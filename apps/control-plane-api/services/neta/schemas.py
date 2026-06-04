@@ -830,6 +830,35 @@ class RelayFacetsResponse(BaseModel):
     active_filters: dict[str, int | str] = Field(default_factory=dict)
 
 
+class RelayFacetToleranceModel(BaseModel):
+    """One facet's acceptance band — percent window and/or an absolute floor (GR §7 / Chip 3)."""
+    pct_low: Optional[float] = None
+    pct_high: Optional[float] = None
+    abs_low: Optional[float] = None
+    abs_high: Optional[float] = None
+    unit: str  # "A" (pickup) | "s" (timing)
+
+
+class RelayToleranceResponse(BaseModel):
+    """Per-relay field-test acceptance tolerance, tier-resolved + trust-tagged (Chip 3).
+
+    Tier order: Enoserv [VENDOR-DOC] catalog (PRIMARY) -> Relays.Note OEM seed -> withheld
+    (no NETA floor yet). ``found=false`` with ``trust='withheld'`` means no validated band — the
+    field sheet must show the manufacturer datasheet is required, never a fabricated tolerance.
+    """
+    td_section_source_id: int
+    manufacturer_source_id: Optional[int] = None
+    manufacturer_name: Optional[str] = None
+    relay_type: Optional[str] = None
+    found: bool = False
+    provenance: str = "none"      # "vendor-doc" | "note" | "none"
+    trust: str = "withheld"       # "validated" | "withheld"
+    match_kind: str = ""          # "exact" | "canonical" | "note" | ""
+    source: str = ""
+    pickup: Optional[RelayFacetToleranceModel] = None
+    timing: Optional[RelayFacetToleranceModel] = None
+
+
 class RelayContext(BaseModel):
     manufacturer_source_id: int
     relay_type: Optional[str] = None

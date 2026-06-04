@@ -1,0 +1,8825 @@
+{
+ "_meta": {
+  "source": "Enoserv RTS FasData7 (snapshot 2026-04-15) \u2014 harvested manufacturer relay test-acceptance tolerances",
+  "trust": "VENDOR-DOC",
+  "description": "Per-element relay accuracy bands keyed by (manufacturer, normalized relay_type). pickup_pct/time_pct = percent acceptance window as [low, high] deviation; pickup_abs/time_abs = absolute floor [low, high] (A for pickup, s for timing). Values are manufacturer-published accuracy specifications extracted from the operator's licensed Enoserv install; Enoserv test scripts/library are NOT included.",
+  "tier": "PRIMARY (above Relays.Note seed and the NETA generic floor)",
+  "entries": 583
+ },
+ "entries": [
+  {
+   "mfr": "ABB",
+   "type": "BL-1",
+   "ntype": "BL1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "ABB",
+   "type": "CA",
+   "ntype": "CA",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CA-16",
+   "ntype": "CA16",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CA-26",
+   "ntype": "CA26",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CA-4",
+   "ntype": "CA4",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CM",
+   "ntype": "CM",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-10",
+   "ntype": "CO10",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-11",
+   "ntype": "CO11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-2",
+   "ntype": "CO2",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-4",
+   "ntype": "CO4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-5",
+   "ntype": "CO5",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-6",
+   "ntype": "CO6",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-7",
+   "ntype": "CO7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-8",
+   "ntype": "CO8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-9",
+   "ntype": "CO9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-AI",
+   "ntype": "COAI",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-AVI",
+   "ntype": "COAVI",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-I",
+   "ntype": "COI",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-LT",
+   "ntype": "COLT",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "COQ",
+   "ntype": "COQ",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-S",
+   "ntype": "COS",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "COV-11",
+   "ntype": "COV11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "COV-7",
+   "ntype": "COV7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "COV-8",
+   "ntype": "COV8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "COV-9",
+   "ntype": "COV9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CO-VI",
+   "ntype": "COVI",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CR-11",
+   "ntype": "CR11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CR-7",
+   "ntype": "CR7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CR-8",
+   "ntype": "CR8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CR-9",
+   "ntype": "CR9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRC-11",
+   "ntype": "CRC11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRC-7",
+   "ntype": "CRC7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRC-8",
+   "ntype": "CRC8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRC-9",
+   "ntype": "CRC9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRD-11",
+   "ntype": "CRD11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRD-7",
+   "ntype": "CRD7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRD-8",
+   "ntype": "CRD8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRD-9",
+   "ntype": "CRD9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRN-1",
+   "ntype": "CRN1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRP-11",
+   "ntype": "CRP11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRP-7",
+   "ntype": "CRP7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRP-8",
+   "ntype": "CRP8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CRP-9",
+   "ntype": "CRP9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CV",
+   "ntype": "CV",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CV-1",
+   "ntype": "CV1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CV-2",
+   "ntype": "CV2",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CV-4",
+   "ntype": "CV4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CV-5",
+   "ntype": "CV5",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CV-6",
+   "ntype": "CV6",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CV-7",
+   "ntype": "CV7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CV-8",
+   "ntype": "CV8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CW",
+   "ntype": "CW",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CWC",
+   "ntype": "CWC",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "CWP",
+   "ntype": "CWP",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "DPU-2000",
+   "ntype": "DPU2000",
+   "pickup_pct": [
+    -7,
+    7
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "ABB",
+   "type": "HA",
+   "ntype": "HA",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "HRK",
+   "ntype": "HRK",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "HRP",
+   "ntype": "HRP",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "HU",
+   "ntype": "HU",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "HU-1",
+   "ntype": "HU1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "ABB",
+   "type": "HU-4",
+   "ntype": "HU4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "HZ",
+   "ntype": "HZ",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "HZM",
+   "ntype": "HZM",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRC-11",
+   "ntype": "IRC11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRC-7",
+   "ntype": "IRC7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRC-8",
+   "ntype": "IRC8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRC-9",
+   "ntype": "IRC9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRD-11",
+   "ntype": "IRD11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRD-7",
+   "ntype": "IRD7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRD-8",
+   "ntype": "IRD8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRD-9",
+   "ntype": "IRD9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRD-91",
+   "ntype": "IRD91",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRP-11",
+   "ntype": "IRP11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRP-7",
+   "ntype": "IRP7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRP-8",
+   "ntype": "IRP8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "IRP-9",
+   "ntype": "IRP9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "ITH",
+   "ntype": "ITH",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "JD",
+   "ntype": "JD",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "KA",
+   "ntype": "KA",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "KA-4",
+   "ntype": "KA4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": [
+    -0.01,
+    0.01
+   ]
+  },
+  {
+   "mfr": "ABB",
+   "type": "KAB",
+   "ntype": "KAB",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "KC-2",
+   "ntype": "KC2",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "KC-3",
+   "ntype": "KC3",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "KC-4",
+   "ntype": "KC4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "KLF",
+   "ntype": "KLF",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "KLF-1",
+   "ntype": "KLF1",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "KRD",
+   "ntype": "KRD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "KRD-4",
+   "ntype": "KRD4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "KS",
+   "ntype": "KS",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -13.8,
+    13.8
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "MCO",
+   "ntype": "MCO",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "MDAR",
+   "ntype": "MDAR",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "ABB",
+   "type": "PM-23",
+   "ntype": "PM23",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -20,
+    20
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "PMD",
+   "ntype": "PMD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "RED670",
+   "ntype": "RED670",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.1,
+    0.1
+   ]
+  },
+  {
+   "mfr": "ABB",
+   "type": "REG670",
+   "ntype": "REG670",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.1,
+    0.1
+   ]
+  },
+  {
+   "mfr": "ABB",
+   "type": "REL-300",
+   "ntype": "REL300",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "REL-301",
+   "ntype": "REL301",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "ABB",
+   "type": "REL-302",
+   "ntype": "REL302",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "ABB",
+   "type": "RET670",
+   "ntype": "RET670",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.1,
+    0.1
+   ]
+  },
+  {
+   "mfr": "ABB",
+   "type": "SA-1",
+   "ntype": "SA1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "SBF-1",
+   "ntype": "SBF1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "SC",
+   "ntype": "SC",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "SC-1",
+   "ntype": "SC1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "SI-T",
+   "ntype": "SIT",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "SM-3",
+   "ntype": "SM3",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "SV",
+   "ntype": "SV",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "SV-1",
+   "ntype": "SV1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "TD-2",
+   "ntype": "TD2",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "TD-4",
+   "ntype": "TD4",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "TD-5",
+   "ntype": "TD5",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "TD-50",
+   "ntype": "TD50",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "TD-52",
+   "ntype": "TD52",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "ABB",
+   "type": "TPU-2000R",
+   "ntype": "TPU2000R",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.03,
+    0.03
+   ]
+  },
+  {
+   "mfr": "ABB",
+   "type": "TSI",
+   "ntype": "TSI",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Alstom",
+   "type": "KCEG140",
+   "ntype": "KCEG140",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -7.5,
+    7.5
+   ],
+   "time_abs": [
+    -0.04,
+    0.04
+   ]
+  },
+  {
+   "mfr": "Alstom",
+   "type": "KCEG242",
+   "ntype": "KCEG242",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -7.5,
+    7.5
+   ],
+   "time_abs": [
+    -0.04,
+    0.04
+   ]
+  },
+  {
+   "mfr": "Alstom",
+   "type": "KCGG142",
+   "ntype": "KCGG142",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -7.5,
+    7.5
+   ],
+   "time_abs": [
+    -0.04,
+    0.04
+   ]
+  },
+  {
+   "mfr": "Areva",
+   "type": "KCEG140",
+   "ntype": "KCEG140",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -7.5,
+    7.5
+   ],
+   "time_abs": [
+    -0.04,
+    0.04
+   ]
+  },
+  {
+   "mfr": "Areva",
+   "type": "KCEG242",
+   "ntype": "KCEG242",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -7.5,
+    7.5
+   ],
+   "time_abs": [
+    -0.04,
+    0.04
+   ]
+  },
+  {
+   "mfr": "Areva",
+   "type": "KCGG142",
+   "ntype": "KCGG142",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -7.5,
+    7.5
+   ],
+   "time_abs": [
+    -0.04,
+    0.04
+   ]
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE-1051",
+   "ntype": "BE1051",
+   "pickup_pct": [
+    -2,
+    2
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -0.05,
+    0.05
+   ]
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-24",
+   "ntype": "BE124",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-25",
+   "ntype": "BE125",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-27",
+   "ntype": "BE127",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-27/59",
+   "ntype": "BE12759",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-46N",
+   "ntype": "BE146N",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-47N",
+   "ntype": "BE147N",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-50",
+   "ntype": "BE150",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-50/51B",
+   "ntype": "BE15051B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-50/51B-214",
+   "ntype": "BE15051B214",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-50/51B-219",
+   "ntype": "BE15051B219",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-50/51M",
+   "ntype": "BE15051M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-50BF",
+   "ntype": "BE150BF",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-51",
+   "ntype": "BE151",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-51/27R",
+   "ntype": "BE15127R",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-59",
+   "ntype": "BE159",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-59N",
+   "ntype": "BE159N",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-60",
+   "ntype": "BE160",
+   "pickup_pct": [
+    -1,
+    1
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-67",
+   "ntype": "BE167",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-67N",
+   "ntype": "BE167N",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-700V",
+   "ntype": "BE1700V",
+   "pickup_pct": [
+    -2,
+    2
+   ],
+   "pickup_abs": [
+    -1,
+    1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -0.05,
+    0.05
+   ]
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-851",
+   "ntype": "BE1851",
+   "pickup_pct": [
+    -2,
+    2
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -0.05,
+    0.05
+   ]
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-87T",
+   "ntype": "BE187T",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Basler",
+   "type": "BE1-951",
+   "ntype": "BE1951",
+   "pickup_pct": [
+    -2,
+    2
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -0.05,
+    0.05
+   ]
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "M-01193/M-0194",
+   "ntype": "M01193M0194",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "M-0188",
+   "ntype": "M0188",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "M-3310",
+   "ntype": "M3310",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1,
+    3
+   ]
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "M-3311",
+   "ntype": "M3311",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1,
+    3
+   ]
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "M-3311A",
+   "ntype": "M3311A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1,
+    3
+   ]
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "M-3410A",
+   "ntype": "M3410A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "M-3420",
+   "ntype": "M3420",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1,
+    3
+   ]
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "M-3425",
+   "ntype": "M3425",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "M-3425A",
+   "ntype": "M3425A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "M-3430",
+   "ntype": "M3430",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1,
+    3
+   ]
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "M-3520",
+   "ntype": "M3520",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.05,
+    0.05
+   ]
+  },
+  {
+   "mfr": "Beckwith",
+   "type": "NA",
+   "ntype": "NA",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.06,
+    0.06
+   ]
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "25",
+   "ntype": "25",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "27",
+   "ntype": "27",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "27/59",
+   "ntype": "2759",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "27G",
+   "ntype": "27G",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.5,
+    0.5
+   ],
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": [
+    -0.05,
+    0.05
+   ]
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "32R",
+   "ntype": "32R",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "40G",
+   "ntype": "40G",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "50H",
+   "ntype": "50H",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "51E",
+   "ntype": "51E",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "51I",
+   "ntype": "51I",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "51L",
+   "ntype": "51L",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "51Y",
+   "ntype": "51Y",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "51YM",
+   "ntype": "51YM",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "59D",
+   "ntype": "59D",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "59F",
+   "ntype": "59F",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "59G",
+   "ntype": "59G",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "60",
+   "ntype": "60",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "62T",
+   "ntype": "62T",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "81",
+   "ntype": "81",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "87B",
+   "ntype": "87B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "87M",
+   "ntype": "87M",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Brown Boveri",
+   "type": "87T",
+   "ntype": "87T",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "B30",
+   "ntype": "B30",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "B90",
+   "ntype": "B90",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "BCA-11AV",
+   "ntype": "BCA11AV",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -18.5,
+    18.5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "BCA-11BA",
+   "ntype": "BCA11BA",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -18.5,
+    18.5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "BDD-15B",
+   "ntype": "BDD15B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "BDD-16B",
+   "ntype": "BDD16B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "BDD-17B",
+   "ntype": "BDD17B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "BDD-18B",
+   "ntype": "BDD18B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "BDD-20B",
+   "ntype": "BDD20B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "C60",
+   "ntype": "C60",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "CEB-51A",
+   "ntype": "CEB51A",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -20,
+    20
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "CEH-52A",
+   "ntype": "CEH52A",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -10.7,
+    10.6
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "CFC-11B",
+   "ntype": "CFC11B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "CFC-11C",
+   "ntype": "CFC11C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "CFC-17A",
+   "ntype": "CFC17A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "CHC-11A",
+   "ntype": "CHC11A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "CHC-12A",
+   "ntype": "CHC12A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "CHC-15A",
+   "ntype": "CHC15A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "CJCG-15E",
+   "ntype": "CJCG15E",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "CJCG-16K",
+   "ntype": "CJCG16K",
+   "pickup_pct": [
+    -15,
+    15
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "CJCG-16M",
+   "ntype": "CJCG16M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "CLPG-12C",
+   "ntype": "CLPG12C",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "D30",
+   "ntype": "D30",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "D60",
+   "ntype": "D60",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "DGP",
+   "ntype": "DGP",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "DLP",
+   "ntype": "DLP",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "F35",
+   "ntype": "F35",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "F60",
+   "ntype": "F60",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "G30",
+   "ntype": "G30",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "G60",
+   "ntype": "G60",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "GCX-51B",
+   "ntype": "GCX51B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "GGP-53B",
+   "ntype": "GGP53B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "GGP-53C",
+   "ntype": "GGP53C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "GSY-51A",
+   "ntype": "GSY51A",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "HFC-21B",
+   "ntype": "HFC21B",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "HFC-22C",
+   "ntype": "HFC22C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "HFC-23C",
+   "ntype": "HFC23C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-51A",
+   "ntype": "IAC51A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-51B",
+   "ntype": "IAC51B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-53A",
+   "ntype": "IAC53A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-53B",
+   "ntype": "IAC53B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-55A",
+   "ntype": "IAC55A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-55B",
+   "ntype": "IAC55B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-57A",
+   "ntype": "IAC57A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-57B",
+   "ntype": "IAC57B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-59B",
+   "ntype": "IAC59B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-59C",
+   "ntype": "IAC59C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-66A",
+   "ntype": "IAC66A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-66B",
+   "ntype": "IAC66B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-66C",
+   "ntype": "IAC66C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-66K",
+   "ntype": "IAC66K",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-77A",
+   "ntype": "IAC77A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-77B",
+   "ntype": "IAC77B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAC-95F",
+   "ntype": "IAC95F",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-51A",
+   "ntype": "IAV51A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-51D",
+   "ntype": "IAV51D",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-53K",
+   "ntype": "IAV53K",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-53L",
+   "ntype": "IAV53L",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-54E",
+   "ntype": "IAV54E",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-54F",
+   "ntype": "IAV54F",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-54H",
+   "ntype": "IAV54H",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-55C",
+   "ntype": "IAV55C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-55F",
+   "ntype": "IAV55F",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-55H",
+   "ntype": "IAV55H",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-55J",
+   "ntype": "IAV55J",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-70A",
+   "ntype": "IAV70A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-70B",
+   "ntype": "IAV70B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IAV-74A",
+   "ntype": "IAV74A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IBC-51M",
+   "ntype": "IBC51M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IBC-53M",
+   "ntype": "IBC53M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IBC-77M",
+   "ntype": "IBC77M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IBCG-51M",
+   "ntype": "IBCG51M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IBCG-53M",
+   "ntype": "IBCG53M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IBCG-77M",
+   "ntype": "IBCG77M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "ICW-51A",
+   "ntype": "ICW51A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "ICW-51B",
+   "ntype": "ICW51B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "ICW-52A",
+   "ntype": "ICW52A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "ICW-53A",
+   "ntype": "ICW53A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-51A",
+   "ntype": "IFC51A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-51AD",
+   "ntype": "IFC51AD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-51B",
+   "ntype": "IFC51B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-51BD",
+   "ntype": "IFC51BD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-53A",
+   "ntype": "IFC53A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-53AD",
+   "ntype": "IFC53AD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-53B",
+   "ntype": "IFC53B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-53BD",
+   "ntype": "IFC53BD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-66A",
+   "ntype": "IFC66A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-66AD",
+   "ntype": "IFC66AD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-66B",
+   "ntype": "IFC66B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-66BD",
+   "ntype": "IFC66BD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-66K",
+   "ntype": "IFC66K",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-77A",
+   "ntype": "IFC77A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-77AD",
+   "ntype": "IFC77AD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-77B",
+   "ntype": "IFC77B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-77BD",
+   "ntype": "IFC77BD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-95A",
+   "ntype": "IFC95A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-95AD",
+   "ntype": "IFC95AD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-95B",
+   "ntype": "IFC95B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFC-95BD",
+   "ntype": "IFC95BD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IFCV-51AD",
+   "ntype": "IFCV51AD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "IFV-51K",
+   "ntype": "IFV51K",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IJCV-51A",
+   "ntype": "IJCV51A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "IJCV-51B",
+   "ntype": "IJCV51B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "INC-77B",
+   "ntype": "INC77B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "JBC-51M",
+   "ntype": "JBC51M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "JBC-53M",
+   "ntype": "JBC53M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "JBC-77M",
+   "ntype": "JBC77M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "JBCG-51M",
+   "ntype": "JBCG51M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "JBCG-53E",
+   "ntype": "JBCG53E",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "JBCG-53K",
+   "ntype": "JBCG53K",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "JBCG-53M",
+   "ntype": "JBCG53M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "JBCG-77M",
+   "ntype": "JBCG77M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "L30",
+   "ntype": "L30",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "L60",
+   "ntype": "L60",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "L90",
+   "ntype": "L90",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "M60",
+   "ntype": "M60",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "MDP",
+   "ntype": "MDP",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "MIFII",
+   "ntype": "MIFII",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "MMCO",
+   "ntype": "MMCO",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NAA-15E",
+   "ntype": "NAA15E",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NAA-15G",
+   "ntype": "NAA15G",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NAA-22L",
+   "ntype": "NAA22L",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -18.5,
+    18.5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NAA-27H",
+   "ntype": "NAA27H",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -11,
+    11
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NAA-27J",
+   "ntype": "NAA27J",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NAA-27K",
+   "ntype": "NAA27K",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -11,
+    11
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NAA-27L",
+   "ntype": "NAA27L",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -11,
+    11
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NAA-27M",
+   "ntype": "NAA27M",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -11,
+    11
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NAA-30A",
+   "ntype": "NAA30A",
+   "pickup_pct": [
+    -3,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NGV-11A",
+   "ntype": "NGV11A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NGV-11B",
+   "ntype": "NGV11B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NGV-12A",
+   "ntype": "NGV12A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NGV-12B",
+   "ntype": "NGV12B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NGV-13A",
+   "ntype": "NGV13A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NGV-13B",
+   "ntype": "NGV13B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NGV-15A",
+   "ntype": "NGV15A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NGV-15B",
+   "ntype": "NGV15B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NGV-17A",
+   "ntype": "NGV17A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NGV-17B",
+   "ntype": "NGV17B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NGV-17C",
+   "ntype": "NGV17C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NHC-11A",
+   "ntype": "NHC11A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -20,
+    20
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NHC-11B",
+   "ntype": "NHC11B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -20,
+    20
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NHC-11C",
+   "ntype": "NHC11C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -20,
+    20
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "NHC-11D",
+   "ntype": "NHC11D",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -20,
+    20
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-11A",
+   "ntype": "PJC11A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-11AV",
+   "ntype": "PJC11AV",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-11E",
+   "ntype": "PJC11E",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-14C",
+   "ntype": "PJC14C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-15E",
+   "ntype": "PJC15E",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-31B",
+   "ntype": "PJC31B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-31C",
+   "ntype": "PJC31C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-31D",
+   "ntype": "PJC31D",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-31E",
+   "ntype": "PJC31E",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-31F",
+   "ntype": "PJC31F",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-31G",
+   "ntype": "PJC31G",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-31H",
+   "ntype": "PJC31H",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-31J",
+   "ntype": "PJC31J",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-31K",
+   "ntype": "PJC31K",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-32B",
+   "ntype": "PJC32B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-32C",
+   "ntype": "PJC32C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-32D",
+   "ntype": "PJC32D",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-32E",
+   "ntype": "PJC32E",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-32F",
+   "ntype": "PJC32F",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-32G",
+   "ntype": "PJC32G",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-32H",
+   "ntype": "PJC32H",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-32J",
+   "ntype": "PJC32J",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-32K",
+   "ntype": "PJC32K",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJC-32L",
+   "ntype": "PJC32L",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJG-11E",
+   "ntype": "PJG11E",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJG-11F",
+   "ntype": "PJG11F",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJG-12B",
+   "ntype": "PJG12B",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJV-11A",
+   "ntype": "PJV11A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PJV-11AJ",
+   "ntype": "PJV11AJ",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PVD-11C",
+   "ntype": "PVD11C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PVD-11D",
+   "ntype": "PVD11D",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PVD-21A",
+   "ntype": "PVD21A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PVD-21B",
+   "ntype": "PVD21B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PVD-21C",
+   "ntype": "PVD21C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "PVD-21D",
+   "ntype": "PVD21D",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "RPM-11D",
+   "ntype": "RPM11D",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "RPM-14D",
+   "ntype": "RPM14D",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "RPM-21D",
+   "ntype": "RPM21D",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-11A",
+   "ntype": "SAM11A",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-11B",
+   "ntype": "SAM11B",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-11C",
+   "ntype": "SAM11C",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-11D",
+   "ntype": "SAM11D",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-11J",
+   "ntype": "SAM11J",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-14B",
+   "ntype": "SAM14B",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-16A",
+   "ntype": "SAM16A",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-17A",
+   "ntype": "SAM17A",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-17B",
+   "ntype": "SAM17B",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-18C",
+   "ntype": "SAM18C",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-201",
+   "ntype": "SAM201",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -0.003,
+    0.003
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-202",
+   "ntype": "SAM202",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -0.003,
+    0.003
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-203",
+   "ntype": "SAM203",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -0.003,
+    0.003
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-204",
+   "ntype": "SAM204",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -0.003,
+    0.003
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-205",
+   "ntype": "SAM205",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -0.003,
+    0.003
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-206",
+   "ntype": "SAM206",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -0.003,
+    0.003
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SAM-207",
+   "ntype": "SAM207",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -0.003,
+    0.003
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SBC-21B",
+   "ntype": "SBC21B",
+   "pickup_pct": [
+    -7,
+    7
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SBC-23B",
+   "ntype": "SBC23B",
+   "pickup_pct": [
+    -7,
+    7
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SCA-52A",
+   "ntype": "SCA52A",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -15,
+    15
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SGC-12A",
+   "ntype": "SGC12A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SGC-12B",
+   "ntype": "SGC12B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SGC-21A",
+   "ntype": "SGC21A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SGC-21B",
+   "ntype": "SGC21B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SGC-21C",
+   "ntype": "SGC21C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SGR-12",
+   "ntype": "SGR12",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SGR-52",
+   "ntype": "SGR52",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SLJ-21A",
+   "ntype": "SLJ21A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "SR-269",
+   "ntype": "SR269",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -2,
+    2
+   ],
+   "time_abs": [
+    -0.5,
+    0.5
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SR-369",
+   "ntype": "SR369",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.5,
+    0.5
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SR-469",
+   "ntype": "SR469",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.5,
+    0.5
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SR-489",
+   "ntype": "SR489",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -3,
+    3
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SR-745",
+   "ntype": "SR745",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -2.16,
+    2.16
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "SR-750-760",
+   "ntype": "SR750760",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "STD-15C",
+   "ntype": "STD15C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "STD-16C",
+   "ntype": "STD16C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "STD-17C",
+   "ntype": "STD17C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "STD-18C",
+   "ntype": "STD18C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "STD-21C",
+   "ntype": "STD21C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "STV-11A",
+   "ntype": "STV11A",
+   "pickup_pct": [
+    -1,
+    1
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "T35",
+   "ntype": "T35",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "T60",
+   "ntype": "T60",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.035,
+    0.035
+   ]
+  },
+  {
+   "mfr": "GE",
+   "type": "THC",
+   "ntype": "THC",
+   "pickup_pct": [
+    -7,
+    7
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "TT-12",
+   "ntype": "TT12",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -20,
+    20
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "TT-9",
+   "ntype": "TT9",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -20,
+    20
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "GE",
+   "type": "TYS3",
+   "ntype": "TYS3",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "GEC",
+   "type": "OPTIMHO",
+   "ntype": "OPTIMHO",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "GEC",
+   "type": "QUADRAMHO",
+   "ntype": "QUADRAMHO",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "GEC Alsthom",
+   "type": "KCEG140",
+   "ntype": "KCEG140",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -7.5,
+    7.5
+   ],
+   "time_abs": [
+    -0.04,
+    0.04
+   ]
+  },
+  {
+   "mfr": "GEC Alsthom",
+   "type": "KCEG242",
+   "ntype": "KCEG242",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -7.5,
+    7.5
+   ],
+   "time_abs": [
+    -0.04,
+    0.04
+   ]
+  },
+  {
+   "mfr": "GEC Alsthom",
+   "type": "KCGG142",
+   "ntype": "KCGG142",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -7.5,
+    7.5
+   ],
+   "time_abs": [
+    -0.04,
+    0.04
+   ]
+  },
+  {
+   "mfr": "GEC Alsthom",
+   "type": "OPTIMHO",
+   "ntype": "OPTIMHO",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "GEC Alsthom",
+   "type": "QUADRAMHO",
+   "ntype": "QUADRAMHO",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "Multilin",
+   "type": "SR-269",
+   "ntype": "SR269",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -2,
+    2
+   ],
+   "time_abs": [
+    -0.5,
+    0.5
+   ]
+  },
+  {
+   "mfr": "Multilin",
+   "type": "SR-369",
+   "ntype": "SR369",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.5,
+    0.5
+   ]
+  },
+  {
+   "mfr": "Multilin",
+   "type": "SR-469",
+   "ntype": "SR469",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.5,
+    0.5
+   ]
+  },
+  {
+   "mfr": "Multilin",
+   "type": "SR-489",
+   "ntype": "SR489",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -3,
+    3
+   ]
+  },
+  {
+   "mfr": "Multilin",
+   "type": "SR-745",
+   "ntype": "SR745",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -2.16,
+    2.16
+   ]
+  },
+  {
+   "mfr": "Multilin",
+   "type": "SR-750-760",
+   "ntype": "SR750760",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-221F",
+   "ntype": "SEL221F",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-221G",
+   "ntype": "SEL221G",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-221H",
+   "ntype": "SEL221H",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-251",
+   "ntype": "SEL251",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-251D",
+   "ntype": "SEL251D",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": [
+    -1.4,
+    1.4
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-267",
+   "ntype": "SEL267",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-2PG10",
+   "ntype": "SEL2PG10",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.9,
+    1.9
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-300G",
+   "ntype": "SEL300G",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.029,
+    0.029
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-311A",
+   "ntype": "SEL311A",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-311B",
+   "ntype": "SEL311B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -1,
+    1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-311C",
+   "ntype": "SEL311C",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -1,
+    1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-311L",
+   "ntype": "SEL311L",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-321",
+   "ntype": "SEL321",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.7,
+    1.7
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-351",
+   "ntype": "SEL351",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-351A",
+   "ntype": "SEL351A",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-351R",
+   "ntype": "SEL351R",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-351S",
+   "ntype": "SEL351S",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-352",
+   "ntype": "SEL352",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.09,
+    0.09
+   ],
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": [
+    -0.5,
+    0.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-387",
+   "ntype": "SEL387",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-387A",
+   "ntype": "SEL387A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-387E",
+   "ntype": "SEL387E",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-387L",
+   "ntype": "SEL387L",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.01,
+    0.01
+   ],
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-411L",
+   "ntype": "SEL411L",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-421",
+   "ntype": "SEL421",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-451",
+   "ntype": "SEL451",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-487B",
+   "ntype": "SEL487B",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": [
+    -1.6,
+    1.6
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-487E",
+   "ntype": "SEL487E",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2.5,
+    2.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-501",
+   "ntype": "SEL501",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    2.7
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-501-2",
+   "ntype": "SEL5012",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    2.7
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-551",
+   "ntype": "SEL551",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-587",
+   "ntype": "SEL587",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-587Z",
+   "ntype": "SEL587Z",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-700G",
+   "ntype": "SEL700G",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.03,
+    0.03
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-701",
+   "ntype": "SEL701",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-710",
+   "ntype": "SEL710",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.03,
+    0.03
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-749M",
+   "ntype": "SEL749M",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.03,
+    0.03
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-751",
+   "ntype": "SEL751",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.03,
+    0.03
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-751A",
+   "ntype": "SEL751A",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.03,
+    0.03
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-787",
+   "ntype": "SEL787",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-849",
+   "ntype": "SEL849",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.01,
+    0.01
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-851",
+   "ntype": "SEL851",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Schweitzer",
+   "type": "SEL-T401L",
+   "ntype": "SELT401L",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.05,
+    0.05
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "6MD664",
+   "ntype": "6MD664",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    0,
+    0.03
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "7RW801",
+   "ntype": "7RW801",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": [
+    -1,
+    1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.01,
+    0.06
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "7SA522",
+   "ntype": "7SA522",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.033,
+    0.033
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "7SD5XX",
+   "ntype": "7SD5XX",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.033,
+    0.033
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "7SJ62_V4.60",
+   "ntype": "7SJ62V460",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    10
+   ],
+   "time_abs": [
+    -0.033,
+    0.033
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "7SJ642",
+   "ntype": "7SJ642",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -1,
+    1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.05,
+    0.05
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "7SJ64_V4.70",
+   "ntype": "7SJ64V470",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": [
+    -2,
+    2
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "7SJ804",
+   "ntype": "7SJ804",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -1,
+    1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.05,
+    0.05
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "7UM622",
+   "ntype": "7UM622",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.5,
+    0.5
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.08,
+    0.08
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "7UT613",
+   "ntype": "7UT613",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.5,
+    0.5
+   ],
+   "time_pct": [
+    -1,
+    1
+   ],
+   "time_abs": [
+    -0.03,
+    0.03
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "7UT635",
+   "ntype": "7UT635",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -1,
+    1
+   ],
+   "time_abs": [
+    -0.03,
+    0.03
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "DIFF GEN RELAY",
+   "ntype": "DIFFGENRELAY",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.5,
+    0.5
+   ],
+   "time_pct": [
+    -5,
+    10
+   ],
+   "time_abs": [
+    -0.033,
+    0.033
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "DIFF XFMR RELAY",
+   "ntype": "DIFFXFMRRELAY",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    10
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "DISTANCE RELAY",
+   "ntype": "DISTANCERELAY",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.033,
+    0.033
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "OVERCURRENT RELAY PROTECTION",
+   "ntype": "OVERCURRENTRELAYPROTECTION",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    10
+   ],
+   "time_abs": [
+    -0.033,
+    0.033
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "TRANSF DIFF PROTEC RELAY",
+   "ntype": "TRANSFDIFFPROTECRELAY",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    10
+   ],
+   "time_abs": [
+    -0.033,
+    0.033
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "TRANSF DIFF PROT RELAY",
+   "ntype": "TRANSFDIFFPROTRELAY",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    10
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "Siemens",
+   "type": "VOLT/FREQ RELAY",
+   "ntype": "VOLTFREQRELAY",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    10
+   ],
+   "time_abs": [
+    -0.033,
+    0.033
+   ]
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "BL-1",
+   "ntype": "BL1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CA",
+   "ntype": "CA",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CA-16",
+   "ntype": "CA16",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CA-26",
+   "ntype": "CA26",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CA-4",
+   "ntype": "CA4",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CM",
+   "ntype": "CM",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-10",
+   "ntype": "CO10",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-11",
+   "ntype": "CO11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-2",
+   "ntype": "CO2",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-4",
+   "ntype": "CO4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-5",
+   "ntype": "CO5",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-6",
+   "ntype": "CO6",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-7",
+   "ntype": "CO7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-8",
+   "ntype": "CO8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-9",
+   "ntype": "CO9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-AI",
+   "ntype": "COAI",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-AVI",
+   "ntype": "COAVI",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-I",
+   "ntype": "COI",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-LT",
+   "ntype": "COLT",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "COQ",
+   "ntype": "COQ",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-S",
+   "ntype": "COS",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "COV-11",
+   "ntype": "COV11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "COV-7",
+   "ntype": "COV7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "COV-8",
+   "ntype": "COV8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "COV-9",
+   "ntype": "COV9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CO-VI",
+   "ntype": "COVI",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CR-11",
+   "ntype": "CR11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CR-7",
+   "ntype": "CR7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CR-8",
+   "ntype": "CR8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CR-9",
+   "ntype": "CR9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRC-11",
+   "ntype": "CRC11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRC-7",
+   "ntype": "CRC7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRC-8",
+   "ntype": "CRC8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRC-9",
+   "ntype": "CRC9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRD-11",
+   "ntype": "CRD11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRD-7",
+   "ntype": "CRD7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRD-8",
+   "ntype": "CRD8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRD-9",
+   "ntype": "CRD9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRN-1",
+   "ntype": "CRN1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRP-11",
+   "ntype": "CRP11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRP-7",
+   "ntype": "CRP7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRP-8",
+   "ntype": "CRP8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CRP-9",
+   "ntype": "CRP9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CV",
+   "ntype": "CV",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CV-1",
+   "ntype": "CV1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CV-2",
+   "ntype": "CV2",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CV-4",
+   "ntype": "CV4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CV-5",
+   "ntype": "CV5",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CV-6",
+   "ntype": "CV6",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CV-7",
+   "ntype": "CV7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CV-8",
+   "ntype": "CV8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CW",
+   "ntype": "CW",
+   "pickup_pct": [
+    -3,
+    3
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CWC",
+   "ntype": "CWC",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "CWP",
+   "ntype": "CWP",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "DPU-2000",
+   "ntype": "DPU2000",
+   "pickup_pct": [
+    -7,
+    7
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -0.025,
+    0.025
+   ]
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "HA",
+   "ntype": "HA",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "HRK",
+   "ntype": "HRK",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "HRP",
+   "ntype": "HRP",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "HU",
+   "ntype": "HU",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "HU-1",
+   "ntype": "HU1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": [
+    -0.1,
+    0.1
+   ],
+   "time_pct": [
+    -5,
+    5
+   ],
+   "time_abs": [
+    -1.5,
+    1.5
+   ]
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "HU-4",
+   "ntype": "HU4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "HZ",
+   "ntype": "HZ",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "HZM",
+   "ntype": "HZM",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRC-11",
+   "ntype": "IRC11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRC-7",
+   "ntype": "IRC7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRC-8",
+   "ntype": "IRC8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRC-9",
+   "ntype": "IRC9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRD-11",
+   "ntype": "IRD11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRD-7",
+   "ntype": "IRD7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRD-8",
+   "ntype": "IRD8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRD-9",
+   "ntype": "IRD9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRD-91",
+   "ntype": "IRD91",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRP-11",
+   "ntype": "IRP11",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRP-7",
+   "ntype": "IRP7",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRP-8",
+   "ntype": "IRP8",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "IRP-9",
+   "ntype": "IRP9",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "ITH",
+   "ntype": "ITH",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "JD",
+   "ntype": "JD",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "KA",
+   "ntype": "KA",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "KA-4",
+   "ntype": "KA4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": [
+    -0.01,
+    0.01
+   ]
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "KAB",
+   "ntype": "KAB",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "KC-2",
+   "ntype": "KC2",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "KC-3",
+   "ntype": "KC3",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "KC-4",
+   "ntype": "KC4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "KLF",
+   "ntype": "KLF",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "KLF-1",
+   "ntype": "KLF1",
+   "pickup_pct": [
+    -10,
+    10
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "KRD",
+   "ntype": "KRD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "KRD-4",
+   "ntype": "KRD4",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "KS",
+   "ntype": "KS",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -13.8,
+    13.8
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "MCO",
+   "ntype": "MCO",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "PM-23",
+   "ntype": "PM23",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -20,
+    20
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "PMD",
+   "ntype": "PMD",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -10,
+    10
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "SA-1",
+   "ntype": "SA1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "SBF-1",
+   "ntype": "SBF1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "SC",
+   "ntype": "SC",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "SC-1",
+   "ntype": "SC1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "SI-T",
+   "ntype": "SIT",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "SM-3",
+   "ntype": "SM3",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "SV",
+   "ntype": "SV",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "SV-1",
+   "ntype": "SV1",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "TD-2",
+   "ntype": "TD2",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "TD-4",
+   "ntype": "TD4",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "TD-5",
+   "ntype": "TD5",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "TD-50",
+   "ntype": "TD50",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "TD-52",
+   "ntype": "TD52",
+   "pickup_pct": null,
+   "pickup_abs": null,
+   "time_pct": [
+    -3,
+    3
+   ],
+   "time_abs": null
+  },
+  {
+   "mfr": "Westinghouse",
+   "type": "TSI",
+   "ntype": "TSI",
+   "pickup_pct": [
+    -5,
+    5
+   ],
+   "pickup_abs": null,
+   "time_pct": null,
+   "time_abs": null
+  }
+ ]
+}

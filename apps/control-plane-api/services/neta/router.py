@@ -113,6 +113,8 @@ from .schemas import (
     RelayStandardOption,
     RelayFamilyOption,
     RelayFacetsResponse,
+    RelayFacetToleranceModel,
+    RelayToleranceResponse,
     EMTFrameSearchResponse,
     EMTFrameSearchResult,
     EMTPickupOption,
@@ -137,6 +139,7 @@ from .delay_trust import (
     delay_trust_reason,
 )
 from . import setting_catalog
+from .relay_tolerance import serve_relay_tolerance
 
 logger = logging.getLogger(__name__)
 
@@ -4707,6 +4710,72 @@ def get_relay_settings(td_section_source_id: int, db: Session = Depends(get_db))
         ],
         curve_parents=[RelayCurveParentOption(**parent) for parent in bundle["curve_parents"]],
         preview_options=[RelayPreviewOption(**option) for option in bundle["preview_options"]],
+    )
+
+
+# ──────────────────────────────────────────────
+# GET /relay/tolerances/{td_section_source_id} — Relay Field-Test Tolerance (Chip 3)
+# ──────────────────────────────────────────────
+
+def _load_relay_identity(db: Session, td_section_source_id: int) -> dict[str, object]:
+    """Resolve a relay TD-section to its manufacturer name, relay_type, and OEM note."""
+    row = db.execute(
+        text(
+            """
+            SELECT m.id AS manufacturer_source_id,
+                   m.mfr_name AS manufacturer_name,
+                   r.relay_type,
+                   r.relay_note
+            FROM tcc.relay_td_sections t
+            JOIN tcc.relay_devices d ON d.relay_device_id = t.relay_device_id
+            JOIN tcc.relays r ON r.relay_id = d.relay_id
+            JOIN tcc.manufacturers m ON m.id = r.manufacturer_source_id
+            WHERE t.source_row_id = :tsid
+            """
+        ),
+        {"tsid": td_section_source_id},
+    ).one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail=f"Relay TD-section {td_section_source_id} not found")
+    return _normalize_mapping(_row_mapping(row))
+
+
+def _relay_facet_model(facet) -> Optional[RelayFacetToleranceModel]:
+    if facet is None:
+        return None
+    return RelayFacetToleranceModel(
+        pct_low=facet.pct_low, pct_high=facet.pct_high,
+        abs_low=facet.abs_low, abs_high=facet.abs_high, unit=facet.unit,
+    )
+
+
+@router.get("/relay/tolerances/{td_section_source_id}", response_model=RelayToleranceResponse)
+def get_relay_tolerances(td_section_source_id: int, db: Session = Depends(get_db)):
+    """Serve a relay's per-element field-test acceptance tolerance (Chip 3).
+
+    Tier order: Enoserv [VENDOR-DOC] catalog (PRIMARY) -> Relays.Note OEM seed -> withheld.
+    A miss is reported as ``found=false`` / ``trust='withheld'`` — never a fabricated band.
+    """
+    _ensure_relay_catalog_available(db)
+    identity = _load_relay_identity(db, td_section_source_id)
+    result = serve_relay_tolerance(
+        identity.get("manufacturer_name"),
+        identity.get("relay_type"),
+        note=identity.get("relay_note"),
+    )
+    msid = identity.get("manufacturer_source_id")
+    return RelayToleranceResponse(
+        td_section_source_id=td_section_source_id,
+        manufacturer_source_id=int(msid) if msid is not None else None,
+        manufacturer_name=identity.get("manufacturer_name"),
+        relay_type=identity.get("relay_type"),
+        found=result.found,
+        provenance=result.provenance,
+        trust=result.trust,
+        match_kind=result.match_kind,
+        source=result.source,
+        pickup=_relay_facet_model(result.pickup),
+        timing=_relay_facet_model(result.timing),
     )
 
 
