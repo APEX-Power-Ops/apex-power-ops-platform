@@ -30,6 +30,7 @@ class CascadeQuery(BaseModel):
 class CascadeManufacturer(BaseModel):
     manufacturer_id: int
     manufacturer_name: str
+    manufacturer_display: Optional[str] = None
     trip_type_count: int
 
 
@@ -107,6 +108,7 @@ class EtuSearchResponse(BaseModel):
 class EtuBreakerManufacturer(BaseModel):
     manufacturer_id: int
     manufacturer_name: str
+    manufacturer_display: Optional[str] = None
     breaker_count: int
 
 
@@ -553,6 +555,7 @@ class ManufacturerFacetOption(BaseModel):
     """A manufacturer option for a guided dropdown (TMT/EMT selectors)."""
     manufacturer_id: int
     manufacturer_name: Optional[str] = None
+    manufacturer_display: Optional[str] = None
     frame_count: int = 0
 
 

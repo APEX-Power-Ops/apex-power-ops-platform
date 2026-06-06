@@ -67,6 +67,7 @@ export type EtuSearchResponse = {
 export type CascadeManufacturer = {
   manufacturer_id: number
   manufacturer_name: string
+  manufacturer_display?: string | null
   trip_type_count: number
 }
 
@@ -140,6 +141,7 @@ export type EtuBreakerCascadeResponse = {
   manufacturers: {
     manufacturer_id: number
     manufacturer_name: string
+    manufacturer_display?: string | null
     breaker_count: number
   }[]
   breaker_classes: {
@@ -868,6 +870,7 @@ export async function fetchTmtFrames({
 export type ManufacturerFacetOption = {
   manufacturer_id: number
   manufacturer_name: string | null
+  manufacturer_display?: string | null
   frame_count: number
 }
 export type ManufacturersResponse = { manufacturers: ManufacturerFacetOption[] }

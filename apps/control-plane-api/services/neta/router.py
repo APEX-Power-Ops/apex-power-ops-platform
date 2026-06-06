@@ -3752,12 +3752,14 @@ def get_cascade(
             SELECT
                 v.manufacturer_id AS manufacturer_id,
                 v.manufacturer_name AS manufacturer_name,
+                COALESCE(a.etap_mfr_name, v.manufacturer_name) AS manufacturer_display,
                 COUNT(DISTINCT v.trip_type_id) AS trip_type_count
             FROM vw_trip_unit_cascade v
+            LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = v.manufacturer_name
             {plug_join}
             {_apply_xh(manufacturer_where)}
-            GROUP BY v.manufacturer_id, v.manufacturer_name
-            ORDER BY v.manufacturer_name
+            GROUP BY v.manufacturer_id, v.manufacturer_name, a.etap_mfr_name
+            ORDER BY manufacturer_display
             """
         ),
         {**manufacturer_params, **plug_params, **xh_params},
@@ -4009,13 +4011,15 @@ def get_etu_breaker_cascade(
             f"""
             {_ETU_BREAKER_CASCADE_CTE}
             SELECT
-                manufacturer_id,
-                manufacturer_name,
+                etu_breaker_combined.manufacturer_id,
+                etu_breaker_combined.manufacturer_name,
+                COALESCE(a.etap_mfr_name, etu_breaker_combined.manufacturer_name) AS manufacturer_display,
                 COUNT(DISTINCT breaker_id) AS breaker_count
             FROM etu_breaker_combined
+            LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = etu_breaker_combined.manufacturer_name
             {_apply_xh(manufacturer_where)}
-            GROUP BY manufacturer_id, manufacturer_name
-            ORDER BY manufacturer_name
+            GROUP BY etu_breaker_combined.manufacturer_id, etu_breaker_combined.manufacturer_name, a.etap_mfr_name
+            ORDER BY manufacturer_display
             """
         ),
         {**manufacturer_params, **xh_params},
@@ -4531,12 +4535,14 @@ def _load_tmt_manufacturers(db: Session, breaker_class: Optional[str]) -> list[d
             {_TMT_FACET_CTE}
             SELECT c.manufacturer_id AS manufacturer_id,
                    m.mfr_name AS manufacturer_name,
+                   COALESCE(a.etap_mfr_name, m.mfr_name) AS manufacturer_display,
                    COUNT(DISTINCT c.frame_id) AS frame_count
             FROM tmt_catalog c
             LEFT JOIN tcc.manufacturers m ON m.id = c.manufacturer_id
+            LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = m.mfr_name
             {where_sql}
-            GROUP BY c.manufacturer_id, m.mfr_name
-            ORDER BY m.mfr_name NULLS LAST
+            GROUP BY c.manufacturer_id, m.mfr_name, a.etap_mfr_name
+            ORDER BY manufacturer_display NULLS LAST
             """
         ),
         params,
@@ -4545,6 +4551,7 @@ def _load_tmt_manufacturers(db: Session, breaker_class: Optional[str]) -> list[d
         {
             "manufacturer_id": int(row._mapping["manufacturer_id"]),
             "manufacturer_name": row._mapping["manufacturer_name"],
+            "manufacturer_display": row._mapping["manufacturer_display"],
             "frame_count": int(row._mapping["frame_count"] or 0),
         }
         for row in rows
@@ -4831,13 +4838,15 @@ def _load_emt_manufacturers(db: Session) -> list[dict]:
             f"""
             SELECT e.{mid} AS manufacturer_id,
                    m.mfr_name AS manufacturer_name,
+                   COALESCE(a.etap_mfr_name, m.mfr_name) AS manufacturer_display,
                    COUNT(DISTINCT f.id) AS frame_count
             FROM tcc.emt_frames f
             INNER JOIN tcc.emt e ON f.{emt_id_col} = e.id
             LEFT JOIN tcc.manufacturers m ON m.id = e.{mid}
+            LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = m.mfr_name
             WHERE e.{mid} IS NOT NULL
-            GROUP BY e.{mid}, m.mfr_name
-            ORDER BY m.mfr_name NULLS LAST
+            GROUP BY e.{mid}, m.mfr_name, a.etap_mfr_name
+            ORDER BY manufacturer_display NULLS LAST
             """
         )
     ).fetchall()
@@ -4845,6 +4854,7 @@ def _load_emt_manufacturers(db: Session) -> list[dict]:
         {
             "manufacturer_id": int(row._mapping["manufacturer_id"]),
             "manufacturer_name": row._mapping["manufacturer_name"],
+            "manufacturer_display": row._mapping["manufacturer_display"],
             "frame_count": int(row._mapping["frame_count"] or 0),
         }
         for row in rows
