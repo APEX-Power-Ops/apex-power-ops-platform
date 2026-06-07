@@ -124,31 +124,63 @@ def _tmt_bundle(
     }
 
 
-def test_breaker_model_aliases_surface_for_pcb_seed_spot_checks(client):
+def test_breaker_model_aliases_surface_for_all_seeded_class_spot_checks(client):
     fake_db = _with_db(
         _breaker_cascade_db(
             style_rows=[
                 _style_row(19, "75HL-3 (1600A)", "75HL-3"),
                 _style_row(2370, "M12 H1 (1200A)", "M12 H1"),
                 _style_row(3125, "NW12H1 (1200A)", "NW12H1"),
+                _style_row(
+                    36,
+                    "S4N (600A)",
+                    "S4N",
+                    breaker_class="MCCB",
+                    breaker_id=901,
+                    breaker_name="Tmax",
+                ),
+                _style_row(
+                    2585,
+                    "S250-NJ (250A)",
+                    "S250-NJ",
+                    breaker_class="MCCB",
+                    breaker_id=902,
+                    breaker_name="SENTRON",
+                ),
+                _style_row(
+                    62,
+                    "MP16 H1 (1600A)",
+                    "MP16 H1",
+                    breaker_class="ICCB",
+                    breaker_id=903,
+                    breaker_name="Masterpact",
+                ),
             ],
-            count=3,
+            count=6,
         )
     )
 
     try:
         resp = client.get(
             "/api/v1/neta/etu/breaker-cascade",
-            params={"breaker_class": "PCB", "breaker_id": 900},
+            params={"breaker_id": 900},
         )
         assert resp.status_code == 200
-        styles = {row["breaker_style_id"]: row for row in resp.json()["breaker_styles"]}
-        assert styles[19]["breaker_model_display"] == "75HL-3"
-        assert styles[2370]["breaker_model_display"] == "M12 H1"
-        assert styles[3125]["breaker_model_display"] == "NW12H1"
+        styles = {
+            (row["breaker_class"], row["breaker_style_id"]): row
+            for row in resp.json()["breaker_styles"]
+        }
+        assert styles[("PCB", 19)]["breaker_model_display"] == "75HL-3"
+        assert styles[("PCB", 2370)]["breaker_model_display"] == "M12 H1"
+        assert styles[("PCB", 3125)]["breaker_model_display"] == "NW12H1"
+        assert styles[("MCCB", 36)]["breaker_model_display"] == "S4N"
+        assert styles[("MCCB", 2585)]["breaker_model_display"] == "S250-NJ"
+        assert styles[("ICCB", 62)]["breaker_model_display"] == "MP16 H1"
 
         style_sql = fake_db.calls[4]["statement"]
         assert "tcc.breaker_style_aliases" in style_sql
+        assert "bsa.breaker_class = etu_breaker_combined.breaker_class" in style_sql
+        assert "bsa.breaker_style_id = etu_breaker_combined.breaker_style_id" in style_sql
     finally:
         _clear_db()
 

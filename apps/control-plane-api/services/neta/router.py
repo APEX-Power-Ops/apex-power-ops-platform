@@ -2228,6 +2228,21 @@ _BREAKER_MODEL_DISPLAY_JOIN = """
 """
 
 
+def _breaker_style_aliases_available(db: Session) -> bool:
+    if not isinstance(db, Session):
+        return True
+    try:
+        return bool(
+            db.execute(text("SELECT to_regclass('tcc.breaker_style_aliases') IS NOT NULL")).scalar()
+        )
+    except Exception as exc:
+        rollback = getattr(db, "rollback", None)
+        if callable(rollback):
+            rollback()
+        logger.warning("breaker style alias availability check failed: %s", exc)
+        return True
+
+
 def _cascade_level(filters: dict[str, Optional[int] | list[int]]) -> str:
     if filters.get("sensor_id") is not None:
         return "sensors"
@@ -3027,7 +3042,11 @@ def _resolve_tmt_breaker_context(db: Session, frame: TMTFrame) -> dict[str, obje
     breaker_style_name = getattr(style, "frame", None)
     breaker_model_display = breaker_style_name
 
-    if breaker_class and frame.breaker_style_id is not None:
+    if (
+        breaker_class
+        and frame.breaker_style_id is not None
+        and _breaker_style_aliases_available(db)
+    ):
         try:
             breaker_model_display = db.execute(
                 text(
@@ -4317,6 +4336,14 @@ def get_etu_breaker_cascade(
             return where_sql + xh_clause
         return "WHERE 1=1" + xh_clause
 
+    has_breaker_aliases = _breaker_style_aliases_available(db)
+    breaker_model_display_join = _BREAKER_MODEL_DISPLAY_JOIN if has_breaker_aliases else ""
+    breaker_model_display_expr = (
+        "COALESCE(bsa.etap_model, etu_breaker_combined.breaker_style_name)"
+        if has_breaker_aliases
+        else "etu_breaker_combined.breaker_style_name"
+    )
+
     full_where, full_params = _build_etu_breaker_cascade_where(scope)
     count_value = db.execute(
         text(
@@ -4453,10 +4480,10 @@ def get_etu_breaker_cascade(
                         etu_breaker_combined.manufacturer_id,
                         etu_breaker_combined.manufacturer_name,
                         COALESCE(a.etap_mfr_name, etu_breaker_combined.manufacturer_name) AS manufacturer_display,
-                        COALESCE(bsa.etap_model, etu_breaker_combined.breaker_style_name) AS breaker_model_display
+                        {breaker_model_display_expr} AS breaker_model_display
                     FROM etu_breaker_combined
                     LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = etu_breaker_combined.manufacturer_name
-                    {_BREAKER_MODEL_DISPLAY_JOIN}
+                    {breaker_model_display_join}
                     {_apply_xh(style_where)}
                 ) style_options
                 GROUP BY manufacturer_display, breaker_class, breaker_name, breaker_model_display
@@ -4625,20 +4652,33 @@ def get_etu_bridge_sensors(
         clauses.append("lower(bridge.breaker_class) = lower(:bclass)")
         params["bclass"] = breaker_class
     where_sql = "WHERE " + " AND ".join(clauses)
+    has_breaker_aliases = _breaker_style_aliases_available(db)
+    breaker_model_display_expr = (
+        "COALESCE(bsa.etap_model, bridge.breaker_style_frame)"
+        if has_breaker_aliases
+        else "bridge.breaker_style_frame"
+    )
+    breaker_model_display_join = (
+        """
+            LEFT JOIN tcc.breaker_style_aliases bsa
+              ON bsa.breaker_class = upper(bridge.breaker_class)
+             AND bsa.breaker_style_id = bridge.breaker_style_id
+        """
+        if has_breaker_aliases
+        else ""
+    )
 
     rows = db.execute(
         text(
             f"""
             SELECT bridge.breaker_class, bridge.breaker_id, bridge.breaker_style_id,
                    bridge.breaker_style_frame,
-                   COALESCE(bsa.etap_model, bridge.breaker_style_frame) AS breaker_model_display,
+                   {breaker_model_display_expr} AS breaker_model_display,
                    bridge.tmt_sst_mfr, bridge.tmt_sst_type, bridge.tmt_sst_style,
                    bridge.trip_style_id, bridge.sensor_id, bridge.sensor_rating,
                    bridge.sensor_description, bridge.r_cont_current
             FROM tcc.vw_breaker_sst_bridge bridge
-            LEFT JOIN tcc.breaker_style_aliases bsa
-              ON bsa.breaker_class = upper(bridge.breaker_class)
-             AND bsa.breaker_style_id = bridge.breaker_style_id
+            {breaker_model_display_join}
             {where_sql}
             ORDER BY bridge.breaker_style_id, bridge.sensor_rating, bridge.sensor_id
             """
