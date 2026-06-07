@@ -34,7 +34,7 @@ _NORMALIZED_REVIEW/
 
 ## Steps
 1. **Inventory + identify** every file across the 3 sources (216 total). For opaque/hash/ID-named files, read page-1 text (`pdftotext -f 1 -l 2`, mingw64) to recover manufacturer / family / doc-number / title — **classification metadata only**.
-2. **Dedupe** across all sources: exact dups by SHA-256; near-dups by recovered doc-identity (same doc-number/title, different filename). The staging pile very likely overlaps the existing RESA folders (e.g. Eaton Digitrip 520, NRX, M-Pact). Keep ONE canonical copy; record the dropped duplicates + which source won in the manifest.
+2. **Dedupe** across all sources: exact dups by SHA-256; near-dups by recovered doc-identity (same doc-number/title, different filename). The staging pile very likely overlaps the existing synced library folders (e.g. Eaton Digitrip 520, NRX, M-Pact). Keep ONE canonical copy; record the dropped duplicates + which source won in the manifest.
 3. **Classify** each kept doc: device_class (`Breaker` | `TripUnit` | `Both`), canonical_mfr, family, models_covered (breaker models + trip-unit models, using workbook vocab where possible), doc_type (`catalog` | `instruction-manual` | `curve-book` | `selectivity-table` | `brochure` | `order-code` | `tool`), doc_number, title.
 4. **COPY** the deduped, classified catalog docs into `NORMALIZED_ROOT/{Breakers,Trip Units}/<Mfr>/<Family>/`. Non-catalog items → `_quarantine/`. **Originals untouched.**
 5. **Manifest (committed)** at `reference/tcc/catalogs/`:
