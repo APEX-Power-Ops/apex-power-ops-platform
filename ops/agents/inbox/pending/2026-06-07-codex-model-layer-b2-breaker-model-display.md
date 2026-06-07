@@ -12,7 +12,9 @@ the MCCB/ICCB names light up automatically when their rows land (serving reads t
 - PUBLIC repo. NO secrets/client/job/site/person identifiers. Mfr/model names + ids are library taxonomy, fine.
 - Scoped `git add`; Git Bash heredoc for commit messages; trailer at end. TDD required (tests first).
 
-## The live prod table (created by CC; PCB seeded via `create_tcc_breaker_style_aliases_pcb_seed`)
+## The live prod table — FULLY SEEDED by CC (all 3 classes live, hash-verified)
+**UPDATE: all three classes are now seeded in prod — PCB 895 + MCCB 2391 + ICCB 174 = 3460 rows, FK-clean.**
+Applied via migrations `create_tcc_breaker_style_aliases_pcb_seed`, `..._iccb_seed`, `..._mccb_seed_p1/p2/p3`.
 ```
 tcc.breaker_style_aliases (
   breaker_class    text not null check (breaker_class in ('MCCB','ICCB','PCB')),
@@ -30,7 +32,8 @@ tcc.breaker_style_aliases (
   `tcc.brk_pcb_styles`. Same pattern for MCCB→`brk_mccb_styles`, ICCB→`brk_iccb_styles`.
 - 1:1 (one ETAP model per style). exact+core only. There is **NO existing breaker alias overlay** (unlike the
   trip layer's `trip_style_aliases`) — so resolution is just the table → EP fallback.
-- Verify-data spot checks (PCB): `brk_pcb_styles.id` 19 → `75HL-3`; 3125 → `NW12H1`; 2370 → `M12 H1`.
+- Verify-data spot checks: PCB `brk_pcb_styles.id` 3125 → `NW12H1`, 2370 → `M12 H1`, 19 → `75HL-3`;
+  MCCB `brk_mccb_styles.id` 2585 → `S250-NJ`, 36 → `S4N`; ICCB `brk_iccb_styles.id` 62 → `MP16 H1`.
 
 ## Serving resolution — `breaker_model_display`
 For each breaker/frame cascade row (keyed by breaker class + brk_<class>_styles.id):
@@ -61,14 +64,15 @@ Report the new divergence count per surface (should drop sharply on PCB now; on 
 - Frontend `apps/operations-web/app/lvbreakertcc/page.tsx` (breaker/frame dropdowns) + `lib/breaker-resources.ts`:
   render `breaker_model_display ?? <EP frame>`; add the TS field.
 - Repo migration RECORD: `infra/database/migrations/tcc/015_tcc_breaker_style_aliases.sql` (+ `_down`) recording
-  the table + PCB seed. The applied SQL is in
-  `.audit_workspace/etap_tcc_sources/crosswalk/v2_starlib/_breaker_style_aliases_pcb_seed.sql` (host-local,
-  gitignored) — copy verbatim. **Mark already-applied to prod (do NOT re-run).** Note in the file that MCCB/ICCB
-  seeds are separate CC migrations into the same table.
+  the table + ALL THREE class seeds (already applied to prod). The applied SQL is in
+  `.audit_workspace/etap_tcc_sources/crosswalk/v2_starlib/` — copy verbatim from `_breaker_style_aliases_pcb_seed.sql`
+  (table DDL + PCB), `_bsa_iccb_seed.sql`, and `_bsa_mccb_part1.sql`/`_bsa_mccb_part2.sql`/`_bsa_mccb_part3.sql`
+  (all host-local, gitignored). **Mark already-applied to prod (do NOT re-run).**
 
 ## TDD — write first (red), then implement (green)
 New backend test file e.g. `apps/control-plane-api/tests/test_neta_breaker_model_display_routes.py`:
-1. A PCB breaker/frame cascade row for `brk_pcb_styles.id` 3125 has `breaker_model_display == 'NW12H1'`; 2370 → `M12 H1`; 19 → `75HL-3`.
+1. Breaker/frame cascade rows resolve the ETAP model: PCB `brk_pcb_styles.id` 3125 → `NW12H1`, 2370 → `M12 H1`;
+   MCCB `brk_mccb_styles.id` 2585 → `S250-NJ`; ICCB `brk_iccb_styles.id` 62 → `MP16 H1`.
 2. A PCB style with NO alias row falls back to the EP `frame`.
 3. Composite-key correctness: an MCCB and a PCB sharing the same numeric `breaker_style_id` resolve independently
    (no cross-class leakage) — assert a PCB id resolves to its PCB model and the same numeric id under MCCB does NOT
