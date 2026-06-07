@@ -355,6 +355,9 @@ def test_tmt_frame_search_reports_divergent_duplicate_frame_labels_without_crash
 
     assert resp.status_code == 200
     body = resp.json()
-    assert body["count"] == 2
+    assert body["count"] == 1
     assert body["dedupe_divergence_count"] == 1
-    assert [row["dedupe_divergence_count"] for row in body["frames"]] == [1, 1]
+    frame = body["frames"][0]
+    assert frame["dedupe_divergence_count"] == 1
+    assert frame["frame_ids"] == [43000, 43001]
+    assert frame["style_ids"] == [7100, 7101]

@@ -3275,13 +3275,12 @@ def _dedupe_tmt_frame_rows(
             frames.append(_merge_tmt_frame_rows(label_rows))
         else:
             divergence_count += 1
-            for signature_rows in signature_groups.values():
-                frames.append(
-                    _merge_tmt_frame_rows(
-                        signature_rows,
-                        dedupe_divergence_count=1,
-                    )
+            frames.append(
+                _merge_tmt_frame_rows(
+                    label_rows,
+                    dedupe_divergence_count=1,
                 )
+            )
 
         if len(frames) >= limit:
             break
