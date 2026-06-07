@@ -2541,31 +2541,35 @@ def _load_etu_plug_value_map_sql(db: Session, sensor_ids: list[int]) -> dict[int
 def _build_etu_breaker_cascade_where(
     scope: dict[str, Optional[object]],
     excluded: set[str] | None = None,
+    qualifier: str | None = None,
 ) -> tuple[str, dict[str, object]]:
     excluded = excluded or set()
     clauses: list[str] = []
     params: dict[str, object] = {}
 
+    def col(name: str) -> str:
+        return f"{qualifier}.{name}" if qualifier else name
+
     if "manufacturer_id" not in excluded and scope.get("manufacturer_ids"):
-        clauses.append("manufacturer_id = ANY(:manufacturer_ids)")
+        clauses.append(f"{col('manufacturer_id')} = ANY(:manufacturer_ids)")
         params["manufacturer_ids"] = scope["manufacturer_ids"]
     elif scope.get("manufacturer_id") is not None and "manufacturer_id" not in excluded:
-        clauses.append("manufacturer_id = :manufacturer_id")
+        clauses.append(f"{col('manufacturer_id')} = :manufacturer_id")
         params["manufacturer_id"] = scope["manufacturer_id"]
     if scope.get("breaker_class") is not None and "breaker_class" not in excluded:
-        clauses.append("breaker_class = :breaker_class")
+        clauses.append(f"{col('breaker_class')} = :breaker_class")
         params["breaker_class"] = scope["breaker_class"]
     if scope.get("breaker_ids") and "breaker_id" not in excluded:
-        clauses.append("breaker_id = ANY(:breaker_ids)")
+        clauses.append(f"{col('breaker_id')} = ANY(:breaker_ids)")
         params["breaker_ids"] = scope["breaker_ids"]
     elif scope.get("breaker_id") is not None and "breaker_id" not in excluded:
-        clauses.append("breaker_id = :breaker_id")
+        clauses.append(f"{col('breaker_id')} = :breaker_id")
         params["breaker_id"] = scope["breaker_id"]
     if scope.get("breaker_style_ids") and "breaker_style_id" not in excluded:
-        clauses.append("breaker_style_id = ANY(:breaker_style_ids)")
+        clauses.append(f"{col('breaker_style_id')} = ANY(:breaker_style_ids)")
         params["breaker_style_ids"] = scope["breaker_style_ids"]
     elif scope.get("breaker_style_id") is not None and "breaker_style_id" not in excluded:
-        clauses.append("breaker_style_id = :breaker_style_id")
+        clauses.append(f"{col('breaker_style_id')} = :breaker_style_id")
         params["breaker_style_id"] = scope["breaker_style_id"]
 
     # bridge_only is an ETU-tab filter: restrict to breaker styles that actually have an
@@ -2575,7 +2579,7 @@ def _build_etu_breaker_cascade_where(
     # overlap across brk_{iccb,mccb,pcb}_styles, so a bare id IN would cross-match classes.
     if scope.get("bridge_only"):
         clauses.append(
-            "(breaker_class, breaker_style_id) IN "
+            f"({col('breaker_class')}, {col('breaker_style_id')}) IN "
             "(SELECT upper(breaker_class), breaker_style_id FROM tcc.vw_breaker_sst_bridge)"
         )
 
@@ -4452,7 +4456,11 @@ def get_etu_breaker_cascade(
 
     breaker_styles: list[EtuBreakerStyleOption] = []
     if breaker_id is not None or scope.get("breaker_ids") or breaker_style_id is not None or scope.get("breaker_style_ids"):
-        style_where, style_params = _build_etu_breaker_cascade_where(scope, {"breaker_style_id"})
+        style_where, style_params = _build_etu_breaker_cascade_where(
+            scope,
+            {"breaker_style_id"},
+            qualifier="etu_breaker_combined",
+        )
         style_rows = db.execute(
             text(
                 f"""

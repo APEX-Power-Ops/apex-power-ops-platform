@@ -209,6 +209,31 @@ def test_breaker_model_display_falls_back_to_ep_frame_when_no_alias_row(client):
         _clear_db()
 
 
+def test_breaker_model_display_class_filter_qualifies_style_sql_after_alias_join(client):
+    fake_db = _with_db(
+        _breaker_cascade_db(
+            style_rows=[
+                _style_row(3125, "NW12H1 (1200A)", "NW12H1"),
+            ],
+        )
+    )
+
+    try:
+        resp = client.get(
+            "/api/v1/neta/etu/breaker-cascade",
+            params={"breaker_class": "PCB", "breaker_id": 900},
+        )
+        assert resp.status_code == 200
+        assert resp.json()["breaker_styles"][0]["breaker_model_display"] == "NW12H1"
+
+        style_sql = fake_db.calls[4]["statement"]
+        assert "WHERE etu_breaker_combined.breaker_class = :breaker_class" in style_sql
+        assert "etu_breaker_combined.breaker_id = :breaker_id" in style_sql
+        assert "WHERE breaker_class = :breaker_class" not in style_sql
+    finally:
+        _clear_db()
+
+
 def test_breaker_model_alias_join_uses_composite_class_and_style_key(client):
     fake_db = _with_db(
         _breaker_cascade_db(
