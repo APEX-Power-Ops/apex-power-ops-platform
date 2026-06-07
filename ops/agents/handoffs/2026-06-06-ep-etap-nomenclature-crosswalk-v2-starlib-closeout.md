@@ -215,19 +215,19 @@ Coverage by tier:
 
 | tier | rows | pct |
 | --- | --- | --- |
-| exact | 481 | 23.0% |
-| core | 360 | 17.2% |
+| exact | 486 | 23.2% |
+| core | 362 | 17.3% |
 | frame | 657 | 31.4% |
-| none | 597 | 28.5% |
+| none | 590 | 28.2% |
 
-Trip family inference counts: {'ETU': 2009, 'EMT': 52, 'MCP': 10, 'TMT': 24}.
+Trip family inference counts: {'ETU': 2046, 'EMT': 15, 'MCP': 10, 'TMT': 24}.
 
 Existing alias agreement check:
 
 | agreement | rows |
 | --- | --- |
-| yes | 83 |
-| no | 40 |
+| yes | 90 |
+| no | 33 |
 | na | 1972 |
 
 Illustrative sample rows:
@@ -241,7 +241,7 @@ Illustrative sample rows:
 | 2 | GE | Ground Break | TGSR | General Electric | Spectra RMS SE Mag-Break | LVSST.htm | frame | na |
 | 58 | West | CL-R | LCL | Westinghouse | Seltronic LCL (Adj) | LVSST.htm | frame | na |
 | 31 | GE | THP | Integral GF | General Electric |  | ETU | none | na |
-| 39 | GE | VersaTrip MOD2 | THKS | General Electric |  | EMT | none | na |
+| 46 | Sensitr | Power Shield | SS-4 |  |  | ETU | none | na |
 
 Alias conflict list (`agrees_with_existing_alias = no`):
 
@@ -251,15 +251,8 @@ Alias conflict list (`agrees_with_existing_alias = no`):
 | 13 | GE | MVT-Plus | LVPCB | General Electric | MVT-9 (LVPCB) | LVSST.htm | core | model-core; family=ETU (default solid-state/electronic trip page) |
 | 15 | GE | MVT-PM | ICCB | General Electric | MVT-9 (ICCB) | LVSST.htm | core | model-core; family=ETU (default solid-state/electronic trip page) |
 | 16 | GE | MVT-PM | LVPCB | General Electric | MVT-9 (LVPCB) | LVSST.htm | core | model-core; family=ETU (default solid-state/electronic trip page) |
-| 57 | West | Amptector II-A | LVPCB | Westinghouse |  | EMT | none | no Star Library candidate matched after restrictions; family=EMT (contains electro-mechanical/static legacy cue) |
-| 132 | Siemens | Static Trip II | LI | Siemens |  | EMT | none | no Star Library manufacturer/family candidates; family=EMT (contains electro-mechanical/static legacy cue) |
-| 133 | Siemens | Static Trip II | LIG | Siemens |  | EMT | none | no Star Library manufacturer/family candidates; family=EMT (contains electro-mechanical/static legacy cue) |
-| 134 | Siemens | Static Trip II | LS | Siemens |  | EMT | none | no Star Library manufacturer/family candidates; family=EMT (contains electro-mechanical/static legacy cue) |
-| 135 | Siemens | Static Trip II | LSG | Siemens |  | EMT | none | no Star Library manufacturer/family candidates; family=EMT (contains electro-mechanical/static legacy cue) |
-| 136 | Siemens | Static Trip II | LSI | Siemens |  | EMT | none | no Star Library manufacturer/family candidates; family=EMT (contains electro-mechanical/static legacy cue) |
-| 137 | Siemens | Static Trip II | LSIG | Siemens |  | EMT | none | no Star Library manufacturer/family candidates; family=EMT (contains electro-mechanical/static legacy cue) |
-| 138 | Siemens | Static Trip III | LVPCB | Siemens |  | EMT | none | no Star Library manufacturer/family candidates; family=EMT (contains electro-mechanical/static legacy cue) |
-| 143 | Cutler-Hammer | Amptector II-A | LVPCB | Cutler-Hammer |  | EMT | none | no Star Library manufacturer/family candidates; family=EMT (contains electro-mechanical/static legacy cue) |
+| 57 | West | Amptector II-A | LVPCB | Westinghouse |  | EMT | none | no Star Library candidate matched after restrictions; family=EMT (contains electro-mechanical/legacy cue) |
+| 143 | Cutler-Hammer | Amptector II-A | LVPCB | Cutler-Hammer |  | EMT | none | no Star Library manufacturer/family candidates; family=EMT (contains electro-mechanical/legacy cue) |
 | 256 | GE | MVT-PM | MCCB | General Electric | MVT-9 (MCCB) | LVSST.htm | core | model-core; family=ETU (default solid-state/electronic trip page) |
 | 419 | Siemens | ETU 745 L(SIG) | WL FS I | Siemens | ETU745 (I^2t) | LVSST.htm | frame | token-overlap+number; family=ETU (default solid-state/electronic trip page) |
 | 420 | Siemens | ETU 745 L(SIG) | WL FS II | Siemens | ETU745 (I^2t) | LVSST.htm | frame | token-overlap+number; family=ETU (default solid-state/electronic trip page) |
@@ -286,9 +279,9 @@ Alias conflict list (`agrees_with_existing_alias = no`):
 | 2467 | Eaton | PXR20 | PDG3-LSIG | Eaton | PXR20(PDC5) ALSIG | LVSST.htm | exact | model-core+function-code; family=ETU (default solid-state/electronic trip page) |
 | 2475 | Eaton | PXR20 | PDG4-LSI | Eaton | PXR10(PDG4) LSI | LVSST.htm | exact | model-core+function-code; family=ETU (default solid-state/electronic trip page) |
 | 2476 | Eaton | PXR20 | PDG4-LSIG | Eaton | PXR20(PDC5) ALSIG | LVSST.htm | exact | model-core+function-code; family=ETU (default solid-state/electronic trip page) |
-| 2503 | Siemens-Allis | Static Trip II | TSIG(3T) | Siemens-Allis |  | EMT | none | no Star Library manufacturer/family candidates; family=EMT (contains electro-mechanical/static legacy cue) |
+| 2503 | Siemens-Allis | Static Trip II | TSIG(3T) | Siemens-Allis |  | ETU | none | no Star Library manufacturer/family candidates; family=ETU (default solid-state/electronic trip page) |
 
-Conflict count: 40. Full row-level conflict detail is in the host-local `trip_unit_crosswalk.tsv`.
+Conflict count: 33. Full row-level conflict detail is in the host-local `trip_unit_crosswalk.tsv`.
 
 ## Level 3 - breaker crosswalk
 
@@ -336,7 +329,7 @@ Illustrative sample rows:
 | level | v1_none | v2_none | none_drop | v1_matched | v2_matched | matched_lift |
 | --- | --- | --- | --- | --- | --- | --- |
 | manufacturer | 118 | 88 | 30 | 19 | 49 | 30 |
-| trip_unit | 979 | 597 | 382 | 1116 | 1498 | 382 |
+| trip_unit | 979 | 590 | 389 | 1116 | 1505 | 389 |
 | breaker | 12201 | 8691 | 3510 | 2021 | 5531 | 3510 |
 
 ## Anomalies and review notes
@@ -344,7 +337,7 @@ Illustrative sample rows:
 - EMT page identity confirmed by page title: `Electro_Magnetic_Trip.htm` is titled `Electro-Mechanical Trip`.
 - Missing page: `IEC_DC_Insulated_Case_breakers.htm`.
 - EP manufacturers still `none`: (Generic), ABB-Wylex, AMR, ASI, Altech Corp, American, Atom Power, Automation Drct, Benshaw, Bill, Bryant, CBI, Carling Tech, Caterpillar, Changshu, Chint, Commander, Crabtree, Crouse-Hinds, Delixi, Doepke, Dorman Smith, E-T-A, EEC, ERMCO, ETA, ETC, English Elect, FMX, Franklin CS, Fuji America, GEIS, GTE, GTE/Sylvania, Generac, Gewiss, Gould, HUNDT & WEBER, Hager, Havells, IndustrialPower, Jiangshu, KTE, Kohler, Legrand, Lovato, MEM, Murray, NHP, Nader, Noark, OEZ, Ottermill, P&A Power Sys, PS Electrical, People Electric, Proteus, Renmin, SACE, SPD Electrical, SREAW, Sace Bergamo, Sace-Sud, Schrack, Sensata, Sensitr, Shanghai Electr, Shihlin, Soprano, Sprecher+Schuh, Stahl, Steck, T&B, Taesung, Taian, Techna, Thomas&Betts, Tianjin Benefo, Trumbel, Trumbull, Unelec, WEG, Weidmuller, Whipp & Bourne, Xiamen Hongfa, Zhejiang BSB, bticino, c3controls.
-- Trip rows with multiple same-tier candidates: 1067. Breaker rows with multiple same-tier candidates: 1973. Alternates are retained in host-local `alt_candidates`.
+- Trip rows with multiple same-tier candidates: 1068. Breaker rows with multiple same-tier candidates: 1973. Alternates are retained in host-local `alt_candidates`.
 - Parsed breaker pages exposed `Manufacturer` and `Model` only in this Star Library help set; no dedicated frame/amp columns were detected.
 
 ## Verdict
