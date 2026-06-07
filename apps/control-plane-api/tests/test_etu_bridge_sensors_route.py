@@ -129,7 +129,7 @@ def test_bridge_sensors_disambiguates_by_breaker_class(client):
         )
         assert resp.status_code == 200
         stmt = fake_db.calls[0]["statement"]
-        assert "lower(breaker_class) = lower(:bclass)" in stmt
+        assert "lower(bridge.breaker_class) = lower(:bclass)" in stmt
         assert fake_db.calls[0]["params"].get("bclass") == "MCCB"
     finally:
         app.dependency_overrides.clear()

@@ -306,13 +306,14 @@ def _build_etu_resolved_equipment_summary(
 def _build_tmt_resolved_equipment_summary(bundle: dict[str, object]) -> ResolvedEquipmentSummary:
     breaker_label = _join_summary_label(bundle.get("breaker_class"), bundle.get("frame_size"))
     primary_label = _join_summary_label(bundle.get("manufacturer_name"), bundle.get("breaker_name"))
-    secondary_label = _join_summary_label(bundle.get("breaker_style_name"), breaker_label)
+    style_label = bundle.get("breaker_model_display") or bundle.get("breaker_style_name")
+    secondary_label = _join_summary_label(style_label, breaker_label)
     rating_label = _join_summary_label("Frame", bundle.get("frame_size"))
     return ResolvedEquipmentSummary(
         family="tmt",
         family_label="TMT",
         resolved_id=f"tmt_frame:{bundle['frame_id']}",
-        primary_label=primary_label or bundle.get("breaker_style_name") or breaker_label,
+        primary_label=primary_label or style_label or breaker_label,
         secondary_label=secondary_label or rating_label,
         breaker_context=ResolvedBreakerContext(
             label=breaker_label,
@@ -320,7 +321,7 @@ def _build_tmt_resolved_equipment_summary(bundle: dict[str, object]) -> Resolved
             manufacturer_name=bundle.get("manufacturer_name"),
             breaker_class=bundle.get("breaker_class"),
             breaker_name=bundle.get("breaker_name"),
-            breaker_style_name=bundle.get("breaker_style_name"),
+            breaker_style_name=style_label,
         ),
         rating_context=ResolvedRatingContext(
             label=rating_label,
@@ -2220,6 +2221,13 @@ _TRIP_MODEL_DISPLAY_JOINS = """
 """
 
 
+_BREAKER_MODEL_DISPLAY_JOIN = """
+                    LEFT JOIN tcc.breaker_style_aliases bsa
+                      ON bsa.breaker_class = etu_breaker_combined.breaker_class
+                     AND bsa.breaker_style_id = etu_breaker_combined.breaker_style_id
+"""
+
+
 def _cascade_level(filters: dict[str, Optional[int] | list[int]]) -> str:
     if filters.get("sensor_id") is not None:
         return "sensors"
@@ -3016,11 +3024,38 @@ def _resolve_tmt_breaker_context(db: Session, frame: TMTFrame) -> dict[str, obje
     breaker = getattr(style, "breaker", None) if style is not None else None
     manufacturer = getattr(breaker, "manufacturer", None) if breaker is not None else None
     standard = getattr(style, "standard", None) if style is not None else None
+    breaker_style_name = getattr(style, "frame", None)
+    breaker_model_display = breaker_style_name
+
+    if breaker_class and frame.breaker_style_id is not None:
+        try:
+            breaker_model_display = db.execute(
+                text(
+                    """
+                    SELECT COALESCE(bsa.etap_model, :raw_frame) AS breaker_model_display
+                    FROM (SELECT 1) seed
+                    LEFT JOIN tcc.breaker_style_aliases bsa
+                      ON bsa.breaker_class = :breaker_class
+                     AND bsa.breaker_style_id = :breaker_style_id
+                    """
+                ),
+                {
+                    "breaker_class": breaker_class,
+                    "breaker_style_id": frame.breaker_style_id,
+                    "raw_frame": breaker_style_name,
+                },
+            ).scalar() or breaker_style_name
+        except Exception as exc:
+            rollback = getattr(db, "rollback", None)
+            if callable(rollback):
+                rollback()
+            logger.warning("breaker model display lookup failed: %s", exc)
 
     return {
         "manufacturer_name": getattr(manufacturer, "name", None),
         "breaker_name": getattr(breaker, "name", None),
-        "breaker_style_name": getattr(style, "frame", None),
+        "breaker_style_name": breaker_style_name,
+        "breaker_model_display": breaker_model_display,
         "standard": float(standard) if standard is not None else None,
     }
 
@@ -3047,6 +3082,7 @@ def _load_tmt_contract_bundle(db: Session, frame_id: int) -> dict[str, object]:
         "manufacturer_name": breaker_context["manufacturer_name"],
         "breaker_name": breaker_context["breaker_name"],
         "breaker_style_name": breaker_context["breaker_style_name"],
+        "breaker_model_display": breaker_context["breaker_model_display"],
         "standard": breaker_context["standard"],
         "available_trip_classes": available_trip_classes,
         "amp_ratings": amp_ratings,
@@ -3235,10 +3271,11 @@ def _tmt_downstream_signature(bundle: dict[str, object]) -> tuple[object, ...]:
 
 
 def _tmt_frame_label_key(row: dict[str, object]) -> tuple[object, ...]:
+    breaker_model_display = row.get("breaker_model_display") or row.get("breaker_style_name")
     return (
         row.get("breaker_class"),
         row.get("breaker_name"),
-        row.get("breaker_style_name"),
+        breaker_model_display,
         row.get("frame_size"),
     )
 
@@ -4396,7 +4433,8 @@ def get_etu_breaker_cascade(
                 SELECT
                     MIN(breaker_style_id) AS breaker_style_id,
                     ARRAY_AGG(DISTINCT breaker_style_id ORDER BY breaker_style_id) AS style_ids,
-                    breaker_style_name,
+                    (ARRAY_AGG(breaker_style_name ORDER BY breaker_id, breaker_style_id))[1] AS breaker_style_name,
+                    breaker_model_display,
                     MIN(breaker_id) AS breaker_id,
                     ARRAY_AGG(DISTINCT breaker_id ORDER BY breaker_id) AS breaker_ids,
                     breaker_name,
@@ -4414,13 +4452,15 @@ def get_etu_breaker_cascade(
                         etu_breaker_combined.breaker_class,
                         etu_breaker_combined.manufacturer_id,
                         etu_breaker_combined.manufacturer_name,
-                        COALESCE(a.etap_mfr_name, etu_breaker_combined.manufacturer_name) AS manufacturer_display
+                        COALESCE(a.etap_mfr_name, etu_breaker_combined.manufacturer_name) AS manufacturer_display,
+                        COALESCE(bsa.etap_model, etu_breaker_combined.breaker_style_name) AS breaker_model_display
                     FROM etu_breaker_combined
                     LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = etu_breaker_combined.manufacturer_name
+                    {_BREAKER_MODEL_DISPLAY_JOIN}
                     {_apply_xh(style_where)}
                 ) style_options
-                GROUP BY manufacturer_display, breaker_class, breaker_name, breaker_style_name
-                ORDER BY manufacturer_display, breaker_class, breaker_name, breaker_style_name
+                GROUP BY manufacturer_display, breaker_class, breaker_name, breaker_model_display
+                ORDER BY manufacturer_display, breaker_class, breaker_name, breaker_model_display
                 """
             ),
             {**style_params, **xh_params},
@@ -4573,29 +4613,34 @@ def get_etu_bridge_sensors(
     clauses: list[str] = []
     params: dict[str, object] = {}
     if breaker_style_filter_ids:
-        clauses.append("breaker_style_id = ANY(:bsids)")
+        clauses.append("bridge.breaker_style_id = ANY(:bsids)")
         params["bsids"] = breaker_style_filter_ids
     elif breaker_style_id is not None:
-        clauses.append("breaker_style_id = :bsid")
+        clauses.append("bridge.breaker_style_id = :bsid")
         params["bsid"] = breaker_style_id
     if breaker_id is not None:
-        clauses.append("breaker_id = :bid")
+        clauses.append("bridge.breaker_id = :bid")
         params["bid"] = breaker_id
     if breaker_class is not None:
-        clauses.append("lower(breaker_class) = lower(:bclass)")
+        clauses.append("lower(bridge.breaker_class) = lower(:bclass)")
         params["bclass"] = breaker_class
     where_sql = "WHERE " + " AND ".join(clauses)
 
     rows = db.execute(
         text(
             f"""
-            SELECT breaker_class, breaker_id, breaker_style_id, breaker_style_frame,
-                   tmt_sst_mfr, tmt_sst_type, tmt_sst_style,
-                   trip_style_id, sensor_id, sensor_rating, sensor_description,
-                   r_cont_current
-            FROM tcc.vw_breaker_sst_bridge
+            SELECT bridge.breaker_class, bridge.breaker_id, bridge.breaker_style_id,
+                   bridge.breaker_style_frame,
+                   COALESCE(bsa.etap_model, bridge.breaker_style_frame) AS breaker_model_display,
+                   bridge.tmt_sst_mfr, bridge.tmt_sst_type, bridge.tmt_sst_style,
+                   bridge.trip_style_id, bridge.sensor_id, bridge.sensor_rating,
+                   bridge.sensor_description, bridge.r_cont_current
+            FROM tcc.vw_breaker_sst_bridge bridge
+            LEFT JOIN tcc.breaker_style_aliases bsa
+              ON bsa.breaker_class = upper(bridge.breaker_class)
+             AND bsa.breaker_style_id = bridge.breaker_style_id
             {where_sql}
-            ORDER BY breaker_style_id, sensor_rating, sensor_id
+            ORDER BY bridge.breaker_style_id, bridge.sensor_rating, bridge.sensor_id
             """
         ),
         params,
@@ -5052,6 +5097,7 @@ def search_tmt_frames(
                     "manufacturer_name": bundle["manufacturer_name"],
                     "breaker_name": bundle["breaker_name"],
                     "breaker_style_name": bundle["breaker_style_name"],
+                    "breaker_model_display": bundle.get("breaker_model_display") or bundle["breaker_style_name"],
                     "standard": bundle["standard"],
                     "matched_amp_rating": matched_amp.get("rating") if matched_amp else None,
                     "_dedupe_signature": _tmt_downstream_signature(bundle),
@@ -5082,6 +5128,7 @@ def get_tmt_context(frame_id: int, db: Session = Depends(get_db)):
         manufacturer_name=bundle["manufacturer_name"],
         breaker_name=bundle["breaker_name"],
         breaker_style_name=bundle["breaker_style_name"],
+        breaker_model_display=bundle.get("breaker_model_display") or bundle["breaker_style_name"],
         standard=bundle["standard"],
         available_trip_classes=bundle["available_trip_classes"],
         amp_rating_count=len(bundle["amp_ratings"]),
@@ -5156,6 +5203,7 @@ def plot_tmt_tcc(req: TMTPlotRequest, db: Session = Depends(get_db)):
             manufacturer_name=bundle["manufacturer_name"],
             breaker_name=bundle["breaker_name"],
             breaker_style_name=bundle["breaker_style_name"],
+            breaker_model_display=bundle.get("breaker_model_display") or bundle["breaker_style_name"],
             standard=bundle["standard"],
             selected_trip_class=req.trip_class,
             selected_amp_rating=matched_amp.get("rating") if matched_amp else None,

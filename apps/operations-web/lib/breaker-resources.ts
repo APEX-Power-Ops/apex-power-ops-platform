@@ -184,6 +184,7 @@ export type EtuBreakerCascadeResponse = {
     breaker_style_id: number
     style_ids?: number[] | null
     breaker_style_name: string
+    breaker_model_display?: string | null
     breaker_id: number
     breaker_ids?: number[] | null
     breaker_name: string
@@ -222,6 +223,7 @@ export type EtuBridgeSensor = {
   breaker_id: number
   breaker_style_id: number
   breaker_style_frame: string | null
+  breaker_model_display?: string | null
   tmt_sst_mfr: string | null
   tmt_sst_type: string | null
   tmt_sst_style: string | null
@@ -482,6 +484,7 @@ export type TMTFrameSearchResult = {
   manufacturer_name: string | null
   breaker_name: string | null
   breaker_style_name: string | null
+  breaker_model_display?: string | null
   standard: number | null
   matched_amp_rating: number | null
   dedupe_divergence_count?: number
@@ -501,6 +504,7 @@ export type TMTFrameContext = {
   manufacturer_name: string | null
   breaker_name: string | null
   breaker_style_name: string | null
+  breaker_model_display?: string | null
   standard: number | null
   available_trip_classes: number[]
   amp_rating_count: number
@@ -548,6 +552,7 @@ export type TMTPlotResponse = {
     manufacturer_name: string | null
     breaker_name: string | null
     breaker_style_name: string | null
+    breaker_model_display?: string | null
     standard: number | null
     selected_trip_class: number
     selected_amp_rating: number | null

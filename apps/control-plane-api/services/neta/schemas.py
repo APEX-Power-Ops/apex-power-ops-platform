@@ -147,6 +147,7 @@ class EtuBreakerStyleOption(BaseModel):
     breaker_style_id: int
     style_ids: Optional[list[int]] = None
     breaker_style_name: str
+    breaker_model_display: Optional[str] = None
     breaker_id: int
     breaker_ids: Optional[list[int]] = None
     breaker_name: str
@@ -178,6 +179,7 @@ class EtuBridgeSensor(BaseModel):
     breaker_id: int
     breaker_style_id: int
     breaker_style_frame: Optional[str] = None
+    breaker_model_display: Optional[str] = None
     tmt_sst_mfr: Optional[str] = None
     tmt_sst_type: Optional[str] = None
     tmt_sst_style: Optional[str] = None
@@ -436,6 +438,7 @@ class TMTFrameContext(BaseModel):
     manufacturer_name: Optional[str] = None
     breaker_name: Optional[str] = None
     breaker_style_name: Optional[str] = None
+    breaker_model_display: Optional[str] = None
     standard: Optional[float] = None
     available_trip_classes: list[int] = Field(default_factory=list)
     amp_rating_count: int = 0
@@ -454,6 +457,7 @@ class TMTFrameSearchResult(BaseModel):
     manufacturer_name: Optional[str] = None
     breaker_name: Optional[str] = None
     breaker_style_name: Optional[str] = None
+    breaker_model_display: Optional[str] = None
     standard: Optional[float] = None
     matched_amp_rating: Optional[float] = None
     dedupe_divergence_count: int = 0
@@ -519,6 +523,7 @@ class TMTPlotMeta(BaseModel):
     manufacturer_name: Optional[str] = None
     breaker_name: Optional[str] = None
     breaker_style_name: Optional[str] = None
+    breaker_model_display: Optional[str] = None
     standard: Optional[float] = None
     selected_trip_class: int
     selected_amp_rating: Optional[float] = None

@@ -523,7 +523,8 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     const bMfrRow = bCascade?.manufacturers.find((m) => String(m.manufacturer_id) === bMfr)
     const bMfrName = bMfrRow?.manufacturer_display ?? bMfrRow?.manufacturer_name ?? ''
     const bName = bCascade?.breakers.find((b) => String(b.breaker_id) === bId)?.breaker_name ?? ''
-    const frame = bCascade?.breaker_styles.find((s) => String(s.breaker_style_id) === bStyle)?.breaker_style_name ?? ''
+    const bStyleRow = bCascade?.breaker_styles.find((s) => String(s.breaker_style_id) === bStyle)
+    const frame = bStyleRow?.breaker_model_display ?? bStyleRow?.breaker_style_name ?? ''
     const breakerLabel = [bMfrName, bClass, bName, frame].filter(Boolean).join(' ') || 'Compatible breaker (any)'
     setResolving(true)
     let plugs: number[] = []
@@ -550,7 +551,10 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   const bMfrOpts = (bCascade?.manufacturers ?? []).map((m) => ({ value: String(m.manufacturer_id), label: `${m.manufacturer_display ?? m.manufacturer_name} (${m.breaker_count})` }))
   const bClassOpts = (bCascade?.breaker_classes ?? []).map((c) => ({ value: c.breaker_class, label: `${c.breaker_class} (${c.breaker_count})` }))
   const bBreakerOpts = (bCascade?.breakers ?? []).map((b) => ({ value: String(b.breaker_id), label: `${b.breaker_name} · ${b.breaker_class}` }))
-  const bStyleOpts = (bCascade?.breaker_styles ?? []).map((s) => ({ value: String(s.breaker_style_id), label: s.breaker_style_name }))
+  const bStyleOpts = (bCascade?.breaker_styles ?? []).map((s) => ({
+    value: String(s.breaker_style_id),
+    label: s.breaker_model_display ?? s.breaker_style_name,
+  }))
   // Axis B options
   const tMfrOpts = (tCascade?.manufacturers ?? []).map((m) => ({ value: String(m.manufacturer_id), label: `${m.manufacturer_display ?? m.manufacturer_name} (${m.trip_type_count})` }))
   const tTypeOpts = (tCascade?.trip_types ?? []).map((t) => ({ value: String(t.trip_type_id), label: t.trip_model_display ?? t.trip_type_name }))
@@ -665,7 +669,12 @@ function TmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     onSelect({
       family: 'tmt',
       frameId: f.frame_id,
-      breakerLabel: [f.manufacturer_name, f.breaker_class, f.breaker_name, f.breaker_style_name].filter(Boolean).join(' '),
+      breakerLabel: [
+        f.manufacturer_name,
+        f.breaker_class,
+        f.breaker_name,
+        f.breaker_model_display ?? f.breaker_style_name,
+      ].filter(Boolean).join(' '),
       tripLabel: 'Thermal-Magnetic (breaker-integral)',
       ratingLabel: f.frame_size ?? '—',
       plugs: [],
@@ -680,7 +689,7 @@ function TmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   }))
   const frameOpts = frames.map((f) => ({
     value: String(f.frame_id),
-    label: `${f.breaker_name ?? ''} ${f.breaker_style_name ?? ''} — ${f.frame_size ?? ''}`.trim(),
+    label: `${f.breaker_name ?? ''} ${f.breaker_model_display ?? f.breaker_style_name ?? ''} — ${f.frame_size ?? ''}`.trim(),
   }))
 
   return (
