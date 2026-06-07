@@ -2153,16 +2153,38 @@ def _build_python_pickup_eval_data(
     return expected_time, time_low, time_high
 
 
+def _normalize_id_list(
+    primary_id: Optional[int],
+    id_values: Optional[list[int]],
+) -> Optional[list[int]]:
+    if id_values:
+        return sorted({int(value) for value in id_values})
+    if primary_id is not None:
+        return [int(primary_id)]
+    return None
+
+
 def _build_cascade_where(
-    filters: dict[str, Optional[int]],
+    filters: dict[str, Optional[int] | list[int]],
     exclude: set[str] | None = None,
     prefix: str = "",
-) -> tuple[str, dict[str, int]]:
+) -> tuple[str, dict[str, object]]:
     exclude = exclude or set()
     clauses: list[str] = []
-    params: dict[str, int] = {}
+    params: dict[str, object] = {}
 
-    for field in ("manufacturer_id", "trip_type_id", "trip_style_id", "sensor_id"):
+    if "manufacturer_id" not in exclude:
+        manufacturer_ids = filters.get("manufacturer_ids")
+        if manufacturer_ids:
+            clauses.append(f"{prefix}manufacturer_id = ANY(:manufacturer_ids)")
+            params["manufacturer_ids"] = manufacturer_ids
+        else:
+            value = filters.get("manufacturer_id")
+            if value is not None:
+                clauses.append(f"{prefix}manufacturer_id = :manufacturer_id")
+                params["manufacturer_id"] = value
+
+    for field in ("trip_type_id", "trip_style_id", "sensor_id"):
         if field in exclude:
             continue
         value = filters.get(field)
@@ -2175,14 +2197,14 @@ def _build_cascade_where(
     return where_sql, params
 
 
-def _cascade_level(filters: dict[str, Optional[int]]) -> str:
+def _cascade_level(filters: dict[str, Optional[int] | list[int]]) -> str:
     if filters.get("sensor_id") is not None:
         return "sensors"
     if filters.get("trip_style_id") is not None:
         return "trip_styles"
     if filters.get("trip_type_id") is not None:
         return "trip_types"
-    if filters.get("manufacturer_id") is not None:
+    if filters.get("manufacturer_id") is not None or filters.get("manufacturer_ids"):
         return "manufacturers"
     return "manufacturers"
 
@@ -2235,6 +2257,7 @@ def _build_cross_half_breaker_filter(
     breaker_id: Optional[int],
     breaker_style_id: Optional[int],
     *,
+    breaker_manufacturer_ids: Optional[list[int]] = None,
     bridge_xfilter: bool = False,
 ) -> tuple[str, dict[str, object], str]:
     """Cross-filter the trip-unit cascade by a breaker-side selection.
@@ -2245,6 +2268,8 @@ def _build_cross_half_breaker_filter(
     behavior — left intact). Returns (clause, params, cte_to_prepend).
     """
     params: dict[str, object] = {}
+    if breaker_manufacturer_ids:
+        params["xh_breaker_manufacturer_ids"] = breaker_manufacturer_ids
     if breaker_class is not None:
         params["xh_breaker_class"] = breaker_class
     if breaker_id is not None:
@@ -2257,20 +2282,27 @@ def _build_cross_half_breaker_filter(
     if bridge_xfilter:
         # (class, id) pair-safe: style/breaker ids overlap across classes.
         parts: list[str] = []
+        if breaker_manufacturer_ids:
+            parts.append("ebc.manufacturer_id = ANY(:xh_breaker_manufacturer_ids)")
         if breaker_class is not None:
-            parts.append("lower(breaker_class) = lower(:xh_breaker_class)")
+            parts.append("ebc.breaker_class = upper(:xh_breaker_class)")
         if breaker_id is not None:
-            parts.append("breaker_id = :xh_breaker_id")
+            parts.append("ebc.breaker_id = :xh_breaker_id")
         if breaker_style_id is not None:
-            parts.append("breaker_style_id = :xh_breaker_style_id")
+            parts.append("ebc.breaker_style_id = :xh_breaker_style_id")
         clause = (
             " AND v.sensor_id IN ("
-            "SELECT sensor_id FROM tcc.vw_breaker_sst_bridge "
+            "SELECT bridge.sensor_id FROM tcc.vw_breaker_sst_bridge bridge "
+            "JOIN etu_breaker_combined ebc "
+            "ON ebc.breaker_class = upper(bridge.breaker_class) "
+            "AND ebc.breaker_style_id = bridge.breaker_style_id "
             f"WHERE {' AND '.join(parts)})"
         )
-        return clause, params, ""
+        return clause, params, _ETU_BREAKER_CASCADE_CTE
 
     parts = []
+    if breaker_manufacturer_ids:
+        parts.append("manufacturer_id = ANY(:xh_breaker_manufacturer_ids)")
     if breaker_class is not None:
         parts.append("breaker_class = :xh_breaker_class")
     if breaker_id is not None:
@@ -2290,6 +2322,7 @@ def _build_cross_half_trip_unit_filter(
     trip_style_id: Optional[int],
     sensor_id: Optional[int],
     *,
+    trip_manufacturer_ids: Optional[list[int]] = None,
     bridge_xfilter: bool = False,
 ) -> tuple[str, dict[str, object]]:
     """Cross-filter the breaker cascade (etu_breaker_combined) by a trip-unit selection.
@@ -2301,6 +2334,9 @@ def _build_cross_half_trip_unit_filter(
     """
     parts: list[str] = []
     params: dict[str, object] = {}
+    if trip_manufacturer_ids:
+        parts.append("manufacturer_id = ANY(:xh_trip_manufacturer_ids)")
+        params["xh_trip_manufacturer_ids"] = trip_manufacturer_ids
     if trip_type_id is not None:
         parts.append("trip_type_id = :xh_trip_type_id")
         params["xh_trip_type_id"] = trip_type_id
@@ -2442,7 +2478,10 @@ def _build_etu_breaker_cascade_where(
     clauses: list[str] = []
     params: dict[str, object] = {}
 
-    if scope.get("manufacturer_id") is not None and "manufacturer_id" not in excluded:
+    if "manufacturer_id" not in excluded and scope.get("manufacturer_ids"):
+        clauses.append("manufacturer_id = ANY(:manufacturer_ids)")
+        params["manufacturer_ids"] = scope["manufacturer_ids"]
+    elif scope.get("manufacturer_id") is not None and "manufacturer_id" not in excluded:
         clauses.append("manufacturer_id = :manufacturer_id")
         params["manufacturer_id"] = scope["manufacturer_id"]
     if scope.get("breaker_class") is not None and "breaker_class" not in excluded:
@@ -2473,7 +2512,7 @@ def _build_etu_breaker_cascade_where(
 def _etu_breaker_cascade_level(scope: dict[str, Optional[object]]) -> str:
     if scope.get("breaker_id") is not None or scope.get("breaker_style_id") is not None:
         return "breaker_styles"
-    if scope.get("manufacturer_id") is not None or scope.get("breaker_class") is not None:
+    if scope.get("manufacturer_id") is not None or scope.get("manufacturer_ids") or scope.get("breaker_class") is not None:
         return "breakers"
     return "manufacturers"
 
@@ -2972,7 +3011,14 @@ def _build_tmt_facet_where(
         clauses.append("c.breaker_class = :breaker_class")
         params["breaker_class"] = filters["breaker_class"]
 
-    for key in ("manufacturer_id", "breaker_id", "breaker_style_id"):
+    if filters.get("manufacturer_ids") and "manufacturer_id" not in excluded:
+        clauses.append("c.manufacturer_id = ANY(:manufacturer_ids)")
+        params["manufacturer_ids"] = filters["manufacturer_ids"]
+    elif filters.get("manufacturer_id") is not None and "manufacturer_id" not in excluded:
+        clauses.append("c.manufacturer_id = :manufacturer_id")
+        params["manufacturer_id"] = filters["manufacturer_id"]
+
+    for key in ("breaker_id", "breaker_style_id"):
         if filters.get(key) is not None and key not in excluded:
             clauses.append(f"c.{key} = :{key}")
             params[key] = filters[key]
@@ -3229,6 +3275,7 @@ def _resolve_emt_contract_columns(db: Session) -> dict[str, dict[str, Optional[s
 def _search_emt_frames(
     db: Session,
     manufacturer_id: Optional[int] = None,
+    manufacturer_ids: Optional[list[int]] = None,
     trip_char: Optional[int] = None,
     trip_plug: Optional[int] = None,
     q: Optional[str] = None,
@@ -3238,7 +3285,10 @@ def _search_emt_frames(
     params: dict[str, object] = {"limit": limit}
     conditions: list[str] = []
 
-    if manufacturer_id is not None:
+    if manufacturer_ids:
+        conditions.append(f"e.{cols['emt']['manufacturer_id']} = ANY(:manufacturer_ids)")
+        params["manufacturer_ids"] = manufacturer_ids
+    elif manufacturer_id is not None:
         conditions.append(f"e.{cols['emt']['manufacturer_id']} = :manufacturer_id")
         params["manufacturer_id"] = manufacturer_id
 
@@ -3317,6 +3367,10 @@ def _load_emt_facets(
         clauses: list[str] = []
         params: dict[str, object] = {}
         for facet_name, sql_expr in facet_specs:
+            if facet_name == "manufacturer_id" and facet_name not in excluded and filters.get("manufacturer_ids"):
+                clauses.append(f"{sql_expr} = ANY(:manufacturer_ids)")
+                params["manufacturer_ids"] = filters["manufacturer_ids"]
+                continue
             if filters.get(facet_name) is None or facet_name in excluded:
                 continue
             clauses.append(f"{sql_expr} = :{facet_name}")
@@ -3680,10 +3734,16 @@ def get_catalog_status(db: Session = Depends(get_db)):
 @router.get("/cascade", response_model=CascadeResponse)
 def get_cascade(
     manufacturer_id: Optional[int] = Query(None, description="Filter by manufacturer"),
+    manufacturer_ids: Optional[list[int]] = Query(None, description="Filter by one or more manufacturers"),
     trip_type_id: Optional[int] = Query(None, description="Filter by trip type"),
     trip_style_id: Optional[int] = Query(None, description="Filter by trip style"),
     sensor_id: Optional[int] = Query(None, description="Filter to specific sensor"),
     plug_value: Optional[float] = Query(None, description="Optional compatible-plug lens"),
+    breaker_manufacturer_id: Optional[int] = Query(None, description="Cross-half filter by breaker manufacturer"),
+    breaker_manufacturer_ids: Optional[list[int]] = Query(
+        None,
+        description="Cross-half filter by one or more breaker manufacturers",
+    ),
     breaker_class: Optional[str] = Query(None, description="Cross-half filter by breaker class"),
     breaker_id: Optional[int] = Query(None, description="Cross-half filter by breaker"),
     breaker_style_id: Optional[int] = Query(None, description="Cross-half filter by breaker style"),
@@ -3710,15 +3770,18 @@ def get_cascade(
 
     filters = {
         "manufacturer_id": manufacturer_id,
+        "manufacturer_ids": _normalize_id_list(None, manufacturer_ids),
         "trip_type_id": trip_type_id,
         "trip_style_id": trip_style_id,
         "sensor_id": sensor_id,
     }
+    breaker_filter_ids = _normalize_id_list(breaker_manufacturer_id, breaker_manufacturer_ids)
 
     xh_clause, xh_params, xh_cte = _build_cross_half_breaker_filter(
         breaker_class,
         breaker_id,
         breaker_style_id,
+        breaker_manufacturer_ids=breaker_filter_ids,
         bridge_xfilter=bridge_xfilter,
     )
     plug_join, plug_params = _build_cascade_plug_join(plug_value, alias="v")
@@ -3750,15 +3813,24 @@ def get_cascade(
             f"""
             {xh_cte}
             SELECT
-                v.manufacturer_id AS manufacturer_id,
-                v.manufacturer_name AS manufacturer_name,
-                COALESCE(a.etap_mfr_name, v.manufacturer_name) AS manufacturer_display,
-                COUNT(DISTINCT v.trip_type_id) AS trip_type_count
-            FROM vw_trip_unit_cascade v
-            LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = v.manufacturer_name
-            {plug_join}
-            {_apply_xh(manufacturer_where)}
-            GROUP BY v.manufacturer_id, v.manufacturer_name, a.etap_mfr_name
+                MIN(manufacturer_id) AS manufacturer_id,
+                ARRAY_AGG(manufacturer_id ORDER BY manufacturer_id) AS manufacturer_ids,
+                (ARRAY_AGG(manufacturer_name ORDER BY manufacturer_id))[1] AS manufacturer_name,
+                manufacturer_display,
+                SUM(trip_type_count)::int AS trip_type_count
+            FROM (
+                SELECT
+                    v.manufacturer_id AS manufacturer_id,
+                    v.manufacturer_name AS manufacturer_name,
+                    COALESCE(a.etap_mfr_name, v.manufacturer_name) AS manufacturer_display,
+                    COUNT(DISTINCT v.trip_type_id) AS trip_type_count
+                FROM vw_trip_unit_cascade v
+                LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = v.manufacturer_name
+                {plug_join}
+                {_apply_xh(manufacturer_where)}
+                GROUP BY v.manufacturer_id, v.manufacturer_name, a.etap_mfr_name
+            ) manufacturer_options
+            GROUP BY manufacturer_display
             ORDER BY manufacturer_display
             """
         ),
@@ -3948,9 +4020,15 @@ def search_etu(
 @router.get("/etu/breaker-cascade", response_model=EtuBreakerCascadeResponse)
 def get_etu_breaker_cascade(
     manufacturer_id: Optional[int] = Query(None, description="Optional manufacturer filter"),
+    manufacturer_ids: Optional[list[int]] = Query(None, description="Optional manufacturer id-set filter"),
     breaker_class: Optional[str] = Query(None, description="Optional breaker class: ICCB, MCCB, or PCB"),
     breaker_id: Optional[int] = Query(None, description="Optional breaker filter"),
     breaker_style_id: Optional[int] = Query(None, description="Optional breaker-style filter"),
+    trip_manufacturer_id: Optional[int] = Query(None, description="Cross-half filter by trip manufacturer"),
+    trip_manufacturer_ids: Optional[list[int]] = Query(
+        None,
+        description="Cross-half filter by one or more trip manufacturers",
+    ),
     trip_type_id: Optional[int] = Query(None, description="Cross-half filter by trip type"),
     trip_style_id: Optional[int] = Query(None, description="Cross-half filter by trip style"),
     sensor_id: Optional[int] = Query(None, description="Cross-half filter by sensor"),
@@ -3972,16 +4050,19 @@ def get_etu_breaker_cascade(
 
     scope: dict[str, Optional[object]] = {
         "manufacturer_id": manufacturer_id,
+        "manufacturer_ids": _normalize_id_list(None, manufacturer_ids),
         "breaker_class": breaker_class,
         "breaker_id": breaker_id,
         "breaker_style_id": breaker_style_id,
         "bridge_only": bridge_only,
     }
+    trip_filter_ids = _normalize_id_list(trip_manufacturer_id, trip_manufacturer_ids)
 
     xh_clause, xh_params = _build_cross_half_trip_unit_filter(
         trip_type_id,
         trip_style_id,
         sensor_id,
+        trip_manufacturer_ids=trip_filter_ids,
         bridge_xfilter=bridge_xfilter,
     )
 
@@ -4011,14 +4092,23 @@ def get_etu_breaker_cascade(
             f"""
             {_ETU_BREAKER_CASCADE_CTE}
             SELECT
-                etu_breaker_combined.manufacturer_id,
-                etu_breaker_combined.manufacturer_name,
-                COALESCE(a.etap_mfr_name, etu_breaker_combined.manufacturer_name) AS manufacturer_display,
-                COUNT(DISTINCT breaker_id) AS breaker_count
-            FROM etu_breaker_combined
-            LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = etu_breaker_combined.manufacturer_name
-            {_apply_xh(manufacturer_where)}
-            GROUP BY etu_breaker_combined.manufacturer_id, etu_breaker_combined.manufacturer_name, a.etap_mfr_name
+                MIN(manufacturer_id) AS manufacturer_id,
+                ARRAY_AGG(manufacturer_id ORDER BY manufacturer_id) AS manufacturer_ids,
+                (ARRAY_AGG(manufacturer_name ORDER BY manufacturer_id))[1] AS manufacturer_name,
+                manufacturer_display,
+                SUM(breaker_count)::int AS breaker_count
+            FROM (
+                SELECT
+                    etu_breaker_combined.manufacturer_id,
+                    etu_breaker_combined.manufacturer_name,
+                    COALESCE(a.etap_mfr_name, etu_breaker_combined.manufacturer_name) AS manufacturer_display,
+                    COUNT(DISTINCT breaker_id) AS breaker_count
+                FROM etu_breaker_combined
+                LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = etu_breaker_combined.manufacturer_name
+                {_apply_xh(manufacturer_where)}
+                GROUP BY etu_breaker_combined.manufacturer_id, etu_breaker_combined.manufacturer_name, a.etap_mfr_name
+            ) manufacturer_options
+            GROUP BY manufacturer_display
             ORDER BY manufacturer_display
             """
         ),
@@ -4043,7 +4133,7 @@ def get_etu_breaker_cascade(
     ).fetchall()
 
     breakers: list[EtuBreakerOption] = []
-    if manufacturer_id is not None or breaker_class is not None or breaker_id is not None or breaker_style_id is not None:
+    if scope.get("manufacturer_ids") or manufacturer_id is not None or breaker_class is not None or breaker_id is not None or breaker_style_id is not None:
         breaker_where, breaker_params = _build_etu_breaker_cascade_where(scope, {"breaker_id"})
         breaker_rows = db.execute(
             text(
@@ -4096,9 +4186,12 @@ def get_etu_breaker_cascade(
         count=int(count_value),
         scope={
             "manufacturer_id": manufacturer_id,
+            "manufacturer_ids": scope["manufacturer_ids"],
             "breaker_class": breaker_class,
             "breaker_id": breaker_id,
             "breaker_style_id": breaker_style_id,
+            "trip_manufacturer_id": trip_manufacturer_id,
+            "trip_manufacturer_ids": trip_filter_ids,
             "trip_type_id": trip_type_id,
             "trip_style_id": trip_style_id,
             "sensor_id": sensor_id,
@@ -4496,6 +4589,7 @@ def get_apparatus_study_resources(apparatus_id: UUID, db: Session = Depends(get_
 def get_tmt_facets(
     breaker_class: Optional[str] = Query(None, description="Filter by ICCB, MCCB, or PCB"),
     manufacturer_id: Optional[int] = Query(None, description="Filter by manufacturer id"),
+    manufacturer_ids: Optional[list[int]] = Query(None, description="Filter by one or more manufacturer ids"),
     breaker_id: Optional[int] = Query(None, description="Filter by breaker id"),
     breaker_style_id: Optional[int] = Query(None, description="Filter by breaker style id"),
     frame_size: Optional[str] = Query(None, description="Filter by exact TMT frame size"),
@@ -4513,6 +4607,7 @@ def get_tmt_facets(
             {
                 "breaker_class": class_filter,
                 "manufacturer_id": manufacturer_id,
+                "manufacturer_ids": _normalize_id_list(None, manufacturer_ids),
                 "breaker_id": breaker_id,
                 "breaker_style_id": breaker_style_id,
                 "frame_size": frame_size,
@@ -4533,15 +4628,24 @@ def _load_tmt_manufacturers(db: Session, breaker_class: Optional[str]) -> list[d
         text(
             f"""
             {_TMT_FACET_CTE}
-            SELECT c.manufacturer_id AS manufacturer_id,
-                   m.mfr_name AS manufacturer_name,
-                   COALESCE(a.etap_mfr_name, m.mfr_name) AS manufacturer_display,
-                   COUNT(DISTINCT c.frame_id) AS frame_count
-            FROM tmt_catalog c
-            LEFT JOIN tcc.manufacturers m ON m.id = c.manufacturer_id
-            LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = m.mfr_name
-            {where_sql}
-            GROUP BY c.manufacturer_id, m.mfr_name, a.etap_mfr_name
+            SELECT
+                MIN(manufacturer_id) AS manufacturer_id,
+                ARRAY_AGG(manufacturer_id ORDER BY manufacturer_id) AS manufacturer_ids,
+                (ARRAY_AGG(manufacturer_name ORDER BY manufacturer_id))[1] AS manufacturer_name,
+                manufacturer_display,
+                SUM(frame_count)::int AS frame_count
+            FROM (
+                SELECT c.manufacturer_id AS manufacturer_id,
+                       m.mfr_name AS manufacturer_name,
+                       COALESCE(a.etap_mfr_name, m.mfr_name) AS manufacturer_display,
+                       COUNT(DISTINCT c.frame_id) AS frame_count
+                FROM tmt_catalog c
+                LEFT JOIN tcc.manufacturers m ON m.id = c.manufacturer_id
+                LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = m.mfr_name
+                {where_sql}
+                GROUP BY c.manufacturer_id, m.mfr_name, a.etap_mfr_name
+            ) manufacturer_options
+            GROUP BY manufacturer_display
             ORDER BY manufacturer_display NULLS LAST
             """
         ),
@@ -4550,6 +4654,10 @@ def _load_tmt_manufacturers(db: Session, breaker_class: Optional[str]) -> list[d
     return [
         {
             "manufacturer_id": int(row._mapping["manufacturer_id"]),
+            "manufacturer_ids": [
+                int(value)
+                for value in (row._mapping.get("manufacturer_ids") or [row._mapping["manufacturer_id"]])
+            ],
             "manufacturer_name": row._mapping["manufacturer_name"],
             "manufacturer_display": row._mapping["manufacturer_display"],
             "frame_count": int(row._mapping["frame_count"] or 0),
@@ -4576,6 +4684,7 @@ def get_tmt_manufacturers(
 def search_tmt_frames(
     breaker_class: Optional[str] = Query(None, description="Filter by ICCB, MCCB, or PCB"),
     manufacturer_id: Optional[int] = Query(None, description="Filter by manufacturer id"),
+    manufacturer_ids: Optional[list[int]] = Query(None, description="Filter by one or more manufacturer ids"),
     breaker_id: Optional[int] = Query(None, description="Filter by breaker id"),
     breaker_style_id: Optional[int] = Query(None, description="Filter by breaker style id"),
     manufacturer_name: Optional[str] = Query(None, description="Filter by manufacturer name"),
@@ -4592,6 +4701,7 @@ def search_tmt_frames(
         raise HTTPException(status_code=400, detail="breaker_class must be one of ICCB, MCCB, or PCB")
 
     candidate_classes = [class_filter] if class_filter else list(_TMT_STYLE_MODELS.keys())
+    manufacturer_filter_ids = _normalize_id_list(None, manufacturer_ids)
     frames: list[TMTFrameSearchResult] = []
     seen_frame_ids: set[int] = set()
 
@@ -4611,7 +4721,9 @@ def search_tmt_frames(
 
         if frame_size:
             query = query.filter(TMTFrame.size.ilike(f"%{frame_size}%"))
-        if manufacturer_id is not None:
+        if manufacturer_filter_ids:
+            query = query.filter(breaker_model.manufacturer_id.in_(manufacturer_filter_ids))
+        elif manufacturer_id is not None:
             query = query.filter(breaker_model.manufacturer_id == manufacturer_id)
         if breaker_id is not None:
             query = query.filter(breaker_model.id == breaker_id)
@@ -4808,6 +4920,7 @@ def plot_tmt_tcc(req: TMTPlotRequest, db: Session = Depends(get_db)):
 @router.get("/emt/facets", response_model=EMTFacetsResponse)
 def get_emt_facets(
     manufacturer_id: Optional[int] = Query(None, description="Filter by manufacturer id"),
+    manufacturer_ids: Optional[list[int]] = Query(None, description="Filter by one or more manufacturer ids"),
     trip_char: Optional[int] = Query(None, description="Filter by EMT TripChar value"),
     trip_plug: Optional[int] = Query(None, description="Filter by EMT TripPlug value"),
     frame_desc: Optional[str] = Query(None, description="Filter by exact EMT frame description"),
@@ -4820,6 +4933,7 @@ def get_emt_facets(
             db,
             {
                 "manufacturer_id": manufacturer_id,
+                "manufacturer_ids": _normalize_id_list(None, manufacturer_ids),
                 "trip_char": trip_char,
                 "trip_plug": trip_plug,
                 "frame_desc": frame_desc,
@@ -4836,16 +4950,25 @@ def _load_emt_manufacturers(db: Session) -> list[dict]:
     rows = db.execute(
         text(
             f"""
-            SELECT e.{mid} AS manufacturer_id,
-                   m.mfr_name AS manufacturer_name,
-                   COALESCE(a.etap_mfr_name, m.mfr_name) AS manufacturer_display,
-                   COUNT(DISTINCT f.id) AS frame_count
-            FROM tcc.emt_frames f
-            INNER JOIN tcc.emt e ON f.{emt_id_col} = e.id
-            LEFT JOIN tcc.manufacturers m ON m.id = e.{mid}
-            LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = m.mfr_name
-            WHERE e.{mid} IS NOT NULL
-            GROUP BY e.{mid}, m.mfr_name, a.etap_mfr_name
+            SELECT
+                MIN(manufacturer_id) AS manufacturer_id,
+                ARRAY_AGG(manufacturer_id ORDER BY manufacturer_id) AS manufacturer_ids,
+                (ARRAY_AGG(manufacturer_name ORDER BY manufacturer_id))[1] AS manufacturer_name,
+                manufacturer_display,
+                SUM(frame_count)::int AS frame_count
+            FROM (
+                SELECT e.{mid} AS manufacturer_id,
+                       m.mfr_name AS manufacturer_name,
+                       COALESCE(a.etap_mfr_name, m.mfr_name) AS manufacturer_display,
+                       COUNT(DISTINCT f.id) AS frame_count
+                FROM tcc.emt_frames f
+                INNER JOIN tcc.emt e ON f.{emt_id_col} = e.id
+                LEFT JOIN tcc.manufacturers m ON m.id = e.{mid}
+                LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = m.mfr_name
+                WHERE e.{mid} IS NOT NULL
+                GROUP BY e.{mid}, m.mfr_name, a.etap_mfr_name
+            ) manufacturer_options
+            GROUP BY manufacturer_display
             ORDER BY manufacturer_display NULLS LAST
             """
         )
@@ -4853,6 +4976,10 @@ def _load_emt_manufacturers(db: Session) -> list[dict]:
     return [
         {
             "manufacturer_id": int(row._mapping["manufacturer_id"]),
+            "manufacturer_ids": [
+                int(value)
+                for value in (row._mapping.get("manufacturer_ids") or [row._mapping["manufacturer_id"]])
+            ],
             "manufacturer_name": row._mapping["manufacturer_name"],
             "manufacturer_display": row._mapping["manufacturer_display"],
             "frame_count": int(row._mapping["frame_count"] or 0),
@@ -4872,6 +4999,7 @@ def get_emt_manufacturers(db: Session = Depends(get_db)):
 @router.get("/emt/frames", response_model=EMTFrameSearchResponse)
 def search_emt_frames(
     manufacturer_id: Optional[int] = Query(None, description="Filter by manufacturer id"),
+    manufacturer_ids: Optional[list[int]] = Query(None, description="Filter by one or more manufacturer ids"),
     trip_char: Optional[int] = Query(None, description="Filter by EMT TripChar value"),
     trip_plug: Optional[int] = Query(None, description="Filter by EMT TripPlug value"),
     q: Optional[str] = Query(None, description="Free-text match against EMT type, style, or frame description"),
@@ -4882,6 +5010,7 @@ def search_emt_frames(
     frames = _search_emt_frames(
         db=db,
         manufacturer_id=manufacturer_id,
+        manufacturer_ids=_normalize_id_list(None, manufacturer_ids),
         trip_char=trip_char,
         trip_plug=trip_plug,
         q=q,

@@ -341,6 +341,20 @@ function Specifications({ family, setFamily, selection, setSelection }: {
 // gets its own sensor source via /etu/bridge-sensors — either terminal yields sensors.
 const SENSOR_CAP = 250
 
+function selectedManufacturerIds(
+  rows: { manufacturer_id: number; manufacturer_ids?: number[] | null }[],
+  selectedId: string,
+): number[] | null {
+  if (!selectedId) return null
+  const representativeId = Number(selectedId)
+  const row = rows.find((m) => m.manufacturer_id === representativeId)
+  return row?.manufacturer_ids?.length ? row.manufacturer_ids : [representativeId]
+}
+
+function manufacturerIdsFromKey(key: string): number[] | null {
+  return key ? key.split(',').map((value) => Number(value)) : null
+}
+
 function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => void; onClear: () => void }) {
   // Axis A — breaker
   const [bMfr, setBMfr] = useState('')
@@ -362,15 +376,28 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   const [err, setErr] = useState<string | null>(null)
 
   const dropSensor = useCallback(() => { setSensorId(''); onClear() }, [onClear])
+  const bMfrIds = useMemo(
+    () => selectedManufacturerIds(bCascade?.manufacturers ?? [], bMfr),
+    [bCascade, bMfr],
+  )
+  const tMfrIds = useMemo(
+    () => selectedManufacturerIds(tCascade?.manufacturers ?? [], tMfr),
+    [tCascade, tMfr],
+  )
+  const bMfrIdsKey = bMfrIds?.join(',') ?? ''
+  const tMfrIdsKey = tMfrIds?.join(',') ?? ''
 
   // Axis A cascade — narrowed by the trip-axis selection (cross-half + bridge_xfilter).
   useEffect(() => {
     let active = true
     setBBusy(true); setErr(null)
+    const breakerManufacturerIds = manufacturerIdsFromKey(bMfrIdsKey)
+    const tripManufacturerIds = manufacturerIdsFromKey(tMfrIdsKey)
     fetchEtuBreakerCascade({
-      manufacturerId: bMfr ? Number(bMfr) : null,
+      manufacturerIds: breakerManufacturerIds,
       breakerClass: bClass || null,
       breakerId: bId ? Number(bId) : null,
+      tripManufacturerIds,
       tripTypeId: tType ? Number(tType) : null,
       tripStyleId: tStyle ? Number(tStyle) : null,
       bridgeOnly: true, // ETU tab: only breakers that actually carry an electronic trip unit
@@ -380,17 +407,20 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setBBusy(false) })
     return () => { active = false }
-  }, [bMfr, bClass, bId, tType, tStyle])
+  }, [bMfrIdsKey, bClass, bId, tMfrIdsKey, tType, tStyle])
 
   // Axis B cascade — narrowed by the breaker-axis selection (cross-half + bridge_xfilter).
   // Its sensors[] is the compatible-sensor intersection (the shared terminal).
   useEffect(() => {
     let active = true
     setTBusy(true); setErr(null)
+    const tripManufacturerIds = manufacturerIdsFromKey(tMfrIdsKey)
+    const breakerManufacturerIds = manufacturerIdsFromKey(bMfrIdsKey)
     fetchCascade({
-      manufacturerId: tMfr ? Number(tMfr) : null,
+      manufacturerIds: tripManufacturerIds,
       tripTypeId: tType ? Number(tType) : null,
       tripStyleId: tStyle ? Number(tStyle) : null,
+      breakerManufacturerIds,
       breakerClass: bClass || null,
       breakerId: bId ? Number(bId) : null,
       breakerStyleId: bStyle ? Number(bStyle) : null,
@@ -400,7 +430,7 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setTBusy(false) })
     return () => { active = false }
-  }, [tMfr, tType, tStyle, bClass, bId, bStyle])
+  }, [tMfrIdsKey, tType, tStyle, bMfrIdsKey, bClass, bId, bStyle])
 
   // Breaker-axis terminal -> sensors directly via the SST bridge, so the breaker lane
   // surfaces sensors without requiring a trip-style tap. Skip when a trip-style leaf is
@@ -563,18 +593,21 @@ function TmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     return () => { active = false }
   }, [bClass])
 
+  const tmtMfrIds = useMemo(() => selectedManufacturerIds(mfrs, mfrId), [mfrs, mfrId])
+  const tmtMfrIdsKey = tmtMfrIds?.join(',') ?? ''
+
   // manufacturer → frames
   useEffect(() => {
     if (!bClass || !mfrId) { setFrames([]); return }
     let active = true
     setBusy(true)
     setErr(null)
-    fetchTmtFrames({ breakerClass: bClass, manufacturerId: Number(mfrId), limit: 200 })
+    fetchTmtFrames({ breakerClass: bClass, manufacturerIds: manufacturerIdsFromKey(tmtMfrIdsKey), limit: 200 })
       .then((r) => { if (active) setFrames(r.frames) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setBusy(false) })
     return () => { active = false }
-  }, [bClass, mfrId])
+  }, [bClass, mfrId, tmtMfrIdsKey])
 
   const pickFrame = (fid: string) => {
     setFrameId(fid)
@@ -642,18 +675,21 @@ function EmtSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     return () => { active = false }
   }, [])
 
+  const emtMfrIds = useMemo(() => selectedManufacturerIds(mfrs, mfrId), [mfrs, mfrId])
+  const emtMfrIdsKey = emtMfrIds?.join(',') ?? ''
+
   // manufacturer → frames
   useEffect(() => {
     if (!mfrId) { setFrames([]); return }
     let active = true
     setBusy(true)
     setErr(null)
-    fetchEmtFrames('', { manufacturerId: Number(mfrId), limit: 200 })
+    fetchEmtFrames('', { manufacturerIds: manufacturerIdsFromKey(emtMfrIdsKey), limit: 200 })
       .then((r) => { if (active) setFrames(r.frames) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setBusy(false) })
     return () => { active = false }
-  }, [mfrId])
+  }, [mfrId, emtMfrIdsKey])
 
   const pickFrame = async (fid: string) => {
     setFrameId(fid)

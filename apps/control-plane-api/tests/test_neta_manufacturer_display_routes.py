@@ -61,12 +61,14 @@ def test_cascade_manufacturers_surface_display_names(client):
         FakeResult(rows=[
             {
                 "manufacturer_id": 9,
+                "manufacturer_ids": [9],
                 "manufacturer_name": "GE",
                 "manufacturer_display": "General Electric",
                 "trip_type_count": 2,
             },
             {
                 "manufacturer_id": 10,
+                "manufacturer_ids": [10],
                 "manufacturer_name": "Eaton",
                 "manufacturer_display": "Eaton",
                 "trip_type_count": 2,
@@ -84,6 +86,7 @@ def test_cascade_manufacturers_surface_display_names(client):
         body = resp.json()
         assert body["manufacturers"][0] == {
             "manufacturer_id": 9,
+            "manufacturer_ids": [9],
             "manufacturer_name": "GE",
             "manufacturer_display": "General Electric",
             "trip_type_count": 2,
@@ -100,12 +103,14 @@ def test_breaker_cascade_manufacturers_surface_display_names(client):
         FakeResult(rows=[
             {
                 "manufacturer_id": 21,
+                "manufacturer_ids": [21],
                 "manufacturer_name": "Cutler Hammer",
                 "manufacturer_display": "Cutler-Hammer",
                 "breaker_count": 3,
             },
             {
                 "manufacturer_id": 10,
+                "manufacturer_ids": [10],
                 "manufacturer_name": "Eaton",
                 "manufacturer_display": "Eaton",
                 "breaker_count": 2,
@@ -121,6 +126,7 @@ def test_breaker_cascade_manufacturers_surface_display_names(client):
         body = resp.json()
         assert body["manufacturers"][0] == {
             "manufacturer_id": 21,
+            "manufacturer_ids": [21],
             "manufacturer_name": "Cutler Hammer",
             "manufacturer_display": "Cutler-Hammer",
             "breaker_count": 3,
@@ -136,12 +142,14 @@ def test_tmt_manufacturers_surface_display_names(client):
         FakeResult(rows=[
             {
                 "manufacturer_id": 21,
+                "manufacturer_ids": [21],
                 "manufacturer_name": "Cutler Hammer",
                 "manufacturer_display": "Cutler-Hammer",
                 "frame_count": 3,
             },
             {
                 "manufacturer_id": 10,
+                "manufacturer_ids": [10],
                 "manufacturer_name": "Eaton",
                 "manufacturer_display": "Eaton",
                 "frame_count": 2,
@@ -156,6 +164,7 @@ def test_tmt_manufacturers_surface_display_names(client):
         body = resp.json()
         assert body["manufacturers"][0] == {
             "manufacturer_id": 21,
+            "manufacturer_ids": [21],
             "manufacturer_name": "Cutler Hammer",
             "manufacturer_display": "Cutler-Hammer",
             "frame_count": 3,
@@ -171,12 +180,14 @@ def test_emt_manufacturers_surface_display_names(client):
         FakeResult(rows=[
             {
                 "manufacturer_id": 25,
+                "manufacturer_ids": [25],
                 "manufacturer_name": "ITE",
                 "manufacturer_display": "ITE (BBC)",
                 "frame_count": 4,
             },
             {
                 "manufacturer_id": 10,
+                "manufacturer_ids": [10],
                 "manufacturer_name": "Eaton",
                 "manufacturer_display": "Eaton",
                 "frame_count": 2,
@@ -196,6 +207,7 @@ def test_emt_manufacturers_surface_display_names(client):
         body = resp.json()
         assert body["manufacturers"][0] == {
             "manufacturer_id": 25,
+            "manufacturer_ids": [25],
             "manufacturer_name": "ITE",
             "manufacturer_display": "ITE (BBC)",
             "frame_count": 4,

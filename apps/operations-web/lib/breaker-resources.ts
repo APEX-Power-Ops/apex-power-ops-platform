@@ -66,6 +66,7 @@ export type EtuSearchResponse = {
 
 export type CascadeManufacturer = {
   manufacturer_id: number
+  manufacturer_ids?: number[] | null
   manufacturer_name: string
   manufacturer_display?: string | null
   trip_type_count: number
@@ -122,10 +123,13 @@ export type CascadeResponse = {
 
 export type CascadeParams = {
   manufacturerId?: number | null
+  manufacturerIds?: number[] | null
   tripTypeId?: number | null
   tripStyleId?: number | null
   sensorId?: number | null
   plugValue?: number | null
+  breakerManufacturerId?: number | null
+  breakerManufacturerIds?: number[] | null
   breakerClass?: string | null
   breakerId?: number | null
   breakerStyleId?: number | null
@@ -137,9 +141,10 @@ export type CascadeParams = {
 export type EtuBreakerCascadeResponse = {
   level: string
   count: number
-  scope: Record<string, number | string | null>
+  scope: Record<string, number | string | number[] | null>
   manufacturers: {
     manufacturer_id: number
+    manufacturer_ids?: number[] | null
     manufacturer_name: string
     manufacturer_display?: string | null
     breaker_count: number
@@ -169,9 +174,12 @@ export type EtuBreakerCascadeResponse = {
 
 export type EtuBreakerCascadeParams = {
   manufacturerId?: number | null
+  manufacturerIds?: number[] | null
   breakerClass?: string | null
   breakerId?: number | null
   breakerStyleId?: number | null
+  tripManufacturerId?: number | null
+  tripManufacturerIds?: number[] | null
   tripTypeId?: number | null
   tripStyleId?: number | null
   sensorId?: number | null
@@ -758,6 +766,16 @@ function appendOptionalParam(search: URLSearchParams, key: string, value: number
   }
 }
 
+function appendOptionalParams(search: URLSearchParams, key: string, values: number[] | null | undefined) {
+  if (!values?.length) {
+    return
+  }
+
+  values.forEach((value) => {
+    search.append(key, String(value))
+  })
+}
+
 export async function fetchCatalogStatus(): Promise<CatalogStatusResponse> {
   return getJson<CatalogStatusResponse>('/api/v1/neta/catalog/status')
 }
@@ -776,11 +794,20 @@ export async function fetchEtuSearch(
 
 export async function fetchCascade(params: CascadeParams = {}): Promise<CascadeResponse> {
   const search = new URLSearchParams()
-  appendOptionalParam(search, 'manufacturer_id', params.manufacturerId)
+  if (params.manufacturerIds?.length) {
+    appendOptionalParams(search, 'manufacturer_ids', params.manufacturerIds)
+  } else {
+    appendOptionalParam(search, 'manufacturer_id', params.manufacturerId)
+  }
   appendOptionalParam(search, 'trip_type_id', params.tripTypeId)
   appendOptionalParam(search, 'trip_style_id', params.tripStyleId)
   appendOptionalParam(search, 'sensor_id', params.sensorId)
   appendOptionalParam(search, 'plug_value', params.plugValue)
+  if (params.breakerManufacturerIds?.length) {
+    appendOptionalParams(search, 'breaker_manufacturer_ids', params.breakerManufacturerIds)
+  } else {
+    appendOptionalParam(search, 'breaker_manufacturer_id', params.breakerManufacturerId)
+  }
   appendOptionalParam(search, 'breaker_class', params.breakerClass)
   appendOptionalParam(search, 'breaker_id', params.breakerId)
   appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
@@ -795,10 +822,19 @@ export async function fetchEtuBreakerCascade(
   params: EtuBreakerCascadeParams = {},
 ): Promise<EtuBreakerCascadeResponse> {
   const search = new URLSearchParams()
-  appendOptionalParam(search, 'manufacturer_id', params.manufacturerId)
+  if (params.manufacturerIds?.length) {
+    appendOptionalParams(search, 'manufacturer_ids', params.manufacturerIds)
+  } else {
+    appendOptionalParam(search, 'manufacturer_id', params.manufacturerId)
+  }
   appendOptionalParam(search, 'breaker_class', params.breakerClass)
   appendOptionalParam(search, 'breaker_id', params.breakerId)
   appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
+  if (params.tripManufacturerIds?.length) {
+    appendOptionalParams(search, 'trip_manufacturer_ids', params.tripManufacturerIds)
+  } else {
+    appendOptionalParam(search, 'trip_manufacturer_id', params.tripManufacturerId)
+  }
   appendOptionalParam(search, 'trip_type_id', params.tripTypeId)
   appendOptionalParam(search, 'trip_style_id', params.tripStyleId)
   appendOptionalParam(search, 'sensor_id', params.sensorId)
@@ -852,23 +888,30 @@ export async function fetchTmtFacets(breakerClass: string): Promise<TMTFacetsRes
 export async function fetchTmtFrames({
   breakerClass,
   manufacturerId,
+  manufacturerIds,
   manufacturerName,
   limit = 12,
 }: {
   breakerClass: string
   manufacturerId?: number | null
+  manufacturerIds?: number[] | null
   manufacturerName?: string
   limit?: number
 }): Promise<TMTFrameSearchResponse> {
   const search = new URLSearchParams({ limit: String(limit) })
   appendOptionalParam(search, 'breaker_class', breakerClass)
-  appendOptionalParam(search, 'manufacturer_id', manufacturerId)
+  if (manufacturerIds?.length) {
+    appendOptionalParams(search, 'manufacturer_ids', manufacturerIds)
+  } else {
+    appendOptionalParam(search, 'manufacturer_id', manufacturerId)
+  }
   appendOptionalParam(search, 'manufacturer_name', manufacturerName)
   return getJson<TMTFrameSearchResponse>(`/api/v1/neta/tmt/frames?${search.toString()}`)
 }
 
 export type ManufacturerFacetOption = {
   manufacturer_id: number
+  manufacturer_ids?: number[] | null
   manufacturer_name: string | null
   manufacturer_display?: string | null
   frame_count: number
@@ -906,12 +949,17 @@ export async function fetchEmtFrames(
   query: string,
   options: {
     manufacturerId?: number | null
+    manufacturerIds?: number[] | null
     limit?: number
   } = {},
 ): Promise<EMTFrameSearchResponse> {
   const search = new URLSearchParams({ limit: String(options.limit ?? 12) })
   appendOptionalParam(search, 'q', query)
-  appendOptionalParam(search, 'manufacturer_id', options.manufacturerId)
+  if (options.manufacturerIds?.length) {
+    appendOptionalParams(search, 'manufacturer_ids', options.manufacturerIds)
+  } else {
+    appendOptionalParam(search, 'manufacturer_id', options.manufacturerId)
+  }
   return getJson<EMTFrameSearchResponse>(`/api/v1/neta/emt/frames?${search.toString()}`)
 }
 

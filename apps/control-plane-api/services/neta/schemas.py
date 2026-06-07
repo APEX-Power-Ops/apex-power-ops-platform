@@ -29,6 +29,7 @@ class CascadeQuery(BaseModel):
 
 class CascadeManufacturer(BaseModel):
     manufacturer_id: int
+    manufacturer_ids: Optional[list[int]] = None
     manufacturer_name: str
     manufacturer_display: Optional[str] = None
     trip_type_count: int
@@ -107,6 +108,7 @@ class EtuSearchResponse(BaseModel):
 
 class EtuBreakerManufacturer(BaseModel):
     manufacturer_id: int
+    manufacturer_ids: Optional[list[int]] = None
     manufacturer_name: str
     manufacturer_display: Optional[str] = None
     breaker_count: int
@@ -448,7 +450,7 @@ class TMTFacet(BaseModel):
 class TMTFacetsResponse(BaseModel):
     facets: list[TMTFacet] = Field(default_factory=list)
     total_matching_frames: int = 0
-    active_filters: dict[str, int | float | str] = Field(default_factory=dict)
+    active_filters: dict[str, int | float | str | list[int]] = Field(default_factory=dict)
 
 
 class TMTSettingsResponse(BaseModel):
@@ -548,12 +550,13 @@ class EMTFacet(BaseModel):
 class EMTFacetsResponse(BaseModel):
     facets: list[EMTFacet] = Field(default_factory=list)
     total_matching_frames: int = 0
-    active_filters: dict[str, int | float | str] = Field(default_factory=dict)
+    active_filters: dict[str, int | float | str | list[int]] = Field(default_factory=dict)
 
 
 class ManufacturerFacetOption(BaseModel):
     """A manufacturer option for a guided dropdown (TMT/EMT selectors)."""
     manufacturer_id: int
+    manufacturer_ids: Optional[list[int]] = None
     manufacturer_name: Optional[str] = None
     manufacturer_display: Optional[str] = None
     frame_count: int = 0
