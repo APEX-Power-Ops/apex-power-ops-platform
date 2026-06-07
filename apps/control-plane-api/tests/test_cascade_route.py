@@ -273,6 +273,7 @@ def test_cascade_sensor_filter_revalidates_exact_path(client):
                 "sensor_desc": "800",
                 "trip_style_id": 3,
                 "trip_style_name": "ICCB",
+                "trip_model_display": None,
                 "trip_type_id": 75,
                 "trip_type_name": "MVT RMS-9",
                 "manufacturer_id": 9,

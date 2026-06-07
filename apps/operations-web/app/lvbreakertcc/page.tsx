@@ -503,8 +503,8 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     const src: PoolItem[] = tStyle && tCascade
       ? tCascade.sensors.map((s) => ({
           sensor_id: s.sensor_id, rating: s.sensor_rating, desc: s.sensor_desc ?? '',
-          tripMfr: s.manufacturer_name ?? '', tripType: s.trip_type_name ?? '', tripStyle: s.trip_style_name ?? '',
-          label: `${s.manufacturer_name ?? ''} ${s.trip_type_name ?? ''} ${s.trip_style_name ?? ''} — ${s.sensor_desc ?? ''}${s.sensor_rating ? ` (${s.sensor_rating}A)` : ''}`.trim(),
+          tripMfr: s.manufacturer_name ?? '', tripType: s.trip_type_name ?? '', tripStyle: s.trip_model_display ?? s.trip_style_name ?? '',
+          label: `${s.manufacturer_name ?? ''} ${s.trip_type_name ?? ''} ${s.trip_model_display ?? s.trip_style_name ?? ''} — ${s.sensor_desc ?? ''}${s.sensor_rating ? ` (${s.sensor_rating}A)` : ''}`.trim(),
         }))
       : bStyle && bridge
         ? bridge.sensors.map((s) => ({
@@ -553,8 +553,8 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   const bStyleOpts = (bCascade?.breaker_styles ?? []).map((s) => ({ value: String(s.breaker_style_id), label: s.breaker_style_name }))
   // Axis B options
   const tMfrOpts = (tCascade?.manufacturers ?? []).map((m) => ({ value: String(m.manufacturer_id), label: `${m.manufacturer_display ?? m.manufacturer_name} (${m.trip_type_count})` }))
-  const tTypeOpts = (tCascade?.trip_types ?? []).map((t) => ({ value: String(t.trip_type_id), label: t.trip_type_name }))
-  const tStyleOpts = (tCascade?.trip_styles ?? []).map((t) => ({ value: String(t.trip_style_id), label: `${t.trip_style_name} (${t.sensor_count})` }))
+  const tTypeOpts = (tCascade?.trip_types ?? []).map((t) => ({ value: String(t.trip_type_id), label: t.trip_model_display ?? t.trip_type_name }))
+  const tStyleOpts = (tCascade?.trip_styles ?? []).map((t) => ({ value: String(t.trip_style_id), label: `${t.trip_model_display ?? t.trip_style_name} (${t.sensor_count})` }))
 
   // shared sensor terminal
   const poolCount = tCascade?.count ?? 0 // distinct sensors compatible with the current selection (both halves)

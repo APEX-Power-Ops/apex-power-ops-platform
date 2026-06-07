@@ -40,6 +40,7 @@ class CascadeTripType(BaseModel):
     trip_type_ids: Optional[list[int]] = None
     style_ids: Optional[list[int]] = None
     trip_type_name: str
+    trip_model_display: Optional[str] = None
     manufacturer_id: int
     manufacturer_ids: Optional[list[int]] = None
     manufacturer_name: str
@@ -51,6 +52,7 @@ class CascadeTripStyle(BaseModel):
     trip_style_id: int
     style_ids: Optional[list[int]] = None
     trip_style_name: str
+    trip_model_display: Optional[str] = None
     trip_type_id: int
     trip_type_ids: Optional[list[int]] = None
     trip_type_name: str
@@ -67,6 +69,7 @@ class CascadeSensor(BaseModel):
     sensor_desc: str
     trip_style_id: int
     trip_style_name: str
+    trip_model_display: Optional[str] = None
     trip_type_id: int
     trip_type_name: str
     manufacturer_id: int

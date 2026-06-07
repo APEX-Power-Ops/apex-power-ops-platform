@@ -2207,6 +2207,19 @@ def _build_cascade_where(
     return where_sql, params
 
 
+_TRIP_MODEL_DISPLAY_JOINS = """
+                LEFT JOIN LATERAL (
+                    SELECT tsa.alias_name
+                    FROM tcc.trip_style_aliases tsa
+                    WHERE tsa.trip_style_id = v.trip_style_id
+                      AND tsa.match_tier IN ('exact', 'core')
+                    ORDER BY CASE tsa.match_tier WHEN 'exact' THEN 0 ELSE 1 END, tsa.alias_id
+                    LIMIT 1
+                ) tsa ON TRUE
+                LEFT JOIN tcc.trip_model_aliases tma ON tma.trip_style_id = v.trip_style_id
+"""
+
+
 def _cascade_level(filters: dict[str, Optional[int] | list[int]]) -> str:
     if filters.get("sensor_id") is not None:
         return "sensors"
@@ -3994,7 +4007,8 @@ def get_cascade(
                 MIN(trip_type_id) AS trip_type_id,
                 ARRAY_AGG(DISTINCT trip_type_id ORDER BY trip_type_id) AS trip_type_ids,
                 ARRAY_AGG(DISTINCT trip_style_id ORDER BY trip_style_id) AS style_ids,
-                trip_type_name,
+                (ARRAY_AGG(trip_type_name ORDER BY trip_type_id, trip_style_id))[1] AS trip_type_name,
+                trip_model_display,
                 MIN(manufacturer_id) AS manufacturer_id,
                 ARRAY_AGG(DISTINCT manufacturer_id ORDER BY manufacturer_id) AS manufacturer_ids,
                 (ARRAY_AGG(manufacturer_name ORDER BY manufacturer_id, trip_type_id))[1] AS manufacturer_name,
@@ -4007,14 +4021,16 @@ def get_cascade(
                     v.trip_style_id,
                     v.manufacturer_id,
                     v.manufacturer_name,
-                    COALESCE(a.etap_mfr_name, v.manufacturer_name) AS manufacturer_display
+                    COALESCE(a.etap_mfr_name, v.manufacturer_name) AS manufacturer_display,
+                    COALESCE(tsa.alias_name, tma.etap_model, v.trip_type_name) AS trip_model_display
                 FROM vw_trip_unit_cascade v
                 LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = v.manufacturer_name
+                {_TRIP_MODEL_DISPLAY_JOINS}
                 {plug_join}
                 {_apply_xh(trip_type_where)}
             ) trip_type_options
-            GROUP BY manufacturer_display, trip_type_name
-            ORDER BY manufacturer_display, trip_type_name
+            GROUP BY manufacturer_display, trip_model_display
+            ORDER BY manufacturer_display, trip_model_display
             """
         ),
         {**trip_type_params, **plug_params, **xh_params},
@@ -4028,10 +4044,11 @@ def get_cascade(
             SELECT
                 MIN(trip_style_id) AS trip_style_id,
                 ARRAY_AGG(DISTINCT trip_style_id ORDER BY trip_style_id) AS style_ids,
-                trip_style_name,
+                (ARRAY_AGG(trip_style_name ORDER BY trip_type_id, trip_style_id))[1] AS trip_style_name,
+                trip_model_display,
                 MIN(trip_type_id) AS trip_type_id,
                 ARRAY_AGG(DISTINCT trip_type_id ORDER BY trip_type_id) AS trip_type_ids,
-                trip_type_name,
+                (ARRAY_AGG(trip_type_name ORDER BY trip_type_id, trip_style_id))[1] AS trip_type_name,
                 MIN(manufacturer_id) AS manufacturer_id,
                 ARRAY_AGG(DISTINCT manufacturer_id ORDER BY manufacturer_id) AS manufacturer_ids,
                 (ARRAY_AGG(manufacturer_name ORDER BY manufacturer_id, trip_type_id, trip_style_id))[1] AS manufacturer_name,
@@ -4046,14 +4063,16 @@ def get_cascade(
                     v.sensor_id,
                     v.manufacturer_id,
                     v.manufacturer_name,
-                    COALESCE(a.etap_mfr_name, v.manufacturer_name) AS manufacturer_display
+                    COALESCE(a.etap_mfr_name, v.manufacturer_name) AS manufacturer_display,
+                    COALESCE(tsa.alias_name, tma.etap_model, v.trip_style_name) AS trip_model_display
                 FROM vw_trip_unit_cascade v
                 LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = v.manufacturer_name
+                {_TRIP_MODEL_DISPLAY_JOINS}
                 {plug_join}
                 {_apply_xh(trip_style_where)}
             ) trip_style_options
-            GROUP BY manufacturer_display, trip_type_name, trip_style_name
-            ORDER BY manufacturer_display, trip_type_name, trip_style_name
+            GROUP BY manufacturer_display, trip_model_display
+            ORDER BY manufacturer_display, trip_model_display
             """
         ),
         {**trip_style_params, **plug_params, **xh_params},
@@ -4090,6 +4109,7 @@ def get_cascade(
                     v.sensor_desc AS sensor_desc,
                     v.trip_style_id AS trip_style_id,
                     v.trip_style_name AS trip_style_name,
+                    COALESCE(tsa.alias_name, tma.etap_model, v.trip_style_name) AS trip_model_display,
                     v.trip_type_id AS trip_type_id,
                     v.trip_type_name AS trip_type_name,
                     v.manufacturer_id AS manufacturer_id,
@@ -4099,6 +4119,7 @@ def get_cascade(
                     v.has_inst AS has_inst,
                     v.has_gfpu AS has_gfpu
                 FROM vw_trip_unit_cascade v
+                {_TRIP_MODEL_DISPLAY_JOINS}
                 {plug_join}
                 {_apply_xh(sensor_where)}
                 ORDER BY v.sensor_rating NULLS LAST, v.sensor_desc

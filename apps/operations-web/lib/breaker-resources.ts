@@ -77,6 +77,7 @@ export type CascadeTripType = {
   trip_type_ids?: number[] | null
   style_ids?: number[] | null
   trip_type_name: string
+  trip_model_display?: string | null
   manufacturer_id: number
   manufacturer_ids?: number[] | null
   manufacturer_name: string
@@ -88,6 +89,7 @@ export type CascadeTripStyle = {
   trip_style_id: number
   style_ids?: number[] | null
   trip_style_name: string
+  trip_model_display?: string | null
   trip_type_id: number
   trip_type_ids?: number[] | null
   trip_type_name: string
@@ -104,6 +106,7 @@ export type CascadeSensor = {
   sensor_desc: string
   trip_style_id: number
   trip_style_name: string
+  trip_model_display?: string | null
   trip_type_id: number
   trip_type_name: string
   manufacturer_id: number

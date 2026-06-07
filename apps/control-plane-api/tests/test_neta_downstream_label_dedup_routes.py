@@ -192,7 +192,7 @@ def test_trip_types_dedupe_by_label_and_expose_downstream_style_ids(client):
         trip_type_sql = fake_db.calls[2]["statement"]
         assert "ARRAY_AGG" in trip_type_sql
         assert "COUNT(DISTINCT trip_style_id)" in trip_type_sql
-        assert "GROUP BY manufacturer_display, trip_type_name" in trip_type_sql
+        assert "GROUP BY manufacturer_display, trip_model_display" in trip_type_sql
     finally:
         _clear_db()
 
