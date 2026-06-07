@@ -37,20 +37,28 @@ class CascadeManufacturer(BaseModel):
 
 class CascadeTripType(BaseModel):
     trip_type_id: int
+    trip_type_ids: Optional[list[int]] = None
+    style_ids: Optional[list[int]] = None
     trip_type_name: str
     manufacturer_id: int
+    manufacturer_ids: Optional[list[int]] = None
     manufacturer_name: str
     trip_style_count: int
+    dedupe_divergence_count: int = 0
 
 
 class CascadeTripStyle(BaseModel):
     trip_style_id: int
+    style_ids: Optional[list[int]] = None
     trip_style_name: str
     trip_type_id: int
+    trip_type_ids: Optional[list[int]] = None
     trip_type_name: str
     manufacturer_id: int
+    manufacturer_ids: Optional[list[int]] = None
     manufacturer_name: str
     sensor_count: int
+    dedupe_divergence_count: int = 0
 
 
 class CascadeSensor(BaseModel):
@@ -121,21 +129,29 @@ class EtuBreakerClassOption(BaseModel):
 
 class EtuBreakerOption(BaseModel):
     breaker_id: int
+    breaker_ids: Optional[list[int]] = None
+    style_ids: Optional[list[int]] = None
     breaker_name: str
     breaker_class: str
     manufacturer_id: int
+    manufacturer_ids: Optional[list[int]] = None
     manufacturer_name: str
     style_count: int
+    dedupe_divergence_count: int = 0
 
 
 class EtuBreakerStyleOption(BaseModel):
     breaker_style_id: int
+    style_ids: Optional[list[int]] = None
     breaker_style_name: str
     breaker_id: int
+    breaker_ids: Optional[list[int]] = None
     breaker_name: str
     breaker_class: str
     manufacturer_id: int
+    manufacturer_ids: Optional[list[int]] = None
     manufacturer_name: str
+    dedupe_divergence_count: int = 0
 
 
 class EtuBreakerCascadeResponse(BaseModel):
@@ -176,6 +192,7 @@ class EtuBridgeSensorsResponse(BaseModel):
     the style either does not use the SST bridge or its bridged target is not in catalog.
     """
     breaker_style_id: Optional[int] = None
+    breaker_style_ids: Optional[list[int]] = None
     breaker_id: Optional[int] = None
     bridge_match_status: str = "unmatched"
     count: int = 0
@@ -426,7 +443,9 @@ class TMTFrameContext(BaseModel):
 
 class TMTFrameSearchResult(BaseModel):
     frame_id: int
+    frame_ids: Optional[list[int]] = None
     breaker_style_id: int
+    style_ids: Optional[list[int]] = None
     breaker_class: Optional[str] = None
     frame_size: Optional[str] = None
     manufacturer_name: Optional[str] = None
@@ -434,11 +453,13 @@ class TMTFrameSearchResult(BaseModel):
     breaker_style_name: Optional[str] = None
     standard: Optional[float] = None
     matched_amp_rating: Optional[float] = None
+    dedupe_divergence_count: int = 0
 
 
 class TMTFrameSearchResponse(BaseModel):
     count: int
     frames: list[TMTFrameSearchResult] = Field(default_factory=list)
+    dedupe_divergence_count: int = 0
 
 
 class TMTFacet(BaseModel):

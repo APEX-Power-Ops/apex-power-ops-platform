@@ -355,6 +355,21 @@ function manufacturerIdsFromKey(key: string): number[] | null {
   return key ? key.split(',').map((value) => Number(value)) : null
 }
 
+function selectedMergedIds<T extends Record<string, unknown>>(
+  rows: T[],
+  selectedId: string,
+  representativeKey: keyof T,
+  idsKey: keyof T,
+): number[] | null {
+  if (!selectedId) return null
+  const representativeId = Number(selectedId)
+  const row = rows.find((candidate) => Number(candidate[representativeKey]) === representativeId)
+  const rawIds = row?.[idsKey]
+  if (!Array.isArray(rawIds)) return null
+  const ids = rawIds.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+  return ids.length > 1 ? ids : null
+}
+
 function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => void; onClear: () => void }) {
   // Axis A — breaker
   const [bMfr, setBMfr] = useState('')
@@ -386,6 +401,26 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   )
   const bMfrIdsKey = bMfrIds?.join(',') ?? ''
   const tMfrIdsKey = tMfrIds?.join(',') ?? ''
+  const bBreakerIds = useMemo(
+    () => selectedMergedIds(bCascade?.breakers ?? [], bId, 'breaker_id', 'breaker_ids'),
+    [bCascade, bId],
+  )
+  const bStyleIds = useMemo(
+    () => selectedMergedIds(bCascade?.breaker_styles ?? [], bStyle, 'breaker_style_id', 'style_ids'),
+    [bCascade, bStyle],
+  )
+  const tTypeIds = useMemo(
+    () => selectedMergedIds(tCascade?.trip_types ?? [], tType, 'trip_type_id', 'trip_type_ids'),
+    [tCascade, tType],
+  )
+  const tStyleIds = useMemo(
+    () => selectedMergedIds(tCascade?.trip_styles ?? [], tStyle, 'trip_style_id', 'style_ids'),
+    [tCascade, tStyle],
+  )
+  const bBreakerIdsKey = bBreakerIds?.join(',') ?? ''
+  const bStyleIdsKey = bStyleIds?.join(',') ?? ''
+  const tTypeIdsKey = tTypeIds?.join(',') ?? ''
+  const tStyleIdsKey = tStyleIds?.join(',') ?? ''
 
   // Axis A cascade — narrowed by the trip-axis selection (cross-half + bridge_xfilter).
   useEffect(() => {
@@ -396,10 +431,15 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     fetchEtuBreakerCascade({
       manufacturerIds: breakerManufacturerIds,
       breakerClass: bClass || null,
-      breakerId: bId ? Number(bId) : null,
+      breakerId: bBreakerIdsKey ? null : bId ? Number(bId) : null,
+      breakerIds: manufacturerIdsFromKey(bBreakerIdsKey),
+      breakerStyleId: bStyleIdsKey ? null : bStyle ? Number(bStyle) : null,
+      breakerStyleIds: manufacturerIdsFromKey(bStyleIdsKey),
       tripManufacturerIds,
-      tripTypeId: tType ? Number(tType) : null,
-      tripStyleId: tStyle ? Number(tStyle) : null,
+      tripTypeId: tTypeIdsKey ? null : tType ? Number(tType) : null,
+      tripTypeIds: manufacturerIdsFromKey(tTypeIdsKey),
+      tripStyleId: tStyleIdsKey ? null : tStyle ? Number(tStyle) : null,
+      tripStyleIds: manufacturerIdsFromKey(tStyleIdsKey),
       bridgeOnly: true, // ETU tab: only breakers that actually carry an electronic trip unit
       bridgeXfilter: true,
     })
@@ -407,7 +447,7 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setBBusy(false) })
     return () => { active = false }
-  }, [bMfrIdsKey, bClass, bId, tMfrIdsKey, tType, tStyle])
+  }, [bMfrIdsKey, bClass, bId, bBreakerIdsKey, bStyle, bStyleIdsKey, tMfrIdsKey, tType, tTypeIdsKey, tStyle, tStyleIdsKey])
 
   // Axis B cascade — narrowed by the breaker-axis selection (cross-half + bridge_xfilter).
   // Its sensors[] is the compatible-sensor intersection (the shared terminal).
@@ -418,19 +458,23 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     const breakerManufacturerIds = manufacturerIdsFromKey(bMfrIdsKey)
     fetchCascade({
       manufacturerIds: tripManufacturerIds,
-      tripTypeId: tType ? Number(tType) : null,
-      tripStyleId: tStyle ? Number(tStyle) : null,
+      tripTypeId: tTypeIdsKey ? null : tType ? Number(tType) : null,
+      tripTypeIds: manufacturerIdsFromKey(tTypeIdsKey),
+      tripStyleId: tStyleIdsKey ? null : tStyle ? Number(tStyle) : null,
+      tripStyleIds: manufacturerIdsFromKey(tStyleIdsKey),
       breakerManufacturerIds,
       breakerClass: bClass || null,
-      breakerId: bId ? Number(bId) : null,
-      breakerStyleId: bStyle ? Number(bStyle) : null,
+      breakerId: bBreakerIdsKey ? null : bId ? Number(bId) : null,
+      breakerIds: manufacturerIdsFromKey(bBreakerIdsKey),
+      breakerStyleId: bStyleIdsKey ? null : bStyle ? Number(bStyle) : null,
+      breakerStyleIds: manufacturerIdsFromKey(bStyleIdsKey),
       bridgeXfilter: true,
     })
       .then((r) => { if (active) setTCascade(r) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setTBusy(false) })
     return () => { active = false }
-  }, [tMfrIdsKey, tType, tStyle, bMfrIdsKey, bClass, bId, bStyle])
+  }, [tMfrIdsKey, tType, tTypeIdsKey, tStyle, tStyleIdsKey, bMfrIdsKey, bClass, bId, bBreakerIdsKey, bStyle, bStyleIdsKey])
 
   // Breaker-axis terminal -> sensors directly via the SST bridge, so the breaker lane
   // surfaces sensors without requiring a trip-style tap. Skip when a trip-style leaf is
@@ -441,12 +485,16 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     if (!bStyle || tStyle) { setBridge(null); return }
     let active = true
     setBridgeBusy(true)
-    fetchEtuBridgeSensors({ breakerStyleId: Number(bStyle), breakerClass: bClass || null })
+    fetchEtuBridgeSensors({
+      breakerStyleId: bStyleIdsKey ? null : Number(bStyle),
+      breakerStyleIds: manufacturerIdsFromKey(bStyleIdsKey),
+      breakerClass: bClass || null,
+    })
       .then((r) => { if (active) setBridge(r) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setBridgeBusy(false) })
     return () => { active = false }
-  }, [bStyle, tStyle, bClass])
+  }, [bStyle, bStyleIdsKey, tStyle, bClass])
 
   // Normalized compatible-sensor pool, from whichever terminal fired (trip-style wins as
   // the breaker∩trip intersection; else the breaker frame's bridge sensors).

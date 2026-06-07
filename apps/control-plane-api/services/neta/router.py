@@ -2184,9 +2184,19 @@ def _build_cascade_where(
                 clauses.append(f"{prefix}manufacturer_id = :manufacturer_id")
                 params["manufacturer_id"] = value
 
-    for field in ("trip_type_id", "trip_style_id", "sensor_id"):
+    for field, plural_field in (
+        ("trip_type_id", "trip_type_ids"),
+        ("trip_style_id", "trip_style_ids"),
+        ("sensor_id", None),
+    ):
         if field in exclude:
             continue
+        if plural_field is not None:
+            values = filters.get(plural_field)
+            if values:
+                clauses.append(f"{prefix}{field} = ANY(:{plural_field})")
+                params[plural_field] = values
+                continue
         value = filters.get(field)
         if value is None:
             continue
@@ -2200,9 +2210,9 @@ def _build_cascade_where(
 def _cascade_level(filters: dict[str, Optional[int] | list[int]]) -> str:
     if filters.get("sensor_id") is not None:
         return "sensors"
-    if filters.get("trip_style_id") is not None:
+    if filters.get("trip_style_id") is not None or filters.get("trip_style_ids"):
         return "trip_styles"
-    if filters.get("trip_type_id") is not None:
+    if filters.get("trip_type_id") is not None or filters.get("trip_type_ids"):
         return "trip_types"
     if filters.get("manufacturer_id") is not None or filters.get("manufacturer_ids"):
         return "manufacturers"
@@ -2257,6 +2267,8 @@ def _build_cross_half_breaker_filter(
     breaker_id: Optional[int],
     breaker_style_id: Optional[int],
     *,
+    breaker_ids: Optional[list[int]] = None,
+    breaker_style_ids: Optional[list[int]] = None,
     breaker_manufacturer_ids: Optional[list[int]] = None,
     bridge_xfilter: bool = False,
 ) -> tuple[str, dict[str, object], str]:
@@ -2274,8 +2286,12 @@ def _build_cross_half_breaker_filter(
         params["xh_breaker_class"] = breaker_class
     if breaker_id is not None:
         params["xh_breaker_id"] = breaker_id
+    if breaker_ids:
+        params["xh_breaker_ids"] = breaker_ids
     if breaker_style_id is not None:
         params["xh_breaker_style_id"] = breaker_style_id
+    if breaker_style_ids:
+        params["xh_breaker_style_ids"] = breaker_style_ids
     if not params:
         return "", {}, ""
 
@@ -2288,8 +2304,12 @@ def _build_cross_half_breaker_filter(
             parts.append("ebc.breaker_class = upper(:xh_breaker_class)")
         if breaker_id is not None:
             parts.append("ebc.breaker_id = :xh_breaker_id")
+        if breaker_ids:
+            parts.append("ebc.breaker_id = ANY(:xh_breaker_ids)")
         if breaker_style_id is not None:
             parts.append("ebc.breaker_style_id = :xh_breaker_style_id")
+        if breaker_style_ids:
+            parts.append("ebc.breaker_style_id = ANY(:xh_breaker_style_ids)")
         clause = (
             " AND v.sensor_id IN ("
             "SELECT bridge.sensor_id FROM tcc.vw_breaker_sst_bridge bridge "
@@ -2307,8 +2327,12 @@ def _build_cross_half_breaker_filter(
         parts.append("breaker_class = :xh_breaker_class")
     if breaker_id is not None:
         parts.append("breaker_id = :xh_breaker_id")
+    if breaker_ids:
+        parts.append("breaker_id = ANY(:xh_breaker_ids)")
     if breaker_style_id is not None:
         parts.append("breaker_style_id = :xh_breaker_style_id")
+    if breaker_style_ids:
+        parts.append("breaker_style_id = ANY(:xh_breaker_style_ids)")
     clause = (
         " AND v.manufacturer_id IN ("
         "SELECT DISTINCT manufacturer_id FROM etu_breaker_combined "
@@ -2322,6 +2346,8 @@ def _build_cross_half_trip_unit_filter(
     trip_style_id: Optional[int],
     sensor_id: Optional[int],
     *,
+    trip_type_ids: Optional[list[int]] = None,
+    trip_style_ids: Optional[list[int]] = None,
     trip_manufacturer_ids: Optional[list[int]] = None,
     bridge_xfilter: bool = False,
 ) -> tuple[str, dict[str, object]]:
@@ -2340,9 +2366,15 @@ def _build_cross_half_trip_unit_filter(
     if trip_type_id is not None:
         parts.append("trip_type_id = :xh_trip_type_id")
         params["xh_trip_type_id"] = trip_type_id
+    if trip_type_ids:
+        parts.append("trip_type_id = ANY(:xh_trip_type_ids)")
+        params["xh_trip_type_ids"] = trip_type_ids
     if trip_style_id is not None:
         parts.append("trip_style_id = :xh_trip_style_id")
         params["xh_trip_style_id"] = trip_style_id
+    if trip_style_ids:
+        parts.append("trip_style_id = ANY(:xh_trip_style_ids)")
+        params["xh_trip_style_ids"] = trip_style_ids
     if sensor_id is not None:
         parts.append("sensor_id = :xh_sensor_id")
         params["xh_sensor_id"] = sensor_id
@@ -2487,10 +2519,16 @@ def _build_etu_breaker_cascade_where(
     if scope.get("breaker_class") is not None and "breaker_class" not in excluded:
         clauses.append("breaker_class = :breaker_class")
         params["breaker_class"] = scope["breaker_class"]
-    if scope.get("breaker_id") is not None and "breaker_id" not in excluded:
+    if scope.get("breaker_ids") and "breaker_id" not in excluded:
+        clauses.append("breaker_id = ANY(:breaker_ids)")
+        params["breaker_ids"] = scope["breaker_ids"]
+    elif scope.get("breaker_id") is not None and "breaker_id" not in excluded:
         clauses.append("breaker_id = :breaker_id")
         params["breaker_id"] = scope["breaker_id"]
-    if scope.get("breaker_style_id") is not None and "breaker_style_id" not in excluded:
+    if scope.get("breaker_style_ids") and "breaker_style_id" not in excluded:
+        clauses.append("breaker_style_id = ANY(:breaker_style_ids)")
+        params["breaker_style_ids"] = scope["breaker_style_ids"]
+    elif scope.get("breaker_style_id") is not None and "breaker_style_id" not in excluded:
         clauses.append("breaker_style_id = :breaker_style_id")
         params["breaker_style_id"] = scope["breaker_style_id"]
 
@@ -2510,7 +2548,12 @@ def _build_etu_breaker_cascade_where(
 
 
 def _etu_breaker_cascade_level(scope: dict[str, Optional[object]]) -> str:
-    if scope.get("breaker_id") is not None or scope.get("breaker_style_id") is not None:
+    if (
+        scope.get("breaker_id") is not None
+        or scope.get("breaker_ids")
+        or scope.get("breaker_style_id") is not None
+        or scope.get("breaker_style_ids")
+    ):
         return "breaker_styles"
     if scope.get("manufacturer_id") is not None or scope.get("manufacturer_ids") or scope.get("breaker_class") is not None:
         return "breakers"
@@ -3151,6 +3194,101 @@ def _normalize_mapping(data: dict[str, object]) -> dict[str, object]:
     return {key: _normalize_scalar(value) for key, value in data.items()}
 
 
+def _tmt_signature_scalar(value: object) -> object:
+    value = _normalize_scalar(value)
+    if isinstance(value, float):
+        return round(value, 8)
+    return value
+
+
+def _tmt_signature_rows(values: object, fields: tuple[str, ...]) -> tuple[tuple[object, ...], ...]:
+    rows = values if isinstance(values, list) else []
+    normalized: list[tuple[object, ...]] = []
+    for row in rows:
+        if isinstance(row, dict):
+            normalized.append(tuple(_tmt_signature_scalar(row.get(field)) for field in fields))
+        else:
+            normalized.append((_tmt_signature_scalar(row),))
+    return tuple(sorted(normalized, key=lambda item: tuple(str(value) for value in item)))
+
+
+def _tmt_downstream_signature(bundle: dict[str, object]) -> tuple[object, ...]:
+    return (
+        tuple(int(value) for value in (bundle.get("available_trip_classes") or [])),
+        _tmt_signature_rows(bundle.get("amp_ratings"), ("rating", "max_override")),
+        _tmt_signature_rows(bundle.get("settings"), ("value", "label", "tol_lo", "tol_hi")),
+        tuple(sorted(_tmt_signature_scalar(value) for value in (bundle.get("thermal_adjustments") or []))),
+    )
+
+
+def _tmt_frame_label_key(row: dict[str, object]) -> tuple[object, ...]:
+    return (
+        row.get("breaker_class"),
+        row.get("breaker_name"),
+        row.get("breaker_style_name"),
+        row.get("frame_size"),
+    )
+
+
+def _merge_tmt_frame_rows(
+    rows: list[dict[str, object]],
+    *,
+    dedupe_divergence_count: int = 0,
+) -> TMTFrameSearchResult:
+    frame_ids = sorted({int(row["frame_id"]) for row in rows if row.get("frame_id") is not None})
+    style_ids = sorted({
+        int(row["breaker_style_id"])
+        for row in rows
+        if row.get("breaker_style_id") is not None
+    })
+    representative = min(rows, key=lambda row: int(row["frame_id"]))
+    data = {
+        key: value
+        for key, value in representative.items()
+        if not key.startswith("_")
+    }
+    data["frame_id"] = frame_ids[0]
+    data["frame_ids"] = frame_ids
+    data["breaker_style_id"] = style_ids[0]
+    data["style_ids"] = style_ids
+    data["dedupe_divergence_count"] = dedupe_divergence_count
+    return TMTFrameSearchResult(**data)
+
+
+def _dedupe_tmt_frame_rows(
+    rows: list[dict[str, object]],
+    *,
+    limit: int,
+) -> tuple[list[TMTFrameSearchResult], int]:
+    grouped: "OrderedDict[tuple[object, ...], list[dict[str, object]]]" = OrderedDict()
+    for row in rows:
+        grouped.setdefault(_tmt_frame_label_key(row), []).append(row)
+
+    frames: list[TMTFrameSearchResult] = []
+    divergence_count = 0
+    for label_rows in grouped.values():
+        signature_groups: "OrderedDict[object, list[dict[str, object]]]" = OrderedDict()
+        for row in label_rows:
+            signature_groups.setdefault(row.get("_dedupe_signature"), []).append(row)
+
+        if len(signature_groups) <= 1:
+            frames.append(_merge_tmt_frame_rows(label_rows))
+        else:
+            divergence_count += 1
+            for signature_rows in signature_groups.values():
+                frames.append(
+                    _merge_tmt_frame_rows(
+                        signature_rows,
+                        dedupe_divergence_count=1,
+                    )
+                )
+
+        if len(frames) >= limit:
+            break
+
+    return frames[:limit], divergence_count
+
+
 def _get_table_columns(db: Session, table_name: str) -> set[str]:
     table_schema, bare_table_name = (
         table_name.split(".", 1) if "." in table_name else (None, table_name)
@@ -3736,7 +3874,10 @@ def get_cascade(
     manufacturer_id: Optional[int] = Query(None, description="Filter by manufacturer"),
     manufacturer_ids: Optional[list[int]] = Query(None, description="Filter by one or more manufacturers"),
     trip_type_id: Optional[int] = Query(None, description="Filter by trip type"),
+    trip_type_ids: Optional[list[int]] = Query(None, description="Filter by one or more trip types"),
     trip_style_id: Optional[int] = Query(None, description="Filter by trip style"),
+    trip_style_ids: Optional[list[int]] = Query(None, description="Filter by one or more trip styles"),
+    style_ids: Optional[list[int]] = Query(None, description="Alias for trip_style_ids from deduped rows"),
     sensor_id: Optional[int] = Query(None, description="Filter to specific sensor"),
     plug_value: Optional[float] = Query(None, description="Optional compatible-plug lens"),
     breaker_manufacturer_id: Optional[int] = Query(None, description="Cross-half filter by breaker manufacturer"),
@@ -3746,7 +3887,9 @@ def get_cascade(
     ),
     breaker_class: Optional[str] = Query(None, description="Cross-half filter by breaker class"),
     breaker_id: Optional[int] = Query(None, description="Cross-half filter by breaker"),
+    breaker_ids: Optional[list[int]] = Query(None, description="Cross-half filter by one or more breakers"),
     breaker_style_id: Optional[int] = Query(None, description="Cross-half filter by breaker style"),
+    breaker_style_ids: Optional[list[int]] = Query(None, description="Cross-half filter by one or more breaker styles"),
     bridge_xfilter: bool = Query(
         False,
         description="Cross-filter by SST-bridge COMPATIBILITY (not just manufacturer) when a breaker is selected",
@@ -3772,15 +3915,21 @@ def get_cascade(
         "manufacturer_id": manufacturer_id,
         "manufacturer_ids": _normalize_id_list(None, manufacturer_ids),
         "trip_type_id": trip_type_id,
+        "trip_type_ids": _normalize_id_list(None, trip_type_ids),
         "trip_style_id": trip_style_id,
+        "trip_style_ids": _normalize_id_list(None, trip_style_ids or style_ids),
         "sensor_id": sensor_id,
     }
     breaker_filter_ids = _normalize_id_list(breaker_manufacturer_id, breaker_manufacturer_ids)
+    breaker_id_filter_ids = _normalize_id_list(None, breaker_ids)
+    breaker_style_filter_ids = _normalize_id_list(None, breaker_style_ids)
 
     xh_clause, xh_params, xh_cte = _build_cross_half_breaker_filter(
         breaker_class,
-        breaker_id,
-        breaker_style_id,
+        None if breaker_id_filter_ids else breaker_id,
+        None if breaker_style_filter_ids else breaker_style_id,
+        breaker_ids=breaker_id_filter_ids,
+        breaker_style_ids=breaker_style_filter_ids,
         breaker_manufacturer_ids=breaker_filter_ids,
         bridge_xfilter=bridge_xfilter,
     )
@@ -3843,17 +3992,30 @@ def get_cascade(
             f"""
             {xh_cte}
             SELECT
-                v.trip_type_id AS trip_type_id,
-                v.trip_type_name AS trip_type_name,
-                v.manufacturer_id AS manufacturer_id,
-                v.manufacturer_name AS manufacturer_name,
-                COUNT(DISTINCT v.trip_style_id) AS trip_style_count
-            FROM vw_trip_unit_cascade v
-            {plug_join}
-            {_apply_xh(trip_type_where)}
-            GROUP BY v.trip_type_id, v.trip_type_name,
-                     v.manufacturer_id, v.manufacturer_name
-            ORDER BY v.manufacturer_name, v.trip_type_name
+                MIN(trip_type_id) AS trip_type_id,
+                ARRAY_AGG(DISTINCT trip_type_id ORDER BY trip_type_id) AS trip_type_ids,
+                ARRAY_AGG(DISTINCT trip_style_id ORDER BY trip_style_id) AS style_ids,
+                trip_type_name,
+                MIN(manufacturer_id) AS manufacturer_id,
+                ARRAY_AGG(DISTINCT manufacturer_id ORDER BY manufacturer_id) AS manufacturer_ids,
+                (ARRAY_AGG(manufacturer_name ORDER BY manufacturer_id, trip_type_id))[1] AS manufacturer_name,
+                COUNT(DISTINCT trip_style_id)::int AS trip_style_count,
+                0::int AS dedupe_divergence_count
+            FROM (
+                SELECT DISTINCT
+                    v.trip_type_id,
+                    v.trip_type_name,
+                    v.trip_style_id,
+                    v.manufacturer_id,
+                    v.manufacturer_name,
+                    COALESCE(a.etap_mfr_name, v.manufacturer_name) AS manufacturer_display
+                FROM vw_trip_unit_cascade v
+                LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = v.manufacturer_name
+                {plug_join}
+                {_apply_xh(trip_type_where)}
+            ) trip_type_options
+            GROUP BY manufacturer_display, trip_type_name
+            ORDER BY manufacturer_display, trip_type_name
             """
         ),
         {**trip_type_params, **plug_params, **xh_params},
@@ -3865,20 +4027,34 @@ def get_cascade(
             f"""
             {xh_cte}
             SELECT
-                v.trip_style_id AS trip_style_id,
-                v.trip_style_name AS trip_style_name,
-                v.trip_type_id AS trip_type_id,
-                v.trip_type_name AS trip_type_name,
-                v.manufacturer_id AS manufacturer_id,
-                v.manufacturer_name AS manufacturer_name,
-                COUNT(DISTINCT v.sensor_id) AS sensor_count
-            FROM vw_trip_unit_cascade v
-            {plug_join}
-            {_apply_xh(trip_style_where)}
-            GROUP BY v.trip_style_id, v.trip_style_name,
-                     v.trip_type_id, v.trip_type_name,
-                     v.manufacturer_id, v.manufacturer_name
-            ORDER BY v.manufacturer_name, v.trip_type_name, v.trip_style_name
+                MIN(trip_style_id) AS trip_style_id,
+                ARRAY_AGG(DISTINCT trip_style_id ORDER BY trip_style_id) AS style_ids,
+                trip_style_name,
+                MIN(trip_type_id) AS trip_type_id,
+                ARRAY_AGG(DISTINCT trip_type_id ORDER BY trip_type_id) AS trip_type_ids,
+                trip_type_name,
+                MIN(manufacturer_id) AS manufacturer_id,
+                ARRAY_AGG(DISTINCT manufacturer_id ORDER BY manufacturer_id) AS manufacturer_ids,
+                (ARRAY_AGG(manufacturer_name ORDER BY manufacturer_id, trip_type_id, trip_style_id))[1] AS manufacturer_name,
+                COUNT(DISTINCT sensor_id)::int AS sensor_count,
+                0::int AS dedupe_divergence_count
+            FROM (
+                SELECT DISTINCT
+                    v.trip_style_id,
+                    v.trip_style_name,
+                    v.trip_type_id,
+                    v.trip_type_name,
+                    v.sensor_id,
+                    v.manufacturer_id,
+                    v.manufacturer_name,
+                    COALESCE(a.etap_mfr_name, v.manufacturer_name) AS manufacturer_display
+                FROM vw_trip_unit_cascade v
+                LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = v.manufacturer_name
+                {plug_join}
+                {_apply_xh(trip_style_where)}
+            ) trip_style_options
+            GROUP BY manufacturer_display, trip_type_name, trip_style_name
+            ORDER BY manufacturer_display, trip_type_name, trip_style_name
             """
         ),
         {**trip_style_params, **plug_params, **xh_params},
@@ -3903,7 +4079,7 @@ def get_cascade(
     ).fetchall()
 
     sensors: list[CascadeSensor] = []
-    if trip_style_id is not None or sensor_id is not None:
+    if trip_style_id is not None or filters.get("trip_style_ids") or sensor_id is not None:
         sensor_where, sensor_params = _build_cascade_where(filters, {"sensor_id"}, prefix="v.")
         sensor_rows = db.execute(
             text(
@@ -4023,14 +4199,19 @@ def get_etu_breaker_cascade(
     manufacturer_ids: Optional[list[int]] = Query(None, description="Optional manufacturer id-set filter"),
     breaker_class: Optional[str] = Query(None, description="Optional breaker class: ICCB, MCCB, or PCB"),
     breaker_id: Optional[int] = Query(None, description="Optional breaker filter"),
+    breaker_ids: Optional[list[int]] = Query(None, description="Optional breaker id-set filter"),
     breaker_style_id: Optional[int] = Query(None, description="Optional breaker-style filter"),
+    breaker_style_ids: Optional[list[int]] = Query(None, description="Optional breaker-style id-set filter"),
+    style_ids: Optional[list[int]] = Query(None, description="Alias for breaker_style_ids from deduped rows"),
     trip_manufacturer_id: Optional[int] = Query(None, description="Cross-half filter by trip manufacturer"),
     trip_manufacturer_ids: Optional[list[int]] = Query(
         None,
         description="Cross-half filter by one or more trip manufacturers",
     ),
     trip_type_id: Optional[int] = Query(None, description="Cross-half filter by trip type"),
+    trip_type_ids: Optional[list[int]] = Query(None, description="Cross-half filter by one or more trip types"),
     trip_style_id: Optional[int] = Query(None, description="Cross-half filter by trip style"),
+    trip_style_ids: Optional[list[int]] = Query(None, description="Cross-half filter by one or more trip styles"),
     sensor_id: Optional[int] = Query(None, description="Cross-half filter by sensor"),
     bridge_only: bool = Query(
         False,
@@ -4053,15 +4234,21 @@ def get_etu_breaker_cascade(
         "manufacturer_ids": _normalize_id_list(None, manufacturer_ids),
         "breaker_class": breaker_class,
         "breaker_id": breaker_id,
+        "breaker_ids": _normalize_id_list(None, breaker_ids),
         "breaker_style_id": breaker_style_id,
+        "breaker_style_ids": _normalize_id_list(None, breaker_style_ids or style_ids),
         "bridge_only": bridge_only,
     }
     trip_filter_ids = _normalize_id_list(trip_manufacturer_id, trip_manufacturer_ids)
+    trip_type_filter_ids = _normalize_id_list(None, trip_type_ids)
+    trip_style_filter_ids = _normalize_id_list(None, trip_style_ids)
 
     xh_clause, xh_params = _build_cross_half_trip_unit_filter(
-        trip_type_id,
-        trip_style_id,
+        None if trip_type_filter_ids else trip_type_id,
+        None if trip_style_filter_ids else trip_style_id,
         sensor_id,
+        trip_type_ids=trip_type_filter_ids,
+        trip_style_ids=trip_style_filter_ids,
         trip_manufacturer_ids=trip_filter_ids,
         bridge_xfilter=bridge_xfilter,
     )
@@ -4133,24 +4320,46 @@ def get_etu_breaker_cascade(
     ).fetchall()
 
     breakers: list[EtuBreakerOption] = []
-    if scope.get("manufacturer_ids") or manufacturer_id is not None or breaker_class is not None or breaker_id is not None or breaker_style_id is not None:
+    if (
+        scope.get("manufacturer_ids")
+        or manufacturer_id is not None
+        or breaker_class is not None
+        or breaker_id is not None
+        or scope.get("breaker_ids")
+        or breaker_style_id is not None
+        or scope.get("breaker_style_ids")
+    ):
         breaker_where, breaker_params = _build_etu_breaker_cascade_where(scope, {"breaker_id"})
         breaker_rows = db.execute(
             text(
                 f"""
                 {_ETU_BREAKER_CASCADE_CTE}
                 SELECT
-                    breaker_id,
+                    MIN(breaker_id) AS breaker_id,
+                    ARRAY_AGG(DISTINCT breaker_id ORDER BY breaker_id) AS breaker_ids,
+                    ARRAY_AGG(DISTINCT breaker_style_id ORDER BY breaker_style_id) AS style_ids,
                     breaker_name,
                     breaker_class,
-                    manufacturer_id,
-                    manufacturer_name,
-                    COUNT(DISTINCT breaker_style_id) AS style_count
-                FROM etu_breaker_combined
-                {_apply_xh(breaker_where)}
-                GROUP BY breaker_id, breaker_name, breaker_class,
-                         manufacturer_id, manufacturer_name
-                ORDER BY manufacturer_name, breaker_class, breaker_name
+                    MIN(manufacturer_id) AS manufacturer_id,
+                    ARRAY_AGG(DISTINCT manufacturer_id ORDER BY manufacturer_id) AS manufacturer_ids,
+                    (ARRAY_AGG(manufacturer_name ORDER BY manufacturer_id, breaker_id))[1] AS manufacturer_name,
+                    COUNT(DISTINCT breaker_style_id)::int AS style_count,
+                    0::int AS dedupe_divergence_count
+                FROM (
+                    SELECT DISTINCT
+                        etu_breaker_combined.breaker_id,
+                        etu_breaker_combined.breaker_name,
+                        etu_breaker_combined.breaker_class,
+                        etu_breaker_combined.breaker_style_id,
+                        etu_breaker_combined.manufacturer_id,
+                        etu_breaker_combined.manufacturer_name,
+                        COALESCE(a.etap_mfr_name, etu_breaker_combined.manufacturer_name) AS manufacturer_display
+                    FROM etu_breaker_combined
+                    LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = etu_breaker_combined.manufacturer_name
+                    {_apply_xh(breaker_where)}
+                ) breaker_options
+                GROUP BY manufacturer_display, breaker_class, breaker_name
+                ORDER BY manufacturer_display, breaker_class, breaker_name
                 """
             ),
             {**breaker_params, **xh_params},
@@ -4158,23 +4367,40 @@ def get_etu_breaker_cascade(
         breakers = [EtuBreakerOption(**dict(row._mapping)) for row in breaker_rows]
 
     breaker_styles: list[EtuBreakerStyleOption] = []
-    if breaker_id is not None or breaker_style_id is not None:
+    if breaker_id is not None or scope.get("breaker_ids") or breaker_style_id is not None or scope.get("breaker_style_ids"):
         style_where, style_params = _build_etu_breaker_cascade_where(scope, {"breaker_style_id"})
         style_rows = db.execute(
             text(
                 f"""
                 {_ETU_BREAKER_CASCADE_CTE}
-                SELECT DISTINCT
-                    breaker_style_id,
+                SELECT
+                    MIN(breaker_style_id) AS breaker_style_id,
+                    ARRAY_AGG(DISTINCT breaker_style_id ORDER BY breaker_style_id) AS style_ids,
                     breaker_style_name,
-                    breaker_id,
+                    MIN(breaker_id) AS breaker_id,
+                    ARRAY_AGG(DISTINCT breaker_id ORDER BY breaker_id) AS breaker_ids,
                     breaker_name,
                     breaker_class,
-                    manufacturer_id,
-                    manufacturer_name
-                FROM etu_breaker_combined
-                {_apply_xh(style_where)}
-                ORDER BY manufacturer_name, breaker_class, breaker_name, breaker_style_name
+                    MIN(manufacturer_id) AS manufacturer_id,
+                    ARRAY_AGG(DISTINCT manufacturer_id ORDER BY manufacturer_id) AS manufacturer_ids,
+                    (ARRAY_AGG(manufacturer_name ORDER BY manufacturer_id, breaker_id, breaker_style_id))[1] AS manufacturer_name,
+                    0::int AS dedupe_divergence_count
+                FROM (
+                    SELECT DISTINCT
+                        etu_breaker_combined.breaker_style_id,
+                        etu_breaker_combined.breaker_style_name,
+                        etu_breaker_combined.breaker_id,
+                        etu_breaker_combined.breaker_name,
+                        etu_breaker_combined.breaker_class,
+                        etu_breaker_combined.manufacturer_id,
+                        etu_breaker_combined.manufacturer_name,
+                        COALESCE(a.etap_mfr_name, etu_breaker_combined.manufacturer_name) AS manufacturer_display
+                    FROM etu_breaker_combined
+                    LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = etu_breaker_combined.manufacturer_name
+                    {_apply_xh(style_where)}
+                ) style_options
+                GROUP BY manufacturer_display, breaker_class, breaker_name, breaker_style_name
+                ORDER BY manufacturer_display, breaker_class, breaker_name, breaker_style_name
                 """
             ),
             {**style_params, **xh_params},
@@ -4189,11 +4415,15 @@ def get_etu_breaker_cascade(
             "manufacturer_ids": scope["manufacturer_ids"],
             "breaker_class": breaker_class,
             "breaker_id": breaker_id,
+            "breaker_ids": scope["breaker_ids"],
             "breaker_style_id": breaker_style_id,
+            "breaker_style_ids": scope["breaker_style_ids"],
             "trip_manufacturer_id": trip_manufacturer_id,
             "trip_manufacturer_ids": trip_filter_ids,
             "trip_type_id": trip_type_id,
+            "trip_type_ids": trip_type_filter_ids,
             "trip_style_id": trip_style_id,
+            "trip_style_ids": trip_style_filter_ids,
             "sensor_id": sensor_id,
         },
         manufacturers=[EtuBreakerManufacturer(**dict(row._mapping)) for row in manufacturer_rows],
@@ -4280,6 +4510,12 @@ def get_etu_bridge_sensors(
     breaker_style_id: Optional[int] = Query(
         None, description="Breaker style to narrow compatible ETU sensors via the SST bridge"
     ),
+    breaker_style_ids: Optional[list[int]] = Query(
+        None, description="Breaker style id set from an exact-label deduped selector row"
+    ),
+    style_ids: Optional[list[int]] = Query(
+        None, description="Alias for breaker_style_ids from deduped rows"
+    ),
     breaker_id: Optional[int] = Query(
         None, description="Alternative: all bridged sensors across a breaker's styles"
     ),
@@ -4302,10 +4538,11 @@ def get_etu_bridge_sensors(
     are independent per-class serials that COLLIDE (e.g. style 1510 is both an MCCB DT 510 and a
     PCB MPS-C-2000), so an id-only filter mixes in foreign-class sensors.
     """
-    if breaker_style_id is None and breaker_id is None:
+    breaker_style_filter_ids = _normalize_id_list(None, breaker_style_ids or style_ids)
+    if breaker_style_id is None and not breaker_style_filter_ids and breaker_id is None:
         raise HTTPException(
             status_code=422,
-            detail="Provide breaker_style_id or breaker_id.",
+            detail="Provide breaker_style_id or breaker_id (or breaker_style_ids).",
         )
     if breaker_class is not None and breaker_class.upper() not in _ETU_BREAKER_CASCADE_CLASSES:
         raise HTTPException(
@@ -4315,7 +4552,10 @@ def get_etu_bridge_sensors(
 
     clauses: list[str] = []
     params: dict[str, object] = {}
-    if breaker_style_id is not None:
+    if breaker_style_filter_ids:
+        clauses.append("breaker_style_id = ANY(:bsids)")
+        params["bsids"] = breaker_style_filter_ids
+    elif breaker_style_id is not None:
         clauses.append("breaker_style_id = :bsid")
         params["bsid"] = breaker_style_id
     if breaker_id is not None:
@@ -4368,6 +4608,7 @@ def get_etu_bridge_sensors(
     rating_warning = _bridge_rating_warning(frame, [s.sensor_rating for s in sensors])
     return EtuBridgeSensorsResponse(
         breaker_style_id=breaker_style_id,
+        breaker_style_ids=breaker_style_filter_ids,
         breaker_id=breaker_id,
         bridge_match_status="matched" if sensors else "unmatched",
         count=len(sensors),
@@ -4687,6 +4928,8 @@ def search_tmt_frames(
     manufacturer_ids: Optional[list[int]] = Query(None, description="Filter by one or more manufacturer ids"),
     breaker_id: Optional[int] = Query(None, description="Filter by breaker id"),
     breaker_style_id: Optional[int] = Query(None, description="Filter by breaker style id"),
+    breaker_style_ids: Optional[list[int]] = Query(None, description="Filter by one or more breaker style ids"),
+    style_ids: Optional[list[int]] = Query(None, description="Alias for breaker_style_ids from deduped rows"),
     manufacturer_name: Optional[str] = Query(None, description="Filter by manufacturer name"),
     breaker_name: Optional[str] = Query(None, description="Filter by breaker name"),
     breaker_style_name: Optional[str] = Query(None, description="Filter by breaker style frame name"),
@@ -4702,11 +4945,13 @@ def search_tmt_frames(
 
     candidate_classes = [class_filter] if class_filter else list(_TMT_STYLE_MODELS.keys())
     manufacturer_filter_ids = _normalize_id_list(None, manufacturer_ids)
-    frames: list[TMTFrameSearchResult] = []
+    breaker_style_filter_ids = _normalize_id_list(None, breaker_style_ids or style_ids)
+    frame_rows: list[dict[str, object]] = []
     seen_frame_ids: set[int] = set()
+    raw_limit = limit * 4
 
     for class_key in candidate_classes:
-        if len(frames) >= limit:
+        if len(frame_rows) >= raw_limit:
             break
 
         style_model = _TMT_STYLE_MODELS[class_key]
@@ -4727,7 +4972,9 @@ def search_tmt_frames(
             query = query.filter(breaker_model.manufacturer_id == manufacturer_id)
         if breaker_id is not None:
             query = query.filter(breaker_model.id == breaker_id)
-        if breaker_style_id is not None:
+        if breaker_style_filter_ids:
+            query = query.filter(TMTFrame.breaker_style_id.in_(breaker_style_filter_ids))
+        elif breaker_style_id is not None:
             query = query.filter(TMTFrame.breaker_style_id == breaker_style_id)
         if manufacturer_name:
             query = query.filter(Manufacturer.name.ilike(f"%{manufacturer_name}%"))
@@ -4747,7 +4994,7 @@ def search_tmt_frames(
                 )
             )
 
-        candidate_rows = query.order_by(*order_by, TMTFrame.id).limit(limit * 4).all()
+        candidate_rows = query.order_by(*order_by, TMTFrame.id).limit(raw_limit).all()
         for frame in candidate_rows:
             if frame.id in seen_frame_ids:
                 continue
@@ -4774,23 +5021,33 @@ def search_tmt_frames(
                 if matched_amp is None:
                     continue
 
-            frames.append(TMTFrameSearchResult(
-                frame_id=bundle["frame_id"],
-                breaker_style_id=bundle["breaker_style_id"],
-                breaker_class=bundle["breaker_class"],
-                frame_size=bundle["frame_size"],
-                manufacturer_name=bundle["manufacturer_name"],
-                breaker_name=bundle["breaker_name"],
-                breaker_style_name=bundle["breaker_style_name"],
-                standard=bundle["standard"],
-                matched_amp_rating=matched_amp.get("rating") if matched_amp else None,
-            ))
+            frame_rows.append(
+                {
+                    "frame_id": bundle["frame_id"],
+                    "frame_ids": [bundle["frame_id"]],
+                    "breaker_style_id": bundle["breaker_style_id"],
+                    "style_ids": [bundle["breaker_style_id"]],
+                    "breaker_class": bundle["breaker_class"],
+                    "frame_size": bundle["frame_size"],
+                    "manufacturer_name": bundle["manufacturer_name"],
+                    "breaker_name": bundle["breaker_name"],
+                    "breaker_style_name": bundle["breaker_style_name"],
+                    "standard": bundle["standard"],
+                    "matched_amp_rating": matched_amp.get("rating") if matched_amp else None,
+                    "_dedupe_signature": _tmt_downstream_signature(bundle),
+                }
+            )
             seen_frame_ids.add(frame.id)
 
-            if len(frames) >= limit:
+            if len(frame_rows) >= raw_limit:
                 break
 
-    return TMTFrameSearchResponse(count=len(frames), frames=frames)
+    frames, divergence_count = _dedupe_tmt_frame_rows(frame_rows, limit=limit)
+    return TMTFrameSearchResponse(
+        count=len(frames),
+        frames=frames,
+        dedupe_divergence_count=divergence_count,
+    )
 
 @router.get("/tmt/context/{frame_id}", response_model=TMTFrameContext)
 def get_tmt_context(frame_id: int, db: Session = Depends(get_db)):

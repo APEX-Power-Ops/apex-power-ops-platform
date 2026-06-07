@@ -74,20 +74,28 @@ export type CascadeManufacturer = {
 
 export type CascadeTripType = {
   trip_type_id: number
+  trip_type_ids?: number[] | null
+  style_ids?: number[] | null
   trip_type_name: string
   manufacturer_id: number
+  manufacturer_ids?: number[] | null
   manufacturer_name: string
   trip_style_count: number
+  dedupe_divergence_count?: number
 }
 
 export type CascadeTripStyle = {
   trip_style_id: number
+  style_ids?: number[] | null
   trip_style_name: string
   trip_type_id: number
+  trip_type_ids?: number[] | null
   trip_type_name: string
   manufacturer_id: number
+  manufacturer_ids?: number[] | null
   manufacturer_name: string
   sensor_count: number
+  dedupe_divergence_count?: number
 }
 
 export type CascadeSensor = {
@@ -125,14 +133,18 @@ export type CascadeParams = {
   manufacturerId?: number | null
   manufacturerIds?: number[] | null
   tripTypeId?: number | null
+  tripTypeIds?: number[] | null
   tripStyleId?: number | null
+  tripStyleIds?: number[] | null
   sensorId?: number | null
   plugValue?: number | null
   breakerManufacturerId?: number | null
   breakerManufacturerIds?: number[] | null
   breakerClass?: string | null
   breakerId?: number | null
+  breakerIds?: number[] | null
   breakerStyleId?: number | null
+  breakerStyleIds?: number[] | null
   // When true and a breaker selection is present, narrow the trip-unit cascade by actual
   // SST-bridge COMPATIBILITY (not just manufacturer) — the bidirectional BG-5 cross-filter.
   bridgeXfilter?: boolean
@@ -155,20 +167,28 @@ export type EtuBreakerCascadeResponse = {
   }[]
   breakers: {
     breaker_id: number
+    breaker_ids?: number[] | null
+    style_ids?: number[] | null
     breaker_name: string
     breaker_class: string
     manufacturer_id: number
+    manufacturer_ids?: number[] | null
     manufacturer_name: string
     style_count: number
+    dedupe_divergence_count?: number
   }[]
   breaker_styles: {
     breaker_style_id: number
+    style_ids?: number[] | null
     breaker_style_name: string
     breaker_id: number
+    breaker_ids?: number[] | null
     breaker_name: string
     breaker_class: string
     manufacturer_id: number
+    manufacturer_ids?: number[] | null
     manufacturer_name: string
+    dedupe_divergence_count?: number
   }[]
 }
 
@@ -177,11 +197,15 @@ export type EtuBreakerCascadeParams = {
   manufacturerIds?: number[] | null
   breakerClass?: string | null
   breakerId?: number | null
+  breakerIds?: number[] | null
   breakerStyleId?: number | null
+  breakerStyleIds?: number[] | null
   tripManufacturerId?: number | null
   tripManufacturerIds?: number[] | null
   tripTypeId?: number | null
+  tripTypeIds?: number[] | null
   tripStyleId?: number | null
+  tripStyleIds?: number[] | null
   sensorId?: number | null
   bridgeOnly?: boolean
   // When true and a trip-unit selection is present, narrow the breaker cascade by actual
@@ -206,6 +230,7 @@ export type EtuBridgeSensor = {
 
 export type EtuBridgeSensorsResponse = {
   breaker_style_id: number | null
+  breaker_style_ids?: number[] | null
   breaker_id: number | null
   bridge_match_status: 'matched' | 'unmatched'
   count: number
@@ -216,6 +241,7 @@ export type EtuBridgeSensorsResponse = {
 
 export type EtuBridgeSensorsParams = {
   breakerStyleId?: number | null
+  breakerStyleIds?: number[] | null
   breakerId?: number | null
   breakerClass?: string | null
 }
@@ -445,7 +471,9 @@ export type TMTFacetsResponse = {
 
 export type TMTFrameSearchResult = {
   frame_id: number
+  frame_ids?: number[] | null
   breaker_style_id: number
+  style_ids?: number[] | null
   breaker_class: string | null
   frame_size: string | null
   manufacturer_name: string | null
@@ -453,11 +481,13 @@ export type TMTFrameSearchResult = {
   breaker_style_name: string | null
   standard: number | null
   matched_amp_rating: number | null
+  dedupe_divergence_count?: number
 }
 
 export type TMTFrameSearchResponse = {
   count: number
   frames: TMTFrameSearchResult[]
+  dedupe_divergence_count?: number
 }
 
 export type TMTFrameContext = {
@@ -799,8 +829,16 @@ export async function fetchCascade(params: CascadeParams = {}): Promise<CascadeR
   } else {
     appendOptionalParam(search, 'manufacturer_id', params.manufacturerId)
   }
-  appendOptionalParam(search, 'trip_type_id', params.tripTypeId)
-  appendOptionalParam(search, 'trip_style_id', params.tripStyleId)
+  if (params.tripTypeIds?.length) {
+    appendOptionalParams(search, 'trip_type_ids', params.tripTypeIds)
+  } else {
+    appendOptionalParam(search, 'trip_type_id', params.tripTypeId)
+  }
+  if (params.tripStyleIds?.length) {
+    appendOptionalParams(search, 'trip_style_ids', params.tripStyleIds)
+  } else {
+    appendOptionalParam(search, 'trip_style_id', params.tripStyleId)
+  }
   appendOptionalParam(search, 'sensor_id', params.sensorId)
   appendOptionalParam(search, 'plug_value', params.plugValue)
   if (params.breakerManufacturerIds?.length) {
@@ -809,8 +847,16 @@ export async function fetchCascade(params: CascadeParams = {}): Promise<CascadeR
     appendOptionalParam(search, 'breaker_manufacturer_id', params.breakerManufacturerId)
   }
   appendOptionalParam(search, 'breaker_class', params.breakerClass)
-  appendOptionalParam(search, 'breaker_id', params.breakerId)
-  appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
+  if (params.breakerIds?.length) {
+    appendOptionalParams(search, 'breaker_ids', params.breakerIds)
+  } else {
+    appendOptionalParam(search, 'breaker_id', params.breakerId)
+  }
+  if (params.breakerStyleIds?.length) {
+    appendOptionalParams(search, 'breaker_style_ids', params.breakerStyleIds)
+  } else {
+    appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
+  }
   if (params.bridgeXfilter) {
     search.set('bridge_xfilter', 'true')
   }
@@ -828,15 +874,31 @@ export async function fetchEtuBreakerCascade(
     appendOptionalParam(search, 'manufacturer_id', params.manufacturerId)
   }
   appendOptionalParam(search, 'breaker_class', params.breakerClass)
-  appendOptionalParam(search, 'breaker_id', params.breakerId)
-  appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
+  if (params.breakerIds?.length) {
+    appendOptionalParams(search, 'breaker_ids', params.breakerIds)
+  } else {
+    appendOptionalParam(search, 'breaker_id', params.breakerId)
+  }
+  if (params.breakerStyleIds?.length) {
+    appendOptionalParams(search, 'breaker_style_ids', params.breakerStyleIds)
+  } else {
+    appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
+  }
   if (params.tripManufacturerIds?.length) {
     appendOptionalParams(search, 'trip_manufacturer_ids', params.tripManufacturerIds)
   } else {
     appendOptionalParam(search, 'trip_manufacturer_id', params.tripManufacturerId)
   }
-  appendOptionalParam(search, 'trip_type_id', params.tripTypeId)
-  appendOptionalParam(search, 'trip_style_id', params.tripStyleId)
+  if (params.tripTypeIds?.length) {
+    appendOptionalParams(search, 'trip_type_ids', params.tripTypeIds)
+  } else {
+    appendOptionalParam(search, 'trip_type_id', params.tripTypeId)
+  }
+  if (params.tripStyleIds?.length) {
+    appendOptionalParams(search, 'trip_style_ids', params.tripStyleIds)
+  } else {
+    appendOptionalParam(search, 'trip_style_id', params.tripStyleId)
+  }
   appendOptionalParam(search, 'sensor_id', params.sensorId)
   if (params.bridgeOnly) {
     search.set('bridge_only', 'true')
@@ -854,7 +916,11 @@ export async function fetchEtuBridgeSensors(
   params: EtuBridgeSensorsParams = {},
 ): Promise<EtuBridgeSensorsResponse> {
   const search = new URLSearchParams()
-  appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
+  if (params.breakerStyleIds?.length) {
+    appendOptionalParams(search, 'breaker_style_ids', params.breakerStyleIds)
+  } else {
+    appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
+  }
   appendOptionalParam(search, 'breaker_id', params.breakerId)
   appendOptionalParam(search, 'breaker_class', params.breakerClass)
   return getJson<EtuBridgeSensorsResponse>(
@@ -889,12 +955,14 @@ export async function fetchTmtFrames({
   breakerClass,
   manufacturerId,
   manufacturerIds,
+  breakerStyleIds,
   manufacturerName,
   limit = 12,
 }: {
   breakerClass: string
   manufacturerId?: number | null
   manufacturerIds?: number[] | null
+  breakerStyleIds?: number[] | null
   manufacturerName?: string
   limit?: number
 }): Promise<TMTFrameSearchResponse> {
@@ -904,6 +972,9 @@ export async function fetchTmtFrames({
     appendOptionalParams(search, 'manufacturer_ids', manufacturerIds)
   } else {
     appendOptionalParam(search, 'manufacturer_id', manufacturerId)
+  }
+  if (breakerStyleIds?.length) {
+    appendOptionalParams(search, 'breaker_style_ids', breakerStyleIds)
   }
   appendOptionalParam(search, 'manufacturer_name', manufacturerName)
   return getJson<TMTFrameSearchResponse>(`/api/v1/neta/tmt/frames?${search.toString()}`)
