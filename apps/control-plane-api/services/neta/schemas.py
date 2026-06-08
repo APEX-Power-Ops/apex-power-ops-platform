@@ -214,6 +214,31 @@ class EtuBridgeSensorsResponse(BaseModel):
     rating_narrowed: bool = False
 
 
+class EtuBreakerAltTrip(BaseModel):
+    """An alternative (retrofit/upgrade) trip unit compatible with a breaker, BEYOND its
+    as-shipped trip — sourced from tcc.breaker_alt_trip_bridge (migration 017).
+
+    protection_class is the protection-element complement derived from the trip's modelled
+    elements: 'L' is always present, plus 'S' (short-time), 'I' (instantaneous) and 'G'
+    (ground-fault) when present — e.g. 'LSIG', 'LIG', 'LI'. It disambiguates trip variants
+    that share a display name (the GE EntelliGuard TU 'WavePro' vs 'Wavepro LI' both
+    display as 'Entelliguard' but differ by element complement).
+    """
+    trip_style_id: int
+    relation: str
+    protection_class: Optional[str] = None
+
+
+class EtuBreakerAltTripsResponse(BaseModel):
+    """The alternative-trip set for a breaker (the alt-trip bridge), so the picker can tag a
+    trip as a retrofit/upgrade and show its protection class without re-querying the main
+    SST bridge. Empty alt_trips = the breaker carries only its native (as-shipped) trip."""
+    breaker_id: Optional[int] = None
+    breaker_style_id: Optional[int] = None
+    count: int = 0
+    alt_trips: list[EtuBreakerAltTrip] = Field(default_factory=list)
+
+
 class ResolvedBreakerContext(BaseModel):
     label: Optional[str] = None
     source: Optional[str] = None

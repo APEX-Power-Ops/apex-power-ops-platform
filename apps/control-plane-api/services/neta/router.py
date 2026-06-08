@@ -52,6 +52,8 @@ from .schemas import (
     EtuBreakerManufacturer,
     EtuBreakerOption,
     EtuBreakerStyleOption,
+    EtuBreakerAltTrip,
+    EtuBreakerAltTripsResponse,
     EtuBridgeSensor,
     EtuBridgeSensorsResponse,
     EtuSearchResult,
@@ -4735,6 +4737,89 @@ def get_etu_bridge_sensors(
         rating_warning=rating_warning,
         breaker_rating=breaker_rating,
         rating_narrowed=any_narrowed,
+    )
+
+
+@router.get("/etu/breaker-alt-trips", response_model=EtuBreakerAltTripsResponse)
+def get_etu_breaker_alt_trips(
+    breaker_id: Optional[int] = Query(
+        None, description="Breaker whose alternative (retrofit/upgrade) trips to list"
+    ),
+    breaker_style_id: Optional[int] = Query(
+        None, description="Specific breaker style (alternative to breaker_id)"
+    ),
+    breaker_class: Optional[str] = Query(
+        None,
+        description="REQUIRED to disambiguate: breaker/style ids are per-class serials that "
+        "overlap across ICCB/MCCB/PCB.",
+    ),
+    db: Session = Depends(get_db),
+):
+    """Return the alternative (retrofit/upgrade) trip units compatible with a breaker.
+
+    Sourced from tcc.breaker_alt_trip_bridge (migration 017) — trips a breaker accepts
+    BEYOND its as-shipped trip (e.g. the GE WavePro -> EntelliGuard TU MicroVersaTrip
+    retrofit). For each alt-trip it derives the protection-element class ('L' always, plus
+    'S'/'I'/'G' when present) from public.vw_trip_unit_cascade, so the picker can show
+    "(retrofit · LSIG)" and distinguish trip variants that share a display name.
+
+    breaker_class is required for a correct result: brk_{iccb,mccb,pcb} ids and their style
+    ids are independent per-class serials that COLLIDE (DURABLE: always class-qualify).
+    """
+    if breaker_id is None and breaker_style_id is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Provide breaker_id or breaker_style_id.",
+        )
+    if breaker_class is not None and breaker_class.upper() not in _ETU_BREAKER_CASCADE_CLASSES:
+        raise HTTPException(
+            status_code=422,
+            detail="breaker_class must be one of 'ICCB', 'MCCB', 'PCB'.",
+        )
+
+    clauses: list[str] = []
+    params: dict[str, object] = {}
+    if breaker_id is not None:
+        clauses.append("eb.breaker_id = :bid")
+        params["bid"] = breaker_id
+    if breaker_style_id is not None:
+        clauses.append("eb.breaker_style_id = :bsid")
+        params["bsid"] = breaker_style_id
+    if breaker_class is not None:
+        clauses.append("upper(eb.breaker_class) = upper(:bclass)")
+        params["bclass"] = breaker_class
+    where_sql = "WHERE " + " AND ".join(clauses)
+
+    rows = db.execute(
+        text(
+            f"""
+            {_ETU_BREAKER_CASCADE_CTE}
+            SELECT a.trip_style_id AS trip_style_id,
+                   a.relation AS relation,
+                   'L'
+                     || CASE WHEN bool_or(c.has_stpu) THEN 'S' ELSE '' END
+                     || CASE WHEN bool_or(c.has_inst) THEN 'I' ELSE '' END
+                     || CASE WHEN bool_or(c.has_gfpu) THEN 'G' ELSE '' END
+                     AS protection_class
+            FROM tcc.breaker_alt_trip_bridge a
+            JOIN etu_breaker_combined eb
+              ON eb.breaker_style_id = a.breaker_style_id
+             AND upper(eb.breaker_class) = upper(a.breaker_class)
+            LEFT JOIN public.vw_trip_unit_cascade c ON c.trip_style_id = a.trip_style_id
+            {where_sql}
+            GROUP BY a.trip_style_id, a.relation
+            ORDER BY a.trip_style_id
+            """
+        ),
+        params,
+    ).fetchall()
+
+    alt_trips = [EtuBreakerAltTrip(**dict(row._mapping)) for row in rows]
+    return EtuBreakerAltTripsResponse(
+        breaker_id=breaker_id,
+        breaker_style_id=breaker_style_id,
+        count=len(alt_trips),
+        alt_trips=alt_trips,
     )
 
 

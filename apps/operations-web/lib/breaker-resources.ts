@@ -251,6 +251,28 @@ export type EtuBridgeSensorsParams = {
   breakerClass?: string | null
 }
 
+// Alternative (retrofit/upgrade) trips for a breaker, beyond its as-shipped trip
+// (tcc.breaker_alt_trip_bridge, migration 017). protection_class is the L/S/I/G element
+// complement, used to tag a trip "(retrofit · LSIG)" and disambiguate same-named variants.
+export type EtuBreakerAltTrip = {
+  trip_style_id: number
+  relation: string
+  protection_class: string | null
+}
+
+export type EtuBreakerAltTripsResponse = {
+  breaker_id: number | null
+  breaker_style_id: number | null
+  count: number
+  alt_trips: EtuBreakerAltTrip[]
+}
+
+export type EtuBreakerAltTripsParams = {
+  breakerId?: number | null
+  breakerStyleId?: number | null
+  breakerClass?: string | null
+}
+
 export type SensorCalcContext = {
   sensor_id: number
   sensor_desc: string
@@ -933,6 +955,18 @@ export async function fetchEtuBridgeSensors(
   appendOptionalParam(search, 'breaker_class', params.breakerClass)
   return getJson<EtuBridgeSensorsResponse>(
     `/api/v1/neta/etu/bridge-sensors?${search.toString()}`,
+  )
+}
+
+export async function fetchEtuBreakerAltTrips(
+  params: EtuBreakerAltTripsParams = {},
+): Promise<EtuBreakerAltTripsResponse> {
+  const search = new URLSearchParams()
+  appendOptionalParam(search, 'breaker_id', params.breakerId)
+  appendOptionalParam(search, 'breaker_style_id', params.breakerStyleId)
+  appendOptionalParam(search, 'breaker_class', params.breakerClass)
+  return getJson<EtuBreakerAltTripsResponse>(
+    `/api/v1/neta/etu/breaker-alt-trips?${search.toString()}`,
   )
 }
 

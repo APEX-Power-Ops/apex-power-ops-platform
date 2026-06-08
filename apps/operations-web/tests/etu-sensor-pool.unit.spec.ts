@@ -194,6 +194,79 @@ test('empty: a reached breaker terminal with no bridge match -> empty, count 0',
   expect(summary.count).toBe(0)
 })
 
+// ── #1/#2: de-dup the stuttered model + tag retrofit · protection-class ────────
+// Mirrors the merged GE EntelliGuard TU: trip type "Entelliguard TU" + model display
+// "Entelliguard" (1073 LSIG / 1566 LIG both display "Entelliguard"). The trip axis
+// carries has_* flags; the alt-trip map carries the retrofit relation + protection class.
+function egtuCascade(): CascadeResponse {
+  const mk = (sensorId: number, tripStyleId: number, rating: number) => ({
+    sensor_id: sensorId,
+    sensor_rating: rating,
+    sensor_desc: `${rating} A`,
+    trip_style_id: tripStyleId,
+    trip_style_name: tripStyleId === 1566 ? 'Wavepro LI' : 'WavePro',
+    trip_model_display: 'Entelliguard',
+    trip_type_id: 700,
+    trip_type_name: 'Entelliguard TU',
+    manufacturer_id: 9,
+    manufacturer_name: 'GE',
+    has_ltpu: true,
+    has_stpu: tripStyleId !== 1566,
+    has_inst: true,
+    has_gfpu: true,
+  })
+  return {
+    level: 'sensors',
+    count: 2,
+    manufacturers: [],
+    trip_types: [],
+    trip_styles: [],
+    sensors: [mk(7001, 1073, 4000), mk(7002, 1566, 4000)],
+    plug_values: [],
+  }
+}
+
+const EGTU_ALT = {
+  1073: { relation: 'retrofit', protectionClass: 'LSIG' },
+  1566: { relation: 'retrofit', protectionClass: 'LIG' },
+}
+
+test('trip-axis retrofit: de-dups the stuttered model and tags retrofit + class', () => {
+  const pool = buildSensorPool({ ...EMPTY, tStyle: '1073', tCascade: egtuCascade(), altTrips: EGTU_ALT })
+  const lsig = pool.find((p) => p.tripStyleId === 1073)!
+  expect(lsig.tripLabel).toBe('GE Entelliguard TU (retrofit · LSIG)')
+  expect(lsig.label).not.toContain('Entelliguard TU Entelliguard')
+  expect(lsig.label.startsWith('GE Entelliguard TU (retrofit · LSIG) — ')).toBe(true)
+})
+
+test('the protection-class tag distinguishes the merged Entelliguard variants (LSIG vs LIG)', () => {
+  const pool = buildSensorPool({ ...EMPTY, tStyle: '1073', tCascade: egtuCascade(), altTrips: EGTU_ALT })
+  expect(pool.find((p) => p.tripStyleId === 1566)!.tripLabel).toBe('GE Entelliguard TU (retrofit · LIG)')
+})
+
+test('pool items carry trip_style_id for the alt-trip lookup', () => {
+  const pool = buildSensorPool({ ...EMPTY, tStyle: '1073', tCascade: egtuCascade() })
+  expect(pool.every((p) => p.tripStyleId != null)).toBe(true)
+})
+
+test('non-retrofit trips get no tag (and a duplicate model is still de-duped)', () => {
+  const pool = buildSensorPool({ ...EMPTY, tStyle: '536', tCascade: cascadeWithSensors(1) })
+  expect(pool[0].label).not.toContain('retrofit')
+  expect(pool[0].tripLabel).toBe('GE Std') // "Std Std" collapses to "Std"
+})
+
+test('breaker-grain retrofit: frame prefix + de-dup + retrofit·class tag', () => {
+  const bridge: EtuBridgeSensorsResponse = {
+    breaker_style_id: null,
+    breaker_id: 18,
+    bridge_match_status: 'matched',
+    count: 1,
+    sensors: [bridgeSensor(1026, 'WPS-08', 'Entelliguard TU', 'WavePro', 1073, 7001, 800)],
+  }
+  const pool = buildSensorPool({ ...EMPTY, bId: '18', bridge, altTrips: { 1073: { relation: 'retrofit', protectionClass: 'LSIG' } } })
+  expect(pool[0].label).toBe('WPS-08 GE Entelliguard TU (retrofit · LSIG) — 800 A (800A)')
+})
+
 test('SENSOR_CAP bounds the breaker-grain pool', () => {
   const many: EtuBridgeSensorsResponse = {
     breaker_style_id: null,

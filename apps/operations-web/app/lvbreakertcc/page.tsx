@@ -18,6 +18,7 @@ import {
   fetchEtuBreakerCascade,
   fetchCascade,
   fetchEtuBridgeSensors,
+  fetchEtuBreakerAltTrips,
   fetchEtuSettings,
   fetchEtuContext,
   fetchEtuCalculate,
@@ -47,7 +48,7 @@ import {
   type EMTFrameContext,
   type EMTSectionSettingsResponse,
 } from '../../lib/breaker-resources'
-import { buildSensorPool, summarizeSensorTerminal } from '../../lib/etu-sensor-pool'
+import { buildSensorPool, summarizeSensorTerminal, type AltTripInfo } from '../../lib/etu-sensor-pool'
 
 // ── families ────────────────────────────────────────────────────────────────
 type Family = 'etu' | 'tmt' | 'emt'
@@ -511,12 +512,34 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     return () => { active = false }
   }, [bStyle, bStyleIdsKey, bId, tStyle, bClass, bIdClass])
 
+  // Alt-trip (retrofit/upgrade) set for the chosen breaker — keyed by trip_style_id so the
+  // sensor pool can tag a trip "(retrofit · LSIG)" and disambiguate same-named variants.
+  // Breaker-grained (uniform across the breaker's frames), so fetch on the breaker pick;
+  // it tags rows from either selection axis.
+  const [altTrips, setAltTrips] = useState<Record<number, AltTripInfo>>({})
+  useEffect(() => {
+    if (!bId && !bStyle) { setAltTrips({}); return }
+    let active = true
+    const cls = bClass || bIdClass || null
+    fetchEtuBreakerAltTrips(
+      bId ? { breakerId: Number(bId), breakerClass: cls } : { breakerStyleId: Number(bStyle), breakerClass: cls },
+    )
+      .then((r) => {
+        if (!active) return
+        const map: Record<number, AltTripInfo> = {}
+        for (const a of r.alt_trips) map[a.trip_style_id] = { relation: a.relation, protectionClass: a.protection_class }
+        setAltTrips(map)
+      })
+      .catch(() => { if (active) setAltTrips({}) })
+    return () => { active = false }
+  }, [bId, bStyle, bClass, bIdClass])
+
   // Normalized compatible-sensor pool, from whichever terminal fired (trip-style wins as
   // the breaker∩trip intersection; else the breaker's bridge sensors — breaker grain unions
   // every frame, frame grain narrows to one). Pure logic lives in lib/etu-sensor-pool.
   const pool = useMemo(
-    () => buildSensorPool({ tStyle, tCascade, bStyle, bId, bridge }),
-    [tStyle, tCascade, bStyle, bId, bridge],
+    () => buildSensorPool({ tStyle, tCascade, bStyle, bId, bridge, altTrips }),
+    [tStyle, tCascade, bStyle, bId, bridge, altTrips],
   )
 
   const resolveSensor = useCallback(async (sid: string) => {
@@ -545,7 +568,7 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
       family: 'etu',
       sensorId: row.sensor_id,
       breakerLabel,
-      tripLabel: [row.tripMfr, row.tripType, row.tripStyle].filter(Boolean).join(' '),
+      tripLabel: row.tripLabel,
       ratingLabel: `${row.desc || '—'}${row.rating ? ` · Ir ${row.rating} A` : ''}`,
       bridgeStatus: 'matched',
       plugs,
