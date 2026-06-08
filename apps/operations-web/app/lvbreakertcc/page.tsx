@@ -262,7 +262,11 @@ function Picker({ label, value, onChange, options, placeholder, disabled, busy }
       <span className="pick-l">{label}{busy ? <span className="spin" /> : null}</span>
       <select className="pick-s" value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)}>
         <option value="">{placeholder ?? 'Select…'}</option>
-        {options.map((o) => (<option key={o.value} value={o.value}>{o.label}</option>))}
+        {/* Key by position, not o.value: deduped trip_types can share a representative
+            trip_type_id (e.g. 24 "Digitrip 310+ …" variants all map to id 218), so keying by
+            value yields duplicate React keys and the keyed reconciliation fails to replace the
+            stale (uncross-filtered) option list when the cross-filtered list arrives. */}
+        {options.map((o, i) => (<option key={`${o.value}#${i}`} value={o.value}>{o.label}</option>))}
       </select>
     </label>
   )
