@@ -57,3 +57,16 @@ the host-local audit workspace:
 
 `CATALOG-INDEX.csv` is bibliographic metadata only. It contains no copyrighted PDF body text and no binary
 payloads. Each row points to a relative path under `_NORMALIZED_REVIEW`.
+
+## Current State
+
+Phase 2 curation on 2026-06-07 reclassified the remaining non-quarantine `Unknown` PDFs, filed the Fuji,
+ITE, L&T, and Merlin Gerin long-tail staging sets, and deduped exact/superseded recoveries.
+
+Current manifest:
+
+- 206 rows
+- 100 breaker rows
+- 94 trip-unit rows
+- 12 quarantine rows
+- 0 non-quarantine `Unknown` rows
