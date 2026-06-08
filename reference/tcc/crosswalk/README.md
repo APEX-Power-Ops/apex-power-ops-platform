@@ -80,7 +80,8 @@ before regenerating, or merge by `trip_style_id` / `(breaker_class, style_id)`.
 
 ## Lineage
 
-- Live serving + alias tables: STATE §181–§184; topic `project_tcc_lvbreaker_mvp_page_2026-06-01.md`.
-- Migrations: `infra/database/migrations/tcc/013` (mfr) · `014` (trip-model) · `015` (breaker-model) · `016` (trip solid-state-fix).
+- Live serving + alias tables: STATE §181–§190; topic `project_tcc_lvbreaker_mvp_page_2026-06-01.md`.
+- Migrations: `infra/database/migrations/tcc/013` (mfr) · `014` (trip-model) · `015` (breaker-model) · `016` (trip solid-state-fix). Later alias/lineage edits ship via governed `apply_migration` (no repo mirror, per §186/§187): §189 L&T C-Power; **§190 `mfr_aliases` ITE(11)+Gould(173) → Siemens**.
+- §190 resolution pass (2026-06-08): Manufacturers ITE/Gould `corrected`→Siemens (BBC/Brown Boveri `confirmed`→kept `ITE (BBC)`); all 684 Merlin Gerin breaker rows dispositioned vs the authoritative ETAP Star Library token set — `confirmed`/`corrected` for exact tokens (MasterPact NW/NT + NS Compact display-correct no-ops; cross-scheme `frame` guesses e.g. `NS400N→CJ 400H` **rejected**), `no_etap_equiv` for genuine gaps (NSX frame-collapse declined per operator).
 - This workbook is a **living document** (binary; opaque to git diff). Periodic
   snapshots are fine; if churn becomes heavy, consider Git LFS.
