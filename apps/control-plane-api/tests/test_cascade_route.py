@@ -128,6 +128,76 @@ def test_cascade_returns_cross_filtered_option_sets(client):
         app.dependency_overrides.clear()
 
 
+def test_cascade_trip_styles_carry_protection_class_and_group_by_it(client):
+    """Trip Style is the protection-class axis (Type=model, Style=L/S/I/G).
+
+    The style dedup must re-key on protection_class so a model with two
+    distinct classes (e.g. GE EntelliGuard TU: WavePro LSIG vs Wavepro-LI LIG)
+    surfaces BOTH classes instead of merging them into one model option.
+    """
+    fake_db = FakeCascadeDb([
+        FakeResult(scalar_value=16),
+        FakeResult(rows=[
+            {"manufacturer_id": 9, "manufacturer_name": "GE", "trip_type_count": 1},
+        ]),
+        FakeResult(rows=[
+            {
+                "trip_type_id": 75,
+                "trip_type_name": "Entelliguard TU",
+                "trip_model_display": "Entelliguard",
+                "manufacturer_id": 9,
+                "manufacturer_name": "GE",
+                "trip_style_count": 2,
+            },
+        ]),
+        FakeResult(rows=[
+            {
+                "trip_style_id": 1073,
+                "style_ids": [1073],
+                "trip_style_name": "WavePro",
+                "trip_model_display": "Entelliguard",
+                "protection_class": "LSIG",
+                "trip_type_id": 75,
+                "trip_type_name": "Entelliguard TU",
+                "manufacturer_id": 9,
+                "manufacturer_name": "GE",
+                "sensor_count": 8,
+            },
+            {
+                "trip_style_id": 1566,
+                "style_ids": [1566],
+                "trip_style_name": "Wavepro LI",
+                "trip_model_display": "Entelliguard",
+                "protection_class": "LIG",
+                "trip_type_id": 75,
+                "trip_type_name": "Entelliguard TU",
+                "manufacturer_id": 9,
+                "manufacturer_name": "GE",
+                "sensor_count": 8,
+            },
+        ]),
+        FakeResult(rows=[{"plug_value": 800, "sensor_count": 8}]),
+    ])
+    app.dependency_overrides[get_db] = lambda: fake_db
+
+    try:
+        resp = client.get("/api/v1/neta/cascade", params={"manufacturer_id": 9, "trip_type_id": 75})
+        assert resp.status_code == 200
+        body = resp.json()
+        styles = body["trip_styles"]
+        assert [s["protection_class"] for s in styles] == ["LSIG", "LIG"]
+        assert [s["style_ids"] for s in styles] == [[1073], [1566]]
+        # The trip_style query (4th execute) must derive + group by protection_class
+        trip_style_call = fake_db.calls[3]
+        assert "AS protection_class" in trip_style_call["statement"]
+        assert (
+            "GROUP BY manufacturer_display, trip_model_display, protection_class"
+            in trip_style_call["statement"]
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+
 def test_cascade_qualifies_sensor_count_when_plug_filter_and_cross_half_filters_are_active(client):
     fake_db = FakeCascadeDb([
         FakeResult(scalar_value=1),

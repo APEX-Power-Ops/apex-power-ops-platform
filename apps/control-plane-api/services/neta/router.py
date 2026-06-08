@@ -4114,6 +4114,7 @@ def get_cascade(
                 ARRAY_AGG(DISTINCT trip_style_id ORDER BY trip_style_id) AS style_ids,
                 (ARRAY_AGG(trip_style_name ORDER BY trip_type_id, trip_style_id))[1] AS trip_style_name,
                 trip_model_display,
+                protection_class,
                 MIN(trip_type_id) AS trip_type_id,
                 ARRAY_AGG(DISTINCT trip_type_id ORDER BY trip_type_id) AS trip_type_ids,
                 (ARRAY_AGG(trip_type_name ORDER BY trip_type_id, trip_style_id))[1] AS trip_type_name,
@@ -4123,24 +4124,49 @@ def get_cascade(
                 COUNT(DISTINCT sensor_id)::int AS sensor_count,
                 0::int AS dedupe_divergence_count
             FROM (
-                SELECT DISTINCT
-                    v.trip_style_id,
-                    v.trip_style_name,
-                    v.trip_type_id,
-                    v.trip_type_name,
-                    v.sensor_id,
-                    v.manufacturer_id,
-                    v.manufacturer_name,
-                    COALESCE(a.etap_mfr_name, v.manufacturer_name) AS manufacturer_display,
-                    COALESCE(tsa.alias_name, tma.etap_model, v.trip_style_name) AS trip_model_display
-                FROM vw_trip_unit_cascade v
-                LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = v.manufacturer_name
-                {_TRIP_MODEL_DISPLAY_JOINS}
-                {plug_join}
-                {_apply_xh(trip_style_where)}
+                -- Step 2 (task #106): the Trip Style axis is the PROTECTION CLASS
+                -- (L/S/I/G), not the model. Derive the class per style (bool_or over
+                -- its sensors' element flags), then re-key the dedup on it so a model
+                -- carrying >1 class (e.g. GE EntelliGuard TU: WavePro LSIG + Wavepro-LI
+                -- LIG) surfaces BOTH classes instead of collapsing to one model option.
+                SELECT
+                    trip_style_id,
+                    trip_style_name,
+                    trip_type_id,
+                    trip_type_name,
+                    sensor_id,
+                    manufacturer_id,
+                    manufacturer_name,
+                    manufacturer_display,
+                    trip_model_display,
+                    'L'
+                      || CASE WHEN BOOL_OR(has_stpu) OVER (PARTITION BY trip_style_id) THEN 'S' ELSE '' END
+                      || CASE WHEN BOOL_OR(has_inst) OVER (PARTITION BY trip_style_id) THEN 'I' ELSE '' END
+                      || CASE WHEN BOOL_OR(has_gfpu) OVER (PARTITION BY trip_style_id) THEN 'G' ELSE '' END
+                      AS protection_class
+                FROM (
+                    SELECT DISTINCT
+                        v.trip_style_id,
+                        v.trip_style_name,
+                        v.trip_type_id,
+                        v.trip_type_name,
+                        v.sensor_id,
+                        v.manufacturer_id,
+                        v.manufacturer_name,
+                        v.has_stpu,
+                        v.has_inst,
+                        v.has_gfpu,
+                        COALESCE(a.etap_mfr_name, v.manufacturer_name) AS manufacturer_display,
+                        COALESCE(tsa.alias_name, tma.etap_model, v.trip_style_name) AS trip_model_display
+                    FROM vw_trip_unit_cascade v
+                    LEFT JOIN tcc.mfr_aliases a ON a.ep_mfr_name = v.manufacturer_name
+                    {_TRIP_MODEL_DISPLAY_JOINS}
+                    {plug_join}
+                    {_apply_xh(trip_style_where)}
+                ) trip_style_base
             ) trip_style_options
-            GROUP BY manufacturer_display, trip_model_display
-            ORDER BY manufacturer_display, trip_model_display
+            GROUP BY manufacturer_display, trip_model_display, protection_class
+            ORDER BY manufacturer_display, trip_model_display, protection_class
             """
         ),
         {**trip_style_params, **plug_params, **xh_params},

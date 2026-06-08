@@ -90,6 +90,8 @@ export type CascadeTripStyle = {
   style_ids?: number[] | null
   trip_style_name: string
   trip_model_display?: string | null
+  // Protection-element class (L/S/I/G, e.g. "LSIG") — the Trip Style axis.
+  protection_class?: string | null
   trip_type_id: number
   trip_type_ids?: number[] | null
   trip_type_name: string

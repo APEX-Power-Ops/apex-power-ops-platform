@@ -53,6 +53,10 @@ class CascadeTripStyle(BaseModel):
     style_ids: Optional[list[int]] = None
     trip_style_name: str
     trip_model_display: Optional[str] = None
+    # Protection-element class (L/S/I/G, e.g. "LSIG") — the Trip Style axis after
+    # the step-2 restructure (Type=model, Style=protection class). Derived from the
+    # style's sensors' has_* flags; never null in practice ('L' is always present).
+    protection_class: Optional[str] = None
     trip_type_id: int
     trip_type_ids: Optional[list[int]] = None
     trip_type_name: str

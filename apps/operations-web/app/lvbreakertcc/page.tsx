@@ -49,6 +49,7 @@ import {
   type EMTSectionSettingsResponse,
 } from '../../lib/breaker-resources'
 import { buildSensorPool, summarizeSensorTerminal, type AltTripInfo } from '../../lib/etu-sensor-pool'
+import { tripStyleOptionLabel } from '../../lib/trip-style-options'
 
 // ── families ────────────────────────────────────────────────────────────────
 type Family = 'etu' | 'tmt' | 'emt'
@@ -591,7 +592,8 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   // Axis B options
   const tMfrOpts = (tCascade?.manufacturers ?? []).map((m) => ({ value: String(m.manufacturer_id), label: `${m.manufacturer_display ?? m.manufacturer_name} (${m.trip_type_count})` }))
   const tTypeOpts = (tCascade?.trip_types ?? []).map((t) => ({ value: String(t.trip_type_id), label: t.trip_model_display ?? t.trip_type_name }))
-  const tStyleOpts = (tCascade?.trip_styles ?? []).map((t) => ({ value: String(t.trip_style_id), label: `${t.trip_model_display ?? t.trip_style_name} (${t.sensor_count})` }))
+  // Trip STYLE = protection class (LSI/LSIG/LIG…); the model lives in Trip TYPE. (task #106)
+  const tStyleOpts = (tCascade?.trip_styles ?? []).map((t) => ({ value: String(t.trip_style_id), label: tripStyleOptionLabel(t) }))
 
   // shared sensor terminal — count tracks the SAME source the dropdown lists, so the
   // status line and the dropdown always agree (no more "8 compatible" over an empty list).
