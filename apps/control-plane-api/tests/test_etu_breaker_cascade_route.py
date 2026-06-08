@@ -151,7 +151,12 @@ def test_breaker_cascade_bridge_xfilter_narrows_by_compatibility_not_manufacture
         )
         assert resp.status_code == 200
         assert all("vw_breaker_sst_bridge" in c["statement"] for c in fake_db.calls)
-        assert any("(breaker_class, breaker_style_id) IN" in c["statement"] for c in fake_db.calls)
+        # Columns are table-qualified to the cascade CTE so the row-value cannot collide
+        # with the styles sub-query's tcc.breaker_style_aliases join (same column names).
+        assert any(
+            "(etu_breaker_combined.breaker_class, etu_breaker_combined.breaker_style_id) IN" in c["statement"]
+            for c in fake_db.calls
+        )
         # legacy manufacturer-only narrowing must NOT be used when bridge_xfilter is on
         assert not any(
             "manufacturer_id IN (SELECT DISTINCT manufacturer_id FROM vw_trip_unit_cascade" in c["statement"]
@@ -177,3 +182,22 @@ def test_breaker_cascade_bridge_only_filters_to_etu_capable(client):
         assert any("(breaker_class, breaker_style_id) IN" in call["statement"] for call in fake_db.calls)
     finally:
         app.dependency_overrides.clear()
+
+
+def test_bridge_xfilter_qualifies_cross_half_columns_against_bsa_collision():
+    # Regression (lvbreakertcc ETU breaker∩trip): the breaker-cascade styles sub-query
+    # LEFT JOINs tcc.breaker_style_aliases (bsa), composite-keyed on
+    # (breaker_class, breaker_style_id) — the SAME column names this cross-filter row-value
+    # references. If the row-value is left UNqualified, Postgres raises 42702 "column
+    # reference is ambiguous" -> 500. FastAPI's 500 carries no CORS header, so the browser
+    # reports it as "Failed to fetch". The columns MUST be qualified to the cascade CTE.
+    from services.neta.router import _build_cross_half_trip_unit_filter
+
+    clause, _params = _build_cross_half_trip_unit_filter(
+        None, None, None, trip_manufacturer_ids=[445], bridge_xfilter=True
+    )
+    assert (
+        "(etu_breaker_combined.breaker_class, etu_breaker_combined.breaker_style_id) IN" in clause
+    )
+    # the bare, unqualified row-value (the bug) must be gone
+    assert "(breaker_class, breaker_style_id) IN" not in clause

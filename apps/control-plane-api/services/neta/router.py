@@ -2419,8 +2419,14 @@ def _build_cross_half_trip_unit_filter(
 
     inner_where = " AND ".join(parts)
     if bridge_xfilter:
+        # Qualify the outer columns with the cascade CTE name. The breaker-cascade styles
+        # sub-query also LEFT JOINs tcc.breaker_style_aliases (bsa), which is composite-keyed
+        # on the SAME (breaker_class, breaker_style_id) columns — an unqualified row-value is
+        # ambiguous there (Postgres 42702) and 500s the whole call. The 500 carries no CORS
+        # header, so the browser surfaces it as "Failed to fetch". Every caller sub-query
+        # selects FROM etu_breaker_combined, so this qualifier is always valid.
         clause = (
-            " AND (breaker_class, breaker_style_id) IN ("
+            " AND (etu_breaker_combined.breaker_class, etu_breaker_combined.breaker_style_id) IN ("
             "SELECT upper(b.breaker_class), b.breaker_style_id "
             "FROM tcc.vw_breaker_sst_bridge b WHERE b.sensor_id IN ("
             f"SELECT sensor_id FROM vw_trip_unit_cascade WHERE {inner_where}))"
