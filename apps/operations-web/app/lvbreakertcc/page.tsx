@@ -47,6 +47,7 @@ import {
   type EMTFrameContext,
   type EMTSectionSettingsResponse,
 } from '../../lib/breaker-resources'
+import { buildSensorPool, summarizeSensorTerminal } from '../../lib/etu-sensor-pool'
 
 // ── families ────────────────────────────────────────────────────────────────
 type Family = 'etu' | 'tmt' | 'emt'
@@ -339,7 +340,6 @@ function Specifications({ family, setFamily, selection, setSelection }: {
 // trip cascade's sensors[]; picking a sensor finalizes — reachable from either end.
 // /cascade only emits sensors[] once a trip-style leaf is chosen, so the breaker lane
 // gets its own sensor source via /etu/bridge-sensors — either terminal yields sensors.
-const SENSOR_CAP = 250
 
 function selectedManufacturerIds(
   rows: { manufacturer_id: number; manufacturer_ids?: number[] | null }[],
@@ -403,6 +403,13 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   const tMfrIdsKey = tMfrIds?.join(',') ?? ''
   const bBreakerIds = useMemo(
     () => selectedMergedIds(bCascade?.breakers ?? [], bId, 'breaker_id', 'breaker_ids'),
+    [bCascade, bId],
+  )
+  // The chosen breaker's class — breaker_id / breaker_style_id are per-class serials that
+  // COLLIDE across ICCB/MCCB/PCB, so the bridge fetch must always carry the class even when
+  // the operator skipped the class dropdown (#23 / DURABLE cross-class id collision).
+  const bIdClass = useMemo(
+    () => bCascade?.breakers.find((b) => String(b.breaker_id) === bId)?.breaker_class ?? null,
     [bCascade, bId],
   )
   const bStyleIds = useMemo(
@@ -477,44 +484,40 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   }, [tMfrIdsKey, tType, tTypeIdsKey, tStyle, tStyleIdsKey, bMfrIdsKey, bClass, bId, bBreakerIdsKey, bStyle, bStyleIdsKey])
 
   // Breaker-axis terminal -> sensors directly via the SST bridge, so the breaker lane
-  // surfaces sensors without requiring a trip-style tap. Skip when a trip-style leaf is
-  // set (then /cascade is the more specific breaker∩trip intersection).
+  // surfaces sensors without requiring a trip-style tap. Fires the moment a breaker is
+  // picked (breaker grain: the union of every frame's bridged sensors, rating-narrowed
+  // per frame by the backend) and re-narrows to one frame once a Frame Size is chosen.
+  // Skip when a trip-style leaf is set (then /cascade is the more specific breaker∩trip
+  // intersection).
   const [bridge, setBridge] = useState<EtuBridgeSensorsResponse | null>(null)
   const [bridgeBusy, setBridgeBusy] = useState(false)
   useEffect(() => {
-    if (!bStyle || tStyle) { setBridge(null); return }
+    if ((!bStyle && !bId) || tStyle) { setBridge(null); return }
     let active = true
     setBridgeBusy(true)
-    fetchEtuBridgeSensors({
-      breakerStyleId: bStyleIdsKey ? null : Number(bStyle),
-      breakerStyleIds: manufacturerIdsFromKey(bStyleIdsKey),
-      breakerClass: bClass || null,
-    })
+    const bridgeClass = bClass || bIdClass || null
+    fetchEtuBridgeSensors(
+      bStyle
+        ? {
+            breakerStyleId: bStyleIdsKey ? null : Number(bStyle),
+            breakerStyleIds: manufacturerIdsFromKey(bStyleIdsKey),
+            breakerClass: bridgeClass,
+          }
+        : { breakerId: Number(bId), breakerClass: bridgeClass },
+    )
       .then((r) => { if (active) setBridge(r) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setBridgeBusy(false) })
     return () => { active = false }
-  }, [bStyle, bStyleIdsKey, tStyle, bClass])
+  }, [bStyle, bStyleIdsKey, bId, tStyle, bClass, bIdClass])
 
   // Normalized compatible-sensor pool, from whichever terminal fired (trip-style wins as
-  // the breaker∩trip intersection; else the breaker frame's bridge sensors).
-  type PoolItem = { sensor_id: number; rating: number | null; desc: string; tripMfr: string; tripType: string; tripStyle: string; label: string }
-  const pool = useMemo<PoolItem[]>(() => {
-    const src: PoolItem[] = tStyle && tCascade
-      ? tCascade.sensors.map((s) => ({
-          sensor_id: s.sensor_id, rating: s.sensor_rating, desc: s.sensor_desc ?? '',
-          tripMfr: s.manufacturer_name ?? '', tripType: s.trip_type_name ?? '', tripStyle: s.trip_model_display ?? s.trip_style_name ?? '',
-          label: `${s.manufacturer_name ?? ''} ${s.trip_type_name ?? ''} ${s.trip_model_display ?? s.trip_style_name ?? ''} — ${s.sensor_desc ?? ''}${s.sensor_rating ? ` (${s.sensor_rating}A)` : ''}`.trim(),
-        }))
-      : bStyle && bridge
-        ? bridge.sensors.map((s) => ({
-            sensor_id: s.sensor_id, rating: s.sensor_rating, desc: s.sensor_description ?? '',
-            tripMfr: s.tmt_sst_mfr ?? '', tripType: s.tmt_sst_type ?? '', tripStyle: s.tmt_sst_style ?? '',
-            label: `${s.tmt_sst_mfr ?? ''} ${s.tmt_sst_type ?? ''} ${s.tmt_sst_style ?? ''} — ${s.sensor_description ?? ''}${s.sensor_rating ? ` (${s.sensor_rating}A)` : ''}`.trim(),
-          }))
-        : []
-    return src.slice(0, SENSOR_CAP)
-  }, [tStyle, tCascade, bStyle, bridge])
+  // the breaker∩trip intersection; else the breaker's bridge sensors — breaker grain unions
+  // every frame, frame grain narrows to one). Pure logic lives in lib/etu-sensor-pool.
+  const pool = useMemo(
+    () => buildSensorPool({ tStyle, tCascade, bStyle, bId, bridge }),
+    [tStyle, tCascade, bStyle, bId, bridge],
+  )
 
   const resolveSensor = useCallback(async (sid: string) => {
     setSensorId(sid)
@@ -523,9 +526,12 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     const bMfrRow = bCascade?.manufacturers.find((m) => String(m.manufacturer_id) === bMfr)
     const bMfrName = bMfrRow?.manufacturer_display ?? bMfrRow?.manufacturer_name ?? ''
     const bName = bCascade?.breakers.find((b) => String(b.breaker_id) === bId)?.breaker_name ?? ''
-    const bStyleRow = bCascade?.breaker_styles.find((s) => String(s.breaker_style_id) === bStyle)
-    const frame = bStyleRow?.breaker_model_display ?? bStyleRow?.breaker_style_name ?? ''
-    const breakerLabel = [bMfrName, bClass, bName, frame].filter(Boolean).join(' ') || 'Compatible breaker (any)'
+    // At breaker grain the frame is carried on the chosen sensor row (row.frame/styleId),
+    // so the nameplate stays complete even when no Frame Size dropdown was touched.
+    const styleKey = bStyle || (row.styleId != null ? String(row.styleId) : '')
+    const bStyleRow = bCascade?.breaker_styles.find((s) => String(s.breaker_style_id) === styleKey)
+    const frame = row.frame ?? bStyleRow?.breaker_model_display ?? bStyleRow?.breaker_style_name ?? ''
+    const breakerLabel = [bMfrName, bClass || bIdClass || '', bName, frame].filter(Boolean).join(' ') || 'Compatible breaker (any)'
     setResolving(true)
     let plugs: number[] = []
     try {
@@ -560,18 +566,20 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   const tTypeOpts = (tCascade?.trip_types ?? []).map((t) => ({ value: String(t.trip_type_id), label: t.trip_model_display ?? t.trip_type_name }))
   const tStyleOpts = (tCascade?.trip_styles ?? []).map((t) => ({ value: String(t.trip_style_id), label: `${t.trip_model_display ?? t.trip_style_name} (${t.sensor_count})` }))
 
-  // shared sensor terminal
-  const poolCount = tCascade?.count ?? 0 // distinct sensors compatible with the current selection (both halves)
-  const sensorReady = pool.length > 0
-  const sensorOpts = pool.map((p) => ({ value: String(p.sensor_id), label: p.label }))
+  // shared sensor terminal — count tracks the SAME source the dropdown lists, so the
+  // status line and the dropdown always agree (no more "8 compatible" over an empty list).
   const anySel = !!(bMfr || bClass || bId || bStyle || tMfr || tType || tStyle)
-  const sensorPlaceholder = sensorReady
-    ? 'Select sensor…'
-    : !anySel
-      ? 'Narrow either axis to begin…'
-      : poolCount === 0
-        ? 'No compatible sensors'
-        : 'Pick a frame or trip style to list sensors'
+  const terminal = summarizeSensorTerminal({ tStyle, tCascade, bStyle, bId, bridge }, pool, anySel)
+  const sensorReady = terminal.state === 'ready'
+  const sensorOpts = pool.map((p) => ({ value: String(p.sensor_id), label: p.label }))
+  const sensorPlaceholder =
+    terminal.state === 'ready'
+      ? 'Select sensor…'
+      : terminal.state === 'idle'
+        ? 'Narrow either axis to begin…'
+        : terminal.state === 'empty'
+          ? 'No compatible sensors'
+          : 'Pick a breaker, frame, or trip style to list sensors'
 
   return (
     <div className="selwrap">
@@ -602,11 +610,13 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
       <div className="sensor-term">
         <Picker label="Compatible Sensor (SST bridge intersection)" value={sensorId} options={sensorOpts} busy={resolving || bridgeBusy}
           placeholder={sensorPlaceholder} disabled={!sensorReady} onChange={resolveSensor} />
-        {anySel && (
-          <div className={`xf-status ${poolCount === 0 ? 'empty' : sensorReady ? 'ok' : ''}`}>
-            {poolCount === 0
+        {anySel && terminal.state !== 'idle' && (
+          <div className={`xf-status ${terminal.state === 'empty' ? 'empty' : terminal.state === 'ready' ? 'ok' : ''}`}>
+            {terminal.state === 'empty'
               ? '✗ No sensors are bridge-compatible with this combination — relax one axis.'
-              : <>↔ <span className="xf-count">{poolCount.toLocaleString('en-US')}</span> compatible sensor{poolCount === 1 ? '' : 's'} — both axes narrow each other.</>}
+              : terminal.state === 'narrow'
+                ? <>↔ <span className="xf-count">{terminal.count.toLocaleString('en-US')}</span> reachable — pick a breaker, frame, or trip style to list them.</>
+                : <>↔ <span className="xf-count">{terminal.count.toLocaleString('en-US')}</span> compatible sensor{terminal.count === 1 ? '' : 's'}{terminal.capped ? ' (first 250 shown)' : ''} — both axes narrow each other.</>}
           </div>
         )}
         {bridge?.rating_warning && (
