@@ -1958,6 +1958,63 @@ def _resolve_longtime_tr(ltd_setting, bands) -> Optional[float]:
     return None
 
 
+def _resolve_longtime_tr_clear(ltd_setting, bands) -> Optional[float]:
+    """The clear-side long-time reference time (total clear at 6×Ir) for the
+    synthesized LTD pair — the SAME-BAND law (adversarial review, #123): the
+    clear basis must come from the band that supplied the open ``tr`` (matched
+    by the dial; else the default band; else the first usable ``open_time``,
+    mirroring ``_resolve_longtime_tr``). A cross-band open/clear pair would be
+    a band that does not exist in the data.
+
+    Returns ``None`` when that band carries no ``clear_time`` DISTINCT from its
+    ``open_time``: the legacy ``etu_ltd_bands`` shape (live prod) is normalized
+    by ``_normalize_ltd_band_rows(legacy=True)`` which DUPLICATES open→clear,
+    so equality means there is no independent clear basis — serving it would
+    draw a fabricated coincident boundary and suppress the open-only honesty
+    note. The caller then serves the open boundary only."""
+
+    def _time_of(band, key) -> Optional[float]:
+        try:
+            v = float(band.get(key))
+            return v if v > 0 else None
+        except (TypeError, ValueError):
+            return None
+
+    rows = [b for b in bands or [] if isinstance(b, dict)]
+    selected = None
+    if ltd_setting is not None:
+        try:
+            tr = float(ltd_setting)
+        except (TypeError, ValueError):
+            return None
+        for b in rows:
+            ot = _time_of(b, "open_time")
+            if ot is not None and abs(ot - tr) < 1e-6:
+                selected = b
+                break
+    else:
+        # Mirror _resolve_longtime_tr's selection: the default band when its
+        # open_time is usable, else the first band with a usable open_time.
+        for b in rows:
+            if b.get("is_default") and _time_of(b, "open_time") is not None:
+                selected = b
+                break
+        if selected is None:
+            for b in rows:
+                if _time_of(b, "open_time") is not None:
+                    selected = b
+                    break
+    if selected is None:
+        return None
+    ot = _time_of(selected, "open_time")
+    ct = _time_of(selected, "clear_time")
+    if ct is None:
+        return None
+    if ot is not None and abs(ct - ot) < 1e-9:
+        return None  # legacy-shim duplicate — no independent clear basis
+    return ct
+
+
 def _synthesize_longtime_i2t(
     ir_amps: float,
     tr_seconds: float,
@@ -2073,6 +2130,7 @@ def _synthesize_i2x_delay_curve(
     lo_amps: float,
     hi_amps: float,
     *,
+    phase: str = "open",
     n_points: int = 56,
     min_time: float = 0.004,
     max_time: float = 1.0e5,
@@ -2084,10 +2142,37 @@ def _synthesize_i2x_delay_curve(
     ``M = I / ref_amps`` — STD references Ir (``ltpu_i``), GFD references In
     (the plug rating); the band's ``i_open`` anchor is the multiple of that
     reference where the ramp meets the floor (10×Ir for STD, 1×In for GFD on the
-    Micrologic 6.0A). Sweeps log-spaced from the element pickup to the upper bound."""
+    Micrologic 6.0A). Sweeps log-spaced from the element pickup to the upper bound.
+
+    ``phase`` selects the band's anchor block: ``"open"`` (min trip) or ``"clear"``
+    (total clear, the ``i_clear``/``t_clear`` ramp anchor + ``floor_clear`` floor).
+    Native open and clear are symmetric ``CIxt`` blocks with their own anchors
+    (``SetSTDB_{Flat,Inverse}Delay{Open,Clear}``, decomp 24440-24531; the I2X-4
+    oracle validated both), so the same kernel evaluates either block — the
+    selected anchors are passed through its per-block parameters. A band with no
+    clear-side data yields NO clear curve (honest zero width), never a copy of
+    the open block."""
     if not band or ref_amps <= 0 or lo_amps <= 0 or hi_amps <= lo_amps:
         return []
     from apex_calc_engine.services.calc_engine import etu_ixt
+
+    if phase == "clear":
+        i_anchor, t_anchor, floor = (
+            band.get("i_clear"), band.get("t_clear"), band.get("floor_clear"))
+        # A composite clear boundary needs the FULL clear block (ramp anchors +
+        # floor): native behavior for a partial block is unratified (the I2X-4
+        # oracle validated full open/clear blocks only), and evaluating just the
+        # available piece can draw a malformed boundary (a lone flat clear floor
+        # sits BELOW the open ramp at low current). 282 STD + 211 GFD prod
+        # composite rows carry partial clear blocks (floor without ramp, none
+        # Micrologic-styled) — withhold: honest open-only zero width.
+        if etu_ixt.i2x_shape(band.get("i2x")) == etu_ixt.SHAPE_COMPOSITE and (
+            i_anchor is None or t_anchor is None or floor is None
+        ):
+            return []
+    else:
+        i_anchor, t_anchor, floor = (
+            band.get("i_open"), band.get("t_open"), band.get("floor_open"))
 
     pts: list[PlotCurvePoint] = []
     for k in range(n_points):
@@ -2097,9 +2182,9 @@ def _synthesize_i2x_delay_curve(
         surface = etu_ixt.i2x_delay_surface(
             test_multiple=m,
             i2x_flag=band.get("i2x"),
-            i_open=band.get("i_open"),
-            t_open=band.get("t_open"),
-            std_open=band.get("floor_open"),
+            i_open=i_anchor,
+            t_open=t_anchor,
+            std_open=floor,
             exp_x=exp_x,
         )
         if surface.expected_time is None:
@@ -2836,7 +2921,8 @@ def _generate_nominal_plot_curves(
                 and ltpu_i > 0
                 and not any(c.element == "LTD" for c in curves)
             ):
-                tr = _resolve_longtime_tr(ltd_setting, ltd_calc.get_band_info())
+                ltd_bands = ltd_calc.get_band_info()
+                tr = _resolve_longtime_tr(ltd_setting, ltd_bands)
                 if tr:
                     upper = stpu_i if stpu_i > 0 else (inst_i if inst_i > 0 else ltpu_i * 12.0)
                     lt_pts = _synthesize_longtime_i2t(ltpu_i, tr, upper)
@@ -2848,6 +2934,20 @@ def _generate_nominal_plot_curves(
                             line_style="solid",
                             points=lt_pts,
                         ))
+                        # Clear boundary: the same I²t law at the matched band's
+                        # clear_time (total clear at 6×Ir). No clear basis → open
+                        # only (honest zero band width; #123).
+                        tr_clear = _resolve_longtime_tr_clear(ltd_setting, ltd_bands)
+                        if tr_clear:
+                            lt_clear_pts = _synthesize_longtime_i2t(ltpu_i, tr_clear, upper)
+                            if lt_clear_pts:
+                                curves.append(PlotCurve(
+                                    id="ltd_clear",
+                                    element="LTD",
+                                    phase="clear",
+                                    line_style="dashed",
+                                    points=lt_clear_pts,
+                                ))
         except Exception as exc:
             rollback = getattr(db, "rollback", None)
             if callable(rollback):
@@ -2874,12 +2974,17 @@ def _generate_nominal_plot_curves(
                     # the right-edge clip, G4 §3g rule 6) instead of stopping
                     # mid-ramp at 6×STPU.
                     upper = inst_i if inst_i > 0 else COMPOSITE_RIGHT_EDGE_AMPS
-                    pts = _synthesize_i2x_delay_curve(std_band, x, ltpu_i, stpu_i, upper)
-                    if pts:
-                        curves.append(PlotCurve(
-                            id="std_open", element="STD", phase="open",
-                            line_style="solid", points=pts,
-                        ))
+                    # Both boundaries from the band's symmetric anchor blocks
+                    # (open + clear CIxt blocks, I2X-4-validated). A band with no
+                    # clear anchors serves open only — honest zero width (#123).
+                    for ph, style in (("open", "solid"), ("clear", "dashed")):
+                        pts = _synthesize_i2x_delay_curve(
+                            std_band, x, ltpu_i, stpu_i, upper, phase=ph)
+                        if pts:
+                            curves.append(PlotCurve(
+                                id=f"std_{ph}", element="STD", phase=ph,
+                                line_style=style, points=pts,
+                            ))
             if (
                 "std" in allowed_delays
                 and std_pickup > 0
@@ -2944,12 +3049,16 @@ def _generate_nominal_plot_curves(
                     x = _sensor_i2x_exponent(db, sensor_id, "gfpu_i2t_val")
                     ref_in = float(plug_rating) if plug_rating else (inst_i if inst_i > 0 else gfpu_i)
                     upper = max(inst_i, ref_in * 3.0) if (inst_i > 0 or ref_in > 0) else gfpu_i * 6.0
-                    pts = _synthesize_i2x_delay_curve(gfd_band, x, ref_in, gfpu_i, upper)
-                    if pts:
-                        curves.append(PlotCurve(
-                            id="gfd_open", element="GFD", phase="open",
-                            line_style="solid", points=pts,
-                        ))
+                    # Open + clear from the band's symmetric anchor blocks (#123);
+                    # missing clear anchors → open only (honest zero width).
+                    for ph, style in (("open", "solid"), ("clear", "dashed")):
+                        pts = _synthesize_i2x_delay_curve(
+                            gfd_band, x, ref_in, gfpu_i, upper, phase=ph)
+                        if pts:
+                            curves.append(PlotCurve(
+                                id=f"gfd_{ph}", element="GFD", phase=ph,
+                                line_style=style, points=pts,
+                            ))
             if (
                 "gfd" in allowed_delays
                 and gfpu_i > 0

@@ -1478,6 +1478,70 @@ class TestMicrologicLongtimeI2t:
         body = resp.json()
         assert not [c for c in body["curves"] if c["element"] == "LTD"]
 
+    def test_resolve_longtime_tr_clear(self):
+        """The clear-side reference time = the matched band's clear_time (the LTD
+        dial IS the band's open_time). No matching band / no clear_time → None
+        (no clear basis — honest, don't guess another band's)."""
+        from services.neta.router import _resolve_longtime_tr_clear
+        bands = [
+            {"open_time": 2.0, "clear_time": 2.6, "is_default": True},
+            {"open_time": 4.0, "clear_time": 5.2, "is_default": False},
+            {"open_time": 8.0, "clear_time": None, "is_default": False},
+        ]
+        assert _resolve_longtime_tr_clear(4.0, bands) == 5.2
+        assert _resolve_longtime_tr_clear(None, bands) == 2.6  # default band
+        assert _resolve_longtime_tr_clear(3.0, bands) is None  # unmatched dial
+        assert _resolve_longtime_tr_clear(8.0, bands) is None  # band has no clear
+        assert _resolve_longtime_tr_clear(None, []) is None
+
+        # SAME-BAND law (adversarial review, #123): with no dial and no default,
+        # the clear basis must come from the band that supplied tr (the first
+        # usable open_time — mirroring _resolve_longtime_tr), NEVER from a later
+        # band that happens to carry a clear (a cross-band pair is a band that
+        # does not exist in the data).
+        nodef = [
+            {"open_time": 2.0, "clear_time": None, "is_default": False},
+            {"open_time": 4.0, "clear_time": 5.2, "is_default": False},
+        ]
+        assert _resolve_longtime_tr_clear(None, nodef) is None
+        nodef2 = [
+            {"open_time": None, "clear_time": 9.9, "is_default": False},
+            {"open_time": 4.0, "clear_time": 5.2, "is_default": False},
+        ]
+        assert _resolve_longtime_tr_clear(None, nodef2) == 5.2  # tr's own band
+
+        # Legacy-shim guard: prod etu_ltd_bands is the legacy shape and
+        # _normalize_ltd_band_rows(legacy=True) DUPLICATES open_time into
+        # clear_time — equality means no independent clear basis; serving it
+        # would draw a fabricated coincident boundary and suppress the
+        # open-only honesty note.
+        shim = [{"open_time": 4.0, "clear_time": 4.0, "is_default": True}]
+        assert _resolve_longtime_tr_clear(4.0, shim) is None
+        assert _resolve_longtime_tr_clear(None, shim) is None
+
+    def test_plot_synthesizes_ltd_clear_for_micrologic(self, client, base_request):
+        """The synthesized long-time serves BOTH boundaries: open at tr (the dial)
+        and clear at the matched band's clear_time, same I²t law."""
+        tc, _ = client
+        req = {**base_request, "trip_unit_style_name": "Micrologic 6.0A",
+               "measurements": None, "include_measured_markers": False}
+        patches, _ = _patch_calc_engine(ltd_info=[])
+        with patches["pickup"], patches["ltd"], patches["ieee"]:
+            resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+
+        body = resp.json()
+        ids = [c["id"] for c in body["curves"] if c["element"] == "LTD"]
+        assert ids == ["ltd_open", "ltd_clear"], ids
+        clear = next(c for c in body["curves"] if c["id"] == "ltd_clear")
+        assert clear["phase"] == "clear" and clear["line_style"] == "dashed"
+        opn = next(c for c in body["curves"] if c["id"] == "ltd_open")
+        # base_request dials tr=3.5 → fixture band B (open 3.5 / clear 3.0): the
+        # clear curve is the same I²t law at the band's clear_time, so away from
+        # the min-time clamp the pointwise ratio is clear/open = 3.0/3.5.
+        for po, pc in zip(opn["points"], clear["points"]):
+            if po["seconds"] > 0.01 and pc["seconds"] > 0.01:
+                assert pc["seconds"] / po["seconds"] == pytest.approx(3.0 / 3.5, rel=1e-6)
+
     def test_no_double_ltd_when_db_params_present(self, client, base_request):
         # Micrologic-labelled but DB params present → use the DB curve, don't also synthesize.
         tc, _ = client
@@ -1521,6 +1585,59 @@ class TestMicrologicI2XComposite:
         band = {"i2x": 0, "i_open": None, "t_open": None, "floor_open": 0.1}  # I²t OFF
         pts = _synthesize_i2x_delay_curve(band, 2.0, 2000.0, 8000.0, 16000.0)
         assert pts and all(p.seconds == pytest.approx(0.1) for p in pts)
+
+    def test_synthesize_i2x_clear_phase_uses_clear_anchors(self):
+        """phase="clear" sweeps the band's CLEAR block (i_clear/t_clear anchor +
+        floor_clear) through the same native CIxt kernel — open and clear are
+        symmetric blocks (SetSTDB_*Delay{Open,Clear}), so the clear boundary is
+        max(clear ramp, clear floor). Gives the composite band real width."""
+        from services.neta.router import _synthesize_i2x_delay_curve
+
+        band = {"i2x": 2, "i_open": 10, "t_open": 0.16, "floor_open": 0.14,
+                "i_clear": 10, "t_clear": 0.20, "floor_clear": 0.20}
+        open_pts = _synthesize_i2x_delay_curve(band, 2.0, 2000.0, 8000.0, 24000.0)
+        clear_pts = _synthesize_i2x_delay_curve(
+            band, 2.0, 2000.0, 8000.0, 24000.0, phase="clear")
+        assert len(clear_pts) == len(open_pts) >= 16
+        for p in clear_pts:
+            ramp = 0.20 * (10.0 * 2000.0 / p.amps) ** 2
+            assert p.seconds == pytest.approx(max(ramp, 0.20), rel=1e-6)
+        # Total-clear sits above min-trip pointwise — the band has real width.
+        for po, pc in zip(open_pts, clear_pts):
+            assert pc.seconds > po.seconds
+
+    def test_synthesize_i2x_clear_phase_withheld_without_anchors(self):
+        """A band with no clear-side data serves NO clear curve (honest zero-width
+        — the open-only legend note), never a copy of the open block."""
+        from services.neta.router import _synthesize_i2x_delay_curve
+        band = {"i2x": 2, "i_open": 10, "t_open": 0.16, "floor_open": 0.14,
+                "i_clear": None, "t_clear": None, "floor_clear": None}
+        assert _synthesize_i2x_delay_curve(
+            band, 2.0, 2000.0, 8000.0, 24000.0, phase="clear") == []
+
+    def test_synthesize_i2x_clear_flat_band(self):
+        from services.neta.router import _synthesize_i2x_delay_curve
+        band = {"i2x": 0, "floor_open": 0.02, "floor_clear": 0.08}  # GF "Off" dial
+        pts = _synthesize_i2x_delay_curve(
+            band, 2.0, 2000.0, 8000.0, 16000.0, phase="clear")
+        assert pts and all(p.seconds == pytest.approx(0.08) for p in pts)
+
+    def test_synthesize_i2x_clear_composite_partial_data_withheld(self):
+        """A composite (i2x=2) band whose CLEAR side has a floor but no ramp anchors
+        (282 STD + 211 GFD prod rows) must serve NO clear curve: evaluating only the
+        floor would draw a flat clear boundary BELOW the open ramp at low current —
+        a malformed inverted band, not the native render. Same for ramp-no-floor."""
+        from services.neta.router import _synthesize_i2x_delay_curve
+
+        floor_no_ramp = {"i2x": 2, "i_open": 10, "t_open": 0.16, "floor_open": 0.14,
+                         "i_clear": None, "t_clear": None, "floor_clear": 0.2}
+        assert _synthesize_i2x_delay_curve(
+            floor_no_ramp, 2.0, 2000.0, 8000.0, 24000.0, phase="clear") == []
+
+        ramp_no_floor = {"i2x": 2, "i_open": 10, "t_open": 0.16, "floor_open": 0.14,
+                         "i_clear": 10, "t_clear": 0.2, "floor_clear": None}
+        assert _synthesize_i2x_delay_curve(
+            ramp_no_floor, 2.0, 2000.0, 8000.0, 24000.0, phase="clear") == []
 
     def test_synthesize_i2x_guards(self):
         from services.neta.router import _synthesize_i2x_delay_curve
@@ -1756,7 +1873,8 @@ class TestInvEqDelayAvailability:
 
     def test_plot_no_inveq_double_draw_when_composite_succeeds(self, base_request):
         # A 6.0-styled sensor whose composite renders must NOT also draw the InvEq
-        # pair on top of it (canonical fallback path; composite emits open only).
+        # pair on top of it (canonical fallback path; composite serves open+clear
+        # from the band's symmetric anchor blocks — the route-1 clear edge, #123).
         body = self._plot(
             base_request, avail_bands=set(), inveq_payload=None,
             trip_style_db="MICROLOGIC 6.0A",
@@ -1764,7 +1882,27 @@ class TestInvEqDelayAvailability:
                            "std_delay_setting": 0.14, "gfd_delay_setting": 0.4},
         )
         std_ids = [c["id"] for c in body["curves"] if c["element"] == "STD"]
-        assert std_ids == ["std_open"], std_ids
+        assert std_ids == ["std_open", "std_clear"], std_ids
+        gfd_ids = [c["id"] for c in body["curves"] if c["element"] == "GFD"]
+        assert gfd_ids == ["gfd_open", "gfd_clear"], gfd_ids
+
+        # The clear boundary sits at/above the open boundary pointwise (canonical
+        # 6.0A band: t_clear/floor_clear ≥ t_open/floor_open) — real band width.
+        std_open = next(c for c in body["curves"] if c["id"] == "std_open")
+        std_clear = next(c for c in body["curves"] if c["id"] == "std_clear")
+        assert std_clear["line_style"] == "dashed" and std_clear["phase"] == "clear"
+        for po, pc in zip(std_open["points"], std_clear["points"]):
+            assert pc["seconds"] >= po["seconds"]
+
+        # And the composite phase band therefore no longer flags STD open-only.
+        phase_band = next(
+            (b for b in body["composite_bands"] if b["id"] == "phase_band"), None)
+        assert phase_band is not None
+        assert "STD" not in phase_band["open_only_elements"]
+        gf_band = next(
+            (b for b in body["composite_bands"] if b["id"] == "gf_band"), None)
+        assert gf_band is not None
+        assert "GFD" not in gf_band["open_only_elements"]
 
 
 # ──────────────────────────────────────────────────
