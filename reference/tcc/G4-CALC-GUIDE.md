@@ -7,7 +7,7 @@
 > packet that computes or ships a pickup/delay/tolerance value cites this guide.
 >
 > Status: DRAFT — agent-authored 2026-05-31; **pickup formulas validated against `SSTSensorRecord` primary source 2026-05-31 (Desktop)**
-> Last validated · 2026-06-01 (pickup formulas vs `SSTSensorRecord.cs`; enum vs `SSTCalcMethod.cs`; INVEQ loader reconciled vs pass-2..5; INVEQ managed-evaluator characterized live + corpus distribution measured — §3e; GF-InvEq ANSI cohort re-measured (100 rows / 23 sensors / 3 styles) + hard-excluded; Therm `CalcThermEq` recovered from `TccBase.dll` + patched; **STD-INVEQ Therm parity CLOSED by native-kernel EXECUTION — `TccBase.dll` `CalcThermEq`/`CalcThermEq3` invoked in-process, STD reproduced BIT-EXACT over the complete 4-dial corpus → PROMOTED to "db"; secondary `*ICalc=0` residual CLOSED (zero rows) — §3f**) · **L1 CLOSED 2026-06-09 (STATE §206): `field[13]` = the PLUG rating (In) — slot map banked via ComputeAmps cross-ref; GF-INVEQ Therm plug-basis (`rIRef' = rIRef × plug/pickup`) BIT-EXACT vs native over the complete GF corpus (416 scenarios, maxabs 0.0) → PROMOTED "db" (~1,690 sensors); `/plot-tcc` renders the inverse (`id_*`) sub-blocks band-matched + basis-corrected** · **Native PLOT COMPOSITION recovered 2026-06-09 (STATE §209): `CPointsMergeSST/GF` boundary assembly — pickup asymptote + per-block `TrimCurveX` windows + log-log-intersection handoffs + closed open/clear band + SC-amps right clip + separate GF band — §3g (serving lane pending ratification)** · Open gaps: GF Ansi (100 rows / 23 sensors) formula recovered, anchors PICKUP (corrected 2026-06-09 — independent implement+validate lane), HARD-EXCLUDED meanwhile · GE-TU-STD/Gnd · I2X-255 · WEG OCR-A pickup `[STUB]` · INST `Sec4Inst*` `[DEFERRED]` · LTD `DS2_DLY_PTY` `[DEFERRED]`
+> Last validated · 2026-06-01 (pickup formulas vs `SSTSensorRecord.cs`; enum vs `SSTCalcMethod.cs`; INVEQ loader reconciled vs pass-2..5; INVEQ managed-evaluator characterized live + corpus distribution measured — §3e; GF-InvEq ANSI cohort re-measured (100 rows / 23 sensors / 3 styles) + hard-excluded; Therm `CalcThermEq` recovered from `TccBase.dll` + patched; **STD-INVEQ Therm parity CLOSED by native-kernel EXECUTION — `TccBase.dll` `CalcThermEq`/`CalcThermEq3` invoked in-process, STD reproduced BIT-EXACT over the complete 4-dial corpus → PROMOTED to "db"; secondary `*ICalc=0` residual CLOSED (zero rows) — §3f**) · **L1 CLOSED 2026-06-09 (STATE §206): `field[13]` = the PLUG rating (In) — slot map banked via ComputeAmps cross-ref; GF-INVEQ Therm plug-basis (`rIRef' = rIRef × plug/pickup`) BIT-EXACT vs native over the complete GF corpus (416 scenarios, maxabs 0.0) → PROMOTED "db" (~1,690 sensors); `/plot-tcc` renders the inverse (`id_*`) sub-blocks band-matched + basis-corrected** · **Native PLOT COMPOSITION recovered 2026-06-09 (STATE §209): `CPointsMergeSST/GF` boundary assembly — pickup asymptote + per-block `TrimCurveX` windows + log-log-intersection handoffs + closed open/clear band + SC-amps right clip + separate GF band — §3g; **serving lane SHIPPED 2026-06-10** (#122 `b2dfa7fd`: `/plot-tcc` `composite_bands` phase+GF open/clear staircase, ratified deviations documented in §3g)** · Open gaps: GF Ansi (100 rows / 23 sensors) formula recovered, anchors PICKUP (corrected 2026-06-09 — independent implement+validate lane), HARD-EXCLUDED meanwhile · GE-TU-STD/Gnd · I2X-255 · WEG OCR-A pickup `[STUB]` · INST `Sec4Inst*` `[DEFERRED]` · LTD `DS2_DLY_PTY` `[DEFERRED]`
 
 ---
 
@@ -489,13 +489,24 @@ pointwise min-envelope.** Rules, each `[DLL TccBase.dll]`-cited:
    (217-251) — own vertical GFPU asymptote + GFD band, filleted corner, SC-amps cap, its own open/clear
    passes. Independent of (and conventionally crossing) the phase band.
 
-**Serving-layer gap inventory (2026-06-09, post-#121):** the API serves per-element traces with NO mutual
-clipping — DB-route LTD + route-2 InvEq STD/GFD sweep to the calc-engine default `max_amps=100,000 A`
-(the router never passes `max_amps`), INST is two points `[pickup, 5×pickup]` at placeholder times
-0.05/0.08 s (the `Sec4Inst*` surface = matrix row 12, unresolved), no pickup asymptotes, no band polygon.
-Only the synthesized branches self-clip (I²t LTD at STPU; route-1 I2X STD at INST; route-1 GFD sweeps
-`[GFPU, max(INST, 3×In)]`). The composite-boundary serving lane (operator-requested, design pending
-ratification) implements rules 1-8; STATE §209.
+**Serving lane SHIPPED 2026-06-10 (#122, apex `b2dfa7fd`; STATE §209-§210):**
+`services/neta/composite_boundary.py` (pure, 20 TDD tests) assembles `composite_bands`
+(`phase_band` + `gf_band`, open/clear boundary polylines each) on `/plot-tcc` from the served
+per-element curves; the frontend fills the closed polygon with the per-element traces demoted to a
+legend toggle. Implements rules 1-8 with these documented deviations (operator-ratified §209 tiers):
+**right edge = 100 kA** (serving sweep default; native clips at study SC amps — SC input later);
+**fillets skipped** (rule 5 cosmetic); **route-1 open-only elements reuse the open block for the clear
+boundary** (zero band width, surfaced in `open_only_elements` + a UI note — clear-edge synthesis from
+`floor_clear`/`t_clear` is the open follow-up). Handoff semantics validated by adversarial review:
+next-element pickup when it already governs there (the classic vertical drop at STPU — THE production
+case, since DB-route LT curves descend through the ST shelf to their min-time floor), log-log crossing
+only when the next block starts ABOVE the current curve (delay priority); region ends = suffix-min of
+later region starts, so a low-dialed INST caps every earlier block at its pickup (native
+`AddInstantaneous`-at-INST-amps equivalence). Route-1 STD now sweeps to the right edge when no INST
+exists (rule 7 — native carries the final element to the clip). Residual per-element serving facts:
+INST times are still the 0.05/0.08 s placeholders (`Sec4Inst*` = matrix row 12, unresolved — the band
+floor inherits them); route-2 sweeps still default `max_amps=100 kA` (now harmless — the assembly
+clips them at the handoffs).
 
 **Read every sensor's delay-calc route against this table before emitting a delay/curve number.**
 Status legend: **PROVEN** = recovered + bound + numerically validated on real rows; **BOUNDED** =
