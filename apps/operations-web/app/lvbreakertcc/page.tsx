@@ -893,7 +893,6 @@ function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, 
   const [loading, setLoading] = useState(true)
   const [calcBusy, setCalcBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
-  const hadChosenOnMount = chosen != null
 
   useEffect(() => {
     let active = true
@@ -903,15 +902,15 @@ function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, 
         if (!active) return
         setSettings(s)
         // Default the selection only when the operator hasn't configured this
-        // sensor yet (the page resets the lifted state on sensor change).
-        if (!hadChosenOnMount) {
-          const mid = (arr: number[]): number | undefined => (arr.length ? arr[Math.floor(arr.length / 2)] : undefined)
-          setChosen({
-            plug: s.plug_values[0] ?? 0,
-            ltpu: mid(s.ltpu_settings), stpu: mid(s.stpu_settings), inst: mid(s.inst_settings), gfpu: mid(s.gfpu_settings),
-            ltd: defaultBandValue(s.ltd_settings), std: defaultBandValue(s.std_settings), gfd: defaultBandValue(s.gfd_settings),
-          })
-        }
+        // sensor yet (the page resets the lifted state on sensor change) —
+        // returning from Screen 3 must not clobber their configuration. The
+        // functional read avoids any stale render-captured snapshot.
+        const mid = (arr: number[]): number | undefined => (arr.length ? arr[Math.floor(arr.length / 2)] : undefined)
+        setChosen((current) => current ?? {
+          plug: s.plug_values[0] ?? 0,
+          ltpu: mid(s.ltpu_settings), stpu: mid(s.stpu_settings), inst: mid(s.inst_settings), gfpu: mid(s.gfpu_settings),
+          ltd: defaultBandValue(s.ltd_settings), std: defaultBandValue(s.std_settings), gfd: defaultBandValue(s.gfd_settings),
+        })
       })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setLoading(false) })
