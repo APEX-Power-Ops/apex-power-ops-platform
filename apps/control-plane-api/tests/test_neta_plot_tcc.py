@@ -2322,7 +2322,14 @@ class TestGEPresetNoWarningContract:
 
             assert plot_resp.status_code == 200
             plot_body = plot_resp.json()
-            assert plot_body["warnings"] == []
+            # The one DELIBERATE disclosure (#124): this fixture's route
+            # bytes resolve to None → the GFD time is G4-withheld while its
+            # curve serves, and GFD is the gf family's only element, so the
+            # envelope honesty warning is the disclosure carrier. Anything
+            # else here is still a spurious warning.
+            assert plot_body["warnings"] == [
+                "GFD acceptance envelope withheld (G4 field-trust)"
+            ]
             assert plot_body["meta"]["sensor_desc"] == "800"
             assert plot_body["meta"]["manufacturer"] == "GE"
             assert plot_body["meta"]["trip_type"] == "MVT RMS-9"
@@ -2790,3 +2797,288 @@ class TestCompositeBands:
 
         assert resp.status_code == 200
         assert resp.json()["composite_bands"] == []
+
+
+# ──────────────────────────────────────────────────
+# Tolerance envelope bands (#124)
+# ──────────────────────────────────────────────────
+
+class TestToleranceEnvelope:
+    """/plot-tcc serves the field-acceptance tolerance envelope (#124):
+    the served curves transformed by the SAME tolerance bases the whiskers
+    grade against (PU pcts from the pickup marker limits; LTD time pcts from
+    the served delay row), assembled into min/max boundaries."""
+
+    # A reference-window-consistent LTD sweep (t = 3.5·(5760/I)², the §111
+    # I²t law through the 3× marker point (2880 A, 14.0 s)). The envelope's
+    # LTD anchor-consistency guard rightly withholds the default
+    # FAKE_LTD_CURVE (5.5 s @ 2880 A vs the graded 14.0 s) — these tests use
+    # a curve that IS the graded surface, as the prod I²t paths are.
+    WINDOW_LTD_CURVE = [
+        FakeLTDCurvePoint(1500.0, 51.6096),
+        FakeLTDCurvePoint(2880.0, 14.0),
+        FakeLTDCurvePoint(5760.0, 3.5),
+        FakeLTDCurvePoint(10000.0, 1.161216),
+    ]
+
+    def _plot(self, base_request, *, ltd_tol_rows=None, delay_routes=None,
+              extra_request=None, ltd_curve=None, calc_data=None):
+        mock_session = MagicMock()
+        mock_session.execute = MagicMock(
+            side_effect=_make_fake_execute(
+                calc_data=calc_data if calc_data is not None else CALC_DATA,
+                ltd_tol_rows=ltd_tol_rows, delay_routes=delay_routes,
+            )
+        )
+
+        def override_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = override_db
+        try:
+            tc = TestClient(app)
+            req = {**base_request, "measurements": None,
+                   "include_measured_markers": False, **(extra_request or {})}
+            patches, _ = _patch_calc_engine(
+                ltd_curve=ltd_curve if ltd_curve is not None else self.WINDOW_LTD_CURVE,
+            )
+            with patches["pickup"], patches["ltd"], patches["ieee"]:
+                resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+            assert resp.status_code == 200, resp.text
+            return resp.json()
+        finally:
+            app.dependency_overrides.clear()
+
+    @staticmethod
+    def _secs_at(points, amps):
+        """Curve seconds at an amps breakpoint (min over the stacked pickup
+        asymptote, like the unit-test helper)."""
+        matches = [p["seconds"] for p in points
+                   if abs(p["amps"] - amps) <= 1e-6 * max(abs(amps), 1.0)]
+        return min(matches) if matches else None
+
+    @staticmethod
+    def _basis(env, element):
+        return next((b for b in env["element_basis"] if b["element"] == element), None)
+
+    def test_envelope_bands_present_with_derived_bases(self, base_request):
+        body = self._plot(base_request)
+        envs = {b["id"]: b for b in body["envelope_bands"]}
+        assert set(envs) == {"phase_envelope", "gf_envelope"}
+
+        phase = envs["phase_envelope"]
+        assert phase["family"] == "phase"
+        # PU pcts derive from the served pickup marker limits (864/1056 over
+        # 960 → −10/+10) — whisker↔envelope identity by construction.
+        ltd = self._basis(phase, "LTD")
+        assert ltd is not None
+        assert ltd["pu_tol_lo_pct"] == pytest.approx(-10.0)
+        assert ltd["pu_tol_hi_pct"] == pytest.approx(10.0)
+        assert ltd["pu_source"] == "db_sensor_tolerance"
+        # No DB LTD tolerance in the default fake → the flagged generic
+        # window (−30/+0), estimated=True (the est marker law).
+        assert ltd["time_tol_lo_pct"] == pytest.approx(-30.0)
+        assert ltd["time_tol_hi_pct"] == pytest.approx(0.0)
+        assert ltd["time_source"] == "ltd_generic_estimate"
+        assert ltd["estimated"] is True
+
+        std = self._basis(phase, "STD")
+        assert std is not None
+        assert std["time_source"] == "published_band"
+        assert std["pu_tol_lo_pct"] == pytest.approx(-10.0)  # 4320/4800
+        inst = self._basis(phase, "INST")
+        assert inst is not None
+        assert inst["time_source"] == "published_band"
+
+        gf = envs["gf_envelope"]
+        gfd = self._basis(gf, "GFD")
+        assert gfd is not None
+        assert gfd["pu_tol_lo_pct"] == pytest.approx(-10.0)  # 432/480
+        assert gfd["pu_tol_hi_pct"] == pytest.approx(10.0)
+        assert gfd["time_source"] == "published_band"
+
+    def test_envelope_geometry_scales_served_curves(self, base_request):
+        body = self._plot(base_request)
+        envs = {b["id"]: b for b in body["envelope_bands"]}
+        phase = envs["phase_envelope"]
+        # Min boundary starts at the LTD curve start shifted by LTPU tol_lo
+        # (1500 × 0.9), max boundary at 1500 × 1.1 — the pickup verticals move.
+        assert phase["min_points"][0]["amps"] == pytest.approx(1350.0)
+        assert phase["max_points"][0]["amps"] == pytest.approx(1650.0)
+        # Acceptance-window law on the LTD segment: seconds scale by the
+        # generic −30% on the min edge (14.0 s @ 2880 A → 9.8 s @ 2592 A) —
+        # and because the curve IS the graded window, the envelope edge at
+        # the marker amps equals the whisker band exactly.
+        assert self._secs_at(phase["min_points"], 2880.0 * 0.9) == pytest.approx(9.8)
+        # Max edge seconds unchanged (tol_hi = 0): 14.0 s @ 3168 A.
+        assert self._secs_at(phase["max_points"], 2880.0 * 1.1) == pytest.approx(14.0)
+
+        gf = envs["gf_envelope"]
+        # GFD published-band mode: pickup shifts (500 → 450 / 550), the GF
+        # curve's own start current carrying the 1000 s top anchor.
+        assert gf["min_points"][0]["amps"] == pytest.approx(450.0)
+        assert gf["max_points"][0]["amps"] == pytest.approx(550.0)
+        assert gf["min_points"][0]["seconds"] == pytest.approx(1000.0)
+
+    def test_ltd_db_tolerance_unflags_estimate(self, base_request):
+        body = self._plot(
+            base_request,
+            ltd_tol_rows=[{"curve_name": "I^2T", "tol_lo": -20.0, "tol_hi": 0.0}],
+        )
+        phase = next(b for b in body["envelope_bands"] if b["id"] == "phase_envelope")
+        ltd = self._basis(phase, "LTD")
+        assert ltd is not None
+        assert ltd["time_tol_lo_pct"] == pytest.approx(-20.0)
+        assert ltd["time_tol_hi_pct"] == pytest.approx(0.0)
+        assert ltd["time_source"] == "ltd_curve_tol"
+        assert ltd["estimated"] is False
+
+    def test_withheld_route_gets_no_envelope(self, base_request):
+        # Route 3 (TUSTD, not implemented) withholds the STD time (G4) — the
+        # envelope must withhold STD too, surfaced honestly, never fabricated.
+        body = self._plot(
+            base_request,
+            delay_routes={"std_route": 3, "gfd_route": 0, "gfd_is_ansi": False},
+        )
+        phase = next(b for b in body["envelope_bands"] if b["id"] == "phase_envelope")
+        assert self._basis(phase, "STD") is None
+        std_served = any(
+            c["element"] == "STD" and c["phase"] == "open" for c in body["curves"])
+        if std_served:
+            assert "STD" in phase["no_envelope_elements"]
+        # The trusted elements keep their envelope.
+        assert self._basis(phase, "LTD") is not None
+
+    def test_withheld_gfd_route_gets_no_gf_envelope(self, base_request):
+        # Route 4 (TUG, not implemented) withholds the GFD time (G4) — the
+        # GFD envelope must withhold too. GFD is the GF family's ONLY
+        # element, so the gf_envelope band disappears entirely
+        # (both-boundaries-or-nothing law), never a fabricated corridor.
+        body = self._plot(
+            base_request,
+            delay_routes={"std_route": 0, "gfd_route": 4, "gfd_is_ansi": False},
+        )
+        gfd_served = any(
+            c["element"] == "GFD" and c["phase"] == "open" for c in body["curves"])
+        for env in body["envelope_bands"]:
+            assert self._basis(env, "GFD") is None
+            # Were a gf envelope ever assembled despite the withhold, it
+            # would at minimum have to disclose GFD as no-envelope.
+            if env["family"] == "gf" and gfd_served:
+                assert "GFD" in env["no_envelope_elements"]
+        assert not any(b["id"] == "gf_envelope" for b in body["envelope_bands"])
+        # The trusted phase family keeps its envelope untouched.
+        phase = next(b for b in body["envelope_bands"] if b["id"] == "phase_envelope")
+        assert self._basis(phase, "LTD") is not None
+        assert self._basis(phase, "STD") is not None
+
+    def test_no_envelope_without_nominal_curve(self, base_request):
+        body = self._plot(base_request, extra_request={"include_nominal_curve": False})
+        assert body["envelope_bands"] == []
+
+    def test_maint_mode_withholds_envelope(self, base_request):
+        # Review finding (#124): in maint mode the markers/grading reflect
+        # the maint configuration while the served curves are nominal — an
+        # envelope would mix the two bases and contradict the whiskers
+        # (Law 1). Withhold + warn instead.
+        body = self._plot(
+            base_request,
+            calc_data={**CALC_DATA, "maint_mode": True},
+            extra_request={"maint_mode": True},
+        )
+        assert body["envelope_bands"] == []
+        assert any("maintenance mode" in w for w in body["warnings"])
+
+    def test_ltd_anchor_inconsistent_curve_withholds_ltd(self, base_request):
+        # Review finding (#124): the LTD acceptance-window pcts grade
+        # against the §111 reference window. The default FAKE_LTD_CURVE
+        # passes 5.5 s at the 3× marker where the graded window says 14.0 s
+        # — scaling that curve would draw a corridor contradicting the
+        # grading row, so the LTD envelope must withhold.
+        body = self._plot(base_request, ltd_curve=FAKE_LTD_CURVE)
+        phase = next(b for b in body["envelope_bands"] if b["id"] == "phase_envelope")
+        assert self._basis(phase, "LTD") is None
+        assert "LTD" in phase["no_envelope_elements"]
+        # A leading withhold: the corridor still serves for STD/INST.
+        assert self._basis(phase, "STD") is not None
+        assert self._basis(phase, "INST") is not None
+
+    def test_gfd_ansi_withhold_gets_no_gf_envelope(self, base_request):
+        # The GF-INVEQ ANSI family (gfd_is_ansi) is hard-excluded (G4 §3e) —
+        # same law as the route-4 withhold: no gf envelope, surfaced warning.
+        body = self._plot(
+            base_request,
+            delay_routes={"std_route": 0, "gfd_route": 2, "gfd_is_ansi": True},
+        )
+        for env in body["envelope_bands"]:
+            assert self._basis(env, "GFD") is None
+        assert not any(b["id"] == "gf_envelope" for b in body["envelope_bands"])
+
+    def test_family_total_withhold_surfaces_a_warning(self, base_request):
+        # Review finding (#124): when a whole family's envelope vanishes
+        # (GFD is the gf family's only element), the no_envelope_elements
+        # honesty list has no band to ride on — a response warning carries
+        # the disclosure instead.
+        body = self._plot(
+            base_request,
+            delay_routes={"std_route": 0, "gfd_route": 4, "gfd_is_ansi": False},
+        )
+        gfd_served = any(
+            c["element"] == "GFD" and c["phase"] == "open" for c in body["curves"])
+        assert not any(b["id"] == "gf_envelope" for b in body["envelope_bands"])
+        if gfd_served:
+            assert any(
+                "GFD" in w and "envelope withheld" in w for w in body["warnings"]
+            ), body["warnings"]
+
+    def test_ltd_non_reference_window_source_is_withheld(self):
+        # The acceptance-window transform (multiplicative along the open
+        # curve) is only proven for the reference-window law. An LTD row
+        # whose timing came from the band table (or curve interpolation)
+        # must NOT be dressed up as a DS2 tolerance — withhold instead.
+        from dataclasses import dataclass
+        from typing import Optional as _Opt
+        from services.neta.router import _build_envelope_basis_map
+
+        @dataclass
+        class _M:
+            id: str
+            kind: str
+            limit_low: _Opt[float]
+            limit_high: _Opt[float]
+            expected_current: float
+
+        @dataclass
+        class _R:
+            element: str
+            kind: str
+            trust: _Opt[str]
+            expected_time: _Opt[float]
+            time_limit_low: _Opt[float]
+            time_limit_high: _Opt[float]
+            notes: _Opt[str]
+
+        markers = [_M("ltpu_expected", "pickup", 864.0, 1056.0, 960.0)]
+        rows = [_R("LTD", "delay", "db", 3.5, 3.0, 3.5,
+                   "timing_source=band_table")]
+        bases = _build_envelope_basis_map(markers, rows)
+        assert "LTD" not in bases
+
+        # The reference-window sources keep the basis (with the est flag
+        # tracking the generic suffix).
+        rows_ok = [_R("LTD", "delay", "db", 14.0, 9.8, 14.0,
+                      "timing_source=ltd_reference_window")]
+        bases_ok = _build_envelope_basis_map(markers, rows_ok)
+        assert bases_ok["LTD"].time_source == "ltd_curve_tol"
+        assert bases_ok["LTD"].estimated is False
+
+        # GFD mirror of the STD withhold law: a TIME_WITHHELD GFD row must
+        # delete the GFD basis (the gf family's only element).
+        gf_markers = [_M("gfpu_expected", "pickup", 432.0, 528.0, 480.0)]
+        gf_rows = [_R("GFD", "delay", "unsupported", None, None, None,
+                      "timing_source=band_table")]
+        assert "GFD" not in _build_envelope_basis_map(gf_markers, gf_rows)
+        gf_rows_ok = [_R("GFD", "delay", "db", 0.14, 0.14, 0.2,
+                         "timing_source=band_table")]
+        assert _build_envelope_basis_map(gf_markers, gf_rows_ok)[
+            "GFD"].time_source == "published_band"

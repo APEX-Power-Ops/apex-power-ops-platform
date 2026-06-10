@@ -1365,6 +1365,46 @@ class PlotCompositeBand(BaseModel):
     right_edge_amps: float
 
 
+class PlotEnvelopeElementBasis(BaseModel):
+    """Per-element tolerance basis behind the acceptance envelope (#124).
+
+    Derived from the SAME served acceptance surfaces the whiskers use
+    (pickup marker limits / delay table rows), so the envelope and the
+    whiskers cannot drift apart. ``estimated`` flags the generic LTD
+    fallback so a placeholder never reads as DB-authoritative."""
+    element: str
+    pu_tol_lo_pct: Optional[float] = None
+    pu_tol_hi_pct: Optional[float] = None
+    time_tol_lo_pct: Optional[float] = None
+    time_tol_hi_pct: Optional[float] = None
+    pu_source: Optional[str] = None
+    time_source: Optional[str] = Field(
+        None,
+        description="'ltd_curve_tol' | 'ltd_generic_estimate' | 'published_band'",
+    )
+    estimated: bool = False
+
+
+class PlotEnvelopeBand(BaseModel):
+    """Field-acceptance tolerance envelope band (#124).
+
+    NOT the published curve pair (that is ``PlotCompositeBand``): the
+    envelope applies the per-sensor mfr PU tolerances along the amps axis
+    (every participating element) and the time-tolerance basis along the
+    seconds axis (acceptance-window elements only — LTD) to the served
+    curves, then reassembles min/max boundaries through the composite
+    assembler. Elements with no usable basis are withheld and listed in
+    ``no_envelope_elements`` (no fabrication; NETA=mfr law)."""
+    id: str = Field(..., description="'phase_envelope' or 'gf_envelope'")
+    family: str = Field(..., description="'phase' or 'gf'")
+    min_points: list[PlotCurvePoint] = Field(default_factory=list)
+    max_points: list[PlotCurvePoint] = Field(default_factory=list)
+    element_basis: list[PlotEnvelopeElementBasis] = Field(default_factory=list)
+    open_only_elements: list[str] = Field(default_factory=list)
+    no_envelope_elements: list[str] = Field(default_factory=list)
+    right_edge_amps: float
+
+
 class PlotExpectedMarker(BaseModel):
     """Expected test target marker."""
     id: str
@@ -1462,6 +1502,7 @@ class PlotTccResponse(BaseModel):
     warnings: list[str] = Field(default_factory=list)
     curves: list[PlotCurve] = Field(default_factory=list)
     composite_bands: list[PlotCompositeBand] = Field(default_factory=list)
+    envelope_bands: list[PlotEnvelopeBand] = Field(default_factory=list)
     expected_markers: list[PlotExpectedMarker] = Field(default_factory=list)
     measured_markers: list[PlotMeasuredMarker] = Field(default_factory=list)
     table_rows: list[PlotTableRow] = Field(default_factory=list)

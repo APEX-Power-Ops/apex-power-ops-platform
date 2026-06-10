@@ -366,6 +366,36 @@ export type EtuPlotCompositeBand = {
   right_edge_amps: number
 }
 
+// Per-element tolerance basis behind the acceptance envelope (#124),
+// derived server-side from the SAME acceptance surfaces the whiskers use.
+// `estimated` flags the generic LTD fallback (est marker law).
+export type EtuPlotEnvelopeElementBasis = {
+  element: string
+  pu_tol_lo_pct: number | null
+  pu_tol_hi_pct: number | null
+  time_tol_lo_pct: number | null
+  time_tol_hi_pct: number | null
+  pu_source: string | null
+  time_source: string | null // "ltd_curve_tol" | "ltd_generic_estimate" | "published_band"
+  estimated: boolean
+}
+
+// Field-acceptance tolerance envelope band (#124): NOT the published curve
+// pair — the per-sensor mfr PU tolerances applied along the amps axis (all
+// elements) + the time-tolerance basis along the seconds axis (acceptance-
+// window elements only). Elements with no usable basis are withheld and
+// listed in no_envelope_elements (no fabrication).
+export type EtuPlotEnvelopeBand = {
+  id: string // "phase_envelope" | "gf_envelope"
+  family: string // "phase" | "gf"
+  min_points: PlotCurvePoint[]
+  max_points: PlotCurvePoint[]
+  element_basis: EtuPlotEnvelopeElementBasis[]
+  open_only_elements: string[]
+  no_envelope_elements: string[]
+  right_edge_amps: number
+}
+
 export type EtuPlotExpectedMarker = {
   id: string
   element: string
@@ -442,6 +472,7 @@ export type EtuPlotResponse = {
   warnings: string[]
   curves: EtuPlotCurve[]
   composite_bands: EtuPlotCompositeBand[]
+  envelope_bands?: EtuPlotEnvelopeBand[]
   expected_markers: EtuPlotExpectedMarker[]
   measured_markers: EtuPlotMeasuredMarker[]
   table_rows: EtuPlotTableRow[]

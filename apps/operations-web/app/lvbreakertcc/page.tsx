@@ -59,7 +59,13 @@ import {
   delayBasisLabel,
   type EtuChosenSettings,
 } from '../../lib/etu-plot-request'
-import { bandPolygonPoints, bandWidthNote } from '../../lib/tcc-band'
+import {
+  bandPolygonPoints,
+  bandWidthNote,
+  envelopeBasisLine,
+  envelopeNote,
+  envelopePolygonPoints,
+} from '../../lib/tcc-band'
 
 // ── families ────────────────────────────────────────────────────────────────
 type Family = 'etu' | 'tmt' | 'emt'
@@ -1519,6 +1525,8 @@ function EtuCurve({ selection, maint, chosen, testMult, measured }: {
   // Composite band is the field view (default); per-element curves stay
   // available as a diagnostic layer behind this toggle.
   const [showElements, setShowElements] = useState(false)
+  // Acceptance envelope (#124) — the lane's headline, default ON.
+  const [showEnvelope, setShowEnvelope] = useState(true)
   // The operator's Screen-2 configuration drives the curve; nominal defaults only
   // when they jumped straight here (the page resets state on sensor change).
   const fromSettings = chosen != null && chosen.plug > 0
@@ -1550,6 +1558,15 @@ function EtuCurve({ selection, maint, chosen, testMult, measured }: {
   const bandNotes = bands
     .map((b) => ({ id: b.id, note: bandWidthNote(b) }))
     .filter((n): n is { id: string; note: string } => n.note != null)
+  // Acceptance envelope (#124): the per-sensor mfr tolerances applied along
+  // the served curves — the field-acceptance corridor, NOT the published pair.
+  const envelopes = plot.envelope_bands ?? []
+  const envColor = (family: string) => (family === 'gf' ? '#8a4ba0' : '#2c7fb8')
+  const envelopeNotes = envelopes
+    .map((b) => ({ id: b.id, note: envelopeNote(b) }))
+    .filter((n): n is { id: string; note: string } => n.note != null)
+  const envelopeBasisLines = envelopes.flatMap((b) =>
+    b.element_basis.map((eb) => ({ key: `${b.id}-${eb.element}`, basis: eb })))
   const rowsByEl = new Map((plot.table_rows ?? []).map((r) => [r.element, r]))
   const delayMarkers = (plot.expected_markers ?? []).filter(
     (m) => m.kind === 'delay' && m.expected_current > 0 && m.expected_time != null && (m.expected_time as number) > 0,
@@ -1628,6 +1645,36 @@ function EtuCurve({ selection, maint, chosen, testMult, measured }: {
               </div>
             </>
           ) : null}
+          {envelopes.length ? (
+            <>
+              <div className="card-h" style={{ marginTop: 8 }}>Acceptance Envelope</div>
+              <div className="legend">
+                <label className="leg" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={showEnvelope}
+                    onChange={(e) => setShowEnvelope(e.target.checked)}
+                    style={{ marginRight: 6 }}
+                  />
+                  Show tolerance envelope
+                </label>
+                {envelopes.map((b) => (
+                  <div key={`env-${b.id}`} className="leg">
+                    <span className="sw" style={{ background: envColor(b.family), opacity: 0.6 }} />
+                    {b.family === 'gf' ? 'Ground fault' : 'Phase'} field-acceptance corridor
+                  </div>
+                ))}
+                {envelopeBasisLines.map(({ key, basis }) => (
+                  <div key={key} className="leg muted2" title={`Tolerance basis for ${basis.element}: pickup from the per-sensor DB tolerance; time per ${basis.time_source ?? '—'}`}>
+                    {envelopeBasisLine(basis)}
+                  </div>
+                ))}
+                {envelopeNotes.map((n) => (
+                  <div key={`env-note-${n.id}`} className="leg muted2" title={n.note}>⚠ {n.note}</div>
+                ))}
+              </div>
+            </>
+          ) : null}
           <div className="card-h" style={{ marginTop: 8 }}>Curve Elements</div>
           <div className="legend">
             {legendItems.length ? legendItems.map((l) => {
@@ -1672,6 +1719,34 @@ function EtuCurve({ selection, maint, chosen, testMult, measured }: {
               ))}
               <text x={PLOT.ml + PLOT.w / 2} y={PLOT.mt + PLOT.h + 38} className="axl" textAnchor="middle">Current (A)</text>
               <text transform={`translate(16 ${PLOT.mt + PLOT.h / 2}) rotate(-90)`} className="axl" textAnchor="middle">Time (s)</text>
+              {/* Acceptance envelope (#124): the field-acceptance corridor —
+                  per-sensor mfr PU tolerances along the amps axis + the
+                  time-tolerance basis (LTD) along the seconds axis. Rendered
+                  BEHIND the published band: the band stays the primary
+                  visual, the envelope is the acceptance overlay. */}
+              {showEnvelope ? envelopes.map((b) => {
+                const stroke = envColor(b.family)
+                const poly = envelopePolygonPoints(b) // [] unless BOTH boundaries exist
+                const min = b.min_points ?? []
+                const max = b.max_points ?? []
+                return (
+                  <g key={b.id}>
+                    {poly.length ? (
+                      <path d={`${scale.livePath(poly)} Z`} fill={stroke} opacity={0.07} stroke="none" />
+                    ) : null}
+                    {min.length ? (
+                      <path d={scale.livePath(min)} fill="none" stroke={stroke} strokeWidth={1.2} strokeDasharray="2 3" strokeLinejoin="round" opacity={0.75}>
+                        <title>{`${b.family === 'gf' ? 'Ground-fault' : 'Phase'} acceptance envelope — minimum`}</title>
+                      </path>
+                    ) : null}
+                    {max.length ? (
+                      <path d={scale.livePath(max)} fill="none" stroke={stroke} strokeWidth={1.2} strokeDasharray="2 3" strokeLinejoin="round" opacity={0.75}>
+                        <title>{`${b.family === 'gf' ? 'Ground-fault' : 'Phase'} acceptance envelope — maximum`}</title>
+                      </path>
+                    ) : null}
+                  </g>
+                )
+              }) : null}
               {/* Composite boundary bands (G4 §3g): shaded min-trip→total-clear
                   polygon per family — phase staircase + the GF crossing band.
                   Off-frame extents (1e6 s asymptote top, right-edge cap) clamp

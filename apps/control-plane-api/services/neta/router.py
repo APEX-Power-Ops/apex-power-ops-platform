@@ -74,6 +74,8 @@ from .schemas import (
     PlotCurve,
     PlotCurvePoint,
     PlotCompositeBand,
+    PlotEnvelopeBand,
+    PlotEnvelopeElementBasis,
     PlotExpectedMarker,
     PlotMeasuredMarker,
     PlotTableRow,
@@ -148,6 +150,10 @@ from . import micrologic_curves
 from .composite_boundary import (
     RIGHT_EDGE_AMPS as COMPOSITE_RIGHT_EDGE_AMPS,
     assemble_composite_bands,
+)
+from .tolerance_envelope import (
+    ElementEnvelopeBasis,
+    assemble_envelope_bands,
 )
 from .relay_tolerance import serve_relay_tolerance
 
@@ -2262,6 +2268,105 @@ def _band_row_to_delay_surface(band_row) -> tuple[Optional[float], Optional[floa
         time_high = clear_value
 
     return expected_time, time_low, time_high
+
+
+# ── Tolerance envelope basis derivation (#124) ──────────────────────────
+
+_PICKUP_KEY_TO_ELEMENT = {"ltpu": "LTD", "stpu": "STD", "inst": "INST", "gfpu": "GFD"}
+
+
+def _tol_pct(limit: Optional[float], expected: Optional[float]) -> Optional[float]:
+    """Signed tolerance percentage implied by a served acceptance limit
+    (``limit = expected·(1+pct/100)``); None when either side is unusable."""
+    if limit is None or expected is None:
+        return None
+    try:
+        expected_f = float(expected)
+        if expected_f <= 0:
+            return None
+        return (float(limit) / expected_f - 1.0) * 100.0
+    except (TypeError, ValueError):
+        return None
+
+
+def _build_envelope_basis_map(
+    expected_markers, table_rows
+) -> dict[str, ElementEnvelopeBasis]:
+    """Derive the per-element envelope tolerance bases from the SERVED
+    acceptance surfaces (#124, ratified 2026-06-10).
+
+    Pickup marker limits give every element's PU percentages — the envelope
+    therefore matches the pickup whiskers by construction, including the
+    STPU-override sensors whose adjusted limits already sit in the marker.
+    The LTD delay row gives the acceptance-window time percentages plus the
+    timing_source basis label (generic fallback → ``estimated``). STD/GFD/
+    INST time acceptance IS the published open/clear pair (amps shift only).
+    A delay element whose time was withheld (G4 field-trust) gets NO basis —
+    no envelope, no fabrication."""
+    bases: dict[str, ElementEnvelopeBasis] = {}
+    for marker in expected_markers:
+        if marker.kind != "pickup":
+            continue
+        element = _PICKUP_KEY_TO_ELEMENT.get(marker.id.split("_")[0])
+        if element is None:
+            continue
+        pu_lo = _tol_pct(marker.limit_low, marker.expected_current)
+        pu_hi = _tol_pct(marker.limit_high, marker.expected_current)
+        if pu_lo is None or pu_hi is None:
+            continue
+        bases[element] = ElementEnvelopeBasis(
+            element=element,
+            pu_tol_lo_pct=pu_lo,
+            pu_tol_hi_pct=pu_hi,
+            pu_source="db_sensor_tolerance",
+        )
+
+    rows = {r.element: r for r in table_rows if r.kind == "delay"}
+
+    # LTD: acceptance window around the open curve (the §111 reference-window
+    # law) — both time percentages must come off the served row, else withhold.
+    ltd = bases.get("LTD")
+    if ltd is not None:
+        ltd_row = rows.get("LTD")
+        ok = (
+            ltd_row is not None
+            and ltd_row.trust not in TIME_WITHHELD
+            and ltd_row.expected_time not in (None, 0)
+        )
+        # The acceptance-window transform (multiplicative along the open
+        # curve) is proven only for the §111 reference-window law — any other
+        # timing source (band_table / curve_interpolation fallthroughs when a
+        # setting or multiple is missing) is NOT a multiplicative tolerance
+        # and must not be dressed up as one.
+        notes = (ltd_row.notes or "") if ltd_row is not None else ""
+        src = notes.split("timing_source=", 1)[1] if "timing_source=" in notes else ""
+        ok = ok and src in ("ltd_reference_window", "ltd_reference_window_generic")
+        t_lo = _tol_pct(ltd_row.time_limit_low, ltd_row.expected_time) if ok else None
+        t_hi = _tol_pct(ltd_row.time_limit_high, ltd_row.expected_time) if ok else None
+        if t_lo is None or t_hi is None:
+            del bases["LTD"]  # no certified time corridor → no envelope
+        else:
+            generic = src.endswith("_generic")
+            ltd.time_tol_lo_pct = t_lo
+            ltd.time_tol_hi_pct = t_hi
+            ltd.time_source = "ltd_generic_estimate" if generic else "ltd_curve_tol"
+            ltd.estimated = generic
+
+    # STD/GFD: published-band mode unless the route trust withheld the time.
+    for element in ("STD", "GFD"):
+        basis = bases.get(element)
+        if basis is None:
+            continue
+        row = rows.get(element)
+        if row is not None and row.trust in TIME_WITHHELD:
+            del bases[element]
+            continue
+        basis.time_source = "published_band"
+
+    # INST: the published open/clear verticals are the window (no delay row).
+    if "INST" in bases:
+        bases["INST"].time_source = "published_band"
+    return bases
 
 
 def _round_deviation_pct(measured_value: float, expected_value: float) -> Optional[float]:
@@ -7110,11 +7215,110 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
         logger.warning("Composite band assembly failed: %s", exc)
         warnings.append(f"Composite band unavailable: {exc}")
 
+    # Field-acceptance tolerance envelope (#124): the per-sensor mfr
+    # tolerances applied continuously along the served curves (PU on the
+    # amps axis for every element; time only where the acceptance-window
+    # basis exists — LTD). Bases derive from the served markers/rows so the
+    # envelope matches the whiskers by construction. Fail open like the
+    # composite band — a geometry edge case must never 500 the plot.
+    envelope_bands: list[PlotEnvelopeBand] = []
+    if req.include_nominal_curve and curves and maint_mode:
+        # Review finding (#124): in maint mode the markers/grading reflect
+        # the maint configuration while the served curves are nominal — an
+        # envelope would mix the two bases and contradict the whiskers on
+        # the same plot. Withhold until curves render the maint config.
+        warnings.append(
+            "Tolerance envelope unavailable in maintenance mode: "
+            "served curves are nominal"
+        )
+    elif req.include_nominal_curve and curves:
+        try:
+            basis_map = _build_envelope_basis_map(expected_markers, table_rows)
+            # LTD anchor-consistency guard (#124 review): the acceptance-
+            # window pcts grade against the §111 reference window — scaling
+            # a served curve that does NOT pass through that window at the
+            # marker would draw a corridor contradicting the grading row
+            # (non-I²t LTD curve methods). Withhold unless consistent.
+            if "LTD" in basis_map:
+                ltd_marker = next(
+                    (m for m in expected_markers
+                     if m.element == "LTD" and m.kind == "delay"), None)
+                ltd_open = next(
+                    (c for c in curves
+                     if c.element == "LTD" and c.phase == "open"), None)
+                consistent = False
+                if (
+                    ltd_marker is not None
+                    and ltd_open is not None
+                    and ltd_marker.expected_time not in (None, 0)
+                    and ltd_marker.expected_current > 0
+                ):
+                    t_curve = _interpolate_time(
+                        ltd_open.points, ltd_marker.expected_current)
+                    expected = float(ltd_marker.expected_time)
+                    consistent = (
+                        t_curve is not None
+                        and abs(t_curve - expected) <= 0.02 * expected
+                    )
+                if not consistent:
+                    del basis_map["LTD"]
+            envelope_bands = [
+                PlotEnvelopeBand(
+                    id=band.id,
+                    family=band.family,
+                    min_points=[PlotCurvePoint(amps=a, seconds=s) for a, s in band.min_points],
+                    max_points=[PlotCurvePoint(amps=a, seconds=s) for a, s in band.max_points],
+                    element_basis=[
+                        PlotEnvelopeElementBasis(
+                            element=b.element,
+                            pu_tol_lo_pct=b.pu_tol_lo_pct,
+                            pu_tol_hi_pct=b.pu_tol_hi_pct,
+                            time_tol_lo_pct=b.time_tol_lo_pct,
+                            time_tol_hi_pct=b.time_tol_hi_pct,
+                            pu_source=b.pu_source,
+                            time_source=b.time_source,
+                            estimated=b.estimated,
+                        )
+                        for b in band.element_basis
+                    ],
+                    open_only_elements=band.open_only_elements,
+                    no_envelope_elements=band.no_envelope_elements,
+                    right_edge_amps=band.right_edge_amps,
+                )
+                for band in assemble_envelope_bands(curves, basis_map)
+            ]
+            # Family-total withhold honesty (#124 review): when a family's
+            # only elements are all withheld, no band exists to carry the
+            # no_envelope_elements disclosure — a response warning does.
+            env_families = {b.family for b in envelope_bands}
+            for fam, fam_elements in (
+                ("phase", ("LTD", "STD", "INST")),
+                ("gf", ("GFD",)),
+            ):
+                if fam in env_families:
+                    continue
+                served = [
+                    e for e in fam_elements
+                    if any(
+                        c.element == e and c.phase == "open" and c.points
+                        for c in curves
+                    )
+                ]
+                if served:
+                    warnings.append(
+                        f"{', '.join(served)} acceptance envelope withheld "
+                        "(G4 field-trust)"
+                    )
+        except Exception as exc:
+            logger.warning("Tolerance envelope assembly failed: %s", exc)
+            warnings.append(f"Tolerance envelope unavailable: {exc}")
+
     return PlotTccResponse(
         meta=meta,
         warnings=warnings,
         curves=curves,
         composite_bands=composite_bands,
+        envelope_bands=envelope_bands,
         expected_markers=expected_markers,
         measured_markers=measured_markers,
         table_rows=table_rows,
