@@ -73,6 +73,7 @@ from .schemas import (
     PlotMeta,
     PlotCurve,
     PlotCurvePoint,
+    PlotCompositeBand,
     PlotExpectedMarker,
     PlotMeasuredMarker,
     PlotTableRow,
@@ -144,6 +145,10 @@ from .delay_trust import (
 )
 from . import setting_catalog
 from . import micrologic_curves
+from .composite_boundary import (
+    RIGHT_EDGE_AMPS as COMPOSITE_RIGHT_EDGE_AMPS,
+    assemble_composite_bands,
+)
 from .relay_tolerance import serve_relay_tolerance
 
 logger = logging.getLogger(__name__)
@@ -2863,7 +2868,12 @@ def _generate_nominal_plot_curves(
                 )
                 if std_band is not None:
                     x = _sensor_i2x_exponent(db, sensor_id, "stpu_i2t_val")
-                    upper = inst_i if inst_i > 0 else stpu_i * 6.0
+                    # With no INST the short-time element is the last block:
+                    # sweep the validated max(ramp, floor) surface to the
+                    # serving right edge (native carries the final element to
+                    # the right-edge clip, G4 §3g rule 6) instead of stopping
+                    # mid-ramp at 6×STPU.
+                    upper = inst_i if inst_i > 0 else COMPOSITE_RIGHT_EDGE_AMPS
                     pts = _synthesize_i2x_delay_curve(std_band, x, ltpu_i, stpu_i, upper)
                     if pts:
                         curves.append(PlotCurve(
@@ -6969,10 +6979,33 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
     if evaluated_rows:
         meta.overall_pass = all(bool(row.passed) for row in evaluated_rows)
 
+    # Composite boundary bands (#122, G4 §3g): the classic staircase band
+    # assembled from the per-element curves served above. Pure assembly —
+    # the per-element curves themselves are unchanged (diagnostic layer).
+    # Fail open: a geometry edge case must degrade to per-element rendering,
+    # never 500 the plot.
+    composite_bands: list[PlotCompositeBand] = []
+    try:
+        composite_bands = [
+            PlotCompositeBand(
+                id=band.id,
+                family=band.family,
+                open_points=[PlotCurvePoint(amps=a, seconds=s) for a, s in band.open_points],
+                clear_points=[PlotCurvePoint(amps=a, seconds=s) for a, s in band.clear_points],
+                open_only_elements=band.open_only_elements,
+                right_edge_amps=band.right_edge_amps,
+            )
+            for band in assemble_composite_bands(curves)
+        ]
+    except Exception as exc:
+        logger.warning("Composite band assembly failed: %s", exc)
+        warnings.append(f"Composite band unavailable: {exc}")
+
     return PlotTccResponse(
         meta=meta,
         warnings=warnings,
         curves=curves,
+        composite_bands=composite_bands,
         expected_markers=expected_markers,
         measured_markers=measured_markers,
         table_rows=table_rows,

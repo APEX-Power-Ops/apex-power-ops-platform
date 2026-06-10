@@ -39,6 +39,7 @@ import {
   type DelayBandOption,
   type EtuCalculateResponse,
   type EtuTestCurrentElement,
+  type EtuPlotCompositeBand,
   type EtuPlotRequest,
   type EtuPlotResponse,
   type TMTFrameSearchResult,
@@ -58,6 +59,7 @@ import {
   delayBasisLabel,
   type EtuChosenSettings,
 } from '../../lib/etu-plot-request'
+import { bandPolygonPoints, bandWidthNote } from '../../lib/tcc-band'
 
 // ── families ────────────────────────────────────────────────────────────────
 type Family = 'etu' | 'tmt' | 'emt'
@@ -1514,6 +1516,9 @@ function EtuCurve({ selection, maint, chosen, testMult, measured }: {
   const [plot, setPlot] = useState<EtuPlotResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
+  // Composite band is the field view (default); per-element curves stay
+  // available as a diagnostic layer behind this toggle.
+  const [showElements, setShowElements] = useState(false)
   // The operator's Screen-2 configuration drives the curve; nominal defaults only
   // when they jumped straight here (the page resets state on sensor change).
   const fromSettings = chosen != null && chosen.plug > 0
@@ -1536,6 +1541,15 @@ function EtuCurve({ selection, maint, chosen, testMult, measured }: {
   if (err || !plot) return <div className="loadbox"><span className="sel-status err">⚠ {err ?? 'No curve data'}</span></div>
 
   const curves = plot.curves ?? []
+  // Composite boundary bands (#122, G4 §3g): the classic staircase assembled
+  // server-side. When the engine serves none, the per-element curves render
+  // unconditionally (the pre-composite behavior).
+  const bands = plot.composite_bands ?? []
+  const showPerElement = showElements || bands.length === 0
+  const bandColor = (b: EtuPlotCompositeBand) => (b.family === 'gf' ? '#b06fc4' : '#14507d')
+  const bandNotes = bands
+    .map((b) => ({ id: b.id, note: bandWidthNote(b) }))
+    .filter((n): n is { id: string; note: string } => n.note != null)
   const rowsByEl = new Map((plot.table_rows ?? []).map((r) => [r.element, r]))
   const delayMarkers = (plot.expected_markers ?? []).filter(
     (m) => m.kind === 'delay' && m.expected_current > 0 && m.expected_time != null && (m.expected_time as number) > 0,
@@ -1589,6 +1603,31 @@ function EtuCurve({ selection, maint, chosen, testMult, measured }: {
             <Field label="Plug (Ir)" value={`${plot.meta.plug_rating} A`} />
             <Field label="Settings" value={fromSettings ? `Protection Settings${maint ? ' · MAINT' : ''}` : 'Nominal defaults'} />
           </div>
+          {bands.length ? (
+            <>
+              <div className="card-h" style={{ marginTop: 8 }}>Composite Band</div>
+              <div className="legend">
+                {bands.map((b) => (
+                  <div key={b.id} className="leg">
+                    <span className="sw" style={{ background: bandColor(b) }} />
+                    {b.family === 'gf' ? 'Ground fault' : 'Phase'} (min-trip / total-clear)
+                  </div>
+                ))}
+                {bandNotes.map((n) => (
+                  <div key={n.id} className="leg muted2" title={n.note}>⚠ {n.note}</div>
+                ))}
+                <label className="leg" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={showElements}
+                    onChange={(e) => setShowElements(e.target.checked)}
+                    style={{ marginRight: 6 }}
+                  />
+                  Show per-element curves
+                </label>
+              </div>
+            </>
+          ) : null}
           <div className="card-h" style={{ marginTop: 8 }}>Curve Elements</div>
           <div className="legend">
             {legendItems.length ? legendItems.map((l) => {
@@ -1633,9 +1672,36 @@ function EtuCurve({ selection, maint, chosen, testMult, measured }: {
               ))}
               <text x={PLOT.ml + PLOT.w / 2} y={PLOT.mt + PLOT.h + 38} className="axl" textAnchor="middle">Current (A)</text>
               <text transform={`translate(16 ${PLOT.mt + PLOT.h / 2}) rotate(-90)`} className="axl" textAnchor="middle">Time (s)</text>
-              {curves.map((c) => (
-                <path key={c.id} d={scale.livePath(c.points)} fill="none" stroke={colorFor(c.element)} strokeWidth={2.4} strokeLinejoin="round" strokeLinecap="round" opacity={0.92} />
-              ))}
+              {/* Composite boundary bands (G4 §3g): shaded min-trip→total-clear
+                  polygon per family — phase staircase + the GF crossing band.
+                  Off-frame extents (1e6 s asymptote top, right-edge cap) clamp
+                  to the plot frame via the scale's clamped path builder. */}
+              {bands.map((b) => {
+                const fill = bandColor(b)
+                const poly = bandPolygonPoints(b) // [] unless BOTH boundaries exist
+                const open = b.open_points ?? []
+                const clear = b.clear_points ?? []
+                return (
+                  <g key={b.id}>
+                    {poly.length ? (
+                      <path d={`${scale.livePath(poly)} Z`} fill={fill} opacity={0.14} stroke="none" />
+                    ) : null}
+                    {open.length ? (
+                      <path d={scale.livePath(open)} fill="none" stroke={fill} strokeWidth={2.6} strokeLinejoin="round" strokeLinecap="round" opacity={0.95}>
+                        <title>{`${b.family === 'gf' ? 'Ground-fault' : 'Phase'} band — minimum trip (open)`}</title>
+                      </path>
+                    ) : null}
+                    {clear.length ? (
+                      <path d={scale.livePath(clear)} fill="none" stroke={fill} strokeWidth={1.6} strokeDasharray="6 4" strokeLinejoin="round" opacity={0.7}>
+                        <title>{`${b.family === 'gf' ? 'Ground-fault' : 'Phase'} band — total clear`}</title>
+                      </path>
+                    ) : null}
+                  </g>
+                )
+              })}
+              {showPerElement ? curves.map((c) => (
+                <path key={c.id} d={scale.livePath(c.points)} fill="none" stroke={colorFor(c.element)} strokeWidth={bands.length ? 1.6 : 2.4} strokeLinejoin="round" strokeLinecap="round" opacity={bands.length ? 0.65 : 0.92} />
+              )) : null}
               {/* Pickup test points: vertical marker at the expected pickup with the
                   DB tolerance band as a horizontal whisker lane above the axis. */}
               {pickupMarkers.map((m, i) => {
@@ -1711,7 +1777,7 @@ function EtuCurve({ selection, maint, chosen, testMult, measured }: {
 
       {plot.warnings?.length ? <div className="sel-status warn">{plot.warnings.join(' · ')}</div> : null}
       <div className="method">
-        <b>{fromSettings ? 'Configured curve.' : 'Nominal defaults.'}</b> Rendered live from the engine (`/plot-tcc`) at {fromSettings ? <>your <b>Protection Settings</b> — plug, pickups, delay bands, test multiples{maint ? ', maintenance mode' : ''}</> : <>the sensor&apos;s nominal defaults — configure on <b>Protection Settings</b> to render your test plan</>}. Delay curves and times follow the <b>G4 field-trust matrix</b>: <b>DB</b> = direct-band + LTD + the native-validated inverse equations (bit-exact vs the EasyPower kernel); <b>verify</b> = I²t composite (native spot-check pending); <b>n/a</b> = withheld. Time tolerance whiskers use the <b>manufacturer&apos;s values</b> where on file (NETA acceptance = mfr tolerances) — the basis per element is listed beside the legend. Markers sit at the NETA test points; measured entries from Screen 2 overlay as pass/fail markers.{plot.meta.plot_disclaimer ? ` ${plot.meta.plot_disclaimer}` : ''}
+        <b>{fromSettings ? 'Configured curve.' : 'Nominal defaults.'}</b> Rendered live from the engine (`/plot-tcc`) at {fromSettings ? <>your <b>Protection Settings</b> — plug, pickups, delay bands, test multiples{maint ? ', maintenance mode' : ''}</> : <>the sensor&apos;s nominal defaults — configure on <b>Protection Settings</b> to render your test plan</>}. The <b>shaded band</b> is the composite trip boundary assembled per the native engine&apos;s plot semantics (G4 §3g): a vertical pickup asymptote, each delay element clipped at its handoff to the next, and the instantaneous floor running to the plot edge — solid = <b>minimum trip</b>, dashed = <b>total clear</b>; ground fault draws as its own crossing band. Per-element curves remain available behind the legend toggle for diagnosis. Delay curves and times follow the <b>G4 field-trust matrix</b>: <b>DB</b> = direct-band + LTD + the native-validated inverse equations (bit-exact vs the EasyPower kernel); <b>verify</b> = I²t composite (native spot-check pending); <b>n/a</b> = withheld. Time tolerance whiskers use the <b>manufacturer&apos;s values</b> where on file (NETA acceptance = mfr tolerances) — the basis per element is listed beside the legend. Markers sit at the NETA test points; measured entries from Screen 2 overlay as pass/fail markers.{plot.meta.plot_disclaimer ? ` ${plot.meta.plot_disclaimer}` : ''}
       </div>
 
       <div className="stats">

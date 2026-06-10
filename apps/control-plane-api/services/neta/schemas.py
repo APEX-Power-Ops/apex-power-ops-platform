@@ -1347,6 +1347,24 @@ class PlotCurve(BaseModel):
     points: list[PlotCurvePoint]
 
 
+class PlotCompositeBand(BaseModel):
+    """Native-faithful composite boundary band (G4 §3g).
+
+    The classic TCC staircase assembled from the served per-element curves
+    (CPointsMergeSST/CPointsMergeGF semantics): vertical pickup asymptote →
+    element blocks clipped at the inter-element handoffs → INST floor to the
+    right edge. ``open_points``/``clear_points`` are the min-trip and
+    total-clear boundaries; the frontend closes them into the shaded band.
+    An element listed in ``open_only_elements`` serves no clear curve, so its
+    clear segment reuses the open data (zero band width there)."""
+    id: str = Field(..., description="'phase_band' or 'gf_band'")
+    family: str = Field(..., description="'phase' or 'gf'")
+    open_points: list[PlotCurvePoint] = Field(default_factory=list)
+    clear_points: list[PlotCurvePoint] = Field(default_factory=list)
+    open_only_elements: list[str] = Field(default_factory=list)
+    right_edge_amps: float
+
+
 class PlotExpectedMarker(BaseModel):
     """Expected test target marker."""
     id: str
@@ -1443,6 +1461,7 @@ class PlotTccResponse(BaseModel):
     meta: PlotMeta
     warnings: list[str] = Field(default_factory=list)
     curves: list[PlotCurve] = Field(default_factory=list)
+    composite_bands: list[PlotCompositeBand] = Field(default_factory=list)
     expected_markers: list[PlotExpectedMarker] = Field(default_factory=list)
     measured_markers: list[PlotMeasuredMarker] = Field(default_factory=list)
     table_rows: list[PlotTableRow] = Field(default_factory=list)

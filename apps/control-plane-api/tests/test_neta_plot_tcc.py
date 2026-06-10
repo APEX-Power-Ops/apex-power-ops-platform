@@ -2594,3 +2594,61 @@ class TestPhase4TableRowTolerances:
         ltpu_row = next(r for r in body["table_rows"] if r["element"] == "LTPU")
         assert ltpu_row["calc_method"] is not None
         assert isinstance(ltpu_row["calc_method"], str)
+
+
+# ──────────────────────────────────────────────────
+# Composite-boundary bands (#122, G4 §3g)
+# ──────────────────────────────────────────────────
+
+class TestCompositeBands:
+    """/plot-tcc serves the native-faithful composite boundary bands
+    (phase_band + gf_band) assembled from the per-element curves."""
+
+    def test_bands_present_and_shaped(self, client, base_request):
+        tc, _ = client
+        req = {**base_request, "measurements": None, "include_measured_markers": False}
+
+        patches, _ = _patch_calc_engine()
+        with patches["pickup"], patches["ltd"], patches["ieee"]:
+            resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+
+        assert resp.status_code == 200
+        body = resp.json()
+        bands = body["composite_bands"]
+        assert [b["id"] for b in bands] == ["phase_band", "gf_band"]
+
+        phase = bands[0]
+        assert phase["family"] == "phase"
+        # Vertical asymptote anchor at the LT curve's start current (1500 A).
+        first = phase["open_points"][0]
+        assert first["amps"] == 1500.0 and first["seconds"] == 1_000_000.0
+        # INST floor extended to the right edge: open 0.05 s, clear 0.08 s.
+        last_open = phase["open_points"][-1]
+        assert last_open["amps"] == 100_000.0 and last_open["seconds"] == 0.05
+        last_clear = phase["clear_points"][-1]
+        assert last_clear["amps"] == 100_000.0 and last_clear["seconds"] == 0.08
+        # Every element in the default fake serves open+clear.
+        assert phase["open_only_elements"] == []
+        assert phase["right_edge_amps"] == 100_000.0
+
+        gf = bands[1]
+        assert gf["family"] == "gf"
+        first_gf = gf["open_points"][0]
+        # GF band: own vertical at the GF curve start, native 1000 s top anchor.
+        assert first_gf["amps"] == 500.0 and first_gf["seconds"] == 1_000.0
+
+    def test_no_bands_without_nominal_curve(self, client, base_request):
+        tc, _ = client
+        req = {
+            **base_request,
+            "measurements": None,
+            "include_measured_markers": False,
+            "include_nominal_curve": False,
+        }
+
+        patches, _ = _patch_calc_engine()
+        with patches["pickup"], patches["ltd"], patches["ieee"]:
+            resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+
+        assert resp.status_code == 200
+        assert resp.json()["composite_bands"] == []

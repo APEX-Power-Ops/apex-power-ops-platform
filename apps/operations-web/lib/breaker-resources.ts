@@ -352,6 +352,20 @@ export type EtuPlotCurve = {
   points: PlotCurvePoint[]
 }
 
+// Native-faithful composite boundary band (#122, G4 §3g): the classic TCC
+// staircase assembled server-side from the per-element curves. open/clear =
+// the min-trip / total-clear boundaries; an element in open_only_elements
+// serves no clear curve, so its clear segment reuses the open data (zero
+// band width there).
+export type EtuPlotCompositeBand = {
+  id: string // "phase_band" | "gf_band"
+  family: string // "phase" | "gf"
+  open_points: PlotCurvePoint[]
+  clear_points: PlotCurvePoint[]
+  open_only_elements: string[]
+  right_edge_amps: number
+}
+
 export type EtuPlotExpectedMarker = {
   id: string
   element: string
@@ -427,6 +441,7 @@ export type EtuPlotResponse = {
   }
   warnings: string[]
   curves: EtuPlotCurve[]
+  composite_bands: EtuPlotCompositeBand[]
   expected_markers: EtuPlotExpectedMarker[]
   measured_markers: EtuPlotMeasuredMarker[]
   table_rows: EtuPlotTableRow[]
