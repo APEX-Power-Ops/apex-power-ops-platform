@@ -7,7 +7,7 @@
 > packet that computes or ships a pickup/delay/tolerance value cites this guide.
 >
 > Status: DRAFT — agent-authored 2026-05-31; **pickup formulas validated against `SSTSensorRecord` primary source 2026-05-31 (Desktop)**
-> Last validated · 2026-06-01 (pickup formulas vs `SSTSensorRecord.cs`; enum vs `SSTCalcMethod.cs`; INVEQ loader reconciled vs pass-2..5; INVEQ managed-evaluator characterized live + corpus distribution measured — §3e; GF-InvEq ANSI cohort re-measured (100 rows / 23 sensors / 3 styles) + hard-excluded; Therm `CalcThermEq` recovered from `TccBase.dll` + patched; **STD-INVEQ Therm parity CLOSED by native-kernel EXECUTION — `TccBase.dll` `CalcThermEq`/`CalcThermEq3` invoked in-process, STD reproduced BIT-EXACT over the complete 4-dial corpus → PROMOTED to "db"; secondary `*ICalc=0` residual CLOSED (zero rows) — §3f**) · **L1 CLOSED 2026-06-09 (STATE §206): `field[13]` = the PLUG rating (In) — slot map banked via ComputeAmps cross-ref; GF-INVEQ Therm plug-basis (`rIRef' = rIRef × plug/pickup`) BIT-EXACT vs native over the complete GF corpus (416 scenarios, maxabs 0.0) → PROMOTED "db" (~1,690 sensors); `/plot-tcc` renders the inverse (`id_*`) sub-blocks band-matched + basis-corrected** · Open gaps: GF Ansi (100 rows / 23 sensors) formula recovered, anchors PICKUP (corrected 2026-06-09 — independent implement+validate lane), HARD-EXCLUDED meanwhile · GE-TU-STD/Gnd · I2X-255 · WEG OCR-A pickup `[STUB]` · INST `Sec4Inst*` `[DEFERRED]` · LTD `DS2_DLY_PTY` `[DEFERRED]`
+> Last validated · 2026-06-01 (pickup formulas vs `SSTSensorRecord.cs`; enum vs `SSTCalcMethod.cs`; INVEQ loader reconciled vs pass-2..5; INVEQ managed-evaluator characterized live + corpus distribution measured — §3e; GF-InvEq ANSI cohort re-measured (100 rows / 23 sensors / 3 styles) + hard-excluded; Therm `CalcThermEq` recovered from `TccBase.dll` + patched; **STD-INVEQ Therm parity CLOSED by native-kernel EXECUTION — `TccBase.dll` `CalcThermEq`/`CalcThermEq3` invoked in-process, STD reproduced BIT-EXACT over the complete 4-dial corpus → PROMOTED to "db"; secondary `*ICalc=0` residual CLOSED (zero rows) — §3f**) · **L1 CLOSED 2026-06-09 (STATE §206): `field[13]` = the PLUG rating (In) — slot map banked via ComputeAmps cross-ref; GF-INVEQ Therm plug-basis (`rIRef' = rIRef × plug/pickup`) BIT-EXACT vs native over the complete GF corpus (416 scenarios, maxabs 0.0) → PROMOTED "db" (~1,690 sensors); `/plot-tcc` renders the inverse (`id_*`) sub-blocks band-matched + basis-corrected** · **Native PLOT COMPOSITION recovered 2026-06-09 (STATE §209): `CPointsMergeSST/GF` boundary assembly — pickup asymptote + per-block `TrimCurveX` windows + log-log-intersection handoffs + closed open/clear band + SC-amps right clip + separate GF band — §3g (serving lane pending ratification)** · Open gaps: GF Ansi (100 rows / 23 sensors) formula recovered, anchors PICKUP (corrected 2026-06-09 — independent implement+validate lane), HARD-EXCLUDED meanwhile · GE-TU-STD/Gnd · I2X-255 · WEG OCR-A pickup `[STUB]` · INST `Sec4Inst*` `[DEFERRED]` · LTD `DS2_DLY_PTY` `[DEFERRED]`
 
 ---
 
@@ -445,9 +445,57 @@ Decisive results:
   4→1690, 8→100(Ansi)}`. The pass-5 translator branch `*ICalc=0 → byICalc=2 → ref[12]` is correct but
   **never exercised** by real data (`[06 §R4]` answered). `[VERIFIED-LIVE 2026-06-01]`
 
----
+### 3g. Native TCC PLOT COMPOSITION — RECOVERED 2026-06-09 (`CPointsMergeSST` / `CPointsMergeGF`) `[DLL]`
 
-## 4. THE FIELD-TRUST MATRIX  ← the centerpiece
+How the native engine assembles the PLOTTED breaker characteristic from the per-element curve blocks —
+previously a G-doc gap (this guide covered calc math only; the composition lived in the unrecovered
+`RecalcCurve_SSTT_*` "heavy" render). Recovered from the Box decompile by a 3-reader evidence sweep
+(operator feedback session 2026-06-09; raw packet with full quotes:
+`.audit_workspace/tcc_composite_boundary/EVIDENCE-wf_a2164913-mergesst-recovery.json`, host-local).
+
+**The composite is ONE ordered polyline per boundary — never independent element traces, never a
+pointwise min-envelope.** Rules, each `[DLL TccBase.dll]`-cited:
+
+1. **Assembly orchestrator** = `CPointsMergeSST.MergeSST` (line 1438): builds one current-ordered point
+   array per pass; dispatches by element-presence flags (LTPU/STPU/INST/STDB) to
+   `MergeSST_LT / _LT_INST / _LT_ST / _LT_ST_INST / _ST_OVR / _LT_OVR`; `bClearing=true` pass is
+   point-REVERSED (`ReversePoints`).
+2. **Vertical pickup asymptote first**: `AddLongTimePickup` (85-94) writes two points at `x = LTPU`
+   (`t = 1,000,000 → 0.001`) — the characteristic's left edge. GF likewise: `{GFPU, 1000} → {GFPU, 0.001}`
+   (`CTccLVBreakerCurveGF.RecalcCurve` cases 1/3, 1141-1199; maint mode swaps the maint-GFPU vertical).
+3. **Every element block is CLIPPED to an explicit current window** via `CLinearEquation.TrimCurveX`:
+   `AddLongTimeDelay` (66-77) trims LT to `[LTPU, dMaxAmps]`; `AddShortTimeDelay` (152) trims ST to
+   `[STPU/handoff, dMaxAmps]` (start index advanced past points below the prior block's end);
+   `AddShortTimeOverideDelay` (171) trims the override array to `[dMin, dMax]`.
+4. **The LT→ST handoff current is a log-log curve INTERSECTION**, not a blind pickup clip:
+   `MergeLines` (1173-1431) walks both curves with `CLogLogIntersection.SolveWithinConstraints/Solve`,
+   truncates curve-1 at the crossing, records the join; a `bDelayPriority` flag selects equal-time joins.
+   In the canonical full-band variant (`MergeSST_LT_ST_OVR_INST_DelayPriorityNone`, 2786-2800) the
+   handoff `dMaxAmps` is computed by `ComputeX` at the ST pickup before the Add* sequence:
+   `AddLongTimePickup → AddLongTimeDelay → AddShortTimeDelay [+ AddShortTimeOverideDelay] →
+   AddInstantaneous(1e10, bOverride)`.
+5. **INST floor**: `AddInstantaneous` (18-58) places the horizontal segment in constant-INST mode
+   (`P_0[72]==2`) and blends the corner from the prior block with `AutoAdjustFillet(0.09)` +
+   `CSplines.Fillet` (cosmetic spline fillets at every block join); with override, the INST time comes
+   from the override array.
+6. **Open + clear = two MergeSST passes into ONE buffer forming a CLOSED band polygon**:
+   `CTccLVBreakerCurveSST.RecalcCurve_STT_LT` (3503-3646) runs `MergeSST(false)` (min-trip/open) then
+   `MergeSST(true)` (total-clear, reversed), copies a closing point (3645); `P_0[7]/P_0[8]` are the
+   open-count/clear-start section markers.
+7. **Final right-edge clip at the study's available short-circuit current**: `RecalcCurve` (3289-3345)
+   → `ClipCurve(GetScAmps, …)` after assembly; shape variant chosen by `DetermineShapeSST` (1788-1916,
+   element bitmask; the override bit is CLEARED when the override pickup ≤ INST amps).
+8. **Ground fault is a fully separate band**: `CPointsMergeGF.MergeGF` (127-200) + `SetGFPU/SetGFDB/SetIXT`
+   (217-251) — own vertical GFPU asymptote + GFD band, filleted corner, SC-amps cap, its own open/clear
+   passes. Independent of (and conventionally crossing) the phase band.
+
+**Serving-layer gap inventory (2026-06-09, post-#121):** the API serves per-element traces with NO mutual
+clipping — DB-route LTD + route-2 InvEq STD/GFD sweep to the calc-engine default `max_amps=100,000 A`
+(the router never passes `max_amps`), INST is two points `[pickup, 5×pickup]` at placeholder times
+0.05/0.08 s (the `Sec4Inst*` surface = matrix row 12, unresolved), no pickup asymptotes, no band polygon.
+Only the synthesized branches self-clip (I²t LTD at STPU; route-1 I2X STD at INST; route-1 GFD sweeps
+`[GFPU, max(INST, 3×In)]`). The composite-boundary serving lane (operator-requested, design pending
+ratification) implements rules 1-8; STATE §209.
 
 **Read every sensor's delay-calc route against this table before emitting a delay/curve number.**
 Status legend: **PROVEN** = recovered + bound + numerically validated on real rows; **BOUNDED** =
