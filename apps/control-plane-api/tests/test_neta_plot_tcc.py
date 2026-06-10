@@ -3082,3 +3082,29 @@ class TestToleranceEnvelope:
                          "timing_source=band_table")]
         assert _build_envelope_basis_map(gf_markers, gf_rows_ok)[
             "GFD"].time_source == "published_band"
+
+    def test_ltd_anchor_consistency_probes_inside_a_clipped_sweep(self):
+        # Live-caught on 3833 (Micrologic 6.0A, STPU 1.5×Ir): the long-time
+        # sweep ends at the STD handoff (1800 A) BEFORE the 3× marker
+        # (2880 A here). The guard must prove consistency against the I²t
+        # window THROUGH the marker anchor at probes INSIDE the served
+        # sweep — a window-law curve clipped short keeps its envelope.
+        clipped_window_curve = [
+            FakeLTDCurvePoint(1320.0, 66.6446280992),  # 14·(2880/1320)²
+            FakeLTDCurvePoint(1800.0, 35.84),          # 14·(2880/1800)²
+        ]
+        body = self._plot(
+            type(self).BASE_REQUEST if hasattr(type(self), "BASE_REQUEST") else {
+                "sensor_id": SENSOR_ID, "plug_rating": PLUG_RATING,
+                "ltpu_setting": 0.8, "ltd_setting": 3.5, "stpu_setting": 4.0,
+                "std_setting": 2.0, "inst_setting": 10.0, "gfpu_setting": 0.4,
+                "gfd_setting": 1.5, "maint_mode": False,
+                "include_nominal_curve": True, "include_expected_markers": True,
+                "include_measured_markers": False,
+            },
+            ltd_curve=clipped_window_curve,
+        )
+        phase = next(b for b in body["envelope_bands"] if b["id"] == "phase_envelope")
+        ltd = self._basis(phase, "LTD")
+        assert ltd is not None, phase["no_envelope_elements"]
+        assert "LTD" not in phase["no_envelope_elements"]

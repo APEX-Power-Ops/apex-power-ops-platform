@@ -7236,9 +7236,14 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
             basis_map = _build_envelope_basis_map(expected_markers, table_rows)
             # LTD anchor-consistency guard (#124 review): the acceptance-
             # window pcts grade against the §111 reference window — scaling
-            # a served curve that does NOT pass through that window at the
-            # marker would draw a corridor contradicting the grading row
-            # (non-I²t LTD curve methods). Withhold unless consistent.
+            # a served curve that does NOT follow that window would draw a
+            # corridor contradicting the grading row (non-I²t LTD curve
+            # methods). The graded surface is the I²t law THROUGH the marker
+            # anchor, t(I) = expected·(marker_amps/I)², so consistency is
+            # probed INSIDE the served sweep — the marker itself may sit
+            # beyond the curve's clip (live case: a low-dialed STPU ends the
+            # long-time sweep before the 3× point). Withhold unless the
+            # curve matches the window law at both probes.
             if "LTD" in basis_map:
                 ltd_marker = next(
                     (m for m in expected_markers
@@ -7253,13 +7258,26 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
                     and ltd_marker.expected_time not in (None, 0)
                     and ltd_marker.expected_current > 0
                 ):
-                    t_curve = _interpolate_time(
-                        ltd_open.points, ltd_marker.expected_current)
                     expected = float(ltd_marker.expected_time)
-                    consistent = (
-                        t_curve is not None
-                        and abs(t_curve - expected) <= 0.02 * expected
-                    )
+                    marker_amps = float(ltd_marker.expected_current)
+                    amps = sorted(p.amps for p in ltd_open.points if p.amps > 0)
+                    if amps:
+                        lo, hi = amps[0], amps[-1]
+                        probes = (
+                            [lo] if lo == hi
+                            else [lo ** (1 - f) * hi ** f for f in (1 / 3, 2 / 3)]
+                        )
+                        consistent = True
+                        for probe in probes:
+                            t_curve = _interpolate_time(ltd_open.points, probe)
+                            t_window = expected * (marker_amps / probe) ** 2
+                            if (
+                                t_curve is None
+                                or t_window <= 0
+                                or abs(t_curve - t_window) > 0.02 * t_window
+                            ):
+                                consistent = False
+                                break
                 if not consistent:
                     del basis_map["LTD"]
             envelope_bands = [
