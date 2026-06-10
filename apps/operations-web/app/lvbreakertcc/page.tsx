@@ -1389,7 +1389,7 @@ function TmtCurve({ selection }: { selection: LiveSelection }) {
         <section className="card plot-card">
           <div className="card-h">Trip Characteristic Curve <span className="badge inline">BOUNDED · nominal class curve</span></div>
           <div className="plot-wrap">
-            <svg viewBox="0 0 700 480" className="plot" role="img" aria-label="Time-current curve">
+            <svg viewBox="0 0 700 500" className="plot" role="img" aria-label="Time-current curve">
               {sc.xTicks.map((t) => (
                 <g key={`x${t}`}>
                   <line x1={sc.px(t)} y1={PLOT.mt} x2={sc.px(t)} y2={PLOT.mt + PLOT.h} className="grid" />
@@ -1618,7 +1618,7 @@ function EtuCurve({ selection, maint, chosen, testMult, measured }: {
         <section className="card plot-card">
           <div className="card-h">Trip Characteristic Curve <span className="badge inline live">{fromSettings ? 'LIVE · your settings' : 'LIVE · nominal defaults'}</span></div>
           <div className="plot-wrap">
-            <svg viewBox="0 0 700 480" className="plot" role="img" aria-label="Time-current curve">
+            <svg viewBox="0 0 700 500" className="plot" role="img" aria-label="Time-current curve">
               {scale.xTicks.map((t) => (
                 <g key={`x${t}`}>
                   <line x1={scale.px(t)} y1={PLOT.mt} x2={scale.px(t)} y2={PLOT.mt + PLOT.h} className="grid" />
