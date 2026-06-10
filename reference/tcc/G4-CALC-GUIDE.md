@@ -517,6 +517,38 @@ INST times are still the 0.05/0.08 s placeholders (`Sec4Inst*` = matrix row 12, 
 floor inherits them); route-2 sweeps still default `max_amps=100 kA` (now harmless — the assembly
 clips them at the handoffs).
 
+**Tolerance-envelope serving lane SHIPPED 2026-06-10 (#124, apex `8b8120d5` + `9b1e995b`; STATE §212):**
+the field-acceptance corridor is a DISTINCT surface from the published band above — `services/neta/
+tolerance_envelope.py` (pure) transforms the served per-element curves by the §2 per-sensor tolerances
+and reassembles min/max boundaries through the composite assembler; `envelope_bands` on `/plot-tcc`
+(per-element basis metadata + `open_only`/`no_envelope` honesty lists, fail-open); FE renders it as a
+dotted translucent corridor BEHIND the band, legend toggle default ON, per-element basis lines.
+Operator-ratified semantics: **PU tolerance shifts the amps axis for every element** (pcts derived
+from the SERVED pickup-marker limits, so whisker↔envelope identity holds by construction — every
+served shape is multiplicative in current); **time widening only in acceptance-window mode** (LTD: the
+§111 reference-window tolerance chain, generic −30/+0 flagged `est`); **published-band mode for
+STD/INST/GFD** (their open/clear pair IS the mfr window — amps shift only). Consistency laws from the
+pre-ship adversarial review (51 agents, 7 confirmed findings, all fixed): (1) **maint mode withholds
+the envelope** + warning — markers grade the maint configuration while curves are nominal, so a
+corridor would mix bases and contradict the whiskers on one plot; (2) **LTD anchor-consistency
+guard** — the graded surface is the I²t window THROUGH the marker anchor (`t = expected·(marker_amps/
+I)²`), probed at two log-spaced points INSIDE the served sweep (the marker itself may sit beyond the
+curve's clip, e.g. a low-dialed STPU; live-caught on 3833): window-law curves keep their envelope at
+any clip, non-I²t LTD curve methods (~890 sensors) withhold honestly; (3) **truncation law** — the
+corridor never SPANS a served-but-uncertified element's region (a middle/last withhold cuts the
+corridor at that element's region start; leading withholds degrade naturally; the assembler's
+suffix-min/flat-tail laws would otherwise chord fabricated geometry across the gap); (4) **G4
+TIME_WITHHELD elements get NO envelope**, surfaced in `no_envelope_elements`, and a **family-total
+withhold surfaces a response warning** (the honesty list has no band to ride on); (5) the LTD basis
+accepts ONLY the reference-window timing sources (`band_table`/`curve_interpolation` fallthroughs are
+not a multiplicative tolerance and must not masquerade as DS2). Live-verified (3833: boundary law
+exact at 1e-6 incl. the real Micrologic **+5/+20 % LTPU** band; identity OK on all four elements;
+maint withhold live; 4628 route-2 InvEq serves published-band corridors). **Open characterization
+(punch list): sensor-level `etu_sensors.ltd_tol_lo/hi` = `DatSensor.DS2_TOL_*` (universal, all
+nonzero) is NOT confirmably the curve-type time tolerance** (545/876 match the `etu_ltd_params` I²T
+row; 288 of the 331 mismatches match NO curve row) — not wired anywhere until its native semantics
+are pinned.
+
 **Read every sensor's delay-calc route against this table before emitting a delay/curve number.**
 Status legend: **PROVEN** = recovered + bound + numerically validated on real rows; **BOUNDED** =
 dispatch/routing recovered, wired, and exercised, but the numerical kernel output is *not* yet proven

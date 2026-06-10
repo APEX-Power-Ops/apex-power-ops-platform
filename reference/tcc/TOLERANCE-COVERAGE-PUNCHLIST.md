@@ -63,6 +63,12 @@ every stage; the punch list is about *coverage*, not *safety*.
 | L8 | TMT thermal time/band | TMT population | thermal verify | mag DB ✓ | M | OPEN |
 | L9 | EMT pickup→current calc | EMT population | withheld | DB ✓ | M | OPEN |
 | L10 | Relays (GR) — analytical curves | Models 1–6 | BOUNDED | stored data | L (separate) | OPEN — native kernel UNRECOVERED |
+| L11 | **Sensor-level `DS2_TOL` characterization** (`etu_sensors.ltd_tol_lo/hi`) | 17,877 sensors (all nonzero) | — | candidate per-sensor LTD time band | S–M | **OPEN (found 2026-06-10, #124)** — NOT wired: semantics unconfirmed (545/876 match the `etu_ltd_params` I²T row; 288/331 mismatches match NO curve row; native curve classes don't consume it). If pinned = retires the generic −30/+0 LTD fallback for ~16.7k sensors (whiskers + envelope + sheet together) |
+
+> **Serving surface (2026-06-10, #124):** the per-element tolerance data above now renders LIVE as the
+> field-acceptance envelope on `/plot-tcc` (G4 §3g serving record — basis derived from the served
+> acceptance surfaces, withhold-over-fabricate laws). Every BAND coverage win banked here lands on the
+> plot automatically through the same chain.
 
 ---
 
