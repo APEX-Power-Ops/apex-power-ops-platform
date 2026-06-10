@@ -1360,6 +1360,10 @@ class PlotExpectedMarker(BaseModel):
     limit_high: Optional[float] = None
     curve_ref: Optional[str] = None
     label: str
+    # G4 per-element field-trust (same classifier as /calculate, #67 parity):
+    # pickups are DB-authoritative; delay markers carry the route-classified tier.
+    trust: Optional[str] = Field(None, description="'db' | 'verify' | 'unsupported'")
+    trust_reason: Optional[str] = None
 
 
 class PlotMeasuredMarker(BaseModel):
@@ -1400,7 +1404,17 @@ class PlotTableRow(BaseModel):
     passed: Optional[bool] = None
     deviation_pct: Optional[float] = None
     calc_method: Optional[str] = None
-    notes: Optional[str] = None
+    notes: Optional[str] = Field(
+        None,
+        description="For delay rows: 'timing_source=<source>' — the tolerance "
+                    "basis ('ltd_reference_window' = per-mfr DS2_TOL band; "
+                    "'..._generic' = flagged generic estimate; 'band_table' = "
+                    "per-sensor DB band; 'i2x_*' = validated etu_ixt surface; "
+                    "'curve_interpolation' = open/clear curve envelope).",
+    )
+    # G4 per-element field-trust (same classifier as /calculate, #67 parity).
+    trust: Optional[str] = Field(None, description="'db' | 'verify' | 'unsupported'")
+    trust_reason: Optional[str] = None
 
 
 class PlotMeta(BaseModel):

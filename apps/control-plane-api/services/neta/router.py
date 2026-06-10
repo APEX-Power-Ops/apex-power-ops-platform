@@ -136,6 +136,8 @@ from .schemas import (
 )
 from .delay_trust import (
     TIME_WITHHELD,
+    TRUST_DB,
+    TRUST_UNSUPPORTED,
     classify_delay_trust,
     delay_route_for,
     delay_trust_reason,
@@ -6718,6 +6720,8 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
                 limit_low=elem.get("limit_low"),
                 limit_high=elem.get("limit_high"),
                 label=label,
+                trust=TRUST_DB,
+                trust_reason="Pickup — DB-authoritative per-sensor tolerance (G4 §4)",
             ))
         table_rows.append(PlotTableRow(
             element=elem_name,
@@ -6728,6 +6732,8 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
             limit_low=elem.get("limit_low"),
             limit_high=elem.get("limit_high"),
             calc_method=str(elem["calc_method"]) if elem.get("calc_method") is not None else None,
+            trust=TRUST_DB,
+            trust_reason="Pickup — DB-authoritative per-sensor tolerance (G4 §4)",
         ))
 
     # Delay elements: LTD, STD, GFD
@@ -6826,9 +6832,35 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
         )
         warnings.extend(curve_warnings)
 
+        # G4 field-trust parity with /calculate (#121, #67 on the TIME axis): the
+        # plot must withhold exactly what Screen 2 withholds — a not-implemented /
+        # hard-excluded route's fall-through band value is NOT a certified time.
+        # Route bytes are authoritative per-sensor data (G4-CALC-GUIDE §3a/§4/§6).
+        route_row = db.execute(
+            text(
+                """
+                SELECT s.stpu_delay_calc_code AS std_route,
+                       s.ground_delay_calc_code AS gfd_route,
+                       EXISTS (
+                           SELECT 1 FROM tcc.etu_gfd_equations eq
+                           WHERE eq.sensor_id = s.id AND eq.id_op_eq <> 0
+                       ) AS gfd_is_ansi
+                FROM tcc.etu_sensors s
+                WHERE s.id = :sid
+                """
+            ),
+            {"sid": req.sensor_id},
+        ).fetchone()
+        _route_map = route_row._mapping if route_row is not None else {}
+        std_route = _route_map.get("std_route")
+        gfd_route = _route_map.get("gfd_route")
+        gfd_is_ansi = bool(_route_map.get("gfd_is_ansi"))
+        _ltpu_current = (calc_data.get("ltpu") or {}).get("test_current")
+
         for marker in expected_markers:
             if marker.kind != "delay" or marker.expected_time is not None:
                 continue
+            element_key = marker.element.lower()
             delay_setting = {
                 "LTD": ltd_delay_setting,
                 "STD": std_delay_setting,
@@ -6839,10 +6871,10 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
                 "STD": std_test_multiple,
                 "GFD": gfd_test_multiple,
             }.get(marker.element)
-            expected_time, time_low, time_high, _timing_source = _authoritative_delay_surface(
+            expected_time, time_low, time_high, timing_source = _authoritative_delay_surface(
                 db=db,
                 sensor_id=req.sensor_id,
-                element_key=marker.element.lower(),
+                element_key=element_key,
                 setting=delay_setting,
                 test_multiple=delay_test_multiple,
                 curves=curves,
@@ -6851,12 +6883,49 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
                 maint_profile=maint_profile,
                 use_ltd_reference_window=True,
             )
+            # Route-1 (I2X): the validated etu_ixt surface replaces the legacy
+            # interpolation and its shape gates the trust — identical numbers to
+            # the Screen-2 /calculate surface (I2X-6).
+            i2x_shape = None
+            _route = std_route if element_key == "std" else (
+                gfd_route if element_key == "gfd" else None
+            )
+            if element_key in ("std", "gfd") and _route == 1:
+                _ref = _ltpu_current if element_key == "std" else req.plug_rating
+                i2x_time, i2x_lo, i2x_hi, _shape, _ok = _i2x_field_delay(
+                    db, req.sensor_id, element_key, marker.expected_current,
+                    float(_ref or 0), delay_setting, micrologic_6_0,
+                )
+                if _ok:
+                    expected_time, time_low, time_high = i2x_time, i2x_lo, i2x_hi
+                    timing_source = f"i2x_{_shape}"
+                    i2x_shape = _shape
+            trust = classify_delay_trust(
+                element_key, std_route=std_route, gfd_route=gfd_route,
+                gfd_is_ansi=gfd_is_ansi, i2x_shape=i2x_shape,
+            )
+            trust_reason = delay_trust_reason(
+                element_key, trust,
+                route=delay_route_for(element_key, std_route=std_route, gfd_route=gfd_route),
+                gfd_is_ansi=gfd_is_ansi,
+            )
+            if trust in TIME_WITHHELD:
+                # Withhold the TIME surface (G4 §6 step 6); the inject current
+                # (the test point) stays field-valid.
+                expected_time = None
+                time_low = None
+                time_high = None
             marker.expected_time = expected_time
+            marker.trust = trust
+            marker.trust_reason = trust_reason
             for tr in table_rows:
                 if tr.element == marker.element:
                     tr.expected_time = expected_time
                     tr.time_limit_low = time_low
                     tr.time_limit_high = time_high
+                    tr.trust = trust
+                    tr.trust_reason = trust_reason
+                    tr.notes = f"timing_source={timing_source}"
                     break
 
         if req.measurements and req.include_measured_markers:
@@ -6868,6 +6937,15 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
                 for tr in table_rows:
                     if tr.element != elem_name:
                         continue
+                    if tr.trust == TRUST_UNSUPPORTED:
+                        # A withheld element has no certified acceptance band —
+                        # grading a measured time against nothing would fabricate
+                        # a PASS. The measurement is simply not evaluated.
+                        warnings.append(
+                            f"{elem_name} measured time not evaluated: expected "
+                            "time withheld (G4 field-trust)"
+                        )
+                        break
                     tr.measured_time = measurement.measured_time
                     lower_ok = True if tr.time_limit_low is None else measurement.measured_time >= tr.time_limit_low
                     upper_ok = True if tr.time_limit_high is None else measurement.measured_time <= tr.time_limit_high

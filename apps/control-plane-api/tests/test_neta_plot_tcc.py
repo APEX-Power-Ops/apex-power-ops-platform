@@ -222,7 +222,7 @@ def _inveq_option_row(label):
 
 def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=None,
                        avail_bands=("ltd", "std", "gfd"), inveq_payload=None,
-                       trip_style_db=None):
+                       trip_style_db=None, delay_routes=None):
     """Return a side_effect function for Session.execute that returns
     deterministic payloads for the two SQL function calls.
 
@@ -241,8 +241,14 @@ def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=No
     labels become payload-row options (#119). Default None → no InvEq rows.
 
     ``trip_style_db`` mocks the sensor's DB trip-style label
-    (``_sensor_trip_style_name``), which drives the Micrologic-6.0 carve-outs."""
+    (``_sensor_trip_style_name``), which drives the Micrologic-6.0 carve-outs.
+
+    ``delay_routes`` mocks the per-sensor SSTDelayCalc route-byte query
+    (std_route / gfd_route / gfd_is_ansi). Defaults to direct-band routes
+    (0/0/False) — the truthful model for the fake's band-table rows."""
     avail_bands = set(avail_bands or ())
+    if delay_routes is None:
+        delay_routes = {"std_route": 0, "gfd_route": 0, "gfd_is_ansi": False}
     call_count = {"n": 0}
 
     def fake_execute(stmt, params=None):
@@ -277,9 +283,10 @@ def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=No
                     row._mapping = {"open_time": 3.5, "clear_time": 3.0, "ordinal": 2, "is_default": False}
                     result.fetchone.return_value = row
         elif "stpu_delay_calc_code" in sql_text:
-            # Delay-route bytes query (/plot-tcc trust block): default unknown,
-            # matching the legacy fall-through these tests were written against.
-            result.fetchone.return_value = None
+            # Per-sensor SSTDelayCalc route bytes (G4 trust classification).
+            row = MagicMock()
+            row._mapping = dict(delay_routes)
+            result.fetchone.return_value = row
         elif "tcc.etu_std_equations" in sql_text:
             result.fetchall.return_value = [
                 _inveq_option_row(lbl)
@@ -1822,6 +1829,116 @@ class TestDelayMarkerEnrichment:
         )
         assert ltd_marker is not None
         assert ltd_marker["expected_time"] == 14.0
+
+
+# ──────────────────────────────────────────────────
+# Test 6b: Plot delay-trust parity with /calculate (G4 §6 / #121)
+# ──────────────────────────────────────────────────
+
+class TestPlotDelayTrustParity:
+    """The plot's delay surface must withhold exactly what Screen 2 withholds
+    (the #67 consistency law on the TIME axis): a not-implemented / hard-excluded
+    route's fall-through band value is NOT a certified time. The payload carries
+    per-element trust + reason + the timing source so Screen 3 can label each
+    curve/marker with the same G4 badges and the tolerance BASIS (per-mfr DB
+    value vs flagged generic estimate — NETA acceptance = mfr tolerances)."""
+
+    def _plot(self, base_request, *, delay_routes=None, measurements=None):
+        mock_session = MagicMock()
+        mock_session.execute = MagicMock(
+            side_effect=_make_fake_execute(delay_routes=delay_routes)
+        )
+
+        def override_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = override_db
+        try:
+            tc = TestClient(app)
+            req = {**base_request, "measurements": measurements,
+                   "include_measured_markers": measurements is not None}
+            patches, _ = _patch_calc_engine()
+            with patches["pickup"], patches["ltd"], patches["ieee"]:
+                resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+            assert resp.status_code == 200, resp.text
+            return resp.json()
+        finally:
+            app.dependency_overrides.clear()
+
+    @staticmethod
+    def _row(body, element):
+        return next(r for r in body["table_rows"] if r["element"] == element)
+
+    @staticmethod
+    def _marker(body, element):
+        return next(
+            m for m in body["expected_markers"]
+            if m["element"] == element and m["kind"] == "delay"
+        )
+
+    def test_direct_band_routes_serve_time_with_db_trust(self, base_request):
+        body = self._plot(base_request)  # default routes 0/0 = direct band
+        for el, t in (("STD", 2.0), ("GFD", 1.5)):
+            marker = self._marker(body, el)
+            assert marker["trust"] == "db", marker
+            assert marker["expected_time"] == t
+            row = self._row(body, el)
+            assert row["trust"] == "db"
+            assert row["expected_time"] == t
+            assert "band_table" in (row["notes"] or "")
+        ltd = self._marker(body, "LTD")
+        assert ltd["trust"] == "db"  # LTD always db (G4 row 5)
+        assert "ltd_reference_window" in (self._row(body, "LTD")["notes"] or "")
+
+    def test_unsupported_routes_withhold_time_but_keep_inject_current(self, base_request):
+        # GE-TU fall-through routes (STD 3 / GFD 4) — Screen 2 withholds, so must we.
+        body = self._plot(base_request, delay_routes={
+            "std_route": 3, "gfd_route": 4, "gfd_is_ansi": False,
+        })
+        for el in ("STD", "GFD"):
+            marker = self._marker(body, el)
+            assert marker["trust"] == "unsupported", marker
+            assert marker["expected_time"] is None
+            assert marker["expected_current"] > 0  # the test point stays valid
+            row = self._row(body, el)
+            assert row["trust"] == "unsupported"
+            assert row["expected_time"] is None
+            assert row["time_limit_low"] is None and row["time_limit_high"] is None
+            assert row["trust_reason"]
+        # LTD is not route-governed — stays served.
+        assert self._marker(body, "LTD")["expected_time"] == 14.0
+
+    def test_gfd_ansi_route2_withheld_std_route2_served(self, base_request):
+        body = self._plot(base_request, delay_routes={
+            "std_route": 2, "gfd_route": 2, "gfd_is_ansi": True,
+        })
+        assert self._marker(body, "STD")["trust"] == "db"
+        assert self._marker(body, "STD")["expected_time"] == 2.0
+        gfd = self._marker(body, "GFD")
+        assert gfd["trust"] == "unsupported"
+        assert gfd["expected_time"] is None
+        assert "ANSI" in (self._row(body, "GFD")["trust_reason"] or "")
+
+    def test_withheld_element_measured_time_is_not_graded(self, base_request):
+        # A measured delay time on a withheld element must not be graded PASS
+        # against an empty (withheld) acceptance band.
+        body = self._plot(
+            base_request,
+            delay_routes={"std_route": 3, "gfd_route": 4, "gfd_is_ansi": False},
+            measurements=[{"element": "STD", "measured_time": 2.1}],
+        )
+        assert not [m for m in body["measured_markers"]
+                    if m["element"] == "STD" and m["kind"] == "delay"]
+        assert self._row(body, "STD")["passed"] is None
+
+    def test_pickup_rows_and_markers_are_db_trust(self, base_request):
+        body = self._plot(base_request)
+        for el in ("LTPU", "STPU", "INST", "GFPU"):
+            row = self._row(body, el)
+            assert row["trust"] == "db", row
+            marker = next(m for m in body["expected_markers"]
+                          if m["element"] == el and m["kind"] == "pickup")
+            assert marker["trust"] == "db"
 
 
 # ══════════════════════════════════════════════════

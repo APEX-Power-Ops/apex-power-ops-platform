@@ -2,15 +2,15 @@
 
 /**
  * LV Breaker TCC — operator-facing field-tolerance tool.
- * 3-screen flow: Specifications -> Protection Settings -> TCC Curve.
- *
- * Stage A (this build): Screen 1 (Specifications) is LIVE — family-polymorphic
- * (ETU / TMT / EMT) selection wired to the control-plane API via lib/breaker-resources.
- *   - ETU uses the recovered SST bridge (GET /etu/bridge-sensors) to narrow a chosen
- *     breaker style to its compatible ETU sensor set (D1 / migration 006).
- *   - TMT / EMT use their existing frame/section browse routes.
- * Screens 2-3 still render the frozen SAMPLE configuration (badged) until Stage B
- * (live per-family settings/tolerances) and Stage C (live per-family curve) land.
+ * 3-screen flow: Specifications -> Protection Settings -> TCC Curve. All three
+ * screens are LIVE against the control-plane API (lib/breaker-resources):
+ *   - Screen 1 — family-polymorphic (ETU / TMT / EMT) selection on the recovered
+ *     SST bridge (co-equal dual-axis cross-filter).
+ *   - Screen 2 — engine-served settings + NETA tolerance bands, G4 field-trust
+ *     gated; delay test multiples selectable; measured field entries graded.
+ *   - Screen 3 — the operator's CONFIGURED curve from /plot-tcc (the Screen-2
+ *     state is lifted to the page), with NETA test-point markers, tolerance
+ *     whiskers (mfr basis surfaced), and measured pass/fail overlays.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -39,6 +39,7 @@ import {
   type DelayBandOption,
   type EtuCalculateResponse,
   type EtuTestCurrentElement,
+  type EtuPlotRequest,
   type EtuPlotResponse,
   type TMTFrameSearchResult,
   type ManufacturerFacetOption,
@@ -50,6 +51,13 @@ import {
 } from '../../lib/breaker-resources'
 import { buildSensorPool, summarizeSensorTerminal, type AltTripInfo } from '../../lib/etu-sensor-pool'
 import { tripStyleOptionLabel, tripStylesForType } from '../../lib/trip-style-options'
+import {
+  buildDefaultEtuPlotRequest,
+  buildEtuPlotRequest,
+  defaultBandValue,
+  delayBasisLabel,
+  type EtuChosenSettings,
+} from '../../lib/etu-plot-request'
 
 // ── families ────────────────────────────────────────────────────────────────
 type Family = 'etu' | 'tmt' | 'emt'
@@ -95,89 +103,17 @@ const DEFAULT_SELECTION: LiveSelection = {
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Request failed')
 
-// ── frozen sample (operator's TCC_Calculator_v5.xlsx) — Screens 2-3 until Stage B/C ──
-const DEVICE = {
-  breakerClass: 'MCCB',
-  breakerMfr: 'Square D',
-  breakerType: 'P Frame',
-  breakerStyle: 'PX',
-  frameSize: '2500 A',
-  tripType: 'Solid State',
-  tripMfr: 'Square D',
-  tripDetail: 'Micrologic 6.0H',
-  tripStyle: 'MCCB',
-  sensorIr: '2500 A',
-  plug: '2500 A',
-  effectiveIr: '2500 A',
-}
-
-type DelayKey = 'ltd' | 'std' | 'gfd'
-type Elt = {
-  code: string
-  label: string
-  kind: 'PICKUP' | 'DELAY' | 'INSTANT' | 'GROUND' | 'GF DELAY' | 'ARC MODE'
-  setting: string
-  base?: number
-  delay?: DelayKey
-  disabled?: boolean
-}
-
-const ELEMENTS: Elt[] = [
-  { code: 'LTPU', label: 'Long-Time Pickup', kind: 'PICKUP', setting: '0.90 × Ir', base: 2250 },
-  { code: 'LTD', label: 'Long-Time Delay', kind: 'DELAY', setting: '12 s', base: 2250, delay: 'ltd' },
-  { code: 'STPU', label: 'Short-Time Pickup', kind: 'PICKUP', setting: '3.2 × Ir', base: 8000 },
-  { code: 'STD', label: 'Short-Time Delay', kind: 'DELAY', setting: '0.30 s (I²t)', base: 8000, delay: 'std' },
-  { code: 'INST', label: 'Instantaneous', kind: 'INSTANT', setting: '5.1 × Ir', base: 12800 },
-  { code: 'GFPU', label: 'Ground-Fault Pickup', kind: 'GROUND', setting: 'Disabled', disabled: true },
-  { code: 'GFD', label: 'Ground-Fault Delay', kind: 'GF DELAY', setting: 'Disabled', delay: 'gfd', disabled: true },
-  { code: 'MAINT', label: 'Maintenance / ARMS', kind: 'ARC MODE', setting: 'Disabled', disabled: true },
-]
+type EltKind = 'PICKUP' | 'DELAY' | 'INSTANT' | 'GROUND' | 'GF DELAY' | 'ARC MODE'
 
 const MULT_OPTS = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6]
-const DELAY_DEFAULT: Record<DelayKey, number> = { ltd: 3, std: 1.5, gfd: 1.5 }
-const fmtA = (n: number) => `${Math.round(n).toLocaleString('en-US')} A`
+const DELAY_DEFAULT: Record<BandKey, number> = { ltd: 3, std: 1.5, gfd: 1.5 }
 const fmtMult = (m: number) => `${Number.isInteger(m) ? m : m.toFixed(1)}×`
 
-type Unit = 'A' | 's' | ''
-type Band = { el: string; nominal: number; min: number; max: number; unit: Unit; status: 'ready' | 'disabled' }
-const BANDS: Band[] = [
-  { el: 'LTPU', nominal: 2250, min: 2025, max: 2475, unit: 'A', status: 'ready' },
-  { el: 'LTD', nominal: 12, min: 9.6, max: 14.4, unit: 's', status: 'ready' },
-  { el: 'STPU', nominal: 8000, min: 7200, max: 8800, unit: 'A', status: 'ready' },
-  { el: 'STD', nominal: 0.3, min: 0.21, max: 0.39, unit: 's', status: 'ready' },
-  { el: 'INST', nominal: 12800, min: 10880, max: 14720, unit: 'A', status: 'ready' },
-  { el: 'GFPU', nominal: 0, min: 0, max: 0, unit: '', status: 'disabled' },
-  { el: 'GFD', nominal: 0, min: 0, max: 0, unit: '', status: 'disabled' },
-  { el: 'MAINT', nominal: 0, min: 0, max: 0, unit: '', status: 'disabled' },
-]
-const fmtVal = (n: number, unit: Unit) =>
-  unit === 'A' ? `${Math.round(n).toLocaleString('en-US')} A` : unit === 's' ? `${n} s` : '—'
-const SETTING_BY_EL: Record<string, string> = Object.fromEntries(ELEMENTS.map((e) => [e.code, e.setting]))
-const BASE_BY_EL: Record<string, number> = Object.fromEntries(ELEMENTS.filter((e) => e.base).map((e) => [e.code, e.base as number]))
-
-// ── log-log curve geometry (sample, Stage C wires live /plot-tcc) ─────────────
-const PLOT = { ml: 58, mt: 18, w: 600, h: 430, x0: 2, x1: 5, y0: -2, y1: 3 }
-const px = (a: number) => PLOT.ml + ((Math.log10(a) - PLOT.x0) / (PLOT.x1 - PLOT.x0)) * PLOT.w
-const py = (s: number) => PLOT.mt + ((PLOT.y1 - Math.log10(s)) / (PLOT.y1 - PLOT.y0)) * PLOT.h
-const NOMINAL: [number, number][] = [
-  [2475, 1000], [2700, 360], [3200, 110], [4500, 38], [6000, 16], [7600, 7.5],
-  [8000, 5.5], [8200, 0.42], [11000, 0.34], [12000, 0.30], [12800, 0.30], [12800, 0.012], [60000, 0.012],
-]
-const bandUp = NOMINAL.map(([a, s]) => [a * 1.12, s * 1.55] as [number, number])
-const bandLo = NOMINAL.map(([a, s]) => [a * 0.9, s * 0.62] as [number, number])
-const toPath = (pts: [number, number][]) => pts.map(([a, s], i) => `${i ? 'L' : 'M'}${px(a).toFixed(1)},${py(s).toFixed(1)}`).join(' ')
-const bandPath = `${toPath(bandUp)} L${bandLo.slice().reverse().map(([a, s]) => `${px(a).toFixed(1)},${py(s).toFixed(1)}`).join(' L')} Z`
-const MARKERS = [
-  { label: 'LTPU 1×', a: 2250, s: 1000, color: '#2f8f5b' },
-  { label: 'LTD 3×', a: 6750, s: 12, color: '#d98324' },
-  { label: 'STD 1.5×', a: 12000, s: 0.33, color: '#d24b4b' },
-  { label: 'INST 1×', a: 12800, s: 0.012, color: '#7c5cc4' },
-]
-const X_TICKS = [100, 1000, 10000, 100000]
-const Y_TICKS = [0.01, 0.1, 1, 10, 100, 1000]
+// ── log-log plot frame geometry (axes auto-fit per device via makeScale) ─────
+const PLOT = { ml: 58, mt: 18, w: 600, h: 430 }
 
 const STEPS = ['Equipment Specifications', 'Protection Settings', 'Time-Current Curve']
-const KIND_CLASS: Record<Elt['kind'], string> = {
+const KIND_CLASS: Record<EltKind, string> = {
   PICKUP: 'pill-green', DELAY: 'pill-green', INSTANT: 'pill-blue',
   GROUND: 'pill-blue', 'GF DELAY': 'pill-blue', 'ARC MODE': 'pill-amber',
 }
@@ -188,6 +124,20 @@ export default function LvBreakerTcc() {
   const [maint, setMaint] = useState(false)
   const [family, setFamily] = useState<Family>('etu')
   const [selection, setSelection] = useState<LiveSelection | null>(DEFAULT_SELECTION)
+
+  // ETU Screen-2 state lives HERE (lean (a), core pass): the curve screen renders
+  // the operator's actual configuration, and navigating 2 ⇄ 3 no longer resets it.
+  // A sensor change resets the lane (different device, different settings).
+  const [etuChosen, setEtuChosen] = useState<EtuChosen | null>(null)
+  const [etuTestMult, setEtuTestMult] = useState<Record<BandKey, number>>(DELAY_DEFAULT)
+  const [etuMeasured, setEtuMeasured] = useState<Record<string, string>>({})
+  const etuSensorId = selection?.family === 'etu' ? selection.sensorId : null
+  useEffect(() => {
+    setEtuChosen(null)
+    setEtuTestMult(DELAY_DEFAULT)
+    setEtuMeasured({})
+    setMaint(false)
+  }, [etuSensorId])
 
   const chip = selection
     ? `${selection.breakerLabel} · ${selection.tripLabel}`
@@ -222,13 +172,25 @@ export default function LvBreakerTcc() {
         {step === 0 && (
           <Specifications family={family} setFamily={setFamily} selection={selection} setSelection={setSelection} />
         )}
-        {step === 1 && <Settings maint={maint} setMaint={setMaint} selection={selection} />}
-        {step === 2 && <Curve selection={selection} />}
+        {step === 1 && (
+          <Settings
+            maint={maint} setMaint={setMaint} selection={selection}
+            etuChosen={etuChosen} setEtuChosen={setEtuChosen}
+            etuTestMult={etuTestMult} setEtuTestMult={setEtuTestMult}
+            etuMeasured={etuMeasured} setEtuMeasured={setEtuMeasured}
+          />
+        )}
+        {step === 2 && (
+          <Curve
+            selection={selection} maint={maint}
+            etuChosen={etuChosen} etuTestMult={etuTestMult} etuMeasured={etuMeasured}
+          />
+        )}
       </main>
 
       <footer className="foot">
         <span>
-          LV Breaker TCC · {selection ? 'live selection' : 'select equipment to begin'} — protection &amp; curve data ships in Stage B/C
+          LV Breaker TCC · {selection ? 'live selection' : 'select equipment to begin'} — engine-served settings, tolerances &amp; curves (G4 field-trust gated)
         </span>
         <div className="nav-btns">
           <button className="btn ghost" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))}>← Back</button>
@@ -861,10 +823,27 @@ function SelectPrompt({ kind }: { kind: 'settings' | 'curve' }) {
   )
 }
 
-// ── Screen 2: Protection Settings (sample until Stage B) ──────────────────────
-function Settings({ maint, setMaint, selection }: { maint: boolean; setMaint: (v: boolean) => void; selection: LiveSelection | null }) {
+// ── Screen 2: Protection Settings dispatcher ──────────────────────────────────
+function Settings({ maint, setMaint, selection, etuChosen, setEtuChosen, etuTestMult, setEtuTestMult, etuMeasured, setEtuMeasured }: {
+  maint: boolean
+  setMaint: (v: boolean) => void
+  selection: LiveSelection | null
+  etuChosen: EtuChosen | null
+  setEtuChosen: (v: EtuChosen | null | ((c: EtuChosen | null) => EtuChosen | null)) => void
+  etuTestMult: Record<BandKey, number>
+  setEtuTestMult: (v: Record<BandKey, number> | ((t: Record<BandKey, number>) => Record<BandKey, number>)) => void
+  etuMeasured: Record<string, string>
+  setEtuMeasured: (v: Record<string, string> | ((m: Record<string, string>) => Record<string, string>)) => void
+}) {
   if (selection?.family === 'etu' && selection.sensorId != null) {
-    return <EtuSettings maint={maint} setMaint={setMaint} selection={selection} />
+    return (
+      <EtuSettings
+        maint={maint} setMaint={setMaint} selection={selection}
+        chosen={etuChosen} setChosen={setEtuChosen}
+        testMult={etuTestMult} setTestMult={setEtuTestMult}
+        measured={etuMeasured} setMeasured={setEtuMeasured}
+      />
+    )
   }
   if (selection?.family === 'tmt' && selection.frameId != null) {
     return <TmtSettings selection={selection} />
@@ -878,8 +857,10 @@ function Settings({ maint, setMaint, selection }: { maint: boolean; setMaint: (v
 // ── Screen 2 ETU (LIVE): editable settings -> /calculate -> DB-authoritative bands ──
 type PickKey = 'ltpu' | 'stpu' | 'inst' | 'gfpu'
 type BandKey = 'ltd' | 'std' | 'gfd'
-type EtuChosen = { plug: number; ltpu?: number; stpu?: number; inst?: number; gfpu?: number; ltd?: number; std?: number; gfd?: number }
-const EL_META: { code: string; label: string; kind: Elt['kind']; pick?: PickKey; band?: BandKey }[] = [
+// Same shape as the lib's EtuChosenSettings — the lifted Screen-2 state the curve
+// request is built from. Delay band values are the option's open_time (numeric).
+type EtuChosen = EtuChosenSettings
+const EL_META: { code: string; label: string; kind: EltKind; pick?: PickKey; band?: BandKey }[] = [
   { code: 'LTPU', label: 'Long-Time Pickup', kind: 'PICKUP', pick: 'ltpu' },
   { code: 'LTD', label: 'Long-Time Delay', kind: 'DELAY', band: 'ltd' },
   { code: 'STPU', label: 'Short-Time Pickup', kind: 'PICKUP', pick: 'stpu' },
@@ -890,41 +871,52 @@ const EL_META: { code: string; label: string; kind: Elt['kind']; pick?: PickKey;
 ]
 const fmtAmp = (n: number | null | undefined) => (n == null ? '—' : `${Math.round(n).toLocaleString('en-US')} A`)
 
-function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint: (v: boolean) => void; selection: LiveSelection }) {
-  const sensorId = selection.sensorId as number
-  const [settings, setSettings] = useState<AvailableSettingsResponse | null>(null)
-  const [chosen, setChosen] = useState<EtuChosen | null>(null)
-  const [calc, setCalc] = useState<EtuCalculateResponse | null>(null)
-  const [measured, setMeasured] = useState<Record<string, string>>({})
+function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, setTestMult, measured, setMeasured }: {
+  maint: boolean
+  setMaint: (v: boolean) => void
+  selection: LiveSelection
+  // Lifted Screen-2 state (lean (a)): owned by the page so the curve screen
+  // renders the same configuration and 2 ⇄ 3 navigation never resets it.
+  chosen: EtuChosen | null
+  setChosen: (v: EtuChosen | null | ((c: EtuChosen | null) => EtuChosen | null)) => void
   // Operator-selectable delay test current (× the element's pickup). NETA defaults:
   // LTD 3×, STD/GFD 1.5×. LTD 6× = the band reference where the expected trip time
   // equals the dial setting and is practically measurable.
-  const [testMult, setTestMult] = useState<Record<BandKey, number>>(DELAY_DEFAULT)
+  testMult: Record<BandKey, number>
+  setTestMult: (v: Record<BandKey, number> | ((t: Record<BandKey, number>) => Record<BandKey, number>)) => void
+  measured: Record<string, string>
+  setMeasured: (v: Record<string, string> | ((m: Record<string, string>) => Record<string, string>)) => void
+}) {
+  const sensorId = selection.sensorId as number
+  const [settings, setSettings] = useState<AvailableSettingsResponse | null>(null)
+  const [calc, setCalc] = useState<EtuCalculateResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [calcBusy, setCalcBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const hadChosenOnMount = chosen != null
 
   useEffect(() => {
     let active = true
-    setLoading(true); setErr(null); setCalc(null); setChosen(null); setMeasured({}); setTestMult(DELAY_DEFAULT)
+    setLoading(true); setErr(null); setCalc(null)
     Promise.all([fetchEtuSettings(sensorId), fetchEtuContext(sensorId)])
       .then(([s]: [AvailableSettingsResponse, SensorCalcContext]) => {
         if (!active) return
         setSettings(s)
-        const mid = (arr: number[]): number | undefined => (arr.length ? arr[Math.floor(arr.length / 2)] : undefined)
-        const bandDefault = (bs: DelayBandOption[]): number | undefined => {
-          const b = bs.find((x) => x.is_default) ?? bs[0]
-          return b ? Number(b.band) : undefined
+        // Default the selection only when the operator hasn't configured this
+        // sensor yet (the page resets the lifted state on sensor change).
+        if (!hadChosenOnMount) {
+          const mid = (arr: number[]): number | undefined => (arr.length ? arr[Math.floor(arr.length / 2)] : undefined)
+          setChosen({
+            plug: s.plug_values[0] ?? 0,
+            ltpu: mid(s.ltpu_settings), stpu: mid(s.stpu_settings), inst: mid(s.inst_settings), gfpu: mid(s.gfpu_settings),
+            ltd: defaultBandValue(s.ltd_settings), std: defaultBandValue(s.std_settings), gfd: defaultBandValue(s.gfd_settings),
+          })
         }
-        setChosen({
-          plug: s.plug_values[0] ?? 0,
-          ltpu: mid(s.ltpu_settings), stpu: mid(s.stpu_settings), inst: mid(s.inst_settings), gfpu: mid(s.gfpu_settings),
-          ltd: bandDefault(s.ltd_settings), std: bandDefault(s.std_settings), gfd: bandDefault(s.gfd_settings),
-        })
       })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sensorId])
 
   useEffect(() => {
@@ -1042,7 +1034,11 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
                     </select>
                   ) : (
                     <select className="el-select" value={String(chosen[m.band!] ?? '')} onChange={(e) => setChosen((c) => (c ? { ...c, [m.band!]: e.target.value ? Number(e.target.value) : undefined } : c))}>
-                      {bandsFor(m.band!).map((b) => (<option key={b.band} value={Number(b.band)}>{b.label}</option>))}
+                      {/* The option VALUE is the band's open_time — numeric for every
+                          source (band tables and route-2 InvEq dials alike) and the
+                          value the backend float-matches; Number(band) is NaN for
+                          textual band-table labels. */}
+                      {bandsFor(m.band!).map((b, i) => (<option key={`${b.band}#${i}`} value={b.open_time}>{b.label}</option>))}
                     </select>
                   )}
                 </div>
@@ -1109,7 +1105,7 @@ function EtuSettings({ maint, setMaint, selection }: { maint: boolean; setMaint:
       {calc?.warnings?.length ? <div className="sel-status warn">{calc.warnings.join(' · ')}</div> : null}
 
       <div className="method">
-        <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) ramp-test <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-safe). Each delay injects a <b>selectable multiple of its pickup</b> (the <b>Test @</b> dropdown) — NETA defaults <b>LTD 3× LTPU, STD/GFD 1.5×</b> — and the <b>inject current is always field-correct</b> (the proven pickup × your chosen multiple). For <b>long-time delay</b> the expected trip <b>time follows the I²t law</b> t = setting·(6/N)²: the stored band setting is the trip time at <b>6× Ir</b>, so testing at <b>6×</b> gives a time equal to the dial setting (the practical, directly-measurable point), while 3× is four times longer. The <b>delay time tolerance band</b> (Min/Max Limit) is the <b>per-manufacturer DB value</b> (`DS2_TOL`, matched to the I²t curve type) when on file; where none exists it falls back to a generic ±estimate, marked <b>est</b>. The expected <b>time</b> stays <b>gated per the G4 field-trust matrix</b>: <b>DB</b> = direct-band (route 0) + LTD; <b>verify</b> = inverse-equation (route 2) pending captured-fixture validation; <b>n/a</b> = I²t / GE-trip-unit / GF-ANSI routes whose solver is not built, so the time is <b>withheld</b> (the inject current stays valid). {selection.trustNote}
+        <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) ramp-test <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-safe). Each delay injects a <b>selectable multiple of its pickup</b> (the <b>Test @</b> dropdown) — NETA defaults <b>LTD 3× LTPU, STD/GFD 1.5×</b> — and the <b>inject current is always field-correct</b> (the proven pickup × your chosen multiple). For <b>long-time delay</b> the expected trip <b>time follows the I²t law</b> t = setting·(6/N)²: the stored band setting is the trip time at <b>6× Ir</b>, so testing at <b>6×</b> gives a time equal to the dial setting (the practical, directly-measurable point), while 3× is four times longer. The <b>delay time tolerance band</b> (Min/Max Limit) is the <b>per-manufacturer DB value</b> (`DS2_TOL`, matched to the I²t curve type) when on file; where none exists it falls back to a generic ±estimate, marked <b>est</b>. The expected <b>time</b> stays <b>gated per the G4 field-trust matrix</b>: <b>DB</b> = direct-band (route 0), LTD, and the <b>inverse-equation routes (validated bit-exact against the native EasyPower kernel — STD §107, GFD plug-basis L1)</b>; <b>verify</b> = the I²t composite render (native spot-check pending); <b>n/a</b> = unknown-shape I²t / GE-trip-unit / GF-ANSI routes whose solver is not built, so the time is <b>withheld</b> (the inject current stays valid). Time tolerance bands use the <b>manufacturer&apos;s values</b> where on file — NETA acceptance is based on manufacturer tolerances; the generic ±estimate appears only where none exists, marked <b>est</b>. {selection.trustNote}
       </div>
     </>
   )
@@ -1303,135 +1299,21 @@ function EmtSettings({ selection }: { selection: LiveSelection }) {
   )
 }
 
-function SampleSettings({ maint, setMaint, selection }: { maint: boolean; setMaint: (v: boolean) => void; selection: LiveSelection | null }) {
-  const [mult, setMult] = useState<Record<DelayKey, number>>(DELAY_DEFAULT)
-  const [measured, setMeasured] = useState<Record<string, string>>({})
-  const bandTestAt = (el: string) => {
-    if (el === 'LTD') return `${fmtMult(mult.ltd)} (${fmtA(mult.ltd * BASE_BY_EL.LTPU)})`
-    if (el === 'STD') return `${fmtMult(mult.std)} (${fmtA(mult.std * BASE_BY_EL.STPU)})`
-    if (el === 'LTPU') return `1× (${fmtA(BASE_BY_EL.LTPU)})`
-    if (el === 'STPU') return `1× (${fmtA(BASE_BY_EL.STPU)})`
-    if (el === 'INST') return `1× (${fmtA(BASE_BY_EL.INST)})`
-    return '—'
-  }
-  return (
-    <>
-      <div className="eq-strip">
-        {selection ? (
-          <>
-            <div><span>Breaker</span>{selection.breakerLabel}</div>
-            <div><span>Trip Unit</span>{selection.tripLabel}</div>
-            <div><span>Rating</span>{selection.ratingLabel}</div>
-            <div><span className="badge">SAMPLE</span>settings &amp; tolerances below are placeholder (Stage B)</div>
-          </>
-        ) : (
-          <>
-            <div><span>Breaker</span>{DEVICE.breakerMfr} {DEVICE.breakerType} {DEVICE.breakerStyle} {DEVICE.frameSize}</div>
-            <div><span>Trip Unit</span>{DEVICE.tripMfr} {DEVICE.tripDetail}</div>
-            <div><span>Sensor</span>{DEVICE.sensorIr}</div>
-            <div><span className="badge">SAMPLE</span>no live selection</div>
-          </>
-        )}
-      </div>
-
-      <div className={`maint-banner ${maint ? 'on' : ''}`}>
-        <div>
-          <b>Maintenance Mode (ARMS)</b>
-          <span>{maint ? 'Reduced instantaneous trip applied — markers reflect maint-mode calculations.' : 'Nominal mode. Toggle to model the reduced arc-flash trip setting.'}</span>
-        </div>
-        <button className={`toggle ${maint ? 'on' : ''}`} onClick={() => setMaint(!maint)} aria-label="toggle maintenance mode"><span /></button>
-      </div>
-
-      <div className="grid2 elgrid">
-        {ELEMENTS.map((e) => {
-          const isDelay = !!e.delay && !e.disabled
-          const testCurrent = e.disabled ? '—' : e.delay ? fmtA(mult[e.delay] * (e.base ?? 0)) : fmtA(e.base ?? 0)
-          return (
-            <div key={e.code} className={`el-card ${e.disabled ? 'off' : ''}`}>
-              <div className="el-h">
-                <div className="el-code"><b>{e.code}</b><span>{e.label}</span></div>
-                <span className={`pill ${KIND_CLASS[e.kind]}`}>{e.kind}</span>
-              </div>
-              <div className="el-b">
-                <div className="el-row"><span>Setting</span><div className="el-input">{e.setting}</div></div>
-                <div className="el-row two">
-                  <div>
-                    <span>Test @</span>
-                    {e.disabled ? (
-                      <div className="el-mult muted">—</div>
-                    ) : isDelay ? (
-                      <select className="el-select" value={mult[e.delay!]} onChange={(ev) => setMult((m) => ({ ...m, [e.delay!]: Number(ev.target.value) }))}>
-                        {MULT_OPTS.map((m) => (<option key={m} value={m}>{fmtMult(m)}</option>))}
-                      </select>
-                    ) : (
-                      <div className="el-mult">1×</div>
-                    )}
-                  </div>
-                  <div><span>Test Current</span><div className="el-cur">{testCurrent}</div></div>
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      <section className="card">
-        <div className="card-h">📊 NETA Tolerance Bands &amp; Field Results <span className="badge inline">SAMPLE — live in Stage B</span></div>
-        <div className="bands-wrap">
-          <table className="bands">
-            <thead><tr><th>Element</th><th>Setting</th><th>Test @</th><th>Min Limit</th><th>Max Limit</th><th>Measured</th><th>% Error</th><th>Status</th></tr></thead>
-            <tbody>
-              {BANDS.map((b) => {
-                const disabled = b.status === 'disabled'
-                const raw = measured[b.el] ?? ''
-                const mv = parseFloat(raw)
-                const hasM = raw.trim() !== '' && !Number.isNaN(mv)
-                const pct = hasM && b.nominal ? ((mv - b.nominal) / b.nominal) * 100 : null
-                const inBand = hasM ? mv >= b.min && mv <= b.max : null
-                return (
-                  <tr key={b.el} className={disabled ? 'row-off' : ''}>
-                    <td><b>{b.el}</b></td>
-                    <td>{SETTING_BY_EL[b.el] ?? '—'}</td>
-                    <td>{disabled ? '—' : bandTestAt(b.el)}</td>
-                    <td className="num">{disabled ? '—' : fmtVal(b.min, b.unit)}</td>
-                    <td className="num">{disabled ? '—' : fmtVal(b.max, b.unit)}</td>
-                    <td>{disabled ? <span className="muted2">—</span> : (
-                      <div className="meas">
-                        <input className="meas-in" inputMode="decimal" value={raw} placeholder="—"
-                          onChange={(ev) => setMeasured((m) => ({ ...m, [b.el]: ev.target.value }))} />
-                        <span className="meas-u">{b.unit}</span>
-                      </div>
-                    )}</td>
-                    <td className="num">{!disabled && pct !== null
-                      ? <span className={`pct ${inBand ? 'ok' : 'bad'}`}>{pct >= 0 ? '+' : ''}{pct.toFixed(1)}%</span>
-                      : <span className="muted2">—</span>}</td>
-                    <td>{disabled
-                      ? <span className="status off">Disabled</span>
-                      : !hasM ? <span className="status ready">● Ready</span>
-                        : inBand ? <span className="status pass">✓ PASS</span>
-                          : <span className="status fail">✗ FAIL</span>}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <div className="method">
-        <b>Test methodology.</b> Pickup elements (LTPU, STPU, INST, GFPU) use ramping tests verified at <b>1×</b> pickup.
-        Delay elements use fixed-current injection: <b>LTD defaults to 3×</b> (selectable to 6× in 0.5× steps); <b>STD &amp; GFD to 1.5×</b>.
-        {selection ? ` ${selection.trustNote}` : ' Select live equipment on Screen 1 to drive these from DB-authoritative per-sensor values.'}
-      </div>
-    </>
-  )
-}
-
-// ── Screen 3: Curve (sample until Stage C) ────────────────────────────────────
 // ── Screen 3: Curve dispatcher ────────────────────────────────────────────────
-function Curve({ selection }: { selection: LiveSelection | null }) {
+function Curve({ selection, maint, etuChosen, etuTestMult, etuMeasured }: {
+  selection: LiveSelection | null
+  maint: boolean
+  etuChosen: EtuChosen | null
+  etuTestMult: Record<BandKey, number>
+  etuMeasured: Record<string, string>
+}) {
   if (selection?.family === 'etu' && selection.sensorId != null) {
-    return <EtuCurve selection={selection} />
+    return (
+      <EtuCurve
+        selection={selection} maint={maint}
+        chosen={etuChosen} testMult={etuTestMult} measured={etuMeasured}
+      />
+    )
   }
   if (selection?.family === 'tmt' && selection.frameId != null) {
     return <TmtCurve selection={selection} />
@@ -1576,20 +1458,16 @@ function EmtCurve({ selection }: { selection: LiveSelection }) {
   )
 }
 
-// ── Screen 3 ETU (LIVE): nominal-illustration curve from /plot-tcc ─────────────
-// The curve is a NOMINAL ILLUSTRATION (G4 / NETA_TCC_OVERLAY_SPEC): the field-authoritative
-// surface is the NETA tolerance table (Screen 2). InvEq curve numbers are G4-withheld pending
-// captured fixtures, so this is labelled non-authoritative. Markers use the NETA test points
-// (LTD 3× / STD·GFD 1.5×) via /plot-tcc's separate test_multiple params.
+// ── Screen 3 ETU (LIVE): the operator's configured curve from /plot-tcc ────────
+// Renders the lifted Screen-2 state (plug, pickups, delay bands, test multiples,
+// maintenance mode, measured entries) — falling back to nominal defaults only when
+// the operator jumps straight here. Delay times follow the G4 field-trust matrix
+// (withheld exactly as on Screen 2); tolerance bands surface their basis per the
+// NETA = manufacturer-tolerances law.
 const CURVE_COLORS: Record<string, string> = {
   ltpu: '#2f8f5b', lt: '#2f8f5b', ltd: '#d98324', stpu: '#1d6fb8', std: '#d24b4b',
   inst: '#7c5cc4', gfpu: '#0d8f8f', gfd: '#b06fc4', nominal: '#14507d',
 }
-const clampX = (a: number) => Math.max(PLOT.ml, Math.min(PLOT.ml + PLOT.w, px(a)))
-const clampY = (s: number) => Math.max(PLOT.mt, Math.min(PLOT.mt + PLOT.h, py(s)))
-const livePath = (pts: { amps: number; seconds: number }[]) =>
-  pts.filter((p) => p.amps > 0 && p.seconds > 0)
-    .map((p, i) => `${i ? 'L' : 'M'}${clampX(p.amps).toFixed(1)},${clampY(p.seconds).toFixed(1)}`).join(' ')
 
 // Decade-snapped log-log scale fit to the actual curve envelope — replaces the fixed
 // 100 A–100 kA / 0.01–1000 s domain so a device fills the plot instead of floating in a corner.
@@ -1617,56 +1495,88 @@ function makeScale(amps: number[], times: number[], minXDecades = 2, minYDecades
 const fmtAmpTick = (a: number) => (a >= 1000 ? `${+(a / 1000).toPrecision(3)}k` : `${a}`)
 const fmtSecTick = (s: number) => (s >= 1 ? `${s}` : `${+s.toPrecision(2)}`)
 
-function EtuCurve({ selection }: { selection: LiveSelection }) {
+function trustBadge(trust: string | null | undefined, reason?: string | null) {
+  if (!trust) return null
+  const t = trust.toLowerCase()
+  const title = reason ?? ''
+  if (t === 'db') return <span className="trust ok" title={title}>DB</span>
+  if (t === 'unsupported') return <span className="trust no" title={title}>n/a</span>
+  return <span className="trust verify" title={title}>verify</span>
+}
+
+function EtuCurve({ selection, maint, chosen, testMult, measured }: {
+  selection: LiveSelection
+  maint: boolean
+  chosen: EtuChosen | null
+  testMult: Record<BandKey, number>
+  measured: Record<string, string>
+}) {
   const sensorId = selection.sensorId as number
   const [plot, setPlot] = useState<EtuPlotResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
+  // The operator's Screen-2 configuration drives the curve; nominal defaults only
+  // when they jumped straight here (the page resets state on sensor change).
+  const fromSettings = chosen != null && chosen.plug > 0
 
   useEffect(() => {
     let active = true
     setLoading(true); setErr(null); setPlot(null)
-    fetchEtuSettings(sensorId)
-      .then((s) => {
-        const mid = (arr: number[]) => (arr.length ? arr[Math.floor(arr.length / 2)] : undefined)
-        const band = (bs: DelayBandOption[]) => { const b = bs.find((x) => x.is_default) ?? bs[0]; return b ? Number(b.band) : undefined }
-        return fetchEtuPlot({
-          sensor_id: sensorId,
-          plug_rating: s.plug_values[0] ?? 0,
-          ltpu_setting: mid(s.ltpu_settings), stpu_setting: mid(s.stpu_settings),
-          inst_setting: mid(s.inst_settings), gfpu_setting: mid(s.gfpu_settings),
-          ltd_setting: band(s.ltd_settings), std_setting: band(s.std_settings), gfd_setting: band(s.gfd_settings),
-          ltd_test_multiple: 3, std_test_multiple: 1.5, gfd_test_multiple: 1.5,
-          include_nominal_curve: true, include_expected_markers: true, include_measured_markers: false,
-        })
-      })
+    const request: Promise<EtuPlotRequest> = fromSettings
+      ? Promise.resolve(buildEtuPlotRequest({ sensorId, chosen: chosen as EtuChosen, testMult, maint, measured }))
+      : fetchEtuSettings(sensorId).then((s) => buildDefaultEtuPlotRequest(sensorId, s))
+    request
+      .then(fetchEtuPlot)
       .then((r) => { if (active) setPlot(r) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [sensorId])
+  }, [sensorId, chosen, testMult, maint, measured, fromSettings])
 
   if (loading) return <div className="loadbox"><span className="spin" /> Generating curve…</div>
   if (err || !plot) return <div className="loadbox"><span className="sel-status err">⚠ {err ?? 'No curve data'}</span></div>
 
   const curves = plot.curves ?? []
-  const markers = (plot.expected_markers ?? []).filter((m) => m.expected_current > 0 && m.expected_time != null && (m.expected_time as number) > 0)
+  const rowsByEl = new Map((plot.table_rows ?? []).map((r) => [r.element, r]))
+  const delayMarkers = (plot.expected_markers ?? []).filter(
+    (m) => m.kind === 'delay' && m.expected_current > 0 && m.expected_time != null && (m.expected_time as number) > 0,
+  )
+  const pickupMarkers = (plot.expected_markers ?? []).filter(
+    (m) => m.kind === 'pickup' && m.expected_current > 0,
+  )
+  const measuredMarkers = (plot.measured_markers ?? [])
   const colorFor = (el: string) => CURVE_COLORS[(el ?? '').toLowerCase()] ?? '#14507d'
   const legendItems = Array.from(new Map(curves.map((c) => [c.element, { c: colorFor(c.element), t: c.element.toUpperCase() }])).values())
+  const delayRows = (plot.table_rows ?? []).filter((r) => r.kind === 'delay')
   const allAmps = curves.flatMap((c) => c.points.map((p) => p.amps)).filter((a) => a > 0)
   const allTimes = curves.flatMap((c) => c.points.map((p) => p.seconds)).filter((t) => t > 0)
-  // Auto-fit the log-log axes to this device's actual envelope (incl. the test markers) so the
-  // curve fills the plot instead of floating inside a fixed 100 A–100 kA / 0.01–1000 s frame.
+  // Auto-fit the log-log axes to the device envelope incl. markers, tolerance
+  // whiskers, and measured points so nothing renders off-frame.
   const scale = makeScale(
-    [...allAmps, ...markers.map((m) => m.expected_current)],
-    [...allTimes, ...markers.map((m) => m.expected_time as number)],
+    [
+      ...allAmps,
+      ...delayMarkers.map((m) => m.expected_current),
+      ...pickupMarkers.flatMap((m) => [m.expected_current, m.limit_low ?? 0, m.limit_high ?? 0]),
+      ...measuredMarkers.map((m) => m.measured_current ?? 0),
+    ],
+    [
+      ...allTimes,
+      ...delayMarkers.map((m) => m.expected_time as number),
+      ...delayMarkers.flatMap((m) => {
+        const r = rowsByEl.get(m.element)
+        return [r?.time_limit_low ?? 0, r?.time_limit_high ?? 0]
+      }),
+      ...measuredMarkers.map((m) => m.measured_time ?? 0),
+    ],
   )
+  const measuredCount = measuredMarkers.length
   const stats = [
     { k: 'Curves', v: String(curves.length) },
-    { k: 'Test Points', v: String(markers.length) },
-    { k: 'Max Current', v: allAmps.length ? `${Math.round(Math.max(...allAmps)).toLocaleString('en-US')} A` : '—' },
+    { k: 'Test Points', v: String(delayMarkers.length + pickupMarkers.length) },
+    { k: 'Measured', v: measuredCount ? `${measuredCount} (${plot.meta.overall_pass == null ? '—' : plot.meta.overall_pass ? 'PASS' : 'FAIL'})` : '—' },
     { k: 'Plug', v: `${plot.meta.plug_rating} A` },
   ]
+  const passColor = (ok: boolean) => (ok ? '#2f8f5b' : '#d24b4b')
 
   return (
     <>
@@ -1678,15 +1588,36 @@ function EtuCurve({ selection }: { selection: LiveSelection }) {
             <Field label="Trip Unit" value={selection.tripLabel} />
             <Field label="Sensor" value={plot.meta.sensor_desc || selection.ratingLabel} />
             <Field label="Plug (Ir)" value={`${plot.meta.plug_rating} A`} />
+            <Field label="Settings" value={fromSettings ? `Protection Settings${maint ? ' · MAINT' : ''}` : 'Nominal defaults'} />
           </div>
           <div className="card-h" style={{ marginTop: 8 }}>Curve Elements</div>
           <div className="legend">
-            {legendItems.length ? legendItems.map((l) => (<div key={l.t} className="leg"><span className="sw" style={{ background: l.c }} />{l.t}</div>)) : <div className="leg muted2">No curve segments</div>}
+            {legendItems.length ? legendItems.map((l) => {
+              const row = rowsByEl.get(l.t)
+              return (
+                <div key={l.t} className="leg">
+                  <span className="sw" style={{ background: l.c }} />{l.t}
+                  {row?.kind === 'delay' ? <>&nbsp;{trustBadge(row.trust, row.trust_reason)}</> : null}
+                </div>
+              )
+            }) : <div className="leg muted2">No curve segments</div>}
           </div>
+          {delayRows.length ? (
+            <>
+              <div className="card-h" style={{ marginTop: 8 }}>Time Tolerance Basis</div>
+              <div className="legend">
+                {delayRows.map((r) => (
+                  <div key={`basis-${r.element}`} className="leg muted2" title={r.trust_reason ?? ''}>
+                    {r.element}: {r.trust === 'unsupported' ? 'withheld (G4)' : delayBasisLabel(r.notes) ?? '—'}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
         </aside>
 
         <section className="card plot-card">
-          <div className="card-h">Trip Characteristic Curve <span className="badge inline">LIVE · nominal illustration</span></div>
+          <div className="card-h">Trip Characteristic Curve <span className="badge inline live">{fromSettings ? 'LIVE · your settings' : 'LIVE · nominal defaults'}</span></div>
           <div className="plot-wrap">
             <svg viewBox="0 0 700 480" className="plot" role="img" aria-label="Time-current curve">
               {scale.xTicks.map((t) => (
@@ -1706,13 +1637,74 @@ function EtuCurve({ selection }: { selection: LiveSelection }) {
               {curves.map((c) => (
                 <path key={c.id} d={scale.livePath(c.points)} fill="none" stroke={colorFor(c.element)} strokeWidth={2.4} strokeLinejoin="round" strokeLinecap="round" opacity={0.92} />
               ))}
-              {markers.map((m) => (
-                <rect key={m.id} x={scale.clampX(m.expected_current) - 5} y={scale.clampY(m.expected_time as number) - 5} width={10} height={10}
-                  transform={`rotate(45 ${scale.clampX(m.expected_current)} ${scale.clampY(m.expected_time as number)})`}
-                  fill={colorFor(m.element)} stroke="#fff" strokeWidth={1.5}>
-                  <title>{`${m.element} ${fmtMult(m.test_multiple)} — ${Math.round(m.expected_current).toLocaleString('en-US')} A`}</title>
-                </rect>
-              ))}
+              {/* Pickup test points: vertical marker at the expected pickup with the
+                  DB tolerance band as a horizontal whisker lane above the axis. */}
+              {pickupMarkers.map((m, i) => {
+                const x = scale.clampX(m.expected_current)
+                const laneY = PLOT.mt + PLOT.h - 12 - i * 12
+                const lo = m.limit_low != null && m.limit_low > 0 ? scale.clampX(m.limit_low) : null
+                const hi = m.limit_high != null && m.limit_high > 0 ? scale.clampX(m.limit_high) : null
+                return (
+                  <g key={m.id} opacity={0.9}>
+                    <line x1={x} y1={PLOT.mt} x2={x} y2={PLOT.mt + PLOT.h} stroke={colorFor(m.element)} strokeWidth={1.2} strokeDasharray="5 4" opacity={0.55} />
+                    {lo != null && hi != null ? (
+                      <g stroke={colorFor(m.element)} strokeWidth={1.6}>
+                        <line x1={lo} y1={laneY} x2={hi} y2={laneY} />
+                        <line x1={lo} y1={laneY - 4} x2={lo} y2={laneY + 4} />
+                        <line x1={hi} y1={laneY - 4} x2={hi} y2={laneY + 4} />
+                      </g>
+                    ) : null}
+                    <title>{`${m.element} 1× — ${Math.round(m.expected_current).toLocaleString('en-US')} A${lo != null && hi != null ? ` (limits ${Math.round(m.limit_low as number).toLocaleString('en-US')}–${Math.round(m.limit_high as number).toLocaleString('en-US')} A)` : ''}`}</title>
+                  </g>
+                )
+              })}
+              {/* Delay test points: diamond at the expected time with the time
+                  tolerance band as a vertical whisker. */}
+              {delayMarkers.map((m) => {
+                const x = scale.clampX(m.expected_current)
+                const y = scale.clampY(m.expected_time as number)
+                const row = rowsByEl.get(m.element)
+                const lo = row?.time_limit_low != null && row.time_limit_low > 0 ? scale.clampY(row.time_limit_low) : null
+                const hi = row?.time_limit_high != null && row.time_limit_high > 0 ? scale.clampY(row.time_limit_high) : null
+                return (
+                  <g key={m.id}>
+                    {lo != null && hi != null ? (
+                      <g stroke={colorFor(m.element)} strokeWidth={1.6} opacity={0.85}>
+                        <line x1={x} y1={lo} x2={x} y2={hi} />
+                        <line x1={x - 5} y1={lo} x2={x + 5} y2={lo} />
+                        <line x1={x - 5} y1={hi} x2={x + 5} y2={hi} />
+                      </g>
+                    ) : null}
+                    <rect x={x - 5} y={y - 5} width={10} height={10}
+                      transform={`rotate(45 ${x} ${y})`}
+                      fill={colorFor(m.element)} stroke="#fff" strokeWidth={1.5}>
+                      <title>{`${m.element} ${fmtMult(m.test_multiple)} — ${Math.round(m.expected_current).toLocaleString('en-US')} A, ${(m.expected_time as number).toFixed(3)} s${row?.time_limit_low != null && row?.time_limit_high != null ? ` (band ${row.time_limit_low}–${row.time_limit_high} s)` : ''}${row ? ` · ${delayBasisLabel(row.notes) ?? ''}` : ''}`}</title>
+                    </rect>
+                  </g>
+                )
+              })}
+              {/* Measured results: pickups as vertical pass/fail lines, delay trips
+                  as pass/fail dots at the inject current. */}
+              {measuredMarkers.map((m) => {
+                if (m.kind === 'pickup' && m.measured_current != null && m.measured_current > 0) {
+                  const x = scale.clampX(m.measured_current)
+                  return (
+                    <line key={m.id} x1={x} y1={PLOT.mt} x2={x} y2={PLOT.mt + PLOT.h}
+                      stroke={passColor(m.passed)} strokeWidth={2} strokeDasharray="7 4">
+                      <title>{`${m.element} measured ${Math.round(m.measured_current).toLocaleString('en-US')} A — ${m.passed ? 'PASS' : 'FAIL'}${m.deviation_pct != null ? ` (${m.deviation_pct >= 0 ? '+' : ''}${m.deviation_pct.toFixed(1)}%)` : ''}`}</title>
+                    </line>
+                  )
+                }
+                if (m.kind === 'delay' && m.measured_time != null && m.measured_time > 0 && m.measured_current != null && m.measured_current > 0) {
+                  return (
+                    <circle key={m.id} cx={scale.clampX(m.measured_current)} cy={scale.clampY(m.measured_time)} r={5.5}
+                      fill={passColor(m.passed)} stroke="#fff" strokeWidth={1.5}>
+                      <title>{`${m.element} measured ${m.measured_time} s — ${m.passed ? 'PASS' : 'FAIL'}${m.deviation_pct != null ? ` (${m.deviation_pct >= 0 ? '+' : ''}${m.deviation_pct.toFixed(1)}%)` : ''}`}</title>
+                    </circle>
+                  )
+                }
+                return null
+              })}
             </svg>
           </div>
         </section>
@@ -1720,85 +1712,7 @@ function EtuCurve({ selection }: { selection: LiveSelection }) {
 
       {plot.warnings?.length ? <div className="sel-status warn">{plot.warnings.join(' · ')}</div> : null}
       <div className="method">
-        <b>Nominal illustration.</b> This curve is rendered live from the engine (`/plot-tcc`) at the sensor's nominal settings — it is <b>supplemental</b>, not the field-authoritative surface. Use the <b>NETA Tolerance Bands</b> table (Protection Settings) for field values; InvEq curve numbers remain pending captured-fixture validation (G4). Markers are placed at the NETA test points (LTD 3× · STD/GFD 1.5×). {plot.meta.plot_disclaimer ? ` ${plot.meta.plot_disclaimer}` : ''}
-      </div>
-
-      <div className="stats">
-        {stats.map((s) => (<div key={s.k} className="stat"><span>{s.k}</span><b>{s.v}</b></div>))}
-      </div>
-    </>
-  )
-}
-
-function SampleCurve({ selection }: { selection: LiveSelection | null }) {
-  const legend = [
-    { c: '#14507d', t: 'Nominal Curve' },
-    { c: '#2f8f5b', t: 'LTPU @ 1×' },
-    { c: '#d98324', t: 'LTD @ 3×' },
-    { c: '#d24b4b', t: 'STD @ 1.5×' },
-    { c: '#7c5cc4', t: 'INST @ 1×' },
-  ]
-  const stats = [
-    { k: 'Test Points', v: '5 Active' },
-    { k: 'Max Current', v: '12,800 A' },
-    { k: 'Min Time', v: '0.01 s' },
-    { k: 'Curve Type', v: 'I²t' },
-  ]
-  return (
-    <>
-      <div className="curve-grid">
-        <aside className="card side">
-          <div className="card-h">Device Info <span className="badge inline">SAMPLE</span></div>
-          <div className="card-b">
-            {selection ? (
-              <>
-                <Field label="Breaker" value={selection.breakerLabel} />
-                <Field label="Trip Unit" value={selection.tripLabel} />
-                <Field label="Rating" value={selection.ratingLabel} />
-              </>
-            ) : (
-              <>
-                <Field label="Breaker" value={`${DEVICE.breakerMfr} ${DEVICE.breakerType} ${DEVICE.breakerStyle}`} />
-                <Field label="Frame" value={DEVICE.frameSize} />
-                <Field label="Trip Unit" value={DEVICE.tripDetail} />
-                <Field label="Sensor Rating" value={`Ir ${DEVICE.sensorIr} · plug ${DEVICE.plug}`} />
-              </>
-            )}
-          </div>
-          <div className="card-h" style={{ marginTop: 8 }}>Curve Elements</div>
-          <div className="legend">
-            {legend.map((l) => (<div key={l.t} className="leg"><span className="sw" style={{ background: l.c }} />{l.t}</div>))}
-          </div>
-        </aside>
-
-        <section className="card plot-card">
-          <div className="card-h">Trip Characteristic Curve <span className="badge inline">SAMPLE — live /plot-tcc in Stage C</span></div>
-          <div className="plot-wrap">
-            <svg viewBox="0 0 700 480" className="plot" role="img" aria-label="Time-current curve">
-              {X_TICKS.map((t) => (
-                <g key={`x${t}`}>
-                  <line x1={px(t)} y1={PLOT.mt} x2={px(t)} y2={PLOT.mt + PLOT.h} className="grid" />
-                  <text x={px(t)} y={PLOT.mt + PLOT.h + 16} className="axt" textAnchor="middle">{t >= 1000 ? `${t / 1000}k` : t}</text>
-                </g>
-              ))}
-              {Y_TICKS.map((t) => (
-                <g key={`y${t}`}>
-                  <line x1={PLOT.ml} y1={py(t)} x2={PLOT.ml + PLOT.w} y2={py(t)} className="grid" />
-                  <text x={PLOT.ml - 8} y={py(t) + 3} className="axt" textAnchor="end">{t}</text>
-                </g>
-              ))}
-              <text x={PLOT.ml + PLOT.w / 2} y={PLOT.mt + PLOT.h + 38} className="axl" textAnchor="middle">Current (A)</text>
-              <text transform={`translate(16 ${PLOT.mt + PLOT.h / 2}) rotate(-90)`} className="axl" textAnchor="middle">Time (s)</text>
-              <path d={bandPath} className="band" />
-              <path d={toPath(NOMINAL)} className="nominal" />
-              {MARKERS.map((m) => (
-                <g key={m.label}>
-                  <rect x={px(m.a) - 5} y={py(m.s) - 5} width={10} height={10} transform={`rotate(45 ${px(m.a)} ${py(m.s)})`} fill={m.color} stroke="#fff" strokeWidth={1.5} />
-                </g>
-              ))}
-            </svg>
-          </div>
-        </section>
+        <b>{fromSettings ? 'Configured curve.' : 'Nominal defaults.'}</b> Rendered live from the engine (`/plot-tcc`) at {fromSettings ? <>your <b>Protection Settings</b> — plug, pickups, delay bands, test multiples{maint ? ', maintenance mode' : ''}</> : <>the sensor&apos;s nominal defaults — configure on <b>Protection Settings</b> to render your test plan</>}. Delay curves and times follow the <b>G4 field-trust matrix</b>: <b>DB</b> = direct-band + LTD + the native-validated inverse equations (bit-exact vs the EasyPower kernel); <b>verify</b> = I²t composite (native spot-check pending); <b>n/a</b> = withheld. Time tolerance whiskers use the <b>manufacturer&apos;s values</b> where on file (NETA acceptance = mfr tolerances) — the basis per element is listed beside the legend. Markers sit at the NETA test points; measured entries from Screen 2 overlay as pass/fail markers.{plot.meta.plot_disclaimer ? ` ${plot.meta.plot_disclaimer}` : ''}
       </div>
 
       <div className="stats">

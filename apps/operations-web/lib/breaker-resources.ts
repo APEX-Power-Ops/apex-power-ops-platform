@@ -364,6 +364,21 @@ export type EtuPlotExpectedMarker = {
   limit_high: number | null
   curve_ref: string | null
   label: string
+  // G4 per-element field-trust (same classifier as /calculate)
+  trust: string | null // "db" | "verify" | "unsupported"
+  trust_reason: string | null
+}
+
+export type EtuPlotMeasuredMarker = {
+  id: string
+  element: string
+  kind: string
+  render_hint: string
+  measured_current: number | null
+  measured_time: number | null
+  passed: boolean
+  deviation_pct: number | null
+  label: string
 }
 
 export type EtuPlotTableRow = {
@@ -377,8 +392,17 @@ export type EtuPlotTableRow = {
   expected_time: number | null
   time_limit_low: number | null
   time_limit_high: number | null
+  measured_current?: number | null
+  measured_time?: number | null
+  passed?: boolean | null
+  deviation_pct?: number | null
   calc_method: string | null
+  // For delay rows: "timing_source=<source>" — the tolerance basis
+  // (ltd_reference_window = per-mfr DS2 band; *_generic = flagged estimate;
+  // band_table = per-sensor DB band; i2x_* = validated surface).
   notes: string | null
+  trust?: string | null
+  trust_reason?: string | null
 }
 
 export type EtuPlotResponse = {
@@ -397,13 +421,24 @@ export type EtuPlotResponse = {
     maint_mode: boolean
     maint_capable: boolean
     maint_support_level: string
+    overall_pass: boolean | null
     plot_disclaimer: string | null
     resolved_equipment: ResolvedEquipmentSummary | null
   }
   warnings: string[]
   curves: EtuPlotCurve[]
   expected_markers: EtuPlotExpectedMarker[]
+  measured_markers: EtuPlotMeasuredMarker[]
   table_rows: EtuPlotTableRow[]
+}
+
+// One measured field entry sent to /plot-tcc: pickups carry measured_current (A),
+// delays carry measured_time (s). Pass/fail is graded server-side against the
+// same G4-gated acceptance bands Screen 2 uses.
+export type EtuPlotMeasurement = {
+  element: string
+  measured_current?: number
+  measured_time?: number
 }
 
 export type EtuCalculateRequest = {
@@ -476,6 +511,7 @@ export type EtuPlotRequest = {
   multiplier_value?: number
   c_factor?: number
   maint_mode?: boolean
+  measurements?: EtuPlotMeasurement[]
   breaker_context_label?: string
   breaker_context_source?: string
   trip_unit_manufacturer_name?: string
