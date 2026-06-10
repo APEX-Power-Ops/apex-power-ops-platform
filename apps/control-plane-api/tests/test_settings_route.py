@@ -48,6 +48,8 @@ class _FakeSettingsDb:
         ltd_band_rows=None,
         direct_rows=None,
         raise_on_function=False,
+        std_inveq_rows=None,
+        gfd_inveq_rows=None,
     ):
         self.settings_payload = settings_payload
         self.context_mapping = context_mapping
@@ -67,6 +69,9 @@ class _FakeSettingsDb:
         self.std_band_rows = [_MappingRow(mapping=row) for row in (std_band_rows or [])]
         self.gfd_band_rows = [_MappingRow(mapping=row) for row in (gfd_band_rows or [])]
         self.ltd_band_rows = [_MappingRow(mapping=row) for row in (ltd_band_rows or [])]
+        # Route-2 (InvEq) dial-option rows (label = eq_desc, value = numeric cast).
+        self.std_inveq_rows = [_MappingRow(mapping=row) for row in (std_inveq_rows or [])]
+        self.gfd_inveq_rows = [_MappingRow(mapping=row) for row in (gfd_inveq_rows or [])]
         self.direct_rows = {
             key: [_MappingRow(mapping=row) for row in rows]
             for key, rows in merged_direct_rows.items()
@@ -103,6 +108,10 @@ class _FakeSettingsDb:
             return _Result(self.std_band_rows)
         if "FROM tcc.etu_gfd_bands" in sql:
             return _Result(self.gfd_band_rows)
+        if "FROM tcc.etu_std_equations" in sql:
+            return _Result(self.std_inveq_rows)
+        if "FROM tcc.etu_gfd_equations" in sql:
+            return _Result(self.gfd_inveq_rows)
         raise AssertionError(f"Unexpected SQL: {sql}")
 
 
@@ -450,5 +459,98 @@ def test_settings_route_catalog_does_not_touch_uncatalogued_rating():
         assert len(data["ltpu_settings"]) > 10  # still the expanded range, not 10 taps
         # units are still derived from calc method even without a catalog entry
         assert data["units"]["ltpu"] == "A"
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+
+def test_settings_route_serves_inveq_dials_when_band_rows_absent():
+    """Route-2 (InvEq) sensors carry their delay dials as equation payload rows
+    (in_out=2, eq_desc labels), not band-table rows. Screen 2 must serve those
+    labels as the STD/GFD band options so the elements don't read "Not available"
+    while the plot renders the validated InvEq curves (#119)."""
+    client = TestClient(app)
+    dial_rows = [
+        {"label": "0.1", "value": 0.1},
+        {"label": "0.2", "value": 0.2},
+        {"label": "0.3", "value": 0.3},
+        {"label": "0.4", "value": 0.4},
+    ]
+    fake_db = _FakeSettingsDb(
+        settings_payload={
+            "plug_values": [800],
+            "ltpu_settings": [0.4, 1.0],
+            "ltd_settings": [],
+            "ltd_multipliers": [],
+            "stpu_settings": [0.6, 10.0],
+            "inst_settings": [1.5, 15.0],
+            "gfpu_settings": [0.1, 1.0],
+        },
+        context_mapping={
+            "manufacturer_name": "GE",
+            "trip_type_name": "MicroVersaTrip",
+            "trip_style_name": "MVT LSG",
+            "ltpu_step": None, "stpu_step": None, "inst_step": None,
+            "gfpu_step": None, "maint_inst_step": None, "maint_gfpu_step": None,
+        },
+        std_inveq_rows=dial_rows,
+        gfd_inveq_rows=dial_rows,
+    )
+    app.dependency_overrides[get_db] = lambda: fake_db
+    try:
+        resp = client.get("/api/v1/neta/settings/4628")
+        assert resp.status_code == 200
+        data = resp.json()
+        expected = [
+            {"band": "0.1", "label": "0.1", "open_time": 0.1, "clear_time": None, "is_default": False},
+            {"band": "0.2", "label": "0.2", "open_time": 0.2, "clear_time": None, "is_default": False},
+            {"band": "0.3", "label": "0.3", "open_time": 0.3, "clear_time": None, "is_default": False},
+            {"band": "0.4", "label": "0.4", "open_time": 0.4, "clear_time": None, "is_default": False},
+        ]
+        assert data["std_settings"] == expected
+        assert data["gfd_settings"] == expected
+    finally:
+        app.dependency_overrides.pop(get_db, None)
+
+
+def test_settings_route_band_rows_win_over_inveq_payload():
+    """When a sensor has real band-table rows, those stay authoritative — the
+    InvEq dial fallback only fills an EMPTY band inventory."""
+    client = TestClient(app)
+    fake_db = _FakeSettingsDb(
+        settings_payload={
+            "plug_values": [800],
+            "ltpu_settings": [0.4, 1.0],
+            "ltd_settings": [],
+            "ltd_multipliers": [],
+            "stpu_settings": [0.6, 10.0],
+            "inst_settings": [1.5, 15.0],
+            "gfpu_settings": [0.1, 1.0],
+        },
+        context_mapping={
+            "manufacturer_name": "GE",
+            "trip_type_name": "MVT RMS-9",
+            "trip_style_name": "ICCB",
+            "ltpu_step": None, "stpu_step": None, "inst_step": None,
+            "gfpu_step": None, "maint_inst_step": None, "maint_gfpu_step": None,
+        },
+        std_band_rows=[
+            {"band": "I2T Min", "label": "Min", "open_time": 0.1, "clear_time": 0.2, "is_default": True},
+        ],
+        std_inveq_rows=[{"label": "0.3", "value": 0.3}],
+        gfd_inveq_rows=[{"label": "0.4", "value": 0.4}],
+    )
+    app.dependency_overrides[get_db] = lambda: fake_db
+    try:
+        resp = client.get("/api/v1/neta/settings/25")
+        assert resp.status_code == 200
+        data = resp.json()
+        # STD has band rows → served verbatim, InvEq rows ignored for STD.
+        assert data["std_settings"] == [
+            {"band": "I2T Min", "label": "Min", "open_time": 0.1, "clear_time": 0.2, "is_default": True},
+        ]
+        # GFD has no band rows → InvEq dial fallback fills it.
+        assert data["gfd_settings"] == [
+            {"band": "0.4", "label": "0.4", "open_time": 0.4, "clear_time": None, "is_default": False},
+        ]
     finally:
         app.dependency_overrides.pop(get_db, None)

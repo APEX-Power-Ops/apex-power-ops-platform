@@ -211,8 +211,18 @@ def _avail_band_row(open_time=0.06, clear_time=0.13):
     return r
 
 
+def _inveq_option_row(label):
+    """One InvEq payload-row option for the ``_load_inveq_delay_settings`` query
+    (``tcc.etu_{std,gfd}_equations``, in_out=2 rows): label = eq_desc, value = its
+    numeric cast."""
+    r = MagicMock()
+    r._mapping = {"label": str(label), "value": float(label)}
+    return r
+
+
 def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=None,
-                       avail_bands=("ltd", "std", "gfd")):
+                       avail_bands=("ltd", "std", "gfd"), inveq_payload=None,
+                       trip_style_db=None):
     """Return a side_effect function for Session.execute that returns
     deterministic payloads for the two SQL function calls.
 
@@ -224,7 +234,14 @@ def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=No
     (``_load_delay_band_settings``) that drives the plot's delay-availability gate:
     a delay element absent from this set returns an empty band list (the Screen-2
     "Not available" state), so the plot must not draw it even though the
-    equation/param mocks would otherwise yield a curve."""
+    equation/param mocks would otherwise yield a curve.
+
+    ``inveq_payload`` mocks the route-2 InvEq dial-option query against the
+    equation tables: a dict like ``{"std": ["0.1", "0.2"], "gfd": [...]}`` whose
+    labels become payload-row options (#119). Default None → no InvEq rows.
+
+    ``trip_style_db`` mocks the sensor's DB trip-style label
+    (``_sensor_trip_style_name``), which drives the Micrologic-6.0 carve-outs."""
     avail_bands = set(avail_bands or ())
     call_count = {"n": 0}
 
@@ -259,6 +276,27 @@ def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=No
                     row = MagicMock()
                     row._mapping = {"open_time": 3.5, "clear_time": 3.0, "ordinal": 2, "is_default": False}
                     result.fetchone.return_value = row
+        elif "stpu_delay_calc_code" in sql_text:
+            # Delay-route bytes query (/plot-tcc trust block): default unknown,
+            # matching the legacy fall-through these tests were written against.
+            result.fetchone.return_value = None
+        elif "tcc.etu_std_equations" in sql_text:
+            result.fetchall.return_value = [
+                _inveq_option_row(lbl)
+                for lbl in (inveq_payload or {}).get("std", [])
+            ]
+        elif "tcc.etu_gfd_equations" in sql_text:
+            result.fetchall.return_value = [
+                _inveq_option_row(lbl)
+                for lbl in (inveq_payload or {}).get("gfd", [])
+            ]
+        elif "FROM tcc.etu_sensors" in sql_text and "trip_styles" in sql_text:
+            if trip_style_db is None:
+                result.fetchone.return_value = None
+            else:
+                row = MagicMock()
+                row._mapping = {"style": trip_style_db}
+                result.fetchone.return_value = row
         elif "tcc.etu_std_bands" in sql_text:
             if "AND std_open = :setting" not in sql_text:
                 result.fetchall.return_value = (
@@ -1582,6 +1620,144 @@ class TestMicrologicBandlessFallback:
         db = MagicMock(); db.execute = MagicMock(side_effect=_make_fake_execute(avail_bands=set()))
         assert _available_delay_elements(db, SENSOR_ID, micrologic_6_0=True) >= {"std", "gfd"}
         assert _available_delay_elements(db, SENSOR_ID, micrologic_6_0=False) == set()
+
+
+# ──────────────────────────────────────────────────
+# Test 5e: Route-2 (InvEq) delay availability from equation payload rows (#119)
+# ──────────────────────────────────────────────────
+
+class TestInvEqDelayAvailability:
+    """Route-2 (InvEq) sensors carry their delay "bands" as equation payload rows
+    (in_out=2, eq_desc = the dial label, e.g. '0.1'–'0.4') in
+    ``tcc.etu_{std,gfd}_equations`` — they have NO ``etu_*_bands`` rows at all.
+    The delay-availability gate and the band-input resolution must source those
+    labels, or the validated InvEq render (G4 §5/§3f) stays dormant for every
+    band-less route-2 sensor (#119). The probe is structurally safe: only route-2
+    Therm sensors have in_out=2 rows (the GF ANSI family is in_out=1 only and the
+    stub is in_out=0), verified against prod 2026-06-09."""
+
+    DIALS = ["0.1", "0.2", "0.3", "0.4"]
+
+    def _db(self, **kwargs):
+        db = MagicMock()
+        db.execute = MagicMock(side_effect=_make_fake_execute(**kwargs))
+        return db
+
+    def test_load_inveq_delay_settings_shapes_options(self):
+        from services.neta.router import _load_inveq_delay_settings
+
+        db = self._db(avail_bands=set(), inveq_payload={"std": self.DIALS})
+        opts = _load_inveq_delay_settings(db, "std", SENSOR_ID)
+        assert [o["open_time"] for o in opts] == [0.1, 0.2, 0.3, 0.4]
+        assert [o["label"] for o in opts] == self.DIALS
+        assert all(o["band"] == o["label"] for o in opts)
+        assert all(o["clear_time"] is None for o in opts)
+        assert all(o["is_default"] is False for o in opts)
+
+    def test_load_inveq_delay_settings_non_delay_element_is_empty(self):
+        from services.neta.router import _load_inveq_delay_settings
+
+        db = self._db(avail_bands=set(), inveq_payload={"std": self.DIALS})
+        assert _load_inveq_delay_settings(db, "ltd", SENSOR_ID) == []
+        db.execute.assert_not_called()
+
+    def test_available_delay_elements_sources_inveq_payload(self):
+        from services.neta.router import _available_delay_elements
+
+        # Band-less route-2 sensor: both elements available via payload rows.
+        db = self._db(avail_bands=set(),
+                      inveq_payload={"std": self.DIALS, "gfd": self.DIALS})
+        assert _available_delay_elements(db, SENSOR_ID) == {"std", "gfd"}
+
+        # Payload on one element only — the other stays unavailable (the 25-sensor
+        # GF ANSI family has no in_out=2 rows and must NOT be exposed).
+        db2 = self._db(avail_bands=set(), inveq_payload={"std": self.DIALS})
+        assert _available_delay_elements(db2, SENSOR_ID) == {"std"}
+
+    def test_available_delay_elements_band_rows_still_win(self):
+        from services.neta.router import _available_delay_elements
+
+        db = self._db(avail_bands={"ltd", "std"}, inveq_payload={"gfd": self.DIALS})
+        assert _available_delay_elements(db, SENSOR_ID) == {"ltd", "std", "gfd"}
+
+    def test_resolve_legacy_setting_matches_inveq_label(self):
+        from services.neta.router import _resolve_plot_delay_inputs
+
+        db = self._db(avail_bands=set(), inveq_payload={"std": self.DIALS})
+        # Legacy value equal to an InvEq dial label = a band selection.
+        assert _resolve_plot_delay_inputs(
+            db, SENSOR_ID, "std", legacy_setting=0.2, delay_setting=None,
+            test_multiple=None, default_test_multiple=1.5,
+        ) == (0.2, 1.5, 0.2)
+        # A non-matching legacy value keeps the old test-multiple meaning.
+        assert _resolve_plot_delay_inputs(
+            db, SENSOR_ID, "std", legacy_setting=7.7, delay_setting=None,
+            test_multiple=None, default_test_multiple=1.5,
+        ) == (None, 7.7, 7.7)
+
+    # ── route-level: the plot draws the InvEq curves for band-less route-2 sensors ──
+
+    def _plot(self, base_request, *, avail_bands, inveq_payload=None,
+              trip_style_db=None, extra_request=None):
+        mock_session = MagicMock()
+        mock_session.execute = MagicMock(
+            side_effect=_make_fake_execute(
+                avail_bands=avail_bands, inveq_payload=inveq_payload,
+                trip_style_db=trip_style_db,
+            )
+        )
+
+        def override_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = override_db
+        try:
+            tc = TestClient(app)
+            req = {**base_request, "measurements": None,
+                   "include_measured_markers": False, **(extra_request or {})}
+            patches, _ = _patch_calc_engine()
+            with patches["pickup"], patches["ltd"], patches["ieee"]:
+                resp = tc.post("/api/v1/neta/plot-tcc", json=req)
+            assert resp.status_code == 200, resp.text
+            return resp.json()
+        finally:
+            app.dependency_overrides.clear()
+
+    def test_plot_draws_inveq_curves_when_bandless(self, base_request):
+        body = self._plot(
+            base_request, avail_bands=set(),
+            inveq_payload={"std": self.DIALS, "gfd": self.DIALS},
+        )
+        curve_els = {c["element"] for c in body["curves"]}
+        assert {"STD", "GFD"} <= curve_els, curve_els
+        assert "LTD" not in curve_els  # still band-gated (no LTD inventory)
+
+        marker_els = {m["element"] for m in body["expected_markers"]}
+        assert {"STD", "GFD"} <= marker_els, marker_els
+
+    def test_plot_micrologic_styled_route2_falls_through_to_inveq(self, base_request):
+        # Micrologic-styled (NOT 6.0) route-2 sensor: the composite branch finds no
+        # band row and must fall through to the sensor's own InvEq payload curves
+        # (the 1,274-sensor STD cohort sized 2026-06-09).
+        body = self._plot(
+            base_request, avail_bands=set(),
+            inveq_payload={"std": self.DIALS, "gfd": self.DIALS},
+            extra_request={"trip_unit_style_name": "MICROLOGIC 5.0"},
+        )
+        curve_els = {c["element"] for c in body["curves"]}
+        assert {"STD", "GFD"} <= curve_els, curve_els
+
+    def test_plot_no_inveq_double_draw_when_composite_succeeds(self, base_request):
+        # A 6.0-styled sensor whose composite renders must NOT also draw the InvEq
+        # pair on top of it (canonical fallback path; composite emits open only).
+        body = self._plot(
+            base_request, avail_bands=set(), inveq_payload=None,
+            trip_style_db="MICROLOGIC 6.0A",
+            extra_request={"trip_unit_style_name": "Micrologic 6.0A",
+                           "std_delay_setting": 0.14, "gfd_delay_setting": 0.4},
+        )
+        std_ids = [c["id"] for c in body["curves"] if c["element"] == "STD"]
+        assert std_ids == ["std_open"], std_ids
 
 
 # ──────────────────────────────────────────────────

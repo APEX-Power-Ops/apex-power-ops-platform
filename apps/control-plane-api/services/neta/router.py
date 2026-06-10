@@ -1401,6 +1401,67 @@ def _load_delay_band_settings(db: Session, table_name: str, sensor_id: int) -> l
     ]
 
 
+_INVEQ_EQUATION_TABLES = {
+    "std": "tcc.etu_std_equations",
+    "gfd": "tcc.etu_gfd_equations",
+}
+
+
+def _load_inveq_delay_settings(db: Session, element_key: str, sensor_id: int) -> list[dict]:
+    """Route-2 (InvEq) delay-band options, sourced from the equation payload rows.
+
+    Route-2 sensors carry no ``etu_*_bands`` rows at all — their delay "bands"
+    are the InvEq payload rows (``in_out = 2``) in ``tcc.etu_{std,gfd}_equations``,
+    one per dial, labelled by ``eq_desc`` (e.g. '0.1'–'0.4'). Serving those labels
+    as the band inventory keeps Screen 2 and the plot's delay-availability gate
+    consistent with the validated InvEq render, whose band selection float-matches
+    the same labels (``_select_inveq_ordinal``). The ``in_out = 2`` filter
+    structurally excludes both the stub row (``in_out = 0``, NULL inverse
+    coefficients) and the GF ANSI family (``in_out = 1`` rows only — hard-excluded
+    until the C37.112 lane lands, G4 §3e); verified against prod 2026-06-09:
+    payload rows exist exclusively on route-2 Therm sensors."""
+    table = _INVEQ_EQUATION_TABLES.get(element_key)
+    if table is None:
+        return []
+    try:
+        rows = db.execute(
+            text(
+                f"""
+                SELECT DISTINCT eq_desc AS label,
+                       eq_desc::numeric AS value
+                FROM {table}
+                WHERE sensor_id = :sensor_id
+                  AND in_out = 2
+                  AND eq_desc ~ '^-?[0-9]+(\\.[0-9]+)?$'
+                ORDER BY eq_desc::numeric
+                """
+            ),
+            {"sensor_id": sensor_id},
+        ).fetchall()
+    except Exception as exc:
+        rollback = getattr(db, "rollback", None)
+        if callable(rollback):
+            rollback()
+        logger.warning("InvEq delay-option probe failed for %s: %s", table, exc)
+        return []
+
+    options: list[dict] = []
+    for row in rows:
+        mapping = row._mapping if hasattr(row, "_mapping") else row
+        label = mapping.get("label")
+        value = mapping.get("value")
+        if label is None or value is None:
+            continue
+        options.append({
+            "band": str(label),
+            "label": str(label),
+            "open_time": float(value),
+            "clear_time": None,
+            "is_default": False,
+        })
+    return options
+
+
 def _sensor_trip_style_name(db: Session, sensor_id: int) -> Optional[str]:
     """The sensor's trip-style label (``tcc.trip_styles.style``), e.g. 'MICROLOGIC 6.0A'."""
     try:
@@ -1435,7 +1496,11 @@ def _available_delay_elements(db: Session, sensor_id: int, micrologic_6_0: bool 
     ``tcc.etu_ltd_params`` — which can carry coefficients even when the per-sensor
     *band* inventory is empty (e.g. Square D Micrologic: STD/GFD equations present,
     band settings absent). Gating the plot on band availability keeps Screen 3
-    consistent with Screen 2 and honours "don't plot elements disabled by default"."""
+    consistent with Screen 2 and honours "don't plot elements disabled by default".
+
+    Route-2 (InvEq) sensors keep their delay dials in the equation payload rows
+    instead of the band tables, so those count as the band inventory too (#119) —
+    otherwise the validated InvEq render reads "Not available" corpus-wide."""
     available: set[str] = set()
     for key, table in (
         ("ltd", "tcc.etu_ltd_bands"),
@@ -1450,6 +1515,9 @@ def _available_delay_elements(db: Session, sensor_id: int, micrologic_6_0: bool 
             if callable(rollback):
                 rollback()
             logger.warning("delay-availability probe failed for %s: %s", table, exc)
+    for key in ("std", "gfd"):
+        if key not in available and _load_inveq_delay_settings(db, key, sensor_id):
+            available.add(key)
     if micrologic_6_0:
         # A band-less 6.0A style record (load gap) still has STD + GFD — the cited
         # canonical I2X bands apply, so the plot + Screen 2 must offer them.
@@ -1748,6 +1816,16 @@ def _resolve_plot_delay_inputs(
     )
     if matched_band is not None:
         return legacy_setting, default_test_multiple, legacy_setting
+
+    # Route-2 (InvEq) sensors have no band rows — their dials are the equation
+    # payload labels, so a legacy value matching one is a band selection too (#119).
+    if element_key in _INVEQ_EQUATION_TABLES:
+        for option in _load_inveq_delay_settings(db, element_key, sensor_id):
+            try:
+                if abs(float(option["open_time"]) - float(legacy_setting)) < 1e-9:
+                    return legacy_setting, default_test_multiple, legacy_setting
+            except (TypeError, ValueError):
+                continue
 
     return None, legacy_setting, legacy_setting
 
@@ -2790,11 +2868,19 @@ def _generate_nominal_plot_curves(
                             id="std_open", element="STD", phase="open",
                             line_style="solid", points=pts,
                         ))
-            elif "std" in allowed_delays and std_pickup > 0:
+            if (
+                "std" in allowed_delays
+                and std_pickup > 0
+                and not any(c.element == "STD" for c in curves)
+            ):
                 # The INVERSE sub-blocks (id_*) carry the curve the native engine
                 # renders (validated bit-exact vs CalcThermEq, G4 §5); the fd_*
                 # sub-blocks are the flat/definite-time segment. Band selection
-                # picks the payload row matching the dialed band.
+                # picks the payload row matching the dialed band. Not an elif:
+                # micrologic-styled route-2 InvEq sensors take the composite branch
+                # above, find no band row, and must fall through to their own
+                # payload curves (#119); route-1 sensors carry no equation rows,
+                # so this stays a no-op for them.
                 std_eqs = ieee.get_equation_info(sensor_id, "std")
                 std_ord = _select_inveq_ordinal(
                     std_eqs, float(std_setting) if std_setting else None
@@ -2852,9 +2938,14 @@ def _generate_nominal_plot_curves(
                             id="gfd_open", element="GFD", phase="open",
                             line_style="solid", points=pts,
                         ))
-            elif "gfd" in allowed_delays and gfpu_i > 0:
+            if (
+                "gfd" in allowed_delays
+                and gfpu_i > 0
+                and not any(c.element == "GFD" for c in curves)
+            ):
                 # GF-enabled breakers run the INVERSE sub-blocks (id_*) per the
-                # native block-kind gating (pass-5). GF InvEq rows are byICalc=1:
+                # native block-kind gating (pass-5). Not an elif — same composite
+                # fall-through as STD (#119). GF InvEq rows are byICalc=1:
                 # the equation anchors on field[13] = the PLUG rating, applied as
                 # rIRef' = rIRef × (plug/pickup) — validated bit-exact vs the
                 # native CalcThermEq kernel (L1 close; G4 §3f). Without a plug
@@ -4991,6 +5082,15 @@ def get_available_settings(sensor_id: int, db: Session = Depends(get_db)):
     std_settings = _load_delay_band_settings(db, "tcc.etu_std_bands", sensor_id)
     gfd_settings = _load_delay_band_settings(db, "tcc.etu_gfd_bands", sensor_id)
     ltd_settings = _dedupe_delay_settings(data.get("ltd_settings", []))
+
+    # Route-2 (InvEq) sensors: the delay dials live in the equation payload rows
+    # (eq_desc labels), not the band tables — serve them as the band options so the
+    # element doesn't read "Not available" while the plot draws its validated InvEq
+    # curve (#119). Real band rows stay authoritative when present.
+    if not std_settings:
+        std_settings = _load_inveq_delay_settings(db, "std", sensor_id)
+    if not gfd_settings:
+        gfd_settings = _load_inveq_delay_settings(db, "gfd", sensor_id)
 
     # Band-less Micrologic 6.0A style records (load gap, tcc styles 238/1919) carry no
     # STD/GFD delay bands though the device has them — serve the cited canonical 6.0A
