@@ -2650,6 +2650,23 @@ def _generate_nominal_plot_curves(
         {"ltd", "std", "gfd"} if available_delays is None else available_delays
     )
 
+    def _select_inveq_ordinal(eqs: list[dict], band_setting: Optional[float]) -> int:
+        """Pick the InvEq equation row matching the selected delay band.
+
+        InvEq tables carry a stub row (in_out=0) plus one payload row per band
+        (in_out=2, label = the band value, e.g. '0.2'). Match the user's band
+        setting to the payload label; fall back to the first payload row (never
+        the stub — its inverse coefficients are NULL)."""
+        payload = [e for e in eqs if e.get("in_out") == 2] or eqs
+        if band_setting is not None:
+            for e in payload:
+                try:
+                    if abs(float(e.get("label") or "") - float(band_setting)) < 1e-9:
+                        return e["ordinal"]
+                except (TypeError, ValueError):
+                    continue
+        return payload[0]["ordinal"] if payload else 1
+
     try:
         from apex_calc_engine.services.calc_engine import ETUPickupCalculator
         from apex_calc_engine.services.calc_engine import ETULTDCalculator
@@ -2774,11 +2791,17 @@ def _generate_nominal_plot_curves(
                             line_style="solid", points=pts,
                         ))
             elif "std" in allowed_delays and std_pickup > 0:
+                # The INVERSE sub-blocks (id_*) carry the curve the native engine
+                # renders (validated bit-exact vs CalcThermEq, G4 §5); the fd_*
+                # sub-blocks are the flat/definite-time segment. Band selection
+                # picks the payload row matching the dialed band.
                 std_eqs = ieee.get_equation_info(sensor_id, "std")
-                std_ord = std_eqs[0]["ordinal"] if std_eqs else 1
+                std_ord = _select_inveq_ordinal(
+                    std_eqs, float(std_setting) if std_setting else None
+                )
                 std_time_dial = float(std_setting) if std_setting else 1.0
 
-                for variant, phase in [("fd_open", "open"), ("fd_clear", "clear")]:
+                for variant, phase in [("id_open", "open"), ("id_clear", "clear")]:
                     points = ieee.generate_curve(
                         sensor_id=sensor_id,
                         ordinal=std_ord,
@@ -2830,11 +2853,28 @@ def _generate_nominal_plot_curves(
                             line_style="solid", points=pts,
                         ))
             elif "gfd" in allowed_delays and gfpu_i > 0:
+                # GF-enabled breakers run the INVERSE sub-blocks (id_*) per the
+                # native block-kind gating (pass-5). GF InvEq rows are byICalc=1:
+                # the equation anchors on field[13] = the PLUG rating, applied as
+                # rIRef' = rIRef × (plug/pickup) — validated bit-exact vs the
+                # native CalcThermEq kernel (L1 close; G4 §3f). Without a plug
+                # the basis is unavailable and the curve is withheld (honest).
                 gfd_eqs = ieee.get_equation_info(sensor_id, "gfd")
-                gfd_ord = gfd_eqs[0]["ordinal"] if gfd_eqs else 1
+                gfd_ord = _select_inveq_ordinal(
+                    gfd_eqs, float(gfd_setting) if gfd_setting else None
+                )
                 gfd_time_dial = float(gfd_setting) if gfd_setting else 1.0
+                gf_basis_ratio = (
+                    float(plug_rating) / gfpu_i
+                    if plug_rating and gfpu_i > 0 else None
+                )
+                if gf_basis_ratio is None:
+                    warnings.append(
+                        "GFD InvEq curve withheld: plug rating unavailable for the "
+                        "field[13] (plug) basis"
+                    )
 
-                for variant, phase in [("fd_open", "open"), ("fd_clear", "clear")]:
+                for variant, phase in [("id_open", "open"), ("id_clear", "clear")]:
                     points = ieee.generate_curve(
                         sensor_id=sensor_id,
                         ordinal=gfd_ord,
@@ -2842,6 +2882,7 @@ def _generate_nominal_plot_curves(
                         pickup_current=gfpu_i,
                         time_dial=gfd_time_dial,
                         equation_type="gfd",
+                        gf_basis_ratio=gf_basis_ratio,
                     )
                     if points:
                         curves.append(PlotCurve(

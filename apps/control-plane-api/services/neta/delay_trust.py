@@ -13,14 +13,18 @@ Three trust tiers (G4 §0 / §4):
                       validated BIT-EXACT against the native EasyPower ``TccBase.dll``
                       ``CalcThermEq``/``CalcThermEq3`` kernel over the complete STD
                       Therm 4-dial corpus (G4 §5; captured-fixture parity closed
-                      2026-06-01). Numerically validated — field-safe. (G4 rows 3/4/5/6.)
-  - ``"verify"``      DISPATCH-WIRED, parity not yet closed. **GFD INVEQ (route 2)
-                      Therm** only: the native ``CalcThermEq`` formula is recovered +
-                      patched, but the GF runtime path uses ``byICalc=1``
-                      (``num3=field13`` ≠ pickup) which the managed solver's
-                      ``num3=num6`` form does not reproduce, and ``rIRef<rM`` GF rows
-                      return None outright (G4 §5, row 7-Therm). Show the engine's best
-                      estimate, flagged; promotion pending ``field13`` provenance.
+                      2026-06-01), and **GFD INVEQ (route 2) Therm** — the GF runtime
+                      path (``byICalc=1``) anchors on ``field[13]`` = the PLUG rating;
+                      the managed plug-basis form (``rIRef' = rIRef × plug/pickup``)
+                      reproduces the native kernel BIT-EXACT over the complete GF
+                      Therm corpus (L1 close 2026-06-09; fixtures
+                      ``gf_inveq_field13_native_parity.json``). Numerically
+                      validated — field-safe. (G4 rows 3/4/5/6/7-Therm.)
+  - ``"verify"``      DISPATCH-WIRED, parity not yet closed. **I2X composite bands**
+                      (route 1, ``max(ramp, floor)``) only: the combine rule is
+                      decompile-confirmed and the ramp native-bit-exact, but the
+                      full native composite render awaits the spot-check gate
+                      (I2X-5 / task #72). Show the engine's best estimate, flagged.
   - ``"unsupported"`` NOT IMPLEMENTED / hard-excluded. I2X (route 1, I²t solver not
                       built), GE trip-unit STD/Gnd (routes 3/4, fall-through
                       diagnostic only), and the GF-INVEQ ANSI family
@@ -134,12 +138,16 @@ def _classify_gfd(route: Optional[int], is_ansi: bool, i2x_shape: Optional[str] 
     if route == 1:
         return _classify_i2x(i2x_shape)
     if route == 2:
-        # GFD INVEQ: ANSI family hard-excluded (G4 §3e). GF Therm stays "verify"
-        # (NOT promoted with STD): the GF runtime path is byICalc=1
-        # (num3=field13 ≠ pickup), which the managed num3=num6 form does not
-        # reproduce, and rIRef<rM GF rows yield None (G4 §5). Promotion to "db"
-        # is gated on field13 provenance + native-oracle re-validation.
-        return TRUST_UNSUPPORTED if is_ansi else TRUST_VERIFY
+        # GFD INVEQ: ANSI family hard-excluded (G4 §3e). GF Therm PROMOTED to
+        # "db" (L1 close, 2026-06-09): field[13] identified as the PLUG rating
+        # via the kernel's own pickup-basis dispatcher (ComputeAmps slot map;
+        # native uCalc = DB *_calc + 1), and the managed plug-basis form
+        # (rIRef' = rIRef × plug/pickup) reproduces the native CalcThermEq
+        # byICalc=1 kernel BIT-EXACT over the complete GF Therm corpus
+        # (4 open + 4 clear dials × all rIRef values × 8 plug/pickup ratios;
+        # fixtures gf_inveq_field13_native_parity.json). Rows whose basis is
+        # unavailable are withheld at the solver, never silently computed.
+        return TRUST_UNSUPPORTED if is_ansi else TRUST_DB
     return TRUST_UNSUPPORTED  # 4 TUG / None / other
 
 
@@ -175,14 +183,14 @@ def delay_trust_reason(
         if route == 2:
             return (
                 "Inverse-equation (Therm) delay — validated BIT-EXACT against the native "
-                "EasyPower CalcThermEq kernel over the complete STD Therm corpus (G4 §5)."
+                "EasyPower CalcThermEq kernel over the complete Therm corpus (STD G4 §5; "
+                "GF plug-basis L1 close, fixtures gf_inveq_field13_native_parity)."
             )
         return f"Direct-band delay ({route_name}) — numerically validated row-for-row (G4)."
     if trust == TRUST_VERIFY:
         return (
-            f"Inverse-equation delay ({route_name}) — dispatch-wired, native CalcThermEq "
-            "recovered + patched; GF byICalc=1 (num3=field13) not yet reproduced by the "
-            "managed solver, captured-fixture promotion pending (G4 §5)."
+            f"Delay ({route_name}) — dispatch-wired and partially native-validated; "
+            "full native-render spot-check pending (I2X composite gate, G4 §3b)."
         )
     if gfd_is_ansi:
         return (

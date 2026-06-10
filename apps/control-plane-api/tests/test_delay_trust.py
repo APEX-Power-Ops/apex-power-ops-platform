@@ -52,7 +52,7 @@ def test_std_route_classification(route, expected):
     "route,is_ansi,expected",
     [
         (0, False, TRUST_DB),            # direct-band DatSection1GfGFD — PROVEN (row 4)
-        (2, False, TRUST_VERIFY),        # INVEQ Therm — fixtures pending (row 7-Therm)
+        (2, False, TRUST_DB),            # INVEQ Therm — plug-basis (field[13]) parity closed (L1, 2026-06-09)
         (2, True, TRUST_UNSUPPORTED),    # INVEQ ANSI family — hard-excluded (row 7-Ansi, G4 §3e)
         (1, False, TRUST_UNSUPPORTED),   # I2X — solver not built (row 11)
         (4, False, TRUST_UNSUPPORTED),   # GE-TU ground — fall-through (row 10)
@@ -99,7 +99,7 @@ def test_unknown_element_is_unsupported():
 
 def test_case_insensitive_element_key():
     assert classify_delay_trust("STD", std_route=0) == TRUST_DB
-    assert classify_delay_trust("Gfd", gfd_route=2) == TRUST_VERIFY
+    assert classify_delay_trust("Gfd", gfd_route=2) == TRUST_DB
 
 
 # ── delay_route_for: raw route byte the element is governed by ──

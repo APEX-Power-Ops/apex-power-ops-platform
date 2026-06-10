@@ -80,6 +80,46 @@ class CurvePoint:
     seconds: float
 
 
+def apply_gf_basis(
+    coeff: Coefficients,
+    i_calc: Optional[int],
+    basis_ratio: Optional[float],
+) -> Optional[Coefficients]:
+    """Apply the native GF-InvEq pickup-basis selection to a coefficient set.
+
+    The native kernel (``CTccLVBreakerCurveGF.CalcThermEq``) anchors the
+    equation's reference current ``num3`` on a curve-object slot selected by
+    ``byICalc`` — ``{0: field[16]=pickup, 1: field[13]=plug, 2: field[12]=
+    sensor/frame}`` — where ``byICalc`` comes from the row's ``*ICalc`` byte
+    through the recovered translator (``FUN_01208640``). In the normalized
+    managed form (I in multiples of pickup) the byICalc=1 path is exactly the
+    STD-proven Therm equation with ``rIRef' = rIRef × (plug / pickup)``
+    (G4 §3f; bit-exact vs the native kernel over the full GF Therm corpus,
+    fixtures ``gf_inveq_field13_native_parity.json``).
+
+    ``basis_ratio`` = plug / pickup (both in amps). A byICalc=1 row with no
+    usable basis is WITHHELD (returns ``None``) — never silently computed on
+    the pickup basis, which the native execution proved unfaithful. byICalc=2
+    (field[12]) is corpus-absent (G4 §3f ``*ICalc=0`` residual closed at zero
+    rows) and withheld defensively.
+    """
+    from apex_calc_engine.services.calc_engine.etu_delay_routing import (
+        gf_inveq_byicalc,
+    )
+
+    by_icalc = gf_inveq_byicalc(i_calc)
+    if by_icalc == 0:
+        return coeff
+    if by_icalc == 1:
+        if basis_ratio is None or basis_ratio <= 0.0:
+            return None
+        return Coefficients(
+            c1=coeff.c1, c2=coeff.c2, c3=coeff.c3,
+            c4=coeff.c4 * basis_ratio, c5=coeff.c5, c6=coeff.c6,
+        )
+    return None  # byICalc == 2 (field[12]) — unwired, withhold
+
+
 class IEEEInverseTimeSolver:
     """
     Evaluates IEEE inverse-time equations from the STD/GFD equation tables.
@@ -106,6 +146,7 @@ class IEEEInverseTimeSolver:
         time_dial: float = 1.0,
         tolerance_pct: float = 0.0,
         equation_type: str = 'std',
+        gf_basis_ratio: Optional[float] = None,
     ) -> Optional[float]:
         """
         Calculate trip time for a single fault current.
@@ -119,6 +160,8 @@ class IEEEInverseTimeSolver:
             time_dial: LTD band multiplier (default 1.0)
             tolerance_pct: Tolerance percentage (e.g. 10.0 for +10%)
             equation_type: 'std' or 'gfd'
+            gf_basis_ratio: plug/pickup ratio for the GF byICalc=1 basis
+                (see apply_gf_basis); required for GFD field[13]-anchored rows.
 
         Returns:
             Trip time in seconds, or None if current is below pickup.
@@ -126,7 +169,10 @@ class IEEEInverseTimeSolver:
         if pickup_current <= 0:
             return None
 
-        coeff = self._load_coefficients(sensor_id, ordinal, variant, equation_type)
+        coeff = self._load_coefficients(
+            sensor_id, ordinal, variant, equation_type,
+            gf_basis_ratio=gf_basis_ratio,
+        )
         if coeff is None or coeff.is_zero:
             return None
 
@@ -150,6 +196,7 @@ class IEEEInverseTimeSolver:
         tolerance_pct: float = 0.0,
         min_time: Optional[float] = None,
         equation_type: str = 'std',
+        gf_basis_ratio: Optional[float] = None,
     ) -> list[CurvePoint]:
         """
         Generate a full TCC curve as a list of (amps, seconds) points.
@@ -173,7 +220,10 @@ class IEEEInverseTimeSolver:
         if pickup_current <= 0:
             return []
 
-        coeff = self._load_coefficients(sensor_id, ordinal, variant, equation_type)
+        coeff = self._load_coefficients(
+            sensor_id, ordinal, variant, equation_type,
+            gf_basis_ratio=gf_basis_ratio,
+        )
         if coeff is None or coeff.is_zero:
             return []
 
@@ -248,8 +298,16 @@ class IEEEInverseTimeSolver:
         ordinal: int,
         variant: str,
         equation_type: str,
+        gf_basis_ratio: Optional[float] = None,
     ) -> Optional[Coefficients]:
-        """Load 6 coefficients for one curve variant from the database."""
+        """Load 6 coefficients for one curve variant from the database.
+
+        For GFD rows the variant's ``*_i_calc`` byte selects the native
+        pickup basis (byICalc); ``apply_gf_basis`` applies the plug-basis
+        correction (byICalc=1 → rIRef × plug/pickup) or withholds the row
+        when the required basis is unavailable. STD rows pass through
+        unchanged (their i_calc translates to the pickup basis).
+        """
         if variant not in VARIANTS:
             raise ValueError(f"Invalid variant '{variant}'. Must be one of {VARIANTS}")
 
@@ -269,10 +327,17 @@ class IEEEInverseTimeSolver:
             val = row.get(f'{variant}_{n}')
             return float(val) if val is not None else 0.0
 
-        return Coefficients(
+        coeff = Coefficients(
             c1=_col(1), c2=_col(2), c3=_col(3),
             c4=_col(4), c5=_col(5), c6=_col(6),
         )
+
+        if equation_type == 'gfd':
+            raw_i_calc = row.get(f'{variant}_i_calc')
+            i_calc = int(raw_i_calc) if raw_i_calc is not None else None
+            return apply_gf_basis(coeff, i_calc, gf_basis_ratio)
+
+        return coeff
 
     def _load_equation_rows(
         self,
@@ -318,7 +383,11 @@ class IEEEInverseTimeSolver:
                            id_cl_3 AS id_clear_3,
                            id_cl_4 AS id_clear_4,
                            id_cl_5 AS id_clear_5,
-                           id_cl_6 AS id_clear_6
+                           id_cl_6 AS id_clear_6,
+                           fd_op_i_calc AS fd_open_i_calc,
+                           fd_cl_i_calc AS fd_clear_i_calc,
+                           id_op_i_calc AS id_open_i_calc,
+                           id_cl_i_calc AS id_clear_i_calc
                     FROM {table_name}
                     WHERE sensor_id = :sensor_id
                     ORDER BY CASE
@@ -385,6 +454,12 @@ class IEEEInverseTimeSolver:
                 'id_clear_4': _read(row, 'id_clear_4'),
                 'id_clear_5': _read(row, 'id_clear_5'),
                 'id_clear_6': _read(row, 'id_clear_6'),
+                # Native byICalc dispatch bytes (GF pickup-basis selection; the
+                # ORM fallback path exposes the source-faithful *_i_calc names).
+                'fd_open_i_calc': _read(row, 'fd_open_i_calc', _read(row, 'fd_op_i_calc')),
+                'fd_clear_i_calc': _read(row, 'fd_clear_i_calc', _read(row, 'fd_cl_i_calc')),
+                'id_open_i_calc': _read(row, 'id_open_i_calc', _read(row, 'id_op_i_calc')),
+                'id_clear_i_calc': _read(row, 'id_clear_i_calc', _read(row, 'id_cl_i_calc')),
             })
         return normalized
 

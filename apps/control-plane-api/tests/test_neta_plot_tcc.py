@@ -420,7 +420,7 @@ def _patch_calc_engine(
     def _ieee_generate_curve(sensor_id, ordinal, variant, pickup_current,
                              time_dial=1.0, tolerance_pct=0.0,
                              min_time=None, max_amps=100000.0,
-                             equation_type='std'):
+                             equation_type='std', gf_basis_ratio=None):
         if equation_type == 'gfd':
             return gfd_curve
         return std_curve
