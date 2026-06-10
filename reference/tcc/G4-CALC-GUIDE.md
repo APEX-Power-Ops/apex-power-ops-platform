@@ -495,9 +495,18 @@ pointwise min-envelope.** Rules, each `[DLL TccBase.dll]`-cited:
 per-element curves; the frontend fills the closed polygon with the per-element traces demoted to a
 legend toggle. Implements rules 1-8 with these documented deviations (operator-ratified §209 tiers):
 **right edge = 100 kA** (serving sweep default; native clips at study SC amps — SC input later);
-**fillets skipped** (rule 5 cosmetic); **route-1 open-only elements reuse the open block for the clear
-boundary** (zero band width, surfaced in `open_only_elements` + a UI note — clear-edge synthesis from
-`floor_clear`/`t_clear` is the open follow-up). Handoff semantics validated by adversarial review:
+**fillets skipped** (rule 5 cosmetic); **route-1 clear-edge synthesis SHIPPED 2026-06-10 (#123, apex
+`4f11d4aa`)**: STD/GFD serve the clear boundary from the band's symmetric CLEAR block
+(`i_clear`/`t_clear` ramp anchor + `std_clear`/`gfd_clear` floor) through the same validated `CIxt`
+kernel — native open/clear are symmetric blocks (`SetSTDB_*Delay{Open,Clear}` 24440-24531; the I2X-4
+oracle validated both sides) — and the synthesized LTD serves clear at the matched band's
+`clear_time` under the **SAME-BAND law** (the clear basis must come from the band that supplied the
+open `tr`; a cross-band pair is a band that does not exist — adversarial-review finding). Remaining
+open-only cases are honest withholds surfaced in `open_only_elements` + the UI note: partial composite
+clear blocks (floor-without-ramp, 282 STD + 211 GFD rows — native partial-block behavior unratified),
+GFD rows missing clear ramp anchors (~8k of 50k), and live LTD (prod `etu_ltd_bands` is the legacy
+shape with no `clear_time`; the legacy normalizer DUPLICATES open→clear, which the equality guard
+rejects as no independent clear basis). Handoff semantics validated by adversarial review:
 next-element pickup when it already governs there (the classic vertical drop at STPU — THE production
 case, since DB-route LT curves descend through the ST shelf to their min-time floor), log-log crossing
 only when the next block starts ABOVE the current curve (delay priority); region ends = suffix-min of
