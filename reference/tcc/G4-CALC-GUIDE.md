@@ -7,7 +7,7 @@
 > packet that computes or ships a pickup/delay/tolerance value cites this guide.
 >
 > Status: DRAFT — agent-authored 2026-05-31; **pickup formulas validated against `SSTSensorRecord` primary source 2026-05-31 (Desktop)**
-> Last validated · 2026-06-01 (pickup formulas vs `SSTSensorRecord.cs`; enum vs `SSTCalcMethod.cs`; INVEQ loader reconciled vs pass-2..5; INVEQ managed-evaluator characterized live + corpus distribution measured — §3e; GF-InvEq ANSI cohort re-measured (100 rows / 23 sensors / 3 styles) + hard-excluded; Therm `CalcThermEq` recovered from `TccBase.dll` + patched; **STD-INVEQ Therm parity CLOSED by native-kernel EXECUTION — `TccBase.dll` `CalcThermEq`/`CalcThermEq3` invoked in-process, STD reproduced BIT-EXACT over the complete 4-dial corpus → PROMOTED to "db"; secondary `*ICalc=0` residual CLOSED (zero rows) — §3f**) · Open gaps: **GF-INVEQ Therm — managed solver not native-faithful for the GF `byICalc=1` (`num3=field13`) basis → stays "verify", promotion gated on `field13` provenance (§3f/§5)** · GF Ansi (100 rows / 23 sensors) formula recovered but HARD-EXCLUDED (keep-excluded default) · GE-TU-STD/Gnd · I2X-255 · WEG OCR-A pickup `[STUB]` · INST `Sec4Inst*` `[DEFERRED]` · LTD `DS2_DLY_PTY` `[DEFERRED]`
+> Last validated · 2026-06-01 (pickup formulas vs `SSTSensorRecord.cs`; enum vs `SSTCalcMethod.cs`; INVEQ loader reconciled vs pass-2..5; INVEQ managed-evaluator characterized live + corpus distribution measured — §3e; GF-InvEq ANSI cohort re-measured (100 rows / 23 sensors / 3 styles) + hard-excluded; Therm `CalcThermEq` recovered from `TccBase.dll` + patched; **STD-INVEQ Therm parity CLOSED by native-kernel EXECUTION — `TccBase.dll` `CalcThermEq`/`CalcThermEq3` invoked in-process, STD reproduced BIT-EXACT over the complete 4-dial corpus → PROMOTED to "db"; secondary `*ICalc=0` residual CLOSED (zero rows) — §3f**) · **L1 CLOSED 2026-06-09 (STATE §206): `field[13]` = the PLUG rating (In) — slot map banked via ComputeAmps cross-ref; GF-INVEQ Therm plug-basis (`rIRef' = rIRef × plug/pickup`) BIT-EXACT vs native over the complete GF corpus (416 scenarios, maxabs 0.0) → PROMOTED "db" (~1,690 sensors); `/plot-tcc` renders the inverse (`id_*`) sub-blocks band-matched + basis-corrected** · Open gaps: GF Ansi (100 rows / 23 sensors) formula recovered, anchors PICKUP (corrected 2026-06-09 — independent implement+validate lane), HARD-EXCLUDED meanwhile · GE-TU-STD/Gnd · I2X-255 · WEG OCR-A pickup `[STUB]` · INST `Sec4Inst*` `[DEFERRED]` · LTD `DS2_DLY_PTY` `[DEFERRED]`
 
 ---
 
@@ -397,23 +397,39 @@ Decisive results:
   `num6/field[13]`; and every `rIRef < rM` GF row (e.g. `rIRef=0.48`) makes `rM/rIRef > 1` so the managed
   `num3=num6` form returns **None** outright. Native produces a valid curve there only via the `field[13]`
   basis. So GF route-2 Therm stays **"verify"** (not promoted); the open item is `field[13]` provenance.
-- **GF `field[13]` characterized (2026-06-01) — the GF promotion is a bounded-but-not-cheap follow-up.**
-  In `CTccLVBreakerCurveGF` (`{ctor}` ~line 7694), fields `[12]/[13]/[16]` are three pickup-basis currents
-  (init to the `3.123…E38` "not set" sentinel that `CalcThermEq` checks); `byICalc` selects among them
-  (`{2→[12], 1→[13], 0→[16]}`), and `field[16]` is always the main pickup (`num6`). The InvEq setter
-  `SetTherm_InverseDelayOpen` (~18965) stores only the coeffs + `byICalc` — it does **not** set the bases;
-  they are loaded earlier in the device→curve build path (not cheaply locatable in the flat decomp).
-  Geometric handle: the native curve passes through **`(amps = field[num3]·rIRef, T = rTref)`** — so
-  `field[13]·rIRef` is the GF curve's **reference current**, and since GFPU pickup is a fraction of the
-  sensor/frame rating and the `rIRef<rM` rows require `field[13] > pickup`, `field[13]` is plausibly the
-  **sensor/frame rating** (hypothesis, NOT yet `[DLL]`-confirmed). **To promote GF Therm, resolve
-  `field[13]/pickup` by EITHER (a) tracing the device→curve pickup-load that sets `[12]/[13]/[16]`, OR (b)
-  a handful of EasyPower-GUI-exported GF-InvEq curve points** (find the `field[13]` that makes the native
-  oracle match the GUI, then apply the `field[13]/pickup` correction to the managed denominator's `rIRef`
-  and re-validate). Promoting on the unconfirmed hypothesis is **disallowed** (field-trust law). NOTE GF
-  InvEq sensors carry no direct GFD bands → no field-table GFD delay row surfaces; promotion would certify
-  the Screen-3 GF-InvEq curve only.
-- **GF-Ansi shares the SAME `field[13]` basis → GF-Therm and GF-Ansi are ONE field[13]-gated lane (NEW 2026-06-02).**
+- **GF `field[13]` RESOLVED = the PLUG rating (In) — GF-INVEQ Therm PROMOTED "db" (L1 close, 2026-06-09; STATE §206).**
+  The provenance fell out of the kernel's own **pickup-basis dispatcher**: `CTccLVBreakerCurveGF.ComputeAmps
+  (uCalc, r)` maps each GF pickup calc code to its basis slot, and cross-referencing against the VALIDATED
+  managed enum (`etu_pickup.py` `ETUCalcMethod`, mirroring `tcc.etu_sensors.*_calc`) locks **native uCalc =
+  DB `*_calc` + 1** via two exact semantic matches (native 8 returns the setting AS AMPS = DB 7 AMPS;
+  native 9 anchors `[16]` = DB 8 GFPU-cascade). **Slot map (banked):** `[12]` = sensor/frame rating ·
+  **`[13]` = plug value (In)** · `[14]` = GF pickup dial setting · `[15]` = C-factor/multiplier (ctor
+  default 1.0) · `[16]` = computed GF pickup amps (`num6`, written by `RecalcCurve`) · `[19]` = pickup max
+  cap (`gfpu_pickup_max`) · `[20]` = external ground-sensor rating. Decompile source: Box
+  `TCC_Master/DLL/CTccLVBreakerCurveGF.cs` (`{ctor}`, `ComputeAmps` ×2, `RecalcCurve`, `CalcAnsiEqGF`).
+  **Numeric validation:** in the normalized managed form, byICalc=1 ≡ the STD-proven Therm equation with
+  **`rIRef' = rIRef × (plug/pickup)`**. The preserved §107 oracle re-ran the native `CalcThermEq` with
+  `byICalc=1`, `[16]=1.0`, `[13]=R` over the COMPLETE GF Therm corpus (4 open dials rM=0.9 × rIRef ∈
+  {1.0,0.75,0.6,0.48,0.2} + 4 clear dials rM=1.1 × rIRef = open×1.1001; rX=2) × R ∈ {1…10} — 416 scenarios:
+  **SMOOTH MAXABS = 0.0 (bit-exact)**, 152/152 all-sentinel outputs exactly at the `R·rIRef ≤ rM` validity
+  boundary with managed-None agreement, 0 floor-knee mismatches. Fixtures frozen
+  (`packages/calc-engine/tests/fixtures/gf_inveq_field13_native_parity.json` + 13 tests; CI runs without
+  the DLL). **Production:** `apply_gf_basis()` gates at coefficient load (`*_i_calc` threaded through the
+  row loader; basis-less byICalc=1 rows WITHHELD, never silently pickup-computed); `/plot-tcc` STD+GFD
+  InvEq curves now render the **inverse sub-blocks** (`id_*` — the native GF-enabled block per pass-5
+  gating; `fd_*` is the flat segment) with band-matched ordinal selection, GFD passing
+  `gf_basis_ratio = plug/GFPU-pickup`. `delay_trust._classify_gfd` route-2 Therm → **db** (~1,690 sensors;
+  certifies the Screen-3 GF-InvEq curve — these sensors carry no direct GFD bands, so no field-table row
+  is affected). Apex `da90b3e8`.
+- **CORRECTED 2026-06-09 (L1 close): GF-Ansi does NOT ride the field[13] anchor at runtime.** The corpus
+  data shows the Ansi rows (`in_out=1`, `id_op_eq=1`) carry `id_op_i_calc = 8` → translator → **byICalc=0 →
+  `field[16]` = pickup basis** — the 2026-06-02 "promote together" coupling below over-read the
+  byte-identical *selector code* as a shared *runtime anchor*. Consequence: GF-Ansi promotion needs NO
+  plug threading — it is an independent, smaller lane: implement the banked C37.112 formula in the managed
+  solver + oracle-validate via `CalcAnsiEqGF` (the §107 harness pattern; arg-mapping from the
+  `SetAnsi_*` setters) + un-exclude. The 2026-06-02 finding below is retained for the formula bank and
+  the selector-recovery provenance:
+- ~~GF-Ansi shares the SAME `field[13]` basis → GF-Therm and GF-Ansi are ONE field[13]-gated lane (NEW 2026-06-02).~~
   Decomp of `CalcAnsiEqGF` (line 18392) shows its pickup-basis selection is **byte-identical to `CalcThermEq`**:
   `byICalc {0→field[16], 1→field[13], 2→field[12]}` (Ansi lines 18400-18419 vs Therm 18305-18324), and the
   Ansi current axis is likewise normalized by that basis (`num10 = field[16]·(rTol+1)/num4`, `num4 = field[<sel>]`;
@@ -448,7 +464,7 @@ withheld with a diagnostic, pickup/curve unknown.
 | 4 | **GFD direct-band** | `DS1GF_SEC3_I2T = 0` | **PROVEN** | **YES.** Literal-amps anchor validated. | Full-SE `2000A` ×4 ordinals; TASK-C `[06]` |
 | 5 | **LTD window** | LTD method 1-5 | **PROVEN (impl. complete)** | **YES** for the window; **flag** `DS2_DLY_PTY` parity. | `etu_ltd.py` 5 methods COMPLETE `[DLL_SEMANTIC_FINDINGS §3]`; §N.3 deferred `[06]` |
 | 6 | **STD-side INVEQ curve NUMBERS** | `DS3_SEC3_I2T = 2` (4,524 sensors, **100% Therm**) | **PROVEN (native-execution parity)** | **YES.** Managed solver reproduces the native `CalcThermEq`/`CalcThermEq3` kernel **BIT-EXACT (maxabs 0.0)** over the complete STD Therm corpus (4 dial curves; all `byICalc=0`). Promoted "verify"→"db" in `delay_trust.py`. | `[DLL-EXEC TccBase.dll]` native kernel invoked; `inveq_therm_native_parity.json` + tests `[VERIFIED-LIVE 2026-06-01 §3f]` |
-| 7 | **GF-side INVEQ curve NUMBERS** | `DS1GF_SEC3_I2T = 2` (1,713 sensors = **1,690 Therm + 23 Ansi**; 100 Ansi rows) | **Therm = NOT managed-faithful (withheld); Ansi = FORMULA RECOVERED BUT STUB/excluded** | **Therm: stays "verify", NOT promoted with STD — GF runtime is `byICalc=1` (`num3=field13` ≠ pickup) which the managed `num3=num6` form doesn't reproduce, and `rIRef<rM` GF rows return None (§3f). Promotion gated on `field13` provenance + oracle re-validation. Ansi: HARD-EXCLUDED in `etu_delay_routing.py` (`id_open_eq != 0`).** | pass-5 BOUND ×3; `[DLL-EXEC]` GF `byICalc=1` divergence shown; `CalcAnsiEqGF` recovered `[VERIFIED-LIVE 2026-06-01 §3f]` |
+| 7 | **GF-side INVEQ curve NUMBERS** | `DS1GF_SEC3_I2T = 2` (1,713 sensors = **1,690 Therm + 23 Ansi**; 100 Ansi rows) | **Therm = PROVEN (native-execution parity, plug basis); Ansi = FORMULA RECOVERED, anchors pickup, excluded pending implementation** | **Therm: PROMOTED "verify"→"db" (L1 close 2026-06-09). `field[13]` = the PLUG rating (ComputeAmps slot map, §3f); managed `rIRef' = rIRef × plug/pickup` reproduces native `CalcThermEq` byICalc=1 BIT-EXACT (maxabs 0.0, 416-scenario corpus sweep; fixtures `gf_inveq_field13_native_parity.json`). Basis-less rows withheld at the solver. Ansi: anchors PICKUP (`id_op_i_calc=8`→byICalc=0, corrected 2026-06-09) — independent implement+validate lane; HARD-EXCLUDED in `etu_delay_routing.py` meanwhile.** | `[DLL-EXEC TccBase.dll 2026-06-09]` native byICalc=1 sweep; ComputeAmps slot map `[DLL]`; apex `da90b3e8` `[VERIFIED-LIVE 2026-06-09 §3f]` |
 | 8 | **WEG OCR Type A pickup** | `DS1GF_PICKUP_CALC = 6` (§N.4, 7 sensors) | **STUB** | **NO — hard-exclude.** Pickup formula UNKNOWN; curve deliberately withheld. Show "unsupported". | diagnostic exclusion `[06 §matrix §N.4]` |
 | 9 | **GE-TU-STD** | `DS3_SEC3_I2T = 3` (235 sensors) | **DEFERRED / STUB** | **NO — hard-exclude.** Fall-through diagnostic only; not solved. | "Enteliguard not supported" `[06]` `[DLL_END_TO_END_MAPPING]` |
 | 10 | **GE-TU-Gnd** | `DS1GF_SEC3_I2T = 4` (209 sensors) | **DEFERRED / STUB** | **NO — hard-exclude.** Fall-through diagnostic only. | `[06 §matrix]` |
@@ -457,9 +473,9 @@ withheld with a diagnostic, pickup/curve unknown.
 | 13 | **STPU override (band routing)** | `tcc.etu_stpu_overrides` (3 sensors) | **PARTIAL** | **Constant-mode override pickup + override tolerances OK; decreasing-mode curve = withhold.** Override *routing* covered in TASK-C; broader override math deferred. | `[06 §matrix]` `[DLL_SEMANTIC_FINDINGS §4]` |
 
 **The one-line rule the matrix encodes:** *ship rows 1-5 (and constant-mode override 13) **plus row 6
-STD-INVEQ Therm** (now native-execution PROVEN, §3f); keep **row 7 GF-INVEQ Therm "verify"** (managed
-solver not native-faithful for the GF `byICalc=1` basis); **hard-exclude the 23 GF Ansi sensors / 100 rows
-(formula recovered but solver path not yet shipped) and rows 8-12.***
+STD-INVEQ Therm AND row 7 GF-INVEQ Therm** (both native-execution PROVEN — STD §107, GF plug-basis L1
+close 2026-06-09 §3f); **hard-exclude the 23 GF Ansi sensors / 100 rows (formula recovered, pickup-anchored,
+solver path not yet shipped) and rows 8-12.***
 
 > **Test-POINT vs expected-TIME (NETA sheet column-trust).** For a delay element the test sheet has two
 > separable quantities, with *different* trust sources: **(a) the test point** — the NETA test multiple
@@ -467,13 +483,13 @@ solver not native-faithful for the GF `byICalc=1` basis); **hard-exclude the 23 
 > multiple × the element's pickup current — is **always field-correct** (a fixed NETA procedure applied to
 > the *proven* pickup current of row 2), independent of curve-number trust; and **(b) the expected trip
 > time** at that point, which inherits this matrix's delay-status (PROVEN for direct-band rows 3-5 **and
-> STD-INVEQ Therm row 6, now native-execution PROVEN §3f**; GF-INVEQ Therm row 7 still flagged "verify").
+> both INVEQ Therm rows 6+7, native-execution PROVEN §3f** — STD §107, GF plug-basis L1 2026-06-09).
 > The LV page (`/lvbreakertcc`) renders (a) directly (NETA multiple +
 > inject current, field-correct) and **route-gates (b) per the per-sensor delay-calc route** (the §6 gating
 > algorithm, encoded once in `apps/control-plane-api/services/neta/delay_trust.py`): **DB** for direct-band
-> (STD/GFD route 0) + LTD (methods 1-5) **+ STD-INVEQ (route 2) Therm — validated BIT-EXACT vs the native
-> `CalcThermEq` kernel (§3f)**; **"verify"** for GFD-INVEQ (route 2) Therm only — native recovered/patched
-> but the GF `byICalc=1` (`num3=field13`) basis is not yet reproduced by the managed solver; and
+> (STD/GFD route 0) + LTD (methods 1-5) **+ STD- and GFD-INVEQ (route 2) Therm — both validated BIT-EXACT
+> vs the native `CalcThermEq` kernel (§3f)**; **"verify"** for the I2X composite shape only (route 1,
+> native-render spot-check pending, task #72); and
 > **"n/a" (time withheld)** for the
 > not-implemented / hard-excluded routes — I2X (route 1), GE-TU STD/Gnd (routes 3/4), and the GF-INVEQ ANSI
 > family (`id_op_eq ≠ 0`). `/calculate` now returns a per-delay-element **`trust` + `delay_route` + `trust_reason`**
@@ -525,9 +541,15 @@ solver not native-faithful for the GF `byICalc=1` basis); **hard-exclude the 23 
 
 ---
 
-## 5. The InvEq numeric-parity gap (the #1 open calc question)
+## 5. The InvEq numeric-parity gap (CLOSED for Therm — STD §107 2026-06-01, GF plug-basis L1 2026-06-09; residual = the 23-sensor Ansi implement+validate lane)
 
-**Statement of the gap `[OPEN-VALIDATION]`:** Both InvEq routes (STD `DS3_SEC3_I2T = 2` and GFD
+> **2026-06-09 status:** the "#1 open calc question" below is **answered for the entire Therm corpus**
+> (6,214 of 6,237 sensors): STD bit-exact (§3f, §107) and GF bit-exact on the plug basis (§3f, L1 close —
+> `field[13]` = plug, 416-scenario sweep, maxabs 0.0, fixtures `gf_inveq_field13_native_parity.json`).
+> The historical statement is preserved below for provenance; the only residual is GF-Ansi (23 sensors /
+> 100 rows): formula recovered + pickup-anchored, awaiting a managed solver branch + oracle validation.
+
+**Statement of the gap `[OPEN-VALIDATION — historical, see status above]`:** Both InvEq routes (STD `DS3_SEC3_I2T = 2` and GFD
 `DS1GF_SEC3_I2T = 2`, ~6,200 sensors combined: 4,524 + 1,713) dispatch into the platform's
 pre-existing **`IEEEInverseTimeSolver`** (`source-domains/tcc_v5_backend/services/calc_engine/etu_curves.py`).
 That solver was **never validated row-for-row against EasyPower's native inverse-equation kernel —

@@ -52,8 +52,9 @@ every stage; the punch list is about *coverage*, not *safety*.
 | — | **Direct-band delay (STD/GFD route 0)** | STD 4,364 / GFD 9,933 | **db** ✓ | open/clear (mfr) ✓ | — | **BANKED** |
 | — | **LTD delay** | all ETU | **db** ✓ (I²t window §111) | engine window | — | **BANKED** (band → L5) |
 | — | **STD-INVEQ Therm** | ~4,524 | **db** ✓ (native §107) | — | — | **BANKED** |
-| L1 | **GF-INVEQ Therm + Ansi** (one field[13] lane) | ~1,690 GFD + 23 Ansi | verify / withheld | — | S | **PAUSED** — `field[13]` evidence (you); both promote together |
-| ~~L2~~ | ~~GF-INVEQ Ansi (standalone)~~ | — | — | — | — | **MERGED INTO L1** (2026-06-02) — shares `field[13]`, not independent |
+| — | **GF-INVEQ Therm** | ~1,690 | **db** ✓ (plug-basis L1 close, STATE §206) | — | — | **BANKED** — `field[13]` = PLUG (ComputeAmps slot map); bit-exact 416-scenario sweep; `/plot-tcc` inverse-block + basis-corrected |
+| L1 | **GF-INVEQ Ansi** (re-narrowed 2026-06-09) | 23 sensors / 100 rows | withheld | — | S | **OPEN** — formula banked (C37.112, G4 §3f), anchors **PICKUP** (`id_op_i_calc=8`→byICalc=0 — the 06-02 "shares field[13]" merge over-read the selector); close = managed Ansi branch + `CalcAnsiEqGF` oracle validation (§107 pattern, `SetAnsi_*` arg-map) + un-exclude |
+| ~~L2~~ | ~~GF-INVEQ Ansi (standalone)~~ | — | — | — | — | ~~MERGED INTO L1 (2026-06-02)~~ → L1 IS now the standalone Ansi lane (Therm banked 2026-06-09) |
 | L3 | GE-TU delay solver | STD 235 / GFD 209 | withheld | — | M | OPEN — separate trip-unit math |
 | L4 | **I2X / Iˣt delay solver** | STD 8,708 / GFD 5,976 (~15k) | withheld | — | **M (resized 06-03; ~98% = banked I²t)** | OPEN — biggest single lever; gating verify DONE §113 |
 | L5 | Delay tolerance BANDS (per-mfr ± on time) | LTD + derived rows | **LTD: db (per-mfr DS2_TOL)** | per-mfr DB band | M | **LTD DONE §114**; STD/GFD + ET 1.0 remain |
@@ -67,20 +68,20 @@ every stage; the punch list is about *coverage*, not *safety*.
 
 ## The lanes (detail + the proven path to close each)
 
-### L1 — GF-INVEQ Therm **+ Ansi** → db  ·  ~1,690 GFD + 23 Ansi  ·  PAUSED (operator evidence)
-**One lane, two families, one blocker (merged 2026-06-02 — see below).** GF runtime is `byICalc=1`
-(`num3/num4 = field[13]` ≠ pickup), so the managed `num3=num6` form isn't native-faithful; `rIRef<rM` GF rows
-return None. **Blocker:** `field[13]` provenance (hypothesis: sensor/frame rating — not yet `[DLL]`-confirmed).
-**Close:** confirm `field[13]/pickup` from operator evidence (or sweep it in the oracle vs an EasyPower-GUI GF
-reference curve) → correct the managed `field[13]` basis → re-validate **both** families bit-exact → promote.
-Oracle harness preserved at `output/inveq-parity/oracle/`. `[G4 §3f/§5]`
-
-> **L2 (GF-Ansi) MERGED into L1 — finding 2026-06-02.** Decomp of `CalcAnsiEqGF` proved its pickup-basis
-> selection is **byte-identical to `CalcThermEq`** (`byICalc {0→field[16], 1→field[13], 2→field[12]}`), so GF-Ansi
-> anchors on the **same `field[13]`** at runtime — it is **not** an independent ship. The recovered Ansi formula
-> `T(M)=rA+rB/M′+rD/M′²+rE/M′³` (C37.112 inverse-time) + its flat-degenerate branch are now **banked in G4 §3f**
-> and **structure-validated** (monotone inverse curve). When `field[13]` lands, the 1,690 Therm + 23 Ansi rows
-> promote **together** in one motion. Net effect: removed a phantom "XS standalone" bite; de-risked the GF lane.
+### L1 — GF-INVEQ Ansi → db  ·  23 sensors / 100 rows  ·  S  ·  (Therm half CLOSED 2026-06-09, STATE §206)
+**Therm CLOSED:** `field[13]` resolved = **the PLUG rating (In)** — the kernel's own `ComputeAmps`
+pickup-basis dispatcher maps native uCalc = DB `*_calc`+1 to slots (`[12]`=sensor/frame, `[13]`=plug,
+`[15]`=C-factor, `[16]`=pickup; G4 §3f slot map). Managed correction `rIRef' = rIRef × plug/pickup`
+re-validated **bit-exact** vs the native `CalcThermEq` (`byICalc=1`) over the COMPLETE GF Therm corpus
+(416 scenarios, maxabs 0.0; fixtures `gf_inveq_field13_native_parity.json`); `/plot-tcc` now renders the
+inverse (`id_*`) sub-blocks band-matched + basis-corrected; `delay_trust` GFD route-2 Therm → **db**
+(~1,690 sensors). Apex `da90b3e8`.
+**Ansi residual (this lever):** the 2026-06-02 merge **over-read the selector** — Ansi rows carry
+`id_op_i_calc=8` → byICalc=0 → **pickup basis**, so Ansi never needed `field[13]`. The recovered formula
+`T(M)=rA+rB/M′+rD/M′²+rE/M′³` (C37.112) + flat-degenerate branch stay **banked in G4 §3f**.
+**Close:** map the 6 row floats → kernel args from the `SetAnsi_{Flat,Inverse}Delay*` setter bodies →
+extend the oracle to `CalcAnsiEqGF` (same §107 reflection pattern; harness preserved at
+`output/inveq-parity/oracle/`) → managed Ansi branch in `etu_curves.py` → bit-exact → un-exclude + promote.
 
 ### L3 — GE-TU delay solver → db  ·  STD 235 + GFD 209  ·  M
 GE trip-unit STD/Gnd (routes 3/4) use a separate solver not built. **Close:** RE the GE-TU delay math
@@ -201,6 +202,7 @@ These are closed and locked in the guides; reopening only on a cited reason:
 - **Direct-band STD/GFD (route 0)** VALUE+band `db` (open/clear manufacturer band) `[G4 §3a]`.
 - **LTD** VALUE `db` — the I²t reference window, band setting = trip time at 6× Ir `[G4 §4 · §111]`.
 - **STD-INVEQ Therm** VALUE `db` — native-kernel bit-exact `[G4 §3f · §107]`.
+- **GF-INVEQ Therm** VALUE `db` — plug-basis (`field[13]` = In) native-kernel bit-exact `[G4 §3f · STATE §206]`.
 - **Envelope-only catalog framework** shipped; PXR2 seeded `[G1 §7 · §108]`. **Extended to the full Eaton
   Power Defense family** — `services/neta/pxr_curves.py` (PD2–6 PXR 10/20/20D/25 curve+setting+tolerance model,
   cited `[VENDOR-DOC]` TD012064/065/067/068EN + PXPM) `[EATON-POWER-DEFENSE-PXR.md · §140–§141]`.
