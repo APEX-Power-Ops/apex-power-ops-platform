@@ -53,7 +53,7 @@ def test_std_route_classification(route, expected):
     [
         (0, False, TRUST_DB),            # direct-band DatSection1GfGFD — PROVEN (row 4)
         (2, False, TRUST_DB),            # INVEQ Therm — plug-basis (field[13]) parity closed (L1, 2026-06-09)
-        (2, True, TRUST_UNSUPPORTED),    # INVEQ ANSI family — hard-excluded (row 7-Ansi, G4 §3e)
+        (2, True, TRUST_DB),             # INVEQ ANSI — CalcAnsiEqGF parity closed (#120, 2026-06-10)
         (1, False, TRUST_UNSUPPORTED),   # I2X — solver not built (row 11)
         (4, False, TRUST_UNSUPPORTED),   # GE-TU ground — fall-through (row 10)
         (None, False, TRUST_UNSUPPORTED),
@@ -117,11 +117,14 @@ def test_reasons_present_and_distinct():
     db_inveq = delay_trust_reason("std", TRUST_DB, route=2)
     verify = delay_trust_reason("gfd", TRUST_VERIFY, route=2)
     unsup = delay_trust_reason("std", TRUST_UNSUPPORTED, route=1)
-    ansi = delay_trust_reason("gfd", TRUST_UNSUPPORTED, route=2, gfd_is_ansi=True)
+    # ANSI route-2 is now a db tier — its reason cites CalcAnsiEqGF parity (#120).
+    ansi = delay_trust_reason("gfd", TRUST_DB, route=2, gfd_is_ansi=True)
     for r in (db, db_inveq, verify, unsup, ansi):
         assert isinstance(r, str) and r.strip()
     assert len({db, db_inveq, verify, unsup, ansi}) == 5
-    assert "ANSI" in ansi
+    assert "ANSI" in ansi and "CalcAnsiEqGF" in ansi
+    # the Therm db reason cites its own kernel, distinct from the ANSI one
+    assert "CalcThermEq" in db_inveq and "CalcAnsiEqGF" not in db_inveq
     # STD route-2 db reason must cite the native-kernel parity, not "direct-band"
     assert "BIT-EXACT" in db_inveq and "direct-band" not in db_inveq.lower()
     assert delay_trust_reason("ltd", TRUST_DB).startswith("LTD")

@@ -138,16 +138,18 @@ def _classify_gfd(route: Optional[int], is_ansi: bool, i2x_shape: Optional[str] 
     if route == 1:
         return _classify_i2x(i2x_shape)
     if route == 2:
-        # GFD INVEQ: ANSI family hard-excluded (G4 §3e). GF Therm PROMOTED to
-        # "db" (L1 close, 2026-06-09): field[13] identified as the PLUG rating
-        # via the kernel's own pickup-basis dispatcher (ComputeAmps slot map;
-        # native uCalc = DB *_calc + 1), and the managed plug-basis form
-        # (rIRef' = rIRef × plug/pickup) reproduces the native CalcThermEq
-        # byICalc=1 kernel BIT-EXACT over the complete GF Therm corpus
-        # (4 open + 4 clear dials × all rIRef values × 8 plug/pickup ratios;
-        # fixtures gf_inveq_field13_native_parity.json). Rows whose basis is
-        # unavailable are withheld at the solver, never silently computed.
-        return TRUST_UNSUPPORTED if is_ansi else TRUST_DB
+        # GFD INVEQ — BOTH native families now validated BIT-EXACT and "db":
+        #   * Therm (L1 close, 2026-06-09): field[13] = PLUG rating; managed
+        #     plug-basis form rIRef' = rIRef × plug/pickup matches CalcThermEq
+        #     byICalc=1 (fixtures gf_inveq_field13_native_parity.json).
+        #   * ANSI (#120, 2026-06-10): CalcAnsiEqGF C37.112 inverse reproduced
+        #     over the complete corpus (18 tuples / 108 rows / 25 sensors;
+        #     fixtures gf_inveq_ansi_native_parity.json). All ANSI rows carry
+        #     id_op_i_calc=8 → byICalc=0 (pickup basis) — standalone, no
+        #     field[13] dependency (the §206 over-read is corrected).
+        # Rows whose basis is unavailable are withheld at the solver, never
+        # silently computed.
+        return TRUST_DB
     return TRUST_UNSUPPORTED  # 4 TUG / None / other
 
 
@@ -180,6 +182,12 @@ def delay_trust_reason(
         return "LTD long-time window (methods 1-5) is implementation-complete and proven (G4 row 5)."
     route_name = _ROUTE_NAME.get(route, "unknown") if route is not None else "n/a"
     if trust == TRUST_DB:
+        if route == 2 and gfd_is_ansi:
+            return (
+                "Inverse-equation (ANSI/C37.112) delay — validated BIT-EXACT against the "
+                "native EasyPower CalcAnsiEqGF kernel over the complete GF ANSI corpus "
+                "(#120; fixtures gf_inveq_ansi_native_parity)."
+            )
         if route == 2:
             return (
                 "Inverse-equation (Therm) delay — validated BIT-EXACT against the native "
@@ -191,11 +199,6 @@ def delay_trust_reason(
         return (
             f"Delay ({route_name}) — dispatch-wired and partially native-validated; "
             "full native-render spot-check pending (I2X composite gate, G4 §3b)."
-        )
-    if gfd_is_ansi:
-        return (
-            "GF inverse-equation ANSI family (id_op_eq ≠ 0) — hard-excluded pending a "
-            "family-aware ANSI solver with captured fixtures (G4 §3e)."
         )
     return (
         f"Delay solver not implemented ({route_name}) — time withheld; "

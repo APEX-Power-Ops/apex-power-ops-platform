@@ -2157,16 +2157,20 @@ class TestPlotDelayTrustParity:
         # LTD is not route-governed — stays served.
         assert self._marker(body, "LTD")["expected_time"] == 14.0
 
-    def test_gfd_ansi_route2_withheld_std_route2_served(self, base_request):
+    def test_gfd_ansi_route2_now_served(self, base_request):
+        # #120: GF-INVEQ ANSI is no longer hard-excluded — CalcAnsiEqGF is
+        # validated bit-exact, so route-2 ANSI GFD is "db" like Therm, with a
+        # served time and a reason that cites the ANSI kernel.
         body = self._plot(base_request, delay_routes={
             "std_route": 2, "gfd_route": 2, "gfd_is_ansi": True,
         })
         assert self._marker(body, "STD")["trust"] == "db"
         assert self._marker(body, "STD")["expected_time"] == 2.0
         gfd = self._marker(body, "GFD")
-        assert gfd["trust"] == "unsupported"
-        assert gfd["expected_time"] is None
-        assert "ANSI" in (self._row(body, "GFD")["trust_reason"] or "")
+        assert gfd["trust"] == "db"
+        assert gfd["expected_time"] is not None
+        reason = self._row(body, "GFD")["trust_reason"] or ""
+        assert "ANSI" in reason and "CalcAnsiEqGF" in reason
 
     def test_withheld_element_measured_time_is_not_graded(self, base_request):
         # A measured delay time on a withheld element must not be graded PASS
@@ -3114,16 +3118,19 @@ class TestToleranceEnvelope:
         assert self._basis(phase, "STD") is not None
         assert self._basis(phase, "INST") is not None
 
-    def test_gfd_ansi_withhold_gets_no_gf_envelope(self, base_request):
-        # The GF-INVEQ ANSI family (gfd_is_ansi) is hard-excluded (G4 §3e) —
-        # same law as the route-4 withhold: no gf envelope, surfaced warning.
+    def test_gfd_ansi_route2_gets_gf_envelope(self, base_request):
+        # #120: GF-INVEQ ANSI is promoted to "db" (CalcAnsiEqGF parity), so a
+        # served ANSI GFD now carries a published-band envelope like any other
+        # trusted route-2 element — no longer force-withheld.
         body = self._plot(
             base_request,
             delay_routes={"std_route": 0, "gfd_route": 2, "gfd_is_ansi": True},
         )
-        for env in body["envelope_bands"]:
-            assert self._basis(env, "GFD") is None
-        assert not any(b["id"] == "gf_envelope" for b in body["envelope_bands"])
+        gf = next((b for b in body["envelope_bands"] if b["id"] == "gf_envelope"), None)
+        assert gf is not None
+        gfd = self._basis(gf, "GFD")
+        assert gfd is not None
+        assert gfd["time_source"] == "published_band"
 
     def test_family_total_withhold_surfaces_a_warning(self, base_request):
         # Review finding (#124): when a whole family's envelope vanishes

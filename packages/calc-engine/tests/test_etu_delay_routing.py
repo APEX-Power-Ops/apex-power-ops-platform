@@ -4,7 +4,7 @@ from apex_calc_engine.services.calc_engine.etu_delay_routing import (
     dispatch_gfd_delay,
     dispatch_gf_inveq_row,
     dispatch_std_delay,
-    gf_inveq_is_excluded_ansi,
+    gf_inveq_is_ansi,
     gf_inveq_family,
     route_delay_curve,
     std_inveq_icalc_integrity_ok,
@@ -39,8 +39,8 @@ def test_std_inveq_integrity_and_gf_native_dispatch_helpers():
 
     assert gf_inveq_family(0) == GFInvEqFamily.THERM
     assert gf_inveq_family(1) == GFInvEqFamily.ANSI
-    assert gf_inveq_is_excluded_ansi(0) is False
-    assert gf_inveq_is_excluded_ansi(1) is True
+    assert gf_inveq_is_ansi(0) is False
+    assert gf_inveq_is_ansi(1) is True
 
     dispatch = dispatch_gf_inveq_row(
         in_out=2,
@@ -98,7 +98,9 @@ def test_gfd_weg_pickup_exclusion_surfaces_warning_without_solver_call():
     assert solver.calls == []
 
 
-def test_gfd_ansi_inveq_exclusion_surfaces_warning_without_solver_call():
+def test_gfd_ansi_inveq_now_dispatches_to_solver():
+    """#120: GF ANSI is no longer excluded — it dispatches to the IEEE-inverse
+    solver (which routes the row to CalcAnsiEqGF via its is_ansi flag)."""
     solver = _FakeSolver()
 
     result = route_delay_curve(
@@ -112,8 +114,7 @@ def test_gfd_ansi_inveq_exclusion_surfaces_warning_without_solver_call():
         id_open_eq=1,
     )
 
-    assert result.dispatch.supported is False
-    assert "ANSI family" in result.dispatch.unsupported_reason
-    assert result.points == []
-    assert result.warnings
-    assert solver.calls == []
+    assert result.dispatch.supported is True
+    assert result.dispatch.solver_path == "ieee_inverse_time"
+    assert result.points == [{"amps": 100.0, "seconds": 1.0}]
+    assert solver.calls and solver.calls[0]["equation_type"] == "gfd"

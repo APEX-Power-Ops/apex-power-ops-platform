@@ -234,18 +234,18 @@ def gf_inveq_family(id_open_eq: Optional[int]) -> GFInvEqFamily:
     return GFInvEqFamily.ANSI if id_open_eq else GFInvEqFamily.THERM
 
 
-def gf_inveq_is_excluded_ansi(id_open_eq: Optional[int]) -> bool:
+def gf_inveq_is_ansi(id_open_eq: Optional[int]) -> bool:
     """True when the GF InvEq row selects the ANSI native family.
 
-    CalcAnsiEqGF is formula-recovered and banked (G4 §3f: T(M) = rA + rB/M' +
-    rD/M'^2 + rE/M'^3, C37.112 inverse-time). It is NOT promotable independently:
-    decomp (TccBase.dll 18392-18419) shows CalcAnsiEqGF selects its pickup basis
-    byICalc {0->field[16], 1->field[13], 2->field[12]} byte-identically to
-    CalcThermEq, so the GF runtime (byICalc=1) anchors ANSI on the SAME field[13]
-    that gates GF Therm. ANSI therefore shares GF Therm's single open blocker
-    (field[13] provenance) and promotes WITH it in one motion once field[13] is
-    resolved (punch list L1). Until then the ANSI branch stays an explicit
-    unsupported diagnostic — never a silent Therm/IEEE fallback.
+    CalcAnsiEqGF (C37.112 inverse-time: T(M) = rA + rB/(M-rC) + rD/(M-rC)² +
+    rE/(M-rC)³, floored at rTmin) is now VALIDATED + WIRED (#120, 2026-06-10):
+    the managed ``IEEEInverseTimeSolver._evaluate_native_ansi`` reproduces the
+    native kernel BIT-EXACT over the complete GF ANSI corpus (18 distinct
+    tuples / 108 rows / 25 sensors / 3 styles; fixtures
+    gf_inveq_ansi_native_parity.json). All 25 sensors carry id_op_i_calc=8 →
+    byICalc=0 (pickup basis), so — unlike the §206 over-read — ANSI needs NO
+    field[13] basis and promoted as a STANDALONE lane. This predicate now only
+    selects the evaluator family; it is no longer an exclusion gate.
     """
     return gf_inveq_family(id_open_eq) == GFInvEqFamily.ANSI
 
@@ -558,22 +558,9 @@ def dispatch_gfd_delay(
                 "until a separately authored RE pass closes the pickup formula."
             ),
         )
-    if (
-        ground_delay_calc_code == SSTDelayCalc.INVEQ
-        and gf_inveq_is_excluded_ansi(id_open_eq)
-    ):
-        return DelayDispatch(
-            path="gfd",
-            code=ground_delay_calc_code,
-            name=delay_calc_name(ground_delay_calc_code),
-            supported=False,
-            solver_path=None,
-            unsupported_reason=(
-                "GF InvEq ANSI family selected (IdOpEq != 0); CalcAnsiEqGF is "
-                "recovered but not yet wired to a captured-parity solver path. "
-                "Curve withheld per INV-7."
-            ),
-        )
+    # GF InvEq ANSI (IdOpEq != 0) is no longer excluded — CalcAnsiEqGF is wired
+    # and validated bit-exact (#120). Both Therm and ANSI route to the solver,
+    # which selects the evaluator family from the row's *_eq byte.
     return _dispatch("gfd", ground_delay_calc_code, _VALID_GFD_CODES)
 
 

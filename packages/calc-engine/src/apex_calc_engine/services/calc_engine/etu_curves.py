@@ -59,13 +59,21 @@ VARIANTS = ('fd_open', 'fd_clear', 'id_open', 'id_clear')
 
 @dataclass
 class Coefficients:
-    """Six IEEE inverse-time coefficients for one curve variant."""
+    """Six IEEE inverse-time coefficients for one curve variant.
+
+    ``is_ansi`` marks the GF ANSI native family (the row's IdOp ``*Eq`` byte is
+    nonzero). ANSI rows evaluate through ``_evaluate_native_ansi`` (CalcAnsiEqGF),
+    NOT the Therm/IEEE path — their coefficient shape (rC<0, rE≠0) would
+    silently mis-evaluate on the IEEE fallback. For ANSI the six floats map
+    ``c1=rTmin c2=rA c3=rB c4=rC c5=rD c6=rE`` (G4 §3f).
+    """
     c1: float
     c2: float
     c3: float
     c4: float  # Extended term coefficient (C4*I)
     c5: float  # Extended term coefficient (C5*I²) or tolerance %
     c6: float  # Additive offset
+    is_ansi: bool = False
 
     @property
     def is_zero(self) -> bool:
@@ -116,6 +124,7 @@ def apply_gf_basis(
         return Coefficients(
             c1=coeff.c1, c2=coeff.c2, c3=coeff.c3,
             c4=coeff.c4 * basis_ratio, c5=coeff.c5, c6=coeff.c6,
+            is_ansi=coeff.is_ansi,
         )
     return None  # byICalc == 2 (field[12]) — unwired, withhold
 
@@ -228,11 +237,15 @@ class IEEEInverseTimeSolver:
             return []
 
         uses_native_therm = self._uses_native_therm_eq(coeff)
+        # ANSI and native-Therm both carry their definite-time floor in c1
+        # (rTmin); the legacy IEEE fallback uses the engine MIN_TIME.
         floor = min_time if min_time is not None else (
-            coeff.c1 if uses_native_therm else self.MIN_TIME
+            coeff.c1 if (uses_native_therm or coeff.is_ansi) else self.MIN_TIME
         )
 
-        # Log-spaced current sweep from just above pickup to max_amps
+        # Log-spaced current sweep from just above pickup to max_amps. Therm
+        # starts just past its rM asymptote; ANSI and IEEE start just above
+        # pickup (the ANSI asymptote rC ≤ 0 for the GF corpus, always valid).
         I_start = coeff.c5 * 1.01 if uses_native_therm else 1.01
         I_end = max_amps / pickup_current
         if I_end <= I_start:
@@ -327,15 +340,23 @@ class IEEEInverseTimeSolver:
             val = row.get(f'{variant}_{n}')
             return float(val) if val is not None else 0.0
 
+        raw_eq = row.get(f'{variant}_eq')
+        is_ansi = raw_eq is not None and int(raw_eq) != 0
         coeff = Coefficients(
             c1=_col(1), c2=_col(2), c3=_col(3),
             c4=_col(4), c5=_col(5), c6=_col(6),
+            is_ansi=is_ansi,
         )
 
         if equation_type == 'gfd':
             raw_i_calc = row.get(f'{variant}_i_calc')
             i_calc = int(raw_i_calc) if raw_i_calc is not None else None
-            return apply_gf_basis(coeff, i_calc, gf_basis_ratio)
+            # ANSI rows carry id_op_i_calc=8 → byICalc=0 (pickup basis); the
+            # apply_gf_basis pass-through preserves the coefficients and the
+            # is_ansi flag routes evaluation to CalcAnsiEqGF (#120). Therm rows
+            # with byICalc=1 still get the field[13] plug-basis correction.
+            adjusted = apply_gf_basis(coeff, i_calc, gf_basis_ratio)
+            return adjusted
 
         return coeff
 
@@ -387,7 +408,11 @@ class IEEEInverseTimeSolver:
                            fd_op_i_calc AS fd_open_i_calc,
                            fd_cl_i_calc AS fd_clear_i_calc,
                            id_op_i_calc AS id_open_i_calc,
-                           id_cl_i_calc AS id_clear_i_calc
+                           id_cl_i_calc AS id_clear_i_calc,
+                           fd_op_eq AS fd_open_eq,
+                           fd_cl_eq AS fd_clear_eq,
+                           id_op_eq AS id_open_eq,
+                           id_cl_eq AS id_clear_eq
                     FROM {table_name}
                     WHERE sensor_id = :sensor_id
                     ORDER BY CASE
@@ -460,6 +485,11 @@ class IEEEInverseTimeSolver:
                 'fd_clear_i_calc': _read(row, 'fd_clear_i_calc', _read(row, 'fd_cl_i_calc')),
                 'id_open_i_calc': _read(row, 'id_open_i_calc', _read(row, 'id_op_i_calc')),
                 'id_clear_i_calc': _read(row, 'id_clear_i_calc', _read(row, 'id_cl_i_calc')),
+                # IdOp *Eq family bytes (0 = Therm, !=0 = ANSI/C37.112; #120).
+                'fd_open_eq': _read(row, 'fd_open_eq', _read(row, 'fd_op_eq')),
+                'fd_clear_eq': _read(row, 'fd_clear_eq', _read(row, 'fd_cl_eq')),
+                'id_open_eq': _read(row, 'id_open_eq', _read(row, 'id_op_eq')),
+                'id_clear_eq': _read(row, 'id_clear_eq', _read(row, 'id_cl_eq')),
             })
         return normalized
 
@@ -484,6 +514,9 @@ class IEEEInverseTimeSolver:
 
         Returns None if the denominator is invalid (I^C2 ≈ 1).
         """
+        if coeff.is_ansi:
+            return IEEEInverseTimeSolver._evaluate_native_ansi(coeff, I_norm)
+
         if IEEEInverseTimeSolver._uses_native_therm_eq(coeff):
             return IEEEInverseTimeSolver._evaluate_native_therm(coeff, I_norm)
 
@@ -556,6 +589,40 @@ class IEEEInverseTimeSolver:
             return None
 
         seconds = coeff.c3 * numerator / denominator
+        if seconds < 0:
+            return None
+        return max(seconds, coeff.c1)
+
+    @staticmethod
+    def _evaluate_native_ansi(
+        coeff: Coefficients,
+        I_norm: float,
+    ) -> Optional[float]:
+        """Evaluate TccBase.dll CTccLVBreakerCurveGF.CalcAnsiEqGF (ANSI/C37.112).
+
+        The native kernel computes, for each abscissa M = I/pickup (byICalc=0):
+
+            arg = M - rC
+            T   = rA + rB/arg + rD/arg² + rE/arg³        floored at rTmin
+
+        with rTmin=c1, rA=c2, rB=c3, rC=c4, rD=c5, rE=c6 (G4 §3f storage order;
+        validated bit-exact over the complete GF ANSI corpus in
+        ``test_gf_inveq_ansi_native_parity``). Returns None below the asymptote
+        (arg ≤ 0) — never a fabricated point. Nominal curve: tolerance = 0, so
+        the native ``M/(1+rTol)`` reduces to M.
+        """
+        arg = I_norm - coeff.c4
+        if arg <= 0.0:
+            return None
+        try:
+            seconds = (
+                coeff.c2
+                + coeff.c3 / arg
+                + coeff.c5 / (arg * arg)
+                + coeff.c6 / (arg * arg * arg)
+            )
+        except (OverflowError, ZeroDivisionError, ValueError):
+            return None
         if seconds < 0:
             return None
         return max(seconds, coeff.c1)
