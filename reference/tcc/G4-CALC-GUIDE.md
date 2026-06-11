@@ -668,13 +668,16 @@ solver path not yet shipped) and rows 8-12.***
 
 ---
 
-## 5. The InvEq numeric-parity gap (CLOSED for Therm — STD §107 2026-06-01, GF plug-basis L1 2026-06-09; residual = the 23-sensor Ansi implement+validate lane)
+## 5. The InvEq numeric-parity gap (FULLY CLOSED — STD Therm §107 2026-06-01, GF Therm plug-basis L1 2026-06-09, GF ANSI #120 2026-06-10)
 
-> **2026-06-09 status:** the "#1 open calc question" below is **answered for the entire Therm corpus**
-> (6,214 of 6,237 sensors): STD bit-exact (§3f, §107) and GF bit-exact on the plug basis (§3f, L1 close —
-> `field[13]` = plug, 416-scenario sweep, maxabs 0.0, fixtures `gf_inveq_field13_native_parity.json`).
-> The historical statement is preserved below for provenance; the only residual is GF-Ansi (23 sensors /
-> 100 rows): formula recovered + pickup-anchored, awaiting a managed solver branch + oracle validation.
+> **2026-06-10 status: the entire InvEq numeric-parity program is CLOSED.** The "#1 open calc question"
+> below is **answered for the COMPLETE corpus** (all 6,237 sensors): STD Therm bit-exact (§3f, §107); GF
+> Therm bit-exact on the plug basis (§3f, L1 close — `field[13]` = plug, 416-scenario sweep, maxabs 0.0,
+> `gf_inveq_field13_native_parity.json`); and **GF ANSI bit-exact (#120, 2026-06-10 — `CalcAnsiEqGF`
+> C37.112 inverse, 18-tuple / 10,398-point native parity, `gf_inveq_ansi_native_parity.json`; standalone
+> pickup-basis lane, un-excluded + trust→db + served via the #119 availability gate accepting the
+> `in_out=1` ANSI bands).** The historical statement is preserved below for provenance; there is no
+> remaining residual.
 
 **Statement of the gap `[OPEN-VALIDATION — historical, see status above]`:** Both InvEq routes (STD `DS3_SEC3_I2T = 2` and GFD
 `DS1GF_SEC3_I2T = 2`, ~6,200 sensors combined: 4,524 + 1,713) dispatch into the platform's
