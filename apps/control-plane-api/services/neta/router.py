@@ -1425,15 +1425,18 @@ def _load_inveq_delay_settings(db: Session, element_key: str, sensor_id: int) ->
     """Route-2 (InvEq) delay-band options, sourced from the equation payload rows.
 
     Route-2 sensors carry no ``etu_*_bands`` rows at all — their delay "bands"
-    are the InvEq payload rows (``in_out = 2``) in ``tcc.etu_{std,gfd}_equations``,
-    one per dial, labelled by ``eq_desc`` (e.g. '0.1'–'0.4'). Serving those labels
-    as the band inventory keeps Screen 2 and the plot's delay-availability gate
-    consistent with the validated InvEq render, whose band selection float-matches
-    the same labels (``_select_inveq_ordinal``). The ``in_out = 2`` filter
-    structurally excludes both the stub row (``in_out = 0``, NULL inverse
-    coefficients) and the GF ANSI family (``in_out = 1`` rows only — hard-excluded
-    until the C37.112 lane lands, G4 §3e); verified against prod 2026-06-09:
-    payload rows exist exclusively on route-2 Therm sensors."""
+    are the InvEq payload rows in ``tcc.etu_{std,gfd}_equations``, one per dial,
+    labelled by ``eq_desc`` (e.g. '0.1'–'0.4'). Serving those labels as the band
+    inventory keeps Screen 2 and the plot's delay-availability gate consistent
+    with the validated InvEq render, whose band selection float-matches the same
+    labels (``_select_inveq_ordinal``). Two payload families qualify:
+
+      * Therm: ``in_out = 2`` (the §107/§119 corpus);
+      * ANSI/C37.112: ``in_out = 1`` with a nonzero ``id_op_eq`` family byte
+        (the GF ANSI bands, now validated + served — #120). Before #120 these
+        were excluded ("in_out=1-only → dark").
+
+    The stub row (``in_out = 0``, NULL inverse coefficients) stays excluded."""
     table = _INVEQ_EQUATION_TABLES.get(element_key)
     if table is None:
         return []
@@ -1445,7 +1448,10 @@ def _load_inveq_delay_settings(db: Session, element_key: str, sensor_id: int) ->
                        eq_desc::numeric AS value
                 FROM {table}
                 WHERE sensor_id = :sensor_id
-                  AND in_out = 2
+                  AND (
+                        in_out = 2
+                        OR (in_out = 1 AND COALESCE(id_op_eq, 0) <> 0)
+                      )
                   AND eq_desc ~ '^-?[0-9]+(\\.[0-9]+)?$'
                 ORDER BY eq_desc::numeric
                 """
@@ -2979,11 +2985,11 @@ def _generate_nominal_plot_curves(
     def _select_inveq_ordinal(eqs: list[dict], band_setting: Optional[float]) -> int:
         """Pick the InvEq equation row matching the selected delay band.
 
-        InvEq tables carry a stub row (in_out=0) plus one payload row per band
-        (in_out=2, label = the band value, e.g. '0.2'). Match the user's band
-        setting to the payload label; fall back to the first payload row (never
-        the stub — its inverse coefficients are NULL)."""
-        payload = [e for e in eqs if e.get("in_out") == 2] or eqs
+        InvEq tables carry a stub row (in_out=0) plus one payload row per band:
+        Therm payloads are in_out=2, ANSI/C37.112 payloads in_out=1 (#120).
+        Match the user's band setting to the payload label; fall back to the
+        first payload row (never the in_out=0 stub — its coefficients are NULL)."""
+        payload = [e for e in eqs if e.get("in_out") in (1, 2)] or eqs
         if band_setting is not None:
             for e in payload:
                 try:
