@@ -543,11 +543,28 @@ withhold surfaces a response warning** (the honesty list has no band to ride on)
 accepts ONLY the reference-window timing sources (`band_table`/`curve_interpolation` fallthroughs are
 not a multiplicative tolerance and must not masquerade as DS2). Live-verified (3833: boundary law
 exact at 1e-6 incl. the real Micrologic **+5/+20 % LTPU** band; identity OK on all four elements;
-maint withhold live; 4628 route-2 InvEq serves published-band corridors). **Open characterization
+maint withhold live; 4628 route-2 InvEq serves published-band corridors). ~~**Open characterization
 (punch list): sensor-level `etu_sensors.ltd_tol_lo/hi` = `DatSensor.DS2_TOL_*` (universal, all
 nonzero) is NOT confirmably the curve-type time tolerance** (545/876 match the `etu_ltd_params` I²T
 row; 288 of the 331 mismatches match NO curve row) — not wired anywhere until its native semantics
-are pinned.
+are pinned.~~ **CLOSED 2026-06-10 (L11, apex `de5cc275`) — semantics PINNED + WIRED.** Triangulation
+(PATTERN-010): the EasyPower device-library editor's own Section-2 dialog template labels the pair
+**"LT Delay Tolerance Band / Low: / High:"** — exactly parallel to Section1/3/4/1GF's proven pickup
+tolerance bands (`[NATIVE-BIN EasyPower.exe dialog resources]`); `DvlEng.dll` places `DS2_TOL_LOW/
+HIGH` in the Section-2 LT-delay column cluster whose per-curve reader is `SELECT * FROM DatSensorSec2
+WHERE SensorID=%d AND CurveName='%s'`, and the `ALTER TABLE DatSensor ADD DS2_ALLOW_CURVES` migration
+strings pin the **two-grain layout**: per-curve `DatSensorSec2` rows (→ `tcc.etu_ltd_params.ds2_tol_*`)
+govern in multi-curve mode; the **sensor-level inline pair governs in the native single-curve layout**
+(`DS2_ALLOW_CURVES=0` = `etu_sensors.ltd_allow_curves`). Value-shape identity across both grains
+(signed percent on time; shared vendor constants −17.89/−26.83/−38.81). The §212 correlation puzzle
+resolves: 818/1,100 multi-curve sensors' inline pairs mirror a live curve row, 282 are stale inline
+values — which is why the resolver uses the inline pair **only when NO curve rows exist** (additive-
+only; disagreeing curve rows still serve the flagged generic rather than the stale-prone inline pair).
+Hygiene gates (non-null / not (0,0) / lo ≤ hi / factor > 0): **16,749/16,749 no-params sensors pass —
+the generic −30/+0 LTD estimate is RETIRED for the entire population** across whiskers, envelope and
+the future field sheet through the unchanged `ltd_reference_window` chain. Live-verified: sensor 849
+serves 640/800 s = exactly (1−0.20)/(1.00)×nominal as `ltd_reference_window`/db; flagship 3833 (itself
+no-params) upgraded generic→real — envelope LTD basis now `time −20/+0, src=ltd_curve_tol, est=False`.
 
 **Read every sensor's delay-calc route against this table before emitting a delay/curve number.**
 Status legend: **PROVEN** = recovered + bound + numerically validated on real rows; **BOUNDED** =

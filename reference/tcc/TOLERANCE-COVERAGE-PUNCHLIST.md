@@ -63,7 +63,7 @@ every stage; the punch list is about *coverage*, not *safety*.
 | L8 | TMT thermal time/band | TMT population | thermal verify | mag DB ✓ | M | OPEN |
 | L9 | EMT pickup→current calc | EMT population | withheld | DB ✓ | M | OPEN |
 | L10 | Relays (GR) — analytical curves | Models 1–6 | BOUNDED | stored data | L (separate) | OPEN — native kernel UNRECOVERED |
-| L11 | **Sensor-level `DS2_TOL` characterization** (`etu_sensors.ltd_tol_lo/hi`) | 17,877 sensors (all nonzero) | — | candidate per-sensor LTD time band | S–M | **OPEN (found 2026-06-10, #124)** — NOT wired: semantics unconfirmed (545/876 match the `etu_ltd_params` I²T row; 288/331 mismatches match NO curve row; native curve classes don't consume it). If pinned = retires the generic −30/+0 LTD fallback for ~16.7k sensors (whiskers + envelope + sheet together) |
+| L11 | **Sensor-level `DS2_TOL` characterization** (`etu_sensors.ltd_tol_lo/hi`) | 17,877 sensors (all nonzero) | **db** ✓ (sensor-grain DS2_TOL) | per-sensor LTD time band ✓ | — | **DONE 2026-06-10 (apex `de5cc275`)** — semantics PINNED (G4 §3g L11 record): the pair = the native Section-2 **"LT Delay Tolerance Band Low/High"** (EasyPower editor dialog caption; two-grain layout via `DS2_ALLOW_CURVES` — per-curve `etu_ltd_params` rows govern when present, the inline pair governs in single-curve mode). WIRED additive-only: `_load_ltd_time_tolerance` falls to the sensor pair when no curve rows exist → **generic −30/+0 RETIRED for 16,749/16,749 no-params sensors** (whiskers + envelope + sheet, same `ltd_reference_window` chain); disagreeing multi-curve rows still serve flagged generic (282/1,100 stale inline pairs must not override). Live: 849 exact 0.8×/1.0×; flagship 3833 upgraded generic→real (envelope `est=False`) |
 
 > **Serving surface (2026-06-10, #124):** the per-element tolerance data above now renders LIVE as the
 > field-acceptance envelope on `/plot-tcc` (G4 §3g serving record — basis derived from the served
@@ -157,7 +157,9 @@ DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113]`
   with the per-sensor DB tolerance `tcc.etu_ltd_params.ds2_tol_low/high`, applied as `nominal·(1 + tol/100)`.
   Tolerance is stored **per LTD curve TYPE** (I²T ≈ −27/+0, IEEE/IEC ±10 %, I⁴T −38.81/+9.7), so the loader pairs
   the **I²T row** with the §111 I²t-rendered window (`_load_ltd_time_tolerance`: prefer I²T → else unambiguous
-  sensor value → else generic). Generic fallback is **flagged** (`timing_source=…_generic`, UI `est` marker).
+  curve-row value → else **(L11, 2026-06-10)** the sensor-level inline `etu_sensors.ltd_tol_lo/hi` pair when NO
+  curve rows exist → else generic). Generic fallback is **flagged** (`timing_source=…_generic`, UI `est` marker)
+  and since L11 applies only to disagreeing-multi-curve residuals (no-params sensors all serve their real pair).
   Tests green, deployed + live-verified. `[G4 §4 · router `_load_ltd_time_tolerance` · §114]`
 - **Remaining:** (a) **ET 1.0 family** (no `ds2_tol` row — e.g. MGA36600) → source ±10 % from curve 613-14
   `[L5-LTD-C — DEFERRED 2026-06-03: gated on the ET 1.0 → trip-unit bridge; that bridge (whole ETU-library family
