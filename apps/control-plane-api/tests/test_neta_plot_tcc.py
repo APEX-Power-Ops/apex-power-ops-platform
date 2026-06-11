@@ -222,13 +222,17 @@ def _inveq_option_row(label):
 
 def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=None,
                        avail_bands=("ltd", "std", "gfd"), inveq_payload=None,
-                       trip_style_db=None, delay_routes=None):
+                       trip_style_db=None, delay_routes=None, sensor_ltd_tol=None):
     """Return a side_effect function for Session.execute that returns
     deterministic payloads for the two SQL function calls.
 
     ``ltd_tol_rows`` mocks the per-sensor LTD time-tolerance query
     (``tcc.etu_ltd_params``); each row is a dict with ``curve_name``/``tol_lo``/
     ``tol_hi``. Default empty → no DB tol → the flagged generic window.
+
+    ``sensor_ltd_tol`` mocks the sensor-level DS2_TOL pair query
+    (``tcc.etu_sensors.ltd_tol_lo/hi`` — the native single-curve "LT Delay
+    Tolerance Band", punch-list L11) as a ``(lo, hi)`` tuple or None.
 
     ``avail_bands`` controls the per-sensor delay-band *availability* list query
     (``_load_delay_band_settings``) that drives the plot's delay-availability gate:
@@ -256,6 +260,17 @@ def _make_fake_execute(calc_data=CALC_DATA, eval_data=EVAL_DATA, ltd_tol_rows=No
         result = MagicMock()
         if "tcc.etu_ltd_params" in sql_text:
             result.fetchall.return_value = list(ltd_tol_rows or [])
+        elif "ltd_tol_lo" in sql_text:
+            # Sensor-level DS2_TOL pair (tcc.etu_sensors.ltd_tol_lo/hi, L11).
+            if sensor_ltd_tol is None:
+                result.fetchone.return_value = None
+            else:
+                row = MagicMock()
+                row._mapping = {
+                    "ltd_tol_lo": sensor_ltd_tol[0],
+                    "ltd_tol_hi": sensor_ltd_tol[1],
+                }
+                result.fetchone.return_value = row
         elif "vw_sensor_calc_context" in sql_text:
             row = MagicMock()
             row._mapping = {"rating": PLUG_RATING}
@@ -695,10 +710,12 @@ class TestCalculateEvaluateParity:
         assert ltd3["test_current"] == pytest.approx(2880.0)         # 3 * 960
         assert ltd3["delay_seconds"] == pytest.approx(ltd6["delay_seconds"] * 4)
 
-    def _calc_ltd_with_tol(self, ltd_tol_rows):
+    def _calc_ltd_with_tol(self, ltd_tol_rows, sensor_ltd_tol=None):
         mock_session = MagicMock()
         mock_session.execute = MagicMock(
-            side_effect=_make_fake_execute(ltd_tol_rows=ltd_tol_rows)
+            side_effect=_make_fake_execute(
+                ltd_tol_rows=ltd_tol_rows, sensor_ltd_tol=sensor_ltd_tol
+            )
         )
 
         def override_db():
@@ -746,16 +763,70 @@ class TestCalculateEvaluateParity:
         assert ltd["time_limit_high"] == pytest.approx(14.0)
         assert ltd["notes"] == "timing_source=ltd_reference_window"
 
+    def test_calculate_ltd_sensor_level_tolerance_band(self):
+        """L11: a sensor with NO per-curve LTD params rows serves its
+        sensor-level DS2_TOL pair (``etu_sensors.ltd_tol_lo/hi`` — the native
+        single-curve "LT Delay Tolerance Band") as a REAL band, not the flagged
+        generic −30/+0. nominal = 3.5·(6/3)² = 14.0 s; −20/+0 → 11.2 .. 14.0 s."""
+        ltd = self._calc_ltd_with_tol([], sensor_ltd_tol=(-20.0, 0.0))
+        assert ltd["delay_seconds"] == pytest.approx(14.0)
+        assert ltd["time_limit_low"] == pytest.approx(11.2)
+        assert ltd["time_limit_high"] == pytest.approx(14.0)
+        assert ltd["notes"] == "timing_source=ltd_reference_window"
+
+    def test_calculate_ltd_curve_rows_outrank_sensor_level_pair(self):
+        """Per-curve params rows (the finer DatSensorSec2 grain) keep
+        precedence over the sensor-level inline pair: −26.83/+0 from the I^2T
+        row wins over the sensor's −20/+0."""
+        ltd = self._calc_ltd_with_tol(
+            [{"curve_name": "I^2T", "tol_lo": -26.83, "tol_hi": 0.0}],
+            sensor_ltd_tol=(-20.0, 0.0),
+        )
+        assert ltd["time_limit_low"] == pytest.approx(14.0 * (1 - 0.2683))
+        assert ltd["time_limit_high"] == pytest.approx(14.0)
+        assert ltd["notes"] == "timing_source=ltd_reference_window"
+
+    def test_calculate_ltd_disagreeing_curve_rows_do_not_fall_to_sensor_pair(self):
+        """Disagreeing multi-curve rows without an I^2T row stay GENERIC: the
+        sensor-level inline pair is stale-prone on multi-curve sensors (the
+        per-curve grain governs natively) and must not paper over the ambiguity."""
+        ltd = self._calc_ltd_with_tol(
+            [
+                {"curve_name": "IEEE V Inv", "tol_lo": -10.0, "tol_hi": 10.0},
+                {"curve_name": "I^4T", "tol_lo": -38.81, "tol_hi": 9.7},
+            ],
+            sensor_ltd_tol=(-20.0, 0.0),
+        )
+        assert ltd["time_limit_low"] == pytest.approx(9.8)   # 0.7 · 14 (generic)
+        assert ltd["time_limit_high"] == pytest.approx(14.0)
+        assert ltd["notes"] == "timing_source=ltd_reference_window_generic"
+
     def test_load_ltd_time_tolerance_branches(self):
         """Helper: prefer I^2T row; else accept only an unambiguous sensor-wide
-        value; else None (→ generic window)."""
+        value; else (no rows at all) the sensor-level DS2_TOL pair; else None
+        (→ generic window)."""
         from services.neta.router import _load_ltd_time_tolerance
 
-        def _db(rows):
+        def _db(rows, sensor_row=None):
             s = MagicMock()
-            res = MagicMock()
-            res.fetchall.return_value = rows
-            s.execute.return_value = res
+
+            def _exec(stmt, params=None):
+                res = MagicMock()
+                if "etu_ltd_params" in str(stmt):
+                    res.fetchall.return_value = rows
+                else:
+                    if sensor_row is None:
+                        res.fetchone.return_value = None
+                    else:
+                        r = MagicMock()
+                        r._mapping = {
+                            "ltd_tol_lo": sensor_row[0],
+                            "ltd_tol_hi": sensor_row[1],
+                        }
+                        res.fetchone.return_value = r
+                return res
+
+            s.execute = MagicMock(side_effect=_exec)
             return s
 
         # prefers the I^2T curve type over IEEE rows
@@ -768,13 +839,53 @@ class TestCalculateEvaluateParity:
             {"curve_name": "IEEE V Inv", "tol_lo": -10.0, "tol_hi": 10.0},
             {"curve_name": "IEC-A", "tol_lo": -10.0, "tol_hi": 10.0},
         ]), 1) == pytest.approx((-10.0, 10.0))
-        # no I^2T, rows disagree → None (caller uses flagged generic window)
+        # no I^2T, rows disagree → None even when a sensor-level pair exists
+        # (the inline pair is stale-prone on multi-curve sensors)
         assert _load_ltd_time_tolerance(_db([
             {"curve_name": "IEEE V Inv", "tol_lo": -10.0, "tol_hi": 10.0},
             {"curve_name": "I^4T", "tol_lo": -38.81, "tol_hi": 9.7},
-        ]), 1) is None
-        # no rows at all → None
+        ], sensor_row=(-20.0, 0.0)), 1) is None
+        # no rows at all + no sensor pair → None
         assert _load_ltd_time_tolerance(_db([]), 1) is None
+
+    def test_load_ltd_time_tolerance_sensor_level_fallback(self):
+        """L11: with NO per-curve rows, the sensor-level DS2_TOL pair governs
+        (native single-curve layout), subject to hygiene gates."""
+        from services.neta.router import _load_ltd_time_tolerance
+
+        def _db(sensor_row):
+            s = MagicMock()
+
+            def _exec(stmt, params=None):
+                res = MagicMock()
+                if "etu_ltd_params" in str(stmt):
+                    res.fetchall.return_value = []
+                else:
+                    if sensor_row is None:
+                        res.fetchone.return_value = None
+                    else:
+                        r = MagicMock()
+                        r._mapping = {
+                            "ltd_tol_lo": sensor_row[0],
+                            "ltd_tol_hi": sensor_row[1],
+                        }
+                        res.fetchone.return_value = r
+                return res
+
+            s.execute = MagicMock(side_effect=_exec)
+            return s
+
+        # the modal real pair → served
+        assert _load_ltd_time_tolerance(_db((-20.0, 0.0)), 1) == pytest.approx((-20.0, 0.0))
+        # a one-sided-positive band is legitimate (cf. the 0/+50 population)
+        assert _load_ltd_time_tolerance(_db((0.0, 50.0)), 1) == pytest.approx((0.0, 50.0))
+        # hygiene gates: (0,0) means "no band entered"; inverted pair invalid;
+        # a lo ≤ −100% factor is no longer a multiplicative band; nulls invalid
+        assert _load_ltd_time_tolerance(_db((0.0, 0.0)), 1) is None
+        assert _load_ltd_time_tolerance(_db((10.0, -5.0)), 1) is None
+        assert _load_ltd_time_tolerance(_db((-100.0, 0.0)), 1) is None
+        assert _load_ltd_time_tolerance(_db((None, 0.0)), 1) is None
+        assert _load_ltd_time_tolerance(_db(None), 1) is None
 
     def test_evaluate_includes_delay_time_results(self):
         eval_data = {

@@ -16,6 +16,7 @@ SQL helper functions evolve independently.
 
 import json
 import logging
+import math
 import re
 from collections import Counter, OrderedDict, defaultdict
 from decimal import Decimal, ROUND_HALF_UP
@@ -1853,7 +1854,7 @@ _LTD_GENERIC_TOL_HIGH = 0.0
 def _load_ltd_time_tolerance(
     db: Session, sensor_id: int
 ) -> Optional[tuple[float, float]]:
-    """Per-sensor LTD *time* tolerance band (G4 §4 / punch-list L5).
+    """Per-sensor LTD *time* tolerance band (G4 §4 / punch-list L5 + L11).
 
     The lvbreakertcc LTD element renders the I²t reference window
     (`_ltd_reference_delay_surface`), so the matching tolerance is the row for
@@ -1863,9 +1864,18 @@ def _load_ltd_time_tolerance(
 
       * prefer the explicit ``I^2T`` curve-type row (matches the rendered shape);
       * else, only if every LTD param row agrees, use that single value;
+      * else (NO param rows at all) the sensor-level inline pair
+        (``tcc.etu_sensors.ltd_tol_lo/hi`` = DatSensor ``DS2_TOL_LOW/HIGH``):
+        in the native single-curve layout (``DS2_ALLOW_CURVES=0``, ~16.6k
+        sensors) the Section-2 "LT Delay Tolerance Band" lives inline on the
+        sensor record and is the governing value — same quantity/units as the
+        per-curve rows (L11, pinned from the vendor editor dialog + the
+        two-grain schema). Param rows that exist but DISAGREE still return
+        None: the inline pair is stale-prone on multi-curve sensors (282/1100
+        mismatch every live curve row) and must not paper over the ambiguity;
       * else return None → caller shows the flagged generic window.
 
-    Returns ``(tol_low_pct, tol_high_pct)`` (low is negative) or ``None``.
+    Returns ``(tol_low_pct, tol_high_pct)`` (signed percent) or ``None``.
     """
     try:
         rows = db.execute(
@@ -1886,7 +1896,7 @@ def _load_ltd_time_tolerance(
         return None
 
     if not rows:
-        return None
+        return _load_sensor_level_ltd_tolerance(db, sensor_id)
 
     def _vals(r):
         m = r._mapping if hasattr(r, "_mapping") else r
@@ -1904,6 +1914,47 @@ def _load_ltd_time_tolerance(
     if len(distinct) == 1:
         return next(iter(distinct))
     return None
+
+
+def _load_sensor_level_ltd_tolerance(
+    db: Session, sensor_id: int
+) -> Optional[tuple[float, float]]:
+    """Sensor-level DS2_TOL pair — the native "LT Delay Tolerance Band" (L11).
+
+    Governs only when the sensor has no per-curve LTD param rows (the native
+    single-curve layout). Hygiene gates: a (0, 0) pair means "no band
+    entered"; the native editor enforces low < high; a low at or below −100%
+    is no longer a multiplicative band.
+    """
+    try:
+        row = db.execute(
+            text(
+                """
+                SELECT ltd_tol_lo, ltd_tol_hi
+                FROM tcc.etu_sensors
+                WHERE id = :sid
+                """
+            ),
+            {"sid": sensor_id},
+        ).fetchone()
+    except Exception:
+        if hasattr(db, "rollback"):
+            db.rollback()
+        return None
+
+    if row is None:
+        return None
+    m = row._mapping if hasattr(row, "_mapping") else row
+    try:
+        lo = float(m["ltd_tol_lo"])
+        hi = float(m["ltd_tol_hi"])
+    except (TypeError, ValueError, KeyError):
+        return None
+    if not (math.isfinite(lo) and math.isfinite(hi)):
+        return None
+    if (lo, hi) == (0.0, 0.0) or lo > hi or (1.0 + lo / 100.0) <= 0.0:
+        return None
+    return lo, hi
 
 
 def _ltd_reference_delay_surface(

@@ -1465,10 +1465,13 @@ class PlotTableRow(BaseModel):
     notes: Optional[str] = Field(
         None,
         description="For delay rows: 'timing_source=<source>' — the tolerance "
-                    "basis ('ltd_reference_window' = per-mfr DS2_TOL band; "
-                    "'..._generic' = flagged generic estimate; 'band_table' = "
-                    "per-sensor DB band; 'i2x_*' = validated etu_ixt surface; "
-                    "'curve_interpolation' = open/clear curve envelope).",
+                    "basis ('ltd_reference_window' = per-mfr DS2_TOL band, from "
+                    "the per-curve etu_ltd_params row or, when no curve rows "
+                    "exist, the sensor-level etu_sensors.ltd_tol_lo/hi pair "
+                    "(L11); '..._generic' = flagged generic estimate; "
+                    "'band_table' = per-sensor DB band; 'i2x_*' = validated "
+                    "etu_ixt surface; 'curve_interpolation' = open/clear curve "
+                    "envelope).",
     )
     # G4 per-element field-trust (same classifier as /calculate, #67 parity).
     trust: Optional[str] = Field(None, description="'db' | 'verify' | 'unsupported'")
