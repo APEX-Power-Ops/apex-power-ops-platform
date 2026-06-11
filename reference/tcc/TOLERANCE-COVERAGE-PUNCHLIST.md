@@ -53,7 +53,7 @@ every stage; the punch list is about *coverage*, not *safety*.
 | — | **LTD delay** | all ETU | **db** ✓ (I²t window §111) | engine window | — | **BANKED** (band → L5) |
 | — | **STD-INVEQ Therm** | ~4,524 | **db** ✓ (native §107) | — | — | **BANKED** |
 | — | **GF-INVEQ Therm** | ~1,690 | **db** ✓ (plug-basis L1 close, STATE §206) | — | — | **BANKED** — `field[13]` = PLUG (ComputeAmps slot map); bit-exact 416-scenario sweep; `/plot-tcc` inverse-block + basis-corrected |
-| L1 | **GF-INVEQ Ansi** (re-narrowed 2026-06-09) | 23 sensors / 100 rows | withheld | — | S | **OPEN** — formula banked (C37.112, G4 §3f), anchors **PICKUP** (`id_op_i_calc=8`→byICalc=0 — the 06-02 "shares field[13]" merge over-read the selector); close = managed Ansi branch + `CalcAnsiEqGF` oracle validation (§107 pattern, `SetAnsi_*` arg-map) + un-exclude |
+| ~~L1~~ | **GF-INVEQ Ansi** | 25 sensors / 108 rows | **db** ✓ (native §120) | — | — | **DONE 2026-06-10 (apex `26c2fe42`)** — `CalcAnsiEqGF` C37.112 inverse (`T=rA+rB/(M-rC)+rD/(M-rC)²+rE/(M-rC)³` floored rTmin) implemented (`_evaluate_native_ansi`) + validated BIT-EXACT over the COMPLETE corpus (18 tuples / 10,398 native points; `gf_inveq_ansi_native_parity.json`). Standalone PICKUP-basis lane (`id_op_i_calc=8`→byICalc=0; no field[13]); un-excluded + trust→db |
 | ~~L2~~ | ~~GF-INVEQ Ansi (standalone)~~ | — | — | — | — | ~~MERGED INTO L1 (2026-06-02)~~ → L1 IS now the standalone Ansi lane (Therm banked 2026-06-09) |
 | L3 | GE-TU delay solver | STD 235 / GFD 209 | withheld | — | M | OPEN — separate trip-unit math |
 | L4 | **I2X / Iˣt delay solver** | STD 8,708 / GFD 5,976 (~15k) | withheld | — | **M (resized 06-03; ~98% = banked I²t)** | OPEN — biggest single lever; gating verify DONE §113 |

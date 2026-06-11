@@ -359,10 +359,18 @@ tractable and more concerning** than the prior framing:
     `IEEEInverseTimeSolver` now detects Therm-shaped rows (`c1=rTmin`, `c2=rX`, `c3=rTref`, `c4=rIref`,
     `c5=rM`, `c6=0`) and evaluates this native form. Focused tests: `test_source_faithful_adapters.py`
     + `test_etu_delay_routing.py` = 12/12. `[DLL TccBase.dll CTccLVBreakerCurveGF.CalcThermEq]`
-  - **`CalcAnsiEqGF` formula recovered, but still excluded.** Native ANSI uses tolerance-adjusted current
-    and `T = A + B/(I-C) + D/(I-C)^2 + E/(I-C)^3`, with a `Tmin` floor/extension. The 100 Ansi rows remain
-    hard-excluded by `gf_inveq_is_excluded_ansi(id_open_eq)` until a family-aware ANSI solver path has
-    captured EasyPower fixtures; no silent IEEE/Therm fallback is allowed. `[DLL TccBase.dll CTccLVBreakerCurveGF.CalcAnsiEqGF]`
+  - ~~**`CalcAnsiEqGF` formula recovered, but still excluded.**~~ **WIRED + VALIDATED 2026-06-10 (#120,
+    apex `26c2fe42`).** Native ANSI uses `T = rA + rB/(M-rC) + rD/(M-rC)² + rE/(M-rC)³` floored at `rTmin`
+    (M = I/pickup; the `(1+rTol)` current shift reduces to identity for the nominal curve). The managed
+    `IEEEInverseTimeSolver._evaluate_native_ansi` reproduces the native kernel **BIT-EXACT** over the
+    COMPLETE distinct corpus (18 tuples / 108 rows / 25 sensors / 3 styles; 10,398 native points captured
+    via `ansi_oracle.exe` → `gf_inveq_ansi_native_parity.json`, DLL-free regression). The 6 floats map
+    `c1=rTmin c2=rA c3=rB c4=rC c5=rD c6=rE`; the flat OPEN family (`rD=1.05`, rest 0 → `T=1.05/M²` floored
+    at the labeled definite-time delay = the standard GF I²t characteristic) independently corroborates the
+    map. **PROVENANCE CORRECTION (over the §3e/§206 "shares field[13]" read):** all ANSI rows carry
+    `id_op_i_calc=8 → byICalc=0 (PICKUP basis)`, so ANSI needs NO field[13] plug anchor and promoted as a
+    **STANDALONE** lane — `gf_inveq_is_excluded_ansi` → `gf_inveq_is_ansi` (family selector only, no longer
+    an exclusion gate); GFD route-2 ANSI trust `unsupported → db`. `[DLL-EXEC TccBase.dll CTccLVBreakerCurveGF.CalcAnsiEqGF]`
 - **Residual parity gate.** The c4/c5 question is closed. What remains is captured EasyPower point parity
   for representative Therm rows (and an ANSI path decision if the excluded cohort must be reintroduced).
   Independent `[DLL]` corroboration of the 5/6 split remains: `GFInverseEqDelayData.cs` declares
@@ -421,14 +429,16 @@ Decisive results:
   `gf_basis_ratio = plug/GFPU-pickup`. `delay_trust._classify_gfd` route-2 Therm → **db** (~1,690 sensors;
   certifies the Screen-3 GF-InvEq curve — these sensors carry no direct GFD bands, so no field-table row
   is affected). Apex `da90b3e8`.
-- **CORRECTED 2026-06-09 (L1 close): GF-Ansi does NOT ride the field[13] anchor at runtime.** The corpus
-  data shows the Ansi rows (`in_out=1`, `id_op_eq=1`) carry `id_op_i_calc = 8` → translator → **byICalc=0 →
-  `field[16]` = pickup basis** — the 2026-06-02 "promote together" coupling below over-read the
-  byte-identical *selector code* as a shared *runtime anchor*. Consequence: GF-Ansi promotion needs NO
-  plug threading — it is an independent, smaller lane: implement the banked C37.112 formula in the managed
-  solver + oracle-validate via `CalcAnsiEqGF` (the §107 harness pattern; arg-mapping from the
-  `SetAnsi_*` setters) + un-exclude. The 2026-06-02 finding below is retained for the formula bank and
-  the selector-recovery provenance:
+- **CORRECTED 2026-06-09 (L1 close), then SHIPPED 2026-06-10 (#120): GF-Ansi does NOT ride the field[13]
+  anchor at runtime.** The corpus data shows the Ansi rows (`in_out=1`, `id_op_eq=1`) carry
+  `id_op_i_calc = 8` → translator → **byICalc=0 → `field[16]` = pickup basis** — the 2026-06-02 "promote
+  together" coupling below over-read the byte-identical *selector code* as a shared *runtime anchor*.
+  Consequence: GF-Ansi promotion needs NO plug threading — it is an independent, smaller lane. **DONE
+  (apex `26c2fe42`):** the banked C37.112 formula is implemented in the managed solver
+  (`_evaluate_native_ansi`), oracle-validated BIT-EXACT via `CalcAnsiEqGF` over the complete corpus (the
+  §107 harness pattern → `gf_inveq_ansi_native_parity.json`), and un-excluded. This prediction held
+  exactly. The 2026-06-02 finding below is retained for the formula bank and the selector-recovery
+  provenance:
 - ~~GF-Ansi shares the SAME `field[13]` basis → GF-Therm and GF-Ansi are ONE field[13]-gated lane (NEW 2026-06-02).~~
   Decomp of `CalcAnsiEqGF` (line 18392) shows its pickup-basis selection is **byte-identical to `CalcThermEq`**:
   `byICalc {0→field[16], 1→field[13], 2→field[12]}` (Ansi lines 18400-18419 vs Therm 18305-18324), and the
