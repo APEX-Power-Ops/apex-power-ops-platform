@@ -635,6 +635,12 @@ close 2026-06-09, GF Ansi #120 close 2026-06-10 §3e/§3f) **plus row 11 I2X fla
 (CIxt I2X-4 + the #72 assembly-primitive close 2026-06-11; unknown shapes withheld);
 **hard-exclude rows 8-10 and 12.***
 
+> **Badge vocabulary on field surfaces (SC3, task #129 — RULED 2026-06-11):** the tier WORDS a tech sees
+> are `MFR` (db) / `VERIFY` (verify) / `N/A` (unsupported, time withheld), served from the governed
+> `tcc.field_terminology` dictionary (migration 026) with the same words as built-in fallbacks — see
+> [SC3-FIELD-TERMINOLOGY-DRAFT.md](SC3-FIELD-TERMINOLOGY-DRAFT.md). The TIERS and gates are unchanged;
+> only the field phrasing is normalized (engineering reasons stay in tooltips as the audit trail).
+
 > **Test-POINT vs expected-TIME (NETA sheet column-trust).** For a delay element the test sheet has two
 > separable quantities, with *different* trust sources: **(a) the test point** — the NETA test multiple
 > (LTD 3× LTPU · STD 1.5× STPU · GFD 1.5× GFPU; `NETA_TEST_PLAN_SPEC §2/§11`) and the **inject current** =

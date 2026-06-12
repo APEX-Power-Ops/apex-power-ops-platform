@@ -1,8 +1,15 @@
-# SC3 — Field-Facing Terminology Mapping `[RULED — BUILD IN PROGRESS]`
+# SC3 — Field-Facing Terminology Mapping `[RULED + BUILT]`
 
-**Status:** v2 (2026-06-11) — **operator red-line received; Q1–Q5 RULED** (see §6); build proceeding
-per §5.5. PROPOSED-basis rows not settled by the rulings resolve via the §5.5-step-1 catalog read;
-anything unconfirmed stays `draft` and does not serve.
+**Status:** v3 (2026-06-11) — **Q1–Q5 RULED + the build SHIPPED** (apex `1352d5c9`; migration `026`
+applied to prod = `tcc.field_terminology`, 67 approved rows). The §5.5-step-1 catalog read CLOSED the
+PROPOSED rows pre-seed (pdftotext 2026-06-11): Digitrip captions per IL70C1037H05 + Digitrip RMS
+Units; GE per GEH-5369 (full plain-English set incl. Long Time Delay); **Series B (0602CT9201R201)
+captions are IDENTICAL to the '*' defaults** (upgrading the default's basis); Siemens WL guide
+confirms IR/tR/Isd/tsd/Ii/Ig/tg. The ONLY symbols left unshipped = **PXR INST/GFPU/GFD** (plain
+captions serve symbol-less per L4 until a PD-doc confirm). Serving: `/settings` carries the
+`terminology` block (fail-open); Screen 2 renders lineage captions + dial symbols; badges
+MFR/VERIFY/N/A; `Rating plug (In)`; bridge display-parity fields live (Part IV). BE
+`services/neta/terminology.py` (+17 tests) · FE `lib/terminology.ts` (+8 tests).
 
 **RULINGS (operator, 2026-06-11):** Q1 = "Local Ground" read **agreed** — no surface ever shows
 "LG"; `Ground Fault` stands everywhere outside 1b (earth leakage). Q2 = db badge **`MFR`**.
