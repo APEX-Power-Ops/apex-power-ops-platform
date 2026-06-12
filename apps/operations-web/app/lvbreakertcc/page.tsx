@@ -67,6 +67,7 @@ import {
   envelopePolygonPoints,
 } from '../../lib/tcc-band'
 import { elementDisplay, plugLabel, testCurrentLabel, trustBadgeWord, trustTitle } from '../../lib/terminology'
+import { FieldSheetView } from './field-sheet'
 
 // ── families ────────────────────────────────────────────────────────────────
 type Family = 'etu' | 'tmt' | 'emt'
@@ -902,6 +903,8 @@ function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, 
   const [loading, setLoading] = useState(true)
   const [calcBusy, setCalcBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  // B2.1: the print-ready field tolerance sheet (renders the served values).
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -1088,7 +1091,15 @@ function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, 
       </div>
 
       <section className="card">
-        <div className="card-h">📊 NETA Tolerance Bands &amp; Field Results {calcBusy ? <span className="spin" /> : <span className="badge inline live">LIVE</span>}</div>
+        <div className="card-h">
+          📊 NETA Tolerance Bands &amp; Field Results {calcBusy ? <span className="spin" /> : <span className="badge inline live">LIVE</span>}
+          <button
+            className="btn ghost sheet-btn"
+            disabled={!calc?.elements?.length}
+            title={calc?.elements?.length ? 'Open the print-ready field tolerance sheet (B2.1)' : 'Adjust settings first — the sheet renders the computed test plan'}
+            onClick={() => setSheetOpen(true)}
+          >🖨 Field Sheet</button>
+        </div>
         <div className="bands-wrap">
           <table className="bands">
             <thead><tr><th>Element</th><th>Trust</th><th>Test ×</th><th>Test Current</th><th>Min Limit</th><th>Max Limit</th><th>Measured</th><th>% Error</th><th>Status</th></tr></thead>
@@ -1132,6 +1143,26 @@ function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, 
       <div className="method">
         <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) ramp-test <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-safe). Each delay injects a <b>selectable multiple of its pickup</b> (the <b>Test @</b> dropdown) — NETA defaults <b>LTD 3× LTPU, STD/GFD 1.5×</b> — and the <b>inject current is always field-correct</b> (the proven pickup × your chosen multiple). For <b>long-time delay</b> the expected trip <b>time follows the I²t law</b> t = setting·(6/N)²: the stored band setting is the trip time at <b>6× Ir</b>, so testing at <b>6×</b> gives a time equal to the dial setting (the practical, directly-measurable point), while 3× is four times longer. The <b>delay time tolerance band</b> (Min/Max Limit) is the <b>per-manufacturer DB value</b> (`DS2_TOL`, matched to the I²t curve type) when on file; where none exists it falls back to a generic ±estimate, marked <b>est</b>. The expected <b>time</b> stays <b>gated per the G4 field-trust matrix</b>: <b>MFR</b> = manufacturer-validated — direct bands, LTD, the <b>inverse-equation routes (bit-exact vs the native EasyPower kernel, incl. GF-ANSI #120)</b> and the <b>I²t flat/ramp/composite surfaces (#72)</b>; <b>N/A</b> = unknown-shape I²t / GE-trip-unit routes whose solver is not built, so the time is <b>withheld</b> (the inject current stays valid). Time tolerance bands use the <b>manufacturer&apos;s values</b> where on file — NETA acceptance is based on manufacturer tolerances; the generic ±estimate appears only where none exists, marked <b>est</b>. {selection.trustNote}
       </div>
+
+      {sheetOpen && calc && (
+        <FieldSheetView
+          input={{
+            selection: {
+              breakerLabel: selection.breakerLabel,
+              tripLabel: selection.tripLabel,
+              ratingLabel: selection.ratingLabel,
+            },
+            sensorId,
+            settings,
+            chosen,
+            testMult,
+            measured,
+            maint,
+            calc,
+          }}
+          onClose={() => setSheetOpen(false)}
+        />
+      )}
     </>
   )
 }
@@ -2054,4 +2085,46 @@ const CSS = `
 .btn:hover{background:var(--brand-d);}
 .btn.ghost{background:transparent;color:var(--brand);border:1px solid var(--line);}
 .btn:disabled{opacity:.4;cursor:default;}
+
+/* ── B2.1 field tolerance sheet (print-first; light theme regardless of app theme) ── */
+.sheet-btn{float:right;padding:6px 14px;font-size:12px;}
+.sheet-overlay{position:fixed;inset:0;z-index:60;overflow:auto;background:rgba(10,14,20,.72);padding:26px 16px 60px;}
+.sheet-actions{display:flex;gap:10px;justify-content:flex-end;max-width:1080px;margin:0 auto 12px;}
+.sheet-card{max-width:1080px;margin:0 auto;background:#fff;color:#16181c;border-radius:10px;padding:26px 30px;box-shadow:0 18px 60px rgba(0,0,0,.5);font-size:12px;line-height:1.45;}
+.sheet-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:2px solid #16181c;padding-bottom:10px;}
+.sheet-title{font-size:17px;font-weight:800;}
+.sheet-sub{font-size:11px;color:#555;margin-top:2px;}
+.sheet-meta{text-align:right;font-size:11px;color:#444;}
+.sheet-id{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px 22px;padding:10px 0 4px;}
+.sheet-id span{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:#666;font-weight:700;}
+.sheet-id b{font-size:12.5px;}
+.sheet-maint{margin:8px 0 2px;padding:7px 12px;border:1.5px solid #b45309;background:#fef3c7;color:#92400e;font-weight:700;border-radius:6px;font-size:11.5px;}
+.sheet-fill{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:12px 0 14px;}
+.sheet-fill span{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:#666;font-weight:700;margin-bottom:14px;}
+.sheet-fill i{display:block;border-bottom:1px solid #444;height:1px;}
+.sheet-table{width:100%;border-collapse:collapse;font-size:11px;}
+.sheet-table th{border:1px solid #333;background:#eef1f5;padding:6px 7px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.3px;}
+.sheet-table th.wide{min-width:80px;}
+.sheet-table td{border:1px solid #333;padding:6px 7px;vertical-align:top;}
+.sheet-table td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.sheet-table td.el{white-space:nowrap;}
+.sheet-table td.meth{font-size:10px;color:#333;max-width:210px;}
+.sheet-table td.badge-cell{font-weight:800;font-size:10px;}
+.sheet-table td.fill{min-width:64px;}
+.sheet-table tr.wh td{color:#777;}
+.sheet-table tr{page-break-inside:avoid;}
+.sheet-elnotes{margin-top:10px;font-size:10.5px;color:#333;}
+.sheet-warn{margin-top:8px;font-size:10.5px;color:#92400e;}
+.sheet-notes{margin-top:10px;font-size:10.5px;color:#333;}
+.sheet-notes div{margin-top:2px;}
+.sheet-law{margin-top:12px;padding-top:8px;border-top:1.5px solid #16181c;font-size:10.5px;font-weight:600;}
+.sheet-gen{margin-top:6px;font-size:9.5px;color:#777;}
+@media print{
+  @page{size:letter landscape;margin:10mm;}
+  body *{visibility:hidden;}
+  .sheet-overlay,.sheet-overlay *{visibility:visible;}
+  .no-print,.no-print *{visibility:hidden!important;display:none!important;}
+  .sheet-overlay{position:absolute;inset:auto;left:0;top:0;width:100%;background:#fff;padding:0;overflow:visible;}
+  .sheet-card{box-shadow:none;border-radius:0;max-width:none;padding:0;}
+}
 `
