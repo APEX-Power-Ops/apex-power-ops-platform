@@ -66,6 +66,7 @@ import {
   envelopeNote,
   envelopePolygonPoints,
 } from '../../lib/tcc-band'
+import { elementDisplay, plugLabel, testCurrentLabel, trustBadgeWord, trustTitle } from '../../lib/terminology'
 
 // ── families ────────────────────────────────────────────────────────────────
 type Family = 'etu' | 'tmt' | 'emt'
@@ -974,13 +975,21 @@ function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, 
   // time (only the inject current stays field-valid). Pickups remain DB-authoritative.
   const delayTrust = (e: EtuTestCurrentElement): string => (e.trust ?? 'verify').toLowerCase()
   const isWithheld = (e: EtuTestCurrentElement): boolean => e.kind === 'delay' && delayTrust(e) === 'unsupported'
+  // SC3 ruled badges (Q2 MFR / Q3 N/A): field phrasing leads the tooltip, the
+  // engineering trust_reason stays appended as the audit trail.
+  const term = settings.terminology
   const trustCell = (e: EtuTestCurrentElement) => {
-    if (e.kind !== 'delay') return <span className="trust ok" title="DB-authoritative per-sensor tolerance">DB</span>
+    if (e.kind !== 'delay') {
+      return <span className="trust ok" title={trustTitle('pickup.db', 'DB-authoritative per-sensor tolerance', term)}>{trustBadgeWord('pickup.db', term)}</span>
+    }
     const t = delayTrust(e)
-    const title = e.trust_reason ?? ''
-    if (t === 'db') return <span className="trust ok" title={title || 'Direct-band delay — numerically validated row-for-row (G4)'}>DB</span>
-    if (t === 'unsupported') return <span className="trust no" title={title || 'Delay solver not implemented — expected trip time withheld (G4)'}>n/a</span>
-    return <span className="trust verify" title={title || 'Inverse-equation delay — captured-fixture validation pending (G4)'}>verify</span>
+    if (t === 'db') {
+      return <span className="trust ok" title={trustTitle('delay.db', e.trust_reason ?? 'Direct-band delay — numerically validated row-for-row (G4)', term)}>{trustBadgeWord('delay.db', term)}</span>
+    }
+    if (t === 'unsupported') {
+      return <span className="trust no" title={trustTitle('delay.unsupported', e.trust_reason ?? 'Delay solver not implemented — expected trip time withheld (G4)', term)}>{trustBadgeWord('delay.unsupported', term)}</span>
+    }
+    return <span className="trust verify" title={trustTitle('delay.verify', e.trust_reason ?? 'Final confirmation pending (G4 §4)', term)}>{trustBadgeWord('delay.verify', term)}</span>
   }
   // A delay band built from the flagged generic −30/+0 estimate (no per-manufacturer
   // LTD tolerance on file) vs a real DB-sourced per-mfr band (G4 §4 / L5).
@@ -1004,7 +1013,9 @@ function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, 
         <div><span>Trip Unit</span>{selection.tripLabel}</div>
         <div><span>Sensor</span>{calc?.sensor_desc ?? selection.ratingLabel}</div>
         <div className="plugpick">
-          <span>Plug (Ir)</span>
+          {/* SC3 Part III 3a: the plug sets In (Ir = LTPU dial × In) — "Plug (Ir)"
+              inverted the two symbols on the flagship family. */}
+          <span>{plugLabel(settings.terminology)}</span>
           <select className="el-select" value={String(chosen.plug)} onChange={(e) => setChosen((c) => (c ? { ...c, plug: Number(e.target.value) } : c))}>
             {settings.plug_values.map((p) => (<option key={p} value={p}>{p} A</option>))}
           </select>
@@ -1024,10 +1035,17 @@ function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, 
         {EL_META.map((m) => {
           const present = m.pick ? listFor(m.pick).length > 0 : m.band ? bandsFor(m.band).length > 0 : false
           const el = elByCode(m.code)
+          // SC3 (task #129): lineage vocabulary from tcc.field_terminology — the
+          // faceplate caption + dial symbol (Q4: shown on Screen 2 AND the sheet);
+          // EL_META stays the fail-open fallback.
+          const disp = elementDisplay((m.pick ?? m.band) as string, m.code, m.label, settings.terminology)
           return (
             <div key={m.code} className={`el-card ${present ? '' : 'off'}`}>
               <div className="el-h">
-                <div className="el-code"><b>{m.code}</b><span>{m.label}</span></div>
+                <div className="el-code" title={disp.note ?? undefined}>
+                  <b>{disp.code}</b>
+                  <span>{disp.label}{disp.symbol ? ` · ${disp.symbol}` : ''}</span>
+                </div>
                 <span className={`pill ${KIND_CLASS[m.kind]}`}>{m.kind}</span>
               </div>
               <div className="el-b">
@@ -1051,7 +1069,7 @@ function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, 
                 </div>
                 {present && m.band ? (
                   <div className="el-row">
-                    <span>Test @</span>
+                    <span>{testCurrentLabel(settings.terminology)} ×</span>
                     <select
                       className="el-select"
                       value={testMult[m.band]}
@@ -1073,7 +1091,7 @@ function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, 
         <div className="card-h">📊 NETA Tolerance Bands &amp; Field Results {calcBusy ? <span className="spin" /> : <span className="badge inline live">LIVE</span>}</div>
         <div className="bands-wrap">
           <table className="bands">
-            <thead><tr><th>Element</th><th>Trust</th><th>Test @</th><th>Test Current</th><th>Min Limit</th><th>Max Limit</th><th>Measured</th><th>% Error</th><th>Status</th></tr></thead>
+            <thead><tr><th>Element</th><th>Trust</th><th>Test ×</th><th>Test Current</th><th>Min Limit</th><th>Max Limit</th><th>Measured</th><th>% Error</th><th>Status</th></tr></thead>
             <tbody>
               {(calc?.elements ?? []).map((e) => {
                 const delay = e.kind === 'delay'
@@ -1112,7 +1130,7 @@ function EtuSettings({ maint, setMaint, selection, chosen, setChosen, testMult, 
       {calc?.warnings?.length ? <div className="sel-status warn">{calc.warnings.join(' · ')}</div> : null}
 
       <div className="method">
-        <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) ramp-test <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-safe). Each delay injects a <b>selectable multiple of its pickup</b> (the <b>Test @</b> dropdown) — NETA defaults <b>LTD 3× LTPU, STD/GFD 1.5×</b> — and the <b>inject current is always field-correct</b> (the proven pickup × your chosen multiple). For <b>long-time delay</b> the expected trip <b>time follows the I²t law</b> t = setting·(6/N)²: the stored band setting is the trip time at <b>6× Ir</b>, so testing at <b>6×</b> gives a time equal to the dial setting (the practical, directly-measurable point), while 3× is four times longer. The <b>delay time tolerance band</b> (Min/Max Limit) is the <b>per-manufacturer DB value</b> (`DS2_TOL`, matched to the I²t curve type) when on file; where none exists it falls back to a generic ±estimate, marked <b>est</b>. The expected <b>time</b> stays <b>gated per the G4 field-trust matrix</b>: <b>DB</b> = direct-band (route 0), LTD, and the <b>inverse-equation routes (validated bit-exact against the native EasyPower kernel — STD §107, GFD plug-basis L1)</b>; <b>verify</b> = the I²t composite render (native spot-check pending); <b>n/a</b> = unknown-shape I²t / GE-trip-unit / GF-ANSI routes whose solver is not built, so the time is <b>withheld</b> (the inject current stays valid). Time tolerance bands use the <b>manufacturer&apos;s values</b> where on file — NETA acceptance is based on manufacturer tolerances; the generic ±estimate appears only where none exists, marked <b>est</b>. {selection.trustNote}
+        <b>NETA test points.</b> Pickups (LTPU/STPU/INST/GFPU) ramp-test <b>@ 1×</b> against <b>DB-authoritative per-sensor tolerances</b> (field-safe). Each delay injects a <b>selectable multiple of its pickup</b> (the <b>Test @</b> dropdown) — NETA defaults <b>LTD 3× LTPU, STD/GFD 1.5×</b> — and the <b>inject current is always field-correct</b> (the proven pickup × your chosen multiple). For <b>long-time delay</b> the expected trip <b>time follows the I²t law</b> t = setting·(6/N)²: the stored band setting is the trip time at <b>6× Ir</b>, so testing at <b>6×</b> gives a time equal to the dial setting (the practical, directly-measurable point), while 3× is four times longer. The <b>delay time tolerance band</b> (Min/Max Limit) is the <b>per-manufacturer DB value</b> (`DS2_TOL`, matched to the I²t curve type) when on file; where none exists it falls back to a generic ±estimate, marked <b>est</b>. The expected <b>time</b> stays <b>gated per the G4 field-trust matrix</b>: <b>MFR</b> = manufacturer-validated — direct bands, LTD, the <b>inverse-equation routes (bit-exact vs the native EasyPower kernel, incl. GF-ANSI #120)</b> and the <b>I²t flat/ramp/composite surfaces (#72)</b>; <b>N/A</b> = unknown-shape I²t / GE-trip-unit routes whose solver is not built, so the time is <b>withheld</b> (the inject current stays valid). Time tolerance bands use the <b>manufacturer&apos;s values</b> where on file — NETA acceptance is based on manufacturer tolerances; the generic ±estimate appears only where none exists, marked <b>est</b>. {selection.trustNote}
       </div>
     </>
   )
@@ -1503,12 +1521,14 @@ const fmtAmpTick = (a: number) => (a >= 1000 ? `${+(a / 1000).toPrecision(3)}k` 
 const fmtSecTick = (s: number) => (s >= 1 ? `${s}` : `${+s.toPrecision(2)}`)
 
 function trustBadge(trust: string | null | undefined, reason?: string | null) {
+  // SC3 ruled badge words (Q2 MFR / Q3 N/A) — mirrors tcc.field_terminology's
+  // '*' trust rows; lib/terminology.ts TRUST_BADGE_FALLBACK is the same set.
   if (!trust) return null
   const t = trust.toLowerCase()
   const title = reason ?? ''
-  if (t === 'db') return <span className="trust ok" title={title}>DB</span>
-  if (t === 'unsupported') return <span className="trust no" title={title}>n/a</span>
-  return <span className="trust verify" title={title}>verify</span>
+  if (t === 'db') return <span className="trust ok" title={title}>MFR</span>
+  if (t === 'unsupported') return <span className="trust no" title={title}>N/A</span>
+  return <span className="trust verify" title={title}>VERIFY</span>
 }
 
 function EtuCurve({ selection, maint, chosen, testMult, measured }: {
@@ -1693,7 +1713,7 @@ function EtuCurve({ selection, maint, chosen, testMult, measured }: {
               <div className="legend">
                 {delayRows.map((r) => (
                   <div key={`basis-${r.element}`} className="leg muted2" title={r.trust_reason ?? ''}>
-                    {r.element}: {r.trust === 'unsupported' ? 'withheld (G4)' : delayBasisLabel(r.notes) ?? '—'}
+                    {r.element}: {r.trust === 'unsupported' ? 'withheld — no certified basis' : delayBasisLabel(r.notes) ?? '—'}
                   </div>
                 ))}
               </div>

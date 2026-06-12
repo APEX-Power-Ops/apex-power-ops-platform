@@ -111,16 +111,26 @@ export function buildDefaultEtuPlotRequest(
 // Tolerance-basis label from a delay table-row's notes ("timing_source=<src>").
 // NETA acceptance = manufacturer tolerances (operator law 2026-06-09): the mfr
 // basis is stated plainly and anything else is surfaced as exactly what it is.
-export function delayBasisLabel(notes: string | null | undefined): string | null {
+// Wording = the SC3 ruled field vocabulary (tcc.field_terminology '*' method
+// rows, operator red-line 2026-06-11); a served method_labels map (per-lineage
+// override) wins when provided.
+export function delayBasisLabel(
+  notes: string | null | undefined,
+  methodLabels?: Record<string, string> | null,
+): string | null {
   if (!notes) return null
   const m = /timing_source=([\w-]+)/.exec(notes)
   if (!m) return null
   const src = m[1]
-  if (src === 'ltd_reference_window') return 'mfr tolerance (DS2)'
-  if (src === 'ltd_reference_window_generic') return 'generic estimate — no mfr tolerance on file'
-  if (src === 'band_table') return 'mfr band (per-sensor DB)'
-  if (src.startsWith('i2x_')) return 'validated I²t surface'
-  if (src === 'curve_interpolation') return 'curve envelope (open/clear)'
-  if (src === 'maint_profile') return 'maintenance-mode profile'
+  if (methodLabels) {
+    const served = methodLabels[src] ?? (src.startsWith('i2x') ? methodLabels['i2x'] : undefined)
+    if (served) return served
+  }
+  if (src === 'ltd_reference_window') return 'Manufacturer LTD tolerance (device library)'
+  if (src === 'ltd_reference_window_generic') return 'Estimated band −30%/+0% — no manufacturer tolerance on file (flagged)'
+  if (src === 'band_table') return 'Manufacturer delay band (per-sensor)'
+  if (src.startsWith('i2x')) return 'Manufacturer I²t characteristic (validated)'
+  if (src === 'curve_interpolation') return 'Manufacturer curve band (open/clear)'
+  if (src === 'maint_profile') return 'Maintenance-mode (ARMS) profile'
   return src
 }

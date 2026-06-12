@@ -1,6 +1,13 @@
-# SC3 — Field-Facing Terminology Mapping `[DRAFT — FOR OPERATOR REVIEW]`
+# SC3 — Field-Facing Terminology Mapping `[RULED — BUILD IN PROGRESS]`
 
-**Status:** DRAFT v1 (2026-06-11) — **nothing in this document ships until the operator red-lines it.**
+**Status:** v2 (2026-06-11) — **operator red-line received; Q1–Q5 RULED** (see §6); build proceeding
+per §5.5. PROPOSED-basis rows not settled by the rulings resolve via the §5.5-step-1 catalog read;
+anything unconfirmed stays `draft` and does not serve.
+
+**RULINGS (operator, 2026-06-11):** Q1 = "Local Ground" read **agreed** — no surface ever shows
+"LG"; `Ground Fault` stands everywhere outside 1b (earth leakage). Q2 = db badge **`MFR`**.
+Q3 = unsupported badge **`N/A`**. Q4 = delegated → **CC call: symbols show on BOTH Screen 2 rows
+and the sheet** (the page is the screen↔faceplate matching surface). Q5 = **"Test Current"**.
 **Lane:** field-tolerances MVP, stage SC3 (`apps/operations-web/TCC_FIELD_TOLERANCES_MVP_SPEC_2026-05-31.md`); task #129.
 **Ratified scope (operator, 2026-06-11):** the **test-facing vocabulary layer** — (A) element/dial-symbol
 labels, (B) trust/method/honesty phrasing, (C) family-specific setting labels — plus (D) the

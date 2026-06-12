@@ -148,6 +148,7 @@ from .delay_trust import (
 )
 from . import setting_catalog
 from . import micrologic_curves
+from . import terminology
 from .composite_boundary import (
     RIGHT_EDGE_AMPS as COMPOSITE_RIGHT_EDGE_AMPS,
     assemble_composite_bands,
@@ -5132,10 +5133,28 @@ def get_etu_bridge_sensors(
                    bridge.breaker_style_frame,
                    {breaker_model_display_expr} AS breaker_model_display,
                    bridge.tmt_sst_mfr, bridge.tmt_sst_type, bridge.tmt_sst_style,
+                   COALESCE(bma.etap_mfr_name, bridge.tmt_sst_mfr) AS tmt_sst_mfr_display,
+                   COALESCE(btsa.alias_name, btma.etap_model, bridge.tmt_sst_style)
+                     AS tmt_sst_model_display,
                    bridge.trip_style_id, bridge.sensor_id, bridge.sensor_rating,
                    bridge.sensor_description, bridge.r_cont_current
             FROM tcc.vw_breaker_sst_bridge bridge
             {breaker_model_display_join}
+            -- SC3 display parity (task #129): the trip identity gets the SAME
+            -- COALESCE chain the cascade serves, so the breaker-axis dropdown
+            -- never shows raw EP vocabulary the trip axis has normalized.
+            LEFT JOIN tcc.trip_styles bts ON bts.id = bridge.trip_style_id
+            LEFT JOIN tcc.manufacturers bm ON bm.id = bts.mfg_id
+            LEFT JOIN tcc.mfr_aliases bma ON bma.ep_mfr_id = bm.id
+            LEFT JOIN LATERAL (
+                SELECT tsa.alias_name
+                FROM tcc.trip_style_aliases tsa
+                WHERE tsa.trip_style_id = bridge.trip_style_id
+                  AND tsa.match_tier IN ('exact', 'core')
+                ORDER BY CASE tsa.match_tier WHEN 'exact' THEN 0 ELSE 1 END, tsa.alias_id
+                LIMIT 1
+            ) btsa ON TRUE
+            LEFT JOIN tcc.trip_model_aliases btma ON btma.trip_style_id = bridge.trip_style_id
             {where_sql}
             ORDER BY bridge.breaker_style_id, bridge.sensor_rating, bridge.sensor_id
             """
@@ -5412,6 +5431,11 @@ def get_available_settings(sensor_id: int, db: Session = Depends(get_db)):
         "gfpu": setting_catalog.pickup_unit(ctx.get("gfpu_calc")),
     }
 
+    # SC3 (task #129): the field-facing vocabulary block for this sensor's trip
+    # lineage, from the governed tcc.field_terminology dictionary. Fail-open —
+    # vocabulary can never 500 the settings route; absent block = UI fallbacks.
+    terminology_block = terminology.build_terminology_block(db, sensor_id, ctx)
+
     # The direct ETU loader returns pickup arrays plus LTD settings. STD/GFD band
     # rows are loaded separately here so the UI can use strict per-sensor delay
     # options without relying on stale RPC wiring.
@@ -5428,6 +5452,7 @@ def get_available_settings(sensor_id: int, db: Session = Depends(get_db)):
         gfpu_settings=gfpu_settings,
         units=units,
         validated_source=validated_source,
+        terminology=terminology_block,
     )
 
 

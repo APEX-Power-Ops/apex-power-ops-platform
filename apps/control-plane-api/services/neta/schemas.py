@@ -187,6 +187,11 @@ class EtuBridgeSensor(BaseModel):
     tmt_sst_mfr: Optional[str] = None
     tmt_sst_type: Optional[str] = None
     tmt_sst_style: Optional[str] = None
+    # SC3 display-parity fields (task #129): the same COALESCE chain the cascade
+    # serves (mfr_aliases / trip_style_aliases pick / trip_model_aliases), so the
+    # breaker-axis dropdown shows the normalized trip identity the trip axis shows.
+    tmt_sst_mfr_display: Optional[str] = None
+    tmt_sst_model_display: Optional[str] = None
     trip_style_id: int
     sensor_id: int
     sensor_rating: Optional[int] = None
@@ -423,6 +428,15 @@ class AvailableSettingsResponse(BaseModel):
     validated_source: Optional[str] = Field(
         None,
         description="Citation when settings come from the validated vendor-doc catalog (envelope-only sensors)",
+    )
+    terminology: Optional[dict] = Field(
+        None,
+        description=(
+            "SC3 field-facing vocabulary for this sensor's trip lineage (task #129; "
+            "tcc.field_terminology): per-element labels + faceplate dial symbols, "
+            "trust badges (MFR/VERIFY/N/A), method labels, honesty notes. Absent = "
+            "fail-open; the UI keeps its built-in labels."
+        ),
     )
 
 

@@ -280,3 +280,20 @@ test('SENSOR_CAP bounds the breaker-grain pool', () => {
   const pool = buildSensorPool({ ...EMPTY, bId: '99', bridge: many })
   expect(pool.length).toBe(SENSOR_CAP)
 })
+
+test('SC3: bridge labels prefer the served normalized trip identity (display parity)', () => {
+  const bridge: EtuBridgeSensorsResponse = {
+    breaker_style_id: 1026,
+    breaker_id: 18,
+    bridge_match_status: 'matched',
+    count: 1,
+    sensors: [{
+      ...bridgeSensor(1026, 'WPS-08', 'Entelliguard TU', 'WavePro LI', 1566, 7003, 800),
+      tmt_sst_mfr_display: 'General Electric',
+      tmt_sst_model_display: 'EntelliGuard TU',
+    }],
+  }
+  const pool = buildSensorPool({ ...EMPTY, bStyle: '1026', bridge })
+  expect(pool[0].tripLabel).toContain('General Electric')
+  expect(pool[0].tripLabel).not.toContain('WavePro LI')
+})

@@ -128,7 +128,14 @@ export function buildSensorPool(input: SensorTerminalInput): SensorPoolItem[] {
       const frame = s.breaker_model_display ?? s.breaker_style_frame ?? null
       const tripStyleId = s.trip_style_id ?? null
       const alt = tripStyleId != null ? altTrips[tripStyleId] : undefined
-      const tripLabel = tripIdentity(s.tmt_sst_mfr ?? '', s.tmt_sst_type ?? '', s.tmt_sst_style ?? '', alt)
+      // SC3 display parity: prefer the served normalized trip identity (the same
+      // COALESCE chain the trip-axis cascade shows) over the raw SST triple.
+      const tripLabel = tripIdentity(
+        s.tmt_sst_mfr_display ?? s.tmt_sst_mfr ?? '',
+        s.tmt_sst_type ?? '',
+        s.tmt_sst_model_display ?? s.tmt_sst_style ?? '',
+        alt,
+      )
       const prefix = breakerGrain && frame ? `${frame} ` : ''
       return {
         sensor_id: s.sensor_id,

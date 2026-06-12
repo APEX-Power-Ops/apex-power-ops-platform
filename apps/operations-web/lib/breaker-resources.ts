@@ -229,6 +229,10 @@ export type EtuBridgeSensor = {
   tmt_sst_mfr: string | null
   tmt_sst_type: string | null
   tmt_sst_style: string | null
+  /** SC3 display parity (task #129): the cascade's COALESCE chain applied to the
+   *  bridge's trip identity, so the breaker-axis dropdown matches the trip axis. */
+  tmt_sst_mfr_display?: string | null
+  tmt_sst_model_display?: string | null
   trip_style_id: number
   sensor_id: number
   sensor_rating: number | null
@@ -324,6 +328,28 @@ export type DelayBandOption = {
   is_default: boolean
 }
 
+/** One element's field-facing display row (SC3, tcc.field_terminology). */
+export type TerminologyElementDisplay = {
+  code: string
+  label: string
+  symbol?: string | null
+  note?: string | null
+}
+
+/** The SC3 field-vocabulary block served with /settings (task #129) — per-lineage
+ *  element labels + faceplate dial symbols, ruled trust badges (MFR/VERIFY/N/A),
+ *  method labels and honesty notes. Absent = fail-open; the UI keeps its
+ *  built-in labels. */
+export type TerminologyBlock = {
+  lineage: string
+  elements: Record<string, TerminologyElementDisplay>
+  plug_label?: string | null
+  test_current_label?: string | null
+  trust?: Record<string, { badge?: string | null; text?: string | null; method_text?: string | null }> | null
+  method_labels?: Record<string, string> | null
+  notes?: Record<string, string> | null
+}
+
 export type AvailableSettingsResponse = {
   sensor_id: number
   plug_values: number[]
@@ -337,6 +363,7 @@ export type AvailableSettingsResponse = {
   gfpu_settings: number[]
   units?: Partial<Record<'ltpu' | 'stpu' | 'inst' | 'gfpu', string>>
   validated_source?: string | null
+  terminology?: TerminologyBlock | null
 }
 
 export type PlotCurvePoint = {
