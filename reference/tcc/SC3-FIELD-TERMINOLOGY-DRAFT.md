@@ -366,6 +366,32 @@ mechanism later via Chips 4–6).
   "Ground Fault". What does EasyPower's "LG" denote in your read (its setting dialogs use it) —
   and should any surface ever show "LG", or is `Ground Fault` correct everywhere outside 1b?
   Draft assumes the latter.
+  **Evidence run 2026-06-11 (Access `D:\TCC_NEW.accdb`, operator-requested join
+  `DatSensor → DatStyle → DatSection1GfGFP`; extract `.audit_workspace/sc3_terminology/LG_pickup_sensors_gfp.csv`):**
+  - Census: `SEC1GF_NAME` has exactly 3 values ever — GF Pickup 16,136 / **LG Pickup 1,623** /
+    Earth Leakage Pickup 72. LG = **purely the legacy ANSI switchboard generation** (all
+    West/C-H/SqD/Eaton DT/Digitrip variants, GE MVT-4/9/Plus/PM/Enhanced + VersaTrip (MOD2) +
+    RMS-9/Power+/SST/SelecTrip/TA9VT, Siemens SB-TL/SB-EC/Sensitrip III, Westrip, SqD
+    Powerlogic 810D; + 5 Chint NA outliers). 1,553 LG sensors carry GFP tap rows (9,945);
+    70 have none (MVT-Enhanced 20, SB-TL 18, Powerlogic 810D 12, VersaTrip MOD2 11, Power+ 9).
+  - **The discriminating contrast: Square D Ground Censor / GC-200 — a SEPARATE ground-CT
+    system — is named `GF Pickup`,** while every breaker-INTEGRAL ground element of that same
+    era is `LG Pickup`. Modern integral units (Micrologic/PXR/Ekip/EG-TU) are all `GF Pickup`,
+    so the distinction was maintained only within the legacy generation.
+  - No structural discriminator otherwise: pickup-calc bases overlap (LG ⊂ {-1,0,1,7});
+    `GFP_DESC` = the literal faceplate dials in both populations (Digitrip lettered taps
+    `A(0.25)…K`, GE fractions `0.2…`/`0.3X`); `DatSection1GfGFP.Mode` is **not read by the
+    decompiled DeviceLibrary** (`ReadGroundSettings` selects only GFP_DESC+GFP_SETTING) —
+    vestigial; Mode=1 exists only on Micrologic 6.0X (450 rows) + Utility Relay AC-PRO/II (126),
+    all GF-named. No DVL description; the string "LG Pickup" appears in no code — it is typed
+    library data (the per-sensor settings-dialog caption).
+  - **CC read:** "LG" = EP-librarian shorthand, best supported as **"Local Ground"** — the
+    breaker-integral ('local') ground element, as opposed to a separate ground-relay system
+    (the Ground Censor pattern) — applied only to the legacy ANSI generation. It is not
+    faceplate vocabulary anywhere → no field surface should show "LG"; `Ground Fault` stands
+    everywhere outside 1b. The real nameplate match for these families lives in the GFP tap
+    labels (`A(0.25)`…), which already serve verbatim per L2. **Operator ruling still owns
+    this row.**
 - **Q2 — badge word for db.** `MFR` proposed (alternatives: keep `DB`; `LIB`; `CERT`). The sheet
   prints it in every row — your call.
 - **Q3 — badge word for unsupported.** `—` + footnote proposed (alternative: `N/A`, current).
