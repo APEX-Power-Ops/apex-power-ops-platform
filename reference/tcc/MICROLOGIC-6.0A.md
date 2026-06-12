@@ -91,10 +91,11 @@ not separately datasheet-checked).
 ## 5. Field-trust posture (G4)
 
 - **L (long-time):** the I²t window is implementation-complete + window-proven → **db** (G4 row 5).
-- **S/G (I2X composite):** `flat`/`ramp` → **db** (native bit-exact, I2X-4); **`composite` → `verify`**
-  (combine rule decompile-confirmed + ramp native-validated; full native-render spot-check is the open
-  gate). `/calculate` computes the composite field time via `etu_ixt` and badges it **verify** (I2X-6,
-  STATE §137); the kernel withholds (→ unsupported) on NULL anchors / unknown shape. The inject current
+- **S/G (I2X composite):** ALL three shapes → **db**: `flat`/`ramp` native bit-exact (I2X-4);
+  **`composite` PROMOTED verify→db 2026-06-11 (#72 close, STATE §214)** — the render assembly validated
+  against the native TccBase assembly primitives (fixtures `composite_primitives_native_parity.json`;
+  G4 §3b·I2X). `/calculate` computes the composite field time via `etu_ixt` and badges it **db**;
+  the kernel withholds (→ unsupported) on NULL anchors / unknown shape. The inject current
   (NETA test point) is always field-correct.
 - The plot curve is a **nominal illustration** (supplemental); the field-authoritative surface is the
   Screen-2 tolerance table.

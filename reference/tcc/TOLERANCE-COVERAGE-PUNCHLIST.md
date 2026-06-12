@@ -238,15 +238,15 @@ These are closed and locked in the guides; reopening only on a cited reason:
 - **ETAP decoded catalog = `[ETAPDOC]` corroboration ONLY (§146, operator-gated):** independently corroborates
   our I²t/I⁴t curve model + the 6× reference window; **persist nothing into the product** (OTI proprietary,
   DRM-decoded — outputs stay in gitignored `.audit_workspace/`) `[STATE §146]`.
-- **Route-1 (I2X) field-time at `/calculate`** wired via `etu_ixt` (flat/ramp `db`, composite `verify`)
-  `[delay_trust.py · §137]`.
+- **Route-1 (I2X) field-time at `/calculate`** wired via `etu_ixt` — all three shapes `db` since the
+  #72 close (flat/ramp I2X-4; composite §214) `[delay_trust.py · §137 · §214]`.
 - **Per-sensor delay-route field-trust gating** live (withhold-not-fabricate) `[G4 §6 · §106]`.
 
 ## Suggested sequence (smallest durable bites first)
-**L1** (GF Therm **+** Ansi, one motion — gated on your `field[13]` evidence; formula side already banked +
-structure-validated 2026-06-02) → **L7/L5** (band validation / per-mfr time tol, bounded) → **L6** (catalog,
-one cited family per bite — open-ended but always-additive) → **L3** (GE-TU) → **L4** (I2X — the deliberate big
-campaign, the ~15k lever) → **L8/L9** (TMT/EMT) → **L10** (relays — its own large lane).
+*(updated 2026-06-11: ~~L1~~ ✓§206/#120 · ~~L4~~ ✓ I2X-4/I2X-6/#72 §214 · ~~L11~~ ✓§213 — the original
+sequence below kept for history)* Remaining: **L7/L5** (band validation / per-mfr time tol, bounded) →
+**L6** (catalog, one cited family per bite — open-ended but always-additive) → **L3** (GE-TU) →
+**L8/L9** (TMT/EMT) → **L10** (relays — its own large lane, = relay Chip 5).
 
 > **What an autonomous bite can/can't do right now (2026-06-02):** L1 is gated on operator `field[13]` evidence
 > (field-trust law forbids promoting on the unconfirmed hypothesis); L5/L7/L6/L8/L9 need OEM/vendor tolerance
