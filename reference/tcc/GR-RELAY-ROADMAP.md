@@ -119,6 +119,14 @@ which OEMs to prioritise (e.g. SEL for Y1202C). Then build the serving layer + t
 3-screen parallel to `lvbreakertcc` (select → settings/tolerances → curve + NETA markers),
 consuming Chips 2–3, badged at the honest tiers from Chip 1. (New page; see deferred decision.)
 
+> **Inheritable machinery (2026-06-12, STATE §215–§216):** the breaker side now ships (a) the governed
+> **`tcc.field_terminology`** dictionary (migration 026 — element/dial vocabulary, MFR/VERIFY/N/A badges,
+> method labels, honesty notes; relay vocabulary would be new `lineage` rows, the mechanism is built) and
+> (b) the **print-ready field-sheet pattern** (`apps/operations-web/lib/field-sheet.ts` pure builder over
+> the SERVED payloads + the `FieldSheetView` print overlay + letter-landscape print CSS). Chip 4 should
+> reuse both rather than re-invent — the relay sheet differs in the ELEMENT MODEL (variable per
+> variant, below), not in the sheet/print mechanics.
+
 **KEY DESIGN DRIVER (operator, 2026-06-03) — variant / available-element handling.** This is where the
 relay sheet *diverges* from the breaker sheet, and the crux of Chip 4. Breakers have a **fixed** element
 model (LTPU/STPU/INST/GF); relays do **not** — the **available protection elements vary by relay model and
