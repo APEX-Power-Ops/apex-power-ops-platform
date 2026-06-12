@@ -18,19 +18,27 @@ Three trust tiers (G4 §0 / §4):
                       the managed plug-basis form (``rIRef' = rIRef × plug/pickup``)
                       reproduces the native kernel BIT-EXACT over the complete GF
                       Therm corpus (L1 close 2026-06-09; fixtures
-                      ``gf_inveq_field13_native_parity.json``). Numerically
-                      validated — field-safe. (G4 rows 3/4/5/6/7-Therm.)
-  - ``"verify"``      DISPATCH-WIRED, parity not yet closed. **I2X composite bands**
-                      (route 1, ``max(ramp, floor)``) only: the combine rule is
-                      decompile-confirmed and the ramp native-bit-exact, but the
-                      full native composite render awaits the spot-check gate
-                      (I2X-5 / task #72). Show the engine's best estimate, flagged.
-  - ``"unsupported"`` NOT IMPLEMENTED / hard-excluded. I2X (route 1, I²t solver not
-                      built), GE trip-unit STD/Gnd (routes 3/4, fall-through
-                      diagnostic only), and the GF-INVEQ ANSI family
-                      (``id_op_eq != 0`` on a GFD route-2 row — 23 sensors). The
-                      solver is not built, so the band/curve number is a meaningless
-                      fall-through — withhold it (G4 §6 step 6; rows 7-Ansi/9/10/11).
+                      ``gf_inveq_field13_native_parity.json``). **I2X route 1**
+                      (shape-gated): ``flat`` = the stored definite time;
+                      ``ramp`` = native-bit-exact ``CIxt.ComputeT`` (I2X-4); and
+                      ``composite`` (``max(ramp, floor)``) — ramp bit-exact +
+                      floor stored + the RENDER ASSEMBLY validated against the
+                      native ``TccBase.dll`` assembly primitives
+                      (TrimCurveX / ComputeY / CLogLogIntersection / MergeLines /
+                      MergeGF; #72 close 2026-06-11, fixtures
+                      ``composite_primitives_native_parity.json``) → db by
+                      composition. Numerically validated — field-safe.
+                      (G4 rows 3/4/5/6/7-Therm/11-flat-ramp-composite.)
+  - ``"verify"``      DISPATCH-WIRED, parity not yet closed. No delay element
+                      currently classifies here (the last occupant — the I2X
+                      composite shape — was promoted by the #72 spot-check);
+                      retained as the framework's flagged middle tier.
+  - ``"unsupported"`` NOT IMPLEMENTED / hard-excluded. I2X route-1 bands whose
+                      shape is unknown/withheld at the evaluator, and GE
+                      trip-unit STD/Gnd (routes 3/4, fall-through diagnostic
+                      only). The solver is not built / not certified, so the
+                      band/curve number is a meaningless fall-through —
+                      withhold it (G4 §6 step 6; rows 9/10/11-unknown).
 
 ``SSTDelayCalc`` routing byte (G4 §3a): 0 NONE/direct-band · 1 I2X · 2 INVEQ ·
 3 TUSTD · 4 TUG. STD path = ``etu_sensors.stpu_delay_calc_code`` (``DS3_SEC3_I2T``);
@@ -96,23 +104,24 @@ def classify_delay_trust(
 
 
 def _classify_i2x(shape: Optional[str]) -> str:
-    """Route-1 (I2X / Iˣt) per-band field-trust tier (G4 §3b·I2X · STATE §120).
+    """Route-1 (I2X / Iˣt) per-band field-trust tier (G4 §3b·I2X · STATE §120/§214).
 
     - ``flat`` (definite-time band, current-independent) → ``db`` — identical to the
       db-proven route-0 direct band.
     - ``ramp`` (pure Iˣt) → ``db`` — ``etu_ixt.ixt_time`` is native-bit-exact to the
       EasyPower ``CIxt.ComputeT`` kernel (I2X-4, max 0 ULP).
-    - ``composite`` (max(ramp, floor)) → ``verify`` — the combine rule is
-      decompile-confirmed and the ramp native-validated, but the full native render
-      has not been spot-checked (the captured-EasyPower-curve gate, I2X-5).
+    - ``composite`` (max(ramp, floor)) → ``db`` — PROMOTED by the #72 spot-check
+      (2026-06-11): the ramp is bit-exact (I2X-4), the floor is the stored band
+      value, the max-combine is decompile-cited, and the RENDER ASSEMBLY is
+      validated against the native TccBase assembly primitives over live served
+      curves + vendor sweeps (fixtures ``composite_primitives_native_parity.json``)
+      → db by composition.
     - anything else (``unknown`` / variable-X-unsupported / NULL anchors / None) →
       ``unsupported``: the evaluator withheld it, so the time is not certified.
     """
     s = (shape or "").lower()
-    if s in ("flat", "ramp"):
+    if s in ("flat", "ramp", "composite"):
         return TRUST_DB
-    if s == "composite":
-        return TRUST_VERIFY
     return TRUST_UNSUPPORTED
 
 
@@ -194,11 +203,18 @@ def delay_trust_reason(
                 "EasyPower CalcThermEq kernel over the complete Therm corpus (STD G4 §5; "
                 "GF plug-basis L1 close, fixtures gf_inveq_field13_native_parity)."
             )
+        if route == 1:
+            return (
+                "I²t/Iˣt (I2X) band delay — the ramp is native-bit-exact (CIxt, I2X-4), "
+                "the floor is the stored band value, and the composite render assembly is "
+                "validated against the native TccBase assembly primitives (#72; fixtures "
+                "composite_primitives_native_parity)."
+            )
         return f"Direct-band delay ({route_name}) — numerically validated row-for-row (G4)."
     if trust == TRUST_VERIFY:
         return (
             f"Delay ({route_name}) — dispatch-wired and partially native-validated; "
-            "full native-render spot-check pending (I2X composite gate, G4 §3b)."
+            "final confirmation pending (shown flagged, G4 §4)."
         )
     return (
         f"Delay solver not implemented ({route_name}) — time withheld; "

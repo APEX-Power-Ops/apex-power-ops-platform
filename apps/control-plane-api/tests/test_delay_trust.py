@@ -76,13 +76,25 @@ def test_gfd_ansi_only_matters_on_route_2():
     [
         ("flat", TRUST_DB),        # definite-time band — db-proven, current-independent
         ("ramp", TRUST_DB),        # pure Iˣt — native-bit-exact to CIxt.ComputeT (I2X-4)
-        ("composite", TRUST_VERIFY),  # max(ramp, floor) — rule confirmed, render spot-check pending
+        # max(ramp, floor): ramp bit-exact (I2X-4) + floor stored + the render
+        # assembly native-validated against the TccBase assembly primitives
+        # (#72, fixtures composite_primitives_native_parity.json) → db by
+        # composition. PROMOTED 2026-06-11.
+        ("composite", TRUST_DB),
         ("unknown", TRUST_UNSUPPORTED),
         (None, TRUST_UNSUPPORTED),  # legacy withhold: no shape supplied
     ],
 )
 def test_i2x_route1_shape_classification(element, route_kw, shape, expected):
     assert classify_delay_trust(element, **{route_kw: 1}, i2x_shape=shape) == expected
+
+
+def test_i2x_route1_db_reason_cites_the_spot_check():
+    # The promoted route-1 reason must cite the #72 native validation so the
+    # field tech sees the basis (the NETA=mfr law: surface the basis).
+    reason = delay_trust_reason("std", TRUST_DB, route=1)
+    assert "#72" in reason
+    assert "native" in reason.lower()
 
 
 def test_i2x_shape_ignored_off_route_1():

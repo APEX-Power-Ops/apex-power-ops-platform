@@ -31,10 +31,11 @@ Per-band SHAPE (``DatSection3STD.I2X`` smallint):
   * ``1`` -> **ramp**: a pure Iˣt ramp through ``(I_anchor, T_anchor)`` — the power
     law above. SUPPORTED here.
   * ``2`` -> **composite**: an Iˣt ramp clamped to a definite-time floor
-    (``std_open``/``std_clear``). The ramp-vs-floor COMBINE RULE (provisional
-    ``t = max(ramp, floor)`` definite-time minimum) is NOT yet confirmed against
-    the native render; this module returns it UNSUPPORTED pending captured-fixture
-    parity (G4 §3b·I2X residual).
+    (``std_open``/``std_clear``), ``t = max(ramp, floor)``. The combine rule is
+    decompile-confirmed (the universal ``max(rTmin, dMinTime)`` clamp across the
+    native renderers) and the full RENDER ASSEMBLY is validated against the
+    native TccBase assembly primitives (#72 close 2026-06-11; fixtures
+    ``composite_primitives_native_parity.json``) — SUPPORTED, trust ``db``.
 
 THREADING NOTE (the units convention): ``I_anchor`` and the NETA ``test_multiple``
 are both multiples of the element pickup, so the pickup cancels and ``M`` here is
@@ -173,7 +174,8 @@ def i2x_delay_surface(
         # confirmed (G4 §3b·I2X / STATE §116): the native renderers apply the floor as
         # a minimum-time clamp on the curve (the explicit max(rTmin, dMinTime) lambda in
         # CalcThermEq2, the universal *prMin clamp across CalcIeeeEq2/CalcGESMREq2). The
-        # ramp is native-bit-exact (I2X-4); the floor is the stored std_open/std_clear.
+        # ramp is native-bit-exact (I2X-4); the floor is the stored std_open/std_clear;
+        # the render ASSEMBLY is native-primitive-validated (#72, STATE §214).
         ramp_open = ixt_time(test_multiple, i_open, t_open, exp_x)
         ramp_clear = ixt_time(test_multiple, i_clear, t_clear, exp_x)
         floor_open = float(std_open) if _usable(std_open) else None

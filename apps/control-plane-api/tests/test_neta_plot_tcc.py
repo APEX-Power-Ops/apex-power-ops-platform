@@ -1776,7 +1776,8 @@ class TestMicrologicI2XComposite:
 
     def test_i2x_field_delay_composite_time_and_shape(self):
         """I2X-6: the route-1 field expected-time = the validated etu_ixt surface,
-        with the shape that gates the trust (composite → verify)."""
+        with the shape that gates the trust (composite → db since the #72
+        native-primitive spot-check)."""
         from services.neta.router import _i2x_field_delay
 
         def fake(stmt, params=None):

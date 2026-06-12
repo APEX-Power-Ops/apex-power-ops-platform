@@ -2272,7 +2272,7 @@ def _i2x_field_delay(
     """Route-1 (I2X) field expected-time for one STD/GFD test point, via the validated
     ``etu_ixt`` kernel (I2X-6). ``M = inject_current / ref_amps`` (STD ref=Ir, GFD
     ref=In — the datasheet axes). Returns ``(time, low, high, shape, supported)``;
-    ``supported=False`` (composite-unknown / NULL-anchor / degenerate) → the caller
+    ``supported=False`` (unknown shape / NULL-anchor / degenerate) → the caller
     withholds. The ``shape`` is fed to ``classify_delay_trust`` for the route-1 tier."""
     if element == "std":
         table, floor_col, clear_col, exp_col = "tcc.etu_std_bands", "std_open", "std_clear", "stpu_i2t_val"
@@ -6561,10 +6561,11 @@ def calculate_test_currents(req: CalculateRequest, db: Session = Depends(get_db)
             use_ltd_reference_window=True,
         )
         # Route-1 (I2X) STD/GFD field time (I2X-6): replace the legacy withhold with
-        # the validated etu_ixt surface (flat=db · ramp=db · composite=verify), shape-
-        # gating the trust. M references Ir (STD) / In (GFD). When the kernel can't
-        # certify the band (NULL anchor / unknown shape) the shape stays None →
-        # route-1 classifies unsupported → time withheld (G4 §6, safe).
+        # the validated etu_ixt surface (flat=db · ramp=db · composite=db since the
+        # #72 native-primitive spot-check), shape-gating the trust. M references Ir
+        # (STD) / In (GFD). When the kernel can't certify the band (NULL anchor /
+        # unknown shape) the shape stays None → route-1 classifies unsupported →
+        # time withheld (G4 §6, safe).
         i2x_shape = None
         _route = std_route if key == "std" else (gfd_route if key == "gfd" else None)
         if key in ("std", "gfd") and _route == 1:
