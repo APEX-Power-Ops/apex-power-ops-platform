@@ -193,9 +193,9 @@ recorded against the 17,831-sensor corpus]` `[DLL_SEMANTIC_FINDINGS §1 / §2]`:
 |---|---|---|---|---|
 | **STD direct-band** `DS3_SEC3_I2T = 0` | `DatSection3STD` flat/Out-In bands | yes | **yes — row-for-row** | Series B SE `(10,10,2)` / MX `(6,6,1)` / PX-6B mixed; TASK-C 8/8 PASS `[06 §matrix]` |
 | **GFD direct-band** `DS1GF_SEC3_I2T = 0` | `DatSection1GfGFD` bands | yes | **yes — literal anchor** | Full-SE `I_OPEN = 2000A` literal ×4 ordinals; TASK-C PASS `[06 §matrix]` |
-| **I2X** route `= 1` | `DatSection3STD` Iˣt ramp + flat floor → **`CIxt` power law** (§3b·I2X) | **no — withheld** (kernel **characterized** 2026-06-03 §113) | no — pending §107 oracle parity | Kernel = `t=T_anchor·(I_anchor/M)^X`, X=`DS3_I2T_VAL` (≈2 for 98%); NOT `CalcThermEq`. ~98% = banked I²t (§4). `[§3b·I2X · §113]` |
-| **INVEQ** route `= 2` (STD) | `DatSection3InvEq` → `IEEEInverseTimeSolver` | **yes — dispatch wired** | **NO — dispatch only, numbers not validated** | `*Eq=0` uniform, `*ICalc=(10,10,4,4)` integrity, `InOut∈{0,2}` switch → IEEE solver; 4,524 sensors `[06 §matrix / §synthesis-4]` |
-| **INVEQ** route `= 2` (GFD) | `DatSection1GfInvEq` → `IEEEInverseTimeSolver` | **yes — full chain bound** | **NO — dispatch only, numbers not validated** | populator `FUN_01207bf0` → reader `nSection=5` → 8 setters; slot matrix BOUND ×3; `byICalc=(in==0)?2:(in==1)?1:0`; Therm/Ansi = IdOp `*Eq` byte; 1,713 sensors `[06 §matrix, pass-5]` |
+| **I2X** route `= 1` | `DatSection3STD` Iˣt ramp + flat floor → **`CIxt` power law** (§3b·I2X) | **yes — `etu_ixt` kernel, shape-gated (I2X-6)** | **yes — flat (stored) · ramp (CIxt bit-exact, I2X-4) · composite (max(ramp,floor) + the #72 assembly-primitive close 2026-06-11)**; unknown shapes withheld | Kernel = `t=T_anchor·(I_anchor/M)^X`, X=`DS3_I2T_VAL` (≈2 for 98%); NOT `CalcThermEq`. `[§3b·I2X · §113 · §214]` |
+| **INVEQ** route `= 2` (STD) | `DatSection3InvEq` → `IEEEInverseTimeSolver` | **yes** | **yes — BIT-EXACT vs native `CalcThermEq` (§5, 2026-06-01)** | `*Eq=0` uniform, `*ICalc=(10,10,4,4)` integrity, `InOut∈{0,2}` switch → IEEE solver; 4,524 sensors `[06 §matrix / §synthesis-4 / §5]` |
+| **INVEQ** route `= 2` (GFD) | `DatSection1GfInvEq` → `IEEEInverseTimeSolver` | **yes** | **yes — Therm plug-basis BIT-EXACT (L1 §3f) + ANSI `CalcAnsiEqGF` BIT-EXACT (#120 §3e)** | populator `FUN_01207bf0` → reader `nSection=5` → 8 setters; `byICalc=(in==0)?2:(in==1)?1:0`; Therm/Ansi = IdOp `*Eq` byte; 1,713 sensors `[06 §matrix, pass-5 / §3e / §3f]` |
 | **TUSTD** route `= 3` | GE trip-unit STD | **no — fall-through diagnostic only** | no | "Enteliguard not supported", 235 sensors `[DLL_END_TO_END_MAPPING §6/§summary]` `[06 §matrix]` |
 | **TUG** route `= 4` | GE trip-unit ground | **no — fall-through diagnostic only** | no | GE-TU-Gnd routing not implemented, 209 sensors `[06 §matrix]` |
 
@@ -254,15 +254,25 @@ field-trust gate holds).
 So the recovered evaluator form is `i2x_composite(M) = max(ixt_time(M, i_anchor, t_anchor, x), std_floor)`.
 **IMPLEMENTED 2026-06-03 (commit `apex aa9b89ea`):** `etu_ixt.i2x_delay_surface` now SUPPORTS composite (the s17
 fixture carries hand-derived `max(ramp,floor)` checks — ramp dominates at low current, floor clamps at high — + a
-dedicated floor-clamp test; 20 parity tests green). **Field-trust tier = `verify`** (not full `db`): the combine rule
-is decompile-confirmed (the `max(rTmin,dMinTime)` lambda) and the ramp is native-bit-exact (I2X-4), but the full
-native composite **render** has not been spot-checked. **Render-capture feasibility (scouted 2026-06-03):** there is
-no clean per-point native evaluator — `CTccLVBreakerCurveSST.ComputeIXT` is the *inverse* (amps-from-time, →
-`ComputeAmps`), so a native capture means driving a full `RecalcCurve_SSTT_LT_STDB_INST`/`RecalcCurve_STT_*` with the
-complete ~2592-byte object state (heavy). → the **`verify`→`db` promotion gate** is a **captured EasyPower curve**
-spot-check (the lighter path), deferred. The evaluator is **ready** but **NOT yet wired into `/calculate`** — the
-STD-first wiring + the live un-withhold is the **I2X-6** step (an operator trust-flip boundary: show composite at the
-`verify` tier, or hold it until the captured-curve `db` promotion).
+dedicated floor-clamp test; 20 parity tests green). ~~**Field-trust tier = `verify`**~~ **PROMOTED `verify`→`db`
+2026-06-11 (#72 close, STATE §214):** the spot-check gate is CLOSED via the **assembly-primitive oracle path** —
+instead of driving the heavy stateful `MergeSST` (~99-slot object, scouted 2026-06-03 as infeasible per-point),
+the #72 oracle invoked the native ASSEMBLY PRIMITIVES (`CLinearEquation.TrimCurveX`/`ComputeY`/`ComputeLogY`,
+`CLogLogIntersection.SetPointLine1/2+SolveWithinConstraints/Solve`, the stateless `CPointsMergeSST.MergeLines`,
+and the whole `CPointsMergeGF` composer) by reflection over the EXACT primitive calls
+`composite_boundary.assemble_composite_bands` performs on LIVE served curves (5 vendor-diverse sensors × hi/lo
+dials) + replication-guarded offline vendor sweeps + synthetic adversarial edges. Results (committed DLL-free
+fixture `composite_primitives_native_parity.json`, 165 scenarios / 87 curves): interpolation double-exact
+(max rel 6.1e-15); clipping geometric-equal incl. edge interpolation; the native intersection solver is
+**SINGLE-precision** (parity at 1.2e-7 rel; ours is the same root at double); all 24 real handoffs = native
+no-cross ↔ our vertical-drop (branch-exact); the GF composer matches verbatim (incl. the discovered
+`TrimCurveStartX` in-place interpolate-at-GFPU rule = our clip rule). Characterized + documented (not
+replicated, ratified deviations): native fills beyond the data end by log-log extrapolation of the boundary
+segment with a 0.001 s-floor horizontal fallback (8/8 probe observations) — equals our flat-tail extension for
+every real composite case; native crossing joins quantize to the curve-1 segment boundary (the IL_0473 snap)
+where ours uses the exact crossing (no real-corpus occurrence). **Per-element curves db (ramp I2X-4 + stored
+floor + decompile-cited max-combine) + assembly primitives native-validated ⇒ composite db by composition.**
+Wiring + the live un-withhold shipped at **I2X-6** (the trust now reads `db`).
 
 **Evaluator built (I2X-3, 2026-06-03):** the validated managed kernel is
 `packages/calc-engine/src/apex_calc_engine/services/calc_engine/etu_ixt.py` (`ixt_time` =
@@ -527,6 +537,26 @@ INST times are still the 0.05/0.08 s placeholders (`Sec4Inst*` = matrix row 12, 
 floor inherits them); route-2 sweeps still default `max_amps=100 kA` (now harmless — the assembly
 clips them at the handoffs).
 
+**#72 ASSEMBLY-PRIMITIVE VALIDATION CLOSED 2026-06-11 (STATE §214):** the serving assembly above is
+native-validated at primitive grain — every `_clip_to_window` / `_loglog_time_at` / `_handoff` /
+GF-composition call it performs on live served curves (sensors 17/809/1160/3833/4628 × hi/lo dials)
++ replication-guarded vendor sweeps + synthetic edges was replayed through the native
+`CLinearEquation.TrimCurveX`/`ComputeY`/`ComputeLogY`, `CLogLogIntersection`, the stateless
+`CPointsMergeSST.MergeLines`, and the whole `CPointsMergeGF` composer by reflection (the §107 harness;
+committed DLL-free fixture `apps/control-plane-api/tests/fixtures/composite_primitives_native_parity.json`,
+165 scenarios / 87 curves; test `test_composite_boundary_native_parity.py`, 9 green). Findings banked:
+interpolation double-exact (6.1e-15); **the native intersection solver is SINGLE-precision** (float32 —
+parity 1.2e-7); all 24 real handoffs = native no-cross ↔ vertical-drop; `TrimCurveStartX` **mutates the
+band start in place with the log-log-interpolated point at GFPU** (= our clip rule); native beyond-data
+fill = log-log extrapolation of the boundary segment with a **0.001 s-floor horizontal fallback** (8/8
+probes) — equals our flat-tail rule for every real composite case; native crossing joins quantize to the
+curve-1 segment end (IL_0473) vs our exact crossing (no real-corpus occurrence). Route-1 `composite`
+field-trust **PROMOTED verify→db** (`delay_trust._classify_i2x`; 6,309 composite-shape route-1 sensors).
+**Adjacent render-coverage gap surfaced (NOT in #72's scope):** the route-1 STD/GFD CURVE synthesis in
+`/plot-tcc` is gated behind the **Micrologic style-NAME check** (`synthesize_i2t_longtime`) — the
+general route-1 population (all shapes, incl. the now-db composite) serves trusted TIMES but no
+STD/GFD curves; generalizing that gate to all route-1 sensors is a follow-on serving lane.
+
 **Tolerance-envelope serving lane SHIPPED 2026-06-10 (#124, apex `8b8120d5` + `9b1e995b`; STATE §212):**
 the field-acceptance corridor is a DISTINCT surface from the published band above — `services/neta/
 tolerance_envelope.py` (pure) transforms the served per-element curves by the §2 per-sensor tolerances
@@ -591,18 +621,19 @@ withheld with a diagnostic, pickup/curve unknown.
 | 4 | **GFD direct-band** | `DS1GF_SEC3_I2T = 0` | **PROVEN** | **YES.** Literal-amps anchor validated. | Full-SE `2000A` ×4 ordinals; TASK-C `[06]` |
 | 5 | **LTD window** | LTD method 1-5 | **PROVEN (impl. complete)** | **YES** for the window; **flag** `DS2_DLY_PTY` parity. | `etu_ltd.py` 5 methods COMPLETE `[DLL_SEMANTIC_FINDINGS §3]`; §N.3 deferred `[06]` |
 | 6 | **STD-side INVEQ curve NUMBERS** | `DS3_SEC3_I2T = 2` (4,524 sensors, **100% Therm**) | **PROVEN (native-execution parity)** | **YES.** Managed solver reproduces the native `CalcThermEq`/`CalcThermEq3` kernel **BIT-EXACT (maxabs 0.0)** over the complete STD Therm corpus (4 dial curves; all `byICalc=0`). Promoted "verify"→"db" in `delay_trust.py`. | `[DLL-EXEC TccBase.dll]` native kernel invoked; `inveq_therm_native_parity.json` + tests `[VERIFIED-LIVE 2026-06-01 §3f]` |
-| 7 | **GF-side INVEQ curve NUMBERS** | `DS1GF_SEC3_I2T = 2` (1,713 sensors = **1,690 Therm + 23 Ansi**; 100 Ansi rows) | **Therm = PROVEN (native-execution parity, plug basis); Ansi = FORMULA RECOVERED, anchors pickup, excluded pending implementation** | **Therm: PROMOTED "verify"→"db" (L1 close 2026-06-09). `field[13]` = the PLUG rating (ComputeAmps slot map, §3f); managed `rIRef' = rIRef × plug/pickup` reproduces native `CalcThermEq` byICalc=1 BIT-EXACT (maxabs 0.0, 416-scenario corpus sweep; fixtures `gf_inveq_field13_native_parity.json`). Basis-less rows withheld at the solver. Ansi: anchors PICKUP (`id_op_i_calc=8`→byICalc=0, corrected 2026-06-09) — independent implement+validate lane; HARD-EXCLUDED in `etu_delay_routing.py` meanwhile.** | `[DLL-EXEC TccBase.dll 2026-06-09]` native byICalc=1 sweep; ComputeAmps slot map `[DLL]`; apex `da90b3e8` `[VERIFIED-LIVE 2026-06-09 §3f]` |
+| 7 | **GF-side INVEQ curve NUMBERS** | `DS1GF_SEC3_I2T = 2` (1,713 sensors = **1,690 Therm + 23 Ansi**; 100 Ansi rows) | **Therm = PROVEN (native-execution parity, plug basis); Ansi = PROVEN (native-execution parity, pickup basis)** | **Therm: PROMOTED "verify"→"db" (L1 close 2026-06-09). `field[13]` = the PLUG rating (ComputeAmps slot map, §3f); managed `rIRef' = rIRef × plug/pickup` reproduces native `CalcThermEq` byICalc=1 BIT-EXACT (maxabs 0.0, 416-scenario corpus sweep; fixtures `gf_inveq_field13_native_parity.json`). Basis-less rows withheld at the solver. Ansi: PROMOTED "db" (#120 close 2026-06-10) — `_evaluate_native_ansi` reproduces `CalcAnsiEqGF` (C37.112 inverse, pickup basis `id_op_i_calc=8`→byICalc=0) BIT-EXACT over the complete corpus (18 tuples / 10,398 native points; fixtures `gf_inveq_ansi_native_parity.json`); un-excluded + served via the `in_out=1` availability-gate extension.** | `[DLL-EXEC TccBase.dll 2026-06-09/10]` native byICalc=1 + CalcAnsiEqGF sweeps; ComputeAmps slot map `[DLL]`; apex `da90b3e8`/`26c2fe42`/`89c3d306` `[VERIFIED-LIVE 2026-06-10 §3e/§3f]` |
 | 8 | **WEG OCR Type A pickup** | `DS1GF_PICKUP_CALC = 6` (§N.4, 7 sensors) | **STUB** | **NO — hard-exclude.** Pickup formula UNKNOWN; curve deliberately withheld. Show "unsupported". | diagnostic exclusion `[06 §matrix §N.4]` |
 | 9 | **GE-TU-STD** | `DS3_SEC3_I2T = 3` (235 sensors) | **DEFERRED / STUB** | **NO — hard-exclude.** Fall-through diagnostic only; not solved. | "Enteliguard not supported" `[06]` `[DLL_END_TO_END_MAPPING]` |
 | 10 | **GE-TU-Gnd** | `DS1GF_SEC3_I2T = 4` (209 sensors) | **DEFERRED / STUB** | **NO — hard-exclude.** Fall-through diagnostic only. | `[06 §matrix]` |
-| 11 | **I2X solver** | `DS3_SEC3_I2T = 1` (8,708 sensors) | **DEFERRED / NOT IMPLEMENTED** | **NO — hard-exclude.** I²t/Iˣ·t solver not built; (`I2X=255` §N.2 also open). | `[DLL_END_TO_END_MAPPING §6/§16]` `[06 §N.2]` |
+| 11 | **I2X solver** | `DS3_SEC3_I2T = 1` (8,708 sensors) | **PROVEN (shape-gated)** | **YES for all three shapes.** `etu_ixt` kernel: **flat** = the stored definite time (db); **ramp** = `CIxt.ComputeT` power law, native-bit-exact (I2X-4, max 0 ULP); **composite** = `max(ramp, floor)` — combine rule decompile-cited + the RENDER ASSEMBLY validated against the native TccBase assembly primitives (**#72 close 2026-06-11**, fixtures `composite_primitives_native_parity.json`) → db by composition (6,309 composite-shape sensors). Unknown shape / NULL anchors / `I2X=255` (2 sentinel rows, §N.2) → withheld. | `[DLL-EXEC TccBase.dll 2026-06-03/11]` CIxt + assembly-primitive oracles; apex I2X-4/I2X-6/#72 `[VERIFIED-LIVE]` |
 | 12 | **INST override** (`Sec4Inst*` / `DS4_OVR_*`) | INST-override path (§N.5 / §K) | **STUB / DEFERRED** | **NO — hard-exclude / withhold.** INST curve-calc surface unresolved; override math native-only, not read by managed lib. | `[06 §N.5, §K]` `[09 §4f]` |
 | 13 | **STPU override (band routing)** | `tcc.etu_stpu_overrides` (3 sensors) | **PARTIAL** | **Constant-mode override pickup + override tolerances OK; decreasing-mode curve = withhold.** Override *routing* covered in TASK-C; broader override math deferred. | `[06 §matrix]` `[DLL_SEMANTIC_FINDINGS §4]` |
 
 **The one-line rule the matrix encodes:** *ship rows 1-5 (and constant-mode override 13) **plus row 6
-STD-INVEQ Therm AND row 7 GF-INVEQ Therm** (both native-execution PROVEN — STD §107, GF plug-basis L1
-close 2026-06-09 §3f); **hard-exclude the 23 GF Ansi sensors / 100 rows (formula recovered, pickup-anchored,
-solver path not yet shipped) and rows 8-12.***
+STD-INVEQ Therm, row 7 GF-INVEQ Therm AND Ansi** (all native-execution PROVEN — STD §107, GF plug-basis L1
+close 2026-06-09, GF Ansi #120 close 2026-06-10 §3e/§3f) **plus row 11 I2X flat/ramp/composite**
+(CIxt I2X-4 + the #72 assembly-primitive close 2026-06-11; unknown shapes withheld);
+**hard-exclude rows 8-10 and 12.***
 
 > **Test-POINT vs expected-TIME (NETA sheet column-trust).** For a delay element the test sheet has two
 > separable quantities, with *different* trust sources: **(a) the test point** — the NETA test multiple
@@ -614,12 +645,13 @@ solver path not yet shipped) and rows 8-12.***
 > The LV page (`/lvbreakertcc`) renders (a) directly (NETA multiple +
 > inject current, field-correct) and **route-gates (b) per the per-sensor delay-calc route** (the §6 gating
 > algorithm, encoded once in `apps/control-plane-api/services/neta/delay_trust.py`): **DB** for direct-band
-> (STD/GFD route 0) + LTD (methods 1-5) **+ STD- and GFD-INVEQ (route 2) Therm — both validated BIT-EXACT
-> vs the native `CalcThermEq` kernel (§3f)**; **"verify"** for the I2X composite shape only (route 1,
-> native-render spot-check pending, task #72); and
+> (STD/GFD route 0) + LTD (methods 1-5) **+ STD- and GFD-INVEQ (route 2) Therm AND GFD-INVEQ ANSI — all
+> validated BIT-EXACT vs the native kernels (`CalcThermEq` §3f / `CalcAnsiEqGF` §3e #120)** **+ I2X
+> (route 1) flat/ramp/composite shapes** (CIxt I2X-4 + the #72 assembly-primitive close — the "verify"
+> tier is now EMPTY for delay elements); and
 > **"n/a" (time withheld)** for the
-> not-implemented / hard-excluded routes — I2X (route 1), GE-TU STD/Gnd (routes 3/4), and the GF-INVEQ ANSI
-> family (`id_op_eq ≠ 0`). `/calculate` now returns a per-delay-element **`trust` + `delay_route` + `trust_reason`**
+> not-implemented / hard-excluded routes — unknown-shape I2X (route 1) and GE-TU STD/Gnd (routes 3/4).
+> `/calculate` now returns a per-delay-element **`trust` + `delay_route` + `trust_reason`**
 > and **nulls the expected time for unsupported routes** (the fall-through band value is not a certified curve;
 > G4 §6 step 6) — so an I2X sensor like XT2 LSIG (STD/GFD route 1) no longer shows a fall-through `band_table`
 > time under a "verify" badge. The inject current (the test point) stays valid in every tier. `/context` also
@@ -760,32 +792,32 @@ emit.** This is the operational form of the Field-Trust Matrix — apply it per 
    - **GFD:** `ground_delay_calc_code` (from `DS1GF_SEC3_I2T`)
 
 4. **Emit full TD windows for proven routes:** direct-band route **`= 0`** (NONE STD `DatSection3STD` /
-   GFD `DatSection1GfGFD`), the **LTD window** (methods 1-5), **constant-mode STPU overrides**, **and
-   `STD` INVEQ route `= 2` Therm** — the latter validated BIT-EXACT against the native `CalcThermEq`
-   kernel (§3f), so STD InvEq Therm now ships as **"db"**. These are rows 3/4/5/6/13.
+   GFD `DatSection1GfGFD`), the **LTD window** (methods 1-5), **constant-mode STPU overrides**,
+   **INVEQ route `= 2`** — STD Therm (§5, BIT-EXACT vs `CalcThermEq`), GFD Therm (plug-basis L1 close
+   §3f) AND GFD ANSI (`CalcAnsiEqGF` #120 close §3e) — **and I2X route `= 1` for the flat / ramp /
+   composite shapes** (CIxt I2X-4 bit-exact + the #72 assembly-primitive close, STATE §214). These are
+   rows 3/4/5/6/7/11/13 — all **"db"**.
 
-5. **FLAG (`"verify"`) the GFD InvEq route (`= 2`) Therm:** the GF runtime uses `byICalc=1`
-   (`num3=field13` ≠ pickup) which the managed `num3=num6` solver does not yet reproduce (and `rIRef<rM`
-   GF rows return None; §3f). Surface the GFD InvEq Therm curve flagged "verify — engine estimate", not
-   as field-authoritative. Promotion to "db" is gated on `field13` provenance + oracle re-validation
-   (4,524 STD already promoted; ~1,690+6,760 GF Therm pending).
+5. **The `"verify"` tier is currently EMPTY for delay elements** (its last occupant — the I2X composite
+   shape — was promoted by the #72 spot-check 2026-06-11). It remains the framework's flagged middle
+   tier for any future partially-validated surface.
 
-6. **HARD-EXCLUDE the stubs/deferred routes:** any sensor whose delay element routes to **I2X (`=1`)**,
-   **TUSTD (`=3`)**, **TUG (`=4`)**, **WEG OCR Type A pickup (`DS1GF_PICKUP_CALC = 6`)**, the
-   **GF-InvEq ANSI family (`id_op_eq != 0` on an INVEQ GFD row — 23 sensors / 100 rows; §3e/§5 row 7)**,
+6. **HARD-EXCLUDE the stubs/deferred routes:** any sensor whose delay element routes to
+   **TUSTD (`=3`)**, **TUG (`=4`)**, **WEG OCR Type A pickup (`DS1GF_PICKUP_CALC = 6`)**, an
+   **I2X (`=1`) band of UNKNOWN shape / NULL anchors / the `I2X=255` sentinel**,
    or the **INST `Sec4Inst*` override** surface must be shown as **"unsupported / withheld"**, never a
    default number. A silent fall-through diagnostic is *not* a curve — do not let it become one on a
-   sheet. *(The GF-InvEq ANSI exclusion is wired in `etu_delay_routing.py`; pass `id_op_eq` to
-   `route_delay_curve` / `dispatch_gfd_delay` so the gate fires.)*
+   sheet.
 
 7. **Consume the current dispatcher, not a stale forward-port.** Behavior authority is the
    source-domain demo (`etu_delay_routing.py` for InvEq dispatch); verify the sheet generator reads
    the *current* dispatcher, not a lagging forward-port. `[06 §R5]`
 
 **One-sentence MVP gate:** *PU tolerances ship for every sensor; TD windows ship for direct-band
-(route 0) + LTD + constant-mode overrides **+ STD-INVEQ (route 2) Therm (native-execution PROVEN)**;
-GFD-INVEQ (route 2) Therm is flagged "verify"; everything else (I2X, GE-TU, GF-INVEQ Ansi, INST override)
-is hard-excluded.*
+(route 0) + LTD + constant-mode overrides + **the full INVEQ route 2 (STD Therm §5 · GFD Therm L1 §3f ·
+GFD ANSI #120 §3e)** + **I2X route 1 flat/ramp/composite (I2X-4 + #72 §214)** — all native-execution
+PROVEN "db"; the rest (GE-TU routes 3/4, WEG OCR pickup, unknown-shape I2X, INST override) is
+hard-excluded.*
 
 ---
 

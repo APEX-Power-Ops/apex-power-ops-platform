@@ -56,7 +56,7 @@ every stage; the punch list is about *coverage*, not *safety*.
 | ~~L1~~ | **GF-INVEQ Ansi** | 25 sensors / 108 rows | **db** ✓ (native §120) | — | — | **DONE 2026-06-10 (apex `26c2fe42`)** — `CalcAnsiEqGF` C37.112 inverse (`T=rA+rB/(M-rC)+rD/(M-rC)²+rE/(M-rC)³` floored rTmin) implemented (`_evaluate_native_ansi`) + validated BIT-EXACT over the COMPLETE corpus (18 tuples / 10,398 native points; `gf_inveq_ansi_native_parity.json`). Standalone PICKUP-basis lane (`id_op_i_calc=8`→byICalc=0; no field[13]); un-excluded + trust→db |
 | ~~L2~~ | ~~GF-INVEQ Ansi (standalone)~~ | — | — | — | — | ~~MERGED INTO L1 (2026-06-02)~~ → L1 IS now the standalone Ansi lane (Therm banked 2026-06-09) |
 | L3 | GE-TU delay solver | STD 235 / GFD 209 | withheld | — | M | OPEN — separate trip-unit math |
-| L4 | **I2X / Iˣt delay solver** | STD 8,708 / GFD 5,976 (~15k) | withheld | — | **M (resized 06-03; ~98% = banked I²t)** | OPEN — biggest single lever; gating verify DONE §113 |
+| L4 | **I2X / Iˣt delay solver** | STD 8,708 / GFD 5,976 (~15k) | **db** ✓ (flat/ramp I2X-4+I2X-6; **composite #72 §214**) | — | — | **TIME SOLVER DONE 2026-06-11** — all three shapes db (unknown-shape/NULL-anchor withheld; GFD anchor gaps self-guarded §117). Follow-on (serving, not trust): generalize the Micrologic-name-gated route-1 CURVE synthesis |
 | L5 | Delay tolerance BANDS (per-mfr ± on time) | LTD + derived rows | **LTD: db (per-mfr DS2_TOL)** | per-mfr DB band | M | **LTD DONE §114**; STD/GFD + ET 1.0 remain |
 | L6 | Envelope-only setting+tolerance catalog | ~4,106 families (PXR2 seeded) | — | `[VENDOR-DOC]` | L (incremental) | IN PROGRESS — validated-library loop |
 | L7 | Pickup BAND validation vs OEM | per family | db | per-sensor DB | M | OPEN — confirm DB = true OEM per-mfr |
@@ -145,12 +145,20 @@ kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find.
   (`_i2x_field_delay`; M=inject/Ir STD, inject/In GFD); the band **shape** drives `classify_delay_trust` —
   **flat/ramp → `db`, composite → `verify`**, NULL-anchor/unknown → withheld. Live-verified (s3947 route-1: STD
   `verify` 0.444 s, GFD `verify` 0.694 s, both `i2x_composite`, exact). The kernel self-guards the gappy GFD (§117).
-- **Remaining (gated):** (b) **validate the composite render** — native composite-band render spot-check confirming
-  `max(ramp, floor)`, then promote composite `verify`→`db` (**operator AUTHORIZED the native-renderer RE 2026-06-04,
-  task #72 — unstarted**; drive `RecalcCurve_SSTT_LT_STDB_INST` with the full object state vs `etu_ixt`); the flat+ramp
-  `db` promotion + frontend un-withhold for STD-first is the remaining serving step.
+- **DONE (#72 composite render spot-check + promotion, 2026-06-11, STATE §214):** composite `verify`→`db`
+  PROMOTED — the gate closed via the **assembly-primitive oracle path** (not the heavy stateful
+  `RecalcCurve_SSTT_*` drive): the native assembly primitives (`TrimCurveX`/`ComputeY`/`ComputeLogY`/
+  `CLogLogIntersection`/stateless `MergeLines`/whole `CPointsMergeGF`) were invoked by reflection over the
+  EXACT primitive calls `composite_boundary.assemble_composite_bands` performs on live served curves +
+  replication-guarded vendor sweeps + synthetic edges (committed fixture
+  `composite_primitives_native_parity.json`, 165 scenarios; 9 parity tests green). Per-element curves db
+  (ramp I2X-4 + stored floor + decompile-cited max-combine) + primitives native-validated ⇒ composite db
+  by composition; 6,309 composite-shape route-1 sensors now carry `db` TIMES. `[G4 §3b·I2X / §3g §214]`
+- **Remaining (follow-on serving lane, NOT trust):** the route-1 STD/GFD **CURVE synthesis** in `/plot-tcc`
+  is still gated behind the Micrologic style-NAME check (`synthesize_i2t_longtime`) — the general route-1
+  population serves db TIMES but no STD/GFD curves; generalize the gate (surfaced at the #72 close).
 `[G4 §3a/§3c/§4 · DLL TccBase.dll CIxt 24248-24297 / SetSTDB_* 24440-24531 / IsSTDB_Ixt 24196,26398-26442 ·
-DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113]`
+DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113/§214]`
 
 ### L5 — Delay tolerance BANDS (per-manufacturer ± on time)  ·  **LTD DONE 2026-06-03; B/C re-scoped+deferred; STD/GFD direct-band remains**
 - **DONE — LTD time band now per-manufacturer.** Replaced the hardcoded `(0.7·nominal, nominal)` placeholder
