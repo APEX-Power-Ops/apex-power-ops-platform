@@ -115,12 +115,29 @@ datasheet_templates ────┘                                   │
 | `work.*` / `mutation-seam` (`seam.*`) | Project/work execution + the governed write pipeline. `neta.*` field records **sync through** the mutation-seam; `datasheets.project_ref`/`work_package_ref` soft-link to it. |
 | `pm.idempotency_keys` | The durable dedupe store that makes offline sync replay-safe. |
 | `tcc.*` + `calc-engine` | Time-current-curve reference + calc. **Seeds** acceptance windows for breaker/relay data sheets during provisioning. |
-| `forms-engine` | Document generation (AHA/MOP/PSS). Becomes the **report/export** renderer for completed `neta` data sheets (Pillar reporting chip). |
+| `forms-engine` / `forms-studio` / `power-test-converters` | Existing forms + report-generation + format-converter variants. **Candidate** report/export + authoring surfaces for this lane — but their consolidation is an open decision (see §6, D-FORMS). Do not wire report-gen to `neta.*` until that is ruled. |
 | `infra/.../source-lineage/apex-resa` NETA procedures/test items | Reference seed for `datasheet_templates.field_schema` (later chip). |
 
 ---
 
-## 6. Maintenance
+## 6. Open lane decisions (held)
+
+This lane owns the full datasheet lifecycle — **define forms → capture/store → generate
+reports** — but two structural calls are deliberately deferred, recorded here so they
+are decided, not drifted into:
+
+| ID | Decision | State | Notes |
+|---|---|---|---|
+| **D-FORMS** | How the forms + report-generation domain is structured | **HELD 2026-06-14** | Several early variants exist (`packages/forms-engine`, the `neta-forms` source repo, `packages/power-test-converters`). They need a proper consolidation/restructuring decision before report-gen is wired to `neta.*`. Until ruled: reuse nothing by default, build nothing parallel. |
+| **D-SURFACE** | Where the lane's UI surfaces live (`apps/field-surface` capture PWA · `apps/forms-studio` authoring · or a new `apps/neta-*`) | **DECIDE PER-CHIP** | Settle when the capture chip (punch list Chip 4) and authoring/report chips actually start. Schema + charter work proceeds meanwhile. |
+| **D-GIT** | Branch/merge model | **WORKING: chip-sized PRs → `main`** | Lane = this charter + punch list, not a long-lived branch. Each chip is a small PR; merge to `main` often. Revisit only if divergence becomes painful. |
+
+`power-test-converters` (PTM/DTAX format conversion) is folded into this lane as
+import/export tooling (punch list Chips 9–10), pending its place in the D-FORMS rework.
+
+---
+
+## 7. Maintenance
 
 - Each guide carries its own status line; bump it when a chip lands.
 - When the data model changes, update §4 here and the migration MANIFEST together.
