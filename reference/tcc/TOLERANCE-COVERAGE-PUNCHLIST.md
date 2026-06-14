@@ -56,7 +56,7 @@ every stage; the punch list is about *coverage*, not *safety*.
 | ~~L1~~ | **GF-INVEQ Ansi** | 25 sensors / 108 rows | **db** ✓ (native §120) | — | — | **DONE 2026-06-10 (apex `26c2fe42`)** — `CalcAnsiEqGF` C37.112 inverse (`T=rA+rB/(M-rC)+rD/(M-rC)²+rE/(M-rC)³` floored rTmin) implemented (`_evaluate_native_ansi`) + validated BIT-EXACT over the COMPLETE corpus (18 tuples / 10,398 native points; `gf_inveq_ansi_native_parity.json`). Standalone PICKUP-basis lane (`id_op_i_calc=8`→byICalc=0; no field[13]); un-excluded + trust→db |
 | ~~L2~~ | ~~GF-INVEQ Ansi (standalone)~~ | — | — | — | — | ~~MERGED INTO L1 (2026-06-02)~~ → L1 IS now the standalone Ansi lane (Therm banked 2026-06-09) |
 | L3 | GE-TU delay solver | STD 235 / GFD 209 | withheld | — | M | OPEN — separate trip-unit math |
-| L4 | **I2X / Iˣt delay solver** | STD 8,708 / GFD 5,976 (~15k) | **db** ✓ (flat/ramp I2X-4+I2X-6; **composite #72 §214**) | — | — | **TIME SOLVER DONE 2026-06-11** — all three shapes db (unknown-shape/NULL-anchor withheld; GFD anchor gaps self-guarded §117). Follow-on (serving, not trust): generalize the Micrologic-name-gated route-1 CURVE synthesis |
+| L4 | **I2X / Iˣt delay solver** | STD 8,708 / GFD 5,976 (~15k) | **db** ✓ (flat/ramp I2X-4+I2X-6; **composite #72 §214**) | — | — | **TIME SOLVER DONE 2026-06-11** — all three shapes db (unknown-shape/NULL-anchor withheld; GFD anchor gaps self-guarded §117). **CURVE synthesis Tier-1 DONE 2026-06-14 (§222/#128, apex `ed9f356f`)** — route-gated (not Micrologic style-name); ~10k+ non-Micrologic route-1 sensors now render their staircase. Tier-2 open: per-vendor STD ref-axis basis for the non-composite-certified tail |
 | L5 | Delay tolerance BANDS (per-mfr ± on time) | LTD + derived rows | **LTD: db (per-mfr DS2_TOL)** | per-mfr DB band | M | **LTD DONE §114**; STD/GFD + ET 1.0 remain |
 | L6 | Envelope-only setting+tolerance catalog | ~4,106 families (PXR2 seeded) | — | `[VENDOR-DOC]` | L (incremental) | IN PROGRESS — validated-library loop |
 | L7 | Pickup BAND validation vs OEM | per family | db | per-sensor DB | M | OPEN — confirm DB = true OEM per-mfr |
@@ -154,9 +154,15 @@ kernel reading `X` from `I2T_VAL`. No `CalcThermEq`, no polynomial root-find.
   `composite_primitives_native_parity.json`, 165 scenarios; 9 parity tests green). Per-element curves db
   (ramp I2X-4 + stored floor + decompile-cited max-combine) + primitives native-validated ⇒ composite db
   by composition; 6,309 composite-shape route-1 sensors now carry `db` TIMES. `[G4 §3b·I2X / §3g §214]`
-- **Remaining (follow-on serving lane, NOT trust):** the route-1 STD/GFD **CURVE synthesis** in `/plot-tcc`
-  is still gated behind the Micrologic style-NAME check (`synthesize_i2t_longtime`) — the general route-1
-  population serves db TIMES but no STD/GFD curves; generalize the gate (surfaced at the #72 close).
+- **CURVE synthesis Tier-1 DONE 2026-06-14 (§222, task #128, apex `ed9f356f`):** the route-1 STD/GFD
+  **CURVE synthesis** in `/plot-tcc` was gated behind the Micrologic style-NAME check
+  (`synthesize_i2t_longtime`); now gates on the per-element ROUTE byte (`std_route`/`gfd_route`==1, D1),
+  with LTD-I²t kept Micrologic-scoped (D2) and GFD withholding without a plug(In) basis (D4). ~10,219 STD /
+  8,381 GFD non-Micrologic route-1 sensors render their staircase (was db TIMES only); 108/108 TDD,
+  live-verified ABB 809 / GE 17, Micrologic 3833 unchanged. Scope: `reference/tcc/TASK-128-SCOPE.md`.
+  **Tier-2 (open):** per-vendor STD ref-axis basis-confirmation for the non-composite-certified tail
+  (`i_open` 2–23 + fractionals = vendor-specific; the 6,309 composite set is §214-transitively-validated,
+  the tail is not).
 `[G4 §3a/§3c/§4 · DLL TccBase.dll CIxt 24248-24297 / SetSTDB_* 24440-24531 / IsSTDB_Ixt 24196,26398-26442 ·
 DatSection3STD + DatSensor.DS3_I2T_VAL/DS1GF_I2T_VAL · §113/§214]`
 
