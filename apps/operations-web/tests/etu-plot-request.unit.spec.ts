@@ -87,11 +87,11 @@ test('nominal-defaults request mirrors the legacy auto-pick', () => {
 })
 
 test('delay basis labels surface the mfr-vs-fallback distinction (NETA = mfr tolerances)', () => {
-  expect(delayBasisLabel('timing_source=ltd_reference_window')).toBe('mfr tolerance (DS2)')
-  expect(delayBasisLabel('timing_source=ltd_reference_window_generic')).toContain('generic estimate')
-  expect(delayBasisLabel('timing_source=band_table')).toBe('mfr band (per-sensor DB)')
-  expect(delayBasisLabel('timing_source=i2x_composite')).toBe('validated I²t surface')
-  expect(delayBasisLabel('timing_source=curve_interpolation')).toBe('curve envelope (open/clear)')
+  expect(delayBasisLabel('timing_source=ltd_reference_window')).toBe('Manufacturer LTD tolerance (device library)')
+  expect(delayBasisLabel('timing_source=ltd_reference_window_generic')).toContain('no manufacturer tolerance on file')
+  expect(delayBasisLabel('timing_source=band_table')).toBe('Manufacturer delay band (per-sensor)')
+  expect(delayBasisLabel('timing_source=i2x_composite')).toBe('Manufacturer I²t characteristic (validated)')
+  expect(delayBasisLabel('timing_source=curve_interpolation')).toBe('Manufacturer curve band (open/clear)')
   expect(delayBasisLabel(null)).toBeNull()
   expect(delayBasisLabel('no marker here')).toBeNull()
 })
