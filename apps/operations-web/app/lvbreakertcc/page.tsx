@@ -51,6 +51,7 @@ import {
   type EMTSectionSettingsResponse,
 } from '../../lib/breaker-resources'
 import { buildSensorPool, summarizeSensorTerminal, type AltTripInfo } from '../../lib/etu-sensor-pool'
+import { effectiveBreakerClass } from '../../lib/etu-cross-filter'
 import { tripStyleOptionLabel, tripStylesForType } from '../../lib/trip-style-options'
 import {
   buildDefaultEtuPlotRequest,
@@ -415,7 +416,7 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     const tripManufacturerIds = manufacturerIdsFromKey(tMfrIdsKey)
     fetchEtuBreakerCascade({
       manufacturerIds: breakerManufacturerIds,
-      breakerClass: bClass || null,
+      breakerClass: effectiveBreakerClass(bClass, bIdClass),
       breakerId: bBreakerIdsKey ? null : bId ? Number(bId) : null,
       breakerIds: manufacturerIdsFromKey(bBreakerIdsKey),
       breakerStyleId: bStyleIdsKey ? null : bStyle ? Number(bStyle) : null,
@@ -432,7 +433,7 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setBBusy(false) })
     return () => { active = false }
-  }, [bMfrIdsKey, bClass, bId, bBreakerIdsKey, bStyle, bStyleIdsKey, tMfrIdsKey, tType, tTypeIdsKey, tStyle, tStyleIdsKey])
+  }, [bMfrIdsKey, bClass, bIdClass, bId, bBreakerIdsKey, bStyle, bStyleIdsKey, tMfrIdsKey, tType, tTypeIdsKey, tStyle, tStyleIdsKey])
 
   // Axis B cascade — narrowed by the breaker-axis selection (cross-half + bridge_xfilter).
   // Its sensors[] is the compatible-sensor intersection (the shared terminal).
@@ -448,7 +449,7 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
       tripStyleId: tStyleIdsKey ? null : tStyle ? Number(tStyle) : null,
       tripStyleIds: manufacturerIdsFromKey(tStyleIdsKey),
       breakerManufacturerIds,
-      breakerClass: bClass || null,
+      breakerClass: effectiveBreakerClass(bClass, bIdClass),
       breakerId: bBreakerIdsKey ? null : bId ? Number(bId) : null,
       breakerIds: manufacturerIdsFromKey(bBreakerIdsKey),
       breakerStyleId: bStyleIdsKey ? null : bStyle ? Number(bStyle) : null,
@@ -459,7 +460,7 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setTBusy(false) })
     return () => { active = false }
-  }, [tMfrIdsKey, tType, tTypeIdsKey, tStyle, tStyleIdsKey, bMfrIdsKey, bClass, bId, bBreakerIdsKey, bStyle, bStyleIdsKey])
+  }, [tMfrIdsKey, tType, tTypeIdsKey, tStyle, tStyleIdsKey, bMfrIdsKey, bClass, bIdClass, bId, bBreakerIdsKey, bStyle, bStyleIdsKey])
 
   // Breaker-axis terminal -> sensors directly via the SST bridge, so the breaker lane
   // surfaces sensors without requiring a trip-style tap. Fires the moment a breaker is
@@ -473,7 +474,7 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
     if ((!bStyle && !bId) || tStyle) { setBridge(null); return }
     let active = true
     setBridgeBusy(true)
-    const bridgeClass = bClass || bIdClass || null
+    const bridgeClass = effectiveBreakerClass(bClass, bIdClass)
     fetchEtuBridgeSensors(
       bStyle
         ? {
@@ -497,7 +498,7 @@ function EtuSelector({ onSelect, onClear }: { onSelect: (s: LiveSelection) => vo
   useEffect(() => {
     if (!bId && !bStyle) { setAltTrips({}); return }
     let active = true
-    const cls = bClass || bIdClass || null
+    const cls = effectiveBreakerClass(bClass, bIdClass)
     fetchEtuBreakerAltTrips(
       bId ? { breakerId: Number(bId), breakerClass: cls } : { breakerStyleId: Number(bStyle), breakerClass: cls },
     )
