@@ -53,6 +53,7 @@ import {
 import { buildSensorPool, summarizeSensorTerminal, type AltTripInfo } from '../../lib/etu-sensor-pool'
 import { effectiveBreakerClass } from '../../lib/etu-cross-filter'
 import { tripStyleOptionLabel, tripStylesForType } from '../../lib/trip-style-options'
+import { tmtCurveAvailability } from '../../lib/tmt-curve-availability'
 import {
   buildDefaultEtuPlotRequest,
   buildEtuPlotRequest,
@@ -1389,28 +1390,47 @@ function Curve({ selection, maint, etuChosen, etuTestMult, etuMeasured }: {
 function TmtCurve({ selection }: { selection: LiveSelection }) {
   const frameId = selection.frameId as number
   const [plot, setPlot] = useState<TMTPlotResponse | null>(null)
+  const [noCurveNote, setNoCurveNote] = useState<string | null>(null)
   const [ampRating, setAmpRating] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
-    setLoading(true); setErr(null); setPlot(null)
+    setLoading(true); setErr(null); setPlot(null); setNoCurveNote(null)
     fetchTmtSettings(frameId)
       .then((s) => {
-        const cls = s.available_trip_classes[0]
+        const avail = tmtCurveAvailability(s.available_trip_classes)
         const amp = s.amp_ratings[0]?.rating ?? 0
-        const setting = s.settings[Math.floor(s.settings.length / 2)]?.value ?? s.settings[0]?.value ?? undefined
         if (active) setAmpRating(amp)
+        if (!avail.hasCurve) {
+          // Magnetic-only / switch / electronic device: no thermal-magnetic curve to plot
+          // (E2E audit F06). Withhold honestly instead of rendering a blank plot.
+          if (active) setNoCurveNote(avail.note)
+          return null
+        }
+        const cls = s.available_trip_classes[0]
+        const setting = s.settings[Math.floor(s.settings.length / 2)]?.value ?? s.settings[0]?.value ?? undefined
         return fetchTmtPlot({ frame_id: frameId, trip_class: cls, amp_rating: amp || undefined, setting_value: setting ?? undefined, include_raw_points: false })
       })
-      .then((r) => { if (active) setPlot(r) })
+      .then((r) => { if (active && r) setPlot(r) })
       .catch((e) => { if (active) setErr(errMsg(e)) })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [frameId])
 
   if (loading) return <div className="loadbox"><span className="spin" /> Generating curve…</div>
+  if (noCurveNote) return (
+    <section className="card">
+      <div className="card-h">Trip Characteristic Curve <span className="badge inline">no thermal curve</span></div>
+      <div className="card-b">
+        <div className="sel-status warn" style={{ marginBottom: 10 }}>⚠ {noCurveNote}</div>
+        <Field label="Breaker" value={selection.breakerLabel} />
+        <Field label="Trip Unit" value={selection.tripLabel} />
+        <Field label="Frame" value={selection.ratingLabel} />
+      </div>
+    </section>
+  )
   if (err || !plot) return <div className="loadbox"><span className="sel-status err">⚠ {err ?? 'No curve data'}</span></div>
 
   const scale = ampRating || 1
