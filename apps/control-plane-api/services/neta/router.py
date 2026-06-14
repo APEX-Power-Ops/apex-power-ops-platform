@@ -2962,7 +2962,9 @@ def _generate_nominal_plot_curves(
     multiplier_value: Optional[float] = None,
     c_factor: Optional[float] = None,
     available_delays: Optional[set[str]] = None,
-    synthesize_i2t_longtime: bool = False,
+    synthesize_ltd_i2t: bool = False,
+    synthesize_std_i2x: bool = False,
+    synthesize_gfd_i2x: bool = False,
     micrologic_6_0: bool = False,
 ) -> tuple[list[PlotCurve], list[str], Optional[dict[str, object]]]:
     """Generate the nominal curves used for delay-band interpolation.
@@ -2972,10 +2974,13 @@ def _generate_nominal_plot_curves(
     a delay element the settings screen reports "Not available" must not appear
     here even when its equation/param coefficients exist. ``None`` = no gating.
 
-    ``synthesize_i2t_longtime`` renders the validated published I²t long-time
+    ``synthesize_ltd_i2t`` renders the validated published I²t long-time
     characteristic (t = tr·(6·Ir/I)²) when the sensor exposes LTD bands but no
     ``etu_ltd_params`` curve method (Square D Micrologic) — only when the DB curve
-    generator produced no LTD curve, so it never double-draws."""
+    generator produced no LTD curve, so it never double-draws. ``synthesize_std_i2x``
+    / ``synthesize_gfd_i2x`` gate the route-1 (I2X) STD/GFD composite synthesis on the
+    per-element route byte (#128 D1): every route-1 sensor renders its native band
+    staircase. GFD additionally requires a plug (In) basis or it withholds (#128 D4)."""
     curves: list[PlotCurve] = []
     warnings: list[str] = []
     maint_profile: Optional[dict[str, object]] = None
@@ -3080,7 +3085,7 @@ def _generate_nominal_plot_curves(
             # it — the Eaton-PXR2 "serve the validated characteristic, cite it" pattern.
             if (
                 "ltd" in allowed_delays
-                and synthesize_i2t_longtime
+                and synthesize_ltd_i2t
                 and ltpu_i > 0
                 and not any(c.element == "LTD" for c in curves)
             ):
@@ -3121,7 +3126,7 @@ def _generate_nominal_plot_curves(
         try:
             ieee = IEEEInverseTimeSolver(db)
             std_pickup = stpu_i if stpu_i > 0 else ltpu_i
-            if "std" in allowed_delays and synthesize_i2t_longtime and stpu_i > 0 and ltpu_i > 0:
+            if "std" in allowed_delays and synthesize_std_i2x and stpu_i > 0 and ltpu_i > 0:
                 # Micrologic short-time = route-1 (I2X) composite: the I²t-ON ramp
                 # clamped to the I²t-OFF definite floor, max(ramp, floor). Swept via
                 # the validated etu_ixt kernel; M references Ir (the ×Ir datasheet axis).
@@ -3200,17 +3205,20 @@ def _generate_nominal_plot_curves(
                         ],
                     ))
 
-            if "gfd" in allowed_delays and synthesize_i2t_longtime and gfpu_i > 0:
-                # Micrologic ground-fault = route-1 (I2X) composite, same kernel as STD
-                # but M references In (the plug rating — the ×In datasheet axis); the
-                # GF ramp anchor is 1×In on the 6.0A.
+            if "gfd" in allowed_delays and synthesize_gfd_i2x and gfpu_i > 0:
+                # Route-1 ground-fault = I2X composite, same kernel as STD but M
+                # references In (the plug rating — the ×In datasheet axis; 1×In ramp
+                # anchor on the 6.0A). #128 D1: gated on the route byte, all vendors.
                 gfd_band = _load_i2x_curve_band(
                     db, "tcc.etu_gfd_bands", "gfd_open", "gfd_clear", sensor_id, gfd_setting,
                     canonical_element="gfd" if micrologic_6_0 else None,
                 )
-                if gfd_band is not None:
+                # Without a plug (In) basis the GF curve is withheld (#128 D4) — matching
+                # the route-2 InvEq path + the TIME axis; never guess the reference from
+                # inst/gfpu (the basis would be wrong, not just absent).
+                if gfd_band is not None and plug_rating:
                     x = _sensor_i2x_exponent(db, sensor_id, "gfpu_i2t_val")
-                    ref_in = float(plug_rating) if plug_rating else (inst_i if inst_i > 0 else gfpu_i)
+                    ref_in = float(plug_rating)
                     upper = max(inst_i, ref_in * 3.0) if (inst_i > 0 or ref_in > 0) else gfpu_i * 6.0
                     # Open + clear from the band's symmetric anchor blocks (#123);
                     # missing clear anchors → open only (honest zero width).
@@ -7111,38 +7119,11 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
                     break
 
     # ── Step 6: Generate curves from calc engine ──
-    # Square D Micrologic carries LTD bands but no etu_ltd_params curve method, so
-    # the generic generator can't draw the long-time sweep. For that family, render
-    # the validated published I²t long-time characteristic instead (cited).
-    synthesize_i2t_longtime = bool(
-        trip_unit_style and "micrologic" in str(trip_unit_style).lower()
-    )
-
     curves: list[PlotCurve] = []
     if req.include_nominal_curve:
-        curves, curve_warnings, maint_profile = _generate_nominal_plot_curves(
-            db=db,
-            sensor_id=req.sensor_id,
-            plug_rating=req.plug_rating,
-            ltpu_setting=req.ltpu_setting,
-            ltd_setting=ltd_curve_setting,
-            stpu_setting=req.stpu_setting,
-            std_setting=std_curve_setting,
-            inst_setting=req.inst_setting,
-            gfpu_setting=req.gfpu_setting,
-            gfd_setting=gfd_curve_setting,
-            multiplier_value=req.multiplier_value,
-            c_factor=req.c_factor,
-            available_delays=available_delays,
-            synthesize_i2t_longtime=synthesize_i2t_longtime,
-            micrologic_6_0=micrologic_6_0,
-        )
-        warnings.extend(curve_warnings)
-
-        # G4 field-trust parity with /calculate (#121, #67 on the TIME axis): the
-        # plot must withhold exactly what Screen 2 withholds — a not-implemented /
-        # hard-excluded route's fall-through band value is NOT a certified time.
-        # Route bytes are authoritative per-sensor data (G4-CALC-GUIDE §3a/§4/§6).
+        # Route bytes are authoritative per-sensor data (G4-CALC-GUIDE §3a/§4/§6):
+        # route-1 STD/GFD curve synthesis gates on the route exactly as the trust
+        # classifier does (#128 D1), and the marker trust pass below reuses them.
         route_row = db.execute(
             text(
                 """
@@ -7162,6 +7143,44 @@ def plot_tcc(req: PlotTccRequest, db: Session = Depends(get_db)):
         std_route = _route_map.get("std_route")
         gfd_route = _route_map.get("gfd_route")
         gfd_is_ansi = bool(_route_map.get("gfd_is_ansi"))
+
+        # Square D Micrologic carries LTD bands but no etu_ltd_params curve method, so
+        # the generic generator can't draw the long-time sweep; synthesize the cited
+        # I²t long-time there. Stays Micrologic-scoped (#128 D2): the t = tr·(6·Ir/I)²
+        # law is the Square D/IEC long-time convention, not universal.
+        synthesize_ltd_i2t = bool(
+            trip_unit_style and "micrologic" in str(trip_unit_style).lower()
+        )
+        # STD/GFD route-1 (I2X) composite synthesis gates on the route byte, NOT the
+        # style name (#128 D1) — every route-1 sensor renders its native band
+        # staircase. Route-2 sensors carry no band row and fall through to InvEq.
+        synthesize_std_i2x = std_route == 1
+        synthesize_gfd_i2x = gfd_route == 1
+
+        curves, curve_warnings, maint_profile = _generate_nominal_plot_curves(
+            db=db,
+            sensor_id=req.sensor_id,
+            plug_rating=req.plug_rating,
+            ltpu_setting=req.ltpu_setting,
+            ltd_setting=ltd_curve_setting,
+            stpu_setting=req.stpu_setting,
+            std_setting=std_curve_setting,
+            inst_setting=req.inst_setting,
+            gfpu_setting=req.gfpu_setting,
+            gfd_setting=gfd_curve_setting,
+            multiplier_value=req.multiplier_value,
+            c_factor=req.c_factor,
+            available_delays=available_delays,
+            synthesize_ltd_i2t=synthesize_ltd_i2t,
+            synthesize_std_i2x=synthesize_std_i2x,
+            synthesize_gfd_i2x=synthesize_gfd_i2x,
+            micrologic_6_0=micrologic_6_0,
+        )
+        warnings.extend(curve_warnings)
+
+        # G4 field-trust parity with /calculate (#121, #67 on the TIME axis): the plot
+        # must withhold exactly what Screen 2 withholds — a not-implemented / hard-
+        # excluded route's fall-through band value is NOT a certified time.
         _ltpu_current = (calc_data.get("ltpu") or {}).get("test_current")
 
         for marker in expected_markers:
