@@ -64,6 +64,7 @@ copy of it.
 | **[00 — Master Index](00-MASTER-INDEX.md)** | The lane charter, the four pillars, the guide map, the data model summary | orienting to the lane | this file |
 | **[01 — Offline-Sync Architecture](01-OFFLINE-SYNC-ARCHITECTURE.md)** | Provisioning / offline capture / reconcile; the device vs server authority split; the PowerSync + mutation-seam write path; the decisions of record | touching any `neta.*` table, sync rule, or the field PWA | **RULED 2026-06-12** (D1 PWA · D2 fully-offline · D3 PowerSync) |
 | **[02 — Legacy Baseline](02-LEGACY-BASELINE.md)** | The capability floor the platform must replace and surpass: the equipment categories, the entity/field concepts, the control model, where we must exceed the incumbent, and the one-time-migration note | scoping what to build/beat, or planning the legacy-data migration | **CAPTURED 2026-06-13** |
+| **[03 — Prior Art & Inputs](03-PRIOR-ART-INPUTS.md)** | Register of preserved early attempts + raw inputs (host-only, non-authoritative): the legacy export, the NETA procedure PDFs, the early report scripts, an old platform snapshot | looking for source material to review/resume, or before re-importing anything | **LIVING — opened 2026-06-14** |
 | **[Punch List](PUNCHLIST.md)** | Forward tracker: the sequenced chips from data model → asset catalog → datasheet capture → PM scheduling → reporting → legacy-data migration | planning what to build next, or recording a chip closed | **LIVING — created 2026-06-12** |
 
 ---
@@ -128,7 +129,7 @@ are decided, not drifted into:
 
 | ID | Decision | State | Notes |
 |---|---|---|---|
-| **D-FORMS** | How the forms + report-generation domain is structured | **HELD 2026-06-14** | Several early variants exist (`packages/forms-engine`, the `neta-forms` source repo, `packages/power-test-converters`). They need a proper consolidation/restructuring decision before report-gen is wired to `neta.*`. Until ruled: reuse nothing by default, build nothing parallel. |
+| **D-FORMS** | How the forms + report-generation domain is structured | **HELD 2026-06-14** | Several early variants exist (`packages/forms-engine`, the `neta-forms` source repo, `packages/power-test-converters`, and the `RESA_Report_Scripts` bundle in `03`). They need a proper consolidation/restructuring decision before report-gen is wired to `neta.*`. Until ruled: reuse nothing by default, build nothing parallel. Inputs catalogued in `03-PRIOR-ART-INPUTS.md`. |
 | **D-SURFACE** | Where the lane's UI surfaces live (`apps/field-surface` capture PWA · `apps/forms-studio` authoring · or a new `apps/neta-*`) | **DECIDE PER-CHIP** | Settle when the capture chip (punch list Chip 4) and authoring/report chips actually start. Schema + charter work proceeds meanwhile. |
 | **D-GIT** | Branch/merge model | **WORKING: chip-sized PRs → `main`** | Lane = this charter + punch list, not a long-lived branch. Each chip is a small PR; merge to `main` often. Revisit only if divergence becomes painful. |
 
