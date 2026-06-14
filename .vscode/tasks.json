@@ -146,6 +146,21 @@
       "group": "test"
     },
     {
+      "label": "Control-plane local NETA family smoke",
+      "type": "shell",
+      "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+      "args": [
+        "apps/control-plane-api/scripts/smoke_local_neta_family_routes.py",
+        "--base-url",
+        "http://127.0.0.1:8010"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "group": "test"
+    },
+    {
       "label": "Bootstrap control-plane local env",
       "type": "shell",
       "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",

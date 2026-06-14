@@ -1816,6 +1816,85 @@ class TestMicrologicI2XComposite:
         assert _sensor_i2x_exponent(db2, 1, "stpu_i2t_val") == 2.0
 
 
+class TestRoute1CurveGateGeneralized:
+    """#128: route-1 STD/GFD I2X curve synthesis gates on the per-element ROUTE byte
+    (D1), not the trip-style name — every route-1 sensor renders its native band
+    staircase, not just Micrologic. LTD-I²t synthesis stays Micrologic-scoped (D2: the
+    t = tr·(6·Ir/I)² law is the Square D/IEC long-time convention, not universal). GFD
+    withholds without a plug (In) basis (D4), matching the route-2 path + the TIME axis.
+
+    These call _generate_nominal_plot_curves directly: std_curve/gfd_curve=[] silence
+    the InvEq fall-through, so any STD/GFD curve present is unambiguously the route-1
+    I2X synthesis (not a fall-through stub)."""
+
+    @staticmethod
+    def _band_db():
+        def fake(stmt, params=None):
+            sql = str(stmt)
+            r = MagicMock()
+            if "i_open" in sql:  # _load_i2x_curve_band → one real composite band
+                m = MagicMock()
+                m._mapping = {"i2x": 2, "i_open": 10, "t_open": 0.16, "i_clear": 10,
+                              "t_clear": 0.20, "floor_open": 0.14, "floor_clear": 0.20,
+                              "ordinal": 1}
+                r.fetchall.return_value = [m]
+            elif "i2t_val" in sql:  # _sensor_i2x_exponent → X = 2
+                row = MagicMock()
+                row._mapping = {"x": 2.0}
+                r.fetchone.return_value = row
+            else:
+                r.fetchall.return_value = []
+                r.fetchone.return_value = None
+            return r
+        db = MagicMock()
+        db.execute = MagicMock(side_effect=fake)
+        return db
+
+    def _gen(self, *, plug_rating=1200.0, **flags):
+        from services.neta.router import _generate_nominal_plot_curves
+        patches, _ = _patch_calc_engine(ltd_info=[], std_curve=[], gfd_curve=[])
+        with patches["pickup"], patches["ltd"], patches["ieee"]:
+            return _generate_nominal_plot_curves(
+                db=self._band_db(), sensor_id=1, plug_rating=plug_rating,
+                ltpu_setting=0.8, ltd_setting=None, stpu_setting=4.0, std_setting=None,
+                inst_setting=None, gfpu_setting=0.4, gfd_setting=None, **flags,
+            )
+
+    def test_std_route1_renders_without_micrologic(self):
+        curves, _, _ = self._gen(
+            synthesize_ltd_i2t=False, synthesize_std_i2x=True, synthesize_gfd_i2x=False)
+        std = [c for c in curves if c.element == "STD"]
+        assert std, "route-1 STD must synthesize regardless of trip-style name"
+        opn = next(c for c in std if c.id == "std_open")
+        assert len(opn.points) >= 8  # the swept I2X curve, not a 3-point stub
+        secs = [p.seconds for p in opn.points]
+        assert secs == sorted(secs, reverse=True)  # ramp descends then clamps to floor
+
+    def test_std_no_synthesis_when_not_route1(self):
+        curves, _, _ = self._gen(
+            synthesize_ltd_i2t=False, synthesize_std_i2x=False, synthesize_gfd_i2x=False)
+        assert not [c for c in curves if c.element == "STD"]
+
+    def test_ltd_i2t_stays_micrologic_scoped(self):
+        # route-1 STD/GFD synthesis on, LTD-I²t off (non-Micrologic) → no LTD curve
+        curves, _, _ = self._gen(
+            synthesize_ltd_i2t=False, synthesize_std_i2x=True, synthesize_gfd_i2x=True)
+        assert not [c for c in curves if c.element == "LTD"]
+
+    def test_gfd_route1_withheld_without_plug_basis(self):
+        curves, warnings, _ = self._gen(
+            plug_rating=None, synthesize_ltd_i2t=False,
+            synthesize_std_i2x=False, synthesize_gfd_i2x=True)
+        assert not [c for c in curves if c.element == "GFD"]
+        assert any("plug" in w.lower() for w in warnings), warnings
+
+    def test_gfd_route1_renders_with_plug_basis(self):
+        curves, _, _ = self._gen(
+            plug_rating=1200.0, synthesize_ltd_i2t=False,
+            synthesize_std_i2x=False, synthesize_gfd_i2x=True)
+        assert [c for c in curves if c.element == "GFD"]
+
+
 class TestMicrologicBandlessFallback:
     """Band-less Micrologic 6.0A style records (load gap, tcc styles 238/1919) serve
     the cited canonical I2X bands so the plot composite + Screen 2 still render the
