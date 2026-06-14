@@ -1,15 +1,15 @@
 -- =============================================================================
--- NETA Records Domain — Core Tables  (PowerDB replacement, Chip 1)
+-- NETA Records Domain — Core Tables  (Chip 1)
 -- Packet: 2026-06-12-neta-records-001
 -- Authority: reference/neta-records/00-MASTER-INDEX.md  §3 (data model)
 -- Landing Lane: infra/database/migrations/neta/
 -- Requires: 001_neta_enums.sql (schema + enums)
 --
--- The eight foundation tables for the four PowerDB pillars. Cross-schema links
--- to org.* / work.* are carried as DEFERRED soft UUID columns (no hard FK) so
--- this migration can land independently of org/work seed ordering, mirroring the
--- work→org deferred-FK pattern. Hard-FK activation is a later chip (see the
--- punch list). Every row carries provenance so a PowerDB import is auditable.
+-- The eight foundation tables for the four NETA field-records pillars. Cross-schema
+-- links to org.* / work.* are carried as DEFERRED soft UUID columns (no hard FK)
+-- so this migration can land independently of org/work seed ordering, mirroring the
+-- work→org deferred-FK pattern. Hard-FK activation is a later chip (see the punch
+-- list). Every row carries provenance so a one-time legacy migration is auditable.
 -- =============================================================================
 
 -- ===========================================================================
@@ -18,9 +18,9 @@
 
 -- ---------------------------------------------------------------------------
 -- neta.asset_classes
---   Equipment-type taxonomy (PowerDB "equipment category"): the thing a test
---   object IS. Maps to a NETA procedure category so datasheet templates and PM
---   programs can be scoped by class (e.g. "LV Power Circuit Breaker").
+--   Equipment-type taxonomy: the thing a tested asset IS. Maps to a NETA
+--   procedure category so datasheet templates and PM programs can be scoped by
+--   class (e.g. "LV Power Circuit Breaker").
 -- ---------------------------------------------------------------------------
 CREATE TABLE neta.asset_classes (
     asset_class_id      uuid            NOT NULL DEFAULT gen_random_uuid(),
@@ -45,13 +45,13 @@ COMMENT ON TABLE neta.asset_classes IS
 
 -- ---------------------------------------------------------------------------
 -- neta.assets
---   The equipment under test — PowerDB "test object". The keystone entity: every
---   data sheet, test result, and PM schedule anchors here. Hierarchical so a
---   substation → switchgear → breaker tree can be modeled via parent_asset_id.
+--   The equipment under test. The keystone entity: every data sheet, test result,
+--   and PM schedule anchors here. Hierarchical so a substation → switchgear →
+--   breaker tree can be modeled via parent_asset_id.
 -- ---------------------------------------------------------------------------
 CREATE TABLE neta.assets (
     asset_id            uuid            NOT NULL DEFAULT gen_random_uuid(),
-    asset_tag           text            NOT NULL,                    -- field-unique designation (PowerDB ID)
+    asset_tag           text            NOT NULL,                    -- field-unique designation
     name                text            NOT NULL,
     asset_class_id      uuid            NULL,                        -- FK → neta.asset_classes
     parent_asset_id     uuid            NULL,                        -- hierarchy (substation/switchgear/device)
@@ -59,16 +59,16 @@ CREATE TABLE neta.assets (
     client_ref          uuid            NULL,                        -- DEFERRED soft FK → org.clients(client_id)
     location_label      text            NULL,                        -- human-readable location within site
 
-    -- Location hierarchy (PowerDB Org1-8 chain, kept as flat strings for import
-    -- fidelity; parent_asset_id above remains the navigable tree).
-    region              text            NULL,                        -- PowerDB Region / Org1
-    jobsite             text            NULL,                        -- PowerDB Jobsite / Org2
-    plant               text            NULL,                        -- PowerDB Plant / Org3
-    substation          text            NULL,                        -- PowerDB Substation / Org4
-    gps_lat             numeric(9,6)    NULL,                        -- PowerDB GPS Coordinates (latitude)
-    gps_long            numeric(9,6)    NULL,                        -- PowerDB GPS Coordinates (longitude)
+    -- Site location hierarchy (flat strings for import fidelity; parent_asset_id
+    -- above remains the navigable tree).
+    region              text            NULL,                        -- hierarchy level 1
+    jobsite             text            NULL,                        -- hierarchy level 2
+    plant               text            NULL,                        -- hierarchy level 3
+    substation          text            NULL,                        -- hierarchy level 4
+    gps_lat             numeric(9,6)    NULL,                        -- latitude
+    gps_long            numeric(9,6)    NULL,                        -- longitude
 
-    -- Nameplate (PowerDB equipment detail)
+    -- Nameplate
     manufacturer        text            NULL,
     model               text            NULL,
     serial_number       text            NULL,
@@ -85,7 +85,7 @@ CREATE TABLE neta.assets (
 
     source              neta.provenance_source_enum NOT NULL DEFAULT 'manual',
     provenance_status   neta.provenance_status_enum NOT NULL DEFAULT 'curated',
-    powerdb_source_id   text            NULL,                        -- legacy PowerDB primary key, if imported
+    legacy_source_id    text            NULL,                        -- legacy record id, if imported
     notes               text            NULL,
     created_at          timestamptz     NOT NULL DEFAULT now(),
     updated_at          timestamptz     NOT NULL DEFAULT now(),
@@ -105,11 +105,11 @@ CREATE TABLE neta.assets (
 );
 
 COMMENT ON TABLE neta.assets IS
-    'The equipment under test (PowerDB test object) — keystone of the records '
-    'domain. site_ref/client_ref/apparatus_ref are deliberately soft UUID links '
-    'to org.* / work.* pending the FK-activation chip.';
-COMMENT ON COLUMN neta.assets.powerdb_source_id IS
-    'Legacy PowerDB record id preserved for round-trip / dedupe during migration.';
+    'The equipment under test — keystone of the records domain. '
+    'site_ref/client_ref/apparatus_ref are deliberately soft UUID links to '
+    'org.* / work.* pending the FK-activation chip.';
+COMMENT ON COLUMN neta.assets.legacy_source_id IS
+    'Legacy source record id preserved for round-trip / dedupe during migration.';
 
 -- ===========================================================================
 -- PILLAR 2 — NETA DATA SHEETS
@@ -117,9 +117,9 @@ COMMENT ON COLUMN neta.assets.powerdb_source_id IS
 
 -- ---------------------------------------------------------------------------
 -- neta.datasheet_templates
---   The blank NETA test-form definition (PowerDB form/test-card template). The
---   field layout lives in field_schema (JSONB) so the template catalog is data,
---   not code — versioned, and scoped to a standard + asset class.
+--   The blank NETA test-form definition. The field layout lives in field_schema
+--   (JSONB) so the template catalog is data, not code — versioned, and scoped to a
+--   standard + asset class.
 -- ---------------------------------------------------------------------------
 CREATE TABLE neta.datasheet_templates (
     template_id         uuid            NOT NULL DEFAULT gen_random_uuid(),
@@ -147,12 +147,11 @@ COMMENT ON TABLE neta.datasheet_templates IS
     'Versioned NETA data-sheet (test-form) definitions. field_schema holds the '
     'ordered field list as JSONB so the template catalog is data, not code.';
 COMMENT ON COLUMN neta.datasheet_templates.field_schema IS
-    'JSONB array of control defs mirroring the PowerDB Device_Type form-control '
-    'model: [{tag, label, control_type, value_kind, data_source, parent, unit, '
-    'min, max, expected, readonly, order}]. control_type ∈ text|numeric|dropdown|'
-    'graphic|subform; data_source ∈ data|job_specific|calc (job_specific fields '
-    'are inherited from the job, not stored per sheet); parent gives the subform/'
-    'embedded-worksheet nesting. Drives data-sheet rendering AND test_results '
+    'JSONB array of control defs: [{tag, label, control_type, value_kind, '
+    'data_source, parent, unit, min, max, expected, readonly, order}]. control_type '
+    '∈ text|numeric|dropdown|graphic|subform; data_source ∈ data|inherited|calc '
+    '(inherited fields come from the job, not stored per sheet); parent gives the '
+    'subform/section nesting. Drives data-sheet rendering AND test_results '
     'validation.';
 
 -- ---------------------------------------------------------------------------
@@ -167,24 +166,24 @@ CREATE TABLE neta.datasheets (
     asset_id            uuid            NOT NULL,                    -- FK → neta.assets
     project_ref         uuid            NULL,                        -- DEFERRED soft FK → work.projects(project_id)
     work_package_ref    uuid            NULL,                        -- DEFERRED soft FK → work.work_packages
-    pm_event_id         uuid            NULL,                        -- set if this sheet fulfilled a PM event (FK added in 004)
+    pm_event_id         uuid            NULL,                        -- set if this sheet fulfilled a PM event (FK added below)
 
     status              neta.datasheet_status_enum  NOT NULL DEFAULT 'draft',
     overall_assessment  neta.assessment_result_enum NOT NULL DEFAULT 'not_tested',
     as_found_as_left    neta.as_found_as_left_enum  NOT NULL DEFAULT 'not_applicable',
-    test_status_label   text            NULL,                        -- PowerDB PdbTestStatus name (import fidelity)
-    job_number          text            NULL,                        -- PowerDB JobNumber — the universal join key
+    test_status_label   text            NULL,                        -- legacy test-status label (import fidelity)
+    job_number          text            NULL,                        -- external job number — the legacy/import join key
     test_date           date            NULL,
     technician          text            NULL,                        -- free text until identity FK chip
     reviewed_by         text            NULL,
     ambient_temp_c      numeric(5,2)    NULL,
     relative_humidity   numeric(5,2)    NULL,
-    test_equipment      text            NULL,                        -- instruments used (PowerDB "test set")
+    test_equipment      text            NULL,                        -- instruments used (the test set)
     summary_notes       text            NULL,
 
     source              neta.provenance_source_enum NOT NULL DEFAULT 'manual',
     provenance_status   neta.provenance_status_enum NOT NULL DEFAULT 'curated',
-    powerdb_source_id   text            NULL,
+    legacy_source_id    text            NULL,
 
     -- Offline-sync contract (device-authoritative record). See
     -- reference/neta-records/01-OFFLINE-SYNC-ARCHITECTURE.md.
@@ -222,7 +221,7 @@ COMMENT ON TABLE neta.datasheets IS
 CREATE TABLE neta.test_results (
     result_id           uuid            NOT NULL DEFAULT gen_random_uuid(),
     datasheet_id        uuid            NOT NULL,                    -- FK → neta.datasheets
-    field_key           text            NOT NULL,                    -- matches a template field_schema[].key
+    field_key           text            NOT NULL,                    -- matches a template field_schema[].tag
     field_label         text            NULL,                        -- denormalized for stable history
     test_group          text            NULL,                        -- e.g. 'insulation_resistance', 'contact_resistance'
     sequence_no         int             NULL,                        -- ordering within the sheet
@@ -233,7 +232,7 @@ CREATE TABLE neta.test_results (
     value_boolean       boolean         NULL,
     unit                text            NULL,                        -- e.g. 'MΩ', 'µΩ', 'A', 's'
 
-    -- Acceptance window (PowerDB tolerance band)
+    -- Acceptance window
     expected_value      numeric         NULL,
     min_acceptable      numeric         NULL,
     max_acceptable      numeric         NULL,

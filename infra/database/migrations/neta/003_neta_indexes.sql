@@ -1,5 +1,5 @@
 -- =============================================================================
--- NETA Records Domain — Indexes  (PowerDB replacement, Chip 1)
+-- NETA Records Domain — Indexes  (Chip 1)
 -- Packet: 2026-06-12-neta-records-001
 -- Landing Lane: infra/database/migrations/neta/
 -- Requires: 002_neta_tables.sql
@@ -15,7 +15,7 @@ CREATE INDEX ix_assets_class       ON neta.assets (asset_class_id);
 CREATE INDEX ix_assets_parent      ON neta.assets (parent_asset_id);
 CREATE INDEX ix_assets_site_ref    ON neta.assets (site_ref);
 CREATE INDEX ix_assets_status      ON neta.assets (status);
-CREATE INDEX ix_assets_powerdb_src ON neta.assets (powerdb_source_id);
+CREATE INDEX ix_assets_legacy_src  ON neta.assets (legacy_source_id);
 
 CREATE INDEX ix_asset_classes_parent ON neta.asset_classes (parent_class_id);
 
@@ -25,7 +25,7 @@ CREATE INDEX ix_datasheets_template  ON neta.datasheets (template_id);
 CREATE INDEX ix_datasheets_project   ON neta.datasheets (project_ref);
 CREATE INDEX ix_datasheets_status    ON neta.datasheets (status);
 CREATE INDEX ix_datasheets_pm_event  ON neta.datasheets (pm_event_id);
-CREATE INDEX ix_datasheets_job_number ON neta.datasheets (job_number);  -- PowerDB universal join key
+CREATE INDEX ix_datasheets_job_number ON neta.datasheets (job_number);  -- external/legacy join key
 
 CREATE INDEX ix_datasheet_templates_class ON neta.datasheet_templates (asset_class_id);
 -- One current version per template_code.

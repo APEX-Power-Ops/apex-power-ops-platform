@@ -1,17 +1,17 @@
 # NETA Records Domain SQL Migration Manifest
 ## Packet: 2026-06-12-neta-records-001
-## Lane: PowerDB replacement — Chip 1 (data model foundation)
+## Lane: NETA field-records platform — Chip 1 (data model foundation)
 ## Authority: `reference/neta-records/00-MASTER-INDEX.md` §4, `01-OFFLINE-SYNC-ARCHITECTURE.md`
 
-The `neta` schema is the in-house PowerDB replacement: asset register, NETA data
-sheets, test results, and PM tracking. This Chip 1 set lands the foundation tables
-only — no data seed, no cross-schema FK activation (both are later chips).
+The `neta` schema is the in-house replacement for the legacy field-test datastore:
+asset register, NETA data sheets, test results, and PM tracking. This Chip 1 set
+lands the foundation tables only — no data seed, no cross-schema FK activation
+(both are later chips).
 
-The model was validated and refined against the live PowerDB Phoenix-region schema
-(80 tables / 1,209 columns) — mapping recorded in
-`reference/neta-records/02-POWERDB-SOURCE-MAP.md`. Refinements folded in:
-sheet-level As-Found/As-Left, GPS + Org1-8 location hierarchy on assets, the
-`job_number` universal join key, a `graph` result kind, and the field_schema
+The model was validated against the legacy field-test baseline — the capability
+floor recorded in `reference/neta-records/02-LEGACY-BASELINE.md`. Refinements
+folded in: sheet-level As-Found/As-Left, GPS + site location hierarchy on assets,
+the `job_number` external join key, a `graph` result kind, and the field_schema
 control model.
 
 ## Execution Order

@@ -1,13 +1,14 @@
 -- =============================================================================
--- NETA Records Domain — Enum Types  (PowerDB replacement, Chip 1)
+-- NETA Records Domain — Enum Types  (Chip 1)
 -- Packet: 2026-06-12-neta-records-001
 -- Authority: reference/neta-records/00-MASTER-INDEX.md  §3 (data model),
---            reference/neta-records/POWERDB-PARITY-PUNCHLIST.md  Chip 1
+--            reference/neta-records/PUNCHLIST.md  Chip 1
 -- Landing Lane: infra/database/migrations/neta/
 --
--- Establishes the `neta` schema and the type-safe enums for the four
--- PowerDB-replacement pillars:
---   1. Asset register      (the equipment under test — PowerDB "test objects")
+-- Establishes the `neta` schema and the type-safe enums for the four pillars of
+-- the NETA field-records platform (the in-house replacement for the legacy
+-- field-test datastore):
+--   1. Asset register      (the equipment under test)
 --   2. NETA data sheets    (the test-form instances bound to an asset + job)
 --   3. Test results        (the measured readings + pass/fail assessment)
 --   4. PM tracking         (preventive-maintenance programs / schedules / events)
@@ -25,9 +26,9 @@
 CREATE SCHEMA IF NOT EXISTS neta;
 
 COMMENT ON SCHEMA neta IS
-    'NETA field-test record domain (PowerDB replacement): asset register, data '
-    'sheets, test results, and preventive-maintenance tracking. Distinct from the '
-    'pm schema, which holds API idempotency infrastructure only.';
+    'NETA field-test record domain: asset register, data sheets, test results, '
+    'and preventive-maintenance tracking. Distinct from the pm schema, which '
+    'holds API idempotency infrastructure only.';
 
 -- ---------------------------------------------------------------------------
 -- Provenance enums (re-declared local to neta; mirror work.* semantics)
@@ -35,7 +36,7 @@ COMMENT ON SCHEMA neta IS
 
 CREATE TYPE neta.provenance_source_enum AS ENUM (
     'manual',
-    'powerdb_import',   -- migrated from a legacy PowerDB instance
+    'legacy_import',    -- migrated from the legacy field-test datastore
     'api',
     'automation',
     'migration',
@@ -43,8 +44,8 @@ CREATE TYPE neta.provenance_source_enum AS ENUM (
 );
 
 COMMENT ON TYPE neta.provenance_source_enum IS
-    'Origin system for a neta record. powerdb_import flags rows carried over '
-    'from the legacy PowerDB datastore during the parity-migration chip.';
+    'Origin system for a neta record. legacy_import flags rows carried over from '
+    'the legacy field-test datastore during the one-time migration chip.';
 
 CREATE TYPE neta.provenance_status_enum AS ENUM (
     'curated',
@@ -70,7 +71,7 @@ CREATE TYPE neta.asset_status_enum AS ENUM (
 );
 
 COMMENT ON TYPE neta.asset_status_enum IS
-    'Operational state of a tested asset (PowerDB equipment lifecycle).';
+    'Operational state of a tested asset.';
 
 CREATE TYPE neta.asset_condition_enum AS ENUM (
     'good',
@@ -109,7 +110,7 @@ CREATE TYPE neta.datasheet_status_enum AS ENUM (
 );
 
 COMMENT ON TYPE neta.datasheet_status_enum IS
-    'Lifecycle of a filled NETA data sheet (PowerDB form state).';
+    'Lifecycle of a filled NETA data sheet.';
 
 CREATE TYPE neta.as_found_as_left_enum AS ENUM (
     'as_found',         -- condition/readings before any adjustment
@@ -118,8 +119,7 @@ CREATE TYPE neta.as_found_as_left_enum AS ENUM (
 );
 
 COMMENT ON TYPE neta.as_found_as_left_enum IS
-    'Sheet-level As-Found / As-Left classification. Mirrors PowerDB '
-    'Results_Header.AsFoundAsLeft (a 6-char field): a maintenance visit yields '
+    'Sheet-level As-Found / As-Left classification: a maintenance visit yields '
     'two sheets (one as_found, one as_left) for the same asset + form.';
 
 -- ---------------------------------------------------------------------------
@@ -139,17 +139,16 @@ COMMENT ON TYPE neta.assessment_result_enum IS
     'Pass/fail-style assessment of a single test result or of a data sheet.';
 
 CREATE TYPE neta.result_value_kind_enum AS ENUM (
-    'numeric',          -- PowerDB Results_Values / Results_FP
-    'boolean',          -- PowerDB Results_Digital
-    'text',             -- PowerDB Results_String
+    'numeric',          -- real-valued reading
+    'boolean',          -- pass/fail or yes/no reading
+    'text',             -- free-text reading
     'selection',        -- dropdown / enumerated choice
-    'graph'             -- PowerDB Results_Graph (embedded trace/plot payload)
+    'graph'             -- embedded trace/plot payload
 );
 
 COMMENT ON TYPE neta.result_value_kind_enum IS
     'Shape of a captured test-result value; selects which value column is '
-    'authoritative for a given neta.test_results row. Mirrors the PowerDB '
-    'Results_Values/FP/Digital/String/Graph typed-table split.';
+    'authoritative for a given neta.test_results row.';
 
 -- ---------------------------------------------------------------------------
 -- Pillar 4: PM tracking

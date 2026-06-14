@@ -25,7 +25,7 @@ DROP INDEX IF EXISTS neta.ix_datasheets_template;
 DROP INDEX IF EXISTS neta.ix_datasheets_asset;
 
 DROP INDEX IF EXISTS neta.ix_asset_classes_parent;
-DROP INDEX IF EXISTS neta.ix_assets_powerdb_src;
+DROP INDEX IF EXISTS neta.ix_assets_legacy_src;
 DROP INDEX IF EXISTS neta.ix_assets_status;
 DROP INDEX IF EXISTS neta.ix_assets_site_ref;
 DROP INDEX IF EXISTS neta.ix_assets_parent;

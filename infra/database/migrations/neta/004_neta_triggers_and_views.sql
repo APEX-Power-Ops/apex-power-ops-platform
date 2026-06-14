@@ -1,11 +1,11 @@
 -- =============================================================================
--- NETA Records Domain — Triggers + Views  (PowerDB replacement, Chip 1)
+-- NETA Records Domain — Triggers + Views  (Chip 1)
 -- Packet: 2026-06-12-neta-records-001
 -- Landing Lane: infra/database/migrations/neta/
 -- Requires: 002_neta_tables.sql
 --
 -- updated_at auto-maintenance on every mutable table, plus two read views that
--- give the surface app its core PowerDB screens without per-call joins:
+-- give the surface app its core operator screens without per-call joins:
 --   * v_asset_test_history — latest data sheet + assessment per asset
 --   * v_pm_due             — PM schedules with a derived due/overdue bucket
 -- =============================================================================
@@ -61,7 +61,7 @@ CREATE TRIGGER trg_pm_events_updated_at
 -- ---------------------------------------------------------------------------
 -- neta.v_asset_test_history
 --   One row per (asset, data sheet) for the asset detail timeline — the
---   PowerDB "test history" panel. Newest first.
+--   the asset test-history panel. Newest first.
 -- ---------------------------------------------------------------------------
 CREATE VIEW neta.v_asset_test_history AS
 SELECT
@@ -82,7 +82,7 @@ JOIN neta.datasheet_templates t ON t.template_id = d.template_id
 ORDER BY a.asset_tag, d.test_date DESC NULLS LAST, d.created_at DESC;
 
 COMMENT ON VIEW neta.v_asset_test_history IS
-    'Per-asset test-sheet timeline (PowerDB test-history panel), newest first.';
+    'Per-asset test-sheet timeline (the asset test-history panel), newest first.';
 
 -- ---------------------------------------------------------------------------
 -- neta.v_pm_due

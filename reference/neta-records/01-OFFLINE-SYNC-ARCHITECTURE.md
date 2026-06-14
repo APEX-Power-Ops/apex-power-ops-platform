@@ -1,21 +1,21 @@
-# NETA Records — Offline-Sync Architecture (PowerDB Replacement)
+# NETA Records — Offline-Sync Architecture
 
-> **The "how it works" record for the PowerDB-replacement lane.** Provisioning,
-> offline field capture, and reconciliation — and the decisions that pin the data
-> model. Read this before changing any `neta.*` table, sync rule, or the field PWA.
+> **The "how it works" record for the NETA Records lane.** Provisioning, offline
+> field capture, and reconciliation — and the decisions that pin the data model.
+> Read this before changing any `neta.*` table, sync rule, or the field PWA.
 
 - **Status:** RULED — direction decided 2026-06-12 (operator: Jason Swenson)
 - **Owner:** APEX NETA Records lane
 - **Home:** `reference/neta-records/` (beside the migrations it governs)
-- **Companion:** `00-MASTER-INDEX.md` (domain charter), `POWERDB-PARITY-PUNCHLIST.md` (forward tracker)
+- **Companion:** `00-MASTER-INDEX.md` (domain charter), `PUNCHLIST.md` (forward tracker)
 
 ---
 
 ## 1. Why offline is the whole design
 
-PowerDB exists the way it does because **techs work where there is no signal** —
-medium-voltage vaults, switchgear rooms, substations behind concrete and steel.
-A replacement that assumes connectivity is a replacement that fails on day one.
+The incumbent field tools are built the way they are because **techs work where
+there is no signal** — medium-voltage vaults, switchgear rooms, substations behind
+concrete and steel. A replacement that assumes connectivity fails on day one.
 Therefore offline is not a feature bolted on later; it is the **load-bearing
 constraint** that the data model and the write path are shaped around.
 
@@ -132,9 +132,9 @@ calc-engine can still *seed* those windows office-side during provisioning.)
 
 ## 6. What this defers (named, not hidden)
 
-- **Instrument import** — pulling readings directly off Megger/test sets
-  (serial/USB/Bluetooth) is a major PowerDB differentiator and a later lane. The
-  `test_results.value_kind` shape already leaves room for it.
+- **Instrument import** — pulling readings directly off field test sets
+  (serial/USB/Bluetooth) is a key capability of the incumbent tools to match, and a
+  later lane. The `test_results.value_kind` shape already leaves room for it.
 - **Field nameplate correction** as a proposed-change flow (keeps reference data
   one-way for now).
 - **Multi-tech concurrent capture** on the *same* data sheet — out of scope while
