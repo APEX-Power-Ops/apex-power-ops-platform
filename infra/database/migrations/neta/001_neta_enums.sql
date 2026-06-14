@@ -111,6 +111,17 @@ CREATE TYPE neta.datasheet_status_enum AS ENUM (
 COMMENT ON TYPE neta.datasheet_status_enum IS
     'Lifecycle of a filled NETA data sheet (PowerDB form state).';
 
+CREATE TYPE neta.as_found_as_left_enum AS ENUM (
+    'as_found',         -- condition/readings before any adjustment
+    'as_left',          -- condition/readings after maintenance/adjustment
+    'not_applicable'    -- acceptance test, single capture (no AF/AL split)
+);
+
+COMMENT ON TYPE neta.as_found_as_left_enum IS
+    'Sheet-level As-Found / As-Left classification. Mirrors PowerDB '
+    'Results_Header.AsFoundAsLeft (a 6-char field): a maintenance visit yields '
+    'two sheets (one as_found, one as_left) for the same asset + form.';
+
 -- ---------------------------------------------------------------------------
 -- Pillar 3: Test results
 -- ---------------------------------------------------------------------------
@@ -128,15 +139,17 @@ COMMENT ON TYPE neta.assessment_result_enum IS
     'Pass/fail-style assessment of a single test result or of a data sheet.';
 
 CREATE TYPE neta.result_value_kind_enum AS ENUM (
-    'numeric',
-    'boolean',
-    'text',
-    'selection'
+    'numeric',          -- PowerDB Results_Values / Results_FP
+    'boolean',          -- PowerDB Results_Digital
+    'text',             -- PowerDB Results_String
+    'selection',        -- dropdown / enumerated choice
+    'graph'             -- PowerDB Results_Graph (embedded trace/plot payload)
 );
 
 COMMENT ON TYPE neta.result_value_kind_enum IS
     'Shape of a captured test-result value; selects which value column is '
-    'authoritative for a given neta.test_results row.';
+    'authoritative for a given neta.test_results row. Mirrors the PowerDB '
+    'Results_Values/FP/Digital/String/Graph typed-table split.';
 
 -- ---------------------------------------------------------------------------
 -- Pillar 4: PM tracking

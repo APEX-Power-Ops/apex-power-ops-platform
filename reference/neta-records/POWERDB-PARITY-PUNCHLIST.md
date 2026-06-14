@@ -13,8 +13,8 @@
 
 | Chip | Scope | Depends on | Status |
 |---|---|---|---|
-| **1 — Data model foundation** | `neta` schema: 8 tables (asset_classes, assets, datasheet_templates, datasheets, test_results, pm_programs, pm_schedules, pm_events) + indexes + updated_at triggers + 2 read views; sync-contract columns on device-authoritative tables. Up/down migrations + MANIFEST. | — | **DRAFTED 2026-06-12** (`infra/database/migrations/neta/001–004`) |
-| **2 — Template seed** | Seed `datasheet_templates.field_schema` from the `apex-resa` NETA procedures/test items reference; first real ATS sheet (e.g. LV power circuit breaker). | 1 | TODO |
+| **1 — Data model foundation** | `neta` schema: 8 tables (asset_classes, assets, datasheet_templates, datasheets, test_results, pm_programs, pm_schedules, pm_events) + indexes + updated_at triggers + 2 read views; sync-contract columns on device-authoritative tables. Up/down migrations + MANIFEST. | — | **DRAFTED 2026-06-12 · PowerDB-VALIDATED 2026-06-13** (`infra/database/migrations/neta/001–004`; refinements in `02` §5) |
+| **2 — Template seed / field-coverage matrix** | Parse the 845 active PowerDB `Device_Type` forms (start transformer + circuit-breaker families) into `datasheet_templates.field_schema` per the `02` §3 control model; prove every tag maps. Cross-reference the `apex-resa` NETA procedures/test items. First real ATS sheet (LV power circuit breaker). | 1, `02` | TODO — **next** |
 | **3 — Sync substrate** | Stand up PowerSync (sync rules for the asset-subtree bucket; `uploadData` connector → mutation-seam; idempotency key per mutation). Hosting decision (Olares self-host vs Cloud). | 1 | TODO |
 | **4 — Field PWA (capture)** | Installable offline PWA: open assigned job, render a data sheet from `field_schema`, capture readings to local SQLite, auto pass/fail vs the acceptance window, queue to outbox. | 1, 3 | TODO |
 | **5 — Provisioning (office)** | Office surface: build job → asset list → assign templates → set acceptance windows (seed from TCC calc) + PM cadence → push bucket to device. | 1, 2, 3 | TODO |

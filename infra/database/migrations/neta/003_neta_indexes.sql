@@ -25,6 +25,7 @@ CREATE INDEX ix_datasheets_template  ON neta.datasheets (template_id);
 CREATE INDEX ix_datasheets_project   ON neta.datasheets (project_ref);
 CREATE INDEX ix_datasheets_status    ON neta.datasheets (status);
 CREATE INDEX ix_datasheets_pm_event  ON neta.datasheets (pm_event_id);
+CREATE INDEX ix_datasheets_job_number ON neta.datasheets (job_number);  -- PowerDB universal join key
 
 CREATE INDEX ix_datasheet_templates_class ON neta.datasheet_templates (asset_class_id);
 -- One current version per template_code.

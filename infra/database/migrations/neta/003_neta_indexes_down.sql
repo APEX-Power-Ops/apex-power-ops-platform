@@ -17,6 +17,7 @@ DROP INDEX IF EXISTS neta.ix_test_results_datasheet;
 
 DROP INDEX IF EXISTS neta.uq_datasheet_templates_current;
 DROP INDEX IF EXISTS neta.ix_datasheet_templates_class;
+DROP INDEX IF EXISTS neta.ix_datasheets_job_number;
 DROP INDEX IF EXISTS neta.ix_datasheets_pm_event;
 DROP INDEX IF EXISTS neta.ix_datasheets_status;
 DROP INDEX IF EXISTS neta.ix_datasheets_project;

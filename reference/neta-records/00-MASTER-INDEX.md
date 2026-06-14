@@ -6,7 +6,7 @@
 > on. If reality and this index disagree, the index is fixed *first* (SSoT Law,
 > inherited from the TCC lane) — never silently worked around.
 
-- **Status:** SEEDED — lane opened 2026-06-12; Chip 1 (data model) drafted; sync direction RULED (`01-OFFLINE-SYNC-ARCHITECTURE.md` §2)
+- **Status:** SEEDED — lane opened 2026-06-12; Chip 1 (data model) drafted + **validated against the live PowerDB schema** (`02-POWERDB-SOURCE-MAP.md`, 2026-06-13); sync direction RULED (`01-OFFLINE-SYNC-ARCHITECTURE.md` §2)
 - **Owner:** APEX NETA Records lane (operator: Jason Swenson)
 - **Home:** `reference/neta-records/` (version-controlled beside the migrations it cites)
 
@@ -56,6 +56,7 @@ replacement** on the platform's own Supabase/Postgres + Next.js stack so that:
 |---|---|---|---|
 | **[00 — Master Index](00-MASTER-INDEX.md)** | The lane charter, the four pillars, the guide map, the data model summary | orienting to the lane | this file |
 | **[01 — Offline-Sync Architecture](01-OFFLINE-SYNC-ARCHITECTURE.md)** | Provisioning / offline capture / reconcile; the device vs server authority split; the PowerSync + mutation-seam write path; the decisions of record | touching any `neta.*` table, sync rule, or the field PWA | **RULED 2026-06-12** (D1 PWA · D2 fully-offline · D3 PowerSync) |
+| **[02 — PowerDB Source Map](02-POWERDB-SOURCE-MAP.md)** | The authoritative PowerDB→`neta` table/field mapping, the 16 form-family→asset-class crosswalk, the field/control model, and the refinements folded into the schema | importing from PowerDB, or asking "where does PowerDB field X go" | **CAPTURED 2026-06-13** (live Phoenix DB: 80 tables / 1,209 cols) |
 | **[PowerDB Parity Punch List](POWERDB-PARITY-PUNCHLIST.md)** | Forward tracker: the sequenced chips from data model → asset catalog → datasheet capture → PM scheduling → reporting → PowerDB migration | planning what to build next, or recording a chip closed | **LIVING — created 2026-06-12** |
 
 ---
@@ -89,6 +90,9 @@ datasheet_templates ────┘                                   │
 - Device-authoritative tables (`datasheets`, `test_results`, `pm_events`) carry the
   sync contract columns (`origin_device`, `client_rev`, `client_captured_at`,
   `synced_at`) — see `01` §3.
+- **PowerDB-validated refinements** (see `02` §5): `datasheets.as_found_as_left`
+  (sheet-level), `datasheets.job_number` (the universal join key), `assets` GPS +
+  Region/Jobsite/Plant/Substation hierarchy, and `result_value_kind = graph`.
 
 > **Note — `neta` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `neta.pm_*`. The two are

@@ -59,6 +59,15 @@ CREATE TABLE neta.assets (
     client_ref          uuid            NULL,                        -- DEFERRED soft FK → org.clients(client_id)
     location_label      text            NULL,                        -- human-readable location within site
 
+    -- Location hierarchy (PowerDB Org1-8 chain, kept as flat strings for import
+    -- fidelity; parent_asset_id above remains the navigable tree).
+    region              text            NULL,                        -- PowerDB Region / Org1
+    jobsite             text            NULL,                        -- PowerDB Jobsite / Org2
+    plant               text            NULL,                        -- PowerDB Plant / Org3
+    substation          text            NULL,                        -- PowerDB Substation / Org4
+    gps_lat             numeric(9,6)    NULL,                        -- PowerDB GPS Coordinates (latitude)
+    gps_long            numeric(9,6)    NULL,                        -- PowerDB GPS Coordinates (longitude)
+
     -- Nameplate (PowerDB equipment detail)
     manufacturer        text            NULL,
     model               text            NULL,
@@ -88,7 +97,11 @@ CREATE TABLE neta.assets (
     CONSTRAINT fk_assets_parent
         FOREIGN KEY (parent_asset_id) REFERENCES neta.assets (asset_id),
     CONSTRAINT ck_assets_year
-        CHECK (year_manufactured IS NULL OR year_manufactured BETWEEN 1900 AND 2100)
+        CHECK (year_manufactured IS NULL OR year_manufactured BETWEEN 1900 AND 2100),
+    CONSTRAINT ck_assets_gps_lat
+        CHECK (gps_lat IS NULL OR gps_lat BETWEEN -90 AND 90),
+    CONSTRAINT ck_assets_gps_long
+        CHECK (gps_long IS NULL OR gps_long BETWEEN -180 AND 180)
 );
 
 COMMENT ON TABLE neta.assets IS
@@ -134,8 +147,13 @@ COMMENT ON TABLE neta.datasheet_templates IS
     'Versioned NETA data-sheet (test-form) definitions. field_schema holds the '
     'ordered field list as JSONB so the template catalog is data, not code.';
 COMMENT ON COLUMN neta.datasheet_templates.field_schema IS
-    'JSONB array of field defs: [{key,label,kind,unit,min,max,expected,group,order}]. '
-    'Drives both data-sheet rendering and test_results validation.';
+    'JSONB array of control defs mirroring the PowerDB Device_Type form-control '
+    'model: [{tag, label, control_type, value_kind, data_source, parent, unit, '
+    'min, max, expected, readonly, order}]. control_type ∈ text|numeric|dropdown|'
+    'graphic|subform; data_source ∈ data|job_specific|calc (job_specific fields '
+    'are inherited from the job, not stored per sheet); parent gives the subform/'
+    'embedded-worksheet nesting. Drives data-sheet rendering AND test_results '
+    'validation.';
 
 -- ---------------------------------------------------------------------------
 -- neta.datasheets
@@ -153,6 +171,9 @@ CREATE TABLE neta.datasheets (
 
     status              neta.datasheet_status_enum  NOT NULL DEFAULT 'draft',
     overall_assessment  neta.assessment_result_enum NOT NULL DEFAULT 'not_tested',
+    as_found_as_left    neta.as_found_as_left_enum  NOT NULL DEFAULT 'not_applicable',
+    test_status_label   text            NULL,                        -- PowerDB PdbTestStatus name (import fidelity)
+    job_number          text            NULL,                        -- PowerDB JobNumber — the universal join key
     test_date           date            NULL,
     technician          text            NULL,                        -- free text until identity FK chip
     reviewed_by         text            NULL,
