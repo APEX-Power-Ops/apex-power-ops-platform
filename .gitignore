@@ -37,6 +37,8 @@ build/
 reference/*
 # EXCEPT the canonical TCC Master Reference (the version-controlled single source of truth — must be tracked).
 !reference/tcc/
+# EXCEPT the records lane SSoT (charter, punch list, offline-sync rulings).
+!reference/records/
 
 # Audit workspace artifacts (read-only audit dispatches; never commit)
 .audit_workspace/
