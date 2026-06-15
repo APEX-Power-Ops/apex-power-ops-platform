@@ -7,7 +7,7 @@
 > SSoT pattern). **Altitude is roadmap, not DDL** — per-chip schema design happens in
 > each chip's own spec.
 
-- **Status:** RE-BASELINE — drafted 2026-06-15 for operator review · **nothing applied to prod or code**
+- **Status:** Chips 0–2 BUILT on `ops_dev` (SSoT + identity + quote model; committed) · **nothing applied to prod**
 - **Owner:** APEX Operations (PM) lane
 - **Lane namespace (target):** `ops` (the Operations lane of `MASTER-SCHEMA.md`)
 - **Supersedes (as forward plan):** `PM_SCHEMA_FOUNDATION_PLAN_v2_2026-05-26.md`, `ERA_2_4_PACKET_B_*` (folded, not discarded — see §9)
@@ -202,12 +202,12 @@ explicit dollar lines). Per-apparatus revenue is *derivable* (hour-share) but no
 Each chip is reversible, validated on a dev DB before prod, behind §4 Law 6. The records-lane
 cadence (design → spec → plan → TDD → chip-sized PR into `main`).
 
-- **Chip 0 — Re-baseline SSoT** (this file). *In review.*
-- **Chip 1 — `ops` identity skeleton + canonical winners.** Stand up `ops`; name canonical project/scope/apparatus/task identity (seam-based); the FIXED scope→apparatus binding; the soft `equipment_model_ref` seam. Dev DB: a fresh **`ops_dev`** on local Postgres (one-DB-per-workstream; do *not* reuse `apex_pm_stage` or `records_dev`). *The foundation everything hangs on.*
-- **Chip 2 — Intake envelope + quote-facts.** Absorb Packet B (`intake_runs`/`source_files`/`validation_findings`) + quote-facts (P3/P4/M4/N4 **+ per-apparatus hours + adder/external allocation**) + the frozen contract snapshot. The extract + draft-scaffold landing of the 5-phase flow. *Needs a real Estimator workbook to confirm D-OPS-4/7.*
-- **Chip 3 — Apparatus revenue + completion + recognition ledger.** §5: per-apparatus hours-value, **binary completion**, append-only percent-complete recognition events. *The elevated concern.*
+- **Chip 0 — Re-baseline SSoT** (this file). **DONE** — `df5fa2bc`.
+- **Chip 1 — `ops` identity skeleton.** `ops` schema + 7 enums + projects/scopes/apparatus/tasks (public/seam conceptual model); FIXED scope→apparatus binding (NOT NULL + immutability trigger); soft `equipment_model_ref` seam. Dev DB **`ops_dev`** (local PG). **DONE** — `5c2442db`, 9/9 TDD, reversible.
+- **Chip 2 — Quote model.** Standard-hours catalog (DEFAULT-only) + **`scope_quote_line`** (per-project `hrs_per_unit`, line-level — D-OPS-7) + `scope_quote` (4 categories + generated P3/P4/blended_rate + J3 trigger) + apparatus quote columns + `v_apparatus_quote`. **DONE** — 10/10 TDD, reversible. *(Intake envelope / Packet B re-scoped → Chip 5.)*
+- **Chip 3 — Apparatus revenue + completion + recognition ledger.** §5: per-apparatus hours-value, **binary apparatus completion** (D-OPS-8), append-only recognition events. *The elevated concern — next.*
 - **Chip 4 — Progress billing.** §5 final layer: the billing-application object (snapshot of recognized-unbilled).
-- **Chip 5 — Intake pipeline (code).** Estimator `.xlsm` extractor + the upload→extract→review→approve→operational flow (the `operations-web` pm-review surface + a parser package), wired to `ops`.
+- **Chip 5 — Intake pipeline (code) + envelope.** Estimator `.xlsm` extractor + the upload→extract→review→approve→operational flow (the `operations-web` pm-review surface + a parser package) + the **intake envelope** (Packet B: `intake_runs`/`source_files`/`validation_findings`, moved from Chip 2), wired to `ops`.
 - **Chip N (interleaved, late) — Convergence/migration.** The deferred D-012 collapse of `public`/`seam`/`schedule`→`ops` (build spine → backfill soft-UUIDs → dual-write → flip readers → drop loser), behind §4 Law 6.
 
 ---
@@ -222,7 +222,7 @@ cadence (design → spec → plan → TDD → chip-sized PR into `main`).
 | D-OPS-4 | Quote→apparatus value | **RESOLVED: single blended rate** = scope P4 ÷ scope hours; per-apparatus = hours × blended rate (§5a) | Chip 2 |
 | D-OPS-5 | Canonical winner | **REVISED: public's conceptual PM model + seam's disciplines** (see §5a; was seam-based) | Chip 1 spec |
 | D-OPS-6 | Dev DB | fresh `ops_dev` (local PG) | Chip 1 |
-| D-OPS-7 | Hours as first-class revenue unit | per-apparatus hours from std-hours catalog (apparatus_type × ATS/MTS) **(verified §5a)** | Chip 2 spec |
+| D-OPS-7 | Hours — per-project, line-level | **catalog = DEFAULT only** (operator 2026-06-15); binding `hrs_per_unit` on `scope_quote_line`, overridable per project; apparatus inherit. **BUILT Chip 2.** | done |
 | D-OPS-8 | Recognition **grain** | **RESOLVED: APPARATUS** — recognize when each apparatus complete (all-or-nothing); not per test-line | — |
 | D-OPS-9 | Revenue categories | **RESOLVED: 4** — Onsite Labor · Offsite Labor · Travel · Outside Services (→ `apparatus_revenue.revenue_type`) | Chip 3 |
 
