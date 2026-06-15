@@ -39,6 +39,8 @@ reference/*
 !reference/tcc/
 # EXCEPT the records lane SSoT (charter, punch list, offline-sync rulings).
 !reference/records/
+# EXCEPT the Operations (PM) lane SSoT (re-baseline master index + chip specs).
+!reference/ops/
 
 # Audit workspace artifacts (read-only audit dispatches; never commit)
 .audit_workspace/
