@@ -102,6 +102,17 @@ form_templates ────┘                                   │
   (sheet-level), `form_submissions.job_number` (the external join key), `assets` GPS +
   region/jobsite/plant/substation hierarchy, and `field_value_kind = graph`.
 
+**Chip 2a — NETA reference layer (2026-06-15).** Three reference tables seed the
+authoritative NETA standard into the DB, loaded accurately from the NETA master
+equipment table (ANSI/NETA ATS-2025 / MTS-2023): `neta_procedures` (72 sections),
+`neta_test_items` (3,920 ATS+MTS items × {`visual_mechanical` | `electrical` |
+`test_value_*`}), and `neta_tables` (43 acceptance tables — e.g. Table 100.1
+insulation-resistance values, the field-trust acceptance basis). Datasheets
+(`form_templates.field_schema`, Chip 2b) **reference + filter** this layer rather than
+copy it — so the NETA-vs-common-datasheet divergence is a query, not a maintained
+matrix. Migrations `005`/`006` (generator `gen_neta_seed.py`); validated by
+`test_005_neta_reference.py` on `records_dev`.
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
