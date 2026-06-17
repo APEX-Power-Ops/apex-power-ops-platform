@@ -236,6 +236,15 @@ surge bridge). The leaf split is idempotent + reversible in `_down`. Migration `
 `gen_surge_template.py`); validated by `test_017_surge_template.py` (16 tests). Full spec:
 `11-SURGE-DATASHEET-SPEC.md`.
 
+**Chip 2b — rotating machinery (2026-06-17).** The ninth 2b family and the **largest** (84 ATS across
+three sheets), and the family that **closes the operator-priority queue**. Three leaf-bound sheets:
+`ats_induction_motor_v1` (7.15.1; 14 sections; 27 ATS), `ats_synchronous_machine_v1` (7.15.2; 15
+sections; 37 ATS — adds the field/excitation battery), `ats_dc_machine_v1` (7.15.3; 11 sections; 20
+ATS). **NOT PowerDB-anchored** → NETA-derived. **R-A = `mfr` only** — motors test to IEEE 43 (IR/PI)
++ NEMA MG 1 (hipot), not a NETA table; no `tcc`, no `neta_table` window. Capture = `field` +
+`cover_attach` (no motor bridge). Migration `018` (generator `gen_motor_template.py`); validated by
+`test_018_motor_template.py` (14 tests). Full spec: `12-MOTOR-DATASHEET-SPEC.md`.
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
