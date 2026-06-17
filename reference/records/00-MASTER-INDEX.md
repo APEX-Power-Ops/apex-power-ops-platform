@@ -162,6 +162,18 @@ resistance, contact timing — the future mfr-tolerance-layer slot) — **never 
 at provisioning (Chip 5), never fabricated. Migration `011` (generator `gen_mv_cb_template.py`);
 validated by `test_011_mvhv_cb_template.py` (21 tests). Full spec: `05-MVHV-CB-DATASHEET-SPEC.md`.
 
+**Chip 2b — transformers (2026-06-17).** The third 2b family and the first chip to ship **two
+leaf-bound composites** in one migration: `ats_dry_xfmr_v1` (→ `xfmr_dry`; folds small 7.2.1.1 +
+large 7.2.1.2 via a `dry_class` selector; 13 sections; 35-item union coverage) and
+`ats_liquid_xfmr_v1` (→ `xfmr_liquid`; 7.2.2; 17 sections; 39 items, incl. LTC 7.12.3 / instrument-
+transformer 7.10 / surge-arrester 7.19 cross-ref borrows). **Both fold two-winding / three-winding**
+via a `winding_config` selector that gates the tertiary-winding (H-Y/X-Y/Y-G) measurement rows —
+measurement granularity, not coverage. **R-A:** `tolerance_source` = `neta_table` (IR→**Table 100.5**,
+torque→100.12) or `mfr` (winding resistance, bushing PF, turns-ratio — the future mfr-layer slot);
+oil/DGA = standard-basis (ASTM D923 / IEEE C57.104); never `tcc`. Per-sheet coverage invariants
+validator-enforced. Migration `012` (generator `gen_xfmr_template.py`); validated by
+`test_012_xfmr_template.py` (17 tests). Full spec: `06-TRANSFORMER-DATASHEET-SPEC.md`.
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
