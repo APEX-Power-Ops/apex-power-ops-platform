@@ -197,6 +197,23 @@ battery: shield continuity, TDR, jacket integrity, dielectric withstand, tan-del
 validator-enforced. Migration `014` (generator `gen_cable_template.py`); validated by
 `test_014_cable_template.py` (13 tests). Full spec: `08-CABLE-DATASHEET-SPEC.md`.
 
+**Chip 2b — instrument transformers (2026-06-17).** The sixth 2b family, and **two firsts**: the
+first **capture-mode-aware** build and the first **PowerDB-anchored** family. Three leaf-bound
+sheets: **`ats_ct_v1`** (`it_ct` → 7.10.1; 12 sections; 18 ATS), **`ats_vt_v1`** (`it_vt` → 7.10.2;
+11 sections; 18 ATS — PT and VT share one sheet), **`ats_cvt_v1`** (`it_cvt` → 7.10.3; 12 sections;
+20 ATS — adds the CVT capacitor-section battery: bolted-resistance, capacitance, PF/DF).
+**R-A:** `tolerance_source` = `neta_table` (IR→100.5, dielectric→100.9, torque→100.12) or `mfr`
+(PF/DF); never `tcc`. **Capture-mode contract (NEW, ratified post-§235):** `field_schema` gains a
+template-level `capture` block `{modes, default}`, a standard **`attachments`** section
+(`kind:attachment`, `capture_mode:cover_attach` = **Path 1**, the datasheet doubles as a cover for
+the mfr/OEM report), and **`instrument_import`** sections carrying an `import` hint `{tool, profile}`
+that names the bridge (**Path 2**: CT excitation/ratio → `ct_analyzer`; VT/CVT ratio → `ptm` TX_TTR;
+PF/DF → `dtax` TX_PFDF). The harvested control `tag` is the Path-2 import target id; importer
+EXECUTION is **Chip 10** (reuses the existing `ctan/dtax/ptm` converters). Field structure anchored
+to the RESA PowerDB cover forms (27660 CT / 27600 PT-VT / 99000 CVT) while **NETA remains the
+coverage authority**. Migration `015` (generator `gen_it_template.py`); validated by
+`test_015_it_template.py` (17 tests). Full spec: `09-IT-DATASHEET-SPEC.md`.
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
