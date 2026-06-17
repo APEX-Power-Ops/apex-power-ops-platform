@@ -137,6 +137,18 @@ divergence is a precise leaf-grain query), and composites resolve constituents t
 the graph + the asset tree. Migrations `008`/`009` (generator `gen_backfill_seed.py`);
 validated by `test_008_backfill.py` (8 tests).
 
+**Chip 2b — first datasheet (LV circuit breaker, 2026-06-17).** The first
+`form_templates` row (`ats_lv_cb_v1`, bound to the `cb_lv` leaf): ONE composite template
+whose `construction_type` selector (power / insulated_case / molded_case) gates the
+molded-case deltas via `visible_if` — not three templates. The `field_schema` (11 sections)
+**references + filters** the leaf's linked NETA 7.6.1.2 items; a **coverage invariant**
+(validator-enforced) proves every ATS visual-mechanical + electrical item maps to a control —
+no silent drops. Acceptance windows are **declared** (each carries a `tolerance_source` → the
+TCC engine) but **resolved at provisioning (Chip 5)**, never fabricated into the template —
+the designed lvbreakertcc→datasheet seam. Migration `010` (generator
+`gen_lv_cb_template.py`); validated by `test_010_lv_cb_template.py` (17 tests). Full spec:
+`04-LV-CB-DATASHEET-SPEC.md`.
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
