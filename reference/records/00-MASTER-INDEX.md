@@ -214,6 +214,16 @@ to the RESA PowerDB cover forms (27660 CT / 27600 PT-VT / 99000 CVT) while **NET
 coverage authority**. Migration `015` (generator `gen_it_template.py`); validated by
 `test_015_it_template.py` (17 tests). Full spec: `09-IT-DATASHEET-SPEC.md`.
 
+**Chip 2b — grounding (2026-06-17).** The seventh 2b family and the smallest (one leaf, 6 ATS); the
+first family after the IT firsts to revert to the NETA-derived recipe — **not PowerDB-anchored** (no
+grounding form in the corpus). `ats_grounding_v1` (`grounding_system` → 7.13; 8 sections; 6 ATS:
+bolted-connection resistance, ground resistance (fall-of-potential / IEEE 81), point-to-point).
+**R-A = `mfr` only** (ground resistance vs design / IEEE 81; bolted-connection R); **no `tcc`, and no
+`neta_table` window** (7.13 has no IR/dielectric table — torque → 100.12 is an acceptance basis on the
+VM row). Capture = `field` + `cover_attach` (no instrument bridge for ground testers; the universal
+cover affordance still applies). Migration `016` (generator `gen_grounding_template.py`); validated by
+`test_016_grounding_template.py` (13 tests). Full spec: `10-GROUNDING-DATASHEET-SPEC.md`.
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
