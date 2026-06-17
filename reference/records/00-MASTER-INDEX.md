@@ -149,6 +149,19 @@ the designed lvbreakertcc→datasheet seam. Migration `010` (generator
 `gen_lv_cb_template.py`); validated by `test_010_lv_cb_template.py` (17 tests). Full spec:
 `04-LV-CB-DATASHEET-SPEC.md`.
 
+**Chip 2b — MV/HV circuit breaker (2026-06-17).** The second datasheet (`ats_mvhv_cb_v1`,
+bound to the `cb_mvhv` leaf) and the first to span **multiple NETA procedures**: ONE composite
+whose `interrupting_medium` selector (air / oil / vacuum / SF6) gates each medium's deltas via
+`visible_if`, covering the **union of all four procedures** (7.6.1.3 air, 7.6.2 oil, 7.6.3 vacuum,
+7.6.4 SF6). The `field_schema` (15 sections) carries a **122-item union coverage invariant** across
+the four — every ATS visual-mechanical + electrical item maps to a control, no silent drops, no
+phantom refs. **R-A is apparatus-appropriate:** an MV/HV breaker has **no integral trip curve**
+(protection is external relays, 7.9 / relaytcc), so acceptance windows declare a `tolerance_source`
+of **`neta_table`** (IR 100.1, dielectric 100.19, pickup 100.20, SF6 gas 100.13) or **`mfr`** (contact
+resistance, contact timing — the future mfr-tolerance-layer slot) — **never `tcc`**. Windows resolve
+at provisioning (Chip 5), never fabricated. Migration `011` (generator `gen_mv_cb_template.py`);
+validated by `test_011_mvhv_cb_template.py` (21 tests). Full spec: `05-MVHV-CB-DATASHEET-SPEC.md`.
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
