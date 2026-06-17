@@ -224,6 +224,18 @@ VM row). Capture = `field` + `cover_attach` (no instrument bridge for ground tes
 cover affordance still applies). Migration `016` (generator `gen_grounding_template.py`); validated by
 `test_016_grounding_template.py` (13 tests). Full spec: `10-GROUNDING-DATASHEET-SPEC.md`.
 
+**Chip 2b — surge protection (2026-06-17).** The eighth 2b family, and the first chip to also perform
+a **taxonomy split**: the operator ruled that NETA 7.19's two procedures (7.19.1 LV SPD + 7.19.2
+MV/HV arrester) are different apparatus, so migration `017` adds the **`spd_lv`** leaf under
+`surge_protection`, relinks 7.19.1 → `spd_lv`, and leaves `surge_arrester` owning 7.19.2 — then two
+leaf-bound sheets: `ats_lv_spd_v1` (7.19.1; 7 sections; 8 ATS) + `ats_mvhv_arrester_v1` (7.19.2; 9
+sections; 12 ATS — bolted-R, IR → Table 100.1, grounding, watts-loss). **NOT PowerDB-anchored** →
+NETA-derived. **R-A = `neta_table` (IR→100.1) + `mfr` (watts-loss, grounding)**; no `tcc` (LV SPD has
+no NETA table, so its only window is the mfr grounding slot). Capture = `field` + `cover_attach` (no
+surge bridge). The leaf split is idempotent + reversible in `_down`. Migration `017` (generator
+`gen_surge_template.py`); validated by `test_017_surge_template.py` (16 tests). Full spec:
+`11-SURGE-DATASHEET-SPEC.md`.
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
