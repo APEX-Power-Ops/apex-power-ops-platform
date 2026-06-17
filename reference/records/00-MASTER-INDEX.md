@@ -102,6 +102,41 @@ form_templates ────┘                                   │
   (sheet-level), `form_submissions.job_number` (the external join key), `assets` GPS +
   region/jobsite/plant/substation hierarchy, and `field_value_kind = graph`.
 
+**Chip 2a — NETA reference layer (2026-06-15).** Three reference tables seed the
+authoritative NETA standard into the DB, loaded accurately from the NETA master
+equipment table (ANSI/NETA ATS-2025 / MTS-2023): `neta_procedures` (72 sections),
+`neta_test_items` (3,920 ATS+MTS items × {`visual_mechanical` | `electrical` |
+`test_value_*` | `crossref`}), and `neta_tables` (43 acceptance tables — e.g. Table 100.1
+insulation-resistance values, the field-trust acceptance basis). Datasheets
+(`form_templates.field_schema`, Chip 2b) **reference + filter** this layer rather than
+copy it — so the NETA-vs-common-datasheet divergence is a query, not a maintained
+matrix. Migrations `005`/`006` (generator `gen_neta_seed.py`); validated by
+`test_005_neta_reference.py` on `records_dev`.
+
+**Chip 2-shell — Family taxonomy (2026-06-15).** `asset_classes` is seeded as a
+**2-level, NETA-anchored shell**: 27 **parents** = the NETA equipment categories (19
+active + 8 future/inactive), each carrying `neta_category` — the anchor into
+`neta_procedures.category`; and 40 **leaf** classes = the practical apparatus a tech
+selects (e.g. `cb_lv` / `cb_mvhv`; `it_ct` / `it_vt` / `it_cvt`), hung off a parent
+via `parent_class_id`. NETA sections + tables attach **once** at the parent and are
+inherited by every leaf (no duplication); `form_templates` + `assets` attach at the
+**leaf** in later chips. Granularity is soft — a leaf can split later with no
+restructuring. Migration `007` (generator `gen_shell_seed.py`); validated by
+`test_007_asset_class_shell.py` (13 tests) on `records_dev`. Every active NETA
+procedure has a leaf home (incl. the motor-control 2×2, the load tap-changer, and
+DC machines); the 2 MCC composition procedures carry their refs as `crossref` items.
+
+**Chip 2-backfill — leaf↔procedure links + the procedure graph (2026-06-16).** Two
+tables scope each leaf's NETA universe and capture how procedures reference one
+another: `asset_class_neta_procedure` (61 leaf→procedure links; RESERVED excluded; one
+`is_primary` per leaf) and `neta_procedure_xref` (70 edges — 8 `crossref` composition,
+e.g. MCC → bus/switches/breakers/starters; 62 `in_accordance` method-borrowing, e.g.
+LTC 7.12.3 → 7.2.2). `to_procedure_id` resolves exact-section refs; category-level refs
+(7.1, 7.6) stay raw. So a leaf's applicable NETA = its linked procedures (the Chip-2b
+divergence is a precise leaf-grain query), and composites resolve constituents through
+the graph + the asset tree. Migrations `008`/`009` (generator `gen_backfill_seed.py`);
+validated by `test_008_backfill.py` (8 tests).
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
