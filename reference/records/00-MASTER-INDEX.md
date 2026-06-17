@@ -174,6 +174,19 @@ oil/DGA = standard-basis (ASTM D923 / IEEE C57.104); never `tcc`. Per-sheet cove
 validator-enforced. Migration `012` (generator `gen_xfmr_template.py`); validated by
 `test_012_xfmr_template.py` (17 tests). Full spec: `06-TRANSFORMER-DATASHEET-SPEC.md`.
 
+**Chip 2b — switchgear + panelboard (2026-06-17).** The fourth 2b family, and the first to introduce
+**parent-node binding**. The `switchgear` parent has 5 leaves, but **four share NETA 7.1.1**
+(`swgr_lv_switchboard` / `swgr_mv_metalclad` / `swgr_padmount` / `swgr_vfi`) and `swgr_panelboard` is its
+own `7.1.2` — so a sheet can't 1:1-bind to a leaf. Two sheets: **`ats_switchgear_v1`** (7.1.1; 13
+sections; 35 ATS; an `assembly_type` selector for the 4 types; **bound to the PARENT `switchgear` node**
+because four leaves share the procedure — assets classify to the leaf and resolve up at provisioning)
+and **`ats_panelboard_v1`** (7.1.2; 6 sections; 14 ATS; leaf-bound to `swgr_panelboard`). IT (7.10) /
+surge-arrester (7.19) / ground (7.13) / metering (7.11) items are cross-ref borrows covered, not
+fabricated. **R-A:** `tolerance_source` = `neta_table` (IR→100.1, dielectric→100.2, torque→100.12) or
+`mfr` (bolted-connection resistance); never `tcc`. Per-sheet coverage invariants validator-enforced.
+Migration `013` (generator `gen_switchgear_template.py`); validated by `test_013_switchgear_template.py`
+(15 tests). Full spec: `07-SWITCHGEAR-DATASHEET-SPEC.md`.
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
