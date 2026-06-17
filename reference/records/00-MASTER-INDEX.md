@@ -126,6 +126,17 @@ restructuring. Migration `007` (generator `gen_shell_seed.py`); validated by
 procedure has a leaf home (incl. the motor-control 2×2, the load tap-changer, and
 DC machines); the 2 MCC composition procedures carry their refs as `crossref` items.
 
+**Chip 2-backfill — leaf↔procedure links + the procedure graph (2026-06-16).** Two
+tables scope each leaf's NETA universe and capture how procedures reference one
+another: `asset_class_neta_procedure` (61 leaf→procedure links; RESERVED excluded; one
+`is_primary` per leaf) and `neta_procedure_xref` (70 edges — 8 `crossref` composition,
+e.g. MCC → bus/switches/breakers/starters; 62 `in_accordance` method-borrowing, e.g.
+LTC 7.12.3 → 7.2.2). `to_procedure_id` resolves exact-section refs; category-level refs
+(7.1, 7.6) stay raw. So a leaf's applicable NETA = its linked procedures (the Chip-2b
+divergence is a precise leaf-grain query), and composites resolve constituents through
+the graph + the asset tree. Migrations `008`/`009` (generator `gen_backfill_seed.py`);
+validated by `test_008_backfill.py` (8 tests).
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
