@@ -83,8 +83,10 @@ LEAVES = {
         ("ngr", "Neutral-Grounding Resistor"),
         ("harmonic_filter", "Harmonic Filter Bank"),
     ],
-    "motor_control": [("mcc_lv", "LV Motor Control Center"), ("motor_starter_mv", "MV Motor Starter")],
-    "rotating_machinery": [("rm_synchronous", "Synchronous Machine"), ("rm_induction", "Induction Motor")],
+    "motor_control": [("mcc_lv", "LV Motor Control Center"), ("mcc_mv", "MV Motor Control Center"),
+                      ("motor_starter_lv", "LV Motor Starter"), ("motor_starter_mv", "MV Motor Starter")],
+    "rotating_machinery": [("rm_synchronous", "Synchronous Machine"), ("rm_induction", "Induction Motor"),
+                           ("rm_dc", "DC Machine")],
     "dc_systems": [("battery", "Storage Battery"), ("battery_charger", "Battery Charger")],
     "emergency_systems": [
         ("ats", "Automatic Transfer Switch"),
@@ -94,7 +96,7 @@ LEAVES = {
     "switches": [("switch_disconnect", "Disconnect / Load-Interrupter Switch")],
     "grounding_systems": [("grounding_system", "Grounding System")],
     "surge_protection": [("surge_arrester", "Surge Arrester")],
-    "regulating_apparatus": [("voltage_regulator", "Voltage Regulator")],
+    "regulating_apparatus": [("voltage_regulator", "Voltage Regulator"), ("load_tap_changer", "Load Tap-Changer")],
     "circuit_switchers": [("circuit_switcher", "Circuit Switcher")],
     "outdoor_bus": [("outdoor_bus_structure", "Outdoor Bus Structure")],
     "metering_devices": [("meter", "Meter")],
@@ -172,12 +174,12 @@ def main():
     n_parents = len(PARENTS)
     n_leaves = sum(len(v) for v in LEAVES.values())
     assert n_parents == 27, n_parents
-    assert n_leaves == 36, n_leaves
+    assert n_leaves == 40, n_leaves
     # sanity: every leaf parent is a real parent code; all codes unique
     pcodes = {c for c, _, _ in PARENTS}
     assert set(LEAVES) <= pcodes, set(LEAVES) - pcodes
     all_codes = [c for c, _, _ in PARENTS] + [lc for kids in LEAVES.values() for lc, _ in kids]
-    assert len(all_codes) == len(set(all_codes)) == 63, "duplicate or wrong-count class_code"
+    assert len(all_codes) == len(set(all_codes)) == 67, "duplicate or wrong-count class_code"
     with open(os.path.join(HERE, "007_asset_class_shell.sql"), "w", encoding="utf-8", newline="\n") as fh:
         fh.write(build_up())
     with open(os.path.join(HERE, "007_asset_class_shell_down.sql"), "w", encoding="utf-8", newline="\n") as fh:

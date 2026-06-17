@@ -65,7 +65,7 @@ def test_parent_and_leaf_counts(conn):
     parents = _scalar(conn, "select count(*) from records.asset_classes where parent_class_id is null")
     leaves = _scalar(conn, "select count(*) from records.asset_classes where parent_class_id is not null")
     assert parents == 27, f"expected 27 NETA-category parents, got {parents}"
-    assert leaves == 36, f"expected 36 leaf classes, got {leaves}"
+    assert leaves == 40, f"expected 40 leaf classes, got {leaves}"
 
 
 def test_active_inactive_split(conn):
@@ -132,6 +132,24 @@ def test_switchgear_five(conn):
         "join records.asset_classes p on p.asset_class_id = c.parent_class_id "
         "where p.class_code = 'switchgear'")
     assert n == 5, f"expected 5 switchgear leaves, got {n}"
+
+
+def test_motor_control_complete(conn):
+    # NETA-complete 2x2 ({LV,MV} x {MCC, starter}) — the ⚑4 resolution from the MCC screenshots
+    kids = _codes(conn,
+        "select c.class_code from records.asset_classes c "
+        "join records.asset_classes p on p.asset_class_id = c.parent_class_id "
+        "where p.class_code = 'motor_control'")
+    assert kids == {"mcc_lv", "mcc_mv", "motor_starter_lv", "motor_starter_mv"}, \
+        f"motor_control leaves = {kids}"
+
+
+def test_orphan_procedures_now_homed(conn):
+    # the 4 real procedures that previously lacked a leaf each have one now
+    for code in ("load_tap_changer", "rm_dc", "mcc_mv", "motor_starter_lv"):
+        n = _scalar(conn,
+            "select count(*) from records.asset_classes where class_code = %s", (code,))
+        assert n == 1, f"leaf {code} missing"
 
 
 def test_future_parent_inactive_and_childless(conn):

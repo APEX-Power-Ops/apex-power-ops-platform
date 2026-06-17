@@ -106,6 +106,31 @@ def test_acceptance_tables_loaded(conn):
     assert parent == "100.12"
 
 
+def test_no_placeholder_descriptions(conn):
+    # the crossref mis-seed emitted bare flag words ('required'/'optional') as descriptions
+    bad = _scalar(conn,
+        "select count(*) from records.neta_test_items "
+        "where lower(btrim(description)) in ('required','optional','n/a','')")
+    assert bad == 0, f"{bad} test items have placeholder descriptions (crossref mis-seed)"
+
+
+def test_mcc_crossref_items(conn):
+    # MCC procedures are crossref-only: their real content is the 'Refer to Section'
+    # composition pointers, carried as category='crossref' items (not garbage).
+    for section in ("7.16.2.1", "7.16.2.2"):
+        n = _scalar(conn,
+            "select count(*) from records.neta_test_items ti "
+            "join records.neta_procedures p using (neta_procedure_id) "
+            "where p.section=%s and ti.standard='ats' and ti.category='crossref'", (section,))
+        assert n == 4, f"{section} should carry 4 ATS crossref items, got {n}"
+    first = conn.execute(
+        "select description from records.neta_test_items ti "
+        "join records.neta_procedures p using (neta_procedure_id) "
+        "where p.section='7.16.2.1' and ti.category='crossref' and ti.standard='ats' "
+        "and ti.item_number='1'").fetchone()
+    assert first and "Refer to Section 7.1" in first[0], f"crossref content wrong: {first}"
+
+
 def test_reversibility_leaves_chip1_intact(conn):
     # down removes only the 2a objects; the Chip-1 tables survive
     _psql("005_neta_reference_tables_down.sql")

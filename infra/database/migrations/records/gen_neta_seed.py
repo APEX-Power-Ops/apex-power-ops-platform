@@ -97,25 +97,46 @@ def main():
     out.append("")
     out.append("-- ---- test items (per procedure x standard x category) ----")
     n_items = 0
+
+    def emit_item(sec, std, cat, num, desc, opt, sort):
+        out.append(
+            "INSERT INTO records.neta_test_items (neta_test_item_id, neta_procedure_id, "
+            "standard, category, item_number, description, is_optional, sort_order) VALUES "
+            f"('{iid(sec, std, cat, num)}', '{pid(sec)}', '{std}', '{cat}', {s(num)}, "
+            f"{s(desc)}, {b(opt)}, {sort}) "
+            "ON CONFLICT (neta_procedure_id, standard, category, item_number) DO UPDATE SET "
+            "description=EXCLUDED.description, is_optional=EXCLUDED.is_optional, "
+            "sort_order=EXCLUDED.sort_order;"
+        )
+
+    def norm(it, i):
+        if isinstance(it, dict):
+            return str(it.get("number", i + 1)), it.get("description"), it.get("optional")
+        return str(i + 1), str(it), False
+
     for e in eq:
         sec = e["section"]
         for std_key, std in (("ats_data", "ats"), ("mts_data", "mts")):
             block = e.get(std_key) or {}
+            # Crossref-only procedures (e.g. MCCs 7.16.2.x): the real content is the
+            # 'Refer to Section X' composition pointers in crossref_items — NOT the
+            # (empty) A/B/C lists. Emit them as the 'crossref' category.
+            if block.get("crossref_only"):
+                for i, it in enumerate(block.get("crossref_items") or []):
+                    num, desc, opt = norm(it, i)
+                    emit_item(sec, std, "crossref", num, desc, opt, i)
+                    n_items += 1
+                continue
             for jkey, cat in CAT_MAP.items():
-                for i, it in enumerate(block.get(jkey) or []):
-                    if isinstance(it, dict):
-                        num, desc, opt = str(it.get("number", i + 1)), it.get("description"), it.get("optional")
-                    else:
-                        num, desc, opt = str(i + 1), str(it), False
-                    out.append(
-                        "INSERT INTO records.neta_test_items (neta_test_item_id, neta_procedure_id, "
-                        "standard, category, item_number, description, is_optional, sort_order) VALUES "
-                        f"('{iid(sec, std, cat, num)}', '{pid(sec)}', '{std}', '{cat}', {s(num)}, "
-                        f"{s(desc)}, {b(opt)}, {i}) "
-                        "ON CONFLICT (neta_procedure_id, standard, category, item_number) DO UPDATE SET "
-                        "description=EXCLUDED.description, is_optional=EXCLUDED.is_optional, "
-                        "sort_order=EXCLUDED.sort_order;"
-                    )
+                sub = block.get(jkey)
+                # Guard: only flat lists are real item arrays. A dict-shaped sub-block
+                # (e.g. {required:[],optional:[]} on a crossref proc) must NOT be
+                # enumerated — that walks the keys and emits them as garbage descriptions.
+                if not isinstance(sub, list):
+                    continue
+                for i, it in enumerate(sub):
+                    num, desc, opt = norm(it, i)
+                    emit_item(sec, std, cat, num, desc, opt, i)
                     n_items += 1
 
     out.append("")

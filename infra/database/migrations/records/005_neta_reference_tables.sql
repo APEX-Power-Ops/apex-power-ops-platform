@@ -24,12 +24,14 @@ CREATE TYPE records.neta_test_category_enum AS ENUM (
     'visual_mechanical',      -- A. Visual and Mechanical Inspection (numbered steps)
     'electrical',             -- B. Electrical Tests (numbered steps)
     'test_value_visual',      -- C.1 Test Values — Visual (acceptance criteria)
-    'test_value_electrical'   -- C.2 Test Values — Electrical (acceptance criteria)
+    'test_value_electrical',  -- C.2 Test Values — Electrical (acceptance criteria)
+    'crossref'                -- composition pointer ("Refer to Section X"): crossref-only procedures (e.g. MCCs)
 );
 
 COMMENT ON TYPE records.neta_test_category_enum IS
-    'Which of the four parallel NETA item structures a test item belongs to '
-    '(the A/B inspection+test steps and the C test-value acceptance criteria).';
+    'Which NETA item structure a test item belongs to: the A/B inspection+test '
+    'steps, the C test-value acceptance criteria, or a crossref composition '
+    'pointer ("Refer to Section X") for crossref-only procedures (e.g. MCCs).';
 
 -- ---------------------------------------------------------------------------
 -- records.neta_procedures

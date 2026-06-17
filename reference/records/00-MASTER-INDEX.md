@@ -106,7 +106,7 @@ form_templates ────┘                                   │
 authoritative NETA standard into the DB, loaded accurately from the NETA master
 equipment table (ANSI/NETA ATS-2025 / MTS-2023): `neta_procedures` (72 sections),
 `neta_test_items` (3,920 ATS+MTS items × {`visual_mechanical` | `electrical` |
-`test_value_*`}), and `neta_tables` (43 acceptance tables — e.g. Table 100.1
+`test_value_*` | `crossref`}), and `neta_tables` (43 acceptance tables — e.g. Table 100.1
 insulation-resistance values, the field-trust acceptance basis). Datasheets
 (`form_templates.field_schema`, Chip 2b) **reference + filter** this layer rather than
 copy it — so the NETA-vs-common-datasheet divergence is a query, not a maintained
@@ -116,13 +116,15 @@ matrix. Migrations `005`/`006` (generator `gen_neta_seed.py`); validated by
 **Chip 2-shell — Family taxonomy (2026-06-15).** `asset_classes` is seeded as a
 **2-level, NETA-anchored shell**: 27 **parents** = the NETA equipment categories (19
 active + 8 future/inactive), each carrying `neta_category` — the anchor into
-`neta_procedures.category`; and 36 **leaf** classes = the practical apparatus a tech
+`neta_procedures.category`; and 40 **leaf** classes = the practical apparatus a tech
 selects (e.g. `cb_lv` / `cb_mvhv`; `it_ct` / `it_vt` / `it_cvt`), hung off a parent
 via `parent_class_id`. NETA sections + tables attach **once** at the parent and are
 inherited by every leaf (no duplication); `form_templates` + `assets` attach at the
 **leaf** in later chips. Granularity is soft — a leaf can split later with no
 restructuring. Migration `007` (generator `gen_shell_seed.py`); validated by
-`test_007_asset_class_shell.py` (11 tests) on `records_dev`.
+`test_007_asset_class_shell.py` (13 tests) on `records_dev`. Every active NETA
+procedure has a leaf home (incl. the motor-control 2×2, the load tap-changer, and
+DC machines); the 2 MCC composition procedures carry their refs as `crossref` items.
 
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
