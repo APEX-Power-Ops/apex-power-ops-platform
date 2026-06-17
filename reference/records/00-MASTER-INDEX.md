@@ -187,6 +187,16 @@ fabricated. **R-A:** `tolerance_source` = `neta_table` (IR→100.1, dielectric�
 Migration `013` (generator `gen_switchgear_template.py`); validated by `test_013_switchgear_template.py`
 (15 tests). Full spec: `07-SWITCHGEAR-DATASHEET-SPEC.md`.
 
+**Chip 2b — cables (2026-06-17).** The fifth 2b family; first of the operator-priority queue
+(cables → IT → grounding → SA → motors). Back to the clean recipe — two leaf-bound single-procedure
+sheets: **`ats_lv_cable_v1`** (`cable_lv` → 7.3.2, LV 600 V max; 6 sections; 11 ATS) and
+**`ats_mvhv_cable_v1`** (`cable_mv` → 7.3.3, MV/HV; 11 sections; 18 ATS — adds the shielded-cable HV
+battery: shield continuity, TDR, jacket integrity, dielectric withstand, tan-delta, partial discharge).
+**R-A:** `tolerance_source` = `neta_table` (MV IR→100.1, tan-delta→100.6.6, torque→100.12) or `mfr`
+(LV IR comparison, MV dielectric withstand); never `tcc`. Per-sheet coverage invariants
+validator-enforced. Migration `014` (generator `gen_cable_template.py`); validated by
+`test_014_cable_template.py` (13 tests). Full spec: `08-CABLE-DATASHEET-SPEC.md`.
+
 > **Note — `records` vs `pm` schema:** the `pm` schema holds POST idempotency infra
 > only. The maintenance *domain* data lives here as `records.pm_*`. The two are
 > complementary, not duplicates: `pm.idempotency_keys` is what makes the `records.*`
