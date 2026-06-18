@@ -184,3 +184,25 @@ def start(job_id, claimed_by, run_env):
                         "where id=%s", (job_id,))
         conn.commit()
     return run_id
+
+
+def report(run_id, exit_code, result=None, log_ref=None):
+    """Finalize a run: set its terminal status from the exit code, stamp
+    finished_at + result, and propagate the status to the owning job. Returns
+    the terminal status ('succeeded' | 'failed')."""
+    status = "succeeded" if exit_code == 0 else "failed"
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "update jobs.run set status=%s, finished_at=now(), exit_code=%s, "
+                "result=%s, log_ref=coalesce(%s, log_ref) where id=%s returning job_id",
+                (status, exit_code, Jsonb(result) if result is not None else None,
+                 log_ref, run_id),
+            )
+            r = cur.fetchone()
+            if r is None:
+                raise ValueError(f"run {run_id} not found")
+            cur.execute("update jobs.job set status=%s, updated_at=now() where id=%s",
+                        (status, r["job_id"]))
+        conn.commit()
+    return status
