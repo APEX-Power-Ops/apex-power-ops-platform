@@ -50,3 +50,38 @@ def get_job(ident):
                 (str(ident), str(ident)),
             )
             return cur.fetchone()
+
+
+def claim(as_=None, env=None):
+    """Atomically claim the highest-priority eligible job (priority asc, then
+    dispatch_id asc). Uses FOR UPDATE SKIP LOCKED on jobs.job directly so
+    concurrent claimers never double-claim. Returns the claimed job (dict) or
+    None if nothing is eligible. `as_`/`env` are recorded on the run at start()."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                select id from jobs.job j
+                where j.status = 'pending'
+                  and (j.predecessor_id is null
+                       or exists (select 1 from jobs.job p
+                                  where p.id = j.predecessor_id and p.status = 'succeeded'))
+                  and not exists (select 1 from jobs.gate g
+                                  where g.job_id = j.id and g.state = 'pending')
+                order by j.priority asc, j.dispatch_id asc
+                limit 1
+                for update skip locked
+                """
+            )
+            row = cur.fetchone()
+            if not row:
+                conn.commit()
+                return None
+            cur.execute(
+                "update jobs.job set status='claimed', updated_at=now() "
+                "where id=%s returning *",
+                (row["id"],),
+            )
+            job = cur.fetchone()
+        conn.commit()
+    return job
