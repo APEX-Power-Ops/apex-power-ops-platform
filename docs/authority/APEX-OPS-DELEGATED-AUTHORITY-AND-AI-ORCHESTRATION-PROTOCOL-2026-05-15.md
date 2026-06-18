@@ -1,7 +1,9 @@
 # APEX Ops Delegated Authority And AI Orchestration Protocol
 
+> **SUPERSEDED 2026-06-18.** Folded into the canonical APEX Platform Operating Architecture (`.claude/PLATFORM/APEX-PLATFORM-OPERATING-ARCHITECTURE-2026-06-18.md`, governance substrate). Retained for provenance; not the current operating authority.
+
 Date: 2026-05-15
-Status: Active governing operating protocol
+Status: SUPERSEDED 2026-06-18 (folded into the 2026-06-18 operating architecture; retained for provenance)
 Scope: APEX Ops and Olares One repo operations under `C:/APEX Platform/apex-power-ops-platform` and `/home/olares/code/apex/apex-power-ops-platform`
 
 ## 1. Purpose

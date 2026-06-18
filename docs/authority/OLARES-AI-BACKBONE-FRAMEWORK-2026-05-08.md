@@ -1,7 +1,9 @@
 # Olares AI Backbone Framework
 
+> **SUPERSEDED 2026-06-18.** Folded into the canonical APEX Platform Operating Architecture (`.claude/PLATFORM/APEX-PLATFORM-OPERATING-ARCHITECTURE-2026-06-18.md`, governance substrate). Retained for provenance; not the current operating authority.
+
 Date: 2026-05-08
-Status: Active repo-owned authority surface
+Status: SUPERSEDED 2026-06-18 (folded into the 2026-06-18 operating architecture; retained for provenance)
 Scope: bounded orchestration-backbone design, scaffold-authoring, and adjacent hardening rules for the Olares-first AI lane
 
 ## Purpose

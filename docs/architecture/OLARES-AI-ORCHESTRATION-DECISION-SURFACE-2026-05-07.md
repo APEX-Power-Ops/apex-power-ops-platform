@@ -1,7 +1,9 @@
 # Olares AI Orchestration Decision Surface
 
+> **SUPERSEDED 2026-06-18.** Folded into the canonical APEX Platform Operating Architecture (`.claude/PLATFORM/APEX-PLATFORM-OPERATING-ARCHITECTURE-2026-06-18.md`, governance substrate). Retained for provenance; not the current operating authority.
+
 Date: 2026-05-07
-Status: Active repo-owned AI orchestration decision surface
+Status: SUPERSEDED 2026-06-18 (folded into the 2026-06-18 operating architecture; retained for provenance)
 Scope: current admitted AI workflow decisions for the Olares-first lane after extraction from parent-root `.claude/DECISION_LOG.md` Section 8
 
 ## Purpose
