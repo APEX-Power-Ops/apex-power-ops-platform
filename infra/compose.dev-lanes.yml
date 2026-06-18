@@ -1,0 +1,19 @@
+# Dev-lane Postgres — PG17 to match PROD (Supabase 17.x). ONE server hosting the
+# dev/test/staging databases for all lanes (separate DBs + roles). IaC; password in gitignored infra/.env.
+services:
+  dev-pg:
+    image: postgres:17-alpine
+    container_name: apex-dev-pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DEV_PG_PASSWORD:?set DEV_PG_PASSWORD in infra/.env}
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: ["apex_dev_pg_data:/var/lib/postgresql/data"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  apex_dev_pg_data:

@@ -47,3 +47,4 @@ reference/*
 # licensed third-party artifacts that must NEVER be committed). The reproducible
 # outputs (captured-point fixtures) live under packages/*/tests/fixtures/ instead.
 output/
+infra/.env

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "apex-jobs"
+version = "0.1.0"
+description = "APEX platform orchestration task bus - durable queue + run/promotion ledger + env & human-approval gates"
+requires-python = ">=3.11"
+dependencies = ["psycopg[binary]>=3.1"]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0.0"]
+
+[project.scripts]
+apex-jobs = "apex_jobs.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
