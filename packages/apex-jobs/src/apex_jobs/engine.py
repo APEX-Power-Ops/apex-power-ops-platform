@@ -206,3 +206,33 @@ def report(run_id, exit_code, result=None, log_ref=None):
                         (status, r["job_id"]))
         conn.commit()
     return status
+
+
+def list_eligible():
+    """Claimable jobs in claim order (priority asc, dispatch_id asc)."""
+    with _conn() as conn, conn.cursor() as cur:
+        cur.execute("select dispatch_id, title, priority, target from jobs.v_eligible")
+        return cur.fetchall()
+
+
+def runs_for(ident):
+    """All runs for a job (by id or dispatch_id), oldest attempt first."""
+    with _conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "select r.* from jobs.run r join jobs.job j on j.id = r.job_id "
+            "where j.id::text = %s or j.dispatch_id = %s order by r.attempt",
+            (str(ident), str(ident)),
+        )
+        return cur.fetchall()
+
+
+def gates_for(ident):
+    """All gates for a job (by id or dispatch_id), oldest first."""
+    with _conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "select g.id, g.gate_type, g.state from jobs.gate g "
+            "join jobs.job j on j.id = g.job_id "
+            "where j.id::text = %s or j.dispatch_id = %s order by g.requested_at",
+            (str(ident), str(ident)),
+        )
+        return cur.fetchall()
