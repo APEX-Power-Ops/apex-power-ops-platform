@@ -16,8 +16,12 @@ def resolve_dsn() -> str:
     if dsn:
         return dsn
     db = os.environ.get("APEX_JOBS_DB", "orchestration_dev")
-    pw = (os.environ.get("APEX_JOBS_PGPASSWORD")
-          or os.environ.get("DEV_PG_PASSWORD") or "TCC_v5_2025")
+    pw = os.environ.get("APEX_JOBS_PGPASSWORD") or os.environ.get("DEV_PG_PASSWORD")
+    if not pw:
+        raise RuntimeError(
+            "set DEV_PG_PASSWORD (or APEX_JOBS_PGPASSWORD) before running apex-jobs "
+            "-- e.g. `set -a; . infra/.env; set +a`. No hardcoded fallback (committed-secret hazard)."
+        )
     host = os.environ.get("APEX_JOBS_HOST", "127.0.0.1")
     port = os.environ.get("APEX_JOBS_PORT", "5432")
     user = os.environ.get("APEX_JOBS_USER", "orchestration")
