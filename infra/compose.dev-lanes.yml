@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DEV_PG_PASSWORD:?set DEV_PG_PASSWORD in infra/.env}
-    ports: ["127.0.0.1:5432:5432"]
+    ports: ["127.0.0.1:5432:5432", "100.64.0.1:5432:5432"]
     volumes: ["apex_dev_pg_data:/var/lib/postgresql/data"]
     restart: unless-stopped
     healthcheck:
