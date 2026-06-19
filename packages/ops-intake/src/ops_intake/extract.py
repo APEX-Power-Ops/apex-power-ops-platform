@@ -12,7 +12,14 @@ SCOPE_RE = re.compile(r"^[AB]\d\)")
 
 
 def _num(v):
-    return float(v) if isinstance(v, (int, float)) else None
+    if isinstance(v, (int, float)):
+        return float(v)
+    if isinstance(v, str):  # the estimator stores some Hrs/Unit / QTY cells as text ("2", "8")
+        try:
+            return float(v.strip().replace(",", ""))
+        except ValueError:
+            return None
+    return None
 
 
 def _str(v):
@@ -39,14 +46,16 @@ def _extract_scope(ws) -> ScopeIn:
     )
     lines: list[QuoteLineIn] = []
     for r in range(6, ws.max_row + 1):
-        qty = _num(ws.cell(r, 3).value)  # col C = QTY (sub-header rows have no QTY -> skipped)
-        if qty is None:
+        qty = _num(ws.cell(r, 3).value)  # col C = QTY (text or number)
+        atype = _str(ws.cell(r, 5).value)  # col E = Apparatus Type
+        # a real apparatus line needs a positive QTY and a type; sub-headers / noise rows lack one
+        if qty is None or qty <= 0 or atype is None:
             continue
         lines.append(QuoteLineIn(
-            apparatus_type=_str(ws.cell(r, 5).value) or "(unspecified)",  # col E
+            apparatus_type=atype,
             test_standard="ATS",
-            qty=int(qty),
-            hrs_per_unit=_num(ws.cell(r, 9).value) or 0.0,  # col I
+            qty=int(round(qty)),
+            hrs_per_unit=_num(ws.cell(r, 9).value) or 0.0,  # col I (text or number)
             neta_section=_str(ws.cell(r, 4).value),  # col D
             drawing=_str(ws.cell(r, 7).value),  # col G
             line_number=r,
