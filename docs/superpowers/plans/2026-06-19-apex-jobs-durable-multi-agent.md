@@ -19,7 +19,8 @@
 **Host shell conventions (every task):**
 - `R=/home/olares/code/apex/apex-orch-lane` ; run from there (or `packages/apex-jobs`).
 - `UV="$HOME/.local/bin/uv"` (uv is not on the non-interactive SSH PATH).
-- Source the password (never echo): `export DEV_PG_PASSWORD=$(grep -E '^DEV_PG_PASSWORD=' "$R/infra/.env" | cut -d= -f2-)`
+- Recreate the gitignored `infra/.env` in the lane once (new worktrees don't carry gitignored files): `cp /home/olares/code/apex/apex-power-ops-platform/infra/.env "$R/infra/.env"`
+- Load the password by **sourcing** it (robust whether or not the value is quoted — `grep|cut` is NOT, it keeps any quotes; never echo it): `set -a; . "$R/infra/.env"; set +a`
 - Test DSN: `host=127.0.0.1 port=5432 dbname=orchestration_test user=orchestration password=$DEV_PG_PASSWORD sslmode=disable` ; runtime DSN: same with `dbname=orchestration_dev`.
 - Engine/CLI target the DB via `APEX_JOBS_DB` (default `orchestration_dev`); tests pin `APEX_JOBS_DB=orchestration_test`.
 
@@ -56,12 +57,12 @@
 ssh olares-mesh 'set -e; R=/home/olares/code/apex/apex-orch-lane; cd "$R"; \
   git worktree list | grep apex-orch-lane; git branch --show-current; \
   "$HOME/.local/bin/uv" --version; which psql; \
-  export DEV_PG_PASSWORD=$(grep -E "^DEV_PG_PASSWORD=" "$R/infra/.env" | cut -d= -f2-); \
+  set -a; . "$R/infra/.env"; set +a; \
   cd packages/apex-jobs && APEX_JOBS_DB=orchestration_test "$HOME/.local/bin/uv" run --with "psycopg[binary]" --with pytest --with-editable . pytest -q'
 ```
 Expected: branch `orchestration/durable-multi-agent`; uv version; `/usr/bin/psql`; **15 passed** (the foundation baseline). If `orchestration_test` is missing, create it (idempotent), then re-run:
 ```bash
-ssh olares-mesh 'export DEV_PG_PASSWORD=$(grep -E "^DEV_PG_PASSWORD=" /home/olares/code/apex/apex-orch-lane/infra/.env | cut -d= -f2-); \
+ssh olares-mesh 'set -a; . /home/olares/code/apex/apex-orch-lane/infra/.env; set +a; \
   for db in orchestration_dev orchestration_test; do \
     PGPASSWORD=$DEV_PG_PASSWORD psql -h 127.0.0.1 -p 5432 -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='"'"'$db'"'"'" | grep -q 1 || \
     PGPASSWORD=$DEV_PG_PASSWORD psql -h 127.0.0.1 -p 5432 -U postgres -c "CREATE DATABASE $db OWNER orchestration"; done'
@@ -152,7 +153,7 @@ def test_down_drops_new_columns():
 
 ```bash
 ssh olares-mesh 'cd /home/olares/code/apex/apex-orch-lane/infra/database/migrations/jobs && \
-  export DEV_PG_PASSWORD=$(grep -E "^DEV_PG_PASSWORD=" /home/olares/code/apex/apex-orch-lane/infra/.env | cut -d= -f2-); \
+  set -a; . /home/olares/code/apex/apex-orch-lane/infra/.env; set +a; \
   "$HOME/.local/bin/uv" run --with "psycopg[binary]" --with pytest pytest test_005_durability_schema.py -q'
 ```
 Expected: FAIL — `psql 005_durability_and_agents.sql failed` (file absent).
@@ -220,7 +221,7 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-orch-lane && git add infra/datab
 - [ ] **Step 2: Run — FAIL** (env-mismatched job still returned / job stuck `awaiting_approval` / no `unblock`). Command:
 ```bash
 ssh olares-mesh 'cd /home/olares/code/apex/apex-orch-lane/packages/apex-jobs && \
-  export DEV_PG_PASSWORD=$(grep -E "^DEV_PG_PASSWORD=" /home/olares/code/apex/apex-orch-lane/infra/.env | cut -d= -f2-); \
+  set -a; . /home/olares/code/apex/apex-orch-lane/infra/.env; set +a; \
   APEX_JOBS_DB=orchestration_test "$HOME/.local/bin/uv" run --with "psycopg[binary]" --with pytest --with-editable . pytest test_durability.py -q'
 ```
 
