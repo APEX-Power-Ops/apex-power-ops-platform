@@ -50,3 +50,47 @@ def test_unblock(conn_test):
     assert engine.unblock("d-blk") is not None
     j = engine.claim(as_="cc", env="host")
     assert j is not None and j["dispatch_id"] == "d-blk", j
+
+
+def test_start_stamps_lease(conn_test):
+    engine.enqueue(dispatch_id="d-lease", title="x", env_required="host")
+    j = engine.claim(as_="cc", env="host")
+    run_id = engine.start(j["id"], claimed_by="cc", run_env="host")
+    row = conn_test.execute(
+        "select lease_expires_at, heartbeat_at, lease_expires_at > now() "
+        "from jobs.run where id=%s", (run_id,)).fetchone()
+    assert row[0] is not None and row[1] is not None      # lease + heartbeat stamped
+    assert row[2] is True                                  # lease is in the future
+
+
+def test_heartbeat_extends_lease(conn_test):
+    engine.enqueue(dispatch_id="d-hb", title="x", env_required="host")
+    j = engine.claim(as_="cc", env="host")
+    run_id = engine.start(j["id"], claimed_by="cc", run_env="host")
+    before = conn_test.execute(
+        "select lease_expires_at from jobs.run where id=%s", (run_id,)).fetchone()[0]
+    engine.heartbeat(run_id, lease_ttl_s=7200)            # longer than the default 1800
+    after = conn_test.execute(
+        "select lease_expires_at from jobs.run where id=%s", (run_id,)).fetchone()[0]
+    assert after > before
+
+
+def test_reaper_requeues_then_fails(conn_test):
+    jid = engine.enqueue(dispatch_id="d-reap", title="x", env_required="host")
+    conn_test.execute("update jobs.job set max_attempts=2 where id=%s", (jid,))
+    # attempt 1: claim + start, then force the lease expired -> reap requeues
+    j = engine.claim(as_="cc", env="host")
+    r1 = engine.start(j["id"], claimed_by="cc", run_env="host")
+    conn_test.execute("update jobs.run set lease_expires_at = now() - interval '1 min' "
+                      "where id=%s", (r1,))
+    assert engine.reap() >= 1
+    assert conn_test.execute("select status from jobs.run where id=%s",
+                             (r1,)).fetchone()[0] == "failed"
+    assert engine.get_job("d-reap")["status"] == "pending"     # budget left -> requeued
+    # attempt 2: same again -> budget exhausted -> job terminal failed
+    j2 = engine.claim(as_="cc", env="host")
+    r2 = engine.start(j2["id"], claimed_by="cc", run_env="host")
+    conn_test.execute("update jobs.run set lease_expires_at = now() - interval '1 min' "
+                      "where id=%s", (r2,))
+    engine.reap()
+    assert engine.get_job("d-reap")["status"] == "failed"      # budget exhausted

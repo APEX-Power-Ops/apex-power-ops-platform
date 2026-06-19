@@ -11,10 +11,17 @@ Gate model:
   * env gate: start() refuses to open a run unless the claiming worker's run_env
     matches the job's env_required (the sandbox|host trust evidence).
 """
+import os
+
 import psycopg
 from psycopg.types.json import Jsonb
 
 from . import db
+
+# Visibility-timeout for crash recovery. A run whose lease expires (worker died,
+# no heartbeat) is reaped and requeued/failed. Generous by default; agent runs
+# extend it via heartbeat().
+LEASE_TTL_S = int(os.environ.get("APEX_JOBS_LEASE_TTL_S", "1800"))
 
 
 class GateError(Exception):
@@ -209,9 +216,11 @@ def start(job_id, claimed_by, run_env):
                         "from jobs.run where job_id=%s", (job_id,))
             attempt = cur.fetchone()["a"]
             cur.execute(
-                "insert into jobs.run (job_id, attempt, claimed_by, env, status, started_at) "
-                "values (%s, %s, %s, %s, 'running', now()) returning id",
-                (job_id, attempt, claimed_by, run_env),
+                "insert into jobs.run (job_id, attempt, claimed_by, env, status, "
+                "started_at, lease_expires_at, heartbeat_at) "
+                "values (%s, %s, %s, %s, 'running', now(), "
+                "now() + (%s || ' seconds')::interval, now()) returning id",
+                (job_id, attempt, claimed_by, run_env, str(LEASE_TTL_S)),
             )
             run_id = cur.fetchone()["id"]
             cur.execute("update jobs.job set status='running', updated_at=now() "
@@ -240,6 +249,50 @@ def report(run_id, exit_code, result=None, log_ref=None):
                         (status, r["job_id"]))
         conn.commit()
     return status
+
+
+def heartbeat(run_id, lease_ttl_s=LEASE_TTL_S):
+    """Extend a running run's lease (called periodically during long agent runs)."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "update jobs.run set heartbeat_at=now(), "
+                "lease_expires_at = now() + (%s || ' seconds')::interval "
+                "where id=%s and status='running'",
+                (str(lease_ttl_s), run_id),
+            )
+        conn.commit()
+
+
+def reap():
+    """Fail lease-expired running runs; requeue the owning job to pending if it has
+    attempts left (run count < max_attempts), else mark it failed. Idempotent.
+    Returns the number of runs reaped."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                select r.id as run_id, r.job_id, j.max_attempts,
+                       (select count(*) from jobs.run r2 where r2.job_id = j.id) as attempts
+                from jobs.run r join jobs.job j on j.id = r.job_id
+                where r.status = 'running' and r.lease_expires_at is not null
+                  and r.lease_expires_at < now()
+                for update skip locked
+                """
+            )
+            rows = cur.fetchall()
+            for row in rows:
+                cur.execute(
+                    "update jobs.run set status='failed', finished_at=now(), "
+                    "result = coalesce(result, '{}'::jsonb) "
+                    "|| jsonb_build_object('reaped', 'lease_expired') where id=%s",
+                    (row["run_id"],),
+                )
+                new_status = "pending" if row["attempts"] < row["max_attempts"] else "failed"
+                cur.execute("update jobs.job set status=%s, updated_at=now() where id=%s",
+                            (new_status, row["job_id"]))
+        conn.commit()
+    return len(rows)
 
 
 def list_eligible():
