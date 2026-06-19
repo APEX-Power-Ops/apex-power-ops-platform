@@ -1,0 +1,29 @@
+apiVersion: app.bytetrade.io/v1alpha1
+kind: Application
+metadata:
+  name: apex-dev-pg-mesh-acl
+  namespace: user-space-jlswen2121
+  labels:
+    app.kubernetes.io/managed-by: apex-power-ops
+    app.kubernetes.io/name: apex-dev-pg
+  annotations:
+    apex.apexpowerops.com/purpose: "Durable private-mesh ACL for apex-dev-pg dev Postgres on tcp:5432."
+spec:
+  appid: apex-dev-pg-mesh-acl
+  isSysApp: false
+  name: apex-dev-pg
+  namespace: user-space-jlswen2121
+  owner: jlswen2121
+  settings:
+    clusterScoped: "false"
+    source: apex-power-ops
+    title: APEX Dev Postgres Mesh ACL
+    version: "1"
+  tailscale:
+    acls:
+      - action: accept
+        src:
+          - "*"
+        proto: tcp
+        dst:
+          - "*:5432"
