@@ -295,6 +295,40 @@ def reap():
     return len(rows)
 
 
+def set_base_ref(job_id, base_ref):
+    """Persist the resolved base_ref when a job was enqueued without one (promote needs it)."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("update jobs.job set base_ref=%s, updated_at=now() "
+                        "where id=%s and base_ref is null", (base_ref, job_id))
+        conn.commit()
+
+
+def set_run_artifacts(run_id, worktree_path=None, branch=None, diff_stat=None):
+    """Record an agent run's worktree/branch/diff_stat on the run row."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "update jobs.run set worktree_path=coalesce(%s, worktree_path), "
+                "branch=coalesce(%s, branch), diff_stat=coalesce(%s, diff_stat) where id=%s",
+                (worktree_path, branch, diff_stat, run_id),
+            )
+        conn.commit()
+
+
+def open_promotion(job_id):
+    """Create a pending promotion gate + move the job to awaiting_promotion. Returns gate id."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("insert into jobs.gate (job_id, gate_type) values (%s, 'promotion') "
+                        "returning id", (job_id,))
+            gid = cur.fetchone()["id"]
+            cur.execute("update jobs.job set status='awaiting_promotion', updated_at=now() "
+                        "where id=%s", (job_id,))
+        conn.commit()
+    return gid
+
+
 def list_eligible():
     """Claimable jobs in claim order (priority asc, dispatch_id asc)."""
     with _conn() as conn, conn.cursor() as cur:
