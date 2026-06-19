@@ -26,9 +26,12 @@ def test_worker_no_eligible_returns_none(conn_test):
     assert run_once(as_="cc", env="host") is None
 
 
-def test_worker_respects_env_gate(conn_test):
+def test_worker_skips_mismatched_env(conn_test):
+    # env-filtered claim: a sandbox worker does NOT claim a host-only job; it stays
+    # pending for a host worker (the old claim-then-block path is gone by design).
     enqueue(dispatch_id="w-gate", title="x", env_required="host",
             payload={"command": "true"})
-    r = run_once(as_="cc", env="sandbox")  # wrong env
-    assert r is not None and "gated" in r
-    assert get_job("w-gate")["status"] == "blocked"
+    assert run_once(as_="cc", env="sandbox") is None       # not claimed (env filtered)
+    assert get_job("w-gate")["status"] == "pending"        # stays claimable
+    r = run_once(as_="cc", env="host")                     # a host worker runs it
+    assert r is not None and r["status"] == "succeeded"

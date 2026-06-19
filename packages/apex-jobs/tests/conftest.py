@@ -15,9 +15,10 @@ PGPW = (os.environ.get("APEX_JOBS_PGPASSWORD")
         or os.environ.get("DEV_PG_PASSWORD") or "TCC_v5_2025")
 DSN = f"host=127.0.0.1 port=5432 dbname={DBNAME} user=orchestration password={PGPW} sslmode=disable"
 
-APPLY = ["001_jobs_enums.sql", "002_jobs_tables.sql", "003_jobs_indexes.sql", "004_jobs_views.sql"]
-DOWN = ["004_jobs_views_down.sql", "003_jobs_indexes_down.sql",
-        "002_jobs_tables_down.sql", "001_jobs_enums_down.sql"]
+APPLY = ["001_jobs_enums.sql", "002_jobs_tables.sql", "003_jobs_indexes.sql",
+         "004_jobs_views.sql", "005_durability_and_agents.sql"]
+DOWN = ["005_durability_and_agents_down.sql", "004_jobs_views_down.sql",
+        "003_jobs_indexes_down.sql", "002_jobs_tables_down.sql", "001_jobs_enums_down.sql"]
 
 
 def _psql(fname):

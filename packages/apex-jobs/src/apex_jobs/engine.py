@@ -85,6 +85,8 @@ def claim(as_=None, env=None):
                 """
                 select id from jobs.job j
                 where j.status = 'pending'
+                  and (%(env)s::text is null or j.env_required = 'any'
+                       or j.env_required::text = %(env)s::text)
                   and (j.predecessor_id is null
                        or exists (select 1 from jobs.job p
                                   where p.id = j.predecessor_id and p.status = 'succeeded'))
@@ -93,7 +95,8 @@ def claim(as_=None, env=None):
                 order by j.priority asc, j.dispatch_id asc
                 limit 1
                 for update skip locked
-                """
+                """,
+                {"env": env},
             )
             row = cur.fetchone()
             if not row:
@@ -139,11 +142,42 @@ def _decide_gate(gate_id, state, by, note):
 
 
 def approve(gate_id, by, note=None):
-    return _decide_gate(gate_id, "approved", by, note)
+    gid = _decide_gate(gate_id, "approved", by, note)
+    # Lifecycle closure: a job parked 'awaiting_approval' becomes claimable again
+    # once it has no remaining open gate. awaiting_promotion is left untouched - it
+    # flows to promote(), not back to pending.
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                update jobs.job j set status='pending', updated_at=now()
+                from jobs.gate g
+                where g.id=%s and j.id=g.job_id and j.status='awaiting_approval'
+                  and not exists (select 1 from jobs.gate g2
+                                  where g2.job_id=j.id and g2.state='pending')
+                """,
+                (gate_id,),
+            )
+        conn.commit()
+    return gid
 
 
 def reject(gate_id, by, note=None):
     return _decide_gate(gate_id, "rejected", by, note)
+
+
+def unblock(ident):
+    """Return a blocked job to pending (re-claimable). Returns the job id or None."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "update jobs.job set status='pending', updated_at=now() "
+                "where (id::text=%s or dispatch_id=%s) and status='blocked' returning id",
+                (str(ident), str(ident)),
+            )
+            r = cur.fetchone()
+        conn.commit()
+    return r["id"] if r else None
 
 
 def start(job_id, claimed_by, run_env):
