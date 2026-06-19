@@ -51,16 +51,17 @@ def build(path: pathlib.Path) -> pathlib.Path:
     ws["L33"] = "Outside Services Totals"
     ws["P33"] = 50.0
 
-    er = wb.create_sheet("Equipment Reference")
-    er["A2"] = "ATS"
-    er["B2"] = "MTS"
-    er["C2"] = "Scope of Work"
-    er["D2"] = "ATS25"
-    er["E2"] = "MTS23"
-    er["C3"] = "Vacuum Interrupter"
-    er["A3"] = "7.6"
-    er["D3"] = 5.0
+    er = wb.create_sheet("Equipment Reference")  # real layout: B=ATS-sec, C=MTS-sec, D=type, E=ATS25, F=MTS23
+    er["B2"] = "ATS"
+    er["C2"] = "MTS"
+    er["D2"] = "Scope of Work"
+    er["E2"] = "ATS25"
+    er["F2"] = "MTS23"
+    er["B3"] = "7.6"
+    er["C3"] = "7.6"
+    er["D3"] = "Vacuum Interrupter"
     er["E3"] = 5.0
+    er["F3"] = 5.0
 
     pt = wb.create_sheet("Print_Template")
     pt["L13"] = "  TOTAL COST"

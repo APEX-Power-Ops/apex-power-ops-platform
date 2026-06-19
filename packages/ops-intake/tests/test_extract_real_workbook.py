@@ -13,5 +13,6 @@ def test_real_miner(real_workbook):
     assert sum(l.qty for l in a1.lines) >= 100  # QTY-expansion (A1 ~114 units)
     chiller = [s for s in p.scopes if "Chiller" in s.scope_name]
     assert len(chiller) == 2 and all(s.quote.is_estimate for s in chiller)
+    assert len(p.standard_hours) >= 20  # Equipment Reference catalog extracted
     bad = [c for c in validate(p) if not c.ok]
     assert not bad, bad
