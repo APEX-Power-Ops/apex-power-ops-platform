@@ -9,7 +9,10 @@ from xml.etree import ElementTree as ET
 
 from power_test_converters.model import (
     PtmBushing,
+    PtmDemagnetizationMeasurement,
+    PtmDemagnetizationTest,
     PtmJob,
+    PtmInstrumentInfo,
     PtmLocation,
     PtmModel,
     PtmExcitingCurrentMeasurement,
@@ -59,6 +62,11 @@ def read_ptm(path: str | Path) -> PtmModel:
         (entry_name, root)
         for entry_name, root in xml_docs.items()
         if _local_name(root.tag) == "TTSHVExcitingCurrentTest"
+    ]
+    demagnetization_docs = [
+        (entry_name, root)
+        for entry_name, root in xml_docs.items()
+        if _local_name(root.tag) == "TTSDemagnetizationTest"
     ]
     job_docs = [
         (entry_name, root)
@@ -123,6 +131,11 @@ def read_ptm(path: str | Path) -> PtmModel:
         for _entry_name, root in exciting_current_docs
         if _text(root, "AssetId") in matching_asset_ids
     ]
+    demagnetization_tests = [
+        _parse_demagnetization_test(root)
+        for _entry_name, root in demagnetization_docs
+        if _text(root, "AssetId") in matching_asset_ids
+    ]
 
     return PtmModel(
         source_path=source_path,
@@ -136,6 +149,7 @@ def read_ptm(path: str | Path) -> PtmModel:
         turns_ratio_tests=turns_ratio_tests,
         winding_resistance_tests=winding_resistance_tests,
         exciting_current_tests=exciting_current_tests,
+        demagnetization_tests=demagnetization_tests,
     )
 
 
@@ -318,6 +332,7 @@ def _parse_tan_delta_measurements(root: ET.Element) -> list[PtmPowerFactorMeasur
     test_name = _text(root, "Name")
     test_grade = _text(root, "Grade")
     global_correction_factor = _float_text(_text(root, "CorrectionFactor"))
+    instrument = _parse_instrument_info(root)
 
     measurements_root = _child(root, "Measurements")
     if measurements_root is None:
@@ -351,6 +366,7 @@ def _parse_tan_delta_measurements(root: ET.Element) -> list[PtmPowerFactorMeasur
                 power_factor_corrected=_float_text(_text(point, "PowerFactorCorrected")),
                 correction_factor=correction_factor or global_correction_factor,
                 grade=test_grade,
+                instrument=instrument,
             )
         )
     return measurements
@@ -383,6 +399,7 @@ def _parse_turns_ratio_test(root: ET.Element) -> PtmTurnsRatioTest:
         execution_date=execution_date,
         test_voltage_v=_float_text(_text(settings, "TestVoltage")) if settings is not None else None,
         test_frequency_hz=_float_text(_text(settings, "TestFrequency")) if settings is not None else None,
+        instrument=_parse_instrument_info(root),
         measurements=measurements,
     )
 
@@ -423,6 +440,7 @@ def _parse_winding_resistance_test(root: ET.Element) -> PtmWindingResistanceTest
         winding_material=_text(settings, "WindingMaterial") if settings is not None else "",
         measured_temperature_c=_float_text(_text(settings, "MeasTemp")) if settings is not None else None,
         reference_temperature_c=_float_text(_text(settings, "RefTemp")) if settings is not None else None,
+        instrument=_parse_instrument_info(root),
         measurements=measurements,
     )
 
@@ -455,8 +473,65 @@ def _parse_exciting_current_test(root: ET.Element) -> PtmExcitingCurrentTest:
         execution_date=execution_date,
         test_voltage_v=_float_text(_text(settings, "TestVoltage")) if settings is not None else None,
         test_frequency_hz=_float_text(_text(settings, "TestFrequency")) if settings is not None else None,
+        instrument=_parse_instrument_info(root),
         measurements=measurements,
     )
+
+
+def _parse_demagnetization_test(root: ET.Element) -> PtmDemagnetizationTest:
+    settings = _child(root, "Settings")
+    execution_date = _text(root, "ExecutionDate")
+    measurements = [
+        PtmDemagnetizationMeasurement(
+            measured_at=_text(item, "MeasuredDate") or execution_date,
+            status=_text(item, "Status"),
+            dc_current_a=_float_text(_text(item, "IDC")),
+            resistance_ohm=_float_text(_text(item, "Resistance")),
+            initial_remanence_percent=_float_text(_text(item, "InitialRemanence")),
+            remanence_percent=_float_text(_text(item, "Remanence")),
+        )
+        for item in _children(
+            _child(root, "Measurements"), "tTTSDemagnetizationMeasurement"
+        )
+    ]
+    return PtmDemagnetizationTest(
+        source_test_id=_text(root, "TestId") or _export_id(root),
+        name=_text(root, "Name"),
+        execution_date=execution_date,
+        test_current_a=(
+            _float_text(_text(settings, "TestCurrent")) if settings is not None else None
+        ),
+        saturation_level_percent=(
+            _float_text(_text(settings, "SaturationLevel"))
+            if settings is not None
+            else None
+        ),
+        grade=_text(root, "Grade"),
+        instrument=_parse_instrument_info(root),
+        measurements=measurements,
+    )
+
+
+def _parse_instrument_info(root: ET.Element) -> PtmInstrumentInfo | None:
+    info = _child(root, "TestSetInfo")
+    if info is None:
+        return None
+    instrument = PtmInstrumentInfo(
+        test_set_name=_text(info, "TestSetName"),
+        serial_number=_text(info, "SerialNumber"),
+        software_version=_text(info, "SoftwareVersion"),
+        calibration_date=_text(info, "CalibrationDate"),
+    )
+    if not any(
+        [
+            instrument.test_set_name,
+            instrument.serial_number,
+            instrument.software_version,
+            instrument.calibration_date,
+        ]
+    ):
+        return None
+    return instrument
 
 
 def _first_measurement_point(measurement: ET.Element) -> ET.Element | None:

@@ -7,9 +7,12 @@ from xml.etree import ElementTree as ET
 
 from power_test_converters.model import (
     PtmBushing,
+    PtmDemagnetizationTest,
     PtmExcitingCurrentMeasurement,
+    PtmInstrumentInfo,
     PtmModel,
     PtmPowerFactorMeasurement,
+    PtmPowerRating,
     PtmTransformer,
     PtmTurnsRatioMeasurement,
     PtmWindingResistanceMeasurement,
@@ -73,6 +76,7 @@ _DTAX_CHILDREN = [
 ]
 _TEMPLATE_PATCH_CHILDREN = [
     "admin-data",
+    "test-admin-data",
     "test-conditions",
     "exciting-current-test-set",
     "bushing-designations",
@@ -81,6 +85,7 @@ _TEMPLATE_PATCH_CHILDREN = [
     "lvttratio-connections",
     "m7winding-resistance-tests-winding-1",
     "m7winding-resistance-tests-winding-2",
+    "demagnetization-test-set",
     "turns-ratio-connections",
     "exciting-current-connections",
     "overall-test-set",
@@ -102,6 +107,33 @@ _TEST_CIRCUIT_BY_MODE = {
     "UstA": "CIRC_UST_RB",
     "UstB": "CIRC_UST_RB",
 }
+_TWO_WINDING_NAMEPLATE_ATTRS = (
+    "year-mfg",
+    "apparatus-type",
+    "mfr",
+    "mfr-location",
+    "serial-num",
+    "special-id",
+    "config",
+    "class",
+    "coolant",
+    "tanktype",
+    "weight-units",
+    "phases",
+    "volume-units",
+    "Va-units",
+    "HVWindingLine",
+    "LVWindingLine",
+    "oil-volume",
+    "Va-0",
+    "Va-1",
+    "Va-2",
+    "Va-3",
+    "BIL",
+    "weight",
+    "kV-0",
+    "kV-1",
+)
 
 
 def write_dtax(
@@ -185,22 +217,30 @@ def _normalize_root_attrs(root: ET.Element) -> None:
     root.attrib.update(ordered_attrs)
 
 
+def _sync_attrs(
+    element: ET.Element, source_attrs: dict[str, str], managed_keys: tuple[str, ...]
+) -> None:
+    for key in managed_keys:
+        if key not in source_attrs and key in element.attrib:
+            del element.attrib[key]
+    for key in managed_keys:
+        if key in source_attrs:
+            element.set(key, source_attrs[key])
+
+
 def _patch_nameplate(nameplate: ET.Element, model: PtmModel) -> None:
     generated = _build_nameplate(model)
-    for key in list(nameplate.attrib):
-        if key in generated.attrib:
-            nameplate.set(key, generated.attrib[key])
+    _sync_attrs(nameplate, generated.attrib, _TWO_WINDING_NAMEPLATE_ATTRS)
 
     for child_name in ["HVWindingDetails", "LVWindingDetails", "TVWindingDetails"]:
         existing = nameplate.find(child_name)
         replacement = generated.find(child_name)
         if existing is None or replacement is None:
             continue
-        for key in list(existing.attrib):
-            if key in replacement.attrib:
-                existing.set(key, replacement.attrib[key])
+        existing.attrib.update(replacement.attrib)
 
     _patch_winding_properties(_ensure_child(nameplate, "winding-properties"), model)
+    _replace_child(nameplate, "tapchanger-nameplates", generated.find("tapchanger-nameplates"))
 
 
 def _build_nameplate(model: PtmModel) -> ET.Element:
@@ -217,16 +257,25 @@ def _build_nameplate(model: PtmModel) -> ET.Element:
         "serial-num": transformer.serial_number,
         "special-id": transformer.apparatus_id,
         "config": _config_code(high, low),
-        "class": _cooling_class(rating.cooling_class if rating else ""),
-        "coolant": _coolant(transformer.fluid_type),
-        "tanktype": transformer.tank_type,
         "weight-units": "LB",
         "phases": _phase_label(transformer.number_of_phases),
         "volume-units": "UG",
         "Va-units": "KVA",
+        "HVWindingLine": "LineToLine",
+        "LVWindingLine": "LineToLine",
     }
+    cooling_class = _cooling_class(rating.cooling_class if rating else "")
+    if cooling_class:
+        attrs["class"] = cooling_class
+    coolant = _coolant(transformer.fluid_type)
+    if coolant:
+        attrs["coolant"] = coolant
+    tank_type = _tank_type(transformer.tank_type)
+    if tank_type:
+        attrs["tanktype"] = tank_type
     _set_if_number(attrs, "oil-volume", _liters_to_us_gallons(transformer.fluid_volume_l))
-    _set_if_number(attrs, "Va-0", _va_to_kva(rating.rated_power_va if rating else None))
+    for index, value in enumerate(_nameplate_kva_values(transformer.power_ratings)):
+        _set_if_number(attrs, f"Va-{index}", value)
     _set_if_number(attrs, "BIL", _v_to_kv(high.bil_v if high else None))
     _set_if_number(attrs, "weight", _kg_to_lb(transformer.total_weight_kg))
     _set_if_number(attrs, "kV-0", _v_to_kv(high.voltage_ll_v if high else None))
@@ -327,6 +376,7 @@ def _patch_session(
         _append_overall_tests(children["overall-test-set"], model.overall_power_factor)
     if not preserve_template_metadata:
         _patch_bushing_tests(children["m7-bushing-test-set"], model)
+    _patch_test_admin_data(children["test-admin-data"], model)
     _clear(children["turns-ratio-test-set"])
     _patch_lv_ttr_tests(children["lvttratio-test-set"], model)
     _patch_lv_ttr_connections(children["lvttratio-connections"], model)
@@ -338,6 +388,157 @@ def _patch_session(
     _patch_winding_resistance_tests(
         children["m7winding-resistance-tests-winding-2"], model, "Low"
     )
+    _patch_demagnetization_tests(children["demagnetization-test-set"], model)
+
+
+def _patch_test_admin_data(parent: ET.Element, model: PtmModel) -> None:
+    _clear(parent)
+    for test_name, instrument, last_date in _test_admin_entries(model):
+        ET.SubElement(
+            parent,
+            "admin-data",
+            _test_admin_attrs(
+                test_name=test_name,
+                instrument=instrument,
+                last_date=last_date,
+                line_frequency=_line_frequency(model.transformer.rated_frequency_hz),
+            ),
+        )
+
+
+def _test_admin_entries(
+    model: PtmModel,
+) -> list[tuple[str, PtmInstrumentInfo | None, str]]:
+    entries: list[tuple[str, PtmInstrumentInfo | None, str]] = []
+    if model.overall_power_factor:
+        entries.append(
+            (
+                "TwoWindingOverall",
+                _measurement_instrument(model.overall_power_factor),
+                _latest_measurement_date(model.overall_power_factor),
+            )
+        )
+    if model.bushing_power_factor:
+        entries.append(
+            (
+                "Bushings",
+                _measurement_instrument(model.bushing_power_factor),
+                _latest_measurement_date(model.bushing_power_factor),
+            )
+        )
+    if model.exciting_current_tests:
+        entries.append(
+            (
+                "ExcitingCurrent",
+                _test_instrument(model.exciting_current_tests),
+                _latest_test_date(model.exciting_current_tests),
+            )
+        )
+    if model.turns_ratio_tests:
+        entries.append(
+            (
+                "LVTTR",
+                _test_instrument(model.turns_ratio_tests),
+                _latest_test_date(model.turns_ratio_tests),
+            )
+        )
+    if model.winding_resistance_tests:
+        entries.append(
+            (
+                "M7WindingResistance",
+                _test_instrument(model.winding_resistance_tests),
+                _latest_test_date(model.winding_resistance_tests),
+            )
+        )
+    if model.demagnetization_tests:
+        entries.append(
+            (
+                "Demagnetization",
+                _test_instrument(model.demagnetization_tests),
+                _latest_test_date(model.demagnetization_tests),
+            )
+        )
+    return entries
+
+
+def _test_admin_attrs(
+    *,
+    test_name: str,
+    instrument: PtmInstrumentInfo | None,
+    last_date: str,
+    line_frequency: str,
+) -> dict[str, str]:
+    return {
+        "copies": "",
+        "top_sn": instrument.serial_number if instrument else "",
+        "tested-by": "",
+        "retest-date-utc": _ZERO_DATE,
+        "check-date-utc": _ZERO_DATE,
+        "checked-by": "",
+        "wo": "",
+        "bottom-sn": instrument.test_set_name if instrument else "",
+        "po-num": "",
+        "insurance-book": "",
+        "travel-time": "",
+        "duration": "",
+        "last-date-utc": _dtax_datetime(last_date),
+        "last-sheet": "",
+        "test-set-type": "Undefined",
+        "reason": "",
+        "reason-enum": "Undefined",
+        "sheet-num": "",
+        "crew-size": "-2147483648",
+        "counter-1": "-2147483648",
+        "counter-2": "-2147483648",
+        "counter-3": "-2147483648",
+        "resonator-counter": "",
+        "resonator-date-tested-utc": _ZERO_DATE,
+        "factory-calibration-date": "0001-01-01T00:00:00",
+        "factory-recalibration-date": "0001-01-01T00:00:00",
+        "field-calibration-date": (
+            _dtax_date(instrument.calibration_date) if instrument else "0001-01-01T00:00:00"
+        ),
+        "LineFrequency": line_frequency,
+        "firmware-version": instrument.software_version if instrument else "",
+        "dta-version": "",
+        "test-name": test_name,
+    }
+
+
+def _measurement_instrument(measurements: list[object]) -> PtmInstrumentInfo | None:
+    for measurement in measurements:
+        instrument = getattr(measurement, "instrument", None)
+        if instrument is not None:
+            return instrument
+    return None
+
+
+def _test_instrument(tests: list[object]) -> PtmInstrumentInfo | None:
+    for test in tests:
+        instrument = getattr(test, "instrument", None)
+        if instrument is not None:
+            return instrument
+    return None
+
+
+def _latest_measurement_date(measurements: list[object]) -> str:
+    return _latest_date(getattr(measurement, "measured_at", "") for measurement in measurements)
+
+
+def _latest_test_date(tests: list[object]) -> str:
+    dates: list[str] = []
+    for test in tests:
+        dates.append(getattr(test, "execution_date", ""))
+        dates.extend(
+            getattr(measurement, "measured_at", "")
+            for measurement in getattr(test, "measurements", [])
+        )
+    return _latest_date(dates)
+
+
+def _latest_date(values: object) -> str:
+    dates = sorted(value for value in values if value)
+    return dates[-1] if dates else ""
 
 
 def _append_bushing_nameplates(parent: ET.Element, bushings: list[PtmBushing]) -> None:
@@ -681,6 +882,7 @@ def _patch_turns_ratio_connections(parent: ET.Element, model: PtmModel) -> None:
 def _patch_lv_ttr_tests(parent: ET.Element, model: PtmModel) -> None:
     _clear(parent)
     low = _winding_by_name(model.transformer, "Secondary")
+    tapchanger_id = _detc_tapchanger_id(model)
     for test in model.turns_ratio_tests:
         for tap_index, tap_name, phase_rows in _phase_groups(test.measurements):
             row = ET.SubElement(parent, "lvttratio-test", {"label": "H-X"})
@@ -729,7 +931,7 @@ def _patch_lv_ttr_tests(parent: ET.Element, model: PtmModel) -> None:
                     ref_set,
                     "tc-reference",
                     {
-                        "tapchanger-id": _ZERO_ID,
+                        "tapchanger-id": tapchanger_id,
                         "tapchanger-position": _tap_position_text(tap_index, tap_name),
                         "tapchanger-type": "DETC",
                     },
@@ -780,6 +982,7 @@ def _all_ig_cable_states() -> dict[str, str]:
 
 def _patch_exciting_current_tests(parent: ET.Element, model: PtmModel) -> None:
     _clear(parent)
+    tapchanger_id = _detc_tapchanger_id(model)
     for test in model.exciting_current_tests:
         for tap_index, tap_name, phase_rows in _phase_groups(test.measurements):
             row = ET.SubElement(
@@ -842,7 +1045,7 @@ def _patch_exciting_current_tests(parent: ET.Element, model: PtmModel) -> None:
                     ref_set,
                     "tc-reference",
                     {
-                        "tapchanger-id": _ZERO_ID,
+                        "tapchanger-id": tapchanger_id,
                         "tapchanger-position": str(tap_index),
                         "tapchanger-type": "DETC",
                     },
@@ -963,6 +1166,60 @@ def _patch_winding_resistance_connections(
         _winding_resistance_circuit_descriptions(winding), start=1
     ):
         connections.set(f"circuit-description-{index}", description)
+
+
+def _patch_demagnetization_tests(parent: ET.Element, model: PtmModel) -> None:
+    if not model.demagnetization_tests:
+        return
+
+    _clear(parent)
+    ET.SubElement(
+        parent,
+        "demagnetization-connections",
+        {
+            "conn-1": "",
+            "conn-2": "",
+            "conn-3": "",
+            "conn-4": "",
+            "conn-5": "",
+            "conn-6": "",
+            "demag-energize-lead-1": "LV3",
+            "demag-energize-lead-2": "LV1",
+            "demag-energize-lead-3": "LV2",
+            "demag-measure-lead-1": "LV1",
+            "demag-measure-lead-2": "LV2",
+            "demag-measure-lead-3": "LV3",
+            "rated-volts": _DOUBLE_MIN,
+        },
+    )
+    results = ET.SubElement(parent, "demagnetization-test-results-set")
+    for test in model.demagnetization_tests:
+        for measurement in test.measurements:
+            result = ET.SubElement(results, "demagnetization-test-results")
+            attrs = {
+                "date-tested-utc": _dtax_datetime(
+                    measurement.measured_at or test.execution_date
+                ),
+                "phase-a-test-completed": _bool_dtax(
+                    _demagnetization_measurement_completed(measurement.status)
+                ),
+                "phase-b-test-completed": _bool_dtax(
+                    _demagnetization_measurement_completed(measurement.status)
+                ),
+                "phase-c-test-completed": _bool_dtax(
+                    _demagnetization_measurement_completed(measurement.status)
+                ),
+            }
+            _set_if_number(attrs, "frequency", model.transformer.rated_frequency_hz)
+            _set_if_number(attrs, "current-c", measurement.resistance_ohm)
+            ET.SubElement(result, "demagnetization-demag-test", _strip_empty_attrs(attrs))
+
+
+def _demagnetization_measurement_completed(status: str) -> bool:
+    normalized = status.lower()
+    if "fail" in normalized:
+        return False
+    return True
 
 
 def _winding_resistance_connection_labels(
@@ -1223,6 +1480,22 @@ def _first_number(values: object) -> float | None:
     return None
 
 
+def _nameplate_kva_values(ratings: list[PtmPowerRating]) -> list[float]:
+    values = [
+        kva
+        for kva in (_va_to_kva(rating.rated_power_va) for rating in ratings)
+        if kva is not None
+    ]
+    if not values:
+        return []
+    if len(values) == 1:
+        return values * 4
+    repeated = values.copy()
+    while len(repeated) < 4:
+        repeated.extend(values)
+    return repeated[:4]
+
+
 def _rating_from_phase_rows(measurements: dict[int, object]) -> str:
     ratings = {
         _rating_from_assessment(getattr(measurement, "assessment", ""))
@@ -1325,9 +1598,19 @@ def _phase_label(number_of_phases: int | None) -> str:
 
 def _coolant(fluid_type: str) -> str:
     return {
-        "NaturalEster": "NaturalEsters",
-        "MineralOil": "MineralOil",
+        "NaturalEster": "FR3",
+        "NaturalEsters": "FR3",
+        "MineralOil": "Oil",
     }.get(fluid_type, fluid_type)
+
+
+def _tank_type(tank_type: str) -> str:
+    return {
+        "Sealed": "N2BLANKETED",
+        "NitrogenBlanketed": "N2BLANKETED",
+        "SealedConservator": "SEALEDCONSER",
+        "Conservator": "SEALEDCONSER",
+    }.get(tank_type, tank_type)
 
 
 def _cooling_class(cooling_class: str) -> str:
@@ -1340,6 +1623,10 @@ def _line_frequency(frequency: float | None) -> str:
     if frequency == 50:
         return "Hertz50"
     return "Custom"
+
+
+def _bool_dtax(value: bool) -> str:
+    return "true" if value else "false"
 
 
 def _rating_from_grade(grade: str) -> str:
@@ -1366,6 +1653,17 @@ def _dtax_datetime(value: str) -> str:
     return parsed.replace(tzinfo=None).strftime("%Y-%m-%d %H:%M:%S")
 
 
+def _dtax_date(value: str) -> str:
+    if not value:
+        return "0001-01-01T00:00:00"
+    normalized = value.strip().replace("Z", "+00:00")
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError:
+        return value.split("T")[0] + "T00:00:00"
+    return parsed.replace(tzinfo=None).strftime("%Y-%m-%dT00:00:00")
+
+
 def _set_if_number(attrs: dict[str, str], key: str, value: float | None) -> None:
     if value is not None:
         attrs[key] = _format_number(value)
@@ -1379,21 +1677,23 @@ def _strip_empty_attrs(attrs: dict[str, str | None]) -> dict[str, str]:
     return {key: value for key, value in attrs.items() if value is not None}
 
 
+def _replace_child(parent: ET.Element, tag: str, replacement: ET.Element | None) -> None:
+    if replacement is None:
+        return
+    existing = parent.find(tag)
+    if existing is None:
+        parent.append(replacement)
+        return
+    index = list(parent).index(existing)
+    parent.remove(existing)
+    parent.insert(index, replacement)
+
+
 def _ensure_child(parent: ET.Element, tag: str) -> ET.Element:
     child = parent.find(tag)
     if child is None:
         child = ET.SubElement(parent, tag)
     return child
-
-
-def _replace_child(parent: ET.Element, tag: str, replacement: ET.Element) -> None:
-    children = list(parent)
-    for index, child in enumerate(children):
-        if child.tag == tag:
-            parent.remove(child)
-            parent.insert(index, replacement)
-            return
-    parent.append(replacement)
 
 
 def _clone_element(element: ET.Element) -> ET.Element:
@@ -1433,8 +1733,18 @@ def _farad_to_pf(value: float | None) -> float | None:
 
 
 def _liters_to_us_gallons(value: float | None) -> float | None:
-    return value * 0.2641720524 if value is not None else None
+    return _converted_unit_value(value, 0.2641720524)
 
 
 def _kg_to_lb(value: float | None) -> float | None:
-    return value * 2.20462262185 if value is not None else None
+    return _converted_unit_value(value, 2.20462262185)
+
+
+def _converted_unit_value(value: float | None, factor: float) -> float | None:
+    if value is None:
+        return None
+    converted = value * factor
+    rounded = round(converted)
+    if abs(converted - rounded) < 0.000001:
+        return float(rounded)
+    return round(converted, 6)

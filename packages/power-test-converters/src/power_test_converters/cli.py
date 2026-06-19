@@ -51,7 +51,8 @@ def main(argv: list[str] | None = None) -> int:
         f"{bushing_summary}; "
         f"{sum(len(test.measurements) for test in model.turns_ratio_tests)} TTR measurements; "
         f"{sum(len(test.measurements) for test in model.winding_resistance_tests)} WR measurements; "
-        f"{sum(len(test.measurements) for test in model.exciting_current_tests)} excitation measurements"
+        f"{sum(len(test.measurements) for test in model.exciting_current_tests)} excitation measurements; "
+        f"{sum(len(test.measurements) for test in model.demagnetization_tests)} demag measurements"
     )
     if args.template_dtax is not None:
         print(f"Template: {args.template_dtax}")

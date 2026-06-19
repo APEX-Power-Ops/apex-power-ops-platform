@@ -108,6 +108,14 @@ class PtmJob:
 
 
 @dataclass(frozen=True)
+class PtmInstrumentInfo:
+    test_set_name: str = ""
+    serial_number: str = ""
+    software_version: str = ""
+    calibration_date: str = ""
+
+
+@dataclass(frozen=True)
 class PtmPowerFactorMeasurement:
     source_test_id: str
     source_test_name: str
@@ -128,6 +136,7 @@ class PtmPowerFactorMeasurement:
     power_factor_corrected: float | None
     correction_factor: float | None
     grade: str
+    instrument: PtmInstrumentInfo | None = None
 
 
 @dataclass(frozen=True)
@@ -154,6 +163,7 @@ class PtmTurnsRatioTest:
     execution_date: str = ""
     test_voltage_v: float | None = None
     test_frequency_hz: float | None = None
+    instrument: PtmInstrumentInfo | None = None
     measurements: list[PtmTurnsRatioMeasurement] = field(default_factory=list)
 
 
@@ -184,6 +194,7 @@ class PtmWindingResistanceTest:
     winding_material: str = ""
     measured_temperature_c: float | None = None
     reference_temperature_c: float | None = None
+    instrument: PtmInstrumentInfo | None = None
     measurements: list[PtmWindingResistanceMeasurement] = field(default_factory=list)
 
 
@@ -210,7 +221,30 @@ class PtmExcitingCurrentTest:
     execution_date: str = ""
     test_voltage_v: float | None = None
     test_frequency_hz: float | None = None
+    instrument: PtmInstrumentInfo | None = None
     measurements: list[PtmExcitingCurrentMeasurement] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class PtmDemagnetizationMeasurement:
+    measured_at: str
+    status: str = ""
+    dc_current_a: float | None = None
+    resistance_ohm: float | None = None
+    initial_remanence_percent: float | None = None
+    remanence_percent: float | None = None
+
+
+@dataclass(frozen=True)
+class PtmDemagnetizationTest:
+    source_test_id: str
+    name: str = ""
+    execution_date: str = ""
+    test_current_a: float | None = None
+    saturation_level_percent: float | None = None
+    grade: str = ""
+    instrument: PtmInstrumentInfo | None = None
+    measurements: list[PtmDemagnetizationMeasurement] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -226,6 +260,7 @@ class PtmModel:
     turns_ratio_tests: list[PtmTurnsRatioTest] = field(default_factory=list)
     winding_resistance_tests: list[PtmWindingResistanceTest] = field(default_factory=list)
     exciting_current_tests: list[PtmExcitingCurrentTest] = field(default_factory=list)
+    demagnetization_tests: list[PtmDemagnetizationTest] = field(default_factory=list)
 
     @property
     def first_test_date(self) -> str:
@@ -243,6 +278,11 @@ class PtmModel:
         measurements += [
             measurement
             for test in self.exciting_current_tests
+            for measurement in test.measurements
+        ]
+        measurements += [
+            measurement
+            for test in self.demagnetization_tests
             for measurement in test.measurements
         ]
         dates = sorted(m.measured_at for m in measurements if m.measured_at)
@@ -264,6 +304,11 @@ class PtmModel:
         measurements += [
             measurement
             for test in self.exciting_current_tests
+            for measurement in test.measurements
+        ]
+        measurements += [
+            measurement
+            for test in self.demagnetization_tests
             for measurement in test.measurements
         ]
         dates = sorted(m.measured_at for m in measurements if m.measured_at)
