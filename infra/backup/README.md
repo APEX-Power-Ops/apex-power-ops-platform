@@ -46,7 +46,7 @@ Mirrors the proven `apex-personal-notes` offsite pattern. Ships the L2 dump sets
 - **`*-offsite-restore-drill.{service,timer}`** — weekly **Sun 05:00 UTC**.
 - **`.env.dev-pg-offsite-backup.template`** — copy + fill (B2 repo/key + restic pw from the Olares Vault).
 
-### Activate (one-time; needs B2 creds — operator)
+### Activate offsite to B2 (FUTURE - deferred 2026-06-19; local-SSD config is live, see below)
 ```bash
 cp infra/backup/.env.dev-pg-offsite-backup.template ~/code/apex/.env.dev-pg-offsite-backup
 chmod 600 ~/code/apex/.env.dev-pg-offsite-backup
@@ -59,3 +59,19 @@ systemctl --user 2>/dev/null; sudo systemctl enable --now \
 sudo systemctl start apex-dev-pg-offsite-backup.service   # first run now
 ```
 Secret custody for these values: `.claude/PLATFORM/APEX-SECRET-CUSTODY-MODEL.md` (L6, private substrate).
+
+## Current backup posture (2026-06-19): local restic on the external TB5 SSD (B2 deferred)
+
+B2 is deferred to "future". The interim off-data-disk copy is an **encrypted restic repo on the
+external 4TB TB5 SSD** (OWC Express 1M2 enclosure holding the WD Black SN850X = `/mnt/apex-backup`,
+confirmed via Thunderbolt topology). The same offsite scripts/units drive it — `RESTIC_REPOSITORY`
+just points at a local path instead of B2 (no AWS creds for a local repo).
+
+- **Repo:** `/mnt/apex-backup/restic-dev-pg` (restic, encrypted) — initialized + LIVE.
+- **Env:** `~/code/apex/.env.dev-pg-offsite-backup` (0600) — `RESTIC_REPOSITORY` (local path) +
+  `RESTIC_PASSWORD` (generated on the host; **must be saved in the Olares Vault** for recoverability).
+- **Chain:** 03:30 L2 `pg_dump` → `/mnt/apex-backup/dev-pg`; 04:30 restic backs those up
+  (tag-filtered forget, keep 7d/4w/3m); weekly Sun 05:00 restore-drill validates a recovered dump
+  with the in-container PG17 `pg_restore`. Redundancy = data on the internal NVMe vs backups on the
+  external SSD; restic adds encryption + versioning + dedup on top.
+- **Switch to B2 later:** set `RESTIC_REPOSITORY=s3:…` + B2 AWS creds in the env, then `restic init`.
