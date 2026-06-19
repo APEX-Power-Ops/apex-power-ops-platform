@@ -59,3 +59,6 @@ infra/.env
 # noise. Ignore the root lock only (anchored) -- real per-package locks such
 # as packages/apex-jobs/uv.lock stay tracked.
 /uv.lock
+
+# real client estimator workbooks (never committed)
+packages/ops-intake/_data/
