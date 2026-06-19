@@ -15,6 +15,7 @@ engine / CLI / worker.
 | 2 | `002_jobs_tables.sql` | `job` (queue item) / `run` (ledger) / `gate` (approvals) + constraints (unique dispatch_id, self-FK predecessor, run.env CHECK in (sandbox,host), unique(job_id,attempt)) |
 | 3 | `003_jobs_indexes.sql` | status / priority(+dispatch_id) / predecessor / run.job / gate.job + partial open-gate index |
 | 4 | `004_jobs_views.sql` | `v_eligible` — claimable jobs (pending, predecessor succeeded-or-null, no open gate) in (priority, dispatch_id) order |
+| 5 | `005_durability_and_agents.sql` | **durable multi-agent core:** `job.kind`(command/agent) / `max_attempts` / `base_ref`; `run.lease_expires_at` / `heartbeat_at` / `worktree_path` / `branch` / `diff_stat`; `job_kind_enum`; `job_status_enum` += `awaiting_promotion` |
 
 Each file has a matching `_down.sql` applied in reverse order. `001_jobs_enums_down.sql`
 drops the schema CASCADE (removing enums + tables in one shot).
@@ -22,6 +23,7 @@ drops the schema CASCADE (removing enums + tables in one shot).
 ## Tests
 - `test_001_jobs_schema.py` — schema + 6 enums + 3 tables + unique/self-FK + down reverses (3 tests)
 - `test_004_jobs_eligibility.py` — `v_eligible` status/predecessor/open-gate exclusions + ordering (4 tests)
+- `test_005_durability_schema.py` — 005 new job/run columns (additive) + `job_kind_enum` + `awaiting_promotion` + down (3 tests)
 - Engine / CLI / worker tests: `packages/apex-jobs/tests/` (11 more; run against `orchestration_test`).
 
 Run (host) per the records convention:
@@ -34,7 +36,7 @@ describe meta-commands hit the renamed-catalog skew). No Windows-path assumption
 
 ## Apply to a database
 ```
-for f in 001_jobs_enums 002_jobs_tables 003_jobs_indexes 004_jobs_views; do
+for f in 001_jobs_enums 002_jobs_tables 003_jobs_indexes 004_jobs_views 005_durability_and_agents; do
   PGPASSWORD=$DEV_PG_PASSWORD psql -h 127.0.0.1 -p 5432 -U orchestration \
     -d orchestration_dev -v ON_ERROR_STOP=1 -f $f.sql
 done
