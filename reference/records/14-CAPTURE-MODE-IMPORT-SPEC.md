@@ -155,8 +155,8 @@ zero-parser-risk path:
 
 ## 10. Build sequencing (proposed chips)
 
-1. **10a — mapping engine + ingest endpoint + review proposal** (no UI), first slice = PTM-transformer;
-   TDD against a `.ptm` fixture. *The vertical slice.*
+1. **10a — mapping engine + review proposal + idempotent write** (no UI), first slice = PTM-transformer.
+   **BUILT 2026-06-17, TDD-green (14/14) on `records_dev`** — see §12. *The vertical slice.*
 2. **10b — review-gate UI** on the office surface (proposal → confirm/adjust → commit).
 3. **10c — DTAX-read adapter** (invert the writer's schema map) → Doble files in.
 4. **10d — CTA-read port** → CT Analyzer → the IT/CT datasheets.
@@ -175,3 +175,40 @@ zero-parser-risk path:
   banked test uses a fixture; validate on a true field file).
 - **Mapping authorship** — who owns/edits the per-family mapping tables (engineering vs a config the PM
   can adjust). Lean: engineering-owned, versioned with the template.
+
+---
+
+## 12. As-built — 10a (2026-06-17, on `records/chip10-import`; NOT merged — "nothing ships until it's all done")
+
+Built TDD (14/14 green on `records_dev`): a prerequisite migration + a new isolated package.
+
+- **Migration `020`** makes the xfmr templates capture-mode-aware (the import targets) — `capture` block
+  + `instrument_import` + `import {tool: ptm, profile}` on turns_ratio / winding_resistance /
+  power_factor / excitation_current (`gen_020` + `test_020` 4/4).
+- **`packages/records-import/`** (isolated; **not** `forms-engine`, which is under the D-FORMS hold):
+  `proposal.ProposedValue` · `mappings/ptm_transformer.map_ptm_transformer` (pure
+  `PtmModel -> ProposedValue[]`) · `review.build_proposal` (mapped / unmapped / pending) · `db`
+  (load schema + idempotent upsert) · `ingest` (`model_to_proposal` / `propose` / `commit`). Reuses the
+  banked `read_ptm` read-only.
+
+**Resolved (the §11 questions):**
+- **Provenance** — `form_field_values` has no per-value `source` enum; use `origin_device` (the
+  instrument) + `measured_at` + `notes` (measured/correction context). **Imported ⟺ `origin_device` set.**
+  No schema change.
+- **`field_key` convention** — `"<section>.<row>.<column>"` (table cells) | `"<section>.<field>"`
+  (fields); `test_group` = section. The `tap` column is a row qualifier, not a value target.
+- **Idempotency** — upsert on the existing `UNIQUE (form_submission_id, field_key)`.
+- **Value selection** — corrected where the instrument corrects (winding-R / PF / excitation); the
+  measured value is retained in `notes`.
+
+**Test-infra lessons:** `form_submissions -> assets` is NOT `ON DELETE CASCADE` (only
+`form_field_values -> form_submissions` is) → teardown deletes the submission first, then the asset;
+`assets.asset_tag` is UNIQUE → fixtures use a per-run unique tag.
+
+**Deferred (not in 10a):**
+- **Real-`.ptm` integration test** — `read_ptm` is validated by the converter's own suite, so 10a tested
+  the new pipeline with a realistic `PtmModel` literal; add a committed sample `.ptm` to exercise the
+  `propose(file)` seam.
+- **Multi-tap row expansion**, **DTAX-read (10c)**, **CTA port (10d)**, **batch identity-match (10e)**,
+  **review-gate UI (10b)**, and the **ingest HTTP surface** (10a is a library; `propose`/`commit` are the
+  seam the office app wires).
