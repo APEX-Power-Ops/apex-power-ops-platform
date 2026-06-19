@@ -23,7 +23,7 @@ say "========================================"
 say "[1] runtime secret-cache permissions"
 declare -a CACHES=(
   "$ROOT/infra/.env:0"
-  "/etc/apex/backup.env:0"
+  "$HOME/code/apex/.env.dev-pg-offsite-backup:0"
 )
 for extra in ${APEX_EXTRA_CACHES:-}; do CACHES+=("$extra:0"); done
 

@@ -1,0 +1,12 @@
+[Unit]
+Description=APEX dev-pg Offsite Backup Timer (after the local L2 dump)
+
+[Timer]
+OnCalendar=*-*-* 04:30:00
+Persistent=true
+RandomizedDelaySec=20m
+AccuracySec=5m
+Unit=apex-dev-pg-offsite-backup.service
+
+[Install]
+WantedBy=timers.target

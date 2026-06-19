@@ -1,0 +1,12 @@
+[Unit]
+Description=APEX dev-pg Offsite Restore Drill Timer (weekly)
+
+[Timer]
+OnCalendar=Sun *-*-* 05:00:00
+Persistent=true
+RandomizedDelaySec=30m
+AccuracySec=10m
+Unit=apex-dev-pg-offsite-restore-drill.service
+
+[Install]
+WantedBy=timers.target

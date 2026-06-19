@@ -1,0 +1,18 @@
+[Unit]
+Description=APEX dev-pg Offsite Restore Drill (restic verify)
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=6h
+StartLimitBurst=2
+
+[Service]
+Type=oneshot
+User=olares
+Group=olares
+ExecStart=/home/olares/code/apex/apex-power-ops-platform/infra/backup/apex-dev-pg-offsite-restore-drill.sh
+WorkingDirectory=/home/olares
+NoNewPrivileges=yes
+Nice=10
+UMask=0077
+StandardOutput=append:/home/olares/apex-logs/dev-pg/apex-dev-pg-offsite-restore-drill.log
+StandardError=append:/home/olares/apex-logs/dev-pg/apex-dev-pg-offsite-restore-drill.log

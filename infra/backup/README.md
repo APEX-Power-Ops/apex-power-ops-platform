@@ -28,6 +28,34 @@ docker exec -i apex-dev-pg pg_restore -U postgres -d <db> --clean --if-exists < 
 ```
 
 ## Backlog
-- **Offsite** — replicate `/mnt/apex-backup` to Backblaze B2 (needs B2 credentials → operator).
 - Target is the dedicated 3.6 TB `/mnt/apex-backup` disk (separate spindle from the data
   volume = genuine redundancy, not same-disk copies).
+
+## Offsite (Backblaze B2 via restic) — replicates the L2 dumps off-host (added 2026-06-18)
+
+Mirrors the proven `apex-personal-notes` offsite pattern. Ships the L2 dump sets
+(`/mnt/apex-backup/dev-pg/`) to an encrypted **restic** repo on Backblaze B2.
+
+- **`apex-dev-pg-offsite-backup.sh`** — `restic backup /mnt/apex-backup/dev-pg`
+  (tags `dev-pg host-scheduled apex-platform`) + tag-filtered `restic forget --prune`
+  (keep 7d/4w/3m). Secrets sourced from an **olares-owned 0600 env file OUTSIDE the repo**
+  (`~/code/apex/.env.dev-pg-offsite-backup`); refuses to run on placeholder values.
+- **`apex-dev-pg-offsite-restore-drill.sh`** — restores the latest snapshot + validates a
+  recovered `.dump` with the in-container PG17 `pg_restore -l`. An untested backup is no backup.
+- **`*-offsite-backup.{service,timer}`** — oneshot `User=olares`, nightly **04:30 UTC** (after the 03:30 dump).
+- **`*-offsite-restore-drill.{service,timer}`** — weekly **Sun 05:00 UTC**.
+- **`.env.dev-pg-offsite-backup.template`** — copy + fill (B2 repo/key + restic pw from the Olares Vault).
+
+### Activate (one-time; needs B2 creds — operator)
+```bash
+cp infra/backup/.env.dev-pg-offsite-backup.template ~/code/apex/.env.dev-pg-offsite-backup
+chmod 600 ~/code/apex/.env.dev-pg-offsite-backup
+# edit: RESTIC_REPOSITORY (B2 s3 path) + AWS_ACCESS_KEY_ID (B2 keyID) +
+#       AWS_SECRET_ACCESS_KEY + RESTIC_PASSWORD   (last two from the Vault)
+set -a; . ~/code/apex/.env.dev-pg-offsite-backup; set +a
+restic init                                          # one-time: create the repo
+systemctl --user 2>/dev/null; sudo systemctl enable --now \
+  apex-dev-pg-offsite-backup.timer apex-dev-pg-offsite-restore-drill.timer
+sudo systemctl start apex-dev-pg-offsite-backup.service   # first run now
+```
+Secret custody for these values: `.claude/PLATFORM/APEX-SECRET-CUSTODY-MODEL.md` (L6, private substrate).

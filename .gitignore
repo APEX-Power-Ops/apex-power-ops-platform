@@ -48,3 +48,6 @@ reference/*
 # outputs (captured-point fixtures) live under packages/*/tests/fixtures/ instead.
 output/
 infra/.env
+
+# L6: allow the placeholder offsite-backup template (no secrets); real .env* stay ignored
+!infra/backup/.env.dev-pg-offsite-backup.template
