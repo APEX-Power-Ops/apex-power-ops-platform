@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Nightly logical backup of the Olares dev-lanes Postgres (apex-dev-pg, PG17).
-# Backs up the host-only dev state (records_dev / ops_dev / orchestration_dev)
+# Backs up the host-only dev state (records_dev / ops_dev / orchestration_dev / apex_pm_stage)
 # to the dedicated backup disk. Dev DBs live ONLY on the host now (dev-residency,
 # 2026-06-18), so this closes the L2 durability gap: a host-data-volume fault no
 # longer strands in-flight dev state. Offsite (Backblaze B2) is a later add.
@@ -8,7 +8,7 @@ set -euo pipefail
 
 CONTAINER="apex-dev-pg"
 BACKUP_ROOT="/mnt/apex-backup/dev-pg"
-DBS="records_dev ops_dev orchestration_dev"
+DBS="records_dev ops_dev orchestration_dev apex_pm_stage"
 RETAIN_DAYS="${RETAIN_DAYS:-14}"
 STAMP="$(date -u +%Y-%m-%dT%H%M%SZ)"
 DEST="${BACKUP_ROOT}/${STAMP}"
