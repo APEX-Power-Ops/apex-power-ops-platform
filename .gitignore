@@ -51,3 +51,9 @@ infra/.env
 
 # L6: allow the placeholder offsite-backup template (no secrets); real .env* stay ignored
 !infra/backup/.env.dev-pg-offsite-backup.template
+
+# uv: the root pyproject.toml is a bootstrap stub (not a [tool.uv.workspace]),
+# so running uv at the repo root regenerates a trivial root lock as untracked
+# noise. Ignore the root lock only (anchored) -- real per-package locks such
+# as packages/apex-jobs/uv.lock stay tracked.
+/uv.lock
