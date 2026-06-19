@@ -543,3 +543,80 @@ def blockers_summary(
         .all()
     )
     return [BlockersSummaryRow(**row) for row in rows]
+
+
+# ---------------------------------------------------------------------------
+# Revenue recognition (derived, read-only) — packet 2026-06-19
+# ---------------------------------------------------------------------------
+
+REVENUE_RECOGNITION_SQL = """
+SELECT
+    p.id AS project_id,
+    p.project_number,
+    p.project_name,
+    s.id AS scope_id,
+    s.scope_name,
+    COALESCE(SUM(a.quoted_revenue), 0) AS quoted_revenue,
+    COALESCE(SUM(a.quoted_revenue) FILTER (WHERE a.status = 'Complete'::public.apparatus_status), 0) AS recognized_revenue,
+    round(
+        CASE
+            WHEN COALESCE(SUM(a.quoted_revenue), 0) > 0
+            THEN COALESCE(SUM(a.quoted_revenue) FILTER (WHERE a.status = 'Complete'::public.apparatus_status), 0)
+                 / SUM(a.quoted_revenue) * 100
+            ELSE 0
+        END, 2) AS recognition_percent,
+    -- billable_now = recognized - billed; billing is not admitted, so billed = 0.
+    COALESCE(SUM(a.quoted_revenue) FILTER (WHERE a.status = 'Complete'::public.apparatus_status), 0) AS billable_now,
+    count(a.id) AS total_apparatus,
+    count(a.id) FILTER (WHERE a.status = 'Complete'::public.apparatus_status) AS completed_apparatus
+FROM public.projects p
+LEFT JOIN public.scopes s ON s.project_id = p.id AND s.is_active = true
+LEFT JOIN public.apparatus a ON a.scope_id = s.id AND a.is_active = true
+WHERE p.is_active = true
+GROUP BY p.id, p.project_number, p.project_name, s.id, s.scope_name
+ORDER BY p.project_number, s.scope_name
+LIMIT :limit
+"""
+
+
+class RevenueRecognitionRow(BaseModel):
+    """Derived recognized-revenue row (scope grain), read-only.
+
+    recognized = sum(quoted_revenue) for apparatus with status='Complete'
+    (binary, at completion). Derived live; NOT a persisted ledger.
+    billable_now = recognized - billed; billing not admitted => billed = 0.
+    """
+
+    project_id: str
+    project_number: Optional[str] = None
+    project_name: Optional[str] = None
+    scope_id: Optional[str] = None
+    scope_name: Optional[str] = None
+    quoted_revenue: float
+    recognized_revenue: float
+    recognition_percent: float
+    billable_now: float
+    total_apparatus: int
+    completed_apparatus: int
+
+
+@router.get(
+    "/revenue-recognition",
+    response_model=list[RevenueRecognitionRow],
+    summary="Operations Visibility recognized-revenue rollup, scope grain (read-only, derived).",
+)
+def revenue_recognition_summary(
+    limit: int = Query(25, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> list[RevenueRecognitionRow]:
+    """Return bounded scope-grain recognized-revenue rows.
+
+    Recognized revenue is derived on read; the dedicated recognition tables are
+    not populated. Strictly read-only: no writes, no new authority.
+    """
+    rows = (
+        db.execute(text(REVENUE_RECOGNITION_SQL), {"limit": limit})
+        .mappings()
+        .all()
+    )
+    return [RevenueRecognitionRow(**row) for row in rows]
