@@ -76,6 +76,7 @@ export default function FinancePlaceholderPage() {
             </p>
           </div>
           <p className="pm-review-link-row">
+            <Link href="/pm-review/finance">Recognized revenue (read-only, admitted)</Link>
             <Link href="/pm-review">Return to PM drivers</Link>
             <Link href="/pm-review/project-overview">Project overview</Link>
             <Link href="/pm-review/customer-reporting-placeholder">Customer reporting placeholder</Link>

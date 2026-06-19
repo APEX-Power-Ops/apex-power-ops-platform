@@ -30,5 +30,6 @@ test('pm finance placeholder route renders downstream no-live planning guardrail
   await expect(page.getByRole('link', { name: /Financial handoff placeholder/i })).toHaveAttribute('href', '/pm-review/financial-handoff-placeholder')
   await expect(page.getByRole('link', { name: /Customer delivery execution/i })).toHaveAttribute('href', '/pm-review/customer-delivery-execution')
 
+  await expect(page.getByRole('link', { name: /Recognized revenue \(read-only, admitted\)/i })).toHaveAttribute('href', '/pm-review/finance')
   expect(mutationRequests).toHaveLength(0)
 })
