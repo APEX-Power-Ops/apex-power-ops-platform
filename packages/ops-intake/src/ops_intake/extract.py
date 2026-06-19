@@ -69,12 +69,12 @@ def _extract_standard_hours(wb) -> list[StandardHourIn]:
     er = wb["Equipment Reference"]
     out: list[StandardHourIn] = []
     for r in range(3, er.max_row + 1):
-        sow = _str(er.cell(r, 3).value)  # col C "Scope of Work" (apparatus type)
-        ats = _num(er.cell(r, 4).value)  # col D ATS25 hours
+        sow = _str(er.cell(r, 4).value)  # col D "Scope of Work" (apparatus type)
+        ats = _num(er.cell(r, 5).value)  # col E ATS25 hours
         if not sow or ats is None:
             continue
         out.append(StandardHourIn(apparatus_type=sow, test_standard="ATS",
-                                  default_hours=ats, neta_section=_str(er.cell(r, 1).value)))
+                                  default_hours=ats, neta_section=_str(er.cell(r, 2).value)))  # col B NETA'25
     return out
 
 
