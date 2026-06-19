@@ -125,16 +125,30 @@ def load_payload(p: IntakePayload, dsn: str, *, approve: bool = False) -> LoadRe
 
 
 def _approve(p: IntakePayload, dsn: str) -> None:
-    """Freeze the quote: apparatus.quoted_revenue = quoted_hours x scope blended_rate; mark frozen/approved."""
+    """Freeze the quote for THIS project only: apparatus.quoted_revenue = quoted_hours x scope blended_rate;
+    mark frozen/approved. Every update is scoped to the loaded project so a shared DB's other projects are
+    never touched."""
     with psycopg.connect(dsn, autocommit=True) as conn, conn.cursor() as cur:
+        row = cur.execute("select id from ops.projects where project_number=%s",
+                          (p.project.project_number,)).fetchone()
+        if row is None:
+            return
+        pid = row[0]
         cur.execute(
             """
             update ops.apparatus a set quoted_revenue = round(a.quoted_hours * sq.blended_rate, 2),
                 provenance_status='approved', updated_at=now()
-            from ops.scope_quote sq
-            where sq.scope_id = a.scope_id and a.quoted_hours is not null
-            """
+            from ops.scope_quote sq, ops.scopes s
+            where sq.scope_id = a.scope_id and s.id = a.scope_id and s.project_id = %s
+              and a.quoted_hours is not null
+            """,
+            (pid,),
         )
-        cur.execute("update ops.scope_quote set is_frozen=true, frozen_at=now()")
-        cur.execute("update ops.projects set provenance_status='approved', updated_at=now() "
-                    "where legacy_source_id='project-miner'")
+        cur.execute(
+            """
+            update ops.scope_quote sq set is_frozen=true, frozen_at=now()
+            from ops.scopes s where s.id = sq.scope_id and s.project_id = %s
+            """,
+            (pid,),
+        )
+        cur.execute("update ops.projects set provenance_status='approved', updated_at=now() where id=%s", (pid,))
