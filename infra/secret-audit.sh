@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# secret-audit.sh - APEX platform secret-hygiene tripwire (L6 custody model).
+#
+# Check 1: runtime secret-cache files are mode 0600/0400 and gitignored.
+# Check 2: high-precision scan for leaked CREDENTIALS in tracked files -
+#          provider token signatures (GitHub/AWS/Slack/Google/OpenAI), JWTs,
+#          private-key blocks, and inline DSN passwords. Example-bearing paths
+#          (docs/tests/templates) are allowlisted in infra/.secret-audit-allow.
+#          Generic hardcoded constants are OUT OF SCOPE - use gitleaks for depth.
+#
+# Output is LOCATIONS ONLY - file:line + rule name; values are never printed.
+# Exit: 0 = clean, 1 = findings (perms FAIL or possible leak).
+set -uo pipefail
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+rc=0
+say() { printf '%s\n' "$*"; }
+
+say "APEX secret-audit  (repo: $ROOT)"
+say "========================================"
+
+# ---- Check 1: cache-file permissions -------------------------------------
+say "[1] runtime secret-cache permissions"
+declare -a CACHES=(
+  "$ROOT/infra/.env:0"
+  "/etc/apex/backup.env:0"
+)
+for extra in ${APEX_EXTRA_CACHES:-}; do CACHES+=("$extra:0"); done
+
+for entry in "${CACHES[@]}"; do
+  f="${entry%:*}"; req="${entry##*:}"
+  if [[ ! -e "$f" ]]; then
+    if [[ "$req" == "1" ]]; then say "  FAIL  missing (required): $f"; rc=1
+    else say "  SKIP  not present:        $f"; fi
+    continue
+  fi
+  mode="$(stat -c '%a' "$f" 2>/dev/null || echo '???')"
+  if [[ "$mode" == "600" || "$mode" == "400" ]]; then
+    say "  PASS  $f  (mode $mode)"
+  else
+    say "  FAIL  $f  (mode $mode, want 600)  fix: chmod 600 '$f'"; rc=1
+  fi
+done
+
+if [[ -f "$ROOT/infra/.env" ]]; then
+  if git -C "$ROOT" check-ignore -q infra/.env; then
+    say "  PASS  infra/.env is gitignored"
+  else
+    say "  FAIL  infra/.env is NOT gitignored"; rc=1
+  fi
+fi
+
+# ---- Check 2: leaked credentials in tracked files ------------------------
+say ""
+say "[2] leaked credentials in tracked files"
+
+declare -a ALLOW=()
+ALLOWFILE="$ROOT/infra/.secret-audit-allow"
+if [[ -f "$ALLOWFILE" ]]; then
+  while IFS= read -r g; do
+    [[ -z "$g" || "$g" == \#* ]] && continue
+    ALLOW+=("$g")
+  done < "$ALLOWFILE"
+fi
+allowed_file() {
+  local f="$1" p
+  for p in "${ALLOW[@]:-}"; do [[ -n "$p" && "$f" == $p ]] && return 0; done
+  return 1
+}
+
+# dummy/placeholder filter (mainly for inline-url-password)
+IGNORE='(\$\{|\$\(|<[A-Za-z0-9_]+>|\[[A-Za-z0-9_]+\]|changeme|CHANGEME|example|EXAMPLE|placeholder|YOUR_|REPLACE|:postgres@|:password@|:secret@|:root@|:admin@)'
+
+# high-precision credential signatures (case-sensitive on purpose)
+declare -A RULES=(
+  ["private-key-block"]='-----BEGIN [A-Z ]*PRIVATE KEY-----'
+  ["aws-access-key-id"]='AKIA[0-9A-Z]{16}'
+  ["github-token"]='gh[pousr]_[A-Za-z0-9]{36}'
+  ["github-fine-pat"]='github_pat_[A-Za-z0-9_]{40,}'
+  ["slack-token"]='xox[baprs]-[A-Za-z0-9-]{12,}'
+  ["google-api-key"]='AIza[0-9A-Za-z_-]{35}'
+  ["openai-key"]='sk-[A-Za-z0-9]{20,}'
+  ["jwt"]='eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}'
+  ["inline-url-password"]='://[A-Za-z0-9._-]+:[^@/[:space:]"]{6,}@'
+)
+hits=0; suppressed=0
+for name in "${!RULES[@]}"; do
+  pat="${RULES[$name]}"
+  while IFS= read -r m; do
+    [[ -z "$m" ]] && continue
+    file="${m%%:*}"
+    if allowed_file "$file"; then suppressed=$((suppressed+1)); continue; fi
+    say "  FIND  ${m}  [rule: $name]"
+    hits=$((hits+1)); rc=1
+  done < <(git -C "$ROOT" grep -nIE -e "$pat" -- . 2>/dev/null | grep -vEi "$IGNORE" | cut -d: -f1,2)
+done
+if [[ "$hits" == "0" ]]; then say "  PASS  no leaked credentials in tracked files"; fi
+[[ "$suppressed" -gt 0 ]] && say "  note  $suppressed match(es) suppressed by infra/.secret-audit-allow"
+
+say ""
+say "========================================"
+if [[ "$rc" == "0" ]]; then say "RESULT: clean"; else say "RESULT: findings above - review (redact & rotate if a value is real)"; fi
+exit "$rc"
