@@ -1,7 +1,31 @@
+# =============================================================================
+# Python packaging convention  (platform decision, 2026-06-19)
+#
+# This repo intentionally does NOT use a uv workspace.
+#   * The deployed apps (apps/control-plane-api, apps/mutation-seam) manage
+#     their dependencies via requirements.txt and deploy on Render
+#     (apps/control-plane-api/render.yaml). A uv workspace lock would not
+#     govern those builds, so it would be false-confidence machinery.
+#   * The shared packages/* use uv independently and resolve fine today.
+#   Revisit a workspace only if the platform standardizes deploys on uv.
+#
+# Lockfile convention -- "deployables pin, libraries float":
+#   * Deployable services PIN their dependencies:
+#       control-plane-api, mutation-seam -> requirements.txt (Render)
+#       apex-jobs (orchestration worker) -> committed packages/apex-jobs/uv.lock
+#   * Shared libraries FLOAT (no committed lock) so consumers resolve:
+#       calc-engine, forms-engine, p6-ingest, power-test-converters,
+#       records-import
+#
+# This root file is metadata-only (ruff + pytest config). Running uv at the
+# repo root regenerates a meaningless root-stub uv.lock, which is gitignored
+# (/uv.lock, anchored so per-package locks stay tracked).
+# =============================================================================
+
 [project]
 name = "apex-power-ops-platform"
 version = "0.1.0"
-description = "Bootstrap Python workspace metadata for the Apex Power Ops platform monorepo"
+description = "Repo-root tooling metadata for the Apex Power Ops platform monorepo (not a uv workspace -- see header)"
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]
