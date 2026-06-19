@@ -80,6 +80,27 @@ def _contract_value(wb) -> float:
     return 0.0
 
 
+def _extract_chiller_scopes(wb, start_sort: int) -> list[ScopeIn]:
+    """Chiller scopes appear only in the Print_Template rollup (no scope sheet); capture the lump
+    as a flagged estimate (single category) so the project total reconciles."""
+    if "Print_Template" not in wb.sheetnames:
+        return []
+    pt = wb["Print_Template"]
+    out: list[ScopeIn] = []
+    for r in range(1, pt.max_row + 1):
+        label = _str(pt.cell(r, 12).value)  # col L
+        if not label or "chiller" not in label.lower():
+            continue
+        amt = _num(pt.cell(r, 18).value) or 0.0  # col R
+        out.append(ScopeIn(
+            scope_name=label.lstrip(" *").strip(),
+            sort_order=start_sort + len(out),
+            quote=ScopeQuoteIn(outside_services=amt, is_estimate=True),
+            lines=[],
+        ))
+    return out
+
+
 def extract_workbook(path) -> IntakePayload:
     path = pathlib.Path(path)
     wb = openpyxl.load_workbook(path, data_only=True)
@@ -89,6 +110,7 @@ def extract_workbook(path) -> IntakePayload:
             s = _extract_scope(ws)
             s.sort_order = len(scopes) + 1
             scopes.append(s)
+    scopes.extend(_extract_chiller_scopes(wb, len(scopes) + 1))
     project = ProjectIn(
         project_number="MINER-PHX-AB-MV",
         project_name="Project Miner — PHX Bldg A & B MV",
