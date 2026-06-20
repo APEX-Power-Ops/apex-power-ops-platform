@@ -6,7 +6,14 @@ _CURATED_BASE = 1000.0
 _SECTION_BASE = 500.0
 _LEVEL_RANK = {"II": 2, "III": 3, "IV": 4}
 # Quality-tier tiebreak within section-match scores (must stay < 50, the primary/secondary gap).
-_QUALITY_BOOST = {"complete": 10.0}
+# Order mirrors content_quality_tier enum: gold > high_quality > complete > draft > needs_review.
+_QUALITY_BOOST: dict[str, float] = {
+    "gold": 40.0,
+    "high_quality": 30.0,
+    "complete": 20.0,
+    "draft": 10.0,
+    "needs_review": 0.0,
+}
 
 
 def _apparatus_type_ids(conn, section: str) -> list[str]:
@@ -67,7 +74,14 @@ def _section_match(conn, section: str, exclude_sc_ids: set[str]) -> list[Resolve
         where (sc.neta_section_primary = %(s)s or %(s)s = any(sc.neta_sections_secondary))
           and sc.is_active and sc.status = 'published'
         order by (sc.neta_section_primary = %(s)s) desc,
-                 (sc.quality_tier = 'complete') desc,
+                 case sc.quality_tier
+                     when 'gold'         then 1
+                     when 'high_quality' then 2
+                     when 'complete'     then 3
+                     when 'draft'        then 4
+                     when 'needs_review' then 5
+                     else 6
+                 end asc,
                  sc.title asc
         """,
         {"s": section},
