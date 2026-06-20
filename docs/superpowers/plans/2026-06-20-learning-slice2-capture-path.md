@@ -1,27 +1,30 @@
 # Learning Slice 2a — Capture Path — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **Rev 2 (2026-06-20):** revised after a technical-authority review of `de5de202` (9 findings). Changes: a lane charter is now Task 1 (lane SSoT); the `learning_dev` schema apply is a deferred human-approval **gate**, not an unattended step; all `source` paths are absolute; API tests run via `uv run --with-requirements` (no venv path juggling); the browser smoke lives under `tests/` (the real `testDir`) and **proves capture** via route-mocking instead of static render; package + UI now carry per-event-type **payload** (assessment score / self-assessment confidence).
 
-**Goal:** Build the end-to-end mechanism that lets a real tech record the first real learning event — an append-only `learning_events` ledger in `learning_dev`, a `learning-capture` package, write/read API routes, and a capture panel on the Slice 1 demo.
+**Goal:** Build the end-to-end mechanism that lets a real tech record the first real learning event — an append-only `learning_events` ledger, a `learning-capture` package, write/read API routes, and a capture panel on the Slice 1 demo.
 
 **Architecture:** A write vertical mirroring Slice 1's read vertical (`resolve → API → demo`). A new additive migration lane (`infra/database/migrations/learning/`) adds a person-spine bridge column to `user_profiles` and an append-only `learning_events` table. A `learning-capture` Python package (mirroring `learning-resolver`, but read-WRITE) exposes `record_event` / `list_events` / `list_users`. The existing `control-plane-api` learning router is extended with `POST/GET /events` + `GET /users`. The `operations-web /learning-demo` page gains a capture panel so the resolve→capture loop is one screen.
 
-**Tech Stack:** PostgreSQL 17 (`learning_dev` / throwaway `learning_test` on host `127.0.0.1:5432`), Python 3.11 + `psycopg[binary]>=3.1`, FastAPI (control-plane-api), Next.js (operations-web). All work on the Olares host over mesh SSH (`ssh olares-mesh`).
+**Tech Stack:** PostgreSQL 17 (`learning_dev` / throwaway `learning_test` on host `127.0.0.1:5432`), Python 3.11 + `psycopg[binary]>=3.1`, FastAPI (control-plane-api), Next.js + Playwright (operations-web). All work on the Olares host over mesh SSH (`ssh olares-mesh`).
 
 ## Global Constraints
 
-- **All DB writes target `learning_dev` only** (or the throwaway `learning_test` for tests). NO prod writes. NO prod-governance gate.
-- **Migration tests run against a THROWAWAY `learning_test`, never `learning_dev`.** `learning_events` FKs reference `public.user_profiles` + `public.study_content`, which a bare test DB lacks → an idempotent `test_prereq.sql` creates minimal stub tables + seed rows first.
-- **After tests pass on `learning_test`, apply `001`+`002` to `learning_dev`** (additive/safe) so the API/demo can capture into it. Mirrors the ops pattern (validated on `ops_test`, applied to `ops_dev`).
+- **Lane discipline (SSoT):** this lane MUST be chartered in `docs/lanes/README.md` (Task 1) before code lands — worktree + branch + dev DB + write-boundary + gates. Lane: `learning`; branch `learning/slice2-capture`; worktree `/home/olares/code/apex/apex-learning-lane` (off main `82c3b97b`; `infra/.env` symlinked there already).
+- **All DB writes target `learning_dev` only** (or throwaway `learning_test` for tests). NO prod writes.
+- **`schema` is a human-approval GATE.** All build/test runs against the throwaway `learning_test`. Applying `001`+`002` to `learning_dev` is a **separate, operator-approved gated step** (see "Gated activation" at the end) — never an unattended plan step. Nothing in the build/test flow requires `learning_dev` to be migrated.
+- **Promotion (merge to main) is operator-gated** — land via PR.
+- **Migration tests run against `learning_test`, never `learning_dev`.** `learning_events` FKs reference `public.user_profiles` + `public.study_content`, which a bare test DB lacks → an idempotent `test_prereq.sql` creates minimal stub tables + seed rows first.
 - **The ledger is append-only:** a DB trigger raises on UPDATE/DELETE; the package issues INSERT/SELECT only.
-- **Event-type vocab is exactly these 4 text values** (CHECK, not an enum): `resource_viewed`, `resource_completed`, `assessment_completed`, `self_assessment`.
+- **Event-type vocab is exactly 4 text values** (CHECK, not an enum): `resource_viewed`, `resource_completed`, `assessment_completed`, `self_assessment`. **Payload shape is the package's job** (per the spec): `assessment_completed` requires numeric `score_percent` (0–100); `self_assessment` requires int `confidence` (1–5); the two resource events ignore payload.
 - **The integration contract is the NETA section** — `neta_section` on an event is the same `records.neta_procedures.section` / `study_content.neta_section_primary` key Slice 1 resolves on.
-- **The person-spine bridge column** `public.user_profiles.employee_id` is a cross-DB **contract-FK** to prod `public.employees.id` — app-enforced, **no DB FK** (employees is a separate database). Mirrors `records.persons.employee_ref` / `ops.persons.employee_ref`.
-- **control-plane-api = pip + requirements.txt (NOT uv).** Wire the package as `-e ../../packages/learning-capture`. **Do NOT commit any `uv.lock`** (a `uv run` byproduct — `git rm` + `.gitignore` it if it appears).
-- **DB password discipline:** `source /home/olares/code/apex/apex-power-ops-platform/infra/.env` to get `DEV_PG_PASSWORD` (UNQUOTED). NEVER `grep|cut` it (the §259 split-brain bug).
-- **Host file edits:** write the file locally then `ssh olares-mesh 'cat > <abs-dest>' < <localfile>` (heredocs break on code quotes). **ssh commit messages must avoid apostrophes** (or `git commit -F <file>`).
-- **uv on PATH for tests:** `export PATH="$HOME/.local/bin:$PATH"`.
-- **Lane:** branch `learning/slice2-capture`, host worktree `/home/olares/code/apex/apex-learning-lane` (off main `82c3b97b`; `infra/.env` is symlinked there already).
+- **The person-spine bridge** `public.user_profiles.employee_id` is a cross-DB **contract-FK** to prod `public.employees.id` — app-enforced, **no DB FK** (employees is a separate database). Mirrors `records.persons.employee_ref` / `ops.persons.employee_ref`.
+- **control-plane-api = pip + requirements.txt (NOT uv) for deploy**, but **tests run via `uv run --with-requirements requirements-dev.txt`** (self-contained; the worktree has no `.venv`). Wire the package as `-e ../../packages/learning-capture`. **Do NOT commit any `uv.lock`** (a `uv run` byproduct — `git rm` + `.gitignore` if it appears).
+- **DB password discipline:** always `source /home/olares/code/apex/apex-learning-lane/infra/.env` (ABSOLUTE path — relative `../../../infra/.env` from a migrations subdir resolves wrong) to get `DEV_PG_PASSWORD` (UNQUOTED). NEVER `grep|cut` it (the §259 split-brain bug).
+- **Host file edits:** write the file locally then `ssh olares-mesh 'cat > <abs-dest>' < <localfile>` (heredocs break on code quotes). **ssh commit messages must avoid apostrophes** (use `git commit -F`).
+- **uv on PATH for tests:** `export PATH="$HOME/.local/bin:$PATH"`. Node/pnpm for operations-web: `. $HOME/.nvm/nvm.sh` (and `corepack enable` if pnpm is missing).
 
 ---
 
@@ -33,16 +36,65 @@
 
 Run:
 ```bash
-ssh olares-mesh 'source /home/olares/code/apex/apex-power-ops-platform/infra/.env; \
+ssh olares-mesh 'source /home/olares/code/apex/apex-learning-lane/infra/.env; \
   PGPASSWORD=$DEV_PG_PASSWORD psql -h 127.0.0.1 -p 5432 -U postgres -tAc \
   "select 1 from pg_database where datname='"'"'learning_test'"'"'" | grep -q 1 \
   || PGPASSWORD=$DEV_PG_PASSWORD psql -h 127.0.0.1 -p 5432 -U postgres -c "CREATE DATABASE learning_test;"'
 ```
-Expected: prints `CREATE DATABASE` (first run) or nothing (already exists). This DB is reused across runs; every test tears its objects down via the down-migrations.
+Expected: prints `CREATE DATABASE` (first run) or nothing (already exists).
 
 ---
 
-### Task 1: Migration lane scaffold + `001` person bridge
+### Task 1: Charter the `learning` lane in the lane SSoT
+
+**Files:**
+- Modify: `docs/lanes/README.md` (add a `### Lane: learning` block under `## Active lanes`).
+
+**Interfaces:**
+- Consumes: nothing.
+- Produces: the lane charter (write-boundary + gates) that governs every later task. No code depends on it, but the lane is not "real" until it is recorded here (SSoT-not-chat).
+
+- [ ] **Step 1: Add the learning lane charter**
+
+Insert this block in `docs/lanes/README.md` immediately AFTER the `### Lane: ops` block's `- **Status:**` line and BEFORE the `> Merged/closed lanes` note:
+
+```markdown
+### Lane: learning (enablement / capture + ROI)
+- **Scope:** the flagship learning lane — contextual resource surfacing (Slice 1, merged) + the capture/tracking path (Slice 2) — DEV ONLY.
+- **Branch:** `learning/slice2-capture`   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
+- **Dev DB / schema:** `learning_dev` → `public.*` (frozen rev-2.3/2.4 baseline; lane isolation = the database, per separate-DB-per-lane D-ARCH-1)
+- **Write-boundary (OWNS):** `infra/database/migrations/learning/**`, `packages/learning-capture/**`,
+  `apps/control-plane-api/services/learning/**` (+ the `-e ../../packages/learning-capture` line in `requirements.txt`),
+  `apps/operations-web/app/learning-demo/**`, `apps/operations-web/lib/learning-*.ts`,
+  `apps/operations-web/tests/learning-*.spec.ts`, `docs/superpowers/{specs,plans}/2026-06-20-learning-slice2-*`.
+- **Must NOT touch:** `records.*` / `ops.*` migrations + packages; the parallel `packages/power-test-converters/**` WIP; prod Supabase.
+- **Gates (human-approval):** `schema` (the `learning_dev` apply of `001`/`002` — see the plan's gated activation step); promotion (merge to main) is operator-gated.
+- **Escalation / owner:** CC (technical authority); operator gates schema apply + merge.
+- **Status:** active (Slice 2a built on `learning_test`; `learning_dev` apply + PR operator-gated).
+```
+
+- [ ] **Step 2: Verify the charter is present**
+
+Run:
+```bash
+ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && grep -n "Lane: learning" docs/lanes/README.md && grep -c "Gates" docs/lanes/README.md'
+```
+Expected: the `### Lane: learning` heading line prints; `Gates` count is now 3 (records, ops, learning).
+
+- [ ] **Step 3: Commit**
+
+```bash
+ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && git add docs/lanes/README.md && git commit -F - <<"EOF"
+docs(lanes): charter the learning lane
+
+Records the learning lane in the lane SSoT (worktree + branch + learning_dev + write-boundary +
+schema gate), per docs/lanes/README.md. Required before Slice 2 code lands.
+EOF'
+```
+
+---
+
+### Task 2: Migration lane scaffold + `001` person bridge
 
 **Files:**
 - Create: `infra/database/migrations/learning/test_prereq.sql`
@@ -54,14 +106,14 @@ Expected: prints `CREATE DATABASE` (first run) or nothing (already exists). This
 
 **Interfaces:**
 - Consumes: a `learning_test` DB (Task 0). The test DSN defaults to `dbname=learning_test`.
-- Produces: `public.user_profiles.employee_id uuid null` (partial-unique, no DB FK). `test_prereq.sql` + `conftest.py` are reused by Task 2 and Task 3.
+- Produces: `public.user_profiles.employee_id uuid null` (partial-unique, no DB FK). `test_prereq.sql` + `conftest.py` are reused by Task 3 and Task 4.
 
 - [ ] **Step 1: Write `test_prereq.sql` (idempotent stubs for the throwaway DB)**
 
 ```sql
 -- Throwaway learning_test bootstrap. Minimal stand-ins for the baseline tables the learning
--- migrations reference (the real learning_dev has the full frozen baseline). Idempotent so it
--- can be applied repeatedly by the migration- and package-test fixtures.
+-- migrations reference (the real learning_dev has the full frozen baseline). Idempotent so the
+-- migration- and package-test fixtures can apply it repeatedly.
 create table if not exists public.user_profiles (
   id    uuid primary key default gen_random_uuid(),
   email text not null default 'seed@example.com'
@@ -86,8 +138,7 @@ insert into public.study_content (id, title) values
 Runs against a THROWAWAY learning_test (NEVER learning_dev). learning_events FKs reference
 public.user_profiles + public.study_content, which a bare test DB lacks -- so this session-scoped
 autouse fixture applies test_prereq.sql (idempotent stub tables + seed rows) before any migration.
-Create the DB first (Task 0):
-  source infra/.env; PGPASSWORD=$DEV_PG_PASSWORD psql -h 127.0.0.1 -U postgres -c "CREATE DATABASE learning_test;"
+Create the DB first (Task 0).
 """
 import os
 import pathlib
@@ -125,7 +176,7 @@ separate database). Mirrors records.persons.employee_ref / ops.persons.employee_
 a THROWAWAY learning_test (conftest applies test_prereq.sql first).
 
 Run (host, from infra/database/migrations/learning/):
-  export PATH="$HOME/.local/bin:$PATH"; source ../../../infra/.env
+  export PATH="$HOME/.local/bin:$PATH"; source /home/olares/code/apex/apex-learning-lane/infra/.env
   LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD \
     uv run --with "psycopg[binary]" --with pytest pytest test_001_person_bridge.py -q
 """
@@ -198,9 +249,9 @@ def test_two_null_employee_ids_allowed():
 
 Run:
 ```bash
-ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/infra/database/migrations/learning; source ../../../infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest pytest test_001_person_bridge.py -q'
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/infra/database/migrations/learning; source /home/olares/code/apex/apex-learning-lane/infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest pytest test_001_person_bridge.py -q'
 ```
-Expected: FAIL — `001_person_bridge.sql` does not exist (the `migrate` fixture errors reading the file), or column not found.
+Expected: FAIL — `001_person_bridge.sql` does not exist (the `migrate` fixture errors reading the file).
 
 - [ ] **Step 5: Write `001_person_bridge.sql`**
 
@@ -210,10 +261,10 @@ Expected: FAIL — `001_person_bridge.sql` does not exist (the `migrate` fixture
 -- Phase-5 additive identity slice / learning Slice 2a.
 -- Authority: docs/superpowers/specs/2026-06-20-learning-slice2-capture-path-design.md;
 --            .claude/PLATFORM/INTEGRATION_BACKBONE_IDENTITY_CONTRACT_2026-06-20.md (C1/D2).
--- Dev DB: learning_dev (local PG). Nothing applied to prod. Mirrors the column the prod
--- migration additive_person_spine_prod already added to public.user_profiles -- but here it is
--- a cross-DB CONTRACT-FK to prod public.employees.id (app-enforced, NO db FK: employees lives
--- in a different database).
+-- Dev DB: learning_dev (apply is an operator-gated step; tests use learning_test). Nothing to prod.
+-- Mirrors the column the prod migration additive_person_spine_prod already added to
+-- public.user_profiles -- but here it is a cross-DB CONTRACT-FK to prod public.employees.id
+-- (app-enforced, NO db FK: employees lives in a different database).
 -- ============================================================================
 
 alter table public.user_profiles
@@ -246,7 +297,8 @@ alter table public.user_profiles drop column if exists employee_id;
 Learning / enablement lane. Dev DB: `learning_dev` (host PG17 `apex-dev-pg`). The baseline content
 was loaded from a frozen prod dump (NOT migrations); this lane holds the **additive** Slice 2+ changes.
 **Nothing here is applied to prod.** Objects live in the `public` schema (lane isolation = the database,
-per separate-DB-per-lane D-ARCH-1).
+per separate-DB-per-lane D-ARCH-1). **`learning_dev` apply is an operator-gated `schema` step**
+(see the Slice 2a plan); validation runs on the throwaway `learning_test`.
 
 | # | Up | Down | What | Slice | Status |
 |---|---|---|---|---|---|
@@ -260,8 +312,8 @@ Create the DB first: `psql -U postgres -c "CREATE DATABASE learning_test;"`. Run
 `LEARNING_TEST_PGPASSWORD=<pw> uv run --with "psycopg[binary]" --with pytest pytest test_001_person_bridge.py -q`.
 
 ## Conventions
-- Each migration ships a reversible `_down`. Validation gate = down → up → invariant tests → down clean.
-- After `learning_test` passes, apply to `learning_dev` (additive/safe): `psql -d learning_dev -f <up>.sql`.
+- Each migration ships a reversible `_down`. Validation gate = down → up → invariant tests → down clean on `learning_test`.
+- Applying to `learning_dev` is a SEPARATE operator-approved `schema` gate (additive/idempotent).
 
 ## Deferred (later sub-slices)
 2b: derive `user_study_progress` / `user_test_attempts` projections + management dashboards · 2c: ROI
@@ -272,7 +324,7 @@ correlation (learning_events → records/ops field output via `employee_id` + NE
 
 Run:
 ```bash
-ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/infra/database/migrations/learning; source ../../../infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest pytest test_001_person_bridge.py -q'
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/infra/database/migrations/learning; source /home/olares/code/apex/apex-learning-lane/infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest pytest test_001_person_bridge.py -q'
 ```
 Expected: PASS (4 passed).
 
@@ -283,14 +335,14 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && git add infra/d
 feat(learning): migration lane + 001 person bridge
 
 New infra/database/migrations/learning lane. 001 adds public.user_profiles.employee_id
-(cross-DB contract-FK to prod employees; partial-unique, no db FK) -- mirrors the prod
-additive person spine into the frozen learning baseline. Validated on throwaway learning_test.
+(cross-DB contract-FK to prod employees; partial-unique, no db FK). Validated on throwaway
+learning_test; learning_dev apply is a gated step.
 EOF'
 ```
 
 ---
 
-### Task 2: `002` append-only `learning_events` + apply both to `learning_dev`
+### Task 3: `002` append-only `learning_events`
 
 **Files:**
 - Create: `infra/database/migrations/learning/002_learning_events.sql`
@@ -298,8 +350,8 @@ EOF'
 - Test: `infra/database/migrations/learning/test_002_learning_events.py`
 
 **Interfaces:**
-- Consumes: `test_prereq.sql` (stub `user_profiles` + `study_content`); the seed UUIDs `…0001` (user) and `…0010` (study_content).
-- Produces: `public.learning_events` — columns `event_id uuid pk`, `user_id uuid not null`, `event_type text`, `study_content_id uuid null`, `neta_section text null`, `occurred_at timestamptz`, `payload jsonb`, `created_at timestamptz`. Append-only (UPDATE/DELETE blocked). Task 3's package INSERTs/SELECTs these columns.
+- Consumes: `test_prereq.sql` (stub `user_profiles` + `study_content`); seed UUIDs `…0001` (user) / `…0010` (study_content).
+- Produces: `public.learning_events` — `event_id uuid pk`, `user_id uuid not null`, `event_type text`, `study_content_id uuid null`, `neta_section text null`, `occurred_at timestamptz`, `payload jsonb`, `created_at timestamptz`. Append-only (UPDATE/DELETE blocked). Task 4's package INSERTs/SELECTs these columns.
 
 - [ ] **Step 1: Write the failing test `test_002_learning_events.py`**
 
@@ -311,7 +363,7 @@ throwaway learning_test (conftest applies test_prereq.sql -> stub user_profiles 
 seed rows 0001 / 0010).
 
 Run (host, from infra/database/migrations/learning/):
-  export PATH="$HOME/.local/bin:$PATH"; source ../../../infra/.env
+  export PATH="$HOME/.local/bin:$PATH"; source /home/olares/code/apex/apex-learning-lane/infra/.env
   LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD \
     uv run --with "psycopg[binary]" --with pytest pytest test_002_learning_events.py -q
 """
@@ -369,8 +421,7 @@ def test_table_exists():
 
 def test_accepts_the_four_event_types(conn):
     for etype in ("resource_viewed", "resource_completed", "assessment_completed", "self_assessment"):
-        eid = _insert(conn, etype)
-        assert eid is not None
+        assert _insert(conn, etype) is not None
 
 
 def test_rejects_unknown_event_type(conn):
@@ -399,11 +450,9 @@ def test_append_only_blocks_delete(conn):
 
 
 def test_study_content_fk_set_null_semantics():
-    # study_content_id is a real FK with ON DELETE SET NULL; the column is nullable.
     rule = _scalar(
         "select confdeltype from pg_constraint "
-        "where conrelid='public.learning_events'::regclass and contype='f' "
-        "and conname like '%study_content%'"
+        "where conrelid='public.learning_events'::regclass and contype='f' and conname like '%study_content%'"
     )
     assert rule == "n"  # 'n' = SET NULL
 
@@ -411,8 +460,7 @@ def test_study_content_fk_set_null_semantics():
 def test_user_fk_cascade_semantics():
     rule = _scalar(
         "select confdeltype from pg_constraint "
-        "where conrelid='public.learning_events'::regclass and contype='f' "
-        "and conname like '%user_id%'"
+        "where conrelid='public.learning_events'::regclass and contype='f' and conname like '%user_id%'"
     )
     assert rule == "c"  # 'c' = CASCADE
 ```
@@ -421,7 +469,7 @@ def test_user_fk_cascade_semantics():
 
 Run:
 ```bash
-ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/infra/database/migrations/learning; source ../../../infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest pytest test_002_learning_events.py -q'
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/infra/database/migrations/learning; source /home/olares/code/apex/apex-learning-lane/infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest pytest test_002_learning_events.py -q'
 ```
 Expected: FAIL — `002_learning_events.sql` does not exist.
 
@@ -431,10 +479,10 @@ Expected: FAIL — `002_learning_events.sql` does not exist.
 -- ============================================================================
 -- learning migration 002 -- append-only learning_events capture ledger. Slice 2a.
 -- Authority: docs/superpowers/specs/2026-06-20-learning-slice2-capture-path-design.md.
--- Dev DB: learning_dev. Nothing applied to prod. The immutable substrate every later projection
+-- Dev DB: learning_dev (apply gated). The immutable substrate every later projection
 -- (user_study_progress / user_test_attempts) and ROI metric derives from. event_type is a text
 -- CHECK vocab (extensible, per the records-lane preference); payload jsonb is the open extension
--- point (score_percent, duration_seconds, source surface, apparatus_type, ...).
+-- point (score_percent, confidence, duration_seconds, source surface, apparatus_type, ...).
 -- ============================================================================
 
 create table if not exists public.learning_events (
@@ -487,23 +535,11 @@ drop function if exists public.learning_events_block_mutation();
 
 Run:
 ```bash
-ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/infra/database/migrations/learning; source ../../../infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest pytest test_002_learning_events.py -q'
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/infra/database/migrations/learning; source /home/olares/code/apex/apex-learning-lane/infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest pytest test_002_learning_events.py -q'
 ```
 Expected: PASS (8 passed).
 
-- [ ] **Step 6: Apply `001` + `002` to `learning_dev` (additive/safe) and verify**
-
-Run:
-```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane; source infra/.env; export PGPASSWORD=$DEV_PG_PASSWORD; \
-  psql -h 127.0.0.1 -U postgres -d learning_dev -f infra/database/migrations/learning/001_person_bridge.sql; \
-  psql -h 127.0.0.1 -U postgres -d learning_dev -f infra/database/migrations/learning/002_learning_events.sql; \
-  psql -h 127.0.0.1 -U postgres -d learning_dev -c "select column_name from information_schema.columns where table_name='"'"'user_profiles'"'"' and column_name='"'"'employee_id'"'"'"; \
-  psql -h 127.0.0.1 -U postgres -d learning_dev -c "select to_regclass('"'"'public.learning_events'"'"')"'
-```
-Expected: `ALTER TABLE` / `CREATE TABLE` etc.; the verification queries print `employee_id` and `public.learning_events`. (Re-running is safe — both migrations are idempotent.)
-
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && git add infra/database/migrations/learning/ && git commit -F - <<"EOF"
@@ -511,13 +547,13 @@ feat(learning): 002 append-only learning_events ledger
 
 Immutable capture substrate (UPDATE/DELETE blocked by trigger; event_type CHECK vocab;
 user CASCADE / study_content SET NULL FKs; neta_section work-context; payload jsonb).
-Validated on learning_test (8/8); 001+002 applied to learning_dev (additive).
+Validated on learning_test (8/8). learning_dev apply is a gated step.
 EOF'
 ```
 
 ---
 
-### Task 3: `packages/learning-capture` (record/list events + users + CLI)
+### Task 4: `packages/learning-capture` (record/list events + users + CLI + payload rules)
 
 **Files:**
 - Create: `packages/learning-capture/pyproject.toml`
@@ -531,15 +567,15 @@ EOF'
 - Create: `packages/learning-capture/tests/test_cli.py`
 
 **Interfaces:**
-- Consumes: the migrated `learning_test` schema (Task 1+2 SQL files, applied by the package conftest); seed UUIDs `…0001` (user) / `…0010` (study_content).
+- Consumes: the migrated `learning_test` schema (Task 2+3 SQL files, applied by the package conftest); seed UUIDs `…0001` / `…0010`.
 - Produces:
   - `record_event(user_id: str, event_type: str, *, study_content_id: str | None = None, neta_section: str | None = None, payload: dict | None = None) -> CapturedEvent`
   - `list_events(user_id: str | None = None, limit: int = 50) -> list[CapturedEvent]`
   - `list_users(limit: int = 100) -> list[dict]` (`{"id": str, "email": str}`)
   - `CapturedEvent` dataclass: `event_id, user_id, event_type, study_content_id, neta_section, occurred_at, payload, created_at`
-  - `CaptureError(ValueError)`
-  - `EVENT_TYPES: frozenset[str]`
-  Task 4's API imports `record_event`, `list_events`, `list_users`, `CaptureError`.
+  - `CaptureError(ValueError)`; `EVENT_TYPES: frozenset[str]`
+  - **Payload rules:** `assessment_completed` requires numeric `score_percent` in [0,100]; `self_assessment` requires int `confidence` in [1,5]; resource events ignore payload.
+  Task 5's API imports `record_event`, `list_events`, `list_users`, `CaptureError`.
 
 - [ ] **Step 1: Write `pyproject.toml`**
 
@@ -663,7 +699,6 @@ def _schema():
 - [ ] **Step 5: Write the failing test `tests/test_capture.py`**
 
 ```python
-import psycopg
 import pytest
 
 from learning_capture import CaptureError, list_events, list_users, record_event
@@ -681,12 +716,6 @@ def test_record_event_returns_captured_event():
     assert ev.neta_section == "7.2.1.1"
 
 
-def test_record_event_assessment_payload_roundtrips():
-    ev = record_event(USER, "assessment_completed", payload={"score_percent": 80, "correct": 8})
-    assert ev.payload["score_percent"] == 80
-    assert ev.payload["correct"] == 8
-
-
 def test_record_event_rejects_unknown_type():
     with pytest.raises(CaptureError):
         record_event(USER, "bogus")
@@ -702,6 +731,24 @@ def test_record_event_rejects_unknown_content():
         record_event(USER, "resource_viewed", study_content_id="33333333-3333-3333-3333-333333333333")
 
 
+def test_assessment_requires_score_percent():
+    with pytest.raises(CaptureError):
+        record_event(USER, "assessment_completed")                       # no payload
+    with pytest.raises(CaptureError):
+        record_event(USER, "assessment_completed", payload={"score_percent": 150})  # out of range
+    ev = record_event(USER, "assessment_completed", payload={"score_percent": 80})
+    assert ev.payload["score_percent"] == 80
+
+
+def test_self_assessment_requires_confidence():
+    with pytest.raises(CaptureError):
+        record_event(USER, "self_assessment")                            # no payload
+    with pytest.raises(CaptureError):
+        record_event(USER, "self_assessment", payload={"confidence": 9})  # out of range
+    ev = record_event(USER, "self_assessment", payload={"confidence": 3})
+    assert ev.payload["confidence"] == 3
+
+
 def test_list_events_filters_by_user_and_orders_desc():
     record_event(USER, "resource_viewed")
     record_event(USER, "resource_completed")
@@ -711,15 +758,14 @@ def test_list_events_filters_by_user_and_orders_desc():
 
 
 def test_list_users_returns_seed_user():
-    users = list_users()
-    assert any(u["id"] == USER for u in users)
+    assert any(u["id"] == USER for u in list_users())
 ```
 
 - [ ] **Step 6: Run the test, verify it fails**
 
 Run:
 ```bash
-ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/packages/learning-capture; source ../../infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests/test_capture.py -q'
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/packages/learning-capture; source /home/olares/code/apex/apex-learning-lane/infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests/test_capture.py -q'
 ```
 Expected: FAIL — `capture.py` has no `record_event` (ImportError).
 
@@ -727,7 +773,10 @@ Expected: FAIL — `capture.py` has no `record_event` (ImportError).
 
 ```python
 """Capture path: append events to the learning_dev learning_events ledger. INSERT/SELECT only
-(the DB trigger backs the append-only invariant)."""
+(the DB trigger backs the append-only invariant). Payload shape per event_type is enforced here
+(the design assigns payload validation to the package)."""
+from numbers import Real
+
 from psycopg.types.json import Json
 
 from .db import connect
@@ -744,7 +793,18 @@ _INSERT = (
 
 
 class CaptureError(ValueError):
-    """Invalid capture request (unknown event_type / missing referenced row)."""
+    """Invalid capture request (unknown event_type / missing referenced row / bad payload)."""
+
+
+def _validate_payload(event_type, payload):
+    if event_type == "assessment_completed":
+        score = payload.get("score_percent")
+        if not isinstance(score, Real) or isinstance(score, bool) or not (0 <= float(score) <= 100):
+            raise CaptureError("assessment_completed requires numeric payload.score_percent in [0,100]")
+    elif event_type == "self_assessment":
+        conf = payload.get("confidence")
+        if not isinstance(conf, int) or isinstance(conf, bool) or not (1 <= conf <= 5):
+            raise CaptureError("self_assessment requires int payload.confidence in [1,5]")
 
 
 def _row_to_event(r) -> CapturedEvent:
@@ -764,6 +824,8 @@ def _row_to_event(r) -> CapturedEvent:
 def record_event(user_id, event_type, *, study_content_id=None, neta_section=None, payload=None) -> CapturedEvent:
     if event_type not in EVENT_TYPES:
         raise CaptureError(f"unknown event_type {event_type!r}; allowed: {sorted(EVENT_TYPES)}")
+    payload = payload or {}
+    _validate_payload(event_type, payload)
     with connect() as conn:
         if conn.execute("select 1 from user_profiles where id = %s::uuid", (user_id,)).fetchone() is None:
             raise CaptureError(f"no such user_profiles.id {user_id!r}")
@@ -775,7 +837,7 @@ def record_event(user_id, event_type, *, study_content_id=None, neta_section=Non
             "event_type": event_type,
             "study_content_id": study_content_id,
             "neta_section": neta_section,
-            "payload": Json(payload or {}),
+            "payload": Json(payload),
         }).fetchone()
     return _row_to_event(row)
 
@@ -815,9 +877,9 @@ __all__ = [
 
 Run:
 ```bash
-ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/packages/learning-capture; source ../../infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests/test_capture.py -q'
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/packages/learning-capture; source /home/olares/code/apex/apex-learning-lane/infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests/test_capture.py -q'
 ```
-Expected: PASS (7 passed).
+Expected: PASS (8 passed).
 
 - [ ] **Step 10: Write the failing CLI test `tests/test_cli.py`**
 
@@ -849,7 +911,7 @@ def test_cli_list_json(capsys):
 
 Run:
 ```bash
-ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/packages/learning-capture; source ../../infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests/test_cli.py -q'
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/packages/learning-capture; source /home/olares/code/apex/apex-learning-lane/infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests/test_cli.py -q'
 ```
 Expected: FAIL — `cli.py` has no `main` (ImportError).
 
@@ -906,9 +968,9 @@ def main(argv: list[str] | None = None) -> int:
 
 Run:
 ```bash
-ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/packages/learning-capture; source ../../infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests -q'
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/packages/learning-capture; source /home/olares/code/apex/apex-learning-lane/infra/.env; LEARNING_TEST_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests -q'
 ```
-Expected: PASS (9 passed: 7 capture + 2 cli).
+Expected: PASS (10 passed: 8 capture + 2 cli).
 
 - [ ] **Step 14: Commit**
 
@@ -917,14 +979,15 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && git add package
 feat(learning): learning-capture package (record/list events + users + CLI)
 
 record_event/list_events/list_users over the learning_dev learning_events ledger; read-WRITE db
-connect (mirrors learning-resolver without the read-only session); validates event_type vocab and
-referenced user/content; INSERT/SELECT only. CLI record/list. 9 tests against throwaway learning_test.
+connect (mirrors learning-resolver without the read-only session); validates event_type vocab,
+referenced user/content, and per-type payload (assessment score_percent / self_assessment
+confidence); INSERT/SELECT only. CLI record/list. 10 tests against throwaway learning_test.
 EOF'
 ```
 
 ---
 
-### Task 4: control-plane-api — `POST/GET /events` + `GET /users`
+### Task 5: control-plane-api — `POST/GET /events` + `GET /users`
 
 **Files:**
 - Modify: `apps/control-plane-api/services/learning/router.py`
@@ -938,7 +1001,7 @@ EOF'
   - `POST /api/v1/learning/events` body `{user_id, event_type, study_content_id?, neta_section?, payload?}` → `201 {event}`; `400` on `CaptureError`.
   - `GET /api/v1/learning/events?user_id=&limit=` → `{events: [...]}`.
   - `GET /api/v1/learning/users?limit=` → `{users: [{id, email}]}`.
-  The existing `learning_router` is already registered in `main.py` (line 97) — extending it needs NO `main.py` change.
+  The existing `learning_router` is already registered in `main.py` — extending it needs NO `main.py` change.
 
 - [ ] **Step 1: Add the editable dep to `requirements.txt`**
 
@@ -949,13 +1012,16 @@ Add a line directly under the existing `-e ../../packages/learning-resolver` so 
 -e ../../packages/learning-capture
 ```
 
-- [ ] **Step 2: Install the editable package into the host `.venv`**
+- [ ] **Step 2: Bootstrap + verify the `learning_test` schema (no error suppression)**
 
-Run:
+The API tests write to `learning_test` (the package conftest is not in this dir, so apply the schema explicitly here). This step is idempotent and VERIFIED — do not suppress its output:
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && .venv/bin/pip install -e packages/learning-capture 2>&1 | tail -3 || /home/olares/code/apex/apex-power-ops-platform/.venv/bin/pip install -e packages/learning-capture 2>&1 | tail -3'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane; source infra/.env; export PGPASSWORD=$DEV_PG_PASSWORD; M=infra/database/migrations/learning; \
+  for f in test_prereq.sql 002_learning_events_down.sql 001_person_bridge_down.sql 001_person_bridge.sql 002_learning_events.sql; do \
+    echo "applying $f"; psql -h 127.0.0.1 -U postgres -d learning_test -v ON_ERROR_STOP=1 -f $M/$f || exit 1; done; \
+  psql -h 127.0.0.1 -U postgres -d learning_test -tAc "select to_regclass('"'"'public.learning_events'"'"')"'
 ```
-Expected: `Successfully installed learning-capture-0.1.0`. (Note: the worktree may not have its own `.venv`; if `.venv` is missing, use the platform-root `.venv` shown in the fallback. Whichever venv runs the API tests must have the package installed.)
+Expected: each `applying …` line succeeds; the final query prints `public.learning_events`. If any apply errors, STOP (do not proceed to test against stale state).
 
 - [ ] **Step 3: Write the failing test `tests/test_learning_events.py`**
 
@@ -995,6 +1061,15 @@ def test_post_event_unknown_user_is_400():
     assert r.status_code == 400
 
 
+def test_post_self_assessment_requires_confidence():
+    bad = client.post("/api/v1/learning/events", json={"user_id": USER, "event_type": "self_assessment"})
+    assert bad.status_code == 400
+    ok = client.post("/api/v1/learning/events",
+                     json={"user_id": USER, "event_type": "self_assessment", "payload": {"confidence": 4}})
+    assert ok.status_code == 201
+    assert ok.json()["event"]["payload"]["confidence"] == 4
+
+
 def test_get_events_reads_back():
     client.post("/api/v1/learning/events", json={"user_id": USER, "event_type": "resource_completed"})
     r = client.get("/api/v1/learning/events", params={"user_id": USER, "limit": 10})
@@ -1012,22 +1087,24 @@ def test_get_users_lists_seed_user():
 
 - [ ] **Step 4: Run the test, verify it fails**
 
-Run (bootstrap `learning_test` schema first, then the test):
+Run (self-contained via `uv run --with-requirements`; run from the app dir so the editable paths and `from main import app` resolve):
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane; source infra/.env; export PGPASSWORD=$DEV_PG_PASSWORD; \
-  M=infra/database/migrations/learning; \
-  for f in test_prereq.sql 002_learning_events_down.sql 001_person_bridge_down.sql 001_person_bridge.sql 002_learning_events.sql; do psql -h 127.0.0.1 -U postgres -d learning_test -f $M/$f >/dev/null 2>&1; done; \
-  VENV=$( [ -x .venv/bin/python ] && echo .venv || echo /home/olares/code/apex/apex-power-ops-platform/.venv ); \
-  cd apps/control-plane-api; \
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/apps/control-plane-api; source /home/olares/code/apex/apex-learning-lane/infra/.env; \
   DATABASE_URL="postgresql://postgres:$DEV_PG_PASSWORD@127.0.0.1:5432/learning_test" \
   LEARNING_DEV_DSN="host=127.0.0.1 port=5432 dbname=learning_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable" \
-    ../../$VENV/bin/python -m pytest tests/test_learning_events.py -q'
+    uv run --with-requirements requirements-dev.txt pytest tests/test_learning_events.py -q'
 ```
 Expected: FAIL — `POST /events` returns 404/405 (route not defined yet).
 
 - [ ] **Step 5: Extend `schemas.py`**
 
-Append to `apps/control-plane-api/services/learning/schemas.py`:
+Change the top import of `apps/control-plane-api/services/learning/schemas.py` from `from pydantic import BaseModel` to:
+```python
+from datetime import datetime
+
+from pydantic import BaseModel
+```
+Then append:
 ```python
 class EventIn(BaseModel):
     user_id: str
@@ -1059,19 +1136,15 @@ class EventsResponse(BaseModel):
 class UsersResponse(BaseModel):
     users: list[dict]
 ```
-And add the import at the top of `schemas.py` (it currently imports only `from pydantic import BaseModel`):
-```python
-from datetime import datetime
-
-from pydantic import BaseModel
-```
 
 - [ ] **Step 6: Extend `router.py`**
 
-Append to `apps/control-plane-api/services/learning/router.py` (the file already defines `router` and imports from `.schemas`):
+Change the existing first import line `from fastapi import APIRouter, Query` to:
 ```python
-from fastapi import HTTPException, status
-
+from fastapi import APIRouter, HTTPException, Query, status
+```
+Then append to the file (it already defines `router` and imports from `.schemas`):
+```python
 from learning_capture import CaptureError, list_events, list_users, record_event
 
 from .schemas import EventCreatedResponse, EventIn, EventOut, EventsResponse, UsersResponse
@@ -1104,64 +1177,58 @@ def get_events(
 def get_users(limit: int = Query(default=100, ge=1, le=500)) -> UsersResponse:
     return UsersResponse(users=list_users(limit=limit))
 ```
-Note: `Query` is already imported in `router.py` (Slice 1's `from fastapi import APIRouter, Query`). Add `HTTPException, status` to that import or use the separate import line shown above — either is fine; do not duplicate `Query`.
 
 - [ ] **Step 7: Run the test, verify it passes**
 
-Run (same env as Step 4):
+Run (same command as Step 4):
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane; source infra/.env; export PGPASSWORD=$DEV_PG_PASSWORD; \
-  VENV=$( [ -x .venv/bin/python ] && echo .venv || echo /home/olares/code/apex/apex-power-ops-platform/.venv ); \
-  cd apps/control-plane-api; \
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/apps/control-plane-api; source /home/olares/code/apex/apex-learning-lane/infra/.env; \
   DATABASE_URL="postgresql://postgres:$DEV_PG_PASSWORD@127.0.0.1:5432/learning_test" \
   LEARNING_DEV_DSN="host=127.0.0.1 port=5432 dbname=learning_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable" \
-    ../../$VENV/bin/python -m pytest tests/test_learning_events.py -q'
+    uv run --with-requirements requirements-dev.txt pytest tests/test_learning_events.py -q'
 ```
-Expected: PASS (5 passed).
+Expected: PASS (6 passed).
 
 - [ ] **Step 8: Confirm Slice 1 learning tests still pass (no regression)**
 
-Run:
+Run (points the resolver at the real `learning_dev`, which it reads):
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane; source infra/.env; export PGPASSWORD=$DEV_PG_PASSWORD; \
-  VENV=$( [ -x .venv/bin/python ] && echo .venv || echo /home/olares/code/apex/apex-power-ops-platform/.venv ); \
-  cd apps/control-plane-api; \
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/apps/control-plane-api; source /home/olares/code/apex/apex-learning-lane/infra/.env; \
   DATABASE_URL="postgresql://postgres:$DEV_PG_PASSWORD@127.0.0.1:5432/learning_dev" \
   LEARNING_DEV_PGPASSWORD=$DEV_PG_PASSWORD \
-    ../../$VENV/bin/python -m pytest tests/test_learning_resources.py -q'
+    uv run --with-requirements requirements-dev.txt pytest tests/test_learning_resources.py -q'
 ```
-Expected: PASS (3 passed) — Slice 1 reads real `learning_dev` (curated `7.2.1.1`), unaffected by the capture routes.
+Expected: PASS (3 passed). (Slice 1 reads curated `7.2.1.1` from `learning_dev`, unaffected by the capture routes.)
 
 - [ ] **Step 9: Verify no `uv.lock` got created; commit**
 
-Run:
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && git status --porcelain | grep -i "uv.lock" && echo "REMOVE THESE" || echo "clean of uv.lock"'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && (git status --porcelain | grep -i "uv.lock" && echo "REMOVE THESE (git rm --cached + gitignore)" || echo "clean of uv.lock")'
 ```
 If any `uv.lock` appears, `git rm --cached` it and add to `.gitignore`. Then:
 ```bash
 ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && git add apps/control-plane-api/services/learning/router.py apps/control-plane-api/services/learning/schemas.py apps/control-plane-api/requirements.txt apps/control-plane-api/tests/test_learning_events.py && git commit -F - <<"EOF"
 feat(learning): control-plane-api capture routes (events + users)
 
-POST /api/v1/learning/events (201; 400 on CaptureError) + GET /events (read-back) + GET /users,
-extending the Slice 1 learning router. Calls the learning-capture package (editable dep via
-requirements.txt, mirroring learning-resolver). 5 route tests against learning_test; Slice 1
+POST /api/v1/learning/events (201; 400 on CaptureError, incl. payload rules) + GET /events
+(read-back) + GET /users, extending the Slice 1 learning router. Calls the learning-capture
+package (editable dep via requirements.txt). 6 route tests against learning_test; Slice 1
 resource tests still green.
 EOF'
 ```
 
 ---
 
-### Task 5: operations-web — capture panel on `/learning-demo`
+### Task 6: operations-web — capture panel on `/learning-demo` + proving smoke
 
 **Files:**
 - Create: `apps/operations-web/lib/learning-capture.ts`
 - Modify: `apps/operations-web/app/learning-demo/page.tsx`
-- Test: `apps/operations-web/e2e/learning-capture.spec.ts` (thin smoke)
+- Test: `apps/operations-web/tests/learning-capture.smoke.spec.ts` (Playwright `testDir` is `./tests`)
 
 **Interfaces:**
-- Consumes: `POST/GET /api/v1/learning/events` + `GET /api/v1/learning/users` (Task 4); `browserEnv.controlPlaneBaseUrl`.
-- Produces: a capture panel where the user is picked from `/users`, a resolver-surfaced resource is marked viewed/completed (or an assessment/self-assessment recorded), and the captured-events list refreshes.
+- Consumes: `POST/GET /api/v1/learning/events` + `GET /api/v1/learning/users`; `browserEnv.controlPlaneBaseUrl`.
+- Produces: a capture panel — pick a tech from `/users`, mark a resolver-surfaced resource viewed/completed, log a self-assessment (confidence) or an assessment (score), and watch the captured-events list refresh. The smoke **route-mocks the API and proves the POST body + re-render** (deterministic; no live API or DB needed — the API+DB path is covered by Task 5).
 
 - [ ] **Step 1: Write `lib/learning-capture.ts`**
 
@@ -1236,9 +1303,9 @@ export async function recordLearningEvent(input: {
 }
 ```
 
-- [ ] **Step 2: Extend `app/learning-demo/page.tsx` with a capture panel**
+- [ ] **Step 2: Replace `app/learning-demo/page.tsx` with the capture-enabled version**
 
-Replace the file with the version below (keeps the Slice 1 resolve panel intact; adds users load, a per-resource "Viewed / Completed" capture, a self-assessment button, and a captured-events list). Reuses the existing `resource-*` / `notes-card` / `btn` classes.
+Keeps the Slice 1 resolve panel; adds a tech picker, per-resource viewed/completed capture, a self-assessment (confidence) control, an assessment (score) control, and a captured-events list. Reuses the existing `resource-*` / `notes-card` / `btn` classes.
 
 ```tsx
 'use client'
@@ -1265,15 +1332,16 @@ export default function LearningDemoPage() {
   const [userId, setUserId] = useState('')
   const [events, setEvents] = useState<LearningEvent[]>([])
   const [captureMessage, setCaptureMessage] = useState<string | null>(null)
+  const [confidence, setConfidence] = useState('3')
+  const [score, setScore] = useState('80')
 
   useEffect(() => {
     fetchLearningUsers()
       .then((u) => {
         setUsers(u)
-        if (u.length && !userId) setUserId(u[0].id)
+        if (u.length) setUserId((prev) => prev || u[0].id)
       })
       .catch(() => setUsers([]))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function refreshEvents(uid: string) {
@@ -1306,26 +1374,25 @@ export default function LearningDemoPage() {
     }
   }
 
-  async function capture(eventType: string, r?: LearningResource) {
+  async function capture(eventType: string, opts?: { resource?: LearningResource; payload?: Record<string, unknown> }) {
     if (!userId) {
       setCaptureMessage('Pick a technician first.')
       return
     }
     setCaptureMessage(null)
-    const ref = r?.reference as { kind?: string; id?: string } | undefined
+    const ref = opts?.resource?.reference as { kind?: string; id?: string } | undefined
     try {
       await recordLearningEvent({
         user_id: userId,
         event_type: eventType,
         study_content_id: ref?.kind === 'study_content' ? ref.id ?? null : null,
         neta_section: section.trim() || null,
+        payload: opts?.payload,
       })
       setCaptureMessage(`Recorded ${eventType}.`)
       await refreshEvents(userId)
     } catch (error) {
-      setCaptureMessage(
-        error instanceof LearningCaptureError ? error.message : 'Capture failed.',
-      )
+      setCaptureMessage(error instanceof LearningCaptureError ? error.message : 'Capture failed.')
     }
   }
 
@@ -1380,8 +1447,8 @@ export default function LearningDemoPage() {
                     <h3>{r.title}</h3>
                     <p>{r.why}</p>
                     <div className="resource-item-row">
-                      <button className="btn" onClick={() => capture('resource_viewed', r)}>Mark viewed</button>
-                      <button className="btn" onClick={() => capture('resource_completed', r)}>Mark completed</button>
+                      <button className="btn" onClick={() => capture('resource_viewed', { resource: r })}>Mark viewed</button>
+                      <button className="btn" onClick={() => capture('resource_completed', { resource: r })}>Mark completed</button>
                     </div>
                   </article>
                 ))}
@@ -1390,8 +1457,21 @@ export default function LearningDemoPage() {
           </div>
         ) : null}
 
-        <div className="resource-item-row" style={{ marginTop: '1rem' }}>
-          <button className="btn" onClick={() => capture('self_assessment')}>Log self-assessment for this section</button>
+        <div className="resource-item-row" style={{ marginTop: '1rem', gap: '0.75rem', alignItems: 'flex-end' }}>
+          <label>Confidence
+            <select value={confidence} onChange={(e) => setConfidence(e.target.value)}>
+              {[1, 2, 3, 4, 5].map((n) => <option key={n} value={String(n)}>{n}</option>)}
+            </select>
+          </label>
+          <button className="btn" onClick={() => capture('self_assessment', { payload: { confidence: Number(confidence) } })}>
+            Log self-assessment
+          </button>
+          <label>Assessment score
+            <input value={score} onChange={(e) => setScore(e.target.value)} style={{ width: '5rem' }} />
+          </label>
+          <button className="btn" onClick={() => capture('assessment_completed', { payload: { score_percent: Number(score) } })}>
+            Record assessment
+          </button>
         </div>
       </section>
 
@@ -1422,42 +1502,121 @@ export default function LearningDemoPage() {
 
 Run:
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane/apps/operations-web && . $HOME/.nvm/nvm.sh && pnpm run typecheck 2>&1 | tail -15'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane/apps/operations-web && . $HOME/.nvm/nvm.sh && (command -v pnpm >/dev/null || corepack enable) && pnpm run typecheck 2>&1 | tail -15'
 ```
-Expected: no type errors (exit 0). If `pnpm` is unavailable, enable it with `corepack enable` first (per §261). Fix any type errors before continuing.
+Expected: no type errors (exit 0). Fix any before continuing.
 
-- [ ] **Step 4: Write a thin browser smoke `e2e/learning-capture.spec.ts`**
+- [ ] **Step 4: Write the failing proving smoke `tests/learning-capture.smoke.spec.ts`**
+
+Route-mocks the control-plane API (no live API/DB needed) and proves: users load → resolve renders → "Mark viewed" POSTs the correct body → the returned event renders; and a self-assessment POSTs its `confidence` payload.
 
 ```ts
 import { test, expect } from '@playwright/test'
 
-// Thin smoke: the capture panel renders with the resolve control and a captured-events section.
-test('learning-demo capture panel renders', async ({ page }) => {
-  await page.goto('/learning-demo')
-  await expect(page.getByRole('button', { name: 'Resolve' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Captured events' })).toBeVisible()
+const USER = '00000000-0000-0000-0000-000000000001'
+const SC = 'aaaaaaaa-1111-1111-1111-111111111111'
+
+test.describe('learning-demo capture loop', () => {
+  test('marks a resource viewed and renders the captured event', async ({ page }) => {
+    const captured: Array<Record<string, unknown>> = []
+
+    await page.route('**/api/v1/learning/users**', (route) =>
+      route.fulfill({ json: { users: [{ id: USER, email: 'tech1@example.com' }] } }),
+    )
+    await page.route('**/api/v1/learning/resources**', (route) =>
+      route.fulfill({
+        json: {
+          context: { neta_section: '7.2.1.1', level: null, limit: 20 },
+          resources: [{
+            resource_type: 'study_content', title: 'Breaker basics', source: 'curated',
+            reference: { kind: 'study_content', id: SC }, is_primary: true, is_mandatory: false,
+            cert_level: 'II', score: 1100, why: 'curated resource for this apparatus type',
+          }],
+        },
+      }),
+    )
+    await page.route('**/api/v1/learning/events**', async (route) => {
+      const req = route.request()
+      if (req.method() === 'POST') {
+        const body = req.postDataJSON() as Record<string, unknown>
+        captured.push(body)
+        await route.fulfill({
+          json: {
+            event: {
+              event_id: `e${captured.length}`, user_id: body.user_id, event_type: body.event_type,
+              study_content_id: body.study_content_id ?? null, neta_section: body.neta_section ?? null,
+              occurred_at: new Date().toISOString(), payload: body.payload ?? {}, created_at: new Date().toISOString(),
+            },
+          },
+        })
+      } else {
+        await route.fulfill({
+          json: {
+            events: captured.map((b, i) => ({
+              event_id: `e${i + 1}`, user_id: b.user_id, event_type: b.event_type,
+              study_content_id: b.study_content_id ?? null, neta_section: b.neta_section ?? null,
+              occurred_at: new Date().toISOString(), payload: b.payload ?? {}, created_at: new Date().toISOString(),
+            })),
+          },
+        })
+      }
+    })
+
+    await page.goto('/learning-demo')
+    await page.getByRole('button', { name: 'Resolve' }).click()
+    await expect(page.getByRole('heading', { name: 'Breaker basics' })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Mark viewed' }).first().click()
+    await expect.poll(() => captured.length).toBeGreaterThan(0)
+    expect(captured[0]).toMatchObject({
+      user_id: USER, event_type: 'resource_viewed', neta_section: '7.2.1.1', study_content_id: SC,
+    })
+    await expect(page.getByText('resource_viewed').first()).toBeVisible()
+
+    await page.getByRole('button', { name: 'Log self-assessment' }).click()
+    await expect.poll(() => captured.length).toBeGreaterThan(1)
+    expect(captured[captured.length - 1]).toMatchObject({
+      event_type: 'self_assessment', payload: { confidence: 3 },
+    })
+  })
 })
 ```
 
-- [ ] **Step 5: Run the smoke (build + playwright)**
+- [ ] **Step 5: Run the smoke, verify it fails then passes**
 
-Run:
+Run (build + Playwright; the spec lives in `./tests`, the real `testDir`):
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane/apps/operations-web && . $HOME/.nvm/nvm.sh && pnpm run smoke:browser 2>&1 | tail -20'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane/apps/operations-web && . $HOME/.nvm/nvm.sh && (command -v pnpm >/dev/null || corepack enable) && pnpm run smoke:browser 2>&1 | tail -25'
 ```
-Expected: the `learning-capture` spec passes. (If the broader smoke suite has unrelated pre-existing failures, confirm the new spec itself passes and note the unrelated ones — do not fix orthogonal failures here.)
+First run (before Step 2 is in place / if the page lacks the panel): the new spec FAILS. After Steps 1–2: the `learning-capture` spec PASSES. (If the broader smoke suite has unrelated pre-existing failures, confirm the `learning-capture` spec itself passes — run `pnpm exec playwright test tests/learning-capture.smoke.spec.ts` to isolate it — and note any orthogonal failures; do not fix them here.)
 
 - [ ] **Step 6: Confirm no `uv.lock`; commit**
 
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && git add apps/operations-web/lib/learning-capture.ts apps/operations-web/app/learning-demo/page.tsx apps/operations-web/e2e/learning-capture.spec.ts && git commit -F - <<"EOF"
+ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && (git status --porcelain | grep -i "uv.lock" && echo "REMOVE THESE" || echo "clean of uv.lock") && git add apps/operations-web/lib/learning-capture.ts apps/operations-web/app/learning-demo/page.tsx apps/operations-web/tests/learning-capture.smoke.spec.ts && git commit -F - <<"EOF"
 feat(learning): operations-web capture panel on /learning-demo
 
 Closes the resolve to capture loop on one screen: pick a technician, resolve resources (Slice 1),
-mark a surfaced resource viewed/completed or log a self-assessment, watch the captured-events list
-refresh. New lib/learning-capture.ts client + a thin browser smoke. Typecheck clean.
+mark a surfaced resource viewed/completed, log a self-assessment (confidence) or assessment (score),
+watch the captured-events list refresh. New lib/learning-capture.ts client + a route-mocked browser
+smoke that PROVES the POST body and re-render. Typecheck clean.
 EOF'
 ```
+
+---
+
+## Gated activation (operator-approved `schema` step — NOT part of the build/test flow)
+
+After all tasks pass and the lane is reviewed, applying `001`+`002` to **`learning_dev`** turns the demo into a live capture surface against the real baseline (the data-acquisition enabler). This is the lane's `schema` gate — **requires the operator's explicit go** and is run as its own step (or routed through `apex-jobs` if stricter run-accounting is wanted), never silently:
+
+```bash
+ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane; source infra/.env; export PGPASSWORD=$DEV_PG_PASSWORD; \
+  psql -h 127.0.0.1 -U postgres -d learning_dev -v ON_ERROR_STOP=1 -f infra/database/migrations/learning/001_person_bridge.sql; \
+  psql -h 127.0.0.1 -U postgres -d learning_dev -v ON_ERROR_STOP=1 -f infra/database/migrations/learning/002_learning_events.sql; \
+  psql -h 127.0.0.1 -U postgres -d learning_dev -c "select column_name from information_schema.columns where table_name='"'"'user_profiles'"'"' and column_name='"'"'employee_id'"'"'"; \
+  psql -h 127.0.0.1 -U postgres -d learning_dev -c "select to_regclass('"'"'public.learning_events'"'"')"'
+```
+Both migrations are additive/idempotent; verification prints `employee_id` and `public.learning_events`.
 
 ---
 
@@ -1465,14 +1624,15 @@ EOF'
 
 **1. Spec coverage:**
 - Spec §2 boundaries (learning_dev-only, deferred 2b/2c) → Global Constraints + MANIFEST "Deferred". ✓
-- Spec §4 `001` person bridge → Task 1. ✓
-- Spec §4 `002` append-only `learning_events` (CHECK vocab, guard trigger, indexes, FK semantics) → Task 2. ✓
-- Spec §5.1 `learning-capture` package (record/list, read-WRITE db, vocab+existence validation, CLI) → Task 3 (plus `list_users`, spec §5.3's "user picker"). ✓
-- Spec §5.2 `POST/GET /events` extending the Slice 1 module + editable dep → Task 4 (plus `GET /users`). ✓
-- Spec §5.3 capture panel extending `/learning-demo` → Task 5. ✓
-- Spec §7 testing (migration throwaway, package, API, UI smoke) → tests in every task. ✓
-- Spec §3 NETA-section contract + person bridge → carried in `neta_section` column + `employee_id`. ✓
+- Spec §4 `001` person bridge → Task 2. ✓
+- Spec §4 `002` append-only `learning_events` (CHECK vocab, guard trigger, indexes, FK semantics) → Task 3. ✓
+- Spec §5.1 `learning-capture` package (record/list, read-WRITE db, vocab + existence + **payload-shape** validation, CLI) → Task 4 (+ `list_users`). ✓
+- Spec §5.2 `POST/GET /events` extending the Slice 1 module + editable dep → Task 5 (+ `GET /users`). ✓
+- Spec §5.3 capture panel extending `/learning-demo` (user picker, viewed/completed, self/assessment payload) → Task 6. ✓
+- Spec §7 testing (migration throwaway, package, API, UI **proving** smoke) → tests in every task. ✓
+- Spec §3 NETA-section contract + person bridge → `neta_section` column + `employee_id`. ✓
+- Governance: lane chartered (Task 1); `schema` apply gated (Gated activation). ✓
 
 **2. Placeholder scan:** No TBD/TODO; every code step shows complete code; every command shows expected output. ✓
 
-**3. Type consistency:** `CapturedEvent` fields (Task 3 `models.py`) == `EventOut` fields (Task 4 `schemas.py`) == `LearningEvent` TS type (Task 5) — `event_id, user_id, event_type, study_content_id, neta_section, occurred_at, payload, created_at`. `record_event` signature identical in spec §5.1, Task 3 interface, Task 3 `capture.py`, and the Task 4 call site. `EVENT_TYPES` 4 values identical in `models.py`, the `002` CHECK, and the demo buttons. Seed UUIDs (`…0001`, `…0010`) identical across `test_prereq.sql`, both migration tests, and the package/API tests. ✓
+**3. Type consistency:** `CapturedEvent` fields (Task 4 `models.py`) == `EventOut` fields (Task 5 `schemas.py`) == `LearningEvent` TS type (Task 6) — `event_id, user_id, event_type, study_content_id, neta_section, occurred_at, payload, created_at`. `record_event` signature identical in spec §5.1, Task 4 interface, Task 4 `capture.py`, and the Task 5 call site. `EVENT_TYPES` 4 values identical in `models.py`, the `002` CHECK, and the demo. Payload rules identical in `capture.py`, the package tests, the API test, and the demo controls (`confidence` 1–5; `score_percent` 0–100). Seed UUIDs (`…0001`, `…0010`) identical across `test_prereq.sql`, both migration tests, the package conftest, and the API tests. ✓
