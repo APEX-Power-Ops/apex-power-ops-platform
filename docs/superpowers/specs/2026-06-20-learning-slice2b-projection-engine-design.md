@@ -28,8 +28,8 @@ These are confirmed against the live DB; the derivations below depend on them.
 - `study_content(id uuid PK, title varchar, neta_section_primary varchar, certification_level, content_id varchar, …)`.
 - `content_concept_links(content_id uuid → study_content.id, concept_id text → concepts.concept_id, …)`. **Key column is `content_id`, not `study_content_id`.** 14,961 rows, 0 orphans on the content side.
 - `concepts(concept_id text PK, concept_description text, domain, …)`. **No `name` column — use `concept_id` + `concept_description`.**
-- `edition_ksa_map(concept_id text, ksa_code text, level text, edition text, …)`. Editions = `{2022, 2026}`; levels = `{II, III, IV}`. 966 rows; **30 rows reference a `ksa_code` absent from `ksas`** (orphans — excluded by the inner join to `ksas`).
-- `ksas(id uuid, ksa_code varchar, certification_level certification_level enum, description, …)`. `ksa_code` is unique within a level. Counts: **II=144, III=169, IV=170**.
+- `edition_ksa_map(concept_id text, ksa_code text, level text, edition text, is_active bool, …)`. Editions = `{2022, 2026}`; levels = `{II, III, IV}`. 966 rows; **30 rows reference a `ksa_code` absent from `ksas`** (orphans — excluded by the inner join to `ksas`). **All 966 are `is_active=true` today, but the competency join filters `is_active` so a future inactive mapping never counts as coverage.** `ekm.level` agrees with `ksas.certification_level` for every joined row (0 disagreements).
+- `ksas(id uuid, ksa_code varchar, certification_level certification_level enum, description, …)`. **`ksa_code` is globally unique** (`ksas_ksa_code_key`); each code belongs to exactly one `certification_level` (0 codes span multiple levels). Counts: **II=144, III=169, IV=170**.
 - `certification_level` enum = `{I, II, III, IV}`. **Level I has zero KSAs** ⇒ its denominator is 0 ⇒ `coverage_percent` MUST be `null` (never 0/0).
 - `user_profiles(id uuid, target_certification_level cert?, current_certification_level cert?, is_active bool, …)`. Both level columns are nullable.
 
@@ -104,7 +104,7 @@ class CompetencyRollup:
     levels_in_scope: list[str]  # e.g. ['II'] or ['II','III','IV'] for all
     evidence_event_count: int   # resource_completed + assessment_completed events w/ content
     coverage: list[LevelCoverage]   # one entry per level in scope
-    covered_concepts: list[ConceptRef]
+    engaged_concepts: list[ConceptRef]   # NOT level-filtered coverage; see derivation
 
 @dataclass
 class CohortAggregate:
@@ -182,10 +182,12 @@ covered as (
   select distinct k.ksa_code, k.certification_level
   from evidence ev
   join content_concept_links ccl on ccl.content_id = ev.content_id
-  join edition_ksa_map ekm       on ekm.concept_id = ccl.concept_id
-  join ksas k                    on k.ksa_code = ekm.ksa_code
+  join edition_ksa_map ekm       on ekm.concept_id = ccl.concept_id and ekm.is_active
+  join ksas k                    on k.ksa_code = ekm.ksa_code and k.certification_level::text = ekm.level
 )
 ```
+(`ekm.is_active` future-proofs against retired mappings; the explicit `level` predicate is safe — 0 live disagreements — and makes the level-pinning legible even though `ksa_code` is globally unique.)
+
 Per level `L` in `levels_in_scope`:
 - `total_ksas_at_level = (select count(distinct ksa_code) from ksas where certification_level=L)`
 - `covered_ksas = (select count(distinct ksa_code) from covered where certification_level=L)`
@@ -193,7 +195,7 @@ Per level `L` in `levels_in_scope`:
 
 `evidence_event_count` = count of the user's `resource_completed`+`assessment_completed` events with non-null `study_content_id`.
 
-`covered_concepts` — **concept-grain, defined independently of the KSA path**: distinct `concepts.concept_id` + `concept_description` reachable from `evidence` via `content_concept_links` (joined to `concepts` for the description). It intentionally **includes orphan-only concepts** (a concept whose only `ksa_code` mappings are orphaned still appears here, even though it contributes 0 to `covered_ksas`). It is the broader "concepts the user has engaged evidence for" signal, deliberately NOT level-filtered and NOT gated on the `ksas` inner join. (Open YAGNI question flagged at the review gate: drop if no consumer is wanted this slice.)
+`engaged_concepts` — **named distinctly from "covered" on purpose** (it is broader than KSA coverage; never present it as level-scoped coverage in the field/UI). Concept-grain, defined independently of the KSA path: distinct `concepts.concept_id` + `concept_description` reachable from `evidence` via `content_concept_links` (joined to `concepts` for the description). It intentionally **includes orphan-only concepts** (a concept whose only `ksa_code` mappings are orphaned/inactive still appears here, even though it contributes 0 to `covered_ksas`), and is **deliberately NOT level-filtered and NOT gated on the `ksas` join**. It is the audit/debug "concepts the user has engaged evidence for" signal — explicitly distinct from the level-scoped `covered_ksas`/`coverage_percent`.
 
 **`cohort_aggregate(level=None) -> CohortAggregate`** — over `user_profiles.is_active = true`. Compute per-user first, then aggregate:
 - `user_count` = active users.
@@ -238,7 +240,7 @@ Pydantic response schemas in `schemas.py` mirror **all six** dataclasses: the fo
 
 - **Users (level-fallback cases, mandatory):** `U_target` (target=II, current=null), `U_current` (target=null, current=III), `U_all` (both null → all-level fallback), plus an inactive user for cohort `is_active` filtering.
 - **KSAs:** a small known set per level (e.g. II:4, III:3) so coverage percentages are hand-computable; **Level I left empty** (to exercise the 0-denominator/null rule).
-- **edition_ksa_map:** includes (a) the same concept→ksa_code under **both** editions (proves edition-aggregation = distinct code), and (b) one **orphan** ksa_code absent from `ksas` (proves exclusion from `covered_ksas` AND inclusion of its concept in `covered_concepts`).
+- **edition_ksa_map:** includes (a) the same concept→ksa_code under **both** editions (proves edition-aggregation = distinct code), (b) one **orphan** ksa_code absent from `ksas` (proves exclusion from `covered_ksas` AND inclusion of its concept in `engaged_concepts`), and (c) one **inactive** (`is_active=false`) mapping to an otherwise-valid ksa_code (proves the `is_active` filter excludes it from `covered_ksas`).
 - **content_concept_links / study_content / concepts:** wire content → concept → ksa so a chosen evidence set yields a known covered count.
 - **learning_events:** per-user events producing known content_progress (views + completion), assessment_summary (objective score + self-assessment confidence, incl. a section-only self_assessment that must NOT appear in per-content output), competency coverage, and cohort inputs (incl. a user with 0 completions and a user with no score).
 
@@ -246,7 +248,7 @@ Pydantic response schemas in `schemas.py` mirror **all six** dataclasses: the fo
 - **read-only guarantee:** `test_db_readonly.py` opens the `learning-projections` session and asserts a trivial `INSERT`/`UPDATE` raises a read-only-transaction error — pins the no-write boundary the whole slice depends on.
 - content_progress: view_count, is_completed/status, first/last timestamps; events without `study_content_id` excluded.
 - assessment_summary: latest vs mean score, latest vs mean confidence, attempt/self counts, `last_activity_at`; section-only self_assessment excluded.
-- competency_rollup: exact `covered_ksas`/`total_ksas_at_level`/`coverage_percent` for `U_target` (II, fixture denominator); `level_source` correctness for target/current/all; `levels_in_scope=['II','III','IV']` on all-fallback; **explicit `level='I'` → `resolved_level='I'`, `levels_in_scope=['I']`, one `LevelCoverage` with `total_ksas_at_level=0` and `coverage_percent=None`**; orphan code excluded from `covered_ksas` while its concept still appears in `covered_concepts`; edition de-dup; `evidence_event_count`; unknown user → 404 (API layer).
+- competency_rollup: exact `covered_ksas`/`total_ksas_at_level`/`coverage_percent` for `U_target` (II, fixture denominator); `level_source` correctness for target/current/all; `levels_in_scope=['II','III','IV']` on all-fallback; **explicit `level='I'` → `resolved_level='I'`, `levels_in_scope=['I']`, one `LevelCoverage` with `total_ksas_at_level=0` and `coverage_percent=None`**; orphan code excluded from `covered_ksas` while its concept still appears in `engaged_concepts`; **inactive `edition_ksa_map` mapping excluded from `covered_ksas`**; edition de-dup; `evidence_event_count`; unknown user → 404 (API layer).
 - cohort_aggregate: `mean_completed_content` counts no-completion users as 0; `mean_latest_score` excludes no-score users and returns `scored_user_count`; `mean_coverage_percent` is per-user-then-averaged over non-null users; inactive user excluded; **`level='I'` → `mean_coverage_percent=None`, `coverage_user_count=0`**.
 - API tests: shapes, 400 (bad user_id / bad level), 404 (unknown user — progress/assessments/competency), cohort takes no user_id, and the guard-disabled (router-absent) case.
 
