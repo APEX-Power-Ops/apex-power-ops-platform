@@ -1,7 +1,8 @@
 """apex-jobs CLI - thin argparse wrapper over the engine. `apex-jobs <verb> ...`.
 
 Verbs: enqueue, queue, claim, start, report, request-gate, approve, reject,
-gates, status, ledger. Returns an int exit code (3 = gated/refused).
+gates, status, ledger, reap, promotions, review, unblock. Returns an int exit
+code (3 = gated/refused).
 """
 import argparse
 import json
@@ -12,11 +13,14 @@ from . import engine
 
 def cmd_enqueue(a):
     payload = json.loads(a.payload) if a.payload else {}
+    if a.prompt:
+        payload["prompt"] = a.prompt
     jid = engine.enqueue(
         dispatch_id=a.dispatch_id, title=a.title, payload=payload, target=a.target,
         priority=a.priority, predecessor_id=a.predecessor, authority=a.authority,
         requires_approval=a.requires_approval, gate_categories=a.gate_category,
-        env_required=a.env_required, created_by=a.by, closeout_path=a.closeout)
+        env_required=a.env_required, created_by=a.by, closeout_path=a.closeout,
+        kind=a.kind, max_attempts=a.max_attempts, base_ref=a.base_ref)
     print(jid)
     return 0
 
@@ -61,11 +65,33 @@ def cmd_request_gate(a):
 
 
 def cmd_approve(a):
+    """Approve a gate. A promotion gate's approval IS the promotion: route it to
+    engine.promote (atomic gate-close + merge), else the normal unblock path."""
+    gate = engine.get_gate(a.gate)
+    if gate and gate["gate_type"] == "promotion":
+        try:
+            newsha = engine.promote(gate["job_id"], by=a.by)
+        except engine.PromoteError as e:
+            print(f"PROMOTE-REFUSED: {e}")
+            return 3
+        print(f"promoted {newsha}")
+        return 0
     print(engine.approve(a.gate, by=a.by, note=a.note))
     return 0
 
 
 def cmd_reject(a):
+    """Reject a gate. A promotion gate's rejection routes to discard_promotion
+    (recoverable snapshot + base untouched), else the normal reject path."""
+    gate = engine.get_gate(a.gate)
+    if gate and gate["gate_type"] == "promotion":
+        try:
+            engine.discard_promotion(gate["job_id"], by=a.by)
+        except engine.PromoteError as e:
+            print(f"DISCARD-REFUSED: {e}")
+            return 3
+        print(f"discarded {gate['job_id']}")
+        return 0
     print(engine.reject(a.gate, by=a.by, note=a.note))
     return 0
 
@@ -92,6 +118,40 @@ def cmd_ledger(a):
     return 0
 
 
+def cmd_reap(a):
+    print(engine.reap())
+    return 0
+
+
+def cmd_promotions(a):
+    rows = engine.list_promotions()
+    if not rows:
+        print("(no jobs awaiting promotion)")
+    for r in rows:
+        print(f"{r['dispatch_id']}\t{r['title']}\tbase={r['base_ref']}\t"
+              f"{r['branch']}\t{r['diff_stat']}")
+    return 0
+
+
+def cmd_review(a):
+    runs = engine.runs_for(a.ident)
+    if not runs:
+        print("(no runs)")
+        return 1
+    r = runs[-1]
+    print(f"branch={r['branch']}")
+    print(f"worktree={r['worktree_path']}")
+    print(f"diff_stat:\n{r['diff_stat']}")
+    print(f"result={r['result']}")
+    return 0
+
+
+def cmd_unblock(a):
+    r = engine.unblock(a.ident)
+    print(r if r is not None else "none")
+    return 0
+
+
 def build_parser():
     p = argparse.ArgumentParser(prog="apex-jobs", description="APEX orchestration task bus")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -109,6 +169,10 @@ def build_parser():
     e.add_argument("--env-required", default="any", dest="env_required")
     e.add_argument("--by", default=None)
     e.add_argument("--closeout", default=None)
+    e.add_argument("--kind", default="command", choices=["command", "agent"])
+    e.add_argument("--base-ref", default=None, dest="base_ref")
+    e.add_argument("--max-attempts", type=int, default=1, dest="max_attempts")
+    e.add_argument("--prompt", default=None)
     e.set_defaults(fn=cmd_enqueue)
 
     q = sub.add_parser("queue")
@@ -160,6 +224,20 @@ def build_parser():
     le = sub.add_parser("ledger")
     le.add_argument("ident")
     le.set_defaults(fn=cmd_ledger)
+
+    rp = sub.add_parser("reap")
+    rp.set_defaults(fn=cmd_reap)
+
+    pr = sub.add_parser("promotions")
+    pr.set_defaults(fn=cmd_promotions)
+
+    rv = sub.add_parser("review")
+    rv.add_argument("ident")
+    rv.set_defaults(fn=cmd_review)
+
+    ub = sub.add_parser("unblock")
+    ub.add_argument("ident")
+    ub.set_defaults(fn=cmd_unblock)
 
     return p
 

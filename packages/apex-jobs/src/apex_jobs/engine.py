@@ -41,7 +41,7 @@ def _conn():
 def enqueue(dispatch_id, title, payload=None, target="any", priority=100,
             predecessor_id=None, authority="gated", requires_approval=False,
             gate_categories=None, env_required="any", created_by=None,
-            closeout_path=None):
+            closeout_path=None, kind="command", max_attempts=1, base_ref=None):
     """Insert (idempotent on dispatch_id) a queue item. On first insert, create
     the matching pending gate rows if approval is required. Returns the job id."""
     payload = payload if payload is not None else {}
@@ -53,14 +53,14 @@ def enqueue(dispatch_id, title, payload=None, target="any", priority=100,
                 insert into jobs.job
                   (dispatch_id, title, target, priority, predecessor_id, authority,
                    requires_approval, gate_categories, env_required, payload,
-                   created_by, closeout_path)
-                values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                   created_by, closeout_path, kind, max_attempts, base_ref)
+                values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 on conflict (dispatch_id) do update set title = excluded.title
                 returning id, (xmax = 0) as inserted
                 """,
                 (dispatch_id, title, target, priority, predecessor_id, authority,
                  requires_approval, gate_categories, env_required, Jsonb(payload),
-                 created_by, closeout_path),
+                 created_by, closeout_path, kind, max_attempts, base_ref),
             )
             r = cur.fetchone()
             jid, inserted = r["id"], r["inserted"]
@@ -363,6 +363,16 @@ def gates_for(ident):
             (str(ident), str(ident)),
         )
         return cur.fetchall()
+
+
+def get_gate(gate_id):
+    """Fetch a single gate row (id, job_id, gate_type, state) by id. None if absent."""
+    with _conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "select id, job_id, gate_type, state from jobs.gate where id::text = %s",
+            (str(gate_id),),
+        )
+        return cur.fetchone()
 
 
 # ---------------------------------------------------------------------------
