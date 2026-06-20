@@ -52,5 +52,19 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 - **Escalation / owner:** CC + operator (revenue = operator authority).
 - **Status:** active (Chips 0/1/2 built on `ops_dev`; not PR'd).
 
+### Lane: learning (enablement / capture + ROI)
+- **Scope:** the flagship learning lane — contextual resource surfacing (Slice 1, merged) + the capture/tracking path (Slice 2) — DEV ONLY.
+- **Branch:** `learning/slice2-capture`   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
+- **Dev DB / schema:** `learning_dev` → `public.*` (frozen rev-2.3/2.4 baseline; lane isolation = the database, per separate-DB-per-lane D-ARCH-1)
+- **Write-boundary (OWNS):** `infra/database/migrations/learning/**`, `packages/learning-capture/**`,
+  `packages/learning-resolver/**` (Slice-1 hardening), `apps/control-plane-api/services/learning/**`
+  (+ the `-e ../../packages/learning-capture` line in `requirements.txt`; + the learning-router guard in `main.py`),
+  `apps/operations-web/app/learning-demo/**`, `apps/operations-web/lib/learning-*.ts`,
+  `apps/operations-web/tests/learning-*.spec.ts`, `docs/superpowers/{specs,plans}/2026-06-20-learning-slice2-*`.
+- **Must NOT touch:** `records.*` / `ops.*` migrations + packages; the parallel `packages/power-test-converters/**` WIP; prod Supabase.
+- **Gates (human-approval):** `schema` (the `learning_dev` apply of `001`/`002` — see the Slice 2a plan's gated activation step); promotion (merge to main) is operator-gated.
+- **Escalation / owner:** CC (technical authority); operator gates schema apply + merge.
+- **Status:** active (Slice 2a built on `learning_test`; `learning_dev` apply + PR operator-gated).
+
 > Merged/closed lanes (orchestration/chip3-apex-jobs, docs/chip2-governance-supersede) are pruned;
 > their work is on `main`.
