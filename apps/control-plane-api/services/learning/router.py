@@ -1,8 +1,19 @@
 from fastapi import APIRouter, HTTPException, Query, status
 
+from learning_capture import CaptureError, list_events, list_users, record_event
 from learning_resolver import list_sections, resolve
 
-from .schemas import ResolvedResourceOut, ResourcesContext, ResourcesResponse, SectionsResponse
+from .schemas import (
+    EventCreatedResponse,
+    EventIn,
+    EventOut,
+    EventsResponse,
+    ResolvedResourceOut,
+    ResourcesContext,
+    ResourcesResponse,
+    SectionsResponse,
+    UsersResponse,
+)
 
 router = APIRouter(prefix="/api/v1/learning", tags=["learning"])
 
@@ -28,11 +39,6 @@ def get_resources(
 @router.get("/sections", response_model=SectionsResponse)
 def get_sections(limit: int = Query(default=500, ge=1, le=2000)) -> SectionsResponse:
     return SectionsResponse(sections=list_sections(limit=limit))
-
-
-from learning_capture import CaptureError, list_events, list_users, record_event
-
-from .schemas import EventCreatedResponse, EventIn, EventOut, EventsResponse, UsersResponse
 
 
 @router.post("/events", response_model=EventCreatedResponse, status_code=status.HTTP_201_CREATED)
