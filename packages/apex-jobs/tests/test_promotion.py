@@ -365,3 +365,26 @@ def test_run_forever_survives_job_exception(monkeypatch):
     with pytest.raises(_Stop):
         worker.run_forever(as_="cc", env="host")
     assert calls["run_once"] == 1 and calls["reap"] == 1   # exception swallowed, loop continued to reap+sleep
+
+
+def test_promote_recovers_crashed_advance(promo_env, tmp_path):
+    # a prior promote advanced base (its no-ff merge) but hard-crashed BEFORE the DB
+    # commit -> base moved, job still awaiting_promotion. A re-promote must self-heal
+    # (finish the DB side) rather than wedge at PromoteNoChanges.
+    base, created, runs, extra_wt, _ = promo_env
+    _run_to_awaiting("p-rec", base, created)
+    mtmp = str(tmp_path / "merge_wt")
+    _git("worktree", "add", "--detach", mtmp, base)
+    extra_wt.append(mtmp)
+    _git("-c", "user.email=t@t", "-c", "user.name=t", "merge", "--no-ff",
+         "-m", "promote p-rec", "refs/heads/job/p-rec", cwd=mtmp)
+    merged = _git("rev-parse", "HEAD", cwd=mtmp).stdout.strip()
+    _git("update-ref", f"refs/heads/{base}", merged)
+    _git("worktree", "remove", "--force", mtmp, check=False)
+    assert engine.get_job("p-rec")["status"] == "awaiting_promotion"   # DB never recorded success
+    new = engine.promote("p-rec", by="recovery")
+    assert new == merged
+    assert _sha(f"refs/heads/{base}") == merged                        # base NOT advanced a second time
+    assert engine.get_job("p-rec")["status"] == "succeeded"
+    assert _promotion_states("p-rec") == ["approved"]
+    assert engine._ref_sha(REPO, "refs/heads/job/p-rec") is None       # branch cleaned up

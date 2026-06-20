@@ -11,6 +11,7 @@ Gate model:
   * env gate: start() refuses to open a run unless the claiming worker's run_env
     matches the job's env_required (the sandbox|host trust evidence).
 """
+import logging
 import os
 import shutil
 import subprocess
@@ -20,6 +21,8 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from . import db
+
+_log = logging.getLogger(__name__)
 
 # Visibility-timeout for crash recovery. A run whose lease expires (worker died,
 # no heartbeat) is reaped and requeued/failed. Generous by default; agent runs
@@ -451,6 +454,21 @@ def _commit_promotion(conn, cur, job_id, by):
     conn.commit()
 
 
+def _is_prior_promote_merge(repo, base, branch, dispatch_id):
+    """True if base's tip is the merge a PRIOR promote() of this job created (second
+    parent == the job branch tip, subject == the promote marker). Signals that base
+    was advanced but the DB commit never landed (a hard crash between the CAS and
+    the commit), so a re-promote should finish the DB side idempotently rather than
+    wedging the job at awaiting_promotion. Migration-free crash recovery."""
+    branch_sha = _ref_sha(repo, f"refs/heads/{branch}")
+    if branch_sha is None:
+        return False
+    if _ref_sha(repo, f"refs/heads/{base}^2") != branch_sha:
+        return False
+    subject = _git("log", "-1", "--format=%s", f"refs/heads/{base}", cwd=repo, check=False).stdout.strip()
+    return subject == f"promote {dispatch_id}"
+
+
 def promote(ident, by="operator", repo=None):
     """Merge the reviewed agent branch job/<dispatch_id> into its base_ref via a
     --no-ff merge built in a throwaway detached worktree, then advance base with a
@@ -513,17 +531,29 @@ def promote(ident, by="operator", repo=None):
                 raise PromoteConflict(
                     f"merge of {branch} into {base} failed: "
                     f"{(m.stdout + m.stderr).strip()[:500]}")
-            if after == oldsha:
+            if after != oldsha:
+                # a real merge commit was created -> advance base. Re-check the
+                # not-checked-out guard here (inside the tx) to close the TOCTOU on
+                # the entry-time guard, then compare-and-swap.
+                if _branch_checked_out(repo, base):
+                    conn.rollback()
+                    raise PromoteRefused(f"{base} became checked out during promote")
+                newsha = after
+                with lock:
+                    cas = _advance_base_ref(repo, base, newsha, oldsha)
+                if cas.returncode != 0:
+                    conn.rollback()
+                    raise PromoteConflict(
+                        f"{base} advanced concurrently; re-promote against the new base: "
+                        f"{cas.stderr.strip()[:300]}")
+            elif _is_prior_promote_merge(repo, base, branch, job["dispatch_id"]):
+                # crash recovery: a prior promote already advanced base with this
+                # job's merge but the DB commit never landed -> finish the DB side
+                # idempotently (base is already at the merge; do NOT advance again).
+                newsha = oldsha
+            else:
                 conn.rollback()
                 raise PromoteNoChanges(f"{branch} has nothing to merge into {base}")
-            newsha = after
-            with lock:
-                cas = _advance_base_ref(repo, base, newsha, oldsha)
-            if cas.returncode != 0:
-                conn.rollback()
-                raise PromoteConflict(
-                    f"{base} advanced concurrently; re-promote against the new base: "
-                    f"{cas.stderr.strip()[:300]}")
         finally:
             with lock:
                 _git("worktree", "remove", "--force", tmp, cwd=repo, check=False)
@@ -534,7 +564,10 @@ def promote(ident, by="operator", repo=None):
             _commit_promotion(conn, cur, job["id"], by)
         except Exception:
             with lock:                      # undo the irreversible base advance on a record-keeping failure
-                _advance_base_ref(repo, base, oldsha, newsha)
+                rb = _advance_base_ref(repo, base, oldsha, newsha)
+            if rb.returncode != 0:          # could not restore base -> needs operator attention
+                _log.error("promote: base rollback failed for %s (base may be advanced "
+                           "without a succeeded job): %s", base, rb.stderr.strip())
             conn.rollback()
             raise
 
