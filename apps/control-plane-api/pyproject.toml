@@ -3,22 +3,6 @@ name = "apex-control-plane-api"
 version = "0.1.0"
 description = "Imported FastAPI control-plane runtime for the Apex Power Ops platform bootstrap"
 requires-python = ">=3.11"
-dependencies = [
-    "learning-resolver",
-    "sqlalchemy>=2.0.0",
-    "psycopg2-binary>=2.9.0",
-    "python-dotenv>=1.0.0",
-    "fastapi>=0.100.0",
-    "uvicorn>=0.23.0",
-    "pydantic>=2.0.0",
-    "PyJWT[crypto]>=2.10.0",
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
-    "httpx>=0.24.0",
-]
-
-[tool.uv.sources]
-learning-resolver = { path = "../../packages/learning-resolver", editable = true }
 
 [tool.pytest.ini_options]
 markers = [
