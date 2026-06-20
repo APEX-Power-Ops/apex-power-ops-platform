@@ -14,5 +14,7 @@ def dsn() -> str:
 
 
 def connect() -> "psycopg.Connection":
-    # read-only by intent; autocommit avoids leaving idle transactions open.
-    return psycopg.connect(dsn(), autocommit=True)
+    # read-only enforced at the session level; autocommit avoids idle transactions.
+    conn = psycopg.connect(dsn(), autocommit=True)
+    conn.execute("SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY")
+    return conn

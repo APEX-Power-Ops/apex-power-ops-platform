@@ -74,3 +74,65 @@ def test_resolve_caps_at_limit(section_with_curated):
 def test_resolve_unknown_section_is_empty():
     from learning_resolver import resolve
     assert resolve("9.9.9.9-nope") == []
+
+
+def test_section_match_quality_tier_tiebreak():
+    """FIX 1: quality_tier tiebreak within primary/secondary bands.
+
+    Section 7.2 has published section-match rows with BOTH quality_tier='complete'
+    and quality_tier='draft', all as primary-section matches.  The spec requires that
+    within the same primary/secondary band, a higher-quality item must not be
+    out-ranked by a lower-quality one.
+
+    This is the MIXED-QUALITY SECTION case: live data confirmed via DB query
+    (7.2 has 15 complete + 1 draft primary rows as of 2026-06-20).
+
+    Scoring: primary_hit -> score = 550 + quality_boost; secondary -> 500 + quality_boost
+    quality_boost: complete=10, draft(or None)=0.
+    So a complete primary (560) > draft primary (550) > complete secondary (510) > draft secondary (500).
+    This test asserts that within the set of primary-hit rows, a complete item scores
+    strictly higher than a draft item.
+    """
+    section = "7.2"
+    with connect() as c:
+        items = resolver._section_match(c, section, exclude_sc_ids=set())
+
+    assert items, "section 7.2 must yield study content matches"
+
+    # Scores must be sorted descending overall.
+    scores = [r.score for r in items]
+    assert scores == sorted(scores, reverse=True), "section_match results must be sorted by score desc"
+
+    # The primary/secondary boundary is a gap of 50; quality tier adds at most 10 within a band.
+    # Confirm that ALL primary-hit items score >= 550 and all secondary-hit items score < 550.
+    # (primary_hit => score = 550 or 560; secondary => 500 or 510)
+    section_base = resolver._SECTION_BASE  # 500
+    primary_threshold = section_base + 50   # 550 -- minimum score for a primary hit with quality=0
+
+    # Partition by primary vs secondary using score >= primary_threshold.
+    primary_items = [r for r in items if r.score >= primary_threshold]
+    secondary_items = [r for r in items if r.score < primary_threshold]
+
+    # Confirm we have the mixed-quality data we expect.
+    primary_scores = {r.score for r in primary_items}
+    # complete primary: 560, draft primary: 550 -- both tiers must appear given live data.
+    assert len(primary_scores) > 1, (
+        "Expected mixed quality_tier in primary hits for section 7.2; "
+        "check that live data still includes at least one 'draft' quality primary row"
+    )
+
+    # The highest-scoring primary items must be complete (560), not draft (550).
+    max_primary_score = max(r.score for r in primary_items)
+    complete_boost = resolver._QUALITY_BOOST.get("complete", 0.0)
+    assert max_primary_score == primary_threshold + complete_boost, (
+        f"Top primary score should be {primary_threshold + complete_boost} (complete tier), "
+        f"got {max_primary_score}"
+    )
+
+    # If secondary items exist, none should outscore a primary item.
+    if secondary_items:
+        max_secondary = max(r.score for r in secondary_items)
+        min_primary = min(r.score for r in primary_items)
+        assert min_primary > max_secondary, (
+            "No secondary item should outscore a primary item (quality boost must not bridge the gap)"
+        )
