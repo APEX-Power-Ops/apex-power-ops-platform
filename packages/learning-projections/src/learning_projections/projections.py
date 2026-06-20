@@ -1,6 +1,7 @@
-from .db import connect
+﻿from .db import connect
 from .models import (
     AssessmentSummary,
+    CohortAggregate,
     CompetencyRollup,
     ConceptRef,
     ContentProgress,
@@ -116,9 +117,6 @@ def competency_rollup(user_id: str, level: str | None = None) -> CompetencyRollu
             (user_id,),
         ).fetchone()[0]
 
-        # covered ksa_code grouped by level (active maps, level-pinned, orphans dropped by the
-        # inner join). NOTE: this is computed across ALL reachable levels; the `scope` loop below
-        # is what filters to levels_in_scope -- the SQL is intentionally not scope-pinned.
         covered_rows = conn.execute(
             """
             with evidence as (
@@ -172,4 +170,45 @@ def competency_rollup(user_id: str, level: str | None = None) -> CompetencyRollu
         user_id=user_id, resolved_level=resolved, level_source=source, levels_in_scope=scope,
         evidence_event_count=evidence_event_count, coverage=coverage,
         engaged_concepts=[ConceptRef(concept_id=r[0], concept_description=r[1]) for r in engaged],
+    )
+
+
+def cohort_aggregate(level: str | None = None) -> CohortAggregate:
+    with connect() as conn:
+        users = [r[0] for r in conn.execute(
+            "select id::text from user_profiles where is_active order by id").fetchall()]
+        completed = dict(conn.execute(
+            """select user_id::text, count(distinct study_content_id)
+               from learning_events where event_type='resource_completed' and study_content_id is not null
+               group by 1""").fetchall())
+        latest = dict(conn.execute(
+            """select user_id::text,
+                 (array_agg((payload->>'score_percent')::numeric order by occurred_at desc)
+                   filter (where payload ? 'score_percent'))[1]
+               from learning_events where event_type='assessment_completed' group by 1""").fetchall())
+
+    completed_counts = [completed.get(u, 0) for u in users]
+    scores = [float(latest[u]) for u in users if latest.get(u) is not None]
+
+    per_user_cov = []
+    for u in users:
+        roll = competency_rollup(u, level=level)
+        if level is not None:
+            pct = roll.coverage[0].coverage_percent
+        elif roll.resolved_level == "all":
+            pct = None                      # all-resolved users have no single coverage_percent
+        else:
+            pct = roll.coverage[0].coverage_percent
+        if pct is not None:
+            per_user_cov.append(pct)
+
+    n = len(users)
+    return CohortAggregate(
+        level=level,
+        user_count=n,
+        mean_completed_content=round(sum(completed_counts) / n, 1) if n else 0.0,
+        mean_latest_score=round(sum(scores) / len(scores), 1) if scores else None,
+        scored_user_count=len(scores),
+        mean_coverage_percent=round(sum(per_user_cov) / len(per_user_cov), 1) if per_user_cov else None,
+        coverage_user_count=len(per_user_cov),
     )
