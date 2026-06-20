@@ -44,7 +44,11 @@ export async function fetchLearningResources(
     payload = null
   }
   if (!response.ok) {
-    throw new LearningResourcesError(`Request failed with status ${response.status}`, response.status)
+    const detail =
+      typeof payload === 'object' && payload !== null
+        ? ((payload as { detail?: unknown }).detail as string | undefined) ?? null
+        : null
+    throw new LearningResourcesError(detail ?? `Request failed with status ${response.status}`, response.status)
   }
   return payload as LearningResourcesResponse
 }
