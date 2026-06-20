@@ -12,6 +12,9 @@ Gate model:
     matches the job's env_required (the sandbox|host trust evidence).
 """
 import os
+import shutil
+import subprocess
+import tempfile
 
 import psycopg
 from psycopg.types.json import Jsonb
@@ -356,4 +359,238 @@ def gates_for(ident):
             "where j.id::text = %s or j.dispatch_id = %s order by g.requested_at",
             (str(ident), str(ident)),
         )
+        return cur.fetchall()
+
+
+# ---------------------------------------------------------------------------
+# Promotion — the operator-gated firewall that merges (or discards) a reviewed
+# agent branch into its base_ref. Hardened per the T6 adversarial design review:
+# protected-ref + checked-out + null/existence guards, an atomic status
+# precondition (row lock), a no-ff merge in a throwaway DETACHED worktree, a
+# compare-and-swap base advance, promotion-gate closure, and DB-as-commit-point
+# ordering so the irreversible branch delete only runs after the DB is durable.
+# NEVER advances main/master. Git plumbing shares agent_runner._WORKTREE_LOCK so
+# it cannot race the concurrent run_pool.
+# ---------------------------------------------------------------------------
+_DEFAULT_REPO = os.path.expanduser("~/code/apex/apex-orch-lane")
+
+
+class PromoteError(Exception):
+    """Base class for promotion failures."""
+
+
+class PromoteRefused(PromoteError):
+    """A precondition guard refused the promotion; base + branch are untouched and
+    the job stays awaiting_promotion (the gate stays pending)."""
+
+
+class PromoteConflict(PromoteError):
+    """The merge could not be applied (conflict) or base moved concurrently
+    (compare-and-swap failed); base is untouched, the job branch is retained for
+    fixup, the job stays awaiting_promotion."""
+
+
+class PromoteNoChanges(PromoteError):
+    """The job branch has nothing to merge into base (already up to date); the
+    branch is preserved and the job stays awaiting_promotion."""
+
+
+def _resolve_repo(repo):
+    return repo or os.environ.get("APEX_JOBS_REPO", _DEFAULT_REPO)
+
+
+def _protected_refs():
+    extra = {r.strip() for r in os.environ.get("APEX_JOBS_PROTECTED_REFS", "").split(",") if r.strip()}
+    return {"main", "master"} | extra
+
+
+def _git(*args, cwd, check=True):
+    return subprocess.run(["git", "-C", cwd, *args], capture_output=True, text=True, check=check)
+
+
+def _ref_sha(repo, ref):
+    """Sha of a ref, or None if it does not resolve."""
+    r = _git("rev-parse", "--verify", "--quiet", ref, cwd=repo, check=False)
+    return r.stdout.strip() or None
+
+
+def _branch_checked_out(repo, branch):
+    """True if refs/heads/<branch> is the checked-out branch of any worktree."""
+    want = f"branch refs/heads/{branch}"
+    out = _git("worktree", "list", "--porcelain", cwd=repo, check=False).stdout
+    return any(line.strip() == want for line in out.splitlines())
+
+
+def _worktree_path_for_branch(repo, branch):
+    """Filesystem path of the worktree whose HEAD is refs/heads/<branch>, or None."""
+    want = f"branch refs/heads/{branch}"
+    path = None
+    for line in _git("worktree", "list", "--porcelain", cwd=repo, check=False).stdout.splitlines():
+        if line.startswith("worktree "):
+            path = line[len("worktree "):]
+        elif line.strip() == want:
+            return path
+    return None
+
+
+def _advance_base_ref(repo, base, newsha, oldsha):
+    """Compare-and-swap advance of refs/heads/<base> from oldsha to newsha. Returns
+    the CompletedProcess; returncode != 0 means base no longer pointed at oldsha
+    (a concurrent advance) and the ref was NOT moved. Factored out as a seam so a
+    test can simulate a racing advance."""
+    return _git("update-ref", f"refs/heads/{base}", newsha, oldsha, cwd=repo, check=False)
+
+
+def promote(ident, by="operator", repo=None):
+    """Merge the reviewed agent branch job/<dispatch_id> into its base_ref via a
+    --no-ff merge built in a throwaway detached worktree, then advance base with a
+    compare-and-swap. Operator-gated firewall: refuses null / protected (main,
+    master, $APEX_JOBS_PROTECTED_REFS) / checked-out bases and any job not in
+    awaiting_promotion. On success: base advanced, promotion gate approved, job
+    succeeded, the job worktree + branch removed. Raises PromoteRefused /
+    PromoteConflict / PromoteNoChanges (each leaves base + branch intact). Returns
+    the new base sha."""
+    from . import agent_runner   # lazy: agent_runner imports engine, so avoid a top-level cycle
+    repo = _resolve_repo(repo)
+    job = get_job(ident)
+    if job is None:
+        raise PromoteRefused(f"no such job: {ident}")
+    base = (job.get("base_ref") or "").strip()
+    if base.startswith("refs/heads/"):
+        base = base[len("refs/heads/"):]
+    branch = f"job/{job['dispatch_id']}"
+
+    # --- pre-flight guards (no mutation; firewall lives here, in CODE not docs) ---
+    if not base:
+        raise PromoteRefused("job has no base_ref")
+    if base in _protected_refs():
+        raise PromoteRefused(f"refusing to promote to protected ref {base!r} "
+                             "(main/master is gated by a separate operator step)")
+    if _ref_sha(repo, f"refs/heads/{base}") is None:
+        raise PromoteRefused(f"base ref does not exist: {base}")
+    if _branch_checked_out(repo, base):
+        raise PromoteRefused(f"{base} is checked out in a worktree; "
+                             "base_ref must be a non-checked-out branch")
+    if _ref_sha(repo, f"refs/heads/{branch}") is None:
+        raise PromoteRefused(f"no agent branch to promote: {branch} "
+                             "(already promoted/discarded, or the run produced none)")
+
+    lock = agent_runner._WORKTREE_LOCK
+    with _conn() as conn, conn.cursor() as cur:
+        # Atomic precondition: claim the awaiting_promotion job under a row lock, so
+        # a second/concurrent promote sees a non-awaiting status and refuses.
+        cur.execute("select status from jobs.job where id=%s for update", (job["id"],))
+        row = cur.fetchone()
+        if row is None or row["status"] != "awaiting_promotion":
+            conn.rollback()
+            raise PromoteRefused(
+                f"job not in awaiting_promotion (status={row['status'] if row else None})")
+
+        oldsha = _ref_sha(repo, f"refs/heads/{base}")
+        tmp = tempfile.mkdtemp(prefix="apex-promote-")
+        newsha = None
+        try:
+            with lock:
+                _git("worktree", "add", "--detach", tmp, oldsha, cwd=repo)
+            # merge runs in the isolated tmp worktree -> safe to run UNLOCKED (it
+            # touches only tmp's index, never the real base or any live worktree).
+            m = _git("merge", "--no-ff", "-m", f"promote {job['dispatch_id']}",
+                     branch, cwd=tmp, check=False)
+            after = _git("rev-parse", "HEAD", cwd=tmp, check=False).stdout.strip()
+            if m.returncode != 0:
+                _git("merge", "--abort", cwd=tmp, check=False)
+                conn.rollback()
+                raise PromoteConflict(
+                    f"merge of {branch} into {base} failed: "
+                    f"{(m.stdout + m.stderr).strip()[:500]}")
+            if after == oldsha:
+                conn.rollback()
+                raise PromoteNoChanges(f"{branch} has nothing to merge into {base}")
+            newsha = after
+            with lock:
+                cas = _advance_base_ref(repo, base, newsha, oldsha)
+            if cas.returncode != 0:
+                conn.rollback()
+                raise PromoteConflict(
+                    f"{base} advanced concurrently; re-promote against the new base: "
+                    f"{cas.stderr.strip()[:300]}")
+        finally:
+            with lock:
+                _git("worktree", "remove", "--force", tmp, cwd=repo, check=False)
+            shutil.rmtree(tmp, ignore_errors=True)
+
+        # base advanced -> record success atomically (DB commit is the commit point).
+        try:
+            cur.execute("update jobs.job set status='succeeded', updated_at=now() where id=%s",
+                        (job["id"],))
+            cur.execute("update jobs.gate set state='approved', decided_at=now(), decided_by=%s "
+                        "where job_id=%s and gate_type='promotion' and state='pending'",
+                        (by, job["id"]))
+            conn.commit()
+        except Exception:
+            with lock:                      # undo the irreversible base advance on a record-keeping failure
+                _advance_base_ref(repo, base, oldsha, newsha)
+            conn.rollback()
+            raise
+
+    # DB is durable -> best-effort cleanup (a crash here leaves a recoverable orphan branch).
+    with lock:
+        wt = _worktree_path_for_branch(repo, branch)
+        if wt:
+            _git("worktree", "remove", "--force", wt, cwd=repo, check=False)
+        _git("branch", "-D", branch, cwd=repo, check=False)
+    return newsha
+
+
+def discard_promotion(ident, by="operator", repo=None):
+    """Reject a reviewed agent branch: snapshot its tip to refs/discarded/<id>
+    (recoverable), mark the job cancelled + the promotion gate rejected (DB commit
+    point), then remove the worktree + force-delete the branch. base_ref is never
+    touched. Raises PromoteRefused if the job is not awaiting_promotion. Returns
+    the saved tip sha (or None)."""
+    from . import agent_runner   # lazy: avoid the engine<->agent_runner cycle
+    repo = _resolve_repo(repo)
+    job = get_job(ident)
+    if job is None:
+        raise PromoteRefused(f"no such job: {ident}")
+    branch = f"job/{job['dispatch_id']}"
+    lock = agent_runner._WORKTREE_LOCK
+    with _conn() as conn, conn.cursor() as cur:
+        cur.execute("select status from jobs.job where id=%s for update", (job["id"],))
+        row = cur.fetchone()
+        if row is None or row["status"] != "awaiting_promotion":
+            conn.rollback()
+            raise PromoteRefused(
+                f"job not in awaiting_promotion (status={row['status'] if row else None})")
+        # snapshot the tip BEFORE any destructive op so a mistaken discard is recoverable
+        tip = _ref_sha(repo, f"refs/heads/{branch}")
+        if tip:
+            with lock:
+                _git("update-ref", f"refs/discarded/{job['dispatch_id']}", tip, cwd=repo, check=False)
+        cur.execute("update jobs.job set status='cancelled', updated_at=now() where id=%s",
+                    (job["id"],))
+        cur.execute("update jobs.gate set state='rejected', decided_at=now(), decided_by=%s "
+                    "where job_id=%s and gate_type='promotion' and state='pending'",
+                    (by, job["id"]))
+        conn.commit()
+    # DB durable -> now the irreversible removals (crash here = recoverable orphan + the snapshot ref).
+    with lock:
+        wt = _worktree_path_for_branch(repo, branch)
+        if wt:
+            _git("worktree", "remove", "--force", wt, cwd=repo, check=False)
+        _git("branch", "-D", branch, cwd=repo, check=False)
+    return tip
+
+
+def list_promotions():
+    """Jobs parked at awaiting_promotion, with their latest run's diff_stat /
+    worktree_path for operator review (newest first)."""
+    with _conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "select j.dispatch_id, j.title, j.base_ref, "
+            "       r.branch, r.worktree_path, r.diff_stat "
+            "from jobs.job j "
+            "left join lateral (select branch, worktree_path, diff_stat from jobs.run "
+            "                   where job_id=j.id order by attempt desc limit 1) r on true "
+            "where j.status='awaiting_promotion' order by j.updated_at desc")
         return cur.fetchall()

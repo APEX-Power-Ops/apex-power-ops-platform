@@ -35,16 +35,23 @@ def _run_command_job(job, env, as_):
 
 
 def run_once(as_, env):
-    """Claim and run one eligible job end-to-end. Returns a summary dict, None if
-    nothing was eligible, or {'job', 'gated'} if a gate refused it after claim."""
+    """Claim and run one eligible job end-to-end, dispatching by kind: an 'agent'
+    job goes to the worktree-isolating agent_runner, a 'command' job runs its
+    payload.command. Returns a summary dict, None if nothing was eligible, or
+    {'job', 'gated'} if a gate refused a command job after claim."""
     job = engine.claim(as_=as_, env=env)
     if job is None:
         return None
+    if job.get("kind") == "agent":
+        from . import agent_runner          # lazy import: avoid the worker<->agent_runner cycle
+        return agent_runner.run_agent_job(job, env, as_=as_)
     return _run_command_job(job, env, as_)
 
 
 def run_forever(as_, env, poll_s=5.0):
-    """Drain eligible jobs forever; sleep poll_s when the queue is empty."""
+    """Drain eligible jobs forever; reap lease-expired runs and sleep poll_s when
+    the queue is empty (opportunistic crash recovery on the idle path)."""
     while True:
         if run_once(as_, env) is None:
+            engine.reap()
             time.sleep(poll_s)
