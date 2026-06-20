@@ -54,7 +54,7 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 
 ### Lane: learning (enablement / capture + ROI)
 - **Scope:** the flagship learning lane — contextual resource surfacing (Slice 1, merged) + the capture/tracking path (Slice 2) — DEV ONLY.
-- **Branch:** `learning/slice2-capture`   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
+- **Branch:** `learning/slice2b-projections`   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
 - **Dev DB / schema:** `learning_dev` → `public.*` (frozen rev-2.3/2.4 baseline; lane isolation = the database, per separate-DB-per-lane D-ARCH-1)
 - **Write-boundary (OWNS):** `infra/database/migrations/learning/**`, `packages/learning-capture/**`,
   `packages/learning-resolver/**` (Slice-1 hardening), `packages/learning-projections/**` (Slice 2b), `apps/control-plane-api/services/learning/**`
