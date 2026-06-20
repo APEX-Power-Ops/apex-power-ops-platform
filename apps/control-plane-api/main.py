@@ -44,6 +44,7 @@ from services.neta.router import router as neta_router
 from services.neta.plans import router as plans_router
 from services.work.router import router as work_router
 from services.ops.router import router as ops_router
+from services.learning.router import router as learning_router
 from services.supabase_mcp_server import (
     build_supabase_mcp_root_payload,
     handle_get_supabase_mcp,
@@ -93,6 +94,7 @@ app.include_router(work_router)
 # else; the work schema registry stays at 22 and the
 # ``/api/v1/work/*`` path count stays at 15.
 app.include_router(ops_router)
+app.include_router(learning_router)
 
 # ── PM idempotency seam: swap to durable DB-backed backend ──
 # Packet 2026-04-16-pm-schema-019f
