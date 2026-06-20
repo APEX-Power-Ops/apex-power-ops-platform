@@ -28,7 +28,7 @@ dispatch_id asc), so concurrent executors never double-claim.
 
 ## CLI (`apex-jobs <verb>`)
 `enqueue · queue · claim · start · report · request-gate · approve · reject ·
-gates · status · ledger`. Target a database with `APEX_JOBS_DB` (default
+gates · status · ledger · reap · promotions · review · unblock`. Target a database with `APEX_JOBS_DB` (default
 `orchestration_dev`) or `APEX_JOBS_DSN`; connects as the `orchestration` role.
 The dev password lives in the gitignored `infra/.env` — never committed.
 
@@ -44,11 +44,28 @@ The subprocess runs with `APEX_JOB_ENV` set to the worker's env.
 apex-jobs runs **alongside** the `ops/agents/inbox` file queue. No cutover yet —
 the inbox remains the live mechanism until apex-jobs is proven in routine use.
 
-## Tests (15)
+## Tests (54)
 ```
-APEX_JOBS_DB=orchestration_test uv run --with pytest pytest
+APEX_JOBS_DB=orchestration_test PSQL_EXE=psql uv run --extra test pytest
 ```
 enqueue/idempotency · atomic SKIP-LOCKED claim · predecessor + env + human gates ·
 run-ledger finalize · CLI smoke · worker end-to-end. Migration tests live in
 `infra/database/migrations/jobs/`. See `ops/orchestration/e2e_proof.md` for the
 recorded live run.
+
+## Durable multi-agent core (`kind='agent'`)
+A **`kind='agent'`** job runs a headless agent in an isolated git worktree off its `base_ref`:
+- **agent-runner** (`run_agent_job` / `run_pool`): worktree off `base_ref` → `claude -p`
+  (pinned `--permission-mode acceptEdits`; injectable for the offline fake agent) → capture the
+  branch diff + result → on success open a **promotion gate** (job parks `awaiting_promotion`,
+  worktree retained for review). `run_pool` fans execution across a bounded `ThreadPoolExecutor`.
+- **promotion firewall** (`engine.promote` / `discard_promotion`): the operator-gated no-ff merge
+  of a reviewed agent branch into `base_ref` in a throwaway detached worktree + compare-and-swap
+  base advance. **Never** advances `main`/`master`/protected refs; refuses checked-out/null bases;
+  crash-safe. `discard_promotion` snapshots to `refs/discarded/<id>` (recoverable).
+- **durability:** each `run` carries `lease_expires_at` + `heartbeat_at`; `reap()` requeues/fails
+  lease-expired runs (crash recovery).
+- **CLI:** `enqueue --kind agent --base-ref <b> --prompt <p>` · `promotions` · `review <job>` ·
+  `approve --gate <g> --by operator` (→ promote) · `reject` (→ discard).
+
+Live `claude -p` proof: `ops/orchestration/e2e_proof_agents.md`.
