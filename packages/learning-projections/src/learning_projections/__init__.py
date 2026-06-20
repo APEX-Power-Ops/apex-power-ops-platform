@@ -1,4 +1,4 @@
-from .models import (
+﻿from .models import (
     AssessmentSummary,
     CohortAggregate,
     CompetencyRollup,
@@ -8,10 +8,10 @@ from .models import (
     ProjectionError,
     UserNotFoundError,
 )
-from .projections import assessment_summary, competency_rollup, content_progress
+from .projections import assessment_summary, cohort_aggregate, competency_rollup, content_progress
 
 __all__ = [
     "AssessmentSummary", "CohortAggregate", "CompetencyRollup", "ConceptRef",
     "ContentProgress", "LevelCoverage", "ProjectionError", "UserNotFoundError",
-    "assessment_summary", "competency_rollup", "content_progress",
+    "assessment_summary", "cohort_aggregate", "competency_rollup", "content_progress",
 ]
