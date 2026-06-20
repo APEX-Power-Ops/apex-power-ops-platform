@@ -1,6 +1,7 @@
 # Runtime dependencies
 -e ../../packages/calc-engine
 -e ../../packages/learning-resolver
+-e ../../packages/learning-capture
 sqlalchemy>=2.0.0
 psycopg2-binary>=2.9.0
 python-dotenv>=1.0.0
