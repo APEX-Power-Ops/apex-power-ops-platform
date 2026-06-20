@@ -3,6 +3,10 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
 > **Rev 2 (2026-06-20):** revised after a technical-authority review of `de5de202` (9 findings). Changes: a lane charter is now Task 1 (lane SSoT); the `learning_dev` schema apply is a deferred human-approval **gate**, not an unattended step; all `source` paths are absolute; API tests run via `uv run --with-requirements` (no venv path juggling); the browser smoke lives under `tests/` (the real `testDir`) and **proves capture** via route-mocking instead of static render; package + UI now carry per-event-type **payload** (assessment score / self-assessment confidence).
+>
+> **Rev 3 (2026-06-20):** a second technical-authority review found 7 gaps in the **merged Slice 1** (resolver/API/demo) that this lane builds on — several are Slice 1 not matching its own spec. Operator chose "fold into this lane." Two **Slice-1 hardening tasks** (1a resolver, 1b API) are prepended (verify-before-build), and the demo (Task 6) gains source-grouping + a seeded section typeahead. Findings: #1 curated `neta_procedure` refs dropped the target id; #2 `get_resources` returned 422/200 not 400 for missing/blank + accepted any `level`; #3 learning routes registered unconditionally → 500 on Render (no `LEARNING_DEV_DSN` in `render.yaml`); #4 demo lacked typeahead + source-grouping; #5 no browser smoke (now covered by Task 6's proving smoke); #6 dedupe/merge tests were data-coincidence false-green; #7 level-rerank test asserted membership only.
+>
+> **Execution order:** Task 0 → Task 1 → **Task 1a → Task 1b** → Task 2 → Task 3 → Task 4 → Task 5 → Task 6 → Gated activation.
 
 **Goal:** Build the end-to-end mechanism that lets a real tech record the first real learning event — an append-only `learning_events` ledger, a `learning-capture` package, write/read API routes, and a capture panel on the Slice 1 demo.
 
@@ -64,7 +68,8 @@ Insert this block in `docs/lanes/README.md` immediately AFTER the `### Lane: ops
 - **Branch:** `learning/slice2-capture`   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
 - **Dev DB / schema:** `learning_dev` → `public.*` (frozen rev-2.3/2.4 baseline; lane isolation = the database, per separate-DB-per-lane D-ARCH-1)
 - **Write-boundary (OWNS):** `infra/database/migrations/learning/**`, `packages/learning-capture/**`,
-  `apps/control-plane-api/services/learning/**` (+ the `-e ../../packages/learning-capture` line in `requirements.txt`),
+  `packages/learning-resolver/**` (Slice-1 hardening), `apps/control-plane-api/services/learning/**`
+  (+ the `-e ../../packages/learning-capture` line in `requirements.txt`; + the learning-router guard in `main.py`),
   `apps/operations-web/app/learning-demo/**`, `apps/operations-web/lib/learning-*.ts`,
   `apps/operations-web/tests/learning-*.spec.ts`, `docs/superpowers/{specs,plans}/2026-06-20-learning-slice2-*`.
 - **Must NOT touch:** `records.*` / `ops.*` migrations + packages; the parallel `packages/power-test-converters/**` WIP; prod Supabase.
@@ -89,6 +94,291 @@ docs(lanes): charter the learning lane
 
 Records the learning lane in the lane SSoT (worktree + branch + learning_dev + write-boundary +
 schema gate), per docs/lanes/README.md. Required before Slice 2 code lands.
+EOF'
+```
+
+---
+
+### Task 1a: Resolver hardening (Slice-1 findings #1, #6, #7 + sections source)
+
+**Files:**
+- Modify: `packages/learning-resolver/src/learning_resolver/resolver.py`
+- Modify: `packages/learning-resolver/src/learning_resolver/__init__.py`
+- Test: `packages/learning-resolver/tests/test_hardening.py`
+
+**Interfaces:**
+- Produces: curated `neta_procedure` references now include `id` (the `neta_procedure_id`); new `list_sections(limit: int = 500) -> list[str]` (distinct `neta_procedures.section_number`). Task 1b's `GET /sections` and Task 6's typeahead consume `list_sections`.
+
+- [ ] **Step 1: Write the failing test `tests/test_hardening.py`**
+
+```python
+"""Slice-1 resolver hardening: target-id in curated neta_procedure refs (#1), dedup exclusion (#6),
+level-rerank math (#7), and list_sections for the typeahead (#4 support). The first three use a fake
+connection so they are deterministic (no data coincidence); list_sections hits learning_dev (read).
+
+Run (host, from packages/learning-resolver/):
+  export PATH="$HOME/.local/bin:$PATH"; source /home/olares/code/apex/apex-learning-lane/infra/.env
+  LEARNING_DEV_PGPASSWORD=$DEV_PG_PASSWORD \
+    uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests/test_hardening.py -q
+"""
+from learning_resolver.resolver import _curated, _level_boost, _section_match, list_sections
+
+
+class FakeConn:
+    """Minimal psycopg-like stand-in: execute(...).fetchall()/fetchone() return canned rows."""
+    def __init__(self, rows):
+        self._rows = rows
+    def execute(self, sql, params=None):
+        return self
+    def fetchall(self):
+        return self._rows
+    def fetchone(self):
+        return self._rows[0] if self._rows else None
+
+
+def test_curated_neta_procedure_ref_includes_id():
+    # _curated row: (rtype, is_primary, is_mandatory, display_order, sc_id, np_id, url, rname,
+    #                sc_title, sc_slug, sc_summary, sc_level, np_title, np_section)
+    row = ("procedure", True, False, 0, None, "np-uuid-1", None, None,
+           None, None, None, None, "Inspect breaker", "7.2.1.1")
+    out = _curated(FakeConn([row]), ["apt-1"])
+    assert out[0].reference == {"kind": "neta_procedure", "section": "7.2.1.1", "id": "np-uuid-1"}
+
+
+def test_section_match_excludes_curated_study_content_ids():
+    # _section_match row: (sc_id, title, slug, summary, level, primary_hit, quality_tier)
+    rows = [
+        ("dup-sc", "Dup", "dup", "s", "II", True, "gold"),
+        ("keep-sc", "Keep", "keep", "s", "II", True, "gold"),
+    ]
+    out = _section_match(FakeConn(rows), "7.2.1.1", exclude_sc_ids={"dup-sc"})
+    assert {r.reference["id"] for r in out} == {"keep-sc"}   # the curated duplicate is removed
+
+
+def test_level_boost_exact_values():
+    assert _level_boost("III", "III") == 30.0   # exact
+    assert _level_boost("II", "III") == 10.0    # one level off
+    assert _level_boost("II", "IV") == 0.0      # two off
+    assert _level_boost(None, "III") == 0.0     # unknown -> no boost
+
+
+def test_list_sections_returns_known_section():
+    sections = list_sections()
+    assert isinstance(sections, list) and sections
+    assert "7.2.1.1" in sections
+```
+
+- [ ] **Step 2: Run the test, verify it fails**
+
+Run:
+```bash
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/packages/learning-resolver; source /home/olares/code/apex/apex-learning-lane/infra/.env; LEARNING_DEV_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests/test_hardening.py -q'
+```
+Expected: FAIL — `ImportError: cannot import name 'list_sections'`; and the curated-ref test fails (ref lacks `id`).
+
+- [ ] **Step 3: Fix `resolver.py` — add the target id + `list_sections`**
+
+In `_curated`, change the `neta_procedure` branch from:
+```python
+        elif np_id is not None:
+            title, ref, level = np_title, {"kind": "neta_procedure", "section": np_section}, None
+```
+to:
+```python
+        elif np_id is not None:
+            title, ref, level = np_title, {"kind": "neta_procedure", "section": np_section, "id": str(np_id)}, None
+```
+Append `list_sections` to `resolver.py`:
+```python
+def list_sections(limit: int = 500) -> list[str]:
+    """Distinct NETA section numbers (seeds the demo typeahead). Read-only."""
+    with connect() as conn:
+        rows = conn.execute(
+            "select distinct section_number from neta_procedures "
+            "where section_number is not null order by section_number limit %s",
+            (limit,),
+        ).fetchall()
+    return [r[0] for r in rows]
+```
+
+- [ ] **Step 4: Update `__init__.py` to export `list_sections`**
+
+```python
+from .models import ResolvedResource
+from .resolver import list_sections, resolve
+
+__all__ = ["resolve", "list_sections", "ResolvedResource"]
+```
+
+- [ ] **Step 5: Run the test, verify it passes**
+
+Run:
+```bash
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/packages/learning-resolver; source /home/olares/code/apex/apex-learning-lane/infra/.env; LEARNING_DEV_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests/test_hardening.py -q'
+```
+Expected: PASS (4 passed). Also run the full resolver suite to confirm no regression:
+```bash
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/packages/learning-resolver; source /home/olares/code/apex/apex-learning-lane/infra/.env; LEARNING_DEV_PGPASSWORD=$DEV_PG_PASSWORD uv run --with "psycopg[binary]" --with pytest --with-editable . pytest tests -q'
+```
+Expected: PASS (18 passed: the 14 Slice-1 tests + 4 hardening).
+
+- [ ] **Step 6: Commit**
+
+```bash
+ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && git add packages/learning-resolver/ && git commit -F - <<"EOF"
+fix(learning): resolver hardening (target-id, dedup + rerank rigor, sections)
+
+Slice-1 review fixes: curated neta_procedure references now carry the concrete neta_procedure_id
+(#1); deterministic fake-conn tests prove dedup exclusion (#6) and exact level-rerank math (#7);
+new list_sections() seeds the demo section typeahead (#4 support). 18 resolver tests green.
+EOF'
+```
+
+---
+
+### Task 1b: API hardening (Slice-1 findings #2, #3 + GET /sections)
+
+**Files:**
+- Modify: `apps/control-plane-api/services/learning/router.py`
+- Modify: `apps/control-plane-api/services/learning/schemas.py`
+- Modify: `apps/control-plane-api/main.py`
+- Test: `apps/control-plane-api/tests/test_learning_resources.py`
+
+**Interfaces:**
+- Consumes: `learning_resolver.list_sections` (Task 1a).
+- Produces: `get_resources` returns `400` for missing/blank `neta_section` and invalid `level`; `GET /api/v1/learning/sections -> {sections: [str]}`; the learning router registers ONLY when `LEARNING_DEV_DSN`/`LEARNING_DEV_PGPASSWORD` is set (prod-safe — no 500ing routes on Render). **Task 5 (capture routes) appends to this same `router.py`/`schemas.py`; its fastapi import (`HTTPException, status`) is already added here.** Task 6's typeahead consumes `GET /sections`.
+
+- [ ] **Step 1: Write the failing tests (REPLACE the contradictory `test_missing_section_is_400` + add cases)**
+
+In `apps/control-plane-api/tests/test_learning_resources.py`, replace the existing `test_missing_section_is_400` body (it asserts `422`) and append the new cases:
+```python
+def test_missing_section_is_400():
+    assert client.get("/api/v1/learning/resources").status_code == 400
+
+
+def test_blank_section_is_400():
+    assert client.get("/api/v1/learning/resources", params={"neta_section": "   "}).status_code == 400
+
+
+def test_invalid_level_is_400():
+    r = client.get("/api/v1/learning/resources", params={"neta_section": "7.2.1.1", "level": "banana"})
+    assert r.status_code == 400
+
+
+def test_sections_endpoint_lists_known_section():
+    r = client.get("/api/v1/learning/sections")
+    assert r.status_code == 200
+    assert "7.2.1.1" in r.json()["sections"]
+
+
+def test_learning_routes_guarded_by_env(monkeypatch):
+    from main import _learning_routes_enabled
+    monkeypatch.delenv("LEARNING_DEV_DSN", raising=False)
+    monkeypatch.delenv("LEARNING_DEV_PGPASSWORD", raising=False)
+    assert _learning_routes_enabled() is False
+    monkeypatch.setenv("LEARNING_DEV_DSN", "host=127.0.0.1 dbname=learning_dev")
+    assert _learning_routes_enabled() is True
+```
+Keep the existing `test_unknown_section_returns_empty_200` and `test_known_section_returns_ranked_resources`.
+
+- [ ] **Step 2: Run the tests, verify they fail**
+
+Run:
+```bash
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/apps/control-plane-api; source /home/olares/code/apex/apex-learning-lane/infra/.env; \
+  DATABASE_URL="postgresql://postgres:$DEV_PG_PASSWORD@127.0.0.1:5432/learning_dev" \
+  LEARNING_DEV_PGPASSWORD=$DEV_PG_PASSWORD \
+    uv run --with-requirements requirements-dev.txt pytest tests/test_learning_resources.py -q'
+```
+Expected: FAIL — missing-section returns 422 not 400; `/sections` 404; `_learning_routes_enabled` import error.
+
+- [ ] **Step 3: Add `SectionsResponse` to `schemas.py`**
+
+Append to `apps/control-plane-api/services/learning/schemas.py`:
+```python
+class SectionsResponse(BaseModel):
+    sections: list[str]
+```
+
+- [ ] **Step 4: Harden `router.py` (validation + `/sections`)**
+
+Change the existing imports at the top of `router.py` from:
+```python
+from fastapi import APIRouter, Query
+
+from learning_resolver import resolve
+
+from .schemas import ResolvedResourceOut, ResourcesContext, ResourcesResponse
+```
+to:
+```python
+from fastapi import APIRouter, HTTPException, Query, status
+
+from learning_resolver import list_sections, resolve
+
+from .schemas import ResolvedResourceOut, ResourcesContext, ResourcesResponse, SectionsResponse
+```
+Replace the existing `get_resources` function with the validated version, and add `get_sections`:
+```python
+@router.get("/resources", response_model=ResourcesResponse)
+def get_resources(
+    neta_section: str | None = Query(default=None),
+    level: str | None = Query(default=None),
+    limit: int = Query(default=20, ge=1, le=100),
+) -> ResourcesResponse:
+    if not neta_section or not neta_section.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="neta_section is required")
+    if level is not None and level not in {"II", "III", "IV"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="level must be II, III, or IV")
+    section = neta_section.strip()
+    items = resolve(section, level=level, limit=limit)
+    return ResourcesResponse(
+        context=ResourcesContext(neta_section=section, level=level, limit=limit),
+        resources=[ResolvedResourceOut(**vars(r)) for r in items],
+    )
+
+
+@router.get("/sections", response_model=SectionsResponse)
+def get_sections(limit: int = Query(default=500, ge=1, le=2000)) -> SectionsResponse:
+    return SectionsResponse(sections=list_sections(limit=limit))
+```
+
+- [ ] **Step 5: Guard the learning router in `main.py` (prod-safe)**
+
+Add a predicate near the other helpers in `apps/control-plane-api/main.py` (it imports `os` already):
+```python
+def _learning_routes_enabled() -> bool:
+    # learning_dev is host-only (mesh PG17); on Render no learning DSN is set -> do not expose
+    # routes that would 500. Keyed on the learning-specific config, NOT the generic PGPASSWORD.
+    return bool(os.environ.get("LEARNING_DEV_DSN") or os.environ.get("LEARNING_DEV_PGPASSWORD"))
+```
+Replace the unconditional `app.include_router(learning_router)` (currently line ~97) with:
+```python
+if _learning_routes_enabled():
+    app.include_router(learning_router)
+```
+
+- [ ] **Step 6: Run the tests, verify they pass**
+
+Run (same command as Step 2):
+```bash
+ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH"; cd /home/olares/code/apex/apex-learning-lane/apps/control-plane-api; source /home/olares/code/apex/apex-learning-lane/infra/.env; \
+  DATABASE_URL="postgresql://postgres:$DEV_PG_PASSWORD@127.0.0.1:5432/learning_dev" \
+  LEARNING_DEV_PGPASSWORD=$DEV_PG_PASSWORD \
+    uv run --with-requirements requirements-dev.txt pytest tests/test_learning_resources.py -q'
+```
+Expected: PASS (8 passed: 3 original-style + 5 new).
+
+- [ ] **Step 7: Verify no `uv.lock`; commit**
+
+```bash
+ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && (git status --porcelain | grep -i "uv.lock" && echo "REMOVE THESE" || echo "clean") && git add apps/control-plane-api/services/learning/router.py apps/control-plane-api/services/learning/schemas.py apps/control-plane-api/main.py apps/control-plane-api/tests/test_learning_resources.py && git commit -F - <<"EOF"
+fix(learning): API hardening (400 validation, route guard, GET sections)
+
+Slice-1 review fixes: get_resources returns 400 for missing/blank neta_section and invalid level
+(#2); the learning router registers only when LEARNING_DEV_DSN/PGPASSWORD is set so the hosted
+Render deploy does not expose 500ing routes (#3); new GET /api/v1/learning/sections seeds the demo
+typeahead (#4). 8 resource tests green.
 EOF'
 ```
 
@@ -1139,11 +1429,7 @@ class UsersResponse(BaseModel):
 
 - [ ] **Step 6: Extend `router.py`**
 
-Change the existing first import line `from fastapi import APIRouter, Query` to:
-```python
-from fastapi import APIRouter, HTTPException, Query, status
-```
-Then append to the file (it already defines `router` and imports from `.schemas`):
+Task 1b already changed the fastapi import to `from fastapi import APIRouter, HTTPException, Query, status` — **do not re-edit it**. Append to the file (it already defines `router`, imports from `.schemas`, and after 1b imports `list_sections, resolve` from `learning_resolver`):
 ```python
 from learning_capture import CaptureError, list_events, list_users, record_event
 
@@ -1227,8 +1513,8 @@ EOF'
 - Test: `apps/operations-web/tests/learning-capture.smoke.spec.ts` (Playwright `testDir` is `./tests`)
 
 **Interfaces:**
-- Consumes: `POST/GET /api/v1/learning/events` + `GET /api/v1/learning/users`; `browserEnv.controlPlaneBaseUrl`.
-- Produces: a capture panel — pick a tech from `/users`, mark a resolver-surfaced resource viewed/completed, log a self-assessment (confidence) or an assessment (score), and watch the captured-events list refresh. The smoke **route-mocks the API and proves the POST body + re-render** (deterministic; no live API or DB needed — the API+DB path is covered by Task 5).
+- Consumes: `POST/GET /api/v1/learning/events`, `GET /api/v1/learning/users`, `GET /api/v1/learning/sections` (Task 1b); `browserEnv.controlPlaneBaseUrl`.
+- Produces: a capture panel — pick a tech from `/users`, a **seeded NETA-section typeahead** (datalist from `/sections`, finding #4), resolve resources **grouped by source** (Curated, then Section matches — finding #4), mark a surfaced resource viewed/completed, log a self-assessment (confidence) or an assessment (score), and watch the captured-events list refresh. The smoke **route-mocks the API and proves the POST body + re-render** (deterministic; no live API or DB needed — the API+DB path is covered by Task 5; this also covers Slice-1 finding #5).
 
 - [ ] **Step 1: Write `lib/learning-capture.ts`**
 
@@ -1281,6 +1567,11 @@ export async function fetchLearningUsers(limit = 100): Promise<LearningUser[]> {
   return ((await parse(r)) as { users: LearningUser[] }).users
 }
 
+export async function fetchLearningSections(limit = 500): Promise<string[]> {
+  const r = await fetch(`${base()}/api/v1/learning/sections?limit=${limit}`, { headers: { Accept: 'application/json' } })
+  return ((await parse(r)) as { sections: string[] }).sections
+}
+
 export async function fetchLearningEvents(userId: string, limit = 20): Promise<LearningEvent[]> {
   const params = new URLSearchParams({ user_id: userId, limit: String(limit) })
   const r = await fetch(`${base()}/api/v1/learning/events?${params.toString()}`, { headers: { Accept: 'application/json' } })
@@ -1314,6 +1605,7 @@ import { useEffect, useState } from 'react'
 import { fetchLearningResources, LearningResource, LearningResourcesError } from '../../lib/learning-resources'
 import {
   fetchLearningEvents,
+  fetchLearningSections,
   fetchLearningUsers,
   LearningCaptureError,
   LearningEvent,
@@ -1330,6 +1622,7 @@ export default function LearningDemoPage() {
 
   const [users, setUsers] = useState<LearningUser[]>([])
   const [userId, setUserId] = useState('')
+  const [sections, setSections] = useState<string[]>([])
   const [events, setEvents] = useState<LearningEvent[]>([])
   const [captureMessage, setCaptureMessage] = useState<string | null>(null)
   const [confidence, setConfidence] = useState('3')
@@ -1342,6 +1635,7 @@ export default function LearningDemoPage() {
         if (u.length) setUserId((prev) => prev || u[0].id)
       })
       .catch(() => setUsers([]))
+    fetchLearningSections().then(setSections).catch(() => setSections([]))
   }, [])
 
   async function refreshEvents(uid: string) {
@@ -1406,7 +1700,10 @@ export default function LearningDemoPage() {
       <section className="notes-card">
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <label>NETA section
-            <input value={section} onChange={(e) => setSection(e.target.value)} placeholder="7.6.1.1.1" />
+            <input list="neta-sections" value={section} onChange={(e) => setSection(e.target.value)} placeholder="7.6.1.1.1" />
+            <datalist id="neta-sections">
+              {sections.map((s) => <option key={s} value={s} />)}
+            </datalist>
           </label>
           <label>Level
             <select value={level} onChange={(e) => setLevel(e.target.value)}>
@@ -1436,23 +1733,33 @@ export default function LearningDemoPage() {
             {resources.length === 0 ? (
               <p className="resource-banner resource-banner-neutral">No linked resources for this section yet.</p>
             ) : (
-              <div className="resource-grid">
-                {resources.map((r, i) => (
-                  <article className="resource-item" key={i}>
-                    <div className="resource-item-row">
-                      <span className="resource-chip">{r.source === 'curated' ? 'Curated' : 'Section match'}</span>
-                      {r.is_primary ? <span className="resource-chip">Primary</span> : null}
-                      {r.cert_level ? <span className="resource-chip">Level {r.cert_level}</span> : null}
+              [
+                { key: 'curated', label: 'Curated', items: resources.filter((r) => r.source === 'curated') },
+                { key: 'section', label: 'Section matches', items: resources.filter((r) => r.source !== 'curated') },
+              ]
+                .filter((g) => g.items.length > 0)
+                .map((g) => (
+                  <div key={g.key}>
+                    <p className="eyebrow">{g.label}</p>
+                    <div className="resource-grid">
+                      {g.items.map((r, i) => (
+                        <article className="resource-item" key={`${g.key}-${i}`}>
+                          <div className="resource-item-row">
+                            <span className="resource-chip">{r.source === 'curated' ? 'Curated' : 'Section match'}</span>
+                            {r.is_primary ? <span className="resource-chip">Primary</span> : null}
+                            {r.cert_level ? <span className="resource-chip">Level {r.cert_level}</span> : null}
+                          </div>
+                          <h3>{r.title}</h3>
+                          <p>{r.why}</p>
+                          <div className="resource-item-row">
+                            <button className="btn" onClick={() => capture('resource_viewed', { resource: r })}>Mark viewed</button>
+                            <button className="btn" onClick={() => capture('resource_completed', { resource: r })}>Mark completed</button>
+                          </div>
+                        </article>
+                      ))}
                     </div>
-                    <h3>{r.title}</h3>
-                    <p>{r.why}</p>
-                    <div className="resource-item-row">
-                      <button className="btn" onClick={() => capture('resource_viewed', { resource: r })}>Mark viewed</button>
-                      <button className="btn" onClick={() => capture('resource_completed', { resource: r })}>Mark completed</button>
-                    </div>
-                  </article>
-                ))}
-              </div>
+                  </div>
+                ))
             )}
           </div>
         ) : null}
@@ -1522,6 +1829,9 @@ test.describe('learning-demo capture loop', () => {
 
     await page.route('**/api/v1/learning/users**', (route) =>
       route.fulfill({ json: { users: [{ id: USER, email: 'tech1@example.com' }] } }),
+    )
+    await page.route('**/api/v1/learning/sections**', (route) =>
+      route.fulfill({ json: { sections: ['7.2.1.1', '7.6.1.1.1'] } }),
     )
     await page.route('**/api/v1/learning/resources**', (route) =>
       route.fulfill({
@@ -1632,7 +1942,8 @@ Both migrations are additive/idempotent; verification prints `employee_id` and `
 - Spec §7 testing (migration throwaway, package, API, UI **proving** smoke) → tests in every task. ✓
 - Spec §3 NETA-section contract + person bridge → `neta_section` column + `employee_id`. ✓
 - Governance: lane chartered (Task 1); `schema` apply gated (Gated activation). ✓
+- Slice-1 review findings: #1 target-id (Task 1a `_curated` np-branch + test); #2 400 validation + #3 route guard (Task 1b `get_resources` + `main._learning_routes_enabled` + tests); #4 typeahead + source-grouping (Task 1a `list_sections` → Task 1b `GET /sections` → Task 6 datalist + grouped render); #5 browser smoke (Task 6 proving smoke); #6 dedup + #7 rerank rigor (Task 1a fake-conn unit tests). ✓
 
 **2. Placeholder scan:** No TBD/TODO; every code step shows complete code; every command shows expected output. ✓
 
-**3. Type consistency:** `CapturedEvent` fields (Task 4 `models.py`) == `EventOut` fields (Task 5 `schemas.py`) == `LearningEvent` TS type (Task 6) — `event_id, user_id, event_type, study_content_id, neta_section, occurred_at, payload, created_at`. `record_event` signature identical in spec §5.1, Task 4 interface, Task 4 `capture.py`, and the Task 5 call site. `EVENT_TYPES` 4 values identical in `models.py`, the `002` CHECK, and the demo. Payload rules identical in `capture.py`, the package tests, the API test, and the demo controls (`confidence` 1–5; `score_percent` 0–100). Seed UUIDs (`…0001`, `…0010`) identical across `test_prereq.sql`, both migration tests, the package conftest, and the API tests. ✓
+**3. Type consistency:** `CapturedEvent` fields (Task 4 `models.py`) == `EventOut` fields (Task 5 `schemas.py`) == `LearningEvent` TS type (Task 6) — `event_id, user_id, event_type, study_content_id, neta_section, occurred_at, payload, created_at`. `record_event` signature identical in spec §5.1, Task 4 interface, Task 4 `capture.py`, and the Task 5 call site. `EVENT_TYPES` 4 values identical in `models.py`, the `002` CHECK, and the demo. Payload rules identical in `capture.py`, the package tests, the API test, and the demo controls (`confidence` 1–5; `score_percent` 0–100). Seed UUIDs (`…0001`, `…0010`) identical across `test_prereq.sql`, both migration tests, the package conftest, and the API tests. Sections path consistent: `list_sections` (Task 1a) → `SectionsResponse {sections: list[str]}` + `GET /sections` (Task 1b) → `fetchLearningSections(): Promise<string[]>` → datalist (Task 6). The route-guard predicate is `_learning_routes_enabled()` in both `main.py` and its test. ✓
