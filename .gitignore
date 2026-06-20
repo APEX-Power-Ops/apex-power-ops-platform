@@ -67,3 +67,6 @@ packages/learning-capture/uv.lock
 
 # real client estimator workbooks (never committed)
 packages/ops-intake/_data/
+
+# SDD controller scratch (subagent-driven-development progress ledger)
+.superpowers/
