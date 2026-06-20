@@ -57,10 +57,10 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 - **Branch:** `learning/slice2-capture`   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
 - **Dev DB / schema:** `learning_dev` → `public.*` (frozen rev-2.3/2.4 baseline; lane isolation = the database, per separate-DB-per-lane D-ARCH-1)
 - **Write-boundary (OWNS):** `infra/database/migrations/learning/**`, `packages/learning-capture/**`,
-  `packages/learning-resolver/**` (Slice-1 hardening), `apps/control-plane-api/services/learning/**`
+  `packages/learning-resolver/**` (Slice-1 hardening), `packages/learning-projections/**` (Slice 2b), `apps/control-plane-api/services/learning/**`
   (+ the `-e ../../packages/learning-capture` line in `requirements.txt`; + the learning-router guard in `main.py`),
   `apps/operations-web/app/learning-demo/**`, `apps/operations-web/lib/learning-*.ts`,
-  `apps/operations-web/tests/learning-*.spec.ts`, `docs/superpowers/{specs,plans}/2026-06-20-learning-slice2-*`.
+  `apps/operations-web/tests/learning-*.spec.ts`, `docs/superpowers/{specs,plans}/2026-06-20-learning-slice2*`.
 - **Must NOT touch:** `records.*` / `ops.*` migrations + packages; the parallel `packages/power-test-converters/**` WIP; prod Supabase.
 - **Gates (human-approval):** `schema` (each `learning_dev` migration apply; `001`/`002` **DONE 2026-06-20**; Slice 2b migrations pending); promotion (merge to main) is operator-gated.
 - **Escalation / owner:** CC (technical authority); operator gates schema apply + merge.
