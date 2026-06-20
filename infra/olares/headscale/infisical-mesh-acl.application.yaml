@@ -1,0 +1,29 @@
+apiVersion: app.bytetrade.io/v1alpha1
+kind: Application
+metadata:
+  name: apex-infisical-mesh-acl
+  namespace: user-space-jlswen2121
+  labels:
+    app.kubernetes.io/managed-by: apex-power-ops
+    app.kubernetes.io/name: apex-infisical
+  annotations:
+    apex.apexpowerops.com/purpose: "Durable private-mesh ACL for self-hosted Infisical (secrets-distribution) on tcp:8222. Mesh-only; never public."
+spec:
+  appid: apex-infisical-mesh-acl
+  isSysApp: false
+  name: apex-infisical
+  namespace: user-space-jlswen2121
+  owner: jlswen2121
+  settings:
+    clusterScoped: "false"
+    source: apex-power-ops
+    title: APEX Infisical Mesh ACL
+    version: "1"
+  tailscale:
+    acls:
+      - action: accept
+        src:
+          - "*"
+        proto: tcp
+        dst:
+          - "*:8222"

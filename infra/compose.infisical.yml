@@ -1,0 +1,35 @@
+name: apex-infisical
+# Infisical self-host — platform secrets-distribution layer. MESH-ONLY.
+# Backing: dedicated `infisical` DB on the shared PG17 (apex-dev-pg) + a private Redis.
+# Container secrets come from gitignored infra/infisical/.env (0600; ENCRYPTION_KEY + AUTH_SECRET are Padloc-rooted ROOT tier).
+# Exposure: 127.0.0.1 (host-local) + mesh IP 100.64.0.1 ONLY — never 0.0.0.0.
+# Mesh traffic gated by infra/olares/headscale/infisical-mesh-acl.application.yaml.
+services:
+  infisical:
+    image: infisical/infisical:v0.161.3
+    container_name: apex-infisical
+    depends_on:
+      infisical-redis:
+        condition: service_healthy
+    env_file: [./infisical/.env]
+    ports:
+      - "127.0.0.1:8222:8080"
+      - "100.64.0.1:8222:8080"
+    networks: [apex-dev, infisical]
+    restart: unless-stopped
+  infisical-redis:
+    image: redis:7-alpine
+    container_name: apex-infisical-redis
+    networks: [infisical]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+networks:
+  apex-dev:
+    external: true
+    name: apex-dev
+  infisical:
+    driver: bridge
