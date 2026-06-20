@@ -12,7 +12,7 @@
 
 - **Read-only.** `db.py` is the resolver's read-only session verbatim: pinned DSN + `SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY`. Nothing writes; the baseline `user_study_progress`/`user_test_attempts` tables are never touched. The no-write guarantee is itself tested.
 - **No new DB objects, no migration.** Compute-on-read only. Mini-graph DDL exists ONLY in the test fixture for `learning_test`.
-- **Naming discipline (load-bearing):** competency fields are `covered_ksas` / `coverage_percent` / `evidence_event_count`; the concept list is `engaged_concepts` (broader than coverage). The token `mastered`/`mastery` MUST NOT appear anywhere.
+- **Naming discipline (load-bearing):** competency fields are `covered_ksas` / `coverage_percent` / `evidence_event_count`; the concept list is `engaged_concepts` (broader than coverage). The token `mastered`/`mastery` MUST NOT appear in any **generated package/API field name, response key, or docstring** (it may appear in plan/spec prose explaining the rule).
 - **Non-silent level resolution (load-bearing):** every competency response carries `resolved_level`, `level_source`, `levels_in_scope`.
 - **Payload contract:** `assessment_completed.payload.score_percent` (numeric 0–100); `self_assessment.payload.confidence` (int 1–5). Missing key → excluded from that aggregate.
 - **Competency math:** denominator = `count(distinct ksa_code) from ksas where certification_level=L`; covered = distinct reachable `ksa_code` via `content_concept_links → edition_ksa_map (is_active, level=cert) → ksas`; edition ignored (distinct code); Level I has 0 KSAs → `coverage_percent = null`.
@@ -71,7 +71,7 @@ This data is fixed; later tasks reference these exact values. **Built fresh each
 **content_concept_links** (content_id, concept_id): `C1→concept-1`, `C1→concept-2`, `C2→concept-3`, `C3→concept-1`.
 
 **learning_events** (per user):
-- **U_target:** `resource_viewed C1`, `resource_completed C1`, `assessment_completed C1` `{score_percent:80}`, `resource_viewed C2`, `self_assessment C1` `{confidence:4}`.
+- **U_target:** `resource_viewed C1`, `resource_completed C1`, `assessment_completed C1` `{score_percent:80}`, `resource_viewed C2`, `self_assessment C1` `{confidence:4}`, **and a section-only `self_assessment` with NULL `study_content_id`** `{confidence:3}` (must be excluded from per-content assessment_summary).
 - **U_current:** `resource_completed C1`, `resource_completed C2`, `assessment_completed C1` `{score_percent:90}`.
 - **U_all:** `resource_completed C1`.
 - **U_none:** `resource_viewed C1`.
@@ -97,21 +97,37 @@ This data is fixed; later tasks reference these exact values. **Built fresh each
 
 - [ ] **Step 1: Confirm the worktree + branch.**
 Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && git branch --show-current && git log --oneline -1'`
-Expected: branch `learning/slice2b-projections`, HEAD is the spec-amendments commit.
+Expected: branch `learning/slice2b-projections` (rebased on current `main`, which already owns `packages/learning-projections/**` in the lane charter).
 
-- [ ] **Step 2: Ensure `infra/.env` exists in the worktree** (new worktrees lack gitignored files).
+- [ ] **Step 2: Fix the lane charter `Branch:` line + commit.** The merged-and-pruned `learning/slice2-capture` is stale; point the learning lane at this branch. (OWNS already lists `packages/learning-projections/**`.)
+Edit `docs/lanes/README.md`: change the learning lane's `- **Branch:** ` + `` `learning/slice2-capture` `` to `` `learning/slice2b-projections` ``.
+```bash
+git add docs/lanes/README.md
+git commit -F - <<'EOF'
+docs(lanes): point the learning lane at slice2b-projections
+
+slice2-capture merged + was pruned; the active learning branch is the
+projection-engine slice.
+EOF
+```
+Expected: one commit on the lane branch.
+
+- [ ] **Step 3: Ensure `infra/.env` exists in the worktree** (new worktrees lack gitignored files).
 Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && test -f infra/.env && echo OK || (cp /home/olares/code/apex/apex-power-ops-platform/infra/.env infra/.env && echo COPIED)'`
 Expected: `OK` or `COPIED`.
 
-- [ ] **Step 3: Create the throwaway `learning_test` DB if absent.**
-Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && set -a && . ./infra/.env && set +a && export PGPASSWORD=$DEV_PG_PASSWORD && psql -h 127.0.0.1 -U postgres -tAc "select 1 from pg_database where datname=\"learning_test\"" | grep -q 1 || psql -h 127.0.0.1 -U postgres -c "create database learning_test"'`
-Expected: silent success (DB exists or is created).
+- [ ] **Step 4: Create the throwaway `learning_test` DB if absent (idempotent).**
+Run:
+```bash
+ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && set -a && . ./infra/.env && set +a && export PGPASSWORD=$DEV_PG_PASSWORD && psql -h 127.0.0.1 -U postgres -tAc "select 1 from pg_database where datname='"'"'learning_test'"'"'" | grep -q 1 || psql -h 127.0.0.1 -U postgres -c "create database learning_test"'
+```
+Expected: silent success. The `datname='learning_test'` **string literal** (single-quoted, escaped through ssh as `'"'"'learning_test'"'"'`) makes the existence check correct — a double-quoted `"learning_test"` would be parsed as an identifier and error, defeating idempotency. `create database` runs only when absent.
 
-- [ ] **Step 4: Verify `uv` + `psql` on PATH.**
+- [ ] **Step 5: Verify `uv` + `psql` on PATH.**
 Run: `ssh olares-mesh 'export PATH="$HOME/.local/bin:$PATH" && uv --version && psql --version'`
 Expected: versions print.
 
-- [ ] **Step 5: Baseline — existing learning suites green** (sanity that the worktree is clean).
+- [ ] **Step 6: Baseline — existing learning suites green** (sanity that the worktree is clean).
 Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane/packages/learning-resolver && export PATH="$HOME/.local/bin:$PATH" && PYTHONPATH=src uv run --no-project --with "psycopg[binary]" --with pytest pytest -q'` (resolver tests run against live `learning_dev`).
 Expected: PASS (or the known-green count). If the resolver tests need `LEARNING_DEV_PGPASSWORD`, export it from `infra/.env` first.
 
@@ -420,7 +436,10 @@ insert into public.learning_events (user_id, event_type, study_content_id, neta_
   ('11111111-0000-0000-0000-000000000002','assessment_completed','22222222-0000-0000-0000-000000000001','7.1','2026-06-01 09:07:00+00','{"score_percent":90}'),
   ('11111111-0000-0000-0000-000000000003','resource_completed',  '22222222-0000-0000-0000-000000000001','7.1','2026-06-01 09:08:00+00','{}'),
   ('11111111-0000-0000-0000-000000000004','resource_viewed',     '22222222-0000-0000-0000-000000000001','7.1','2026-06-01 09:09:00+00','{}'),
-  ('11111111-0000-0000-0000-000000000009','resource_completed',  '22222222-0000-0000-0000-000000000001','7.1','2026-06-01 09:10:00+00','{}');
+  ('11111111-0000-0000-0000-000000000009','resource_completed',  '22222222-0000-0000-0000-000000000001','7.1','2026-06-01 09:10:00+00','{}'),
+  -- section-only self_assessment (NULL study_content_id): must be EXCLUDED from per-content
+  -- assessment_summary (the spec-required null-content exclusion case).
+  ('11111111-0000-0000-0000-000000000001','self_assessment',     null,                                   '7.5','2026-06-01 09:11:00+00','{"confidence":3}');
 ```
 
 - [ ] **Step 3: Write `tests/conftest.py`** (test-DB-guarded; applies prereq → mig 002 → events seed once per session).
@@ -474,7 +493,8 @@ def _scalar(sql):
 def test_fixture_rows_seeded():
     assert _scalar("select count(*) from user_profiles") == 5
     assert _scalar("select count(*) from ksas where certification_level='II'") == 4
-    assert _scalar("select count(*) from learning_events") == 11
+    assert _scalar("select count(*) from learning_events") == 12
+    assert _scalar("select count(*) from learning_events where study_content_id is null") == 1
     assert _scalar("select count(*) from edition_ksa_map where is_active=false") == 1
 
 
@@ -637,6 +657,9 @@ def test_assessment_summary_target():
     assert a.latest_score_percent == 80 and a.mean_score_percent == 80
     assert a.self_assessment_count == 1
     assert a.latest_confidence == 4 and a.mean_confidence == 4
+    # the section-only self_assessment (NULL study_content_id) is excluded: still 1 row and
+    # self_assessment_count stays 1 (would be 2 / a null row if the null-content event leaked in).
+    assert all(r.study_content_id is not None for r in rows)
 ```
 
 - [ ] **Step 2: Run to verify it fails.**
@@ -1003,7 +1026,7 @@ U_TARGET = "11111111-0000-0000-0000-000000000001"
 
 
 def test_cli_competency_json(capsys):
-    rc = main(["competency", "--user", U_TARGET, "--json"])
+    rc = main(["competency", "--user", U_TARGET])
     assert rc == 0
     out = json.loads(capsys.readouterr().out)
     assert out["resolved_level"] == "II"
@@ -1011,7 +1034,7 @@ def test_cli_competency_json(capsys):
 
 
 def test_cli_cohort_json(capsys):
-    rc = main(["cohort", "--json"])
+    rc = main(["cohort"])
     assert rc == 0
     out = json.loads(capsys.readouterr().out)
     assert out["user_count"] == 4
@@ -1038,17 +1061,15 @@ def _dump(obj):
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     ap = argparse.ArgumentParser(prog="learning-projections",
-                                 description="Read-model projections over learning_events (learning_dev)")
+                                 description="Read-model projections over learning_events (learning_dev); prints JSON")
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("progress", "assessments", "competency"):
         p = sub.add_parser(name)
         p.add_argument("--user", required=True)
-        p.add_argument("--json", action="store_true")
         if name == "competency":
             p.add_argument("--level", default=None, choices=["I", "II", "III", "IV"])
     pc = sub.add_parser("cohort")
     pc.add_argument("--level", default=None, choices=["I", "II", "III", "IV"])
-    pc.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
 
     if args.cmd == "progress":
@@ -1314,6 +1335,30 @@ def test_cohort_level_param_passthrough():
     r = client.get("/api/v1/learning/cohort", params={"level": "II"})
     assert r.status_code == 200
     assert r.json()["mean_coverage_percent"] == 37.5
+
+
+def test_learning_routes_absent_when_guard_disabled():
+    # spec error matrix: guard env unset -> router not registered -> 404. The guard runs at
+    # main-import time, so monkeypatching after `from main import app` is too late -- run an
+    # import-isolated subprocess with the learning DSN/PGPASSWORD cleared.
+    import os
+    import subprocess
+    import sys
+
+    env = dict(os.environ)
+    env.pop("LEARNING_DEV_DSN", None)
+    env.pop("LEARNING_DEV_PGPASSWORD", None)
+    snippet = (
+        "from fastapi.testclient import TestClient; from main import app; "
+        "c = TestClient(app); "
+        "r = c.get('/api/v1/learning/progress', params={'user_id': '11111111-0000-0000-0000-000000000001'}); "
+        "assert r.status_code == 404, r.status_code; print('GUARD_OK')"
+    )
+    api_dir = os.path.dirname(os.path.dirname(__file__))  # apps/control-plane-api
+    proc = subprocess.run([sys.executable, "-c", snippet], cwd=api_dir, env=env,
+                          capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr
+    assert "GUARD_OK" in proc.stdout
 ```
 
 - [ ] **Step 5: Run to verify it fails** (routes not added / package not installed), then passes after Steps 1-3. Apply the fixture to `learning_test`, then run with the learning DSN pinned there:
@@ -1328,7 +1373,7 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-learning-lane && set -a && . ./i
          LEARNING_DEV_DSN="host=127.0.0.1 port=5432 dbname=learning_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable" && \
   uv run --with-requirements requirements-dev.txt --with ../../packages/learning-projections pytest tests/test_learning_projections.py -q'
 ```
-Expected: `13 passed`. (If `DATABASE_URL` form differs, copy the working value from the existing `test_learning_events.py` run in the Slice 2a notes.)
+Expected: `14 passed`. (If `DATABASE_URL` form differs, copy the working value from the existing `test_learning_events.py` run in the Slice 2a notes.)
 
 - [ ] **Step 6: Commit.**
 ```bash
@@ -1350,6 +1395,8 @@ EOF
 
 **2. Placeholder scan:** every code step contains complete code; every run step has an exact command + expected output. No TBD/TODO.
 
-**3. Type consistency:** dataclass field names (T1) ↔ SQL column aliases (T3-T6) ↔ Pydantic `*Out` fields (T8) ↔ test assertions all use the same names (`covered_ksas`, `coverage_percent`, `evidence_event_count`, `engaged_concepts`, `mean_coverage_percent`, `coverage_user_count`). `UserNotFoundError` raised in T3-T5, mapped to 404 in T8. No `mastered`/`mastery` token anywhere.
+**3. Type consistency:** dataclass field names (T1) ↔ SQL column aliases (T3-T6) ↔ Pydantic `*Out` fields (T8) ↔ test assertions all use the same names (`covered_ksas`, `coverage_percent`, `evidence_event_count`, `engaged_concepts`, `mean_coverage_percent`, `coverage_user_count`). `UserNotFoundError` raised in T3-T5, mapped to 404 in T8. No `mastered`/`mastery` token in any generated field name, response key, or docstring (the rule is scoped to generated artifacts, not this plan's prose).
+
+**4. Error/guard matrix:** 400 (missing/blank/bad-uuid user_id, bad level), 404 (unknown user — /progress, /assessments, /competency), 200-empty (/assessments for a view-only user), bare-object vs wrapped contract, level passthrough, and the **guard-disabled router-absent 404** (import-isolated subprocess) are all route-tested (T8). The section-only `self_assessment` exclusion is fixtured (T2) and asserted (T4). Lane charter `Branch:` corrected before any code (T0 Step 2).
 
 **Note on cohort 'all'-resolved users:** a spec detail made explicit here — in a no-level cohort call, a user whose resolved level is `all` contributes `null` (excluded) to `mean_coverage_percent`. This is implemented in T6 and asserted by `test_cohort_no_level` (U_all excluded → coverage_user_count 3).
