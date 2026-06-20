@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "learning-projections"
+version = "0.1.0"
+description = "Read-only projection engine over the learning_events ledger (learning Slice 2b)"
+requires-python = ">=3.11"
+dependencies = ["psycopg[binary]>=3.1"]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0.0"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+learning-projections = "learning_projections.cli:main"
