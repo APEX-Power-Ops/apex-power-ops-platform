@@ -64,7 +64,7 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 - **Must NOT touch:** `records.*` / `ops.*` migrations + packages; the parallel `packages/power-test-converters/**` WIP; prod Supabase.
 - **Gates (human-approval):** `schema` (the `learning_dev` apply of `001`/`002` — see the Slice 2a plan's gated activation step); promotion (merge to main) is operator-gated.
 - **Escalation / owner:** CC (technical authority); operator gates schema apply + merge.
-- **Status:** active (Slice 2a built on `learning_test`; `learning_dev` apply + PR operator-gated).
+- **Status:** active (Slice 2a MERGED to main via PR #23 → `c9c2b6a8`; `learning_dev` apply still gated; 2b/2c + data acquisition next).
 
 > Merged/closed lanes (orchestration/chip3-apex-jobs, docs/chip2-governance-supersede) are pruned;
 > their work is on `main`.
