@@ -52,3 +52,30 @@ def _curated(conn, apt_ids: list[str]) -> list[ResolvedResource]:
             score=float(score), why="curated resource for this apparatus type",
         ))
     return out
+
+
+def _section_match(conn, section: str, exclude_sc_ids: set[str]) -> list[ResolvedResource]:
+    rows = conn.execute(
+        """
+        select sc.id, sc.title, sc.slug, sc.summary, sc.certification_level,
+               (sc.neta_section_primary = %(s)s) as primary_hit
+        from study_content sc
+        where (sc.neta_section_primary = %(s)s or %(s)s = any(sc.neta_sections_secondary))
+          and sc.is_active and sc.status = 'published'
+        order by (sc.neta_section_primary = %(s)s) desc, sc.title asc
+        """,
+        {"s": section},
+    ).fetchall()
+    out: list[ResolvedResource] = []
+    for sc_id, title, slug, summary, level, primary_hit in rows:
+        if str(sc_id) in exclude_sc_ids:
+            continue
+        score = _SECTION_BASE + (50 if primary_hit else 0)
+        out.append(ResolvedResource(
+            resource_type="study_content", title=title or "Untitled", source="section_match",
+            reference={"kind": "study_content", "id": str(sc_id), "slug": slug, "summary": summary},
+            cert_level=level, score=float(score),
+            why=("NETA " + section + " primary-section study content") if primary_hit
+                 else ("NETA " + section + " related (secondary) study content"),
+        ))
+    return out
