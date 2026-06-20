@@ -1,5 +1,12 @@
 from .db import connect
-from .models import AssessmentSummary, ContentProgress, UserNotFoundError
+from .models import (
+    AssessmentSummary,
+    CompetencyRollup,
+    ConceptRef,
+    ContentProgress,
+    LevelCoverage,
+    UserNotFoundError,
+)
 
 
 def _require_user(conn, user_id: str) -> None:
@@ -77,3 +84,92 @@ def assessment_summary(user_id: str) -> list[AssessmentSummary]:
         )
         for r in rows
     ]
+
+
+ALL_LEVELS = ["II", "III", "IV"]
+
+
+def _resolve_level(conn, user_id, level):
+    if level is not None:
+        return level, "explicit", [level]
+    row = conn.execute(
+        "select target_certification_level, current_certification_level from user_profiles where id=%s",
+        (user_id,),
+    ).fetchone()
+    target, current = row
+    if target is not None:
+        return target, "target", [target]
+    if current is not None:
+        return current, "current", [current]
+    return "all", "all", list(ALL_LEVELS)
+
+
+def competency_rollup(user_id: str, level: str | None = None) -> CompetencyRollup:
+    with connect() as conn:
+        _require_user(conn, user_id)
+        resolved, source, scope = _resolve_level(conn, user_id, level)
+
+        evidence_event_count = conn.execute(
+            """select count(*) from learning_events
+               where user_id=%s and event_type in ('resource_completed','assessment_completed')
+                 and study_content_id is not null""",
+            (user_id,),
+        ).fetchone()[0]
+
+        # covered ksa_code grouped by level (active maps, level-pinned, orphans dropped by the
+        # inner join). NOTE: this is computed across ALL reachable levels; the `scope` loop below
+        # is what filters to levels_in_scope -- the SQL is intentionally not scope-pinned.
+        covered_rows = conn.execute(
+            """
+            with evidence as (
+              select distinct study_content_id as content_id from learning_events
+              where user_id=%s and event_type in ('resource_completed','assessment_completed')
+                and study_content_id is not null
+            ),
+            covered as (
+              select distinct k.ksa_code, k.certification_level::text as lvl
+              from evidence ev
+              join content_concept_links ccl on ccl.content_id = ev.content_id
+              join edition_ksa_map ekm on ekm.concept_id = ccl.concept_id and ekm.is_active
+              join ksas k on k.ksa_code = ekm.ksa_code and k.certification_level::text = ekm.level
+            )
+            select lvl, count(distinct ksa_code) from covered group by lvl
+            """,
+            (user_id,),
+        ).fetchall()
+        covered_by_level = {lvl: n for lvl, n in covered_rows}
+
+        totals = dict(
+            conn.execute(
+                "select certification_level::text, count(distinct ksa_code) from ksas group by 1"
+            ).fetchall()
+        )
+
+        engaged = conn.execute(
+            """
+            with evidence as (
+              select distinct study_content_id as content_id from learning_events
+              where user_id=%s and event_type in ('resource_completed','assessment_completed')
+                and study_content_id is not null
+            )
+            select distinct c.concept_id, c.concept_description
+            from evidence ev
+            join content_concept_links ccl on ccl.content_id = ev.content_id
+            join concepts c on c.concept_id = ccl.concept_id
+            order by c.concept_id
+            """,
+            (user_id,),
+        ).fetchall()
+
+    coverage = []
+    for lvl in scope:
+        total = totals.get(lvl, 0)
+        cov = covered_by_level.get(lvl, 0)
+        pct = round(100.0 * cov / total, 1) if total > 0 else None
+        coverage.append(LevelCoverage(level=lvl, total_ksas_at_level=total, covered_ksas=cov, coverage_percent=pct))
+
+    return CompetencyRollup(
+        user_id=user_id, resolved_level=resolved, level_source=source, levels_in_scope=scope,
+        evidence_event_count=evidence_event_count, coverage=coverage,
+        engaged_concepts=[ConceptRef(concept_id=r[0], concept_description=r[1]) for r in engaged],
+    )
