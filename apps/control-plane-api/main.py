@@ -94,7 +94,16 @@ app.include_router(work_router)
 # else; the work schema registry stays at 22 and the
 # ``/api/v1/work/*`` path count stays at 15.
 app.include_router(ops_router)
-app.include_router(learning_router)
+
+
+def _learning_routes_enabled() -> bool:
+    # learning_dev is host-only (mesh PG17); on Render no learning DSN is set -> do not expose
+    # routes that would 500. Keyed on the learning-specific config, NOT the generic PGPASSWORD.
+    return bool(os.environ.get("LEARNING_DEV_DSN") or os.environ.get("LEARNING_DEV_PGPASSWORD"))
+
+
+if _learning_routes_enabled():
+    app.include_router(learning_router)
 
 # ── PM idempotency seam: swap to durable DB-backed backend ──
 # Packet 2026-04-16-pm-schema-019f

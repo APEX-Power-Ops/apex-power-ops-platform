@@ -5,7 +5,32 @@ client = TestClient(app)
 
 
 def test_missing_section_is_400():
-    assert client.get("/api/v1/learning/resources").status_code == 422  # FastAPI required-param
+    assert client.get("/api/v1/learning/resources").status_code == 400
+
+
+def test_blank_section_is_400():
+    assert client.get("/api/v1/learning/resources", params={"neta_section": "   "}).status_code == 400
+
+
+def test_invalid_level_is_400():
+    r = client.get("/api/v1/learning/resources", params={"neta_section": "7.2.1.1", "level": "banana"})
+    assert r.status_code == 400
+
+
+def test_sections_endpoint_lists_known_section():
+    r = client.get("/api/v1/learning/sections")
+    assert r.status_code == 200
+    assert "7.2.1.1" in r.json()["sections"]
+
+
+def test_learning_routes_guarded_by_env(monkeypatch):
+    from main import _learning_routes_enabled
+    monkeypatch.delenv("LEARNING_DEV_DSN", raising=False)
+    monkeypatch.delenv("LEARNING_DEV_PGPASSWORD", raising=False)
+    assert _learning_routes_enabled() is False
+    monkeypatch.setenv("LEARNING_DEV_DSN", "host=127.0.0.1 dbname=learning_dev")
+    assert _learning_routes_enabled() is True
+
 
 def test_unknown_section_returns_empty_200():
     r = client.get("/api/v1/learning/resources", params={"neta_section": "9.9.9.9-nope"})
