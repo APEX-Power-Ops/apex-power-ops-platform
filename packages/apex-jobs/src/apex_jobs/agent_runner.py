@@ -4,16 +4,26 @@ open a promotion gate on success. Offline-testable by injecting agent_cmd (the
 fake agent), so the whole runner is exercised without claude / tokens / OAuth.
 
 REPO + RUNS_DIR are resolved at call time from the env so tests can redirect them.
+run_pool() fans execution out across threads, bounded by `concurrency`.
 """
 import os
 import subprocess
 import threading
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 
 from . import engine
 
 DEFAULT_REPO = os.path.expanduser("~/code/apex/apex-orch-lane")
 DEFAULT_RUNS_DIR = os.path.expanduser("~/.apex-jobs/runs")
 TIMEOUT_S = int(os.environ.get("APEX_JOBS_AGENT_TIMEOUT_S", "3600"))
+
+# Serialize the git worktree-admin plumbing (remove / branch -D / worktree add)
+# across pool threads: `git worktree add` and ref deletes briefly lock the shared
+# repo, so concurrent setup would race on index.lock / packed-refs. The agent
+# subprocess — the part we actually want to run in parallel — runs OUTSIDE this
+# lock, as do per-worktree `add`/`commit` (distinct index + distinct ref) and the
+# read-only diff.
+_WORKTREE_LOCK = threading.Lock()
 
 # Per-target headless agent command templates; {prompt} is substituted. Exact
 # claude flags are pinned in Task 0 Step 4 before the live path is trusted.
@@ -54,9 +64,10 @@ def run_agent_job(job, env, as_="cc", agent_cmd=None):
     branch = f"job/{job['dispatch_id']}"
     wt = os.path.join(runs, job["dispatch_id"])
     os.makedirs(runs, exist_ok=True)
-    _git("worktree", "remove", "--force", wt, cwd=repo, check=False)   # idempotent (requeue-safe)
-    _git("branch", "-D", branch, cwd=repo, check=False)
-    _git("worktree", "add", "-b", branch, wt, base_ref, cwd=repo)
+    with _WORKTREE_LOCK:                                            # serialize repo-admin plumbing
+        _git("worktree", "remove", "--force", wt, cwd=repo, check=False)   # idempotent (requeue-safe)
+        _git("branch", "-D", branch, cwd=repo, check=False)
+        _git("worktree", "add", "-b", branch, wt, base_ref, cwd=repo)
 
     prompt = (job.get("payload") or {}).get("prompt", "")
     argv = agent_cmd or _agent_argv(job.get("target", "cc"), prompt)
@@ -96,3 +107,39 @@ def run_agent_job(job, env, as_="cc", agent_cmd=None):
         engine.open_promotion(job["id"])
     return {"job": job["dispatch_id"], "run": str(run_id), "status": status,
             "no_changes": result["no_changes"]}
+
+
+def _run_one(job, env, as_, agent_cmd):
+    """Dispatch one already-claimed job: agent → the runner, command → the worker
+    (lazy import avoids an import cycle — worker imports engine, agent_runner does too)."""
+    if job.get("kind") == "agent":
+        return run_agent_job(job, env, as_=as_, agent_cmd=agent_cmd)
+    from .worker import _run_command_job
+    return _run_command_job(job, env, as_)
+
+
+def run_pool(as_, env, concurrency=4, agent_cmd=None, max_jobs=None):
+    """Drain eligible jobs, at most `concurrency` executing at once, until the queue
+    is empty and every in-flight job finishes (or `max_jobs` have completed). Claims
+    run serially on this thread — FOR UPDATE SKIP LOCKED already makes concurrent
+    claiming safe, but serial claiming keeps ordering deterministic; only execution
+    fans out. Returns the list of per-job summaries (claim order is not guaranteed)."""
+    results, in_flight = [], set()
+    submitted = 0
+    with ThreadPoolExecutor(max_workers=concurrency) as ex:
+        while True:
+            engine.reap()                                   # opportunistic crash recovery
+            while len(in_flight) < concurrency and (max_jobs is None or submitted < max_jobs):
+                job = engine.claim(as_=as_, env=env)
+                if job is None:
+                    break
+                in_flight.add(ex.submit(_run_one, job, env, as_, agent_cmd))
+                submitted += 1
+            if not in_flight:
+                break                                       # queue drained, nothing running
+            done, in_flight = wait(in_flight, return_when=FIRST_COMPLETED)
+            for fut in done:
+                results.append(fut.result())
+            if max_jobs is not None and len(results) >= max_jobs:
+                break
+    return results
