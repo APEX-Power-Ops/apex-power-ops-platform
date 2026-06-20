@@ -57,8 +57,12 @@ infra/.env
 # uv: the root pyproject.toml is a bootstrap stub (not a [tool.uv.workspace]),
 # so running uv at the repo root regenerates a trivial root lock as untracked
 # noise. Ignore the root lock only (anchored) -- real per-package locks such
-# as packages/apex-jobs/uv.lock stay tracked.
+# as packages/apex-jobs/uv.lock stay tracked (apex-jobs has a real uv workspace).
+# Deployers that build via requirements.txt (control-plane-api) and packages that
+# are consumed as editable deps (learning-resolver) do NOT commit their lock files.
 /uv.lock
+apps/control-plane-api/uv.lock
+packages/learning-resolver/uv.lock
 
 # real client estimator workbooks (never committed)
 packages/ops-intake/_data/
