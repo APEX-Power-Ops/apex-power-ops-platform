@@ -63,6 +63,7 @@ infra/.env
 /uv.lock
 apps/control-plane-api/uv.lock
 packages/learning-resolver/uv.lock
+packages/learning-capture/uv.lock
 
 # real client estimator workbooks (never committed)
 packages/ops-intake/_data/
