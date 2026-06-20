@@ -139,7 +139,10 @@ def run_pool(as_, env, concurrency=4, agent_cmd=None, max_jobs=None):
                 break                                       # queue drained, nothing running
             done, in_flight = wait(in_flight, return_when=FIRST_COMPLETED)
             for fut in done:
-                results.append(fut.result())
+                try:
+                    results.append(fut.result())
+                except Exception as exc:    # isolate one job's failure; its run is left for the reaper
+                    results.append({"error": str(exc)})
             if max_jobs is not None and len(results) >= max_jobs:
                 break
     return results

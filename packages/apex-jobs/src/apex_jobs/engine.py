@@ -441,6 +441,16 @@ def _advance_base_ref(repo, base, newsha, oldsha):
     return _git("update-ref", f"refs/heads/{base}", newsha, oldsha, cwd=repo, check=False)
 
 
+def _commit_promotion(conn, cur, job_id, by):
+    """Record a successful promotion (job succeeded + promotion gate approved) and
+    commit. Factored out as a seam so a test can inject a post-CAS DB failure and
+    verify that promote() rolls the base ref back."""
+    cur.execute("update jobs.job set status='succeeded', updated_at=now() where id=%s", (job_id,))
+    cur.execute("update jobs.gate set state='approved', decided_at=now(), decided_by=%s "
+                "where job_id=%s and gate_type='promotion' and state='pending'", (by, job_id))
+    conn.commit()
+
+
 def promote(ident, by="operator", repo=None):
     """Merge the reviewed agent branch job/<dispatch_id> into its base_ref via a
     --no-ff merge built in a throwaway detached worktree, then advance base with a
@@ -521,12 +531,7 @@ def promote(ident, by="operator", repo=None):
 
         # base advanced -> record success atomically (DB commit is the commit point).
         try:
-            cur.execute("update jobs.job set status='succeeded', updated_at=now() where id=%s",
-                        (job["id"],))
-            cur.execute("update jobs.gate set state='approved', decided_at=now(), decided_by=%s "
-                        "where job_id=%s and gate_type='promotion' and state='pending'",
-                        (by, job["id"]))
-            conn.commit()
+            _commit_promotion(conn, cur, job["id"], by)
         except Exception:
             with lock:                      # undo the irreversible base advance on a record-keeping failure
                 _advance_base_ref(repo, base, oldsha, newsha)
