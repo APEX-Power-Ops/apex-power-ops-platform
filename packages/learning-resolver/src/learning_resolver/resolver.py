@@ -51,7 +51,7 @@ def _curated(conn, apt_ids: list[str]) -> list[ResolvedResource]:
             title, ref, level = sc_title, {"kind": "study_content", "id": str(sc_id),
                                            "slug": sc_slug, "summary": sc_summary}, sc_level
         elif np_id is not None:
-            title, ref, level = np_title, {"kind": "neta_procedure", "section": np_section}, None
+            title, ref, level = np_title, {"kind": "neta_procedure", "section": np_section, "id": str(np_id)}, None
         else:
             title, ref, level = (rname or "Linked resource"), {"kind": "url", "url": url}, None
         score = (_CURATED_BASE + (100 if is_primary else 0) + (50 if is_mandatory else 0)
@@ -127,3 +127,14 @@ def resolve(neta_section: str, level: str | None = None, limit: int = 20) -> lis
             r.score += _level_boost(r.cert_level, level)
     items.sort(key=lambda r: (-r.score, r.title))
     return items[:limit]
+
+
+def list_sections(limit: int = 500) -> list[str]:
+    """Distinct NETA section numbers (seeds the demo typeahead). Read-only."""
+    with connect() as conn:
+        rows = conn.execute(
+            "select distinct section_number from neta_procedures "
+            "where section_number is not null order by section_number limit %s",
+            (limit,),
+        ).fetchall()
+    return [r[0] for r in rows]

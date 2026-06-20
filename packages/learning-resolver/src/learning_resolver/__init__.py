@@ -1,4 +1,4 @@
 from .models import ResolvedResource
-from .resolver import resolve
+from .resolver import list_sections, resolve
 
-__all__ = ["resolve", "ResolvedResource"]
+__all__ = ["resolve", "list_sections", "ResolvedResource"]
