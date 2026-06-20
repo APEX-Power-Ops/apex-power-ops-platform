@@ -22,3 +22,7 @@ class ResourcesContext(BaseModel):
 class ResourcesResponse(BaseModel):
     context: ResourcesContext
     resources: list[ResolvedResourceOut]
+
+
+class SectionsResponse(BaseModel):
+    sections: list[str]
