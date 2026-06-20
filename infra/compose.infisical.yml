@@ -1,9 +1,13 @@
 name: apex-infisical
 # Infisical self-host — platform secrets-distribution layer. MESH-ONLY.
 # Backing: dedicated `infisical` DB on the shared PG17 (apex-dev-pg) + a private Redis.
-# Container secrets come from gitignored infra/infisical/.env (0600; ENCRYPTION_KEY + AUTH_SECRET are Padloc-rooted ROOT tier).
-# Exposure: 127.0.0.1 (host-local) + mesh IP 100.64.0.1 ONLY — never 0.0.0.0.
-# Mesh traffic gated by infra/olares/headscale/infisical-mesh-acl.application.yaml.
+# apex-dev-pg lives on the external `infra_default` network (compose project `infra`,
+# from compose.dev-lanes.yml); we join it so the app resolves `apex-dev-pg` by name.
+# PG is bound only to 127.0.0.1/100.64.0.1, so host-gateway can't reach it — shared
+# docker network is required.
+# Container secrets come from gitignored infra/infisical/.env (0600; ENCRYPTION_KEY +
+# AUTH_SECRET are Padloc-rooted ROOT tier). Exposure: 127.0.0.1 + mesh IP 100.64.0.1
+# ONLY — never 0.0.0.0. Mesh gated by infra/olares/headscale/infisical-mesh-acl.application.yaml.
 services:
   infisical:
     image: infisical/infisical:v0.161.3
@@ -15,7 +19,7 @@ services:
     ports:
       - "127.0.0.1:8222:8080"
       - "100.64.0.1:8222:8080"
-    networks: [apex-dev, infisical]
+    networks: [pgnet, infisical]
     restart: unless-stopped
   infisical-redis:
     image: redis:7-alpine
@@ -28,8 +32,8 @@ services:
       timeout: 5s
       retries: 5
 networks:
-  apex-dev:
+  pgnet:
     external: true
-    name: apex-dev
+    name: infra_default
   infisical:
     driver: bridge
