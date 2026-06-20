@@ -28,7 +28,7 @@ _WORKTREE_LOCK = threading.Lock()
 # Per-target headless agent command templates; {prompt} is substituted. Exact
 # claude flags are pinned in Task 0 Step 4 before the live path is trusted.
 AGENT_CMD = {
-    "cc": ["claude", "-p", "{prompt}", "--output-format", "json"],
+    "cc": ["claude", "-p", "{prompt}", "--output-format", "json", "--permission-mode", "acceptEdits"],
     "codex": ["codex", "exec", "{prompt}"],
 }
 
