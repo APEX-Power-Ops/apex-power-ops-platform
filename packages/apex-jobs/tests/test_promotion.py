@@ -277,3 +277,91 @@ def test_promote_uses_shared_worktree_lock(promo_env, monkeypatch):
     monkeypatch.setattr(agent_runner, "_WORKTREE_LOCK", TrackLock())
     engine.promote("p-lock")
     assert calls   # promote acquired agent_runner._WORKTREE_LOCK (the shared object), not a private lock
+
+
+def test_promote_rolls_back_base_on_db_failure(promo_env, monkeypatch):
+    # the most safety-critical branch: if recording success fails AFTER base was
+    # advanced, promote() must un-advance base (else moved-base-with-stale-job).
+    base, created, runs, _, _ = promo_env
+    _run_to_awaiting("p-rb", base, created)
+    base_before = _sha(f"refs/heads/{base}")
+
+    def boom(*a, **k):
+        raise RuntimeError("db boom")
+
+    monkeypatch.setattr(engine, "_commit_promotion", boom)
+    with pytest.raises(RuntimeError):
+        engine.promote("p-rb")
+    # the irreversible base advance was rolled back; nothing else mutated
+    assert _sha(f"refs/heads/{base}") == base_before
+    assert engine.get_job("p-rb")["status"] == "awaiting_promotion"
+    assert _promotion_states("p-rb") == ["pending"]
+    assert engine._ref_sha(REPO, "refs/heads/job/p-rb") is not None   # branch preserved (delete is post-commit)
+
+
+def test_promote_concurrent_double_is_serialized(promo_env):
+    # two threads promote the same awaiting_promotion job; the row lock + CAS must
+    # let EXACTLY ONE win (no double-merge / clobbered base).
+    base, created, runs, _, _ = promo_env
+    _run_to_awaiting("p-cc", base, created)
+    barrier = threading.Barrier(2)
+    results = {}
+
+    def go(n):
+        barrier.wait()
+        try:
+            results[n] = ("ok", engine.promote("p-cc"))
+        except engine.PromoteError as e:
+            results[n] = ("refused", type(e).__name__)
+
+    threads = [threading.Thread(target=go, args=(i,)) for i in (0, 1)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    oks = [r for r in results.values() if r[0] == "ok"]
+    refused = [r for r in results.values() if r[0] == "refused"]
+    assert len(oks) == 1 and len(refused) == 1            # exactly one promotion won
+    assert engine.get_job("p-cc")["status"] == "succeeded"
+    assert _sha(f"{base}^2")                              # base advanced by a single no-ff merge
+
+
+def test_run_once_agent_gate_error_returns_gated(promo_env):
+    # a GateError from the agent path must be caught (mirroring the command path),
+    # never propagated to crash the poller.
+    base, created, runs, _, _ = promo_env
+    jid = engine.enqueue(dispatch_id="w-gate", title="agent", env_required="host",
+                         payload={"prompt": "x"})
+    with engine._conn() as c:
+        with c.cursor() as cur:
+            cur.execute("update jobs.job set kind='agent', base_ref=%s where id=%s", (base, jid))
+        c.commit()
+    with mock.patch.object(agent_runner, "run_agent_job",
+                           side_effect=engine.GateError("env gate")):
+        out = worker.run_once(as_="cc", env="host")
+    assert out == {"job": "w-gate", "gated": "env gate"}
+
+
+def test_run_forever_survives_job_exception(monkeypatch):
+    # a single job's exception must not kill the poll loop.
+    calls = {"run_once": 0, "reap": 0}
+
+    class _Stop(Exception):
+        pass
+
+    def fake_run_once(as_, env):
+        calls["run_once"] += 1
+        raise RuntimeError("job blew up")
+
+    def fake_reap():
+        calls["reap"] += 1
+
+    def fake_sleep(_s):
+        raise _Stop()   # break the otherwise-infinite loop after one idle cycle
+
+    monkeypatch.setattr(worker, "run_once", fake_run_once)
+    monkeypatch.setattr(worker.engine, "reap", fake_reap)
+    monkeypatch.setattr(worker.time, "sleep", fake_sleep)
+    with pytest.raises(_Stop):
+        worker.run_forever(as_="cc", env="host")
+    assert calls["run_once"] == 1 and calls["reap"] == 1   # exception swallowed, loop continued to reap+sleep

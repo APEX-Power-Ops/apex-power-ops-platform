@@ -125,3 +125,23 @@ def test_run_pool_concurrency(agent_env, tmp_path):
         peak = max(peak, cur)
     assert peak <= 3, f"pool exceeded concurrency cap: peak={peak}"
     assert peak >= 2, f"pool did not run agents in parallel: peak={peak}"
+
+
+def test_run_pool_isolates_failing_job(agent_env, monkeypatch):
+    base, created, runs = agent_env
+    for d in ("q-0", "q-1"):
+        _enqueue_agent_unclaimed(d, base, created)
+    real = agent_runner.run_agent_job
+
+    def maybe_fail(job, env, as_="cc", agent_cmd=None):
+        if job["dispatch_id"] == "q-0":
+            raise RuntimeError("agent blew up")
+        return real(job, env, as_=as_, agent_cmd=agent_cmd)
+
+    monkeypatch.setattr(agent_runner, "run_agent_job", maybe_fail)
+    res = agent_runner.run_pool(as_="cc", env="host", concurrency=2, agent_cmd=FAKE)
+    # one job blew up but the pool drained both and the other still completed
+    assert len(res) == 2
+    assert any("error" in r for r in res)
+    assert any(r.get("status") == "succeeded" for r in res)
+    assert engine.get_job("q-1")["status"] == "awaiting_promotion"
