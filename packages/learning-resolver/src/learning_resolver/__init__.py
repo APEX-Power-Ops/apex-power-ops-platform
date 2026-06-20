@@ -1,1 +1,4 @@
-# learning_resolver package - populated by subsequent tasks
+from .models import ResolvedResource
+from .resolver import resolve
+
+__all__ = ["resolve", "ResolvedResource"]

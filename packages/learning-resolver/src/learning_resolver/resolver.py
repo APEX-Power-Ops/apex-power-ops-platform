@@ -4,6 +4,7 @@ from .models import ResolvedResource
 
 _CURATED_BASE = 1000.0
 _SECTION_BASE = 500.0
+_LEVEL_RANK = {"II": 2, "III": 3, "IV": 4}
 
 
 def _apparatus_type_ids(conn, section: str) -> list[str]:
@@ -79,3 +80,29 @@ def _section_match(conn, section: str, exclude_sc_ids: set[str]) -> list[Resolve
                  else ("NETA " + section + " related (secondary) study content"),
         ))
     return out
+
+
+def _level_boost(resource_level: str | None, want: str | None) -> float:
+    if not want or not resource_level:
+        return 0.0
+    rl, wl = _LEVEL_RANK.get(resource_level), _LEVEL_RANK.get(want)
+    if rl is None or wl is None:
+        return 0.0
+    diff = abs(rl - wl)
+    return 30.0 if diff == 0 else (10.0 if diff == 1 else 0.0)
+
+
+def resolve(neta_section: str, level: str | None = None, limit: int = 20) -> list[ResolvedResource]:
+    if not neta_section or not neta_section.strip():
+        return []
+    with connect() as conn:
+        apt_ids = _apparatus_type_ids(conn, neta_section)
+        curated = _curated(conn, apt_ids)
+        seen = {r.reference["id"] for r in curated if r.reference.get("kind") == "study_content"}
+        section = _section_match(conn, neta_section, exclude_sc_ids=seen)
+    items = curated + section
+    if level:
+        for r in items:
+            r.score += _level_boost(r.cert_level, level)
+    items.sort(key=lambda r: (-r.score, r.title))
+    return items[:limit]
