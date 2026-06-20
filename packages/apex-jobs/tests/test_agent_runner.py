@@ -1,5 +1,6 @@
-"""TDD — agent-runner: worktree isolation + diff/result capture + promotion gate.
-Driven entirely by the offline fake agent (no claude, no tokens, no OAuth)."""
+"""TDD — agent-runner: worktree isolation + diff/result capture + promotion gate,
+plus the bounded-concurrency pool. Driven entirely by the offline fake agent
+(no claude, no tokens, no OAuth)."""
 import os
 import subprocess
 import sys
@@ -33,7 +34,9 @@ def agent_env(conn_test, tmp_path, monkeypatch):
     subprocess.run(["git", "-C", REPO, "branch", "-D", base], capture_output=True)
 
 
-def _enqueue_agent(disp, base, created, prompt="write a file"):
+def _enqueue_agent_unclaimed(disp, base, created, prompt="write a file"):
+    """Enqueue a kind='agent' job and leave it pending (NOT claimed) so run_pool
+    can claim it itself. Returns the job id."""
     created.append(disp)
     jid = engine.enqueue(dispatch_id=disp, title="agent job", env_required="host",
                          payload={"prompt": prompt})
@@ -42,6 +45,12 @@ def _enqueue_agent(disp, base, created, prompt="write a file"):
         with c.cursor() as cur:
             cur.execute("update jobs.job set kind='agent', base_ref=%s where id=%s", (base, jid))
         c.commit()
+    return jid
+
+
+def _enqueue_agent(disp, base, created, prompt="write a file"):
+    """Enqueue + claim — the single-job tests drive run_agent_job on the claimed job."""
+    _enqueue_agent_unclaimed(disp, base, created, prompt)
     return engine.claim(as_="cc", env="host")
 
 
@@ -78,3 +87,41 @@ def test_agent_job_no_changes(agent_env):
     assert r["status"] == "succeeded" and r["no_changes"] is True
     # promotion gate still opened so the reviewer sees "nothing to merge"
     assert any(g["gate_type"] == "promotion" for g in engine.gates_for("a-noop"))
+
+
+def test_run_pool_concurrency(agent_env, tmp_path):
+    base, created, runs = agent_env
+    probe = str(tmp_path / "probe.log")
+    disps = ["p-0", "p-1", "p-2", "p-3"]
+    for d in disps:
+        _enqueue_agent_unclaimed(d, base, created)
+
+    summaries = agent_runner.run_pool(
+        as_="cc", env="host", concurrency=3,
+        agent_cmd=FAKE + ["--probe", probe, "--sleep", "0.3"],
+    )
+
+    # every job ran to completion, each isolated in its own worktree
+    assert len(summaries) == 4
+    assert all(s["status"] == "succeeded" for s in summaries)
+    for d in disps:
+        assert engine.get_job(d)["status"] == "awaiting_promotion"
+    worktrees = {engine.runs_for(d)[-1]["worktree_path"] for d in disps}
+    assert len(worktrees) == 4, worktrees
+
+    # the pool never ran more than `concurrency` agents simultaneously, but did run
+    # them in parallel (a serial pool peaks at 1; an unbounded one at 4).
+    events = []
+    with open(probe) as f:
+        for line in f:
+            if not line.strip():
+                continue
+            kind, _pid, ts = line.split()
+            events.append((float(ts), 1 if kind == "START" else -1))
+    events.sort(key=lambda e: (e[0], e[1]))   # END (-1) before START (+1) at equal ts
+    peak = cur = 0
+    for _ts, delta in events:
+        cur += delta
+        peak = max(peak, cur)
+    assert peak <= 3, f"pool exceeded concurrency cap: peak={peak}"
+    assert peak >= 2, f"pool did not run agents in parallel: peak={peak}"

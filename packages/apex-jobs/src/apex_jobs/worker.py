@@ -12,12 +12,11 @@ import time
 from . import engine
 
 
-def run_once(as_, env):
-    """Claim and run one eligible job end-to-end. Returns a summary dict, None if
-    nothing was eligible, or {'job', 'gated'} if a gate refused it after claim."""
-    job = engine.claim(as_=as_, env=env)
-    if job is None:
-        return None
+def _run_command_job(job, env, as_):
+    """Run an already-claimed kind='command' job: open a run (enforcing the env +
+    approval gates), execute payload.command in a subprocess tagged with the worker
+    env, and record the ledger. Returns a summary dict, or {'job','gated'} if a gate
+    refused it at start(). Shared by run_once and the agent pool's _run_one."""
     try:
         run_id = engine.start(job["id"], claimed_by=as_, run_env=env)
     except engine.GateError as e:
@@ -33,6 +32,15 @@ def run_once(as_, env):
     )
     return {"job": job["dispatch_id"], "run": str(run_id),
             "status": status, "exit_code": proc.returncode}
+
+
+def run_once(as_, env):
+    """Claim and run one eligible job end-to-end. Returns a summary dict, None if
+    nothing was eligible, or {'job', 'gated'} if a gate refused it after claim."""
+    job = engine.claim(as_=as_, env=env)
+    if job is None:
+        return None
+    return _run_command_job(job, env, as_)
 
 
 def run_forever(as_, env, poll_s=5.0):
