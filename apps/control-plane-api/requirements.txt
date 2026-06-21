@@ -1,5 +1,6 @@
 # Runtime dependencies
 -e ../../packages/calc-engine
+-e ../../packages/ops-intake
 -e ../../packages/learning-resolver
 -e ../../packages/learning-capture
 -e ../../packages/learning-projections
