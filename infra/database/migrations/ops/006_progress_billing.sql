@@ -1167,6 +1167,8 @@ create or replace view ops.v_unbilled_recognition as
         and bl.is_voided = false
         and ba.status = 'issued'
     )
+    -- sub-cent guard: skip events that round to $0.00 (mirrors §8.4 positive-line rejection)
+    and round(e.recognized_amount, 2) <> 0
 
   union all
 
@@ -1201,7 +1203,9 @@ create or replace view ops.v_unbilled_recognition as
       where bl.recognition_event_id = e.id
         and bl.is_voided = false
         and ba.status = 'issued'
-    );
+    )
+    -- sub-cent guard: matches the sweep's explicit round(recognized_amount,2)<>0 skip
+    and round(e.recognized_amount, 2) <> 0;
 
 -- 9b. v_draft_preview
 --   Advisory per-draft would-be sweep (non-binding; recomputed fresh at issue time).

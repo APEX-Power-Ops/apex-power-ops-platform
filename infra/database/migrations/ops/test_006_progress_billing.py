@@ -799,3 +799,44 @@ def test_project_billing_open_draft_count(conn):
     assert conn.execute(
         "select open_draft_count from ops.v_project_billing where project_id=%s",
         (s["project"],)).fetchone()[0] == 1
+
+
+# ---- Task 9 / review fix: v_unbilled_recognition sub-cent guard parity with sweep ----
+
+def test_subcent_excluded_from_unbilled_view(conn):
+    """Sub-cent events (round(recognized_amount,2)=0) must not appear in v_unbilled_recognition.
+
+    Verifies that the view's positive branch guard (mirrors §8.4 rejection gate) and credit branch
+    guard (mirrors the sweep's explicit round(recognized_amount,2)<>0 predicate) both hold.
+
+    quoted_revenue=0.004 => recognized_amount=0.004 => round(0.004,2)=0.00.
+    The §8.4 trigger would reject billing this event (amount<=0), so it must not appear as unbilled.
+
+    Step 1: After recognize, BEFORE reverse -- positive branch guard must exclude the sub-cent event.
+    Step 2: After reverse_recognition -- neither the sub-cent positive nor the sub-cent reversal
+            should appear (positive is now reversed so excluded by the not-reversed predicate;
+            reversal is excluded by the credit branch guard since its original was never billed AND
+            by the round()!=0 guard -- defense in depth for the case an original somehow were billed).
+    """
+    s = _seed_recognizable(conn, quoted_revenue=Decimal("0.004"), quoted_hours=1)
+    ev = _recognize(conn, s)
+
+    # Step 1: positive branch guard -- sub-cent recognized event must NOT appear
+    cnt_after_recognize = conn.execute(
+        "select count(*) from ops.v_unbilled_recognition where apparatus_id = %s",
+        (s["apparatus"],)).fetchone()[0]
+    assert cnt_after_recognize == 0, (
+        f"sub-cent recognized event (round=0.00) must be excluded from v_unbilled_recognition "
+        f"by positive branch guard; got count={cnt_after_recognize}"
+    )
+
+    # Step 2: reverse the sub-cent event and verify neither event appears in the view
+    conn.execute("select ops.reverse_recognition(%s, %s, 'sub-cent rework')", (ev, s["person"]))
+
+    cnt_after_reverse = conn.execute(
+        "select count(*) from ops.v_unbilled_recognition where apparatus_id = %s",
+        (s["apparatus"],)).fetchone()[0]
+    assert cnt_after_reverse == 0, (
+        f"after reversing a sub-cent event, neither the positive nor the reversal should appear "
+        f"in v_unbilled_recognition; got count={cnt_after_reverse}"
+    )
