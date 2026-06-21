@@ -11,7 +11,7 @@
 
 Turn the working-but-bare Miner loader into a **server-side, governed, multi-project intake product**:
 
-> upload an Estimator `.xlsm` → server parses → validate → persist an auditable **intake run** → PM reviews/edits the **scope → task → apparatus** tree → **identity-gated approve** materializes & freezes the quote → operational.
+> upload an Estimator `.xlsm` → server parses → validate → persist an auditable **intake run** → PM reviews/edits the **scope → task → line** tree (apparatus are the QTY-expansion materialized at approve, shown read-only) → **identity-gated approve** materializes & freezes the quote → operational.
 
 The operational `ops.*` revenue substrate (Chips 1–4) is written **only at approve**. Everything before approve lives in the intake **envelope** and is fully reversible by discarding the run.
 
@@ -102,9 +102,9 @@ ops.intake_source_files
   run_id        uuid not null references ops.intake_runs(id) on delete cascade
   filename      text not null
   content_type  text not null              -- discriminator: 'xlsm' | 'json'
-  byte_size     bigint not null            -- enforced <= size cap at the boundary
+  byte_size     bigint not null            -- CHECK (>0 and <= 25 MB) -- audit-envelope guard, not only the API boundary
   sha256        text not null              -- hex; provenance + dedupe signal (identical re-upload detectable)
-  raw_bytes     bytea not null             -- Chip 5 KEEPS the artifact (re-parse + chain-of-custody); no storage_ref path
+  raw_bytes     bytea not null             -- Chip 5 KEEPS the artifact; CHECK octet_length(raw_bytes)=byte_size; no storage_ref path
   created_at    timestamptz
 
 ops.intake_validation_findings
@@ -151,12 +151,13 @@ The full client/site/contact set is retained in `intake_runs.canonical_payload_j
 - Edits permitted on the review payload: task rename/regroup, **move apparatus between tasks within a scope**, edit `hrs_per_unit`, edit metadata. **Forbidden: move apparatus across scopes** (Law 1) — rejected in the package and unreachable in the UI.
 
 ### 6.3 Approve — the only domain writer (D6 identity-gated; full-replacement materialization)
-`approve_run(dsn, run_id, *, approved_by) -> ApproveResult`, transactional, **under a project lock**:
+`approve_run(dsn, run_id, *, approved_by) -> ApproveResult`, transactional, **locking the intake_run row, then the project row (fixed order)**:
+0. `SELECT ... FROM ops.intake_runs WHERE id=run_id FOR UPDATE` — serializes concurrent approves of the same run before any status/conflict read (else a second approve reads `parsed`, blocks on the project lock, then mis-marks the now-approved run `revision_blocked`).
 1. Re-validate the current `review_payload`; **refuse (422) if any `blocking` finding is open** (incl. N4 reconciliation).
 2. Refuse (409) if `status != active` (not in `parsed`/`reviewing`) — e.g. a stale/superseded run (§6.4).
 3. Refuse (409) if `status = revision_blocked` (D5).
 4. `SELECT ... FOR UPDATE` the project row (by `project_number`; create it if new). **Re-check conflict under the lock** (frozen / **any** `revenue_recognition_event` exists / any `billing_application`) — if a conflict now exists that did not at `create_run` (the project changed mid-flight), mark the run `revision_blocked` and abort **409**. Closes the create→approve TOCTOU; also means the §6.3 delete can never encounter a ledger-FK'd row.
-5. **Full replacement of intake-owned children**: `DELETE` the project's **intake-owned** scopes (`legacy_source_id is not null`) → cascades tasks/scope_quote/scope_quote_line/apparatus → then `INSERT` fresh from the review payload, creating **tasks** from `section` (with `legacy_source_id=<section>`) and linking `apparatus.task_id`. Guarantees **no stale rows** for re-intake of an unfrozen project; safe because steps 3–4 guarantee no recognition/billing FK references exist. Project row updated in place (stable `project_id`).
+5. **Full replacement of intake-owned children**: `DELETE` the project's **intake-owned** scopes (`source='ops-intake'` — the materialize step stamps this exclusive owner marker on every row it writes; NOT the generic `legacy_source_id`, which is a per-row key) → cascades tasks/scope_quote/scope_quote_line/apparatus → then `INSERT` fresh from the review payload, creating **tasks** from `section` (with `legacy_source_id=<section>`) and linking `apparatus.task_id`. Guarantees **no stale rows** for re-intake of an unfrozen project; safe because steps 3–4 guarantee no recognition/billing FK references exist. Project row updated in place (stable `project_id`).
 6. Freeze: set `scope_quote.is_frozen/frozen_at`, compute `apparatus.quoted_revenue = round(quoted_hours × blended_rate, 2)`, `provenance_status='approved'` — **project-scoped** (never touches other projects).
 7. Set `intake_runs.status='approved'`, `approved_by/at`, link `project_id`.
 - **Removes upload-driven `standard_hours` mutation** (D4): the catalog is not written by intake at all.
@@ -186,7 +187,7 @@ Routes register **only when `OPS_DEV_DSN` is set** (env-gated like the learning 
 
 A new intake surface (against the host control-plane API → `ops_dev`):
 1. **Upload** — drop the `.xlsm`; show parse result + `source_format` + findings (**PM-safe `message` only**).
-2. **Review tree** — scope → task → apparatus, editable task groupings and `hrs_per_unit`, inline findings, run status. Cross-scope moves not offered.
+2. **Review tree** — scope → task → **line** (apparatus = QTY-expansion at approve, shown read-only), editable task groupings and `hrs_per_unit`, inline findings, run status. Cross-scope moves not offered.
 3. **Approve** — identity-gated; disabled while blocking findings are open or `revision_blocked` (shows the conflict + diff).
 - **D7 firewall:** the review/approve surface shows **structure, hours, validation, status — no dollars.** `quoted_revenue` is computed at approve and lives behind the finance gate; finding money values live only in the withheld `diagnostic_detail`.
 - Branding from `resa-complete-theme.json`.

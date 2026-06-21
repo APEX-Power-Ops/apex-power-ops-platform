@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Wrap the existing `ops-intake` engine in a server-side, governed, multi-project intake envelope — upload `.xlsm` → parse → review/edit the scope→task→apparatus tree → identity-gated approve materializes & freezes the quote — with `ops.*` written **only at approve**.
+**Goal:** Wrap the existing `ops-intake` engine in a server-side, governed, multi-project intake envelope — upload `.xlsm` → parse → review/edit the **scope→task→line** tree (the PM regroups lines into tasks + edits hours; apparatus are the QTY-expansion materialized at approve, shown read-only) → identity-gated approve materializes & freezes the quote — with `ops.*` written **only at approve**.
 
 **Architecture:** Four layers on `main@94db4727` (Chips 1–4): (A) migration `007` adds the envelope tables + DB guards; (B) `packages/ops-intake` is generalized so parse persists only to the envelope and approve is the sole domain writer (full-replacement under a project lock, with an approve-time conflict re-check); (C) a host-gated control-plane API exposes upload/preview/PATCH/approve/reject with findings finance-redaction; (D) an `operations-web` page gives the upload→review→approve UI (no dollars).
 
@@ -13,7 +13,8 @@
 - **Dev-only.** Nothing is applied to `ops_dev`/prod by the build. Migration/package/API tests run on **throwaway `ops_test`**; `ops_dev` is for operator review only. Merge to main is **operator-gated**.
 - **Test DSN pinning (hard safety rule):** every test that applies/tears-down schema or truncates pins the DSN at **`ops_test`** and **refuses any DSN whose dbname is not `ops_test`**. The migration-test idiom (`infra/database/migrations/ops/test_006_progress_billing.py`) is the template: `DSN = os.environ.get("OPS_DEV_DSN") or "...dbname=ops_test..."`.
 - **No operational writes before approve.** Parse/validate/PATCH touch only the envelope tables (`ops.intake_runs|intake_source_files|intake_validation_findings`). `ops.projects|scopes|tasks|apparatus|scope_quote|scope_quote_line|standard_hours` are written **only** inside `approve_run`.
-- **Approve is the only domain writer** and is **identity-gated** by `ops.persons(person_id)`.
+- **Approve is the only domain writer** and is **identity-gated** by `ops.persons(person_id)`. It takes `SELECT ... FOR UPDATE` on the **intake_run row first, then the project row** (fixed order; serializes concurrent approves of the same run before any status/conflict read).
+- **Intake ownership marker:** rows materialized by approve are stamped `source='ops-intake'`; full-replacement deletes the project's scopes **`where source='ops-intake'`** (cascade) — never the generic `legacy_source_id is not null`, which is a per-row stable key (used by the 003/007 unique indexes), not an exclusive owner marker.
 - **`recognized` conflict is membership, not balance:** any `ops.revenue_recognition_event` row existing for the project (EXISTS), never `net > 0`.
 - **Finance redaction:** findings carry a PM-safe `message` (no dollars) and a finance-only `diagnostic_detail`; API/UI return only `message`.
 - **Law 1:** apparatus never move across scopes; the DB guard backstops it.
@@ -167,6 +168,20 @@ def test_one_active_run_per_project(conn):
     mk("parsed")
     with pytest.raises(psycopg.errors.UniqueViolation):
         mk("reviewing")
+
+def test_approved_at_set_once_and_source_file_checks(conn):
+    who = _person(conn)
+    rid = conn.execute(
+        "insert into ops.intake_runs (project_number, status, source_format, payload_schema_version, parser_version,"
+        " canonical_payload_json, review_payload_json, uploaded_by, approved_by, approved_at) "
+        "values ('PA','approved','decomposed_scope_sheet','1','t','{}','{}',%s,%s, now()) returning id",
+        (who, who)).fetchone()[0]
+    with pytest.raises(psycopg.errors.RaiseException):                      # approved_at is set-once
+        conn.execute("update ops.intake_runs set approved_at = now() + interval '1 day' where id=%s", (rid,))
+    with pytest.raises(psycopg.errors.CheckViolation):                      # raw_bytes length must equal byte_size
+        conn.execute(
+            "insert into ops.intake_source_files (run_id, filename, content_type, byte_size, sha256, raw_bytes) "
+            "values (%s,'f.xlsm','xlsm', 999, 'x', %s)", (rid, b"short"))
 ```
 
 - [ ] **Step 2: Run it — expect FAIL** (`to_regclass` returns None / undefined relation). Command:
@@ -212,9 +227,9 @@ create table ops.intake_source_files (
   run_id       uuid not null references ops.intake_runs(id) on delete cascade,
   filename     text not null,
   content_type text not null check (content_type in ('xlsm','json')),
-  byte_size    bigint not null check (byte_size > 0),
+  byte_size    bigint not null check (byte_size > 0 and byte_size <= 26214400),  -- 25 MB audit-envelope cap
   sha256       text not null,
-  raw_bytes    bytea not null,
+  raw_bytes    bytea not null check (octet_length(raw_bytes) = byte_size),       -- stored artifact integrity
   created_at   timestamptz not null default now()
 );
 
@@ -248,6 +263,16 @@ begin
   end if;
   if old.approved_by is not null and new.approved_by is distinct from old.approved_by then
     raise exception 'intake_runs.approved_by is set-once (run %)', old.id;
+  end if;
+  if old.approved_at is not null and new.approved_at is distinct from old.approved_at then
+    raise exception 'intake_runs.approved_at is set-once (run %)', old.id;
+  end if;
+  -- approval shape: approved_by and approved_at are set together, and only on the approved status
+  if (new.approved_by is null) <> (new.approved_at is null) then
+    raise exception 'intake_runs approval requires approved_by and approved_at together (run %)', old.id;
+  end if;
+  if new.approved_by is not null and new.status <> 'approved' then
+    raise exception 'intake_runs approved_by set but status is % (run %)', new.status, old.id;
   end if;
   new.updated_at := now();
   return new;
@@ -582,7 +607,7 @@ def test_n4_default_is_info_when_reconciles():
   - `get_run(dsn, run_id) -> dict`.
   - Helper `_classify_conflict(cur, project_number) -> (project_id|None, conflict_kind)` — `recognized` if **any** `ops.revenue_recognition_event` row references the project; `billed` if any `ops.billing_application.project_id`; `frozen` if any `ops.scope_quote.is_frozen` for the project's scopes; precedence `billed>recognized>frozen`.
 
-- [ ] **Step 1: Update `conftest.py`** — add a session `apply_migrations` fixture (guarded to `ops_test`) chaining 001–007 + DOWN1 teardown, and extend `_OPS_TRUNCATE` to include `ops.tasks, ops.intake_validation_findings, ops.intake_source_files, ops.intake_runs`. (Guard: `assert "dbname=ops_test" in _dsn()` inside the fixture before any DDL.)
+- [ ] **Step 1: Update `conftest.py`** — (a) add a session **`apply_migrations` fixture with `autouse=True`** (chains 001–007, DOWN1 teardown); (b) extend `_OPS_TRUNCATE` to include `ops.tasks, ops.intake_validation_findings, ops.intake_source_files, ops.intake_runs`; (c) **put the `ops_test` safety guard at the TOP of `_dsn()` AND inside `clean_ops` _before_ the truncate** — `d = _dsn(); assert "dbname=ops_test" in d, "ops-intake DB tests must run on ops_test"` — not only in `apply_migrations`. The conftest's `_dsn()` default is `ops_dev`, and `clean_ops` truncates immediately ([conftest.py:30]); the guard must fire before any truncate so a mis-pinned run fails loudly instead of nuking Miner data.
 
 - [ ] **Step 2: Write failing test** (`test_envelope.py`):
 
@@ -632,7 +657,7 @@ def test_second_active_upload_supersedes(mini_workbook, clean_ops):
 **Files:** Modify `src/ops_intake/envelope.py`; Test `tests/test_envelope.py` (add).
 
 **Interfaces:**
-- Produces: `patch_review(dsn, run_id, *, review_payload: dict) -> dict` — replaces `review_payload_json`, bumps `review_payload_version`, re-runs `validate_payload`, replaces findings at the new version; returns the updated run. Only valid on `parsed`/`reviewing` runs (else `ValueError`/409 at the API). Exposes a pure helper `_assert_no_cross_scope_move(canonical: dict, review: dict) -> None` that raises `ValueError("cross-scope apparatus move forbidden")` when a line's `legacy_source_id` appears under a different `scope_name` than in the canonical payload — unit-testable directly with hand-built dicts.
+- Produces: `patch_review(dsn, run_id, *, review_payload: dict) -> dict` — replaces `review_payload_json`, bumps `review_payload_version`, re-runs `validate_payload`, replaces findings at the new version; returns the updated run. Only valid on `parsed`/`reviewing` runs (else `ValueError`/409 at the API). Exposes a pure helper `_assert_no_cross_scope_move(canonical: dict, review: dict) -> None` that raises `ValueError("cross-scope apparatus move forbidden")` when a line's `legacy_source_id` appears under a different `scope_name` than in the canonical payload — unit-testable directly with hand-built dicts. The review tree is **line-grain** (scope→task→line); apparatus are the QTY-expansion materialized at approve and are not individually edited, so membership is tracked at the **line** `legacy_source_id`.
 
 - [ ] **Step 1: Write failing test:**
 
@@ -674,7 +699,7 @@ def test_within_scope_regroup_ok():
 
 **Interfaces:**
 - Consumes: the run + `review_payload_json`; `load.py` row-builders.
-- Produces: `approve_run(dsn, run_id, *, approved_by: uuid) -> dict`. Transactional, under `SELECT ... FOR UPDATE` on the project row. Steps per spec §6.3: (1) refuse 422 if any open `blocking` finding; (2) refuse 409 if run not active; (3) refuse 409 if `revision_blocked`; (4) lock project (create if new) + **re-check conflict** (frozen / any recognition / any billing) → if now-conflicted, set `revision_blocked` + raise 409; (5) **full replacement**: delete intake-owned scopes (`legacy_source_id is not null`) for the project (cascade), insert fresh from `review_payload`, create tasks from `section` (`legacy_source_id=section`), link `apparatus.task_id`; (6) freeze (`is_frozen`, `quoted_revenue = round(quoted_hours*blended_rate,2)`, `provenance_status='approved'`); (7) set run `approved` + `approved_by/at` + `project_id`. **No `standard_hours` write.** Exposes the materialize primitive `materialize(cur, project_number, review_payload) -> None` (upsert project + delete intake-owned scopes cascade + insert fresh from payload, creating tasks from `section`), unit-testable directly.
+- Produces: `approve_run(dsn, run_id, *, approved_by: uuid) -> dict`. Transactional, **row locks in fixed order — intake_run first, then project**. Steps per spec §6.3: **(0) `SELECT ... FROM ops.intake_runs WHERE id=run_id FOR UPDATE`** before any status/finding read (without it a second concurrent approve reads `parsed`, blocks on the project lock, then mis-marks the now-approved run `revision_blocked`); (1) refuse 422 if any open `blocking` finding; (2) refuse 409 if run not active; (3) refuse 409 if `revision_blocked`; (4) `SELECT ... FOR UPDATE` the project (create if new) + **re-check conflict** (frozen / any recognition / any billing) → if now-conflicted, set `revision_blocked` + raise 409; (5) **full replacement**: delete the project's intake-owned scopes (**`where source='ops-intake'`**, cascade), insert fresh from `review_payload`, **stamping `source='ops-intake'`** on every materialized scope/task/scope_quote_line/apparatus, creating tasks from `section` (`legacy_source_id=section`), linking `apparatus.task_id`; (6) freeze (`is_frozen`, `quoted_revenue = round(quoted_hours*blended_rate,2)`, `provenance_status='approved'`); (7) set run `approved` + `approved_by/at` + `project_id`. **No `standard_hours` write.** Exposes the materialize primitive `materialize(cur, project_number, review_payload) -> None` (upsert project + delete `source='ops-intake'` scopes cascade + insert fresh stamping the marker + creating tasks from `section`), unit-testable directly.
 
 - [ ] **Step 1: Write failing tests** (`test_approve_envelope.py`):
 
@@ -731,7 +756,7 @@ def test_recognized_then_reversed_still_blocks(mini_workbook, clean_ops):
 ```
 
 - [ ] **Step 2: Run — FAIL.**
-- [ ] **Step 3: Implement `approve.py`** per the interface; refactor `load.py` so the per-row insert helpers (project upsert, scope, scope_quote, scope_quote_line, apparatus, **task**) are importable; delete the standard_hours loop and the inline `_approve`; the materialize step creates tasks keyed on `section` and sets `apparatus.task_id`.
+- [ ] **Step 3: Implement `approve.py`** per the interface; refactor `load.py` so the per-row insert helpers (project upsert, scope, scope_quote, scope_quote_line, apparatus, **task**) are importable and **stamp `source='ops-intake'`** on scope/task/scope_quote_line/apparatus; delete the standard_hours loop and the inline `_approve`; the materialize step deletes the project's `source='ops-intake'` scopes (cascade), inserts fresh, creates tasks keyed on `section`, and sets `apparatus.task_id`.
 - [ ] **Step 4: Flesh out the `recognized-then-reversed` test** using the Chip 3 `ops.approve_and_recognize` + `ops.reverse_recognition` functions (see `test_006` `_recognize` helper), asserting the re-`create_run` returns `conflict_kind='recognized'`, `status='revision_blocked'`, and zero new domain writes.
 - [ ] **Step 5: Run — PASS.**
 - [ ] **Step 6: Commit** (`-m "feat(ops-intake): approve_run -- sole domain writer, full-replacement under lock, TOCTOU re-check, freeze; drop catalog write"`)
@@ -788,7 +813,7 @@ if _ops_intake_enabled():
 **Interfaces (request/response, all under `/api/v1/ops/intake`):**
 - `POST ` (multipart `file`, form `uploaded_by`, `content_type`) — 413 if > 25 MB; → `{run_id, status, conflict_kind, source_format, review_payload, findings:[{code,severity,ok,message}]}` (**no `diagnostic_detail`**). Calls `ops_intake.envelope.create_run`.
 - `GET /{run_id}` → `{run..., review_payload, findings (PM-safe)}`.
-- `PATCH /{run_id}` body `{review_payload}` → updated run; 409 if not active; 400 on cross-scope move.
+- `POST /{run_id}/review` body `{review_payload}` → updated run; 409 if not active; 400 on cross-scope move. **(POST, not PATCH** — the global CORS at `main.py:78` allows only GET/POST/OPTIONS, so a PATCH verb would be preflight-blocked in the browser.)
 - `POST /{run_id}/approve` body `{approved_by}` → 200 `{status:'approved'}`; 422 open blocking; 409 revision_blocked/not-active. Calls `approve_run`.
 - `POST /{run_id}/reject` body `{reason}` → `{status:'rejected'}`.
 
@@ -805,7 +830,7 @@ if _ops_intake_enabled():
 **Files:** Create `apps/operations-web/lib/estimator-intake.ts`; Test `apps/operations-web/tests/estimator-intake.unit.spec.ts`.
 
 **Interfaces:**
-- Produces: types `IntakeRun`, `IntakeFinding` (`{code, severity, ok, message}` — no money), `ScopeNode/TaskNode/ApparatusNode`; `buildTree(reviewPayload): ScopeNode[]` (scope→task→apparatus, hours only); `fetchRun/uploadWorkbook/patchReview/approveRun/rejectRun` calling `/api/v1/ops/intake*` (base URL via the existing browser-env pattern in `lib/browser-env.ts`).
+- Produces: types `IntakeRun`, `IntakeFinding` (`{code, severity, ok, message}` — no money), `ScopeNode/TaskNode/LineNode`; `buildTree(reviewPayload): ScopeNode[]` (scope→task→**line**, hours only; each line shows its apparatus-type × qty); `fetchRun/uploadWorkbook/editReview/approveRun/rejectRun` calling `/api/v1/ops/intake*` (base URL via `lib/browser-env.ts`); `editReview` issues **POST `/{run_id}/review`** (not PATCH — CORS).
 
 - [ ] **Step 1: Write failing unit test** — `buildTree` groups apparatus under tasks under scopes and exposes `hoursPerUnit`/`totalHours` but **no dollar fields**; a finding view-model carries `message` only.
 - [ ] **Step 2: Run — FAIL** (`pnpm --filter operations-web test:unit` or the repo's unit runner; see `package.json`).
@@ -819,7 +844,7 @@ if _ops_intake_enabled():
 
 **Files:** Create `apps/operations-web/app/pm-review/estimator-intake/page.tsx`; Test `apps/operations-web/tests/browser-shell.estimator-intake.smoke.spec.ts`.
 
-**Interfaces:** Consumes `lib/estimator-intake.ts`. A client page: upload control → on response render the scope→task→apparatus tree + findings (`message`) + status; editable `hrs_per_unit` + task regroup (within scope); an Approve button disabled while any blocking finding is open or status is `revision_blocked`. **No dollar values anywhere.**
+**Interfaces:** Consumes `lib/estimator-intake.ts`. A client page: upload control → on response render the scope→task→line tree (apparatus shown read-only as a per-line qty/expansion) + findings (`message`) + status; editable `hrs_per_unit` + line regroup into tasks (within scope); an Approve button disabled while any blocking finding is open or status is `revision_blocked`. **No dollar values anywhere.**
 
 - [ ] **Step 1: Write failing route-mocked smoke** (mirror `tests/browser-shell.pm-import-admission-plan.smoke.spec.ts`): `page.route('**/api/v1/ops/intake', ...)` returns a fixed run with a 2-scope tree + one blocking + one info finding; assert the tree renders, the Approve button is disabled (blocking open), and **`await expect(page.locator('body')).not.toContainText('$')`** (no dollars).
 - [ ] **Step 2: Run — FAIL** (page 404). Command: `pnpm --filter operations-web build && pnpm --filter operations-web exec playwright test browser-shell.estimator-intake -g "estimator"` (confirm exact scripts in `apps/operations-web/package.json`).
