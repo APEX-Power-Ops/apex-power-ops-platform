@@ -148,7 +148,7 @@ The full client/site/contact set is retained in `intake_runs.canonical_payload_j
 
 ### 6.2 Review/edit
 - `validate_payload(review_payload) -> Check[]` (the 3 existing checks + N4 reconciliation + format) computed against the **review** payload at its version; re-persisted as findings at the new `payload_version` on each review edit (each finding split into `message` + `diagnostic_detail`).
-- Edits permitted on the review payload: task rename/regroup, **move a LINE between tasks within a scope**, edit `hrs_per_unit`. **Forbidden: move a line across scopes** (Law 1) and any other mutation. Enforced by **an allowlist diff against canonical** (`_assert_review_within_allowlist`): same `project_number`, same scope-name set, the **exact same `line_uid` multiset** (no add/delete/duplicate), and per line **only `section` + `hrs_per_unit` mutable** — every other field (qty, apparatus_type, test_standard, scope-quote dollars, project fields) must equal canonical — plus the `line_uid`-keyed cross-scope guard. So approve can never materialize a doctored basis. Project/site metadata is read-only (persisted at approve); apparatus are the QTY-expansion at approve and are never individually edited.
+- Edits permitted on the review payload: task rename/regroup, **move a LINE between tasks within a scope**, edit `hrs_per_unit`. **Forbidden: move a line across scopes** (Law 1) and any other mutation. Enforced by a **default-deny allowlist diff against canonical** (`_assert_review_within_allowlist`): same `project_number`, same scope-name set, the **exact same `line_uid` multiset** (no add/delete/duplicate); each review line is matched to its canonical line **by `line_uid`** (not position), and per line **only `section` + `hrs_per_unit` are mutable** (qty/apparatus_type/test_standard/line_number pinned); at the scope level **every `scope_quote` field** must equal canonical — the 4 dollar categories AND `unit_multiplier`/`pct_adjust`/`total_quoted_hours`/`is_estimate` (M4/N4/J3 drive `blended_rate=P4/J3`); every project field pinned — plus the `line_uid`-keyed cross-scope guard. So approve can never materialize a doctored basis. Project/site metadata is read-only (persisted at approve); apparatus are the QTY-expansion at approve and are never individually edited.
 
 ### 6.3 Approve — the only domain writer (D6 identity-gated; full-replacement materialization)
 `approve_run(dsn, run_id, *, approved_by) -> ApproveResult`, transactional. **Lock order: advisory(`project_number`) → intake_run row → project → apparatus** — matches `create_run`'s order (advisory **before** the run row), which is what prevents the create-vs-approve deadlock:
@@ -199,6 +199,7 @@ A new intake surface (against the host control-plane API → `ops_dev`):
 - **No operational writes before approve** (the central new invariant).
 - Identity (`ops.persons`) on `uploaded_by` + `approved_by` (D6).
 - **Single active approvable run per `project_number`** (supersede lifecycle).
+- **Lock order** (deadlock-free, DAG-verified across Chips 3/4/5): `advisory(project_number) → intake_run → billing_application → project → recognition_event → apparatus`. `create_run` and `approve_run` both take the project advisory lock **before any row lock**.
 
 ## 10. Testing matrix (TDD, throwaway `ops_test`; `ops_dev` for operator review only)
 

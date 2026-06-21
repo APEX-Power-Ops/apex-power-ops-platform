@@ -694,7 +694,7 @@ def test_dsn_guard_blocks_non_ops_test():
 
 **Interfaces:**
 - Produces: `patch_review(dsn, run_id, *, review_payload: dict) -> dict` — replaces `review_payload_json`, bumps `review_payload_version`, re-runs `validate_payload`, replaces findings at the new version; returns the updated run. Only valid on `parsed`/`reviewing` runs (else `ValueError`/409 at the API). Exposes a pure helper `_assert_no_cross_scope_move(canonical: dict, review: dict) -> None` that builds a `line_uid → scope_name` map from each payload and raises `ValueError("cross-scope line move forbidden")` when any `line_uid` sits under a different `scope_name` in `review` than in `canonical`. The review tree is **line-grain** (scope→task→line); apparatus are the QTY-expansion materialized at approve and are not individually edited. **The guard keys on `line_uid`** (the stable parse-time identity from Task 4) — NOT `legacy_source_id` (absent from payload lines — it is synthesized only at DB write) and NOT `line_number` (scope-relative, collides on a move).
-- **Also exposes `_assert_review_within_allowlist(canonical: dict, review: dict) -> None`** — the integrity gate. The review payload may differ from canonical ONLY in allowed ways: same `project_number`; same set of `scope_name`s; the **exact same multiset of `line_uid`s** (no added/deleted/duplicated line); per line, **only `section` (task regroup) and `hrs_per_unit` are mutable** — `qty`/`apparatus_type`/`test_standard`/`line_number`, every `scope_quote` dollar field, and every project field must equal canonical; task names may be renamed. Any other drift raises `ValueError`. `patch_review` calls **both** guards before persisting. Without this, a caller could tamper `qty`/type/dollars/`project_number` or inject lines and approve would materialize the altered basis.
+- **Also exposes `_assert_review_within_allowlist(canonical: dict, review: dict) -> None`** — the integrity gate, **default-deny** (pin everything except an explicit mutable set). The review payload may differ from canonical ONLY in allowed ways: same `project_number`; same set of `scope_name`s; the **exact same multiset of `line_uid`s** (no added/deleted/duplicated line); **each review line is joined to its canonical line BY `line_uid`** (a `line_uid→line` map, NOT positional — task regroup reorders lines; a positional diff would both false-reject regroups and miss a same-scope content swap), and per line **only `section` and `hrs_per_unit` are mutable** (`qty`/`apparatus_type`/`test_standard`/`line_number`/everything else pinned). At the **scope level, EVERY `scope_quote` field must equal canonical** — not just the 4 dollar categories but `unit_multiplier` (M4), `pct_adjust` (N4), `total_quoted_hours` (J3), `is_estimate` (M4/N4/J3 drive `blended_rate=P4/J3`, so a non-dollar tamper corrupts `quoted_revenue` just like a dollar one). Every project field pinned. Task names may be renamed. Any other drift raises `ValueError`. `patch_review` calls **both** guards before persisting — so approve can never materialize a doctored basis.
 
 - [ ] **Step 1: Write failing test:**
 
@@ -733,9 +733,13 @@ def test_within_scope_regroup_ok():
 
 def _canon():
     return {"project": {"project_number": "P1"},
-            "scopes": [{"scope_name": "A", "quote": {"onsite_labor": 1000},
+            "scopes": [{"scope_name": "A",
+                        "quote": {"onsite_labor": 1000, "offsite_labor": 0, "travel": 0, "outside_services": 0,
+                                  "unit_multiplier": 1, "pct_adjust": 1, "total_quoted_hours": 7},
                         "lines": [{"line_uid": "A:row1", "qty": 1, "apparatus_type": "X",
-                                   "test_standard": "ATS", "hrs_per_unit": 2.0, "section": "old"}]}]}
+                                   "test_standard": "ATS", "hrs_per_unit": 2.0, "section": "old"},
+                                  {"line_uid": "A:row2", "qty": 5, "apparatus_type": "Y",
+                                   "test_standard": "ATS", "hrs_per_unit": 1.0, "section": "old"}]}]}
 
 def test_allowlist_blocks_qty_and_dollar_tamper():
     bad = _canon(); bad["scopes"][0]["lines"][0]["qty"] = 99
@@ -745,8 +749,23 @@ def test_allowlist_blocks_qty_and_dollar_tamper():
     with pytest.raises(ValueError):
         _assert_review_within_allowlist(_canon(), bad2)
 
+def test_allowlist_blocks_multiplier_and_j3_tamper():
+    """M4/N4/J3 are NOT dollars but drive blended_rate=P4/J3 -- default-deny must pin them too."""
+    for field in ("unit_multiplier", "pct_adjust", "total_quoted_hours"):
+        bad = _canon(); bad["scopes"][0]["quote"][field] = 9
+        with pytest.raises(ValueError):
+            _assert_review_within_allowlist(_canon(), bad)
+
+def test_allowlist_blocks_same_scope_content_swap():
+    """Swapping two lines' qty/type while keeping their line_uids is caught by the line_uid-keyed diff."""
+    swap = _canon(); a, b = swap["scopes"][0]["lines"]
+    a["qty"], b["qty"] = b["qty"], a["qty"]                                  # row1 now carries row2's qty
+    a["apparatus_type"], b["apparatus_type"] = b["apparatus_type"], a["apparatus_type"]
+    with pytest.raises(ValueError):
+        _assert_review_within_allowlist(_canon(), swap)
+
 def test_allowlist_blocks_added_or_duplicated_line():
-    add = _canon(); add["scopes"][0]["lines"].append({"line_uid": "A:row2", "qty": 1})
+    add = _canon(); add["scopes"][0]["lines"].append({"line_uid": "A:row3", "qty": 1})
     with pytest.raises(ValueError):
         _assert_review_within_allowlist(_canon(), add)
     dup = _canon(); dup["scopes"][0]["lines"].append({**_canon()["scopes"][0]["lines"][0]})  # duplicate line_uid
@@ -759,7 +778,7 @@ def test_allowlist_allows_section_and_hours_edit():
 ```
 
 - [ ] **Step 2: Run — FAIL.**
-- [ ] **Step 3: Implement** `patch_review` — status guard (active runs only); run **`_assert_review_within_allowlist`** then **`_assert_no_cross_scope_move`** against `canonical_payload_json`; replace `review_payload_json`; bump `review_payload_version`; re-run `validate_payload` and replace findings at the new version.
+- [ ] **Step 3: Implement** `patch_review` — status guard (active runs only); run **`_assert_review_within_allowlist`** (build `line_uid→line` maps from canonical + review and compare each line **by `line_uid`**, not position; scope.quote is **default-deny** — pin all 8 fields) then **`_assert_no_cross_scope_move`** against `canonical_payload_json`; replace `review_payload_json`; bump `review_payload_version`; re-run `validate_payload` and replace findings at the new version.
 - [ ] **Step 4: Run — PASS.**
 - [ ] **Step 5: Commit** (`-m "feat(ops-intake): patch_review -- version bump, re-validate, cross-scope guard"`)
 
@@ -963,7 +982,7 @@ if _ops_intake_enabled():
 
 **Files:** Modify `reference/ops/00-MASTER-INDEX.md`, `infra/database/migrations/ops/MANIFEST.md`.
 
-- [ ] **Step 1:** In `00-MASTER-INDEX.md`: §6/G6 → mark the extractor as existing; §7 Chip 5 → "envelope/lifecycle/UI (extractor pre-existing)"; add a **D-OPS** row capturing: parse/envelope/approve separation · no-writes-before-approve · revision-refusal (recognized=EXISTS, +billing) · N4 mandatory for `.xlsm` · supersede lifecycle · full-replacement materialization · findings finance-redaction · **global lock order `intake_runs → projects → apparatus`** (always lock `ops.projects` before recognition/billing/apparatus rows) · **`source='ops-intake'` ownership marker + foreign-source refusal** · **Miner-coexistence decision** (legacy Miner rows are frozen/out-of-lifecycle; approve refuses a project bearing non-`ops-intake` rows; no auto-backfill) · **`line_uid`** payload line identity (distinct from the DB `legacy_source_id`).
+- [ ] **Step 1:** In `00-MASTER-INDEX.md`: §6/G6 → mark the extractor as existing; §7 Chip 5 → "envelope/lifecycle/UI (extractor pre-existing)"; add a **D-OPS** row capturing: parse/envelope/approve separation · no-writes-before-approve · revision-refusal (recognized=EXISTS, +billing) · N4 mandatory for `.xlsm` · supersede lifecycle · full-replacement materialization · findings finance-redaction · **global lock order `advisory(project_number) → intake_run → billing_application → project → recognition_event → apparatus`** (the verified partial order across Chips 3/4/5 — Chip 5 acquires advisory→run→project→apparatus; record the full chain so future writers respect it) · **`source='ops-intake'` ownership marker + foreign-source refusal** · **Miner-coexistence decision** (legacy Miner rows are frozen/out-of-lifecycle; approve refuses a project bearing non-`ops-intake` rows; no auto-backfill) · **`line_uid`** payload line identity (distinct from the DB `legacy_source_id`).
 - [ ] **Step 2:** MANIFEST.md → add row `007 | intake_envelope | Chip 5 | ...`.
 - [ ] **Step 3: Commit** (`-m "docs(ops): Chip 5 SSoT + MANIFEST -- intake envelope decisions"`). (RESUME_HERE + memory updates happen at the merge checkpoint, in the finish-branch task.)
 
