@@ -10,7 +10,10 @@ requires-python = ">=3.11"
 dependencies = ["psycopg[binary]>=3.1"]
 
 [project.optional-dependencies]
-test = ["pytest>=8.0.0"]
+test = ["pytest>=8.0.0", "learning-capture"]
+
+[tool.uv.sources]
+learning-capture = { path = "../learning-capture", editable = true }
 
 [tool.setuptools]
 package-dir = {"" = "src"}
