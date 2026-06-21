@@ -88,3 +88,43 @@ begin
 end $$;
 create trigger trg_intake_run_immutable before insert or update on ops.intake_runs
   for each row execute function ops.trg_intake_run_immutable();
+
+-- D1: apparatus.task_id must reference a task in the SAME scope.
+create or replace function ops.trg_apparatus_task_same_scope() returns trigger language plpgsql as $$
+declare v_task_scope uuid;
+begin
+  if new.task_id is not null then
+    select scope_id into v_task_scope from ops.tasks where id = new.task_id;
+    if v_task_scope is null or v_task_scope <> new.scope_id then
+      raise exception 'apparatus % task_id must be a task in scope % (got task scope %)',
+        coalesce(new.apparatus_designation,'?'), new.scope_id, v_task_scope;
+    end if;
+  end if;
+  return new;
+end $$;
+create trigger trg_apparatus_task_same_scope before insert or update on ops.apparatus
+  for each row execute function ops.trg_apparatus_task_same_scope();
+
+-- D1: tasks.scope_id is immutable once the row exists.
+create or replace function ops.trg_task_scope_immutable() returns trigger language plpgsql as $$
+begin
+  if new.scope_id is distinct from old.scope_id then
+    raise exception 'ops.tasks.scope_id is immutable (task %)', old.id;
+  end if;
+  return new;
+end $$;
+create trigger trg_task_scope_immutable before update on ops.tasks
+  for each row execute function ops.trg_task_scope_immutable();
+
+-- Intake idempotency for tasks (003 covered scopes/lines/apparatus but not tasks). Section is the stable key.
+create unique index uq_ops_tasks_intake on ops.tasks (scope_id, legacy_source_id)
+  where legacy_source_id is not null;
+
+-- D2: minimal source-derived project columns (NOT canonical CRM).
+alter table ops.projects
+  add column if not exists source_client_name   text,
+  add column if not exists source_site_name     text,
+  add column if not exists source_site_address  text,
+  add column if not exists source_site_city     text,
+  add column if not exists source_site_state    text,
+  add column if not exists source_site_zip      text;

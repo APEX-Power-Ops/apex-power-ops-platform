@@ -90,3 +90,39 @@ def test_source_file_byte_size_integrity(conn):
         conn.execute(
             "insert into ops.intake_source_files (run_id, filename, content_type, byte_size, sha256, raw_bytes) "
             "values (%s,'f.xlsm','xlsm', 999, 'x', %s)", (rid, b"short"))
+
+def _proj_scope(c):
+    pid = c.execute("insert into ops.projects (project_number, project_name) values (%s,'p') returning id",
+                    (f"P-{uuid.uuid4().hex[:6]}",)).fetchone()[0]
+    s1 = c.execute("insert into ops.scopes (project_id, scope_name) values (%s,'s1') returning id",(pid,)).fetchone()[0]
+    s2 = c.execute("insert into ops.scopes (project_id, scope_name) values (%s,'s2') returning id",(pid,)).fetchone()[0]
+    return pid, s1, s2
+
+def test_apparatus_task_must_match_scope(conn):
+    _, s1, s2 = _proj_scope(conn)
+    t1 = conn.execute("insert into ops.tasks (scope_id, task_name) values (%s,'t') returning id",(s1,)).fetchone()[0]
+    # same scope: ok
+    conn.execute("insert into ops.apparatus (scope_id, apparatus_designation, task_id) values (%s,'A',%s)",(s1,t1))
+    # cross scope: rejected
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute("insert into ops.apparatus (scope_id, apparatus_designation, task_id) values (%s,'B',%s)",(s2,t1))
+
+def test_task_scope_immutable(conn):
+    _, s1, s2 = _proj_scope(conn)
+    t1 = conn.execute("insert into ops.tasks (scope_id, task_name) values (%s,'t') returning id",(s1,)).fetchone()[0]
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute("update ops.tasks set scope_id=%s where id=%s",(s2,t1))
+
+def test_tasks_intake_unique(conn):
+    _, s1, _ = _proj_scope(conn)
+    conn.execute("insert into ops.tasks (scope_id, task_name, legacy_source_id) values (%s,'t','SEC-A')",(s1,))
+    with pytest.raises(psycopg.errors.UniqueViolation):
+        conn.execute("insert into ops.tasks (scope_id, task_name, legacy_source_id) values (%s,'t2','SEC-A')",(s1,))
+
+def test_source_columns_exist(conn):
+    cols = conn.execute(
+        "select column_name from information_schema.columns where table_schema='ops' and table_name='projects' "
+        "and column_name like 'source_%'").fetchall()
+    names = {r[0] for r in cols}
+    assert {'source_client_name','source_site_name','source_site_address','source_site_city',
+            'source_site_state','source_site_zip'} <= names
