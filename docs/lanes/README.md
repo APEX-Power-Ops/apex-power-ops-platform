@@ -54,7 +54,7 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 
 ### Lane: learning (enablement / capture + ROI)
 - **Scope:** the flagship learning lane — contextual resource surfacing (Slice 1, merged) + the capture/tracking path (Slice 2) — DEV ONLY.
-- **Branch:** `learning/slice2d-acquisition-pilot`   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
+- **Branch:** (none active -- Slice 2d machinery merged; next slice branches off main)   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
 - **Dev DB / schema:** `learning_dev` → `public.*` (frozen rev-2.3/2.4 baseline; lane isolation = the database, per separate-DB-per-lane D-ARCH-1)
 - **Write-boundary (OWNS):** `infra/database/migrations/learning/**`, `packages/learning-capture/**`,
   `packages/learning-resolver/**` (Slice-1 hardening), `packages/learning-projections/**` (Slice 2b), `apps/control-plane-api/services/learning/**`
@@ -64,7 +64,7 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 - **Must NOT touch:** `records.*` / `ops.*` migrations + packages; the parallel `packages/power-test-converters/**` WIP; prod Supabase.
 - **Gates (human-approval):** `schema` (each `learning_dev` migration apply; `001`/`002` **DONE 2026-06-20**); `data_write` (Slice 2d writes business data: cohort provisioning + event capture into `learning_dev` are operator-approved, distinct from schema apply); promotion (merge to main) is operator-gated.
 - **Escalation / owner:** CC (technical authority); operator gates schema apply + merge.
-- **Status:** active (Slices 1 + 2a + **2b** all MERGED to main; 2b projection engine = PR #24 → `3a1c45a9`. `learning_dev` apply DONE + e2e-verified. NEXT = real DATA ACQUISITION (the value gate) · 2c ROI correlation · management dashboard UI). Slice 2d controlled acquisition pilot IN PROGRESS (spec `2c9521d8`, plan `235abaed`).
+- **Status:** active (Slices 1 + 2a + **2b** all MERGED to main; 2b projection engine = PR #24 → `3a1c45a9`. `learning_dev` apply DONE + e2e-verified. NEXT = real DATA ACQUISITION (the value gate) · 2c ROI correlation · management dashboard UI). Slice 2d MACHINERY MERGED to main (PR #25 -> `f995238e`): guarded capture helper + CLI + provisioning scripts + e2e proof + runbook, dev-only. NEXT = the live rehearsal run (Task 6, `data_write`-gated, real subject) which produces the redacted evidence packet.
 
 > Merged/closed lanes (orchestration/chip3-apex-jobs, docs/chip2-governance-supersede) are pruned;
 > their work is on `main`.
