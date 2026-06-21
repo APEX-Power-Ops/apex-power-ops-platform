@@ -78,6 +78,10 @@
 | create_run: no domain writes + sha256 + supersede-only-if-active + conflict (recognized=EXISTS, +billing) | 8 |
 | review PATCH: version bump, re-validate, no cross-scope moves | 9 |
 | approve: identity-gated, full-replacement under lock, TOCTOU re-check, freeze, no standard_hours | 10 |
+| stable `line_uid` line key + cross-scope guard keyed on it (not legacy_source_id) | 4, 5, 9 |
+| foreign-source refusal + Miner coexistence decision | 10, 16 |
+| concurrency: create_run advisory lock + approve apparatus-lock + UniqueViolation→409 | 8, 10 |
+| project-qualified apparatus key + `__ungrouped__` null-section fallback + metadata write | 10 |
 | CLI | 11 |
 | API host-gating + route guard + editable install | 12 |
 | API routes + finance-redaction | 13 |
@@ -169,7 +173,9 @@ def test_one_active_run_per_project(conn):
     with pytest.raises(psycopg.errors.UniqueViolation):
         mk("reviewing")
 
-def test_approved_at_set_once_and_source_file_checks(conn):
+# NB: each failing statement aborts the txn, so a single test cannot chain two pytest.raises on the
+# same `conn` (the 2nd would see InFailedSqlTransaction, not the specific error). Split per assertion.
+def test_approved_at_is_set_once(conn):
     who = _person(conn)
     rid = conn.execute(
         "insert into ops.intake_runs (project_number, status, source_format, payload_schema_version, parser_version,"
@@ -178,7 +184,14 @@ def test_approved_at_set_once_and_source_file_checks(conn):
         (who, who)).fetchone()[0]
     with pytest.raises(psycopg.errors.RaiseException):                      # approved_at is set-once
         conn.execute("update ops.intake_runs set approved_at = now() + interval '1 day' where id=%s", (rid,))
-    with pytest.raises(psycopg.errors.CheckViolation):                      # raw_bytes length must equal byte_size
+
+def test_source_file_byte_size_integrity(conn):
+    who = _person(conn)
+    rid = conn.execute(
+        "insert into ops.intake_runs (project_number, source_format, payload_schema_version, parser_version,"
+        " canonical_payload_json, review_payload_json, uploaded_by) "
+        "values ('PB','decomposed_scope_sheet','1','t','{}','{}',%s) returning id", (who,)).fetchone()[0]
+    with pytest.raises(psycopg.errors.CheckViolation):                     # octet_length(raw_bytes) must == byte_size
         conn.execute(
             "insert into ops.intake_source_files (run_id, filename, content_type, byte_size, sha256, raw_bytes) "
             "values (%s,'f.xlsm','xlsm', 999, 'x', %s)", (rid, b"short"))
@@ -458,7 +471,7 @@ drop index if exists ops.uq_intake_one_active;
 - Test: `packages/ops-intake/tests/test_model.py`
 
 **Interfaces:**
-- Produces: `PAYLOAD_SCHEMA_VERSION = "1"`, `PARSER_VERSION` constant; `QuoteLineIn.section: str | None`; `ScopeQuoteIn.pct_adjust` already exists — confirm; `ProjectIn.client_name`, `site_name/address/city/state/zip/contact_name/contact_phone/contact_email`. `IntakePayload` unchanged shape (project/scopes/standard_hours) + these fields.
+- Produces: `PAYLOAD_SCHEMA_VERSION = "1"`, `PARSER_VERSION` constant; `QuoteLineIn.section: str | None` (the bold-header task-group label — **mutable**, it IS the regroup key) and **`QuoteLineIn.line_uid: str | None`** (a **stable, scope-independent, write-once payload line identity** minted at parse — the key the cross-scope guard AND materialize idempotency hang on; distinct from the DB-synthesized `scope_quote_line.legacy_source_id`); `ScopeQuoteIn.pct_adjust` already exists — confirm; `ProjectIn.client_name`, `site_name/address/city/state/zip/contact_name/contact_phone/contact_email`. `IntakePayload` unchanged shape (project/scopes/standard_hours) + these fields. **Why `line_uid`:** the canonical/review payload is `dataclasses.asdict(IntakePayload)`, so the cross-scope guard can only key on a field that actually exists on the line dict — `section` is mutable and `line_number` is scope-relative (collides on a move), so neither works; `line_uid` is the one stable anchor.
 
 - [ ] **Step 1: Write failing test** (`test_model.py` — add):
 
@@ -473,12 +486,17 @@ def test_line_carries_section():
     assert QuoteLineIn(apparatus_type="X", test_standard="ATS", qty=1, hrs_per_unit=2.0,
                        section="SES-00-001").section == "SES-00-001"
 
+def test_line_carries_stable_uid():
+    l = QuoteLineIn(apparatus_type="X", test_standard="ATS", qty=1, hrs_per_unit=2.0,
+                    section="SES-00-001", line_uid="ScopeA:row7")
+    assert l.line_uid == "ScopeA:row7"
+
 def test_schema_version_constant():
     assert PAYLOAD_SCHEMA_VERSION == "1"
 ```
 
 - [ ] **Step 2: Run — FAIL** (`section`/`client_name` unexpected kwarg; `PAYLOAD_SCHEMA_VERSION` missing).
-- [ ] **Step 3: Edit `model.py`** — add at top `PAYLOAD_SCHEMA_VERSION = "1"` and `PARSER_VERSION = "ops-intake/0.2.0"`; add `section: str | None = None` to `QuoteLineIn`; add to `ProjectIn`: `client_name: str | None = None`, `site_name/site_address/site_city/site_state/site_zip/site_contact_name/site_contact_phone/site_contact_email: str | None = None`. (`ScopeQuoteIn.pct_adjust` already exists.)
+- [ ] **Step 3: Edit `model.py`** — add at top `PAYLOAD_SCHEMA_VERSION = "1"` and `PARSER_VERSION = "ops-intake/0.2.0"`; add `section: str | None = None` **and `line_uid: str | None = None`** to `QuoteLineIn`; add to `ProjectIn`: `client_name: str | None = None`, `site_name/site_address/site_city/site_state/site_zip/site_contact_name/site_contact_phone/site_contact_email: str | None = None`. (`ScopeQuoteIn.pct_adjust` already exists.)
 - [ ] **Step 4: Extend `build_fixture.py`** — the synthetic scope sheet writes a bold `section` header row above its apparatus rows; set `N4` (the pct-adjust cell) explicitly = 1.0; add a `Dataverse_Import` sheet with `Client:`/`Site City:`/`Job #:` label-value rows. Keep the existing reconciliation (5 apparatus × 5h, P4 = 1000) intact.
 - [ ] **Step 5: Run the model + a fixture sanity test — PASS.** Command:
 
@@ -507,12 +525,14 @@ def test_extract_sections_and_metadata(mini_workbook):
     p = extract_workbook(mini_workbook)
     s = p.scopes[0]
     assert any(l.section for l in s.lines)              # section captured
+    assert all(l.line_uid for l in s.lines)             # stable per-line identity minted at parse
+    assert len({l.line_uid for sc in p.scopes for l in sc.lines}) == sum(len(sc.lines) for sc in p.scopes)  # unique
     assert abs(s.quote.pct_adjust - 1.0) < 1e-9         # N4 read
     assert p.project.client_name is not None            # metadata sheet read
 ```
 
 - [ ] **Step 2: Run — FAIL** (sections/metadata not populated).
-- [ ] **Step 3: Implement** — in `extract.py`: switch `load_workbook` to `data_only=True, read_only=True`; in the apparatus-row loop, track the current bold `section` header (mirror `DataverseExport.bas` `BuildApparatusJSON` section detection) and set `line.section`; add `_extract_metadata(wb)` reading the `Dataverse_Import` label/value rows (`Client:`, `Site Name`/`Project:`, `Site Address:`, `Site City:`, etc.) onto `ProjectIn`; read the N4 cell into `ScopeQuoteIn.pct_adjust` (the macro reads only `M4`; N4 is the adjacent pct-adjust cell — confirm the cell ref against the real Rev10 workbook, default 1.0 if blank).
+- [ ] **Step 3: Implement** — in `extract.py`: switch `load_workbook` to `data_only=True, read_only=True`; in the apparatus-row loop, track the current bold `section` header (mirror `DataverseExport.bas` `BuildApparatusJSON` section detection) and set `line.section`; **set `line.line_uid = f"{scope_name}:row{line_number}"`** (write-once; encodes the line's origin scope so a later cross-scope move is detectable, and is unique within the payload); add `_extract_metadata(wb)` reading the `Dataverse_Import` label/value rows (`Client:`, `Site Name`/`Project:`, `Site Address:`, `Site City:`, etc.) onto `ProjectIn`; read the N4 cell into `ScopeQuoteIn.pct_adjust` (the macro reads only `M4`; N4 is the adjacent pct-adjust cell — confirm the cell ref against the real Rev10 workbook, default 1.0 if blank).
 - [ ] **Step 4: Run — PASS** (+ the skip-gated `test_extract_real_workbook.py` if `MINER_WORKBOOK` is set on the host).
 - [ ] **Step 5: Commit** (`-m "feat(ops-intake): macro-parity parse -- section, client/site, N4; data_only read"`)
 
@@ -523,7 +543,7 @@ def test_extract_sections_and_metadata(mini_workbook):
 **Files:** Create `src/ops_intake/classify.py`; Test `tests/test_classify.py`.
 
 **Interfaces:**
-- Produces: `classify(payload: IntakePayload) -> str` returning `'decomposed_scope_sheet' | 'flat_quote' | 'unsupported'`. Rule: any scope with apparatus `lines` → `decomposed_scope_sheet`; scopes present but none bear lines → `flat_quote`; no scopes / no contract value → `unsupported`.
+- Produces: `classify(payload: IntakePayload) -> str` returning `'decomposed_scope_sheet' | 'flat_quote' | 'unsupported'`. Rule: **any scope bears apparatus `lines` → `decomposed_scope_sheet`** (regardless of contract_value — a 0/missing total is a `contract_total` blocking finding in Task 7, NOT a format rejection, so a parse glitch never silently rejects a loadable project); scopes present but none bear lines → `flat_quote`; **no scopes at all → `unsupported`**.
 
 - [ ] **Step 1: Write failing test:**
 
@@ -536,6 +556,11 @@ def _proj(): return ProjectIn(project_number="J", project_name="N", contract_val
 def test_decomposed():
     s = ScopeIn(scope_name="A", lines=[QuoteLineIn("X","ATS",1,2.0)])
     assert classify(IntakePayload(_proj(), [s])) == "decomposed_scope_sheet"
+
+def test_decomposed_even_with_zero_contract():
+    s = ScopeIn(scope_name="A", lines=[QuoteLineIn("X","ATS",1,2.0)])
+    p = IntakePayload(ProjectIn(project_number="J", project_name="N", contract_value=0.0), [s])
+    assert classify(p) == "decomposed_scope_sheet"   # 0 total is a finding, not a format rejection
 
 def test_flat_quote():
     assert classify(IntakePayload(_proj(), [ScopeIn(scope_name="A")])) == "flat_quote"
@@ -607,7 +632,7 @@ def test_n4_default_is_info_when_reconciles():
   - `get_run(dsn, run_id) -> dict`.
   - Helper `_classify_conflict(cur, project_number) -> (project_id|None, conflict_kind)` — `recognized` if **any** `ops.revenue_recognition_event` row references the project; `billed` if any `ops.billing_application.project_id`; `frozen` if any `ops.scope_quote.is_frozen` for the project's scopes; precedence `billed>recognized>frozen`.
 
-- [ ] **Step 1: Update `conftest.py`** — (a) add a session **`apply_migrations` fixture with `autouse=True`** (chains 001–007, DOWN1 teardown); (b) extend `_OPS_TRUNCATE` to include `ops.tasks, ops.intake_validation_findings, ops.intake_source_files, ops.intake_runs`; (c) **put the `ops_test` safety guard at the TOP of `_dsn()` AND inside `clean_ops` _before_ the truncate** — `d = _dsn(); assert "dbname=ops_test" in d, "ops-intake DB tests must run on ops_test"` — not only in `apply_migrations`. The conftest's `_dsn()` default is `ops_dev`, and `clean_ops` truncates immediately ([conftest.py:30]); the guard must fire before any truncate so a mis-pinned run fails loudly instead of nuking Miner data.
+- [ ] **Step 1: Update `conftest.py`** — (a) add a session **`apply_migrations` fixture with `autouse=True`** (chains 001–007, DOWN1 teardown); (b) extend `_OPS_TRUNCATE` to include `ops.tasks, ops.intake_validation_findings, ops.intake_source_files, ops.intake_runs`; (c) add a helper **`_require_ops_test(dsn)`** = `assert "dbname=ops_test" in dsn, "ops-intake DB tests must run on ops_test"`, and call it at the TOP of `_dsn()` AND inside `clean_ops` **before the truncate** (not only in `apply_migrations`). The conftest's `_dsn()` default is `ops_dev` and `clean_ops` truncates immediately ([conftest.py:30]); the guard must fire before any truncate so a mis-pinned run fails loudly instead of nuking Miner data. Exposing it as a named helper lets a test assert it raises.
 
 - [ ] **Step 2: Write failing test** (`test_envelope.py`):
 
@@ -643,10 +668,17 @@ def test_second_active_upload_supersedes(mini_workbook, clean_ops):
     with psycopg.connect(dsn) as c:
         assert c.execute("select status from ops.intake_runs where id=%s",(r1["run_id"],)).fetchone()[0]=="superseded"
         assert c.execute("select status from ops.intake_runs where id=%s",(r2["run_id"],)).fetchone()[0]=="parsed"
+
+def test_dsn_guard_blocks_non_ops_test():
+    """The conftest ops_test guard must raise for any non-ops_test DSN (protects ops_dev Miner data)."""
+    import pytest
+    from conftest import _require_ops_test
+    with pytest.raises(AssertionError):
+        _require_ops_test("host=127.0.0.1 port=5432 dbname=ops_dev user=postgres sslmode=disable")
 ```
 
 - [ ] **Step 3: Run — FAIL** (module missing).
-- [ ] **Step 4: Implement `envelope.py`** — `create_run` in one txn: extract→classify→`validate_payload`→`_classify_conflict`; decide status (`rejected` if format∈{flat_quote,unsupported}; else `revision_blocked` if conflict≠none; else `parsed`); **supersede prior active runs only if the new status is parsed/reviewing**; insert `intake_runs` (canonical==review payload via `dataclasses.asdict`), `intake_source_files`, findings. No domain writes. `get_run` reads the run + findings (PM-safe shaping happens at the API layer).
+- [ ] **Step 4: Implement `envelope.py`** — `create_run` in one txn: **first `cur.execute("select pg_advisory_xact_lock(hashtext(%s))", (project_number,))`** (serializes concurrent uploads of the same project so the supersede sees committed prior runs); then extract→classify→`validate_payload`→`_classify_conflict`; decide status (`rejected` if format∈{flat_quote,unsupported}; else `revision_blocked` if conflict≠none; else `parsed`); **supersede prior active runs only if the new status is parsed/reviewing**; insert `intake_runs` (canonical==review payload via `dataclasses.asdict`), `intake_source_files` (`sha256`, `byte_size`, `raw_bytes`), findings. Catch a residual `psycopg.errors.UniqueViolation` on `uq_intake_one_active` and raise a clean `ActiveRunExists` (→409), never a raw 500. No domain writes. `get_run` reads the run + findings (PM-safe shaping at the API layer).
 - [ ] **Step 5: Run — PASS.**
 - [ ] **Step 6: Commit** (`-m "feat(ops-intake): create_run envelope writer -- no domain writes, sha256, supersede, conflict classification"`)
 
@@ -657,12 +689,14 @@ def test_second_active_upload_supersedes(mini_workbook, clean_ops):
 **Files:** Modify `src/ops_intake/envelope.py`; Test `tests/test_envelope.py` (add).
 
 **Interfaces:**
-- Produces: `patch_review(dsn, run_id, *, review_payload: dict) -> dict` — replaces `review_payload_json`, bumps `review_payload_version`, re-runs `validate_payload`, replaces findings at the new version; returns the updated run. Only valid on `parsed`/`reviewing` runs (else `ValueError`/409 at the API). Exposes a pure helper `_assert_no_cross_scope_move(canonical: dict, review: dict) -> None` that raises `ValueError("cross-scope apparatus move forbidden")` when a line's `legacy_source_id` appears under a different `scope_name` than in the canonical payload — unit-testable directly with hand-built dicts. The review tree is **line-grain** (scope→task→line); apparatus are the QTY-expansion materialized at approve and are not individually edited, so membership is tracked at the **line** `legacy_source_id`.
+- Produces: `patch_review(dsn, run_id, *, review_payload: dict) -> dict` — replaces `review_payload_json`, bumps `review_payload_version`, re-runs `validate_payload`, replaces findings at the new version; returns the updated run. Only valid on `parsed`/`reviewing` runs (else `ValueError`/409 at the API). Exposes a pure helper `_assert_no_cross_scope_move(canonical: dict, review: dict) -> None` that builds a `line_uid → scope_name` map from each payload and raises `ValueError("cross-scope line move forbidden")` when any `line_uid` sits under a different `scope_name` in `review` than in `canonical`. The review tree is **line-grain** (scope→task→line); apparatus are the QTY-expansion materialized at approve and are not individually edited. **The guard keys on `line_uid`** (the stable parse-time identity from Task 4) — NOT `legacy_source_id` (absent from payload lines — it is synthesized only at DB write) and NOT `line_number` (scope-relative, collides on a move).
 
 - [ ] **Step 1: Write failing test:**
 
 ```python
 import pytest
+from dataclasses import asdict
+from ops_intake.extract import extract_workbook
 from ops_intake.envelope import create_run, patch_review, _assert_no_cross_scope_move
 
 def test_patch_bumps_version_and_revalidates(mini_workbook, clean_ops):
@@ -672,17 +706,23 @@ def test_patch_bumps_version_and_revalidates(mini_workbook, clean_ops):
     out = patch_review(dsn, r["run_id"], review_payload=rp)
     assert out["review_payload_version"] == 2
 
+def test_real_payload_lines_carry_line_uid(mini_workbook):
+    """Guard the guard: the REAL asdict payload must expose line_uid, else the cross-scope check is a no-op."""
+    p = asdict(extract_workbook(mini_workbook))
+    assert all(l.get("line_uid") for s in p["scopes"] for l in s["lines"])
+
 def test_cross_scope_move_rejected():
-    canon = {"scopes":[{"scope_name":"A","lines":[{"legacy_source_id":"A:1"}]},
-                       {"scope_name":"B","lines":[]}]}
-    moved = {"scopes":[{"scope_name":"A","lines":[]},
-                       {"scope_name":"B","lines":[{"legacy_source_id":"A:1"}]}]}
+    canon = {"scopes": [{"scope_name": "A", "lines": [{"line_uid": "A:row1"}]},
+                        {"scope_name": "B", "lines": []}]}
+    moved = {"scopes": [{"scope_name": "A", "lines": []},
+                        {"scope_name": "B", "lines": [{"line_uid": "A:row1"}]}]}
     with pytest.raises(ValueError):
         _assert_no_cross_scope_move(canon, moved)
 
 def test_within_scope_regroup_ok():
-    canon = {"scopes":[{"scope_name":"A","lines":[{"legacy_source_id":"A:1"}]}]}
-    same  = {"scopes":[{"scope_name":"A","lines":[{"legacy_source_id":"A:1","section":"new task"}]}]}
+    """Changing a line's section (task regroup) inside its own scope is allowed."""
+    canon = {"scopes": [{"scope_name": "A", "lines": [{"line_uid": "A:row1", "section": "old"}]}]}
+    same  = {"scopes": [{"scope_name": "A", "lines": [{"line_uid": "A:row1", "section": "NEW TASK"}]}]}
     _assert_no_cross_scope_move(canon, same)  # must not raise
 ```
 
@@ -699,7 +739,14 @@ def test_within_scope_regroup_ok():
 
 **Interfaces:**
 - Consumes: the run + `review_payload_json`; `load.py` row-builders.
-- Produces: `approve_run(dsn, run_id, *, approved_by: uuid) -> dict`. Transactional, **row locks in fixed order — intake_run first, then project**. Steps per spec §6.3: **(0) `SELECT ... FROM ops.intake_runs WHERE id=run_id FOR UPDATE`** before any status/finding read (without it a second concurrent approve reads `parsed`, blocks on the project lock, then mis-marks the now-approved run `revision_blocked`); (1) refuse 422 if any open `blocking` finding; (2) refuse 409 if run not active; (3) refuse 409 if `revision_blocked`; (4) `SELECT ... FOR UPDATE` the project (create if new) + **re-check conflict** (frozen / any recognition / any billing) → if now-conflicted, set `revision_blocked` + raise 409; (5) **full replacement**: delete the project's intake-owned scopes (**`where source='ops-intake'`**, cascade), insert fresh from `review_payload`, **stamping `source='ops-intake'`** on every materialized scope/task/scope_quote_line/apparatus, creating tasks from `section` (`legacy_source_id=section`), linking `apparatus.task_id`; (6) freeze (`is_frozen`, `quoted_revenue = round(quoted_hours*blended_rate,2)`, `provenance_status='approved'`); (7) set run `approved` + `approved_by/at` + `project_id`. **No `standard_hours` write.** Exposes the materialize primitive `materialize(cur, project_number, review_payload) -> None` (upsert project + delete `source='ops-intake'` scopes cascade + insert fresh stamping the marker + creating tasks from `section`), unit-testable directly.
+- Produces: `approve_run(dsn, run_id, *, approved_by: uuid) -> dict`. Transactional. **Global lock order: intake_runs → projects → apparatus** (record this in the SSoT, Task 16). Steps per spec §6.3:
+  - **(0)** `SELECT ... FROM ops.intake_runs WHERE id=run_id FOR UPDATE` before any status/finding read (serializes concurrent approves of the same run — else a second approve reads `parsed`, blocks downstream, then mis-marks the now-approved run `revision_blocked`).
+  - **(1)** refuse 422 if any open `blocking` finding; **(2)** refuse 409 if run not active; **(3)** refuse 409 if `revision_blocked`.
+  - **(4)** lock the project: `pg_advisory_xact_lock(hashtext(project_number))` (covers the brand-new-project case where no row exists to `FOR UPDATE`), then upsert+`SELECT ... FOR UPDATE` the project row, **then `SELECT id FROM ops.apparatus WHERE <project> FOR UPDATE`** so any in-flight Chip-3 `approve_and_recognize` (which locks apparatus rows, not the project) serializes and its event becomes visible. Then **re-check conflict** (frozen / **any** `revenue_recognition_event` EXISTS / any `billing_application`) → if now-conflicted, set `revision_blocked` + raise 409.
+  - **(4b) foreign-source guard:** if the project has any scope with `source IS DISTINCT FROM 'ops-intake'` (e.g. legacy Miner rows stamped `miner_rev10.xlsm`), **abort 409** — refuse to manage a project the intake engine does not own (prevents delete-by-marker from orphaning foreign rows). See the Miner-coexistence decision (Task 16 / spec §12).
+  - **(5) full replacement:** delete the project's scopes `where source='ops-intake'` (cascade), insert fresh from `review_payload`, **stamping `source='ops-intake'`** on every scope/task/scope_quote_line/apparatus **and on the project row**; create tasks from `section`, with a deterministic **`__ungrouped__`** fallback for null-section lines (so `tasks.legacy_source_id` is never null and `uq_ops_tasks_intake` always applies); set `scope_quote_line.legacy_source_id = line_uid` and `apparatus.legacy_source_id = f"{project_number}:{line_uid}:u{i}"` (**project-qualified** — `uq_ops_apparatus_intake` is GLOBALLY unique, so a bare scope-relative key collides across projects); link `apparatus.task_id`; write `ops.projects.source_client_name/source_site_*` from `review_payload.project`.
+  - **(6) freeze** (`is_frozen`, `quoted_revenue = round(quoted_hours*blended_rate,2)`, `provenance_status='approved'`); **(7)** set run `approved` + `approved_by/at` + `project_id`. **No `standard_hours` write.**
+- Exposes `materialize(cur, project_number, review_payload) -> None` (project upsert stamping `source='ops-intake'` + delete `source='ops-intake'` scopes cascade + insert fresh with the marker + tasks from `section`/`__ungrouped__` + `apparatus.legacy_source_id` project-qualified + source_* columns), unit-testable directly.
 
 - [ ] **Step 1: Write failing tests** (`test_approve_envelope.py`):
 
@@ -723,22 +770,47 @@ def test_approve_materializes_tasks_and_freezes(mini_workbook, clean_ops):
         assert c.execute("select count(*) from ops.standard_hours").fetchone()[0] == 0  # D4: no catalog write
         assert c.execute("select status from ops.intake_runs where id=%s",(r["run_id"],)).fetchone()[0]=="approved"
 
-def test_materialize_full_replacement_removes_stale(clean_ops):
-    """materialize() replaces intake-owned children -- a dropped line does not linger as a stale row."""
+def test_materialize_full_replacement_removes_all_children_and_spares_foreign(clean_ops):
+    """Full replacement removes ALL intake-owned children via the source='ops-intake' scope cascade; foreign rows survive."""
+    from ops_intake.approve import materialize
+    dsn = clean_ops
+    line  = {"apparatus_type":"X","test_standard":"ATS","qty":2,"hrs_per_unit":2.0,
+             "section":"S1","line_number":1,"line_uid":"A:row1"}
+    scope = {"scope_name":"A","legacy_source_id":"A",
+             "quote":{"onsite_labor":1000,"unit_multiplier":1,"pct_adjust":1,"total_quoted_hours":4},
+             "lines":[line]}
+    payload = {"project":{"project_number":"FR-1","project_name":"N","contract_value":1000.0}, "scopes":[scope]}
+    with psycopg.connect(dsn) as c:
+        pid = c.execute("insert into ops.projects (project_number,project_name,source) "
+                        "values ('OTHER','o','manual') returning id").fetchone()[0]
+        c.execute("insert into ops.scopes (project_id,scope_name,source) values (%s,'keep','manual')", (pid,))  # FOREIGN
+        materialize(c, "FR-1", payload); c.commit()
+        counts = lambda: {t: c.execute(f"select count(*) from ops.{t}").fetchone()[0]
+                          for t in ("scope_quote","scope_quote_line","tasks","apparatus")}
+        before = counts()
+        materialize(c, "FR-1", {**payload, "scopes": []}); c.commit()                       # drop the WHOLE scope
+        after = counts()
+        intake_scopes = c.execute("select count(*) from ops.scopes where source='ops-intake'").fetchone()[0]
+        foreign       = c.execute("select count(*) from ops.scopes where source='manual'").fetchone()[0]
+    assert before["apparatus"] == 2 and before["tasks"] >= 1
+    assert intake_scopes == 0 and all(v == 0 for v in after.values())   # every intake child gone, zero orphans
+    assert foreign == 1                                                  # the foreign scope was never touched
+
+def test_null_section_lines_are_idempotent(clean_ops):
+    """Lines with section=None get a deterministic __ungrouped__ task; re-materialize does not grow tasks."""
     from ops_intake.approve import materialize
     dsn = clean_ops
     scope = {"scope_name":"A","legacy_source_id":"A",
              "quote":{"onsite_labor":1000,"unit_multiplier":1,"pct_adjust":1,"total_quoted_hours":2},
              "lines":[{"apparatus_type":"X","test_standard":"ATS","qty":1,"hrs_per_unit":2.0,
-                       "section":"S1","line_number":1}]}
-    payload  = {"project":{"project_number":"FR-1","project_name":"N","contract_value":1000.0}, "scopes":[scope]}
-    dropped  = {**payload, "scopes":[{**scope, "lines":[]}]}
+                       "section":None,"line_number":1,"line_uid":"A:row1"}]}
+    payload = {"project":{"project_number":"NS-1","project_name":"N","contract_value":1000.0}, "scopes":[scope]}
     with psycopg.connect(dsn) as c:
-        materialize(c, "FR-1", payload); c.commit()
-        n1 = c.execute("select count(*) from ops.apparatus").fetchone()[0]
-        materialize(c, "FR-1", dropped); c.commit()
-        n2 = c.execute("select count(*) from ops.apparatus").fetchone()[0]
-    assert n1 == 1 and n2 == 0          # the stale apparatus was removed, not accumulated
+        materialize(c, "NS-1", payload); c.commit()
+        t1 = c.execute("select count(*) from ops.tasks").fetchone()[0]
+        materialize(c, "NS-1", payload); c.commit()
+        t2 = c.execute("select count(*) from ops.tasks").fetchone()[0]
+    assert t1 == 1 and t2 == 1   # exactly one __ungrouped__ task, not duplicated on re-approve
 
 def test_recognized_then_reversed_still_blocks(mini_workbook, clean_ops):
     """recognized -> fully reversed (net 0) -> re-intake still revision_blocked/recognized (EXISTS, not net)."""
@@ -858,7 +930,7 @@ if _ops_intake_enabled():
 
 **Files:** Modify `reference/ops/00-MASTER-INDEX.md`, `infra/database/migrations/ops/MANIFEST.md`.
 
-- [ ] **Step 1:** In `00-MASTER-INDEX.md`: §6/G6 → mark the extractor as existing; §7 Chip 5 → "envelope/lifecycle/UI (extractor pre-existing)"; add a **D-OPS** row capturing: parse/envelope/approve separation · no-writes-before-approve · revision-refusal (recognized=EXISTS, +billing) · N4 mandatory for `.xlsm` · supersede lifecycle · full-replacement materialization · findings finance-redaction.
+- [ ] **Step 1:** In `00-MASTER-INDEX.md`: §6/G6 → mark the extractor as existing; §7 Chip 5 → "envelope/lifecycle/UI (extractor pre-existing)"; add a **D-OPS** row capturing: parse/envelope/approve separation · no-writes-before-approve · revision-refusal (recognized=EXISTS, +billing) · N4 mandatory for `.xlsm` · supersede lifecycle · full-replacement materialization · findings finance-redaction · **global lock order `intake_runs → projects → apparatus`** (always lock `ops.projects` before recognition/billing/apparatus rows) · **`source='ops-intake'` ownership marker + foreign-source refusal** · **Miner-coexistence decision** (legacy Miner rows are frozen/out-of-lifecycle; approve refuses a project bearing non-`ops-intake` rows; no auto-backfill) · **`line_uid`** payload line identity (distinct from the DB `legacy_source_id`).
 - [ ] **Step 2:** MANIFEST.md → add row `007 | intake_envelope | Chip 5 | ...`.
 - [ ] **Step 3: Commit** (`-m "docs(ops): Chip 5 SSoT + MANIFEST -- intake envelope decisions"`). (RESUME_HERE + memory updates happen at the merge checkpoint, in the finish-branch task.)
 
