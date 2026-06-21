@@ -1,0 +1,1359 @@
+-- ============================================================================
+-- UP -- ops Chip 4 progress billing scaffold.
+-- Adds: retainage_pct column on projects; billing_application_status enum;
+--       billing_application, billing_application_line, billing_application_draft tables;
+--       indexes uq_billapp_issued_ref, uq_billline_active_event + supporting indexes.
+-- Triggers/functions/views added by Tasks 2-9.
+-- ============================================================================
+
+-- 6a. retainage_pct on projects
+alter table ops.projects
+  add column retainage_pct numeric(6,5) not null default 0
+    check (retainage_pct >= 0 and retainage_pct < 1);
+
+-- 6b. status enum (no draft -- drafts are a separate table)
+create type ops.billing_application_status as enum ('issued','voided');
+
+-- 6c. billing_application (the financial record -- always issued | voided)
+create table ops.billing_application (
+  id                    uuid primary key default gen_random_uuid(),
+  project_id            uuid not null references ops.projects(id),
+  application_no        int  not null,
+  status                ops.billing_application_status not null default 'issued',
+  period_through        date not null,
+  external_invoice_ref  text not null,
+  billable_hours        numeric(14,2) not null,
+  gross_amount          numeric(14,2) not null,
+  positive_gross        numeric(14,2) not null,
+  retainage_withheld    numeric(14,2) not null default 0,
+  retainage_released    numeric(14,2) not null default 0,
+  retainage_drawn       numeric(14,2) not null default 0,
+  net_invoiced          numeric(14,2) not null,
+  actor_person_id       uuid not null references ops.persons(person_id),
+  issued_at             timestamptz not null default now(),
+  voided_at             timestamptz,
+  voided_by             uuid references ops.persons(person_id),
+  void_reason           text,
+  created_at            timestamptz not null default now(),
+
+  constraint uq_billapp_project_no unique (project_id, application_no),
+  constraint ck_billapp_ref_nonblank check (btrim(external_invoice_ref) <> ''),
+  constraint ck_billapp_void_shape check (
+    status <> 'voided'
+    or (voided_at is not null and voided_by is not null
+        and void_reason is not null and btrim(void_reason) <> '')),
+  constraint ck_billapp_retainage_nonneg check (
+    retainage_withheld >= 0 and retainage_released >= 0 and retainage_drawn >= 0),
+  constraint ck_billapp_withheld_cap check (retainage_withheld <= positive_gross),
+  constraint ck_billapp_net check (
+    net_invoiced = gross_amount - retainage_withheld + retainage_released + retainage_drawn)
+);
+
+-- no two ISSUED apps may record the same RESA invoice ref for a project (voided refs may be re-used)
+create unique index uq_billapp_issued_ref
+  on ops.billing_application (project_id, lower(btrim(external_invoice_ref))) where status = 'issued';
+
+-- 6d. billing_application_line (membership marker + line-grain retainage)
+create table ops.billing_application_line (
+  id                   uuid primary key default gen_random_uuid(),
+  application_id       uuid not null references ops.billing_application(id),
+  recognition_event_id uuid not null references ops.revenue_recognition_event(id),
+  event_type           ops.recognition_event_type not null,
+  apparatus_id         uuid not null references ops.apparatus(id),
+  scope_id             uuid not null references ops.scopes(id),
+  project_id           uuid not null references ops.projects(id),
+  amount               numeric(14,2) not null,
+  billable_hours       numeric(14,2) not null,
+  retainage_withheld   numeric(14,2) not null default 0,
+  retainage_released   numeric(14,2) not null default 0,
+  is_voided            boolean not null default false,
+  created_at           timestamptz not null default now(),
+  constraint ck_billline_retainage_nonneg check (retainage_withheld >= 0 and retainage_released >= 0)
+);
+
+create unique index uq_billline_active_event
+  on ops.billing_application_line (recognition_event_id) where is_voided = false;
+
+create index ix_billline_app on ops.billing_application_line(application_id);
+create index ix_billline_apparatus on ops.billing_application_line(apparatus_id);
+create index ix_billline_scope on ops.billing_application_line(scope_id);
+
+-- 6e. billing_application_draft (saved intent -- NOT a financial record)
+create table ops.billing_application_draft (
+  id                       uuid primary key default gen_random_uuid(),
+  project_id               uuid not null references ops.projects(id),
+  period_through           date not null,
+  exclude_apparatus_ids    uuid[] not null default '{}',
+  retainage_draw_request   numeric(14,2) not null default 0,
+  external_invoice_ref     text,
+  actor_person_id          uuid not null references ops.persons(person_id),
+  created_at               timestamptz not null default now(),
+  updated_at               timestamptz not null default now()
+);
+
+-- ============================================================================
+-- Task 2: function-only mutation gate + immutability triggers (sec 8.0/8.1/8.2)
+-- ============================================================================
+
+-- 8.1 Header immutability + void cascade (also carries §8.0 gate for INSERT path;
+--     Task 4 extended with §8.3 header insert-integrity logic)
+-- before insert or update or delete on ops.billing_application
+create or replace function ops.trg_billapp_immutable()
+returns trigger language plpgsql as $$
+declare
+  v_max_period   date;
+  v_held_to_date numeric(14,2);
+begin
+  -- 8.0 gate: every mutation trigger checks the billing-context flag first
+  if current_setting('ops.billing_ctx', true) is distinct from '1' then
+    raise exception 'ops billing tables are function-only (set ops.billing_ctx)';
+  end if;
+
+  -- §8.3 INSERT integrity (serialize + validate header invariants)
+  if tg_op = 'INSERT' then
+    -- Serialize concurrent inserters: project FOR UPDATE
+    perform 1 from ops.projects where id = new.project_id for update;
+
+    -- Note: external_invoice_ref non-blank is enforced by ck_billapp_ref_nonblank CHECK constraint;
+    -- we do NOT duplicate it here to avoid shadowing the expected CheckViolation error class.
+
+    -- application_no must equal max(existing)+1 for this project
+    -- (the project lock above serializes this read)
+    declare
+      v_next_no int;
+    begin
+      select coalesce(max(application_no), 0) + 1
+        into v_next_no
+        from ops.billing_application
+       where project_id = new.project_id;
+      if new.application_no <> v_next_no then
+        raise exception 'application_no must be % for project % (got %)',
+                        v_next_no, new.project_id, new.application_no;
+      end if;
+    end;
+
+    -- period_through must be >= every issued app period_through for this project
+    select max(period_through)
+      into v_max_period
+      from ops.billing_application
+     where project_id = new.project_id
+       and status = 'issued';
+    if v_max_period is not null and new.period_through < v_max_period then
+      raise exception 'period_through % is not monotonically increasing (max existing: %)',
+                      new.period_through, v_max_period;
+    end if;
+
+    -- retainage_drawn upper-bound: must not exceed held_to_date
+    -- held_to_date = sum(withheld - released - drawn) over issued apps for this project
+    select coalesce(sum(retainage_withheld - retainage_released - retainage_drawn), 0)
+      into v_held_to_date
+      from ops.billing_application
+     where project_id = new.project_id
+       and status = 'issued';
+    if new.retainage_drawn > v_held_to_date then
+      raise exception 'retainage_drawn (%) exceeds held_to_date (%) for project %',
+                      new.retainage_drawn, v_held_to_date, new.project_id;
+    end if;
+
+    return new;
+  end if;
+
+  -- DELETE is never permitted on billing_application
+  if tg_op = 'DELETE' then
+    raise exception 'billing_application rows are immutable -- DELETE is not permitted';
+  end if;
+
+  -- UPDATE: only issued->voided transition writing exactly status/voided_at/voided_by/void_reason
+  if tg_op = 'UPDATE' then
+    if not (
+      old.status = 'issued'
+      and new.status = 'voided'
+      and new.project_id              = old.project_id
+      and new.application_no          = old.application_no
+      and new.period_through          = old.period_through
+      and new.external_invoice_ref    = old.external_invoice_ref
+      and new.billable_hours          = old.billable_hours
+      and new.gross_amount            = old.gross_amount
+      and new.positive_gross          = old.positive_gross
+      and new.retainage_withheld      = old.retainage_withheld
+      and new.retainage_released      = old.retainage_released
+      and new.retainage_drawn         = old.retainage_drawn
+      and new.net_invoiced            = old.net_invoiced
+      and new.actor_person_id         = old.actor_person_id
+      and new.issued_at               = old.issued_at
+      and new.created_at              = old.created_at
+      and new.voided_at    is not null
+      and new.voided_by    is not null
+      and new.void_reason  is not null
+    ) then
+      raise exception 'billing_application is immutable -- only issued->voided transition is permitted '
+                      '(fields: status, voided_at, voided_by, void_reason)';
+    end if;
+
+    -- §8.1 void-dependency guard (standing-credit guard):
+    -- Part A: Reject if EXISTS another issued application with an active (is_voided=false) line L
+    -- where L.recognition_event_id is a reversal event whose reverses_event_id is in
+    -- {the recognition_event_id of THIS app's active lines}.
+    -- A standing credit means voiding the original app would orphan the credit line.
+    if exists (
+      select 1
+        from ops.billing_application_line this_line
+       where this_line.application_id = old.id
+         and this_line.is_voided = false
+         -- find a reversal event that reverses one of this app's positive events
+         and exists (
+           select 1
+             from ops.revenue_recognition_event rev_evt
+            where rev_evt.reverses_event_id = this_line.recognition_event_id
+              -- that reversal event has an active line on ANOTHER issued application (not this one)
+              and exists (
+                select 1
+                  from ops.billing_application_line other_line
+                  join ops.billing_application other_app
+                    on other_app.id = other_line.application_id
+                 where other_line.recognition_event_id = rev_evt.id
+                   and other_line.is_voided = false
+                   and other_app.status = 'issued'
+                   and other_app.id <> old.id
+              )
+         )
+    ) then
+      raise exception 'cannot void billing application %: a standing credit on another issued application depends on one of its lines (standing-credit guard)',
+                      old.id;
+    end if;
+
+    -- §8.1 void-dependency guard Part B (draw-void guard):
+    -- A pure-draw app has no lines so Part A never fires.  But voiding a draw raises held_to_date,
+    -- which can leave a later credit application (app3) overstated: app3 released LEAST(withheld, 0)=0
+    -- at issue time (held was 0 after the draw), but now held would be restored to 50, making the
+    -- credit's net_invoiced wrong relative to the re-computed held pool.
+    -- Conservative rule: reject the void if the app has a non-zero draw AND there exists a later
+    -- issued application (higher application_no, same project) that carries an active credit line
+    -- (event_type='reversal' with is_voided=false).  The operator must void the later credit app(s)
+    -- first (reverse-first rule).
+    if old.retainage_drawn > 0 then
+      if exists (
+        select 1
+          from ops.billing_application later_app
+          join ops.billing_application_line later_line
+            on later_line.application_id = later_app.id
+         where later_app.project_id = old.project_id
+           and later_app.status = 'issued'
+           and later_app.application_no > old.application_no
+           and later_line.is_voided = false
+           and later_line.event_type = 'reversal'
+      ) then
+        raise exception 'cannot void billing application % (retainage_drawn=%): a later credit application depends on the held pool it consumed -- void the later credit application(s) first (draw-void guard)',
+                        old.id, old.retainage_drawn;
+      end if;
+    end if;
+
+    -- cascade the line-void: all active lines for this application become voided
+    update ops.billing_application_line
+       set is_voided = true
+     where application_id = old.id
+       and is_voided = false;
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger trg_billapp_immutable
+  before insert or update or delete on ops.billing_application
+  for each row execute function ops.trg_billapp_immutable();
+
+-- 8.2 Line immutability (also carries §8.0 gate for INSERT path;
+--     Task 4 extended with §8.4 line insert-integrity logic)
+-- before insert or update or delete on ops.billing_application_line
+create or replace function ops.trg_billline_immutable()
+returns trigger language plpgsql as $$
+declare
+  v_event        record;
+  v_app_project  uuid;
+  v_expected_amt numeric(14,2);
+  v_expected_hrs numeric(14,2);
+  v_orig_line    record;
+begin
+  -- 8.0 gate
+  if current_setting('ops.billing_ctx', true) is distinct from '1' then
+    raise exception 'ops billing tables are function-only (set ops.billing_ctx)';
+  end if;
+
+  -- §8.4 INSERT integrity (validate line against committed state)
+  if tg_op = 'INSERT' then
+    -- Event must exist and attributes must match
+    select e.id, e.event_type, e.apparatus_id, e.scope_id, e.project_id,
+           e.recognized_amount, e.quoted_hours, e.reverses_event_id
+      into v_event
+      from ops.revenue_recognition_event e
+     where e.id = new.recognition_event_id;
+    if not found then
+      raise exception 'recognition_event_id % does not exist', new.recognition_event_id;
+    end if;
+
+    if new.event_type::text <> v_event.event_type::text then
+      raise exception 'event_type mismatch: line has % but event has %',
+                      new.event_type, v_event.event_type;
+    end if;
+    if new.apparatus_id <> v_event.apparatus_id then
+      raise exception 'apparatus_id mismatch: line has % but event has %',
+                      new.apparatus_id, v_event.apparatus_id;
+    end if;
+    if new.scope_id <> v_event.scope_id then
+      raise exception 'scope_id mismatch: line has % but event has %',
+                      new.scope_id, v_event.scope_id;
+    end if;
+    if new.project_id <> v_event.project_id then
+      raise exception 'project_id mismatch: line has % but event has %',
+                      new.project_id, v_event.project_id;
+    end if;
+
+    -- project_id must match the application header
+    select project_id into v_app_project
+      from ops.billing_application
+     where id = new.application_id;
+    if not found then
+      raise exception 'application_id % does not exist', new.application_id;
+    end if;
+    if new.project_id <> v_app_project then
+      raise exception 'line project_id (%) does not match application project_id (%)',
+                      new.project_id, v_app_project;
+    end if;
+
+    -- Determine branch: positive (recognized) vs credit (reversal)
+    if v_event.reverses_event_id is null then
+      -- POSITIVE BRANCH
+      -- amount = round(recognized_amount,2) and amount > 0
+      v_expected_amt := round(v_event.recognized_amount, 2);
+      if v_expected_amt <= 0 then
+        raise exception 'positive line amount rounds to <=0 (event %); sub-cent rows must not consume the no-double-bill slot',
+                        new.recognition_event_id;
+      end if;
+      if new.amount <> v_expected_amt then
+        raise exception 'amount % does not equal round(recognized_amount,2)=% for event %',
+                        new.amount, v_expected_amt, new.recognition_event_id;
+      end if;
+      if new.amount <= 0 then
+        raise exception 'positive line amount must be > 0 (got %)', new.amount;
+      end if;
+
+      -- billable_hours = round(quoted_hours,2) for positive
+      v_expected_hrs := round(v_event.quoted_hours, 2);
+      if new.billable_hours <> v_expected_hrs then
+        raise exception 'billable_hours % does not equal round(quoted_hours,2)=% for event %',
+                        new.billable_hours, v_expected_hrs, new.recognition_event_id;
+      end if;
+
+      -- retainage_released must be 0 for positive line
+      if new.retainage_released <> 0 then
+        raise exception 'retainage_released must be 0 for a positive line (got %)', new.retainage_released;
+      end if;
+
+      -- §8.4 retainage_withheld must match round(amount * retainage_pct, 2) for positive line.
+      -- Only validate when withheld >= 0; negatives are caught by ck_billline_retainage_nonneg CHECK.
+      if new.retainage_withheld >= 0 then
+        declare
+          v_retainage_pct_line numeric;
+          v_expected_withheld  numeric(14,2);
+        begin
+          select retainage_pct into v_retainage_pct_line
+            from ops.projects where id = new.project_id;
+          v_expected_withheld := round(new.amount * v_retainage_pct_line, 2);
+          if new.retainage_withheld is distinct from v_expected_withheld then
+            raise exception 'retainage_withheld % does not match round(amount(%) * retainage_pct(%), 2) = % for event %',
+                            new.retainage_withheld, new.amount, v_retainage_pct_line,
+                            v_expected_withheld, new.recognition_event_id;
+          end if;
+        end;
+      end if;
+
+      -- branch eligibility: event must not be reversed
+      if exists (
+        select 1 from ops.revenue_recognition_event r
+         where r.reverses_event_id = new.recognition_event_id
+      ) then
+        raise exception 'event % has been reversed -- cannot bill a reversed event',
+                        new.recognition_event_id;
+      end if;
+
+    else
+      -- CREDIT BRANCH (reversal event: reverses_event_id is not null)
+      -- amount = -round(orig.recognized_amount,2) and amount < 0
+      -- We need the original event for amount + hours
+      declare
+        v_orig_event record;
+      begin
+        select e2.recognized_amount, e2.quoted_hours
+          into v_orig_event
+          from ops.revenue_recognition_event e2
+         where e2.id = v_event.reverses_event_id;
+        if not found then
+          raise exception 'original event % for reversal not found', v_event.reverses_event_id;
+        end if;
+
+        v_expected_amt := -round(v_orig_event.recognized_amount, 2);
+        if new.amount <> v_expected_amt then
+          raise exception 'credit line amount % does not equal -round(orig.recognized_amount,2)=% for reversal event %',
+                          new.amount, v_expected_amt, new.recognition_event_id;
+        end if;
+        if new.amount >= 0 then
+          raise exception 'credit line amount must be < 0 (got %)', new.amount;
+        end if;
+
+        -- billable_hours = -round(orig.quoted_hours,2) for credit
+        v_expected_hrs := -round(v_orig_event.quoted_hours, 2);
+        if new.billable_hours <> v_expected_hrs then
+          raise exception 'credit billable_hours % does not equal -round(orig.quoted_hours,2)=% for event %',
+                          new.billable_hours, v_expected_hrs, new.recognition_event_id;
+        end if;
+      end;
+
+      -- §6d / spec: credit line retainage_withheld must be 0 (only retainage_released applies)
+      if new.retainage_withheld is distinct from 0 then
+        raise exception 'credit line retainage_withheld must be 0 for a reversal line (got %) -- spec §6d',
+                        new.retainage_withheld;
+      end if;
+
+      -- retainage_released <= original active line retainage_withheld
+      select bl.retainage_withheld
+        into v_orig_line
+        from ops.billing_application_line bl
+        join ops.billing_application ba on ba.id = bl.application_id
+       where bl.recognition_event_id = v_event.reverses_event_id
+         and bl.is_voided = false
+         and ba.status = 'issued'
+       limit 1;
+      if found and new.retainage_released > v_orig_line.retainage_withheld then
+        raise exception 'retainage_released (%) exceeds original line retainage_withheld (%) for credit event %',
+                        new.retainage_released, v_orig_line.retainage_withheld, new.recognition_event_id;
+      end if;
+
+      -- branch eligibility: original event must have an active issued line
+      if not exists (
+        select 1 from ops.billing_application_line bl
+          join ops.billing_application ba on ba.id = bl.application_id
+         where bl.recognition_event_id = v_event.reverses_event_id
+           and bl.is_voided = false
+           and ba.status = 'issued'
+      ) then
+        raise exception 'credit line: original event % has no active issued line (credit eligibility failed)',
+                        v_event.reverses_event_id;
+      end if;
+    end if;
+
+    return new;
+  end if;
+
+  -- DELETE is never permitted
+  if tg_op = 'DELETE' then
+    raise exception 'billing_application_line rows are immutable -- DELETE is not permitted';
+  end if;
+
+  -- UPDATE: only is_voided false->true
+  if tg_op = 'UPDATE' then
+    if not (old.is_voided = false and new.is_voided = true
+            and new.application_id       = old.application_id
+            and new.recognition_event_id = old.recognition_event_id
+            and new.event_type           = old.event_type
+            and new.apparatus_id         = old.apparatus_id
+            and new.scope_id             = old.scope_id
+            and new.project_id           = old.project_id
+            and new.amount               = old.amount
+            and new.billable_hours       = old.billable_hours
+            and new.retainage_withheld   = old.retainage_withheld
+            and new.retainage_released   = old.retainage_released
+            and new.created_at           = old.created_at) then
+      raise exception 'billing_application_line is immutable -- only is_voided false->true is permitted';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger trg_billline_immutable
+  before insert or update or delete on ops.billing_application_line
+  for each row execute function ops.trg_billline_immutable();
+
+-- 8.0 Draft gate (insert/update/delete on billing_application_draft: gate only)
+create or replace function ops.trg_billdraft_gate()
+returns trigger language plpgsql as $$
+begin
+  if current_setting('ops.billing_ctx', true) is distinct from '1' then
+    raise exception 'ops billing tables are function-only (set ops.billing_ctx)';
+  end if;
+  -- For DELETE, new is NULL; return old so the DELETE proceeds.
+  -- For INSERT/UPDATE, return new.
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger trg_billdraft_gate
+  before insert or update or delete on ops.billing_application_draft
+  for each row execute function ops.trg_billdraft_gate();
+
+-- ============================================================================
+-- Task 3: record_billing_application / issue_billing_application
+--         Positive-branch sweep + Chip-3 event FOR UPDATE lock + flag containment.
+--         No retainage math (pct=0 in seeds), no credits, no draft path yet.
+-- ============================================================================
+
+-- 7b. issue_billing_application -- the core write path.
+--     Signature: (p_project_id, p_actor_person_id, p_period_through, p_external_invoice_ref,
+--                 p_exclude_apparatus, p_retainage_draw_request)
+create or replace function ops.issue_billing_application(
+  p_project_id             uuid,
+  p_actor_person_id        uuid,
+  p_period_through         date,
+  p_external_invoice_ref   text,
+  p_exclude_apparatus      uuid[]   default '{}',
+  p_retainage_draw_request numeric  default 0
+) returns uuid language plpgsql as $$
+declare
+  v_proj            record;
+  v_retainage_pct   numeric;
+  candidate_ids     uuid[];
+  credit_ids        uuid[];
+  v_app_id          uuid;
+  v_app_no          int;
+  v_gross           numeric(14,2);
+  v_positive_gross  numeric(14,2);
+  v_billable_hours  numeric(14,2);
+  v_withheld        numeric(14,2);
+  v_released        numeric(14,2);
+  v_net             numeric(14,2);
+  v_cutoff          timestamptz;
+  v_held_before     numeric(14,2);
+  v_remaining_held  numeric(14,2);
+  rec               record;
+begin
+  -- set the billing context flag so the mutation gate permits our inserts
+  perform set_config('ops.billing_ctx', '1', true);
+
+  -- 1. Lock the project (serialize Chip-4 vs Chip-4)
+  select id, is_active, status, retainage_pct
+    into v_proj
+    from ops.projects
+   where id = p_project_id
+   for update;
+  if not found then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'project % not found', p_project_id;
+  end if;
+  if not v_proj.is_active or v_proj.status = 'Cancelled' then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'project % is inactive or cancelled', p_project_id;
+  end if;
+  if p_external_invoice_ref is null or btrim(p_external_invoice_ref) = '' then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'external_invoice_ref is required for issue';
+  end if;
+
+  -- §7b: draw request must be >= 0 (spec: 0 <= p_retainage_draw_request)
+  if p_retainage_draw_request < 0 then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'p_retainage_draw_request must be >= 0 (got %)', p_retainage_draw_request;
+  end if;
+
+  v_retainage_pct := v_proj.retainage_pct;
+
+  -- 2. Monotonic period: reject if any issued app has period_through > p_period_through
+  if exists (
+    select 1 from ops.billing_application
+     where project_id = p_project_id
+       and status = 'issued'
+       and period_through > p_period_through
+  ) then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'period_through % is not monotonically increasing for project %',
+                    p_period_through, p_project_id;
+  end if;
+
+  -- Phoenix cutoff: events with recognized_at < (period_through+1) day at America/Phoenix midnight
+  v_cutoff := (p_period_through + 1)::timestamp at time zone 'America/Phoenix';
+
+  -- 3. Preliminary positive sweep: recognized events not reversed, not already on an active line,
+  --    within period cutoff, apparatus not excluded, sub-cent events skipped (mirrors view guard and
+  --    §8.4 line trigger: a round(recognized_amount,2)=0 line would be rejected anyway, and including
+  --    it in the sweep causes a trigger error that aborts the whole call).
+  select array_agg(e.id)
+    into candidate_ids
+    from ops.revenue_recognition_event e
+   where e.project_id = p_project_id
+     and e.event_type = 'recognized'
+     and e.recognized_at < v_cutoff
+     -- sub-cent: skip events where round(recognized_amount,2) = 0 (§8.4 would reject the line)
+     and round(e.recognized_amount, 2) <> 0
+     -- not reversed
+     and not exists (
+       select 1 from ops.revenue_recognition_event r
+        where r.reverses_event_id = e.id
+     )
+     -- no active line (is_voided=false on an issued app)
+     and not exists (
+       select 1 from ops.billing_application_line bl
+        join ops.billing_application ba on ba.id = bl.application_id
+        where bl.recognition_event_id = e.id
+          and bl.is_voided = false
+          and ba.status = 'issued'
+     )
+     -- apparatus not excluded
+     and (p_exclude_apparatus is null
+          or cardinality(p_exclude_apparatus) = 0
+          or e.apparatus_id <> all(p_exclude_apparatus));
+
+  -- 4. Lock the candidate events to close the Chip-3 reversal race.
+  --    Deterministic order avoids deadlock (conflicts with reverse_recognition FOR UPDATE).
+  if candidate_ids is not null and cardinality(candidate_ids) > 0 then
+    perform 1
+      from ops.revenue_recognition_event
+     where id = any(candidate_ids)
+     order by id
+     for update;
+
+    -- Re-evaluate eligibility under the lock (a reversal that committed before the lock is now visible)
+    select array_agg(e.id)
+      into candidate_ids
+      from ops.revenue_recognition_event e
+     where e.id = any(candidate_ids)
+       -- sub-cent guard preserved under lock (defensive; preliminary sweep already excluded these)
+       and round(e.recognized_amount, 2) <> 0
+       and not exists (
+         select 1 from ops.revenue_recognition_event r
+          where r.reverses_event_id = e.id
+       )
+       and not exists (
+         select 1 from ops.billing_application_line bl
+          join ops.billing_application ba on ba.id = bl.application_id
+          where bl.recognition_event_id = e.id
+            and bl.is_voided = false
+            and ba.status = 'issued'
+       );
+  end if;
+
+  -- 5. Build aggregate totals from positive lines.
+  v_gross          := 0;
+  v_positive_gross := 0;
+  v_billable_hours := 0;
+  v_withheld       := 0;
+  v_released       := 0;
+
+  if candidate_ids is not null then
+    select coalesce(sum(round(e.recognized_amount, 2)), 0),
+           coalesce(sum(round(e.recognized_amount, 2)), 0),
+           coalesce(sum(round(e.quoted_hours, 2)), 0)
+      into v_gross, v_positive_gross, v_billable_hours
+      from ops.revenue_recognition_event e
+     where e.id = any(candidate_ids);
+
+    -- retainage withheld: round(amount*pct,2) per line then sum
+    if v_retainage_pct > 0 then
+      select coalesce(sum(round(round(e.recognized_amount, 2) * v_retainage_pct, 2)), 0)
+        into v_withheld
+        from ops.revenue_recognition_event e
+       where e.id = any(candidate_ids);
+    end if;
+  end if;
+
+  -- 5b. Credit walk (§5 credit branch + §7b step 5).
+  --   held_before = sum(withheld - released - drawn) over all existing issued apps for this project
+  --   (snapshot taken before this application is inserted).
+  select coalesce(sum(retainage_withheld - retainage_released - retainage_drawn), 0)
+    into v_held_before
+    from ops.billing_application
+   where project_id = p_project_id
+     and status = 'issued';
+
+  v_remaining_held := v_held_before;
+
+  -- Identify credit-eligible reversal events:
+  --   reversal event whose original event has an active issued line and which itself has no active line.
+  --   Credits are exempt from period cutoff and are non-excludable (exclude[] does not suppress them).
+  --   Sub-cent credits (round(recognized_amount,2) = 0) are skipped per spec eligibility.
+  select array_agg(e.id)
+    into credit_ids
+    from ops.revenue_recognition_event e
+   where e.project_id = p_project_id
+     and e.event_type = 'reversal'
+     -- original event has an active issued line (credit eligibility)
+     and exists (
+       select 1 from ops.billing_application_line bl
+         join ops.billing_application ba on ba.id = bl.application_id
+        where bl.recognition_event_id = e.reverses_event_id
+          and bl.is_voided = false
+          and ba.status = 'issued'
+     )
+     -- this reversal has no active line yet (not already billed)
+     and not exists (
+       select 1 from ops.billing_application_line bl
+         join ops.billing_application ba on ba.id = bl.application_id
+        where bl.recognition_event_id = e.id
+          and bl.is_voided = false
+          and ba.status = 'issued'
+     )
+     -- sub-cent: skip reversals where round(recognized_amount,2) = 0
+     and round(e.recognized_amount, 2) <> 0;
+
+  -- Walk credit lines in canonical order to compute per-line released amounts and accumulate totals.
+  -- Order: orig-event.recognized_at, reversal_event.id (deterministic; reproducible across issue calls).
+  -- remaining_held starts at held_before and decrements; kept >= 0 by LEAST clamp (C-2).
+  if credit_ids is not null and cardinality(credit_ids) > 0 then
+    for rec in
+      select
+        e.id                                              as rev_event_id,
+        e.apparatus_id,
+        e.scope_id,
+        e.project_id                                      as rev_project_id,
+        round(e.recognized_amount, 2)                     as credit_amount,
+        round(orig_event.quoted_hours, 2)                 as orig_quoted_hours,
+        coalesce(orig_line.retainage_withheld, 0)         as orig_line_withheld
+      from ops.revenue_recognition_event e
+      join ops.revenue_recognition_event orig_event
+        on orig_event.id = e.reverses_event_id
+      left join (
+        select bl.recognition_event_id, bl.retainage_withheld
+          from ops.billing_application_line bl
+          join ops.billing_application ba on ba.id = bl.application_id
+         where bl.is_voided = false
+           and ba.status = 'issued'
+      ) orig_line on orig_line.recognition_event_id = e.reverses_event_id
+      where e.id = any(credit_ids)
+      order by orig_event.recognized_at, e.id
+    loop
+      declare
+        v_line_released numeric(14,2);
+      begin
+        v_line_released  := least(rec.orig_line_withheld, v_remaining_held);
+        v_remaining_held := v_remaining_held - v_line_released;
+
+        -- accumulate header totals (credit amounts are negative)
+        v_gross          := v_gross          + rec.credit_amount;
+        v_billable_hours := v_billable_hours + (-rec.orig_quoted_hours);
+        v_released       := v_released       + v_line_released;
+      end;
+    end loop;
+  end if;
+
+  -- 8. Nothing-to-bill check: empty positive+credit sweep AND draw=0 -> raise.
+  if (candidate_ids is null or cardinality(candidate_ids) = 0)
+     and (credit_ids is null or cardinality(credit_ids) = 0)
+     and p_retainage_draw_request = 0 then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'nothing to bill for project %', p_project_id;
+  end if;
+
+  -- 7. Draw cap: draw must not exceed held_before minus this app's credit releases (spec §7b step 7).
+  if p_retainage_draw_request > v_held_before - v_released then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'retainage_drawn (%) exceeds available held (held_before=% minus releases=%) for project %',
+                    p_retainage_draw_request, v_held_before, v_released, p_project_id;
+  end if;
+
+  -- 9. application_no (under project lock; burned forever)
+  select coalesce(max(application_no), 0) + 1
+    into v_app_no
+    from ops.billing_application
+   where project_id = p_project_id;
+
+  v_net := v_gross - v_withheld + v_released + p_retainage_draw_request;
+
+  -- 10. Insert header
+  insert into ops.billing_application (
+    project_id, application_no, status, period_through, external_invoice_ref,
+    billable_hours, gross_amount, positive_gross,
+    retainage_withheld, retainage_released, retainage_drawn,
+    net_invoiced, actor_person_id
+  ) values (
+    p_project_id, v_app_no, 'issued', p_period_through, p_external_invoice_ref,
+    v_billable_hours, v_gross, v_positive_gross,
+    v_withheld, v_released, p_retainage_draw_request,
+    v_net, p_actor_person_id
+  ) returning id into v_app_id;
+
+  -- Insert positive lines
+  if candidate_ids is not null and cardinality(candidate_ids) > 0 then
+    insert into ops.billing_application_line (
+      application_id, recognition_event_id, event_type,
+      apparatus_id, scope_id, project_id,
+      amount, billable_hours,
+      retainage_withheld, retainage_released
+    )
+    select
+      v_app_id,
+      e.id,
+      'recognized'::ops.recognition_event_type,
+      e.apparatus_id,
+      e.scope_id,
+      e.project_id,
+      round(e.recognized_amount, 2),
+      round(e.quoted_hours, 2),
+      case when v_retainage_pct > 0 then round(round(e.recognized_amount, 2) * v_retainage_pct, 2) else 0 end,
+      0
+    from ops.revenue_recognition_event e
+    where e.id = any(candidate_ids);
+  end if;
+
+  -- Insert credit lines in canonical order (re-execute the ordered walk with the now-known v_app_id).
+  -- remaining_held is reset to held_before to reproduce the identical allocation computed above.
+  if credit_ids is not null and cardinality(credit_ids) > 0 then
+    v_remaining_held := v_held_before;
+    for rec in
+      select
+        e.id                                              as rev_event_id,
+        e.apparatus_id,
+        e.scope_id,
+        e.project_id                                      as rev_project_id,
+        round(e.recognized_amount, 2)                     as credit_amount,
+        round(orig_event.quoted_hours, 2)                 as orig_quoted_hours,
+        coalesce(orig_line.retainage_withheld, 0)         as orig_line_withheld
+      from ops.revenue_recognition_event e
+      join ops.revenue_recognition_event orig_event
+        on orig_event.id = e.reverses_event_id
+      left join (
+        select bl.recognition_event_id, bl.retainage_withheld
+          from ops.billing_application_line bl
+          join ops.billing_application ba on ba.id = bl.application_id
+         where bl.is_voided = false
+           and ba.status = 'issued'
+      ) orig_line on orig_line.recognition_event_id = e.reverses_event_id
+      where e.id = any(credit_ids)
+      order by orig_event.recognized_at, e.id
+    loop
+      declare
+        v_line_released numeric(14,2);
+      begin
+        v_line_released  := least(rec.orig_line_withheld, v_remaining_held);
+        v_remaining_held := v_remaining_held - v_line_released;
+
+        insert into ops.billing_application_line (
+          application_id, recognition_event_id, event_type,
+          apparatus_id, scope_id, project_id,
+          amount, billable_hours,
+          retainage_withheld, retainage_released
+        ) values (
+          v_app_id,
+          rec.rev_event_id,
+          'reversal'::ops.recognition_event_type,
+          rec.apparatus_id,
+          rec.scope_id,
+          rec.rev_project_id,
+          rec.credit_amount,
+          -rec.orig_quoted_hours,
+          0,
+          v_line_released
+        );
+      end;
+    end loop;
+  end if;
+
+  -- Reset flag before returning
+  perform set_config('ops.billing_ctx', '0', true);
+  return v_app_id;
+
+exception when others then
+  -- On any error: reset flag so it does not linger in explicit transactions.
+  -- In a subtransaction (savepoint) the SET CONFIG with is_local=true is rolled back automatically,
+  -- so this is belt-and-suspenders for top-level transactions.
+  perform set_config('ops.billing_ctx', '0', true);
+  raise;
+end;
+$$;
+
+-- ============================================================================
+-- Task 4: §8.5 Deferred consistency constraint trigger
+--   Fires AFTER INSERT OR UPDATE on billing_application and billing_application_line,
+--   DEFERRABLE INITIALLY DEFERRED (runs at COMMIT).
+--   Does NOT check ops.billing_ctx -- the function has already reset it by COMMIT.
+--   Asserts for each touched ISSUED application:
+--     header.gross_amount        = sum(active lines amount)
+--     header.positive_gross      = sum(active lines amount where amount > 0)
+--     header.billable_hours      = sum(active lines billable_hours)
+--     header.retainage_withheld  = sum(active lines retainage_withheld)
+--     header.retainage_released  = sum(active lines retainage_released)
+--   Asserts for each touched PROJECT:
+--     sum(withheld - released - drawn) over issued apps >= 0  (held_to_date >= 0)
+-- ============================================================================
+create or replace function ops.trg_billing_consistency()
+returns trigger language plpgsql as $$
+declare
+  v_app_id    uuid;
+  v_proj_id   uuid;
+  v_hdr       record;
+  v_sum       record;
+  v_held      numeric(14,2);
+  touched_app_ids  uuid[];
+  touched_proj_ids uuid[];
+begin
+  -- Collect touched application_ids depending on which table fired
+  if tg_table_name = 'billing_application' then
+    -- header row: application_id is the row itself
+    touched_app_ids  := array[new.id];
+    touched_proj_ids := array[new.project_id];
+  else
+    -- line row: resolve application_id from the line
+    touched_app_ids  := array[new.application_id];
+    select project_id into v_proj_id
+      from ops.billing_application where id = new.application_id;
+    touched_proj_ids := array[v_proj_id];
+  end if;
+
+  -- Assert header = sum(active lines) for each touched ISSUED application
+  foreach v_app_id in array touched_app_ids loop
+    -- Only check issued apps (voided are exempt from header=sum-lines)
+    select * into v_hdr
+      from ops.billing_application
+     where id = v_app_id and status = 'issued';
+    if not found then
+      continue;  -- voided or not found: skip
+    end if;
+
+    select
+      coalesce(sum(amount), 0)                                  as gross_amount,
+      coalesce(sum(amount) filter (where amount > 0), 0)        as positive_gross,
+      coalesce(sum(billable_hours), 0)                          as billable_hours,
+      coalesce(sum(retainage_withheld), 0)                      as retainage_withheld,
+      coalesce(sum(retainage_released), 0)                      as retainage_released
+      into v_sum
+      from ops.billing_application_line
+     where application_id = v_app_id
+       and is_voided = false;
+
+    if v_hdr.gross_amount <> v_sum.gross_amount then
+      raise exception
+        'billing consistency: app % gross_amount (%) != sum of active lines (%)',
+        v_app_id, v_hdr.gross_amount, v_sum.gross_amount;
+    end if;
+    if v_hdr.positive_gross <> v_sum.positive_gross then
+      raise exception
+        'billing consistency: app % positive_gross (%) != sum of active positive lines (%)',
+        v_app_id, v_hdr.positive_gross, v_sum.positive_gross;
+    end if;
+    if v_hdr.billable_hours <> v_sum.billable_hours then
+      raise exception
+        'billing consistency: app % billable_hours (%) != sum of active line hours (%)',
+        v_app_id, v_hdr.billable_hours, v_sum.billable_hours;
+    end if;
+    if v_hdr.retainage_withheld <> v_sum.retainage_withheld then
+      raise exception
+        'billing consistency: app % retainage_withheld (%) != sum of active line retainage_withheld (%)',
+        v_app_id, v_hdr.retainage_withheld, v_sum.retainage_withheld;
+    end if;
+    if v_hdr.retainage_released <> v_sum.retainage_released then
+      raise exception
+        'billing consistency: app % retainage_released (%) != sum of active line retainage_released (%)',
+        v_app_id, v_hdr.retainage_released, v_sum.retainage_released;
+    end if;
+  end loop;
+
+  -- Assert held_to_date >= 0 per touched project (over issued apps only)
+  foreach v_proj_id in array touched_proj_ids loop
+    select coalesce(sum(retainage_withheld - retainage_released - retainage_drawn), 0)
+      into v_held
+      from ops.billing_application
+     where project_id = v_proj_id
+       and status = 'issued';
+    if v_held < 0 then
+      raise exception
+        'billing consistency: project % held_to_date is negative (%), retainage draw exceeds held',
+        v_proj_id, v_held;
+    end if;
+  end loop;
+
+  return new;
+end;
+$$;
+
+-- Deferred constraint trigger on billing_application (header inserts/updates)
+create constraint trigger trg_billing_consistency_header
+  after insert or update on ops.billing_application
+  deferrable initially deferred
+  for each row execute function ops.trg_billing_consistency();
+
+-- Deferred constraint trigger on billing_application_line (line inserts/updates)
+create constraint trigger trg_billing_consistency_line
+  after insert or update on ops.billing_application_line
+  deferrable initially deferred
+  for each row execute function ops.trg_billing_consistency();
+
+-- ============================================================================
+-- Task 8: draft intent path
+-- ============================================================================
+
+-- 7a. record_billing_application -- entry point.
+--     With a non-blank ref: delegates to issue immediately.
+--     With a null/blank ref: saves a draft and returns its id.
+create or replace function ops.record_billing_application(
+  p_project_id             uuid,
+  p_actor_person_id        uuid,
+  p_period_through         date,
+  p_external_invoice_ref   text    default null,
+  p_exclude_apparatus      uuid[]  default '{}',
+  p_retainage_draw_request numeric default 0
+) returns uuid language plpgsql as $$
+declare
+  v_draft_id uuid;
+begin
+  if p_external_invoice_ref is not null and btrim(p_external_invoice_ref) <> '' then
+    -- Issue path: delegate to issue_billing_application
+    return ops.issue_billing_application(
+      p_project_id,
+      p_actor_person_id,
+      p_period_through,
+      p_external_invoice_ref,
+      p_exclude_apparatus,
+      p_retainage_draw_request
+    );
+  else
+    -- Draft path: insert a billing_application_draft and return its id.
+    -- A draft is pure intent: no lines, no application_no, no financials.
+    -- Drafts reserve nothing -- the sweep is re-derived fresh at issue time.
+
+    -- §7b: draw request must be >= 0 even for a draft (mirrors the issue-path guard)
+    if p_retainage_draw_request < 0 then
+      raise exception 'p_retainage_draw_request must be >= 0 (got %)', p_retainage_draw_request;
+    end if;
+
+    perform set_config('ops.billing_ctx', '1', true);
+    insert into ops.billing_application_draft (
+      project_id,
+      period_through,
+      exclude_apparatus_ids,
+      retainage_draw_request,
+      external_invoice_ref,
+      actor_person_id
+    ) values (
+      p_project_id,
+      p_period_through,
+      coalesce(p_exclude_apparatus, '{}'),
+      coalesce(p_retainage_draw_request, 0),
+      p_external_invoice_ref,  -- may be null
+      p_actor_person_id
+    ) returning id into v_draft_id;
+    perform set_config('ops.billing_ctx', '0', true);
+    return v_draft_id;
+  end if;
+exception when others then
+  perform set_config('ops.billing_ctx', '0', true);
+  raise;
+end;
+$$;
+
+-- 7b (3-param overload). issue_billing_application(draft_id, actor, ref) -- promote a draft.
+--   Loads the draft's params, requires non-blank ref, delegates to the 6-param worker,
+--   then deletes the draft (it was consumed).
+--   Use CREATE (not CREATE OR REPLACE) so both arities coexist; Postgres resolves by arity.
+create function ops.issue_billing_application(
+  p_draft_id        uuid,
+  p_actor_person_id uuid,
+  p_ref             text
+) returns uuid language plpgsql as $$
+declare
+  v_draft  record;
+  v_app_id uuid;
+begin
+  -- Require non-blank ref up front (clear message before touching the draft)
+  if p_ref is null or btrim(p_ref) = '' then
+    raise exception 'external_invoice_ref is required to promote a draft';
+  end if;
+
+  -- Load the draft (no lock needed -- drafts are not financial records;
+  -- the 6-param worker will take the project FOR UPDATE)
+  select project_id, period_through, exclude_apparatus_ids, retainage_draw_request
+    into v_draft
+    from ops.billing_application_draft
+   where id = p_draft_id;
+
+  if not found then
+    raise exception 'billing_application_draft % not found', p_draft_id;
+  end if;
+
+  -- Delegate to the 6-param worker (does the fresh sweep, inserts header+lines)
+  v_app_id := ops.issue_billing_application(
+    v_draft.project_id,
+    p_actor_person_id,
+    v_draft.period_through,
+    p_ref,
+    v_draft.exclude_apparatus_ids,
+    v_draft.retainage_draw_request
+  );
+
+  -- Delete the consumed draft (ctx flag is already clear after the worker returns;
+  -- re-set it briefly for the DELETE so the gate permits it)
+  perform set_config('ops.billing_ctx', '1', true);
+  delete from ops.billing_application_draft where id = p_draft_id;
+  perform set_config('ops.billing_ctx', '0', true);
+
+  return v_app_id;
+
+exception when others then
+  perform set_config('ops.billing_ctx', '0', true);
+  raise;
+end;
+$$;
+
+-- 7c. discard_draft_billing_application -- delete a draft (no financial effect).
+create or replace function ops.discard_draft_billing_application(
+  p_draft_id        uuid,
+  p_actor_person_id uuid
+) returns void language plpgsql as $$
+begin
+  perform set_config('ops.billing_ctx', '1', true);
+
+  if not exists (select 1 from ops.billing_application_draft where id = p_draft_id) then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'billing_application_draft % not found', p_draft_id;
+  end if;
+
+  delete from ops.billing_application_draft where id = p_draft_id;
+
+  perform set_config('ops.billing_ctx', '0', true);
+
+exception when others then
+  perform set_config('ops.billing_ctx', '0', true);
+  raise;
+end;
+$$;
+
+-- ============================================================================
+-- Task 7: void_billing_application (§7d)
+--   Sets ctx; requires non-blank reason; locks app + project; rejects if status<>'issued'.
+--   Sets status='voided', voided_at/by, void_reason.
+--   The §8.1 trigger (trg_billapp_immutable) runs the standing-credit guard and cascades
+--   is_voided=true to the lines. application_no stays burned.
+-- ============================================================================
+create or replace function ops.void_billing_application(
+  p_application_id  uuid,
+  p_actor_person_id uuid,
+  p_reason          text
+) returns void language plpgsql as $$
+declare
+  v_app record;
+begin
+  -- Set billing context flag so the mutation gate permits the UPDATE
+  perform set_config('ops.billing_ctx', '1', true);
+
+  -- Require non-blank reason
+  if p_reason is null or btrim(p_reason) = '' then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'void_reason is required and must be non-blank';
+  end if;
+
+  -- Lock + fetch the application
+  select id, project_id, status
+    into v_app
+    from ops.billing_application
+   where id = p_application_id
+   for update;
+
+  if not found then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'billing application % not found', p_application_id;
+  end if;
+
+  -- Reject if not issued
+  if v_app.status <> 'issued' then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'billing application % has status % -- only issued applications can be voided',
+                    p_application_id, v_app.status;
+  end if;
+
+  -- Lock the project (serialize Chip-4 vs Chip-4)
+  perform 1 from ops.projects where id = v_app.project_id for update;
+
+  -- Update: the §8.1 trigger will run the standing-credit guard and cascade line voids
+  update ops.billing_application
+     set status    = 'voided',
+         voided_at = now(),
+         voided_by = p_actor_person_id,
+         void_reason = p_reason
+   where id = p_application_id;
+
+  -- Reset flag before returning
+  perform set_config('ops.billing_ctx', '0', true);
+
+exception when others then
+  perform set_config('ops.billing_ctx', '0', true);
+  raise;
+end;
+$$;
+
+-- ============================================================================
+-- Task 9: Views (§9)
+-- ============================================================================
+
+-- 9a. v_unbilled_recognition
+--   §5 two-branch set.  "active line" = is_voided=false on a status='issued' application.
+--   Positive branch: recognized events not yet reversed AND not already billed (active line on them).
+--   Credit branch:   reversal events whose ORIGINAL event IS actively billed AND this credit is not yet billed.
+--   No period-bound filter on the view itself -- the sweep function applies the cutoff; the view is the
+--   full backlog (all unbilled recognized/reversals regardless of recognized_at).
+create or replace view ops.v_unbilled_recognition as
+  -- Positive branch: recognized, not reversed, not billed
+  select
+    e.id                                   as recognition_event_id,
+    e.apparatus_id,
+    e.scope_id,
+    e.project_id,
+    e.event_type,
+    round(e.recognized_amount, 2)          as amount,
+    round(e.quoted_hours, 2)               as billable_hours,
+    e.recognized_at
+  from ops.revenue_recognition_event e
+  where e.event_type = 'recognized'
+    -- not reversed
+    and not exists (
+      select 1 from ops.revenue_recognition_event r
+      where r.reverses_event_id = e.id
+    )
+    -- not already on an active (non-voided, issued) billing line
+    and not exists (
+      select 1
+      from ops.billing_application_line bl
+      join ops.billing_application ba on ba.id = bl.application_id
+      where bl.recognition_event_id = e.id
+        and bl.is_voided = false
+        and ba.status = 'issued'
+    )
+    -- sub-cent guard: skip events that round to $0.00 (mirrors §8.4 positive-line rejection)
+    and round(e.recognized_amount, 2) <> 0
+
+  union all
+
+  -- Credit branch: reversal whose original event IS actively billed; this credit not yet billed
+  select
+    e.id                                           as recognition_event_id,
+    e.apparatus_id,
+    e.scope_id,
+    e.project_id,
+    e.event_type,
+    round(e.recognized_amount, 2)                  as amount,
+    -- credit hours = negative of original event's quoted_hours (rounded at this grain)
+    -round(orig.quoted_hours, 2)                   as billable_hours,
+    e.recognized_at
+  from ops.revenue_recognition_event e
+  join ops.revenue_recognition_event orig on orig.id = e.reverses_event_id
+  where e.event_type = 'reversal'
+    -- original IS actively billed
+    and exists (
+      select 1
+      from ops.billing_application_line bl
+      join ops.billing_application ba on ba.id = bl.application_id
+      where bl.recognition_event_id = e.reverses_event_id
+        and bl.is_voided = false
+        and ba.status = 'issued'
+    )
+    -- this credit not yet billed
+    and not exists (
+      select 1
+      from ops.billing_application_line bl
+      join ops.billing_application ba on ba.id = bl.application_id
+      where bl.recognition_event_id = e.id
+        and bl.is_voided = false
+        and ba.status = 'issued'
+    )
+    -- sub-cent guard: matches the sweep's explicit round(recognized_amount,2)<>0 skip
+    and round(e.recognized_amount, 2) <> 0;
+
+-- 9b. v_draft_preview
+--   Advisory per-draft would-be sweep (non-binding; recomputed fresh at issue time).
+--   Joins drafts to the current unbilled set via project_id and the draft's exclude list.
+create or replace view ops.v_draft_preview as
+  select
+    d.id                           as draft_id,
+    d.project_id,
+    d.period_through,
+    d.actor_person_id,
+    d.retainage_draw_request,
+    u.recognition_event_id,
+    u.apparatus_id,
+    u.scope_id,
+    u.event_type,
+    u.amount,
+    u.billable_hours,
+    u.recognized_at
+  from ops.billing_application_draft d
+  join ops.v_unbilled_recognition u on u.project_id = d.project_id
+  where
+    -- apply period cutoff (positive branch only, credit exempt per §5)
+    (
+      u.event_type = 'reversal'
+      or u.recognized_at < (d.period_through + 1)::timestamp at time zone 'America/Phoenix'
+    )
+    -- apply exclude list (positive branch only)
+    and (
+      u.event_type = 'reversal'
+      or not (u.apparatus_id = any(d.exclude_apparatus_ids))
+    );
+
+-- 9c. v_billing_application_sov
+--   Schedule-of-values: per (application_id, scope_id) over non-voided lines.
+create or replace view ops.v_billing_application_sov as
+  select
+    bl.application_id,
+    bl.scope_id,
+    count(*)                        as apparatus_count,
+    sum(bl.billable_hours)          as billable_hours,
+    sum(bl.amount)                  as amount,
+    sum(bl.retainage_withheld)      as retainage_withheld,
+    sum(bl.retainage_released)      as retainage_released
+  from ops.billing_application_line bl
+  where bl.is_voided = false
+  group by bl.application_id, bl.scope_id;
+
+-- 9d. v_project_billing
+--   Per-project derived billing summary; isolated from RESA.
+--
+--   recognized_to_date  = Sum round(e.recognized_amount,2) over ALL revenue_recognition_event rows
+--                         (both recognized + reversal, signed). A +X and its -X each round independently
+--                         then cancel, matching line-grain rounding so recognized = billed + unbilled (M-2).
+--   billed_gross_to_date    = Sum gross_amount  over issued apps.
+--   net_invoiced_to_date    = Sum net_invoiced  over issued apps.
+--   retainage_held_to_date  = Sum(withheld - released - drawn) over issued apps.
+--   unbilled_recognized     = Sum amount from v_unbilled_recognition.
+--   open_draft_count        = count of billing_application_draft rows.
+create or replace view ops.v_project_billing as
+  select
+    p.id                                                                      as project_id,
+    p.project_number,
+    p.contract_value,
+    -- recognized_to_date: all events, signed, per-event rounded (M-2 cent-exact)
+    coalesce((
+      select sum(round(e.recognized_amount, 2))
+      from ops.revenue_recognition_event e
+      where e.project_id = p.id
+    ), 0)                                                                     as recognized_to_date,
+    -- billed_gross_to_date: sum over issued applications
+    coalesce((
+      select sum(ba.gross_amount)
+      from ops.billing_application ba
+      where ba.project_id = p.id and ba.status = 'issued'
+    ), 0)                                                                     as billed_gross_to_date,
+    -- net_invoiced_to_date
+    coalesce((
+      select sum(ba.net_invoiced)
+      from ops.billing_application ba
+      where ba.project_id = p.id and ba.status = 'issued'
+    ), 0)                                                                     as net_invoiced_to_date,
+    -- retainage_held_to_date: withheld - released - drawn over issued
+    coalesce((
+      select sum(ba.retainage_withheld - ba.retainage_released - ba.retainage_drawn)
+      from ops.billing_application ba
+      where ba.project_id = p.id and ba.status = 'issued'
+    ), 0)                                                                     as retainage_held_to_date,
+    -- unbilled_recognized: from the unbilled view
+    coalesce((
+      select sum(u.amount)
+      from ops.v_unbilled_recognition u
+      where u.project_id = p.id
+    ), 0)                                                                     as unbilled_recognized,
+    -- open_draft_count
+    coalesce((
+      select count(*)
+      from ops.billing_application_draft d
+      where d.project_id = p.id
+    ), 0)                                                                     as open_draft_count
+  from ops.projects p;

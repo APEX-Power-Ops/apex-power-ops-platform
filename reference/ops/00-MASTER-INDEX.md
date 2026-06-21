@@ -7,7 +7,7 @@
 > SSoT pattern). **Altitude is roadmap, not DDL** — per-chip schema design happens in
 > each chip's own spec.
 
-- **Status:** Chips 0–2 BUILT on `ops_dev` (SSoT + identity + quote model; committed) · **nothing applied to prod**
+- **Status:** Chips 0–4 BUILT on `ops_test` (SSoT + identity + quote model + recognition ledger + progress billing; dev-only; operator-gated merge to main) · **nothing applied to prod**
 - **Owner:** APEX Operations (PM) lane
 - **Lane namespace (target):** `ops` (the Operations lane of `MASTER-SCHEMA.md`)
 - **Supersedes (as forward plan):** `PM_SCHEMA_FOUNDATION_PLAN_v2_2026-05-26.md`, `ERA_2_4_PACKET_B_*` (folded, not discarded — see §9)
@@ -206,7 +206,7 @@ cadence (design → spec → plan → TDD → chip-sized PR into `main`).
 - **Chip 1 — `ops` identity skeleton.** `ops` schema + 7 enums + projects/scopes/apparatus/tasks (public/seam conceptual model); FIXED scope→apparatus binding (NOT NULL + immutability trigger); soft `equipment_model_ref` seam. Dev DB **`ops_dev`** (local PG). **DONE** — `5c2442db`, 9/9 TDD, reversible.
 - **Chip 2 — Quote model.** Standard-hours catalog (DEFAULT-only) + **`scope_quote_line`** (per-project `hrs_per_unit`, line-level — D-OPS-7) + `scope_quote` (4 categories + generated P3/P4/blended_rate + J3 trigger) + apparatus quote columns + `v_apparatus_quote`. **DONE** — 10/10 TDD, reversible. *(Intake envelope / Packet B re-scoped → Chip 5.)*
 - **Chip 3 — Apparatus revenue + completion + recognition ledger.** §5: per-apparatus hours-value, **binary apparatus completion** (D-OPS-8), append-only recognition events. **DONE** — 33/33 TDD, reversible. (Dev-only `ops_test`; NOT deployed; see D-OPS-10/D-OPS-11.)
-- **Chip 4 — Progress billing.** §5 final layer: the billing-application object (snapshot of recognized-unbilled).
+- **Chip 4 — Progress billing.** §5 final layer: the billing-application object (snapshot of recognized-unbilled). **DONE** — 63+ tests, reversible (Chips 1-3 survive DOWN); sub-cent parity fix; full firewall assertion; dev-only `ops_test`; operator-gated merge.
 - **Chip 5 — Intake pipeline (code) + envelope.** Estimator `.xlsm` extractor + the upload→extract→review→approve→operational flow (the `operations-web` pm-review surface + a parser package) + the **intake envelope** (Packet B: `intake_runs`/`source_files`/`validation_findings`, moved from Chip 2), wired to `ops`.
 - **Chip N (interleaved, late) — Convergence/migration.** The deferred D-012 collapse of `public`/`seam`/`schedule`→`ops` (build spine → backfill soft-UUIDs → dual-write → flip readers → drop loser), behind §4 Law 6.
 
@@ -218,7 +218,7 @@ cadence (design → spec → plan → TDD → chip-sized PR into `main`).
 |---|---|---|---|
 | D-OPS-1 | Completion grain | **RESOLVED: binary (`=1`)**; `completion_factor` reserved | — |
 | D-OPS-2 | Recognition timing | event-driven append-only ledger | Chip 3 spec |
-| D-OPS-3 | Progress-bill object & cadence | snapshot-at-issue, cadence-agnostic | Chip 4 spec |
+| D-OPS-3 | Progress-bill object & cadence | **RESOLVED: snapshot-at-issue, cadence-agnostic** (Chip 4 built) | — |
 | D-OPS-4 | Quote→apparatus value | **RESOLVED: single blended rate** = scope P4 ÷ scope hours; per-apparatus = hours × blended rate (§5a) | Chip 2 |
 | D-OPS-5 | Canonical winner | **REVISED: public's conceptual PM model + seam's disciplines** (see §5a; was seam-based) | Chip 1 spec |
 | D-OPS-6 | Dev DB | fresh `ops_dev` (local PG) | Chip 1 |
