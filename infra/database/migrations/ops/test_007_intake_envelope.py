@@ -126,3 +126,15 @@ def test_source_columns_exist(conn):
     names = {r[0] for r in cols}
     assert {'source_client_name','source_site_name','source_site_address','source_site_city',
             'source_site_state','source_site_zip'} <= names
+
+
+def test_down_then_up_is_idempotent_and_chips_survive():
+    # apply down (007 only) then re-up; 006 objects (e.g. ops.billing_application) survive throughout.
+    _exec(HERE/"007_intake_envelope_down.sql")
+    with psycopg.connect(DSN, autocommit=True) as c:
+        assert c.execute("select to_regclass('ops.intake_runs')").fetchone()[0] is None
+        assert c.execute("select to_regclass('ops.billing_application')").fetchone()[0] is not None  # Chip 4 intact
+        assert c.execute("select to_regclass('ops.scopes')").fetchone()[0] is not None               # Chip 1 intact
+    _exec(HERE/"007_intake_envelope.sql")
+    with psycopg.connect(DSN, autocommit=True) as c:
+        assert c.execute("select to_regclass('ops.intake_runs')").fetchone()[0] is not None
