@@ -5,6 +5,7 @@ import hashlib
 import json
 import pathlib
 import tempfile
+from collections import Counter
 from typing import Optional, Tuple
 
 import psycopg
@@ -12,12 +13,243 @@ import psycopg.errors
 
 from .classify import classify
 from .extract import extract_workbook
-from .model import PARSER_VERSION, PAYLOAD_SCHEMA_VERSION
+from .model import (
+    PARSER_VERSION, PAYLOAD_SCHEMA_VERSION,
+    IntakePayload, ProjectIn, ScopeIn, ScopeQuoteIn, QuoteLineIn, StandardHourIn,
+)
 from .validate import validate_payload
 
 
 class ActiveRunExists(Exception):
     pass
+
+
+def _payload_from_dict(d):
+    """Reconstruct an IntakePayload from a plain dict (e.g. review_payload_json)."""
+    proj = ProjectIn(**{
+        k: v for k, v in d["project"].items()
+        if k in {f.name for f in dataclasses.fields(ProjectIn)}
+    })
+    scopes = []
+    for sd in d.get("scopes", []):
+        qd = sd.get("quote", {})
+        quote = ScopeQuoteIn(**{
+            k: v for k, v in qd.items()
+            if k in {f.name for f in dataclasses.fields(ScopeQuoteIn)}
+        })
+        lines = []
+        for ld in sd.get("lines", []):
+            line = QuoteLineIn(**{
+                k: v for k, v in ld.items()
+                if k in {f.name for f in dataclasses.fields(QuoteLineIn)}
+            })
+            lines.append(line)
+        scope = ScopeIn(
+            scope_name=sd["scope_name"],
+            scope_type=sd.get("scope_type", "OTHER"),
+            sort_order=sd.get("sort_order", 0),
+            quote=quote,
+            lines=lines,
+        )
+        scopes.append(scope)
+    standard_hours = []
+    for shd in d.get("standard_hours", []):
+        sh = StandardHourIn(**{
+            k: v for k, v in shd.items()
+            if k in {f.name for f in dataclasses.fields(StandardHourIn)}
+        })
+        standard_hours.append(sh)
+    return IntakePayload(project=proj, scopes=scopes, standard_hours=standard_hours)
+
+
+def _assert_no_cross_scope_move(canonical, review):
+    """Build line_uid -> scope_name maps; raise if any uid moved across scopes."""
+    canon_map = {}
+    for scope in canonical.get("scopes", []):
+        scope_name = scope["scope_name"]
+        for line in scope.get("lines", []):
+            uid = line.get("line_uid")
+            if uid is not None:
+                canon_map[uid] = scope_name
+
+    review_map = {}
+    for scope in review.get("scopes", []):
+        scope_name = scope["scope_name"]
+        for line in scope.get("lines", []):
+            uid = line.get("line_uid")
+            if uid is not None:
+                review_map[uid] = scope_name
+
+    for uid, canon_scope in canon_map.items():
+        if uid in review_map and review_map[uid] != canon_scope:
+            raise ValueError(
+                "cross-scope line move forbidden: line_uid=" + repr(uid) +
+                " moved from scope " + repr(canon_scope) +
+                " to " + repr(review_map[uid])
+            )
+
+
+_LINE_MUTABLE = frozenset({"section", "hrs_per_unit"})
+
+
+def _assert_review_within_allowlist(canonical, review):
+    """Default-deny integrity gate. Lines joined by line_uid not position."""
+    # 1. Project: pin every field
+    canon_proj = canonical.get("project", {})
+    rev_proj = review.get("project", {})
+    all_proj_keys = set(canon_proj) | set(rev_proj)
+    for k in all_proj_keys:
+        if canon_proj.get(k) != rev_proj.get(k):
+            raise ValueError(
+                "project field " + repr(k) + " is not mutable: " +
+                "canonical=" + repr(canon_proj.get(k)) +
+                ", review=" + repr(rev_proj.get(k))
+            )
+
+    # 2. Scope set
+    canon_scopes = {s["scope_name"]: s for s in canonical.get("scopes", [])}
+    rev_scopes = {s["scope_name"]: s for s in review.get("scopes", [])}
+    if set(canon_scopes) != set(rev_scopes):
+        raise ValueError(
+            "scope set changed: " +
+            "canonical=" + str(sorted(canon_scopes)) +
+            ", review=" + str(sorted(rev_scopes))
+        )
+
+    for scope_name in canon_scopes:
+        cs = canon_scopes[scope_name]
+        rs = rev_scopes[scope_name]
+
+        # 3. Scope quote: pin ALL fields
+        cq = cs.get("quote", {})
+        rq = rs.get("quote", {})
+        all_quote_keys = set(cq) | set(rq)
+        for k in all_quote_keys:
+            if cq.get(k) != rq.get(k):
+                raise ValueError(
+                    "scope " + repr(scope_name) +
+                    " quote field " + repr(k) + " is not mutable: " +
+                    "canonical=" + repr(cq.get(k)) +
+                    ", review=" + repr(rq.get(k))
+                )
+
+        # 4. Lines: exact same multiset of line_uid values
+        canon_lines_list = cs.get("lines", [])
+        rev_lines_list = rs.get("lines", [])
+
+        canon_uid_counts = Counter(l.get("line_uid") for l in canon_lines_list)
+        rev_uid_counts = Counter(l.get("line_uid") for l in rev_lines_list)
+
+        for uid, cnt in rev_uid_counts.items():
+            if cnt > 1:
+                raise ValueError(
+                    "scope " + repr(scope_name) +
+                    ": line_uid " + repr(uid) +
+                    " appears " + str(cnt) +
+                    " times in review (duplicate line detected)"
+                )
+
+        if canon_uid_counts != rev_uid_counts:
+            added = set(rev_uid_counts) - set(canon_uid_counts)
+            removed = set(canon_uid_counts) - set(rev_uid_counts)
+            raise ValueError(
+                "scope " + repr(scope_name) + ": line_uid multiset changed " +
+                "(added=" + str(sorted(str(u) for u in added)) +
+                ", removed=" + str(sorted(str(u) for u in removed)) + ")"
+            )
+
+        # 5. Per-line: join by line_uid NOT position
+        canon_by_uid = {l.get("line_uid"): l for l in canon_lines_list}
+        rev_by_uid = {l.get("line_uid"): l for l in rev_lines_list}
+
+        for uid, canon_line in canon_by_uid.items():
+            rev_line = rev_by_uid[uid]
+            all_line_keys = set(canon_line) | set(rev_line)
+            for k in all_line_keys:
+                if k in _LINE_MUTABLE:
+                    continue
+                if canon_line.get(k) != rev_line.get(k):
+                    raise ValueError(
+                        "scope " + repr(scope_name) +
+                        " line " + repr(uid) +
+                        ": field " + repr(k) + " is not mutable: " +
+                        "canonical=" + repr(canon_line.get(k)) +
+                        ", review=" + repr(rev_line.get(k))
+                    )
+
+
+def patch_review(dsn, run_id, *, review_payload):
+    """Edit review payload; status guard; both integrity guards; persist; return updated run."""
+    _ACTIVE_STATUSES = {"parsed", "reviewing"}
+
+    with psycopg.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "select status, canonical_payload_json, review_payload_version, source_format"
+                "  from ops.intake_runs"
+                " where id = %s",
+                (run_id,),
+            )
+            row = cur.fetchone()
+            if row is None:
+                raise KeyError("run not found: " + repr(run_id))
+
+            status, canonical_json, current_version, source_format = row
+
+            if status not in _ACTIVE_STATUSES:
+                raise ValueError(
+                    "patch_review only allowed on parsed/reviewing runs; " +
+                    "run " + repr(run_id) + " has status " + repr(status)
+                )
+
+            canonical = canonical_json if isinstance(canonical_json, dict) else json.loads(canonical_json)
+
+            _assert_review_within_allowlist(canonical, review_payload)
+            _assert_no_cross_scope_move(canonical, review_payload)
+
+            new_version = current_version + 1
+
+            cur.execute(
+                "update ops.intake_runs"
+                " set review_payload_json = %s::jsonb,"
+                "     review_payload_version = %s,"
+                "     status = %s::ops.intake_run_status,"
+                "     updated_at = now()"
+                " where id = %s",
+                (
+                    json.dumps(review_payload, default=str),
+                    new_version,
+                    "reviewing",
+                    run_id,
+                ),
+            )
+
+            updated_payload_obj = _payload_from_dict(review_payload)
+            findings = validate_payload(
+                updated_payload_obj,
+                source_format=source_format,
+                n4_defaulted=False,
+            )
+
+            for finding in findings:
+                cur.execute(
+                    "insert into ops.intake_validation_findings ("
+                    "   run_id, payload_version, severity, code, ok, message, diagnostic_detail"
+                    ") values (%s, %s, %s, %s, %s, %s, %s)",
+                    (
+                        run_id,
+                        new_version,
+                        finding.severity,
+                        finding.code,
+                        finding.ok,
+                        finding.message,
+                        finding.diagnostic_detail,
+                    ),
+                )
+
+        conn.commit()
+
+    return get_run(dsn, run_id)
 
 
 def _classify_conflict(cur, project_number):
