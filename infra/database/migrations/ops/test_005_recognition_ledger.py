@@ -300,3 +300,59 @@ def test_insert_reversal_amount_must_equal_negative_original(conn):
             "(apparatus_id, scope_id, project_id, event_type, recognized_amount, actor_person_id, reverses_event_id, reason) "
             "values (%s,%s,%s,'reversal',-499,%s,%s,'bad')",   # -499 != -500
             (s["apparatus"], s["scope"], s["project"], s["person"], eid))
+
+
+# ---- Task 5: protection + freeze-immutability guards ----
+
+def test_protect_apparatus_uncomplete_and_deactivate(conn):
+    s = _seed_recognizable(conn)
+    eid = _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException, match="open recognition"):
+        conn.execute("update ops.apparatus set status='In Progress' where id=%s", (s["apparatus"],))
+    conn.rollback()
+    s = _seed_recognizable(conn); eid = _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException, match="open recognition"):
+        conn.execute("update ops.apparatus set is_active=false where id=%s", (s["apparatus"],))
+    conn.rollback()
+    s = _seed_recognizable(conn); eid = _recognize(conn, s)
+    conn.execute("select ops.reverse_recognition(%s,%s,%s)", (eid, s["person"], "x"))
+    conn.execute("update ops.apparatus set status='In Progress' where id=%s", (s["apparatus"],))  # ok after reverse
+
+
+def test_protect_scope_and_project(conn):
+    s = _seed_recognizable(conn)
+    _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException, match="open recognition"):
+        conn.execute("update ops.scopes set status='Cancelled' where id=%s", (s["scope"],))
+    conn.rollback()
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException, match="open recognition"):
+        conn.execute("update ops.projects set is_active=false where id=%s", (s["project"],))
+
+
+def test_basis_immutability_guard(conn):
+    s = _seed_recognizable(conn)   # already frozen
+    with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
+        conn.execute("update ops.scope_quote set onsite_labor=2000 where scope_id=%s", (s["scope"],))
+    conn.rollback()
+    s = _seed_recognizable(conn)
+    with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
+        conn.execute("update ops.apparatus set quoted_revenue=999 where id=%s", (s["apparatus"],))
+    conn.rollback()
+    # before freeze: edit allowed
+    s = _seed_recognizable(conn, frozen=False)
+    conn.execute("update ops.scope_quote set onsite_labor=2000 where scope_id=%s", (s["scope"],))  # ok
+
+
+def test_post_freeze_line_edit_blocked(conn):
+    # build a scope with a line driving J3, then freeze, then edit the line -> transitive block
+    pid = conn.execute("insert into ops.projects (project_number, project_name) values (%s,'t') returning id",
+                       (f"P-{uuid.uuid4().hex[:8]}",)).fetchone()[0]
+    sid = conn.execute("insert into ops.scopes (project_id, scope_name) values (%s,'s') returning id",
+                       (pid,)).fetchone()[0]
+    conn.execute("insert into ops.scope_quote (scope_id, onsite_labor, unit_multiplier, pct_adjust) values (%s,1000,1,1)", (sid,))
+    lid = conn.execute("insert into ops.scope_quote_line (scope_id, apparatus_type, qty, hrs_per_unit) "
+                       "values (%s,'A',2,5) returning id", (sid,)).fetchone()[0]   # J3 -> 10
+    conn.execute("update ops.scope_quote set is_frozen=true, frozen_at=now() where scope_id=%s", (sid,))
+    with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
+        conn.execute("update ops.scope_quote_line set hrs_per_unit=9 where id=%s", (lid,))  # J3 recompute hits frozen guard

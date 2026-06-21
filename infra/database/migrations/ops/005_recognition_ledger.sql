@@ -199,3 +199,84 @@ end;
 $$;
 create trigger revrec_insert_integrity before insert on ops.revenue_recognition_event
   for each row execute function ops.trg_revrec_insert_integrity();
+
+-- ---- Component 4: recognition-protection guards (reverse-first) -------------
+create or replace function ops.trg_apparatus_protect_recognition() returns trigger language plpgsql as $$
+declare v_net numeric;
+begin
+  if (old.status='Complete' and new.status<>'Complete') or (old.is_active and not new.is_active) then
+    select coalesce(sum(recognized_amount),0) into v_net
+      from ops.revenue_recognition_event where apparatus_id = new.id;
+    if v_net > 0 then raise exception 'apparatus % has open recognition; reverse first', new.id; end if;
+  end if;
+  return new;
+end;
+$$;
+create trigger apparatus_protect_recognition before update on ops.apparatus
+  for each row execute function ops.trg_apparatus_protect_recognition();
+
+create or replace function ops.trg_scope_protect_recognition() returns trigger language plpgsql as $$
+declare v_net numeric;
+begin
+  if (old.is_active and not new.is_active) or (new.status='Cancelled' and old.status<>'Cancelled') then
+    select coalesce(sum(recognized_amount),0) into v_net
+      from ops.revenue_recognition_event where scope_id = new.id;
+    if v_net > 0 then raise exception 'scope % has open recognition; reverse first', new.id; end if;
+  end if;
+  return new;
+end;
+$$;
+create trigger scope_protect_recognition before update on ops.scopes
+  for each row execute function ops.trg_scope_protect_recognition();
+
+create or replace function ops.trg_project_protect_recognition() returns trigger language plpgsql as $$
+declare v_net numeric;
+begin
+  if (old.is_active and not new.is_active) or (new.status='Cancelled' and old.status<>'Cancelled') then
+    select coalesce(sum(recognized_amount),0) into v_net
+      from ops.revenue_recognition_event where project_id = new.id;
+    if v_net > 0 then raise exception 'project % has open recognition; reverse first', new.id; end if;
+  end if;
+  return new;
+end;
+$$;
+create trigger project_protect_recognition before update on ops.projects
+  for each row execute function ops.trg_project_protect_recognition();
+
+-- ---- Component 5: frozen-basis immutability (completes the Chip 2 freeze) ---
+create or replace function ops.trg_scope_quote_freeze_guard() returns trigger language plpgsql as $$
+begin
+  if old.is_frozen and (
+       new.onsite_labor       is distinct from old.onsite_labor
+    or new.offsite_labor      is distinct from old.offsite_labor
+    or new.travel             is distinct from old.travel
+    or new.outside_services   is distinct from old.outside_services
+    or new.unit_multiplier    is distinct from old.unit_multiplier
+    or new.pct_adjust         is distinct from old.pct_adjust
+    or new.total_quoted_hours is distinct from old.total_quoted_hours
+    or new.is_frozen          is distinct from old.is_frozen
+    or new.frozen_at          is distinct from old.frozen_at) then
+    raise exception 'frozen quote basis is immutable (scope %)', old.scope_id;
+  end if;
+  return new;
+end;
+$$;
+create trigger scope_quote_freeze_guard before update on ops.scope_quote
+  for each row execute function ops.trg_scope_quote_freeze_guard();
+
+create or replace function ops.trg_apparatus_freeze_guard() returns trigger language plpgsql as $$
+declare v_frozen boolean;
+begin
+  if new.quoted_hours   is distinct from old.quoted_hours
+     or new.quoted_revenue is distinct from old.quoted_revenue
+     or new.quote_line_id  is distinct from old.quote_line_id then
+    select is_frozen into v_frozen from ops.scope_quote where scope_id = old.scope_id;
+    if coalesce(v_frozen,false) then
+      raise exception 'apparatus quote columns immutable once scope quote frozen (apparatus %)', old.id;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+create trigger apparatus_freeze_guard before update on ops.apparatus
+  for each row execute function ops.trg_apparatus_freeze_guard();
