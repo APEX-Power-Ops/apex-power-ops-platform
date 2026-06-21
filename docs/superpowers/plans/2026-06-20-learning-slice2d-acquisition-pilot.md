@@ -111,7 +111,7 @@ git commit -m "docs(lanes): Slice 2d active branch + data_write gate"
 
 **Interfaces:**
 - Consumes: `learning_capture.capture.record_event(user_id, event_type, *, study_content_id, neta_section, payload) -> CapturedEvent`; `learning_capture.capture.CaptureError`; `learning_capture.db.dsn() -> str`.
-- Produces: `record_acquired_event(*, user_id, event_type, acquisition_run_id, source_surface, observed_by, evidence_ref, data_fidelity, study_content_id=None, neta_section=None, score_percent=None, confidence=None, extra=None) -> CapturedEvent`; module constants `SOURCE_SURFACES`, `DATA_FIDELITIES`.
+- Produces: `record_acquired_event(*, user_id, event_type, acquisition_run_id, source_surface, observed_by, evidence_ref, data_fidelity, study_content_id=None, neta_section=None, score_percent=None, confidence=None) -> CapturedEvent`; module constants `SOURCE_SURFACES`, `DATA_FIDELITIES`.
 
 The existing `conftest.py` pins `LEARNING_DEV_DSN` to `learning_test` and seeds `user_profiles.id =
 00000000-0000-0000-0000-000000000001` + `study_content.id = 00000000-0000-0000-0000-000000000010`.
