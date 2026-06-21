@@ -27,6 +27,7 @@ All work on the Olares host over mesh SSH (`ssh olares-mesh`, worktree `/home/ol
 - **Canonical credit-release order:** `ORDER BY orig-event.recognized_at, recognition_event_id`.
 - **Commits:** message body via `ssh olares-mesh` must contain **no apostrophes** (use plain ASCII). Co-author trailer per repo convention.
 - **Test DSN pinning (never `ops_dev`):** `OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable"`.
+- **Deferred-constraint test idiom (binding):** to test a `deferrable initially deferred` constraint, do the inserts in the `conn` fixture's txn and fire it with **`conn.execute("set constraints all immediate")`** inside `pytest.raises`. Do NOT use `with conn.transaction()` (a SAVEPOINT — deferred constraints fire at top-level COMMIT, not savepoint release → false-green) and do NOT commit on a separate connection (leaks seed rows into `ops_test`). The fixture rollback then cleans up.
 
 **Run the suite (host):**
 ```bash
@@ -261,9 +262,25 @@ def test_nothing_to_bill_raises(conn):
 
 def test_period_cutoff_excludes_future_recognition(conn):
     s = _seed_recognizable(conn); _recognize(conn, s)
-    # period_through in the past (yesterday Phoenix) excludes today's recognition -> nothing to bill
+    # recognition is stamped now(); a period_through FIRMLY in the past excludes it DETERMINISTICALLY
+    # (current_date-1 is flaky near the Phoenix-midnight boundary — audit finding).
     with pytest.raises(psycopg.errors.RaiseException):
-        _issue(conn, s["project"], s["person"], period="current_date - 1")
+        _issue(conn, s["project"], s["person"], period="'2000-01-01'::date")
+
+def test_monotonic_period_rejected(conn):
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    _issue(conn, s["project"], s["person"], ref="'INV-1'", period="current_date")
+    a2 = conn.execute("insert into ops.apparatus (scope_id,apparatus_designation,status,is_active,assessment,"
+        "quoted_hours,quoted_revenue) values (%s,'A-2','Complete',true,'Pass',5,500) returning id",(s["scope"],)).fetchone()[0]
+    conn.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(a2,s["person"]))
+    with pytest.raises(psycopg.errors.RaiseException):   # earlier period than a prior issued app
+        _issue(conn, s["project"], s["person"], ref="'INV-2'", period="current_date - 5")
+
+def test_exclude_holds_apparatus_back(conn):
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException):   # exclude the only recognized apparatus -> nothing to bill
+        conn.execute("select ops.record_billing_application(%s,%s,current_date,'INV',array[%s]::uuid[],0)",
+                     (s["project"], s["person"], s["apparatus"]))
 
 def test_application_no_sequential(conn):
     s = _seed_recognizable(conn); _recognize(conn, s); _issue(conn, s["project"], s["person"], ref="'INV-1'")
@@ -327,16 +344,40 @@ def test_line_lineage_mismatch_rejected(conn):
             (app, ev, s["apparatus"], other["scope"], s["project"]))
 
 def test_header_neq_sum_lines_deferred_fires(conn):
-    # an issued app with header gross != Σ lines must fail at COMMIT
+    # DEFERRED-CONSTRAINT TEST IDIOM (audit fix): do the mismatched inserts in THIS conn's txn, then fire the
+    # deferred constraint NOW with `set constraints all immediate`. This (a) avoids the savepoint false-green
+    # (`with conn.transaction()` is a SAVEPOINT, and deferred constraints fire at top-level COMMIT, not savepoint
+    # release) and (b) needs no separate committed connection, so the fixture rollback cleans up — no ops_test leak.
     _set_ctx(conn); s = _seed_recognizable(conn); ev = _recognize(conn, s)
+    app = conn.execute("insert into ops.billing_application (project_id,application_no,status,period_through,"
+        "external_invoice_ref,billable_hours,gross_amount,positive_gross,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV',5,999,999,999,%s) returning id",(s["project"],s["person"])).fetchone()[0]
+    conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
+        "apparatus_id,scope_id,project_id,amount,billable_hours) values (%s,%s,'recognized',%s,%s,%s,500,5)",
+        (app, ev, s["apparatus"], s["scope"], s["project"]))
     with pytest.raises(psycopg.errors.RaiseException):
-        with conn.transaction():
-            app = conn.execute("insert into ops.billing_application (project_id,application_no,status,period_through,"
-                "external_invoice_ref,billable_hours,gross_amount,positive_gross,net_invoiced,actor_person_id) "
-                "values (%s,1,'issued',current_date,'INV',5,999,999,999,%s) returning id",(s["project"],s["person"])).fetchone()[0]
-            conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
-                "apparatus_id,scope_id,project_id,amount,billable_hours) values (%s,%s,'recognized',%s,%s,%s,500,5)",
-                (app, ev, s["apparatus"], s["scope"], s["project"]))
+        conn.execute("set constraints all immediate")   # header gross 999 != Σ lines 500 -> fires now
+
+def test_line_withheld_must_match_pct(conn):   # audit: §8.4 positive-branch withheld validation (Task-4 gap)
+    _set_ctx(conn); s = _seed_recognizable(conn, pct=Decimal("0.10")); ev = _recognize(conn, s)
+    app = conn.execute("insert into ops.billing_application (project_id,application_no,status,period_through,"
+        "external_invoice_ref,billable_hours,gross_amount,positive_gross,retainage_withheld,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV',5,500,500,50,450,%s) returning id",(s["project"],s["person"])).fetchone()[0]
+    with pytest.raises(psycopg.errors.RaiseException):   # withheld 0 but pct=0.10 on amount 500 -> must be 50.00
+        conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
+            "apparatus_id,scope_id,project_id,amount,billable_hours,retainage_withheld) values (%s,%s,'recognized',%s,%s,%s,500,5,0)",
+            (app, ev, s["apparatus"], s["scope"], s["project"]))
+
+def test_positive_line_after_reversal_rejected(conn):  # audit: §8.4 branch eligibility (gate-bypassed)
+    _set_ctx(conn); s = _seed_recognizable(conn); ev = _recognize(conn, s)
+    conn.execute("select ops.reverse_recognition(%s,%s,'x')", (ev, s["person"]))   # event now reversed
+    app = conn.execute("insert into ops.billing_application (project_id,application_no,status,period_through,"
+        "external_invoice_ref,billable_hours,gross_amount,positive_gross,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV',5,500,500,500,%s) returning id",(s["project"],s["person"])).fetchone()[0]
+    with pytest.raises(psycopg.errors.RaiseException):   # positive line for a now-reversed recognition
+        conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
+            "apparatus_id,scope_id,project_id,amount,billable_hours) values (%s,%s,'recognized',%s,%s,%s,500,5)",
+            (app, ev, s["apparatus"], s["scope"], s["project"]))
 ```
 
 - [ ] **Step 2: Run — verify fail.** Expected: FAIL (no integrity/deferred triggers → both inserts succeed).
@@ -458,7 +499,9 @@ def test_void_blocked_by_standing_credit(conn):
 
 **Files:** Modify `006_progress_billing.sql` (§7a draft path, §7b draft promotion, §7c discard); test file.
 
-**Interfaces:** Produces: `record` with no ref → a `billing_application_draft` row (returns its id, no number/lines/totals); `issue_billing_application(draft_id, actor, ref)` promotes via a **fresh** sweep; `discard_draft_billing_application(draft_id, actor)` deletes it.
+**Interfaces:** Produces: `record` with no ref → a `billing_application_draft` row (returns its id, no number/lines/totals); a NEW **3-param overload** `issue_billing_application(draft_id uuid, actor uuid, ref text)` that loads the draft's params and **delegates to the Task-3 6-param `issue_billing_application(project,actor,period,ref,exclude,draw)` worker** (then deletes the draft) — Postgres allows the two arities to coexist; `create` the new arity (not `create or replace`). `discard_draft_billing_application(draft_id, actor)` deletes a draft. **Add a SECOND down-migration drop line** for the 3-param `issue_billing_application(uuid,uuid,text)` (the existing drop is signature-specific to the 6-param form).
+
+**API staging (audit clarification):** Task 3 already shipped the 6-param `issue_billing_application` as the **issue worker** (called by `record`); the public 3-param draft-promotion overload is deferred to here (Task 8). Both share the worker — there is no second sweep implementation.
 
 - [ ] **Step 1: Write failing tests:**
 
@@ -526,11 +569,21 @@ def test_recognition_firewall_intact(conn):
         "and table_name in ('apparatus','scopes','projects') and column_name like '%recognized%'").fetchone()[0]
     assert cols == 0
 
+def _regclass(c, name):
+    return c.execute("select to_regclass(%s)", (name,)).fetchone()[0]
+
 def test_full_down_up_down_clean():
-    _exec_file(DOWN6); _exec_file(UP6); _exec_file(DOWN6); _exec_file(UP6)  # idempotent both directions
-    assert _scalar := None or True
+    # idempotent both directions; Chip 4 recreates; a Chip-4 DOWN must NOT touch Chips 1-3.
+    _exec_file(DOWN6); _exec_file(UP6); _exec_file(DOWN6); _exec_file(UP6)   # round-trips cleanly
+    with psycopg.connect(DSN, autocommit=True) as c:
+        assert _regclass(c, "ops.billing_application") is not None            # Chip 4 present after re-up
+        _exec_file(DOWN6)
+        assert _regclass(c, "ops.billing_application") is None                # Chip 4 dropped
+        assert _regclass(c, "ops.revenue_recognition_event") is not None      # Chip 3 SURVIVES
+        assert _regclass(c, "ops.apparatus") is not None                      # Chip 1 SURVIVES
+        assert c.execute("select 1 from ops.scope_quote limit 1") is not None # Chip 2 SURVIVES
+        _exec_file(UP6)                                                       # restore for any later test
 ```
-(Add a `_scalar` helper mirroring Chip 3 if needed; assert Chips 1–3 objects survive a `DOWN6`.)
 
 - [ ] **Step 2: Run — verify fail** (down list incomplete → dangling objects on re-up). **Step 3:** Reconcile `006_down` to drop every trigger-function added in Tasks 2–9 (header/line/draft immutability, insert-integrity, the deferred consistency constraint, the 4 functions) before the tables; add the MANIFEST row 006 and mark D-OPS-3 / Chip 4 in the MASTER-INDEX. **Step 4: Run the FULL ~45-case suite — verify all pass.** **Step 5: Commit** (`feat(ops): Chip 4 Task 10 -- reversibility + firewall assertion + MANIFEST/MASTER-INDEX`).
 
@@ -539,6 +592,20 @@ def test_full_down_up_down_clean():
 ## Plan Self-Review
 
 - **Spec coverage:** §6a–6e → T1; §8.0/8.1/8.2 → T2 (+ void guard T7); §7a/7b positive → T3; §8.3/8.4/8.5 → T4; retainage §6c/§7b → T5; credits §5/§7b → T6; void §7d → T7; draft §6e/§7a/7b/7c → T8; views §9 → T9; reversibility §10 + firewall + docs → T10. §11 test list distributed across T1–T10. **No gaps.**
-- **Type consistency:** function signatures are pinned in the Global Constraints + the down migration and reused verbatim (`record_billing_application(uuid,uuid,date,text,uuid[],numeric)`, `issue_billing_application(uuid,uuid,text)`, `discard_draft_billing_application(uuid,uuid)`, `void_billing_application(uuid,uuid,text)`). Note: `issue` is called two ways — from `record` (internal) and on a draft id (T8); keep one overload set per the spec.
+- **Type consistency:** the `issue_billing_application` API is staged: T3 ships the **6-param worker** `(uuid,uuid,date,text,uuid[],numeric)` (called by `record`); T8 adds the **3-param overload** `(uuid,uuid,text)` for draft promotion (a thin wrapper around the worker — two arities coexist; T8 `create`s the new one + adds its own down-drop). `discard_draft_billing_application(uuid,uuid)`, `void_billing_application(uuid,uuid,text)` per spec.
 - **Placeholder scan:** the per-task SQL points to the committed spec as the canonical block and inlines the test code; no "TBD"/"add error handling" placeholders. The implementer must copy the spec's DDL/function/trigger bodies exactly.
 - **Ordering caveat (call out to implementers):** the mutation gate (T2) makes raw inserts require `_set_ctx`; every raw-insert test helper sets it from T1 so no test churns. `issue`'s credit/draw branches are stubbed as no-ops in T3 and filled in T5/T6 — they must not raise when pct=0/no credits.
+
+## Invariant → Task test-coverage map (audit: pin each v6 invariant to a concrete task test)
+
+| Invariant | Task / test |
+|---|---|
+| duplicate RESA invoice ref blocked among issued (reuse OK after void) | **T7** `test_dup_ref_blocked` + `test_ref_reusable_after_void` |
+| gate-bypassed positive line whose event is reversed → rejected (§8.4 eligibility) | **T4** `test_positive_line_after_reversal_rejected` |
+| line `retainage_withheld = round(amount*pct,2)` (§8.4) | **T4** `test_line_withheld_must_match_pct` |
+| credit line `amount < 0` enforced; sub-cent credit skipped | **T6** `test_credit_amount_negative` + `test_sub_cent_credit_skipped` |
+| `exclude[]` holds positive apparatus back; credit non-excludable (B-6) | **T3** `test_exclude_holds_apparatus_back`; **T6** `test_credit_non_excludable` |
+| monotonic period_through rejection | **T3** `test_monotonic_period_rejected` |
+| held-negative void rejected (deferred held≥0) | **T7** `test_void_blocked_when_held_would_go_negative` |
+| `application_no` burned after void | **T7** `test_application_no_burned_after_void` |
+| deferred-constraint tests fire deterministically (no savepoint false-green, no leak) | **all** — use the **`set constraints all immediate`** idiom (see T4 `test_header_neq_sum_lines_deferred_fires`) |
