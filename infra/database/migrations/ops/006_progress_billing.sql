@@ -292,6 +292,24 @@ begin
         raise exception 'retainage_released must be 0 for a positive line (got %)', new.retainage_released;
       end if;
 
+      -- §8.4 retainage_withheld must match round(amount * retainage_pct, 2) for positive line.
+      -- Only validate when withheld >= 0; negatives are caught by ck_billline_retainage_nonneg CHECK.
+      if new.retainage_withheld >= 0 then
+        declare
+          v_retainage_pct_line numeric;
+          v_expected_withheld  numeric(14,2);
+        begin
+          select retainage_pct into v_retainage_pct_line
+            from ops.projects where id = new.project_id;
+          v_expected_withheld := round(new.amount * v_retainage_pct_line, 2);
+          if new.retainage_withheld is distinct from v_expected_withheld then
+            raise exception 'retainage_withheld % does not match round(amount(%) * retainage_pct(%), 2) = % for event %',
+                            new.retainage_withheld, new.amount, v_retainage_pct_line,
+                            v_expected_withheld, new.recognition_event_id;
+          end if;
+        end;
+      end if;
+
       -- branch eligibility: event must not be reversed
       if exists (
         select 1 from ops.revenue_recognition_event r
@@ -632,7 +650,7 @@ $$;
 --   DEFERRABLE INITIALLY DEFERRED (runs at COMMIT).
 --   Does NOT check ops.billing_ctx -- the function has already reset it by COMMIT.
 --   Asserts for each touched ISSUED application:
---     header.gross_amount        = sum(active lines amount where amount > 0 ... wait, spec says Sigma active)
+--     header.gross_amount        = sum(active lines amount)
 --     header.positive_gross      = sum(active lines amount where amount > 0)
 --     header.billable_hours      = sum(active lines billable_hours)
 --     header.retainage_withheld  = sum(active lines retainage_withheld)

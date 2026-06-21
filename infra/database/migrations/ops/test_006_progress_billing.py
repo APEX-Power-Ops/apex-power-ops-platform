@@ -307,9 +307,27 @@ def test_nothing_to_bill_raises(conn):
 
 def test_period_cutoff_excludes_future_recognition(conn):
     s = _seed_recognizable(conn); _recognize(conn, s)
-    # period_through in the past (yesterday Phoenix) excludes today's recognition -> nothing to bill
+    # recognition is stamped now(); a period_through FIRMLY in the past excludes it DETERMINISTICALLY
+    # (current_date-1 is flaky near the Phoenix-midnight boundary -- audit finding).
     with pytest.raises(psycopg.errors.RaiseException):
-        _issue(conn, s["project"], s["person"], period="current_date - 1")
+        _issue(conn, s["project"], s["person"], period="'2000-01-01'::date")
+
+
+def test_monotonic_period_rejected(conn):
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    _issue(conn, s["project"], s["person"], ref="'INV-1'", period="current_date")
+    a2 = conn.execute("insert into ops.apparatus (scope_id,apparatus_designation,status,is_active,assessment,"
+        "quoted_hours,quoted_revenue) values (%s,'A-2','Complete',true,'Pass',5,500) returning id",(s["scope"],)).fetchone()[0]
+    conn.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(a2,s["person"]))
+    with pytest.raises(psycopg.errors.RaiseException):   # earlier period than a prior issued app
+        _issue(conn, s["project"], s["person"], ref="'INV-2'", period="current_date - 5")
+
+
+def test_exclude_holds_apparatus_back(conn):
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException):   # exclude the only recognized apparatus -> nothing to bill
+        conn.execute("select ops.record_billing_application(%s,%s,current_date,'INV',array[%s]::uuid[],0)",
+                     (s["project"], s["person"], s["apparatus"]))
 
 
 def test_application_no_sequential(conn):
@@ -359,28 +377,39 @@ def test_line_lineage_mismatch_rejected(conn):
 
 
 def test_header_neq_sum_lines_deferred_fires(conn):
-    # an issued app with header gross != sum lines must fail at COMMIT.
-    # Uses a fresh connection so conn.transaction() issues a real BEGIN/COMMIT
-    # (the deferred constraint fires at COMMIT, not at savepoint release).
-    # The seed is done on the main conn (rolled back at teardown; ops_test is throwaway),
-    # but the failing billing inserts run on a fresh connection within a real txn block.
-    s = _seed_recognizable(conn); ev = _recognize(conn, s)
-    # Flush seed to ops_test (visible to other connections) -- ops_test is throwaway
-    conn.commit()
-    try:
-        with psycopg.connect(DSN) as c2:
-            with pytest.raises(psycopg.errors.RaiseException):
-                with c2.transaction():
-                    c2.execute("select set_config('ops.billing_ctx','1',true)")
-                    app = c2.execute(
-                        "insert into ops.billing_application (project_id,application_no,status,period_through,"
-                        "external_invoice_ref,billable_hours,gross_amount,positive_gross,net_invoiced,actor_person_id) "
-                        "values (%s,1,'issued',current_date,'INV',5,999,999,999,%s) returning id",
-                        (s["project"],s["person"])).fetchone()[0]
-                    c2.execute(
-                        "insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
-                        "apparatus_id,scope_id,project_id,amount,billable_hours) values (%s,%s,'recognized',%s,%s,%s,500,5)",
-                        (app, ev, s["apparatus"], s["scope"], s["project"]))
-    finally:
-        # Rollback the seed data left on conn (ops_test is throwaway; belt+suspenders)
-        conn.rollback()
+    # DEFERRED-CONSTRAINT TEST IDIOM (audit fix): do the mismatched inserts in THIS conn's txn, then fire the
+    # deferred constraint NOW with `set constraints all immediate`. This (a) avoids the savepoint false-green
+    # (`with conn.transaction()` is a SAVEPOINT, and deferred constraints fire at top-level COMMIT, not savepoint
+    # release) and (b) needs no separate committed connection, so the fixture rollback cleans up -- no ops_test leak.
+    _set_ctx(conn); s = _seed_recognizable(conn); ev = _recognize(conn, s)
+    app = conn.execute("insert into ops.billing_application (project_id,application_no,status,period_through,"
+        "external_invoice_ref,billable_hours,gross_amount,positive_gross,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV',5,999,999,999,%s) returning id",(s["project"],s["person"])).fetchone()[0]
+    conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
+        "apparatus_id,scope_id,project_id,amount,billable_hours) values (%s,%s,'recognized',%s,%s,%s,500,5)",
+        (app, ev, s["apparatus"], s["scope"], s["project"]))
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute("set constraints all immediate")   # header gross 999 != Sigma lines 500 -> fires now
+
+
+def test_line_withheld_must_match_pct(conn):   # audit: §8.4 positive-branch withheld validation (Task-4 gap)
+    _set_ctx(conn); s = _seed_recognizable(conn, pct=Decimal("0.10")); ev = _recognize(conn, s)
+    app = conn.execute("insert into ops.billing_application (project_id,application_no,status,period_through,"
+        "external_invoice_ref,billable_hours,gross_amount,positive_gross,retainage_withheld,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV',5,500,500,50,450,%s) returning id",(s["project"],s["person"])).fetchone()[0]
+    with pytest.raises(psycopg.errors.RaiseException):   # withheld 0 but pct=0.10 on amount 500 -> must be 50.00
+        conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
+            "apparatus_id,scope_id,project_id,amount,billable_hours,retainage_withheld) values (%s,%s,'recognized',%s,%s,%s,500,5,0)",
+            (app, ev, s["apparatus"], s["scope"], s["project"]))
+
+
+def test_positive_line_after_reversal_rejected(conn):  # audit: §8.4 branch eligibility (gate-bypassed)
+    _set_ctx(conn); s = _seed_recognizable(conn); ev = _recognize(conn, s)
+    conn.execute("select ops.reverse_recognition(%s,%s,'x')", (ev, s["person"]))   # event now reversed
+    app = conn.execute("insert into ops.billing_application (project_id,application_no,status,period_through,"
+        "external_invoice_ref,billable_hours,gross_amount,positive_gross,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV',5,500,500,500,%s) returning id",(s["project"],s["person"])).fetchone()[0]
+    with pytest.raises(psycopg.errors.RaiseException):   # positive line for a now-reversed recognition
+        conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
+            "apparatus_id,scope_id,project_id,amount,billable_hours) values (%s,%s,'recognized',%s,%s,%s,500,5)",
+            (app, ev, s["apparatus"], s["scope"], s["project"]))
