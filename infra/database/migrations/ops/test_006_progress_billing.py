@@ -437,3 +437,116 @@ def test_over_draw_rejected(conn):
     s = _seed_recognizable(conn, pct=Decimal("0.10")); _recognize(conn, s); _issue(conn, s["project"], s["person"], ref="'INV-1'")
     with pytest.raises(psycopg.errors.RaiseException):
         _issue(conn, s["project"], s["person"], ref="'INV-2'", draw=999)
+
+
+# ---- Task 6: credit branch + line-grain auto-release (canonical order) ----
+
+def test_credit_returns_gross_plus_retainage(conn):
+    s = _seed_recognizable(conn, pct=Decimal("0.10"), quoted_revenue=500); ev = _recognize(conn, s)
+    _issue(conn, s["project"], s["person"], ref="'INV-1'")              # bill: net 450, held 50
+    conn.execute("select ops.reverse_recognition(%s,%s,'rework')", (ev, s["person"]))
+    app2 = _issue(conn, s["project"], s["person"], ref="'INV-2'")        # credit
+    h = conn.execute("select gross_amount,retainage_released,net_invoiced from ops.billing_application where id=%s",(app2,)).fetchone()
+    assert h == (Decimal("-500.00"), Decimal("50.00"), Decimal("-450.00"))  # net-credit = -(net originally billed)
+    held = conn.execute("select coalesce(sum(retainage_withheld-retainage_released-retainage_drawn),0) "
+                        "from ops.billing_application where project_id=%s and status='issued'",(s["project"],)).fetchone()[0]
+    assert held == Decimal("0.00")
+
+
+def test_pure_credit_app_issues(conn):   # C-1 fix: withheld cap=positive_gross, not LEAST(.,gross)
+    s = _seed_recognizable(conn, pct=Decimal("0.10")); ev = _recognize(conn, s)
+    _issue(conn, s["project"], s["person"], ref="'INV-1'")
+    conn.execute("select ops.reverse_recognition(%s,%s,'x')",(ev,s["person"]))
+    app2 = _issue(conn, s["project"], s["person"], ref="'INV-2'")
+    assert conn.execute("select gross_amount from ops.billing_application where id=%s",(app2,)).fetchone()[0] < 0
+
+
+def test_bill_draw_reverse_no_wedge(conn):  # C-2 fix
+    s = _seed_recognizable(conn, pct=Decimal("0.10")); ev = _recognize(conn, s)
+    _issue(conn, s["project"], s["person"], ref="'INV-1'")               # held 50
+    _issue(conn, s["project"], s["person"], ref="'INV-2'", draw=50)      # held 0
+    conn.execute("select ops.reverse_recognition(%s,%s,'x')",(ev,s["person"]))
+    app3 = _issue(conn, s["project"], s["person"], ref="'INV-3'")        # credit: released=LEAST(50,0)=0
+    h = conn.execute("select retainage_released,net_invoiced from ops.billing_application where id=%s",(app3,)).fetchone()
+    assert h == (Decimal("0.00"), Decimal("-500.00"))   # full gross credited; no wedge
+
+
+def test_credit_amount_negative(conn):
+    """§8.4: credit line amount must be < 0 -- trigger enforces this."""
+    _set_ctx(conn); s = _seed_recognizable(conn, pct=Decimal("0.10")); ev = _recognize(conn, s)
+    app1 = conn.execute(
+        "insert into ops.billing_application "
+        "(project_id,application_no,status,period_through,external_invoice_ref,"
+        "billable_hours,gross_amount,positive_gross,retainage_withheld,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV-P',5,500,500,50,450,%s) returning id",
+        (s["project"], s["person"])).fetchone()[0]
+    conn.execute(
+        "insert into ops.billing_application_line "
+        "(application_id,recognition_event_id,event_type,apparatus_id,scope_id,project_id,"
+        "amount,billable_hours,retainage_withheld,retainage_released) "
+        "values (%s,%s,'recognized',%s,%s,%s,500,5,50,0)",
+        (app1, ev, s["apparatus"], s["scope"], s["project"]))
+    # Now reverse
+    rev_ev = conn.execute("select ops.reverse_recognition(%s,%s,'test')", (ev, s["person"])).fetchone()[0]
+    app2 = conn.execute(
+        "insert into ops.billing_application "
+        "(project_id,application_no,status,period_through,external_invoice_ref,"
+        "billable_hours,gross_amount,positive_gross,retainage_withheld,retainage_released,net_invoiced,actor_person_id) "
+        "values (%s,2,'issued',current_date,'INV-C',-5,-500,0,0,50,-450,%s) returning id",
+        (s["project"], s["person"])).fetchone()[0]
+    # Attempt a credit line with amount > 0 -- must be rejected by the trigger
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute(
+            "insert into ops.billing_application_line "
+            "(application_id,recognition_event_id,event_type,apparatus_id,scope_id,project_id,"
+            "amount,billable_hours,retainage_withheld,retainage_released) "
+            "values (%s,%s,'reversal',%s,%s,%s,500,-5,0,50)",
+            (app2, rev_ev, s["apparatus"], s["scope"], s["project"]))
+
+
+def test_sub_cent_credit_skipped(conn):
+    """A credit line with amount=0 (round(recognized_amount,2)=0) is rejected by §8.4 trigger.
+    Sub-cent reversal events cannot produce valid credit lines -- the amount<0 check enforces this."""
+    _set_ctx(conn); s = _seed_recognizable(conn, pct=Decimal("0.10")); ev = _recognize(conn, s)
+    # Bill the positive event
+    app1 = conn.execute(
+        "insert into ops.billing_application "
+        "(project_id,application_no,status,period_through,external_invoice_ref,"
+        "billable_hours,gross_amount,positive_gross,retainage_withheld,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV-P',5,500,500,50,450,%s) returning id",
+        (s["project"], s["person"])).fetchone()[0]
+    conn.execute(
+        "insert into ops.billing_application_line "
+        "(application_id,recognition_event_id,event_type,apparatus_id,scope_id,project_id,"
+        "amount,billable_hours,retainage_withheld,retainage_released) "
+        "values (%s,%s,'recognized',%s,%s,%s,500,5,50,0)",
+        (app1, ev, s["apparatus"], s["scope"], s["project"]))
+    rev_ev = conn.execute("select ops.reverse_recognition(%s,%s,'sub-cent-test')", (ev, s["person"])).fetchone()[0]
+    # Attempt a credit line with amount=0.00 -- trigger must reject (credit amount must be < 0, not zero)
+    app2 = conn.execute(
+        "insert into ops.billing_application "
+        "(project_id,application_no,status,period_through,external_invoice_ref,"
+        "billable_hours,gross_amount,positive_gross,retainage_withheld,retainage_released,net_invoiced,actor_person_id) "
+        "values (%s,2,'issued',current_date,'INV-SC',0,0,0,0,0,0,%s) returning id",
+        (s["project"], s["person"])).fetchone()[0]
+    with pytest.raises(psycopg.errors.RaiseException):
+        # amount=0.00 for a reversal line -- trigger rejects (must be < 0)
+        conn.execute(
+            "insert into ops.billing_application_line "
+            "(application_id,recognition_event_id,event_type,apparatus_id,scope_id,project_id,"
+            "amount,billable_hours,retainage_withheld,retainage_released) "
+            "values (%s,%s,'reversal',%s,%s,%s,0.00,-5,0,0)",
+            (app2, rev_ev, s["apparatus"], s["scope"], s["project"]))
+
+
+def test_credit_non_excludable(conn):
+    """exclude[] does NOT suppress a credit for an already-billed-then-reversed apparatus."""
+    s = _seed_recognizable(conn, pct=Decimal("0.10"), quoted_revenue=500); ev = _recognize(conn, s)
+    _issue(conn, s["project"], s["person"], ref="'INV-1'")
+    conn.execute("select ops.reverse_recognition(%s,%s,'test')", (ev, s["person"]))
+    # Issue with exclude=[apparatus] -- credit should still sweep (credits are non-excludable)
+    app2 = conn.execute(
+        "select ops.record_billing_application(%s,%s,current_date,'INV-2',array[%s]::uuid[],0)",
+        (s["project"], s["person"], s["apparatus"])).fetchone()[0]
+    row = conn.execute("select gross_amount from ops.billing_application where id=%s", (app2,)).fetchone()
+    assert row[0] < 0  # credit swept despite apparatus being in exclude[]

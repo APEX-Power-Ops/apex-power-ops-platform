@@ -448,6 +448,7 @@ declare
   v_proj            record;
   v_retainage_pct   numeric;
   candidate_ids     uuid[];
+  credit_ids        uuid[];
   v_app_id          uuid;
   v_app_no          int;
   v_gross           numeric(14,2);
@@ -457,6 +458,8 @@ declare
   v_released        numeric(14,2);
   v_net             numeric(14,2);
   v_cutoff          timestamptz;
+  v_held_before     numeric(14,2);
+  v_remaining_held  numeric(14,2);
   rec               record;
 begin
   -- set the billing context flag so the mutation gate permits our inserts
@@ -551,20 +554,7 @@ begin
        );
   end if;
 
-  -- 8. Nothing-to-bill check (positive branch only; draw cap is a later task)
-  if (candidate_ids is null or cardinality(candidate_ids) = 0)
-     and p_retainage_draw_request = 0 then
-    perform set_config('ops.billing_ctx', '0', true);
-    raise exception 'nothing to bill for project %', p_project_id;
-  end if;
-
-  -- 9. application_no (under project lock; burned forever)
-  select coalesce(max(application_no), 0) + 1
-    into v_app_no
-    from ops.billing_application
-   where project_id = p_project_id;
-
-  -- 5. Build aggregate totals from positive lines (retainage is 0 for now; Task 5/6 fill the math)
+  -- 5. Build aggregate totals from positive lines.
   v_gross          := 0;
   v_positive_gross := 0;
   v_billable_hours := 0;
@@ -580,7 +570,6 @@ begin
      where e.id = any(candidate_ids);
 
     -- retainage withheld: round(amount*pct,2) per line then sum
-    -- pct=0 in Task 3 seeds so this is 0; guard so it is a no-op when pct=0
     if v_retainage_pct > 0 then
       select coalesce(sum(round(round(e.recognized_amount, 2) * v_retainage_pct, 2)), 0)
         into v_withheld
@@ -589,10 +578,106 @@ begin
     end if;
   end if;
 
-  -- credit walk: no credits in Task 3 (Tasks 5/6 add the walk)
-  -- v_released stays 0
+  -- 5b. Credit walk (§5 credit branch + §7b step 5).
+  --   held_before = sum(withheld - released - drawn) over all existing issued apps for this project
+  --   (snapshot taken before this application is inserted).
+  select coalesce(sum(retainage_withheld - retainage_released - retainage_drawn), 0)
+    into v_held_before
+    from ops.billing_application
+   where project_id = p_project_id
+     and status = 'issued';
 
-  -- retainage draw: Task 6 caps this; for now just pass it through (pct=0 => withheld=0 => draw stays 0)
+  v_remaining_held := v_held_before;
+
+  -- Identify credit-eligible reversal events:
+  --   reversal event whose original event has an active issued line and which itself has no active line.
+  --   Credits are exempt from period cutoff and are non-excludable (exclude[] does not suppress them).
+  --   Sub-cent credits (round(recognized_amount,2) = 0) are skipped per spec eligibility.
+  select array_agg(e.id)
+    into credit_ids
+    from ops.revenue_recognition_event e
+   where e.project_id = p_project_id
+     and e.event_type = 'reversal'
+     -- original event has an active issued line (credit eligibility)
+     and exists (
+       select 1 from ops.billing_application_line bl
+         join ops.billing_application ba on ba.id = bl.application_id
+        where bl.recognition_event_id = e.reverses_event_id
+          and bl.is_voided = false
+          and ba.status = 'issued'
+     )
+     -- this reversal has no active line yet (not already billed)
+     and not exists (
+       select 1 from ops.billing_application_line bl
+         join ops.billing_application ba on ba.id = bl.application_id
+        where bl.recognition_event_id = e.id
+          and bl.is_voided = false
+          and ba.status = 'issued'
+     )
+     -- sub-cent: skip reversals where round(recognized_amount,2) = 0
+     and round(e.recognized_amount, 2) <> 0;
+
+  -- Walk credit lines in canonical order to compute per-line released amounts and accumulate totals.
+  -- Order: orig-event.recognized_at, reversal_event.id (deterministic; reproducible across issue calls).
+  -- remaining_held starts at held_before and decrements; kept >= 0 by LEAST clamp (C-2).
+  if credit_ids is not null and cardinality(credit_ids) > 0 then
+    for rec in
+      select
+        e.id                                              as rev_event_id,
+        e.apparatus_id,
+        e.scope_id,
+        e.project_id                                      as rev_project_id,
+        round(e.recognized_amount, 2)                     as credit_amount,
+        round(orig_event.quoted_hours, 2)                 as orig_quoted_hours,
+        coalesce(orig_line.retainage_withheld, 0)         as orig_line_withheld
+      from ops.revenue_recognition_event e
+      join ops.revenue_recognition_event orig_event
+        on orig_event.id = e.reverses_event_id
+      left join (
+        select bl.recognition_event_id, bl.retainage_withheld
+          from ops.billing_application_line bl
+          join ops.billing_application ba on ba.id = bl.application_id
+         where bl.is_voided = false
+           and ba.status = 'issued'
+      ) orig_line on orig_line.recognition_event_id = e.reverses_event_id
+      where e.id = any(credit_ids)
+      order by orig_event.recognized_at, e.id
+    loop
+      declare
+        v_line_released numeric(14,2);
+      begin
+        v_line_released  := least(rec.orig_line_withheld, v_remaining_held);
+        v_remaining_held := v_remaining_held - v_line_released;
+
+        -- accumulate header totals (credit amounts are negative)
+        v_gross          := v_gross          + rec.credit_amount;
+        v_billable_hours := v_billable_hours + (-rec.orig_quoted_hours);
+        v_released       := v_released       + v_line_released;
+      end;
+    end loop;
+  end if;
+
+  -- 8. Nothing-to-bill check: empty positive+credit sweep AND draw=0 -> raise.
+  if (candidate_ids is null or cardinality(candidate_ids) = 0)
+     and (credit_ids is null or cardinality(credit_ids) = 0)
+     and p_retainage_draw_request = 0 then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'nothing to bill for project %', p_project_id;
+  end if;
+
+  -- 7. Draw cap: draw must not exceed held_before minus this app's credit releases (spec §7b step 7).
+  if p_retainage_draw_request > v_held_before - v_released then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'retainage_drawn (%) exceeds available held (held_before=% minus releases=%) for project %',
+                    p_retainage_draw_request, v_held_before, v_released, p_project_id;
+  end if;
+
+  -- 9. application_no (under project lock; burned forever)
+  select coalesce(max(application_no), 0) + 1
+    into v_app_no
+    from ops.billing_application
+   where project_id = p_project_id;
+
   v_net := v_gross - v_withheld + v_released + p_retainage_draw_request;
 
   -- 10. Insert header
@@ -629,6 +714,59 @@ begin
       0
     from ops.revenue_recognition_event e
     where e.id = any(candidate_ids);
+  end if;
+
+  -- Insert credit lines in canonical order (re-execute the ordered walk with the now-known v_app_id).
+  -- remaining_held is reset to held_before to reproduce the identical allocation computed above.
+  if credit_ids is not null and cardinality(credit_ids) > 0 then
+    v_remaining_held := v_held_before;
+    for rec in
+      select
+        e.id                                              as rev_event_id,
+        e.apparatus_id,
+        e.scope_id,
+        e.project_id                                      as rev_project_id,
+        round(e.recognized_amount, 2)                     as credit_amount,
+        round(orig_event.quoted_hours, 2)                 as orig_quoted_hours,
+        coalesce(orig_line.retainage_withheld, 0)         as orig_line_withheld
+      from ops.revenue_recognition_event e
+      join ops.revenue_recognition_event orig_event
+        on orig_event.id = e.reverses_event_id
+      left join (
+        select bl.recognition_event_id, bl.retainage_withheld
+          from ops.billing_application_line bl
+          join ops.billing_application ba on ba.id = bl.application_id
+         where bl.is_voided = false
+           and ba.status = 'issued'
+      ) orig_line on orig_line.recognition_event_id = e.reverses_event_id
+      where e.id = any(credit_ids)
+      order by orig_event.recognized_at, e.id
+    loop
+      declare
+        v_line_released numeric(14,2);
+      begin
+        v_line_released  := least(rec.orig_line_withheld, v_remaining_held);
+        v_remaining_held := v_remaining_held - v_line_released;
+
+        insert into ops.billing_application_line (
+          application_id, recognition_event_id, event_type,
+          apparatus_id, scope_id, project_id,
+          amount, billable_hours,
+          retainage_withheld, retainage_released
+        ) values (
+          v_app_id,
+          rec.rev_event_id,
+          'reversal'::ops.recognition_event_type,
+          rec.apparatus_id,
+          rec.scope_id,
+          rec.rev_project_id,
+          rec.credit_amount,
+          -rec.orig_quoted_hours,
+          0,
+          v_line_released
+        );
+      end;
+    end loop;
   end if;
 
   -- Reset flag before returning
