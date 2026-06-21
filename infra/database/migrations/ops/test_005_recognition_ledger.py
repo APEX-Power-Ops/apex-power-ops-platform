@@ -451,3 +451,36 @@ def test_migration_reversible():
     assert _scalar("select to_regclass('ops.persons')") is not None
     _exec_file(UP5)
     assert _scalar("select to_regclass('ops.revenue_recognition_event')") is not None
+
+
+# ---- Fix wave 2: new tests for HIGH-1, HIGH-2, MED-4 ----
+
+def test_insert_idempotency_direct(conn):
+    """FIX-A: a second direct recognized insert for the same apparatus must be rejected."""
+    s = _seed_recognizable(conn)
+    _recognize(conn, s)   # net recognized = 500 via the function (legitimate path)
+    with pytest.raises(psycopg.errors.RaiseException, match="open recognition"):
+        _insert_recognized(conn, s)   # direct insert must fail on the idempotency gate
+
+
+def test_insert_null_quote_basis(conn):
+    """FIX-B: IS DISTINCT FROM rejects a direct insert when apparatus.quoted_revenue IS NULL."""
+    s = _seed_recognizable(conn, quoted_revenue=None)
+    # quoted_revenue is NULL on apparatus; any recognized_amount is DISTINCT from NULL -> raises
+    with pytest.raises(psycopg.errors.RaiseException, match="quoted_revenue"):
+        _insert_recognized(conn, s, recognized_amount=500)
+
+
+def test_ceiling_excludes_cancelled(conn):
+    """FIX-C: v_scope_recognition.apparatus_ceiling must not count cancelled apparatus."""
+    s = _seed_recognizable(conn)   # A-1: status=Complete, is_active=True, quoted_revenue=500
+    # raw-insert a second apparatus with status=Cancelled — not blocked by freeze/protect guards
+    conn.execute(
+        "insert into ops.apparatus (scope_id, apparatus_designation, status, is_active, quoted_hours, quoted_revenue) "
+        "values (%s, 'A-X', 'Cancelled', true, 5, 500)",
+        (s["scope"],))
+    row = conn.execute(
+        "select apparatus_ceiling from ops.v_scope_recognition where scope_id=%s",
+        (s["scope"],)).fetchone()
+    # only the non-cancelled A-1 (500) should count; the cancelled A-X must be excluded
+    assert row[0] == Decimal("500")

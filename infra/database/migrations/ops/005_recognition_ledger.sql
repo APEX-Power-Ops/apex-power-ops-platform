@@ -169,7 +169,8 @@ begin
            p.is_active as project_active, p.status as project_status
       into a
       from ops.apparatus a2 join ops.scopes s on s.id=a2.scope_id join ops.projects p on p.id=s.project_id
-     where a2.id = new.apparatus_id;
+     where a2.id = new.apparatus_id
+     for update of a2;                         -- FIX-A: lock serializes concurrent direct inserts
     if not (a.is_active and a.scope_active and a.project_active
             and a.scope_status <> 'Cancelled' and a.project_status <> 'Cancelled') then
       raise exception 'recognized row for inactive/cancelled chain';
@@ -179,13 +180,19 @@ begin
     if not found or not sq.is_frozen or sq.frozen_at is null then
       raise exception 'recognized row on unfrozen basis';
     end if;
-    if new.recognized_amount <> a.quoted_revenue then
+    if new.recognized_amount is distinct from a.quoted_revenue then  -- FIX-B: null-safe comparison
       raise exception 'recognized_amount must equal apparatus.quoted_revenue';
     end if;
     if new.quoted_hours is distinct from a.quoted_hours
        or new.blended_rate is distinct from sq.blended_rate
        or new.basis_frozen_at is distinct from sq.frozen_at then
       raise exception 'recognized row snapshot does not match current basis';
+    end if;
+    -- FIX-A: idempotency gate — reject if apparatus already has an open net recognition
+    -- (BEFORE INSERT fires before the new row exists, so sum reflects only prior rows)
+    if (select coalesce(sum(recognized_amount),0)
+          from ops.revenue_recognition_event where apparatus_id = new.apparatus_id) > 0 then
+      raise exception 'apparatus % already has an open recognition', new.apparatus_id;
     end if;
   elsif new.event_type = 'reversal' then
     select apparatus_id, recognized_amount into orig
@@ -314,12 +321,12 @@ left join lateral (
 create view ops.v_scope_recognition as
 select s.id as scope_id, s.project_id,
        coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.scope_id=s.id),0) as recognized_total,
-       coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active),0) as apparatus_ceiling,
+       coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active and a.status <> 'Cancelled'),0) as apparatus_ceiling,  -- FIX-C
        sq.adjusted_total as scope_adjusted_total,
        sq.adjusted_total
-         - coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active),0) as residual,
+         - coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active and a.status <> 'Cancelled'),0) as residual,  -- FIX-C
        coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.scope_id=s.id),0)
-         / NULLIF(coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active),0), 0) as pct_of_ceiling,
+         / NULLIF(coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active and a.status <> 'Cancelled'),0), 0) as pct_of_ceiling,  -- FIX-C
        coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.scope_id=s.id),0)
          / NULLIF(sq.adjusted_total, 0) as pct_of_scope
 from ops.scopes s
@@ -330,19 +337,22 @@ where s.is_active and s.status <> 'Cancelled' and p.is_active and p.status <> 'C
 create view ops.v_project_recognition as
 select p.id as project_id,
        coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.project_id=p.id),0) as recognized_total,
-       coalesce((select sum(a.quoted_revenue) from ops.apparatus a
-                 join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active),0) as apparatus_ceiling,
+       coalesce((select sum(a.quoted_revenue) from ops.apparatus a                              -- FIX-C: add scope+cancelled filters
+                 join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active
+                 and s.is_active and s.status <> 'Cancelled' and a.status <> 'Cancelled'),0) as apparatus_ceiling,
        coalesce((select sum(sq.adjusted_total) from ops.scope_quote sq
                  join ops.scopes s on s.id=sq.scope_id
                  where s.project_id=p.id and s.is_active and s.status <> 'Cancelled'),0) as scope_adjusted_total,
        coalesce((select sum(sq.adjusted_total) from ops.scope_quote sq
                  join ops.scopes s on s.id=sq.scope_id
                  where s.project_id=p.id and s.is_active and s.status <> 'Cancelled'),0)
-         - coalesce((select sum(a.quoted_revenue) from ops.apparatus a
-                     join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active),0) as residual,
+         - coalesce((select sum(a.quoted_revenue) from ops.apparatus a                          -- FIX-C: add scope+cancelled filters
+                     join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active
+                     and s.is_active and s.status <> 'Cancelled' and a.status <> 'Cancelled'),0) as residual,
        coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.project_id=p.id),0)
-         / NULLIF(coalesce((select sum(a.quoted_revenue) from ops.apparatus a
-                            join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active),0), 0) as pct_of_ceiling,
+         / NULLIF(coalesce((select sum(a.quoted_revenue) from ops.apparatus a                   -- FIX-C: add scope+cancelled filters
+                            join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active
+                            and s.is_active and s.status <> 'Cancelled' and a.status <> 'Cancelled'),0), 0) as pct_of_ceiling,
        coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.project_id=p.id),0)
          / NULLIF(coalesce((select sum(sq.adjusted_total) from ops.scope_quote sq
                             join ops.scopes s on s.id=sq.scope_id
