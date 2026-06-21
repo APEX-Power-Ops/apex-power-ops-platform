@@ -413,3 +413,27 @@ def test_positive_line_after_reversal_rejected(conn):  # audit: §8.4 branch eli
         conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
             "apparatus_id,scope_id,project_id,amount,billable_hours) values (%s,%s,'recognized',%s,%s,%s,500,5)",
             (app, ev, s["apparatus"], s["scope"], s["project"]))
+
+
+# ---- Task 5: line-grain retainage withholding + explicit capped draw ----
+
+def test_withholding_line_grain(conn):
+    s = _seed_recognizable(conn, pct=Decimal("0.10"), quoted_revenue=500); _recognize(conn, s)
+    app = _issue(conn, s["project"], s["person"])
+    h = conn.execute("select retainage_withheld,net_invoiced from ops.billing_application where id=%s",(app,)).fetchone()
+    assert h[0] == Decimal("50.00") and h[1] == Decimal("450.00")  # 500*0.10 withheld; net 450
+    ln = conn.execute("select retainage_withheld from ops.billing_application_line where application_id=%s",(app,)).fetchone()
+    assert ln[0] == Decimal("50.00")
+
+
+def test_pure_draw_app_issues(conn):
+    s = _seed_recognizable(conn, pct=Decimal("0.10")); _recognize(conn, s); _issue(conn, s["project"], s["person"], ref="'INV-1'")
+    # held_to_date is 50; a pure draw of 50 with empty sweep issues
+    app2 = _issue(conn, s["project"], s["person"], ref="'INV-2'", draw=50)
+    assert conn.execute("select retainage_drawn,net_invoiced from ops.billing_application where id=%s",(app2,)).fetchone() == (Decimal("50.00"), Decimal("50.00"))
+
+
+def test_over_draw_rejected(conn):
+    s = _seed_recognizable(conn, pct=Decimal("0.10")); _recognize(conn, s); _issue(conn, s["project"], s["person"], ref="'INV-1'")
+    with pytest.raises(psycopg.errors.RaiseException):
+        _issue(conn, s["project"], s["person"], ref="'INV-2'", draw=999)
