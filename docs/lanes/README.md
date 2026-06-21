@@ -54,7 +54,7 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 
 ### Lane: learning (enablement / capture + ROI)
 - **Scope:** the flagship learning lane — contextual resource surfacing (Slice 1, merged) + the capture/tracking path (Slice 2) — DEV ONLY.
-- **Branch:** `learning/slice2b-projections`   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
+- **Branch:** (none active -- Slice 2b merged; next slice branches off main)   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
 - **Dev DB / schema:** `learning_dev` → `public.*` (frozen rev-2.3/2.4 baseline; lane isolation = the database, per separate-DB-per-lane D-ARCH-1)
 - **Write-boundary (OWNS):** `infra/database/migrations/learning/**`, `packages/learning-capture/**`,
   `packages/learning-resolver/**` (Slice-1 hardening), `packages/learning-projections/**` (Slice 2b), `apps/control-plane-api/services/learning/**`
@@ -64,7 +64,7 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 - **Must NOT touch:** `records.*` / `ops.*` migrations + packages; the parallel `packages/power-test-converters/**` WIP; prod Supabase.
 - **Gates (human-approval):** `schema` (each `learning_dev` migration apply; `001`/`002` **DONE 2026-06-20**; Slice 2b migrations pending); promotion (merge to main) is operator-gated.
 - **Escalation / owner:** CC (technical authority); operator gates schema apply + merge.
-- **Status:** active (Slice 2a MERGED, PR #23 → `c9c2b6a8`; **`learning_dev` apply DONE + e2e-verified 2026-06-20** — capture vertical LIVE; Slice 2b projections next; data acquisition = value gate).
+- **Status:** active (Slices 1 + 2a + **2b** all MERGED to main; 2b projection engine = PR #24 → `3a1c45a9`. `learning_dev` apply DONE + e2e-verified. NEXT = real DATA ACQUISITION (the value gate) · 2c ROI correlation · management dashboard UI).
 
 > Merged/closed lanes (orchestration/chip3-apex-jobs, docs/chip2-governance-supersede) are pruned;
 > their work is on `main`.
