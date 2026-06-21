@@ -687,25 +687,13 @@ def test_draft_saved_then_issued_fresh(conn):
 
 def test_draft_reserves_nothing(conn):
     """A saved draft does not create any billing_application_line -- it reserves nothing.
-    The apparatus still appears on the unbilled set (confirmed via inline query; Task 9 will
-    switch this assertion to ops.v_unbilled_recognition once the view lands)."""
+    The apparatus still appears on the unbilled set (confirmed via ops.v_unbilled_recognition)."""
     s = _seed_recognizable(conn); _recognize(conn, s)
     conn.execute("select ops.record_billing_application(%s,%s,current_date,null,'{}'::uuid[],0)",
                  (s["project"], s["person"]))
-    # Inline unbilled-equivalent: a recognized event with no active billing line -- drafts must not consume this slot.
-    # Task 9 TODO: replace this inline query with:
-    #   select count(*) from ops.v_unbilled_recognition where apparatus_id=%s
+    # Drafts reserve nothing -- apparatus must still appear in the unbilled view.
     unbilled_count = conn.execute(
-        "select count(*) from ops.revenue_recognition_event e "
-        "where e.apparatus_id = %s "
-        "  and e.event_type = 'recognized' "
-        "  and not exists ("
-        "    select 1 from ops.billing_application_line bl "
-        "    join ops.billing_application ba on ba.id = bl.application_id "
-        "    where bl.recognition_event_id = e.id "
-        "      and bl.is_voided = false "
-        "      and ba.status = 'issued'"
-        "  )",
+        "select count(*) from ops.v_unbilled_recognition where apparatus_id=%s",
         (s["apparatus"],)).fetchone()[0]
     assert unbilled_count >= 1
 
@@ -736,3 +724,78 @@ def test_draft_promote_nonexistent_id_rejected(conn):
     with pytest.raises(psycopg.errors.RaiseException):
         conn.execute("select ops.issue_billing_application(%s,%s,'INV-GHOST')",
                      (str(uuid.uuid4()), s["person"]))
+
+
+# ---- Task 9: views (v_unbilled_recognition, v_draft_preview, v_billing_application_sov, v_project_billing) ----
+
+def test_reconciliation_ties_to_cent(conn):
+    """recognized_to_date == billed_gross_to_date + unbilled_recognized, cent-exact.
+    Uses non-2dp quoted_revenue (333.335) to confirm round-per-event then sum avoids floating drift."""
+    # quoted_revenue=333.335: round(333.335,2) = 333.34 (half-even) or 333.33 depending on DB;
+    # the key is that recognized_to_date uses the SAME per-event rounding as the billing lines,
+    # so the identity holds regardless of which way it rounds.
+    s = _seed_recognizable(conn, quoted_revenue=Decimal("333.335"), quoted_hours=3)
+    _recognize(conn, s)
+    _issue(conn, s["project"], s["person"])
+    r = conn.execute(
+        "select recognized_to_date, billed_gross_to_date, unbilled_recognized "
+        "from ops.v_project_billing where project_id=%s",
+        (s["project"],)).fetchone()
+    assert r is not None
+    assert r[0] == r[1] + r[2]   # recognized == billed + unbilled, to the cent
+
+
+def test_unbilled_view_matches_sweep(conn):
+    """v_unbilled_recognition shows the apparatus before billing; disappears after issue."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    assert conn.execute(
+        "select count(*) from ops.v_unbilled_recognition where apparatus_id=%s",
+        (s["apparatus"],)).fetchone()[0] == 1
+    _issue(conn, s["project"], s["person"])
+    assert conn.execute(
+        "select count(*) from ops.v_unbilled_recognition where apparatus_id=%s",
+        (s["apparatus"],)).fetchone()[0] == 0
+
+
+def test_views_exist(conn):
+    """All four Task 9 views are present in the ops schema."""
+    for v in ("v_unbilled_recognition", "v_draft_preview", "v_billing_application_sov", "v_project_billing"):
+        assert conn.execute("select to_regclass(%s)", (f"ops.{v}",)).fetchone()[0] is not None, f"missing view ops.{v}"
+
+
+def test_sov_aggregates_by_scope(conn):
+    """v_billing_application_sov groups lines by (application_id, scope_id)."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    app = _issue(conn, s["project"], s["person"])
+    row = conn.execute(
+        "select apparatus_count, amount from ops.v_billing_application_sov where application_id=%s",
+        (app,)).fetchone()
+    assert row is not None
+    assert row[0] == 1
+    assert row[1] == Decimal("500.00")
+
+
+def test_draft_preview_shows_unbilled(conn):
+    """v_draft_preview shows unbilled apparatus for a saved draft."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    d = conn.execute(
+        "select ops.record_billing_application(%s,%s,current_date,null,'{}'::uuid[],0)",
+        (s["project"], s["person"])).fetchone()[0]
+    cnt = conn.execute(
+        "select count(*) from ops.v_draft_preview where draft_id=%s",
+        (d,)).fetchone()[0]
+    assert cnt == 1
+
+
+def test_project_billing_open_draft_count(conn):
+    """v_project_billing.open_draft_count reflects saved drafts."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    assert conn.execute(
+        "select open_draft_count from ops.v_project_billing where project_id=%s",
+        (s["project"],)).fetchone()[0] == 0
+    conn.execute(
+        "select ops.record_billing_application(%s,%s,current_date,null,'{}'::uuid[],0)",
+        (s["project"], s["person"]))
+    assert conn.execute(
+        "select open_draft_count from ops.v_project_billing where project_id=%s",
+        (s["project"],)).fetchone()[0] == 1

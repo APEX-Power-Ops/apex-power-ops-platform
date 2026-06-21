@@ -1129,3 +1129,176 @@ exception when others then
   raise;
 end;
 $$;
+
+-- ============================================================================
+-- Task 9: Views (§9)
+-- ============================================================================
+
+-- 9a. v_unbilled_recognition
+--   §5 two-branch set.  "active line" = is_voided=false on a status='issued' application.
+--   Positive branch: recognized events not yet reversed AND not already billed (active line on them).
+--   Credit branch:   reversal events whose ORIGINAL event IS actively billed AND this credit is not yet billed.
+--   No period-bound filter on the view itself -- the sweep function applies the cutoff; the view is the
+--   full backlog (all unbilled recognized/reversals regardless of recognized_at).
+create or replace view ops.v_unbilled_recognition as
+  -- Positive branch: recognized, not reversed, not billed
+  select
+    e.id                                   as recognition_event_id,
+    e.apparatus_id,
+    e.scope_id,
+    e.project_id,
+    e.event_type,
+    round(e.recognized_amount, 2)          as amount,
+    round(e.quoted_hours, 2)               as billable_hours,
+    e.recognized_at
+  from ops.revenue_recognition_event e
+  where e.event_type = 'recognized'
+    -- not reversed
+    and not exists (
+      select 1 from ops.revenue_recognition_event r
+      where r.reverses_event_id = e.id
+    )
+    -- not already on an active (non-voided, issued) billing line
+    and not exists (
+      select 1
+      from ops.billing_application_line bl
+      join ops.billing_application ba on ba.id = bl.application_id
+      where bl.recognition_event_id = e.id
+        and bl.is_voided = false
+        and ba.status = 'issued'
+    )
+
+  union all
+
+  -- Credit branch: reversal whose original event IS actively billed; this credit not yet billed
+  select
+    e.id                                           as recognition_event_id,
+    e.apparatus_id,
+    e.scope_id,
+    e.project_id,
+    e.event_type,
+    round(e.recognized_amount, 2)                  as amount,
+    -- credit hours = negative of original event's quoted_hours (rounded at this grain)
+    -round(orig.quoted_hours, 2)                   as billable_hours,
+    e.recognized_at
+  from ops.revenue_recognition_event e
+  join ops.revenue_recognition_event orig on orig.id = e.reverses_event_id
+  where e.event_type = 'reversal'
+    -- original IS actively billed
+    and exists (
+      select 1
+      from ops.billing_application_line bl
+      join ops.billing_application ba on ba.id = bl.application_id
+      where bl.recognition_event_id = e.reverses_event_id
+        and bl.is_voided = false
+        and ba.status = 'issued'
+    )
+    -- this credit not yet billed
+    and not exists (
+      select 1
+      from ops.billing_application_line bl
+      join ops.billing_application ba on ba.id = bl.application_id
+      where bl.recognition_event_id = e.id
+        and bl.is_voided = false
+        and ba.status = 'issued'
+    );
+
+-- 9b. v_draft_preview
+--   Advisory per-draft would-be sweep (non-binding; recomputed fresh at issue time).
+--   Joins drafts to the current unbilled set via project_id and the draft's exclude list.
+create or replace view ops.v_draft_preview as
+  select
+    d.id                           as draft_id,
+    d.project_id,
+    d.period_through,
+    d.actor_person_id,
+    d.retainage_draw_request,
+    u.recognition_event_id,
+    u.apparatus_id,
+    u.scope_id,
+    u.event_type,
+    u.amount,
+    u.billable_hours,
+    u.recognized_at
+  from ops.billing_application_draft d
+  join ops.v_unbilled_recognition u on u.project_id = d.project_id
+  where
+    -- apply period cutoff (positive branch only, credit exempt per §5)
+    (
+      u.event_type = 'reversal'
+      or u.recognized_at < (d.period_through + 1)::timestamp at time zone 'America/Phoenix'
+    )
+    -- apply exclude list (positive branch only)
+    and (
+      u.event_type = 'reversal'
+      or not (u.apparatus_id = any(d.exclude_apparatus_ids))
+    );
+
+-- 9c. v_billing_application_sov
+--   Schedule-of-values: per (application_id, scope_id) over non-voided lines.
+create or replace view ops.v_billing_application_sov as
+  select
+    bl.application_id,
+    bl.scope_id,
+    count(*)                        as apparatus_count,
+    sum(bl.billable_hours)          as billable_hours,
+    sum(bl.amount)                  as amount,
+    sum(bl.retainage_withheld)      as retainage_withheld,
+    sum(bl.retainage_released)      as retainage_released
+  from ops.billing_application_line bl
+  where bl.is_voided = false
+  group by bl.application_id, bl.scope_id;
+
+-- 9d. v_project_billing
+--   Per-project derived billing summary; isolated from RESA.
+--
+--   recognized_to_date  = Sum round(e.recognized_amount,2) over ALL revenue_recognition_event rows
+--                         (both recognized + reversal, signed). A +X and its -X each round independently
+--                         then cancel, matching line-grain rounding so recognized = billed + unbilled (M-2).
+--   billed_gross_to_date    = Sum gross_amount  over issued apps.
+--   net_invoiced_to_date    = Sum net_invoiced  over issued apps.
+--   retainage_held_to_date  = Sum(withheld - released - drawn) over issued apps.
+--   unbilled_recognized     = Sum amount from v_unbilled_recognition.
+--   open_draft_count        = count of billing_application_draft rows.
+create or replace view ops.v_project_billing as
+  select
+    p.id                                                                      as project_id,
+    p.project_number,
+    p.contract_value,
+    -- recognized_to_date: all events, signed, per-event rounded (M-2 cent-exact)
+    coalesce((
+      select sum(round(e.recognized_amount, 2))
+      from ops.revenue_recognition_event e
+      where e.project_id = p.id
+    ), 0)                                                                     as recognized_to_date,
+    -- billed_gross_to_date: sum over issued applications
+    coalesce((
+      select sum(ba.gross_amount)
+      from ops.billing_application ba
+      where ba.project_id = p.id and ba.status = 'issued'
+    ), 0)                                                                     as billed_gross_to_date,
+    -- net_invoiced_to_date
+    coalesce((
+      select sum(ba.net_invoiced)
+      from ops.billing_application ba
+      where ba.project_id = p.id and ba.status = 'issued'
+    ), 0)                                                                     as net_invoiced_to_date,
+    -- retainage_held_to_date: withheld - released - drawn over issued
+    coalesce((
+      select sum(ba.retainage_withheld - ba.retainage_released - ba.retainage_drawn)
+      from ops.billing_application ba
+      where ba.project_id = p.id and ba.status = 'issued'
+    ), 0)                                                                     as retainage_held_to_date,
+    -- unbilled_recognized: from the unbilled view
+    coalesce((
+      select sum(u.amount)
+      from ops.v_unbilled_recognition u
+      where u.project_id = p.id
+    ), 0)                                                                     as unbilled_recognized,
+    -- open_draft_count
+    coalesce((
+      select count(*)
+      from ops.billing_application_draft d
+      where d.project_id = p.id
+    ), 0)                                                                     as open_draft_count
+  from ops.projects p;
