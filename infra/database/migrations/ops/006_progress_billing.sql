@@ -190,6 +190,37 @@ begin
                       '(fields: status, voided_at, voided_by, void_reason)';
     end if;
 
+    -- §8.1 void-dependency guard (standing-credit guard):
+    -- Reject if EXISTS another issued application with an active (is_voided=false) line L
+    -- where L.recognition_event_id is a reversal event whose reverses_event_id is in
+    -- {the recognition_event_id of THIS app's active lines}.
+    -- A standing credit means voiding the original app would orphan the credit line.
+    if exists (
+      select 1
+        from ops.billing_application_line this_line
+       where this_line.application_id = old.id
+         and this_line.is_voided = false
+         -- find a reversal event that reverses one of this app's positive events
+         and exists (
+           select 1
+             from ops.revenue_recognition_event rev_evt
+            where rev_evt.reverses_event_id = this_line.recognition_event_id
+              -- that reversal event has an active line on another issued application
+              and exists (
+                select 1
+                  from ops.billing_application_line other_line
+                  join ops.billing_application other_app
+                    on other_app.id = other_line.application_id
+                 where other_line.recognition_event_id = rev_evt.id
+                   and other_line.is_voided = false
+                   and other_app.status = 'issued'
+              )
+         )
+    ) then
+      raise exception 'cannot void billing application %: a standing credit on another issued application depends on one of its lines (standing-credit guard)',
+                      old.id;
+    end if;
+
     -- cascade the line-void: all active lines for this application become voided
     update ops.billing_application_line
        set is_voided = true
@@ -925,5 +956,68 @@ begin
     -- Draft path: Task 8
     raise exception 'draft billing application not yet supported; provide external_invoice_ref to issue immediately';
   end if;
+end;
+$$;
+
+-- ============================================================================
+-- Task 7: void_billing_application (§7d)
+--   Sets ctx; requires non-blank reason; locks app + project; rejects if status<>'issued'.
+--   Sets status='voided', voided_at/by, void_reason.
+--   The §8.1 trigger (trg_billapp_immutable) runs the standing-credit guard and cascades
+--   is_voided=true to the lines. application_no stays burned.
+-- ============================================================================
+create or replace function ops.void_billing_application(
+  p_application_id  uuid,
+  p_actor_person_id uuid,
+  p_reason          text
+) returns void language plpgsql as $$
+declare
+  v_app record;
+begin
+  -- Set billing context flag so the mutation gate permits the UPDATE
+  perform set_config('ops.billing_ctx', '1', true);
+
+  -- Require non-blank reason
+  if p_reason is null or btrim(p_reason) = '' then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'void_reason is required and must be non-blank';
+  end if;
+
+  -- Lock + fetch the application
+  select id, project_id, status
+    into v_app
+    from ops.billing_application
+   where id = p_application_id
+   for update;
+
+  if not found then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'billing application % not found', p_application_id;
+  end if;
+
+  -- Reject if not issued
+  if v_app.status <> 'issued' then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'billing application % has status % -- only issued applications can be voided',
+                    p_application_id, v_app.status;
+  end if;
+
+  -- Lock the project (serialize Chip-4 vs Chip-4)
+  perform 1 from ops.projects where id = v_app.project_id for update;
+
+  -- Update: the §8.1 trigger will run the standing-credit guard and cascade line voids
+  update ops.billing_application
+     set status    = 'voided',
+         voided_at = now(),
+         voided_by = p_actor_person_id,
+         void_reason = p_reason
+   where id = p_application_id;
+
+  -- Reset flag before returning
+  perform set_config('ops.billing_ctx', '0', true);
+
+exception when others then
+  perform set_config('ops.billing_ctx', '0', true);
+  raise;
 end;
 $$;

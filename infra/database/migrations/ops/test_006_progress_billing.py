@@ -550,3 +550,119 @@ def test_credit_non_excludable(conn):
         (s["project"], s["person"], s["apparatus"])).fetchone()[0]
     row = conn.execute("select gross_amount from ops.billing_application where id=%s", (app2,)).fetchone()
     assert row[0] < 0  # credit swept despite apparatus being in exclude[]
+
+
+# ---- Task 7: void_billing_application + void-dependency guard + line-cascade ----
+
+def test_void_green_path(conn):
+    """Legal issued->voided under ctx: status flips, lines cascade to is_voided=true."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    app = _issue(conn, s["project"], s["person"])
+    conn.execute("select ops.void_billing_application(%s,%s,'mis-invoiced')", (app, s["person"]))
+    hdr = conn.execute("select status,voided_at,voided_by,void_reason from ops.billing_application where id=%s",
+                       (app,)).fetchone()
+    assert hdr[0] == "voided"
+    assert hdr[1] is not None
+    assert hdr[2] == s["person"]
+    assert hdr[3] == "mis-invoiced"
+    # All lines must be voided
+    lines_voided = conn.execute(
+        "select bool_and(is_voided) from ops.billing_application_line where application_id=%s",
+        (app,)).fetchone()[0]
+    assert lines_voided is True
+
+
+def test_void_releases_events_to_unbilled(conn):
+    """After voiding, the event's active line is gone; a second issue can sweep it again."""
+    s = _seed_recognizable(conn); ev = _recognize(conn, s)
+    app = _issue(conn, s["project"], s["person"])
+    conn.execute("select ops.void_billing_application(%s,%s,'mis-invoiced')", (app, s["person"]))
+    assert conn.execute(
+        "select status from ops.billing_application where id=%s", (app,)).fetchone()[0] == "voided"
+    assert conn.execute(
+        "select bool_and(is_voided) from ops.billing_application_line where application_id=%s",
+        (app,)).fetchone()[0] is True
+    # Event is re-billable: a new issue must succeed
+    app2 = _issue(conn, s["project"], s["person"], ref="'INV-2'")
+    assert app2 is not None
+
+
+def test_void_blocked_by_standing_credit(conn):
+    """Cannot void app1 when another issued app holds a standing credit against app1's lines."""
+    s = _seed_recognizable(conn); ev = _recognize(conn, s)
+    app1 = _issue(conn, s["project"], s["person"], ref="'INV-1'")
+    # Reverse the recognized event so a credit becomes available
+    conn.execute("select ops.reverse_recognition(%s,%s,'x')", (ev, s["person"]))
+    # Issue app2 which picks up the standing credit (credit line points at app1's positive event)
+    _issue(conn, s["project"], s["person"], ref="'INV-2'")
+    # Now try to void app1 -- the standing-credit guard must reject
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute("select ops.void_billing_application(%s,%s,'late')", (app1, s["person"]))
+
+
+def test_void_blocked_when_held_would_go_negative(conn):
+    """Voiding a withholding app that was already drawn from makes held go negative.
+    The §8.5 deferred held>=0 check catches this (fired by set constraints all immediate)."""
+    s = _seed_recognizable(conn, pct=Decimal("0.10"), quoted_revenue=500); _recognize(conn, s)
+    app1 = _issue(conn, s["project"], s["person"], ref="'INV-1'")  # held=50
+    # Draw all held retainage via a pure-draw app
+    _issue(conn, s["project"], s["person"], ref="'INV-2'", draw=50)  # held now 0
+    # Void app1 (which had withheld=50): held would become -50 for the project
+    # The deferred constraint (held>=0) should fire
+    conn.execute("select ops.void_billing_application(%s,%s,'wrong')", (app1, s["person"]))
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute("set constraints all immediate")
+
+
+def test_application_no_burned_after_void(conn):
+    """application_no is burned on void: the next issued app gets no=2, not no=1 reused."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    app1 = _issue(conn, s["project"], s["person"], ref="'INV-1'")
+    no1 = conn.execute("select application_no from ops.billing_application where id=%s", (app1,)).fetchone()[0]
+    assert no1 == 1
+    conn.execute("select ops.void_billing_application(%s,%s,'void-for-test')", (app1, s["person"]))
+    # Seed a new recognizable apparatus in same project so there is something to bill
+    a2 = conn.execute(
+        "insert into ops.apparatus (scope_id,apparatus_designation,status,is_active,assessment,"
+        "quoted_hours,quoted_revenue) values (%s,'A-2','Complete',true,'Pass',5,500) returning id",
+        (s["scope"],)).fetchone()[0]
+    conn.execute(
+        "select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",
+        (a2, s["person"]))
+    app2 = _issue(conn, s["project"], s["person"], ref="'INV-2'")
+    no2 = conn.execute("select application_no from ops.billing_application where id=%s", (app2,)).fetchone()[0]
+    assert no2 == 2  # burned; not reused
+
+
+def test_dup_ref_blocked(conn):
+    """uq_billapp_issued_ref: two simultaneously issued apps with the same ref are blocked."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    _issue(conn, s["project"], s["person"], ref="'INV-DUP'")
+    # Seed a second recognizable apparatus to give something to bill
+    a2 = conn.execute(
+        "insert into ops.apparatus (scope_id,apparatus_designation,status,is_active,assessment,"
+        "quoted_hours,quoted_revenue) values (%s,'A-2','Complete',true,'Pass',5,500) returning id",
+        (s["scope"],)).fetchone()[0]
+    conn.execute(
+        "select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",
+        (a2, s["person"]))
+    with pytest.raises(psycopg.errors.UniqueViolation):
+        _issue(conn, s["project"], s["person"], ref="'INV-DUP'")
+
+
+def test_ref_reusable_after_void(conn):
+    """After voiding app1 with ref='INV-REUSE', a new issued app can reuse the same ref."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    app1 = _issue(conn, s["project"], s["person"], ref="'INV-REUSE'")
+    conn.execute("select ops.void_billing_application(%s,%s,'void-for-reuse')", (app1, s["person"]))
+    # Seed a new apparatus to bill
+    a2 = conn.execute(
+        "insert into ops.apparatus (scope_id,apparatus_designation,status,is_active,assessment,"
+        "quoted_hours,quoted_revenue) values (%s,'A-2','Complete',true,'Pass',5,500) returning id",
+        (s["scope"],)).fetchone()[0]
+    conn.execute(
+        "select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",
+        (a2, s["person"]))
+    # Re-use the same ref -- must succeed since app1 is now voided
+    app2 = _issue(conn, s["project"], s["person"], ref="'INV-REUSE'")
+    assert app2 is not None
