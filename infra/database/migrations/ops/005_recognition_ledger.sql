@@ -150,3 +150,52 @@ begin
   return v_id;
 end;
 $$;
+
+-- ---- insert integrity: direct inserts cannot bypass the function gate -------
+create or replace function ops.trg_revrec_insert_integrity() returns trigger language plpgsql as $$
+declare v_scope uuid; a record; sq record; orig record;
+begin
+  -- lineage (all rows)
+  select scope_id into v_scope from ops.apparatus where id = new.apparatus_id;
+  if not found then raise exception 'apparatus % not found', new.apparatus_id; end if;
+  if new.scope_id <> v_scope then raise exception 'scope_id lineage mismatch'; end if;
+  if new.project_id <> (select project_id from ops.scopes where id = new.scope_id) then
+    raise exception 'project_id lineage mismatch';
+  end if;
+
+  if new.event_type = 'recognized' then
+    select a2.status, a2.is_active, a2.quoted_hours, a2.quoted_revenue,
+           s.is_active as scope_active, s.status as scope_status,
+           p.is_active as project_active, p.status as project_status
+      into a
+      from ops.apparatus a2 join ops.scopes s on s.id=a2.scope_id join ops.projects p on p.id=s.project_id
+     where a2.id = new.apparatus_id;
+    if not (a.is_active and a.scope_active and a.project_active
+            and a.scope_status <> 'Cancelled' and a.project_status <> 'Cancelled') then
+      raise exception 'recognized row for inactive/cancelled chain';
+    end if;
+    if a.status <> 'Complete' then raise exception 'recognized row for non-complete apparatus'; end if;
+    select is_frozen, frozen_at, blended_rate into sq from ops.scope_quote where scope_id = new.scope_id;
+    if not found or not sq.is_frozen or sq.frozen_at is null then
+      raise exception 'recognized row on unfrozen basis';
+    end if;
+    if new.recognized_amount <> a.quoted_revenue then
+      raise exception 'recognized_amount must equal apparatus.quoted_revenue';
+    end if;
+    if new.quoted_hours is distinct from a.quoted_hours
+       or new.blended_rate is distinct from sq.blended_rate
+       or new.basis_frozen_at is distinct from sq.frozen_at then
+      raise exception 'recognized row snapshot does not match current basis';
+    end if;
+  elsif new.event_type = 'reversal' then
+    select apparatus_id, recognized_amount into orig
+      from ops.revenue_recognition_event where id = new.reverses_event_id and event_type='recognized';
+    if not found then raise exception 'reversal target is not a recognized event'; end if;
+    if orig.apparatus_id <> new.apparatus_id then raise exception 'reversal apparatus mismatch'; end if;
+    if new.recognized_amount <> -orig.recognized_amount then raise exception 'reversal amount must equal -(original)'; end if;
+  end if;
+  return new;
+end;
+$$;
+create trigger revrec_insert_integrity before insert on ops.revenue_recognition_event
+  for each row execute function ops.trg_revrec_insert_integrity();

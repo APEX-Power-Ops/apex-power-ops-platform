@@ -245,3 +245,58 @@ def test_one_reversal_per_event(conn):
     conn.execute("select ops.reverse_recognition(%s,%s,%s)", (eid, s["person"], "first"))
     with pytest.raises(psycopg.errors.RaiseException, match="already reversed"):
         conn.execute("select ops.reverse_recognition(%s,%s,%s)", (eid, s["person"], "second"))
+
+
+# ---- Task 4: insert-invariant trigger ----
+
+def _base_recognized_cols(s):
+    return ("apparatus_id, scope_id, project_id, event_type, recognized_amount, quoted_hours, blended_rate, "
+            "basis_frozen_at, actor_person_id, datasheet_clearance, cx_clearance")
+
+
+def test_insert_lineage_mismatch(conn):
+    s = _seed_recognizable(conn)
+    other_scope = _seed_recognizable(conn)["scope"]
+    with pytest.raises(psycopg.errors.RaiseException, match="lineage"):
+        conn.execute(
+            f"insert into ops.revenue_recognition_event ({_base_recognized_cols(s)}) "
+            "values (%s,%s,%s,'recognized',500,5,100,now(),%s,'not_applicable','not_applicable')",
+            (s["apparatus"], other_scope, s["project"], s["person"]))   # scope_id != apparatus lineage
+
+
+def test_insert_recognized_requires_complete(conn):
+    s = _seed_recognizable(conn, status="In Progress")
+    with pytest.raises(psycopg.errors.RaiseException, match="non-complete"):
+        conn.execute(
+            f"insert into ops.revenue_recognition_event ({_base_recognized_cols(s)}) "
+            "values (%s,%s,%s,'recognized',500,5,100,now(),%s,'not_applicable','not_applicable')",
+            (s["apparatus"], s["scope"], s["project"], s["person"]))
+
+
+def test_insert_recognized_amount_must_match_quote(conn):
+    s = _seed_recognizable(conn)
+    with pytest.raises(psycopg.errors.RaiseException, match="quoted_revenue"):
+        conn.execute(
+            f"insert into ops.revenue_recognition_event ({_base_recognized_cols(s)}) "
+            "values (%s,%s,%s,'recognized',499,5,100,now(),%s,'not_applicable','not_applicable')",  # 499 != 500
+            (s["apparatus"], s["scope"], s["project"], s["person"]))
+
+
+def test_insert_recognized_snapshot_must_match(conn):
+    s = _seed_recognizable(conn)
+    with pytest.raises(psycopg.errors.RaiseException, match="snapshot"):
+        conn.execute(
+            f"insert into ops.revenue_recognition_event ({_base_recognized_cols(s)}) "
+            "values (%s,%s,%s,'recognized',500,5,999,now(),%s,'not_applicable','not_applicable')",  # blended 999 != 100
+            (s["apparatus"], s["scope"], s["project"], s["person"]))
+
+
+def test_insert_reversal_amount_must_equal_negative_original(conn):
+    s = _seed_recognizable(conn)
+    eid = _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException, match="reversal amount"):
+        conn.execute(
+            "insert into ops.revenue_recognition_event "
+            "(apparatus_id, scope_id, project_id, event_type, recognized_amount, actor_person_id, reverses_event_id, reason) "
+            "values (%s,%s,%s,'reversal',-499,%s,%s,'bad')",   # -499 != -500
+            (s["apparatus"], s["scope"], s["project"], s["person"], eid))
