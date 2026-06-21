@@ -155,18 +155,23 @@ The full client/site/contact set is retained in `intake_runs.canonical_payload_j
 1. Re-validate the current `review_payload`; **refuse (422) if any `blocking` finding is open** (incl. N4 reconciliation).
 2. Refuse (409) if `status != active` (not in `parsed`/`reviewing`) — e.g. a stale/superseded run (§6.4).
 3. Refuse (409) if `status = revision_blocked` (D5).
-4. `SELECT ... FOR UPDATE` the project row (by `project_number`; create it if new), then **full replacement of intake-owned children**: `DELETE` the project's **intake-owned** scopes (`legacy_source_id is not null`) → cascades tasks/scope_quote/scope_quote_line/apparatus → then `INSERT` fresh from the review payload, creating **tasks** from `section` (with `legacy_source_id=<section>`) and linking `apparatus.task_id`. This guarantees **no stale rows** for re-intake of an unfrozen project; safe because the frozen/recognized/billed path never reaches here (D5). The project row is updated in place (stable `project_id`).
-5. Freeze: set `scope_quote.is_frozen/frozen_at`, compute `apparatus.quoted_revenue = round(quoted_hours × blended_rate, 2)`, `provenance_status='approved'` — **project-scoped** (never touches other projects).
-6. Set `intake_runs.status='approved'`, `approved_by/at`, link `project_id`.
+4. `SELECT ... FOR UPDATE` the project row (by `project_number`; create it if new). **Re-check conflict under the lock** (frozen / **any** `revenue_recognition_event` exists / any `billing_application`) — if a conflict now exists that did not at `create_run` (the project changed mid-flight), mark the run `revision_blocked` and abort **409**. Closes the create→approve TOCTOU; also means the §6.3 delete can never encounter a ledger-FK'd row.
+5. **Full replacement of intake-owned children**: `DELETE` the project's **intake-owned** scopes (`legacy_source_id is not null`) → cascades tasks/scope_quote/scope_quote_line/apparatus → then `INSERT` fresh from the review payload, creating **tasks** from `section` (with `legacy_source_id=<section>`) and linking `apparatus.task_id`. Guarantees **no stale rows** for re-intake of an unfrozen project; safe because steps 3–4 guarantee no recognition/billing FK references exist. Project row updated in place (stable `project_id`).
+6. Freeze: set `scope_quote.is_frozen/frozen_at`, compute `apparatus.quoted_revenue = round(quoted_hours × blended_rate, 2)`, `provenance_status='approved'` — **project-scoped** (never touches other projects).
+7. Set `intake_runs.status='approved'`, `approved_by/at`, link `project_id`.
 - **Removes upload-driven `standard_hours` mutation** (D4): the catalog is not written by intake at all.
 
 ### 6.4 Revision detection, refusal, and supersede lifecycle (D5 + Important)
-At `create_run`, within the same txn:
-- **Supersede:** set any existing **active** runs (`status in ('parsed','reviewing')`) for the same `project_number` to `superseded`. The new run becomes the single active run (DB-backstopped by `uq_intake_one_active`). Re-intake before approve = a new run that supersedes the prior draft (never an in-place draft edit; that ambiguity is removed).
-- **Conflict classification** — look up `ops.projects` by `project_number`:
-  - **none** → `conflict_kind='none'`, status `parsed` → normal flow.
-  - **exists, no frozen scope_quote, no recognition, no billing** → `none` → updatable at approve via the §6.3 full replacement.
-  - **exists AND (any `scope_quote.is_frozen` for its scopes, OR `ops.revenue_recognition_event` net>0, OR any `ops.billing_application` for `project_id`)** → set `conflict_kind` = `billed` > `recognized` > `frozen` (most-downstream wins), `status='revision_blocked'`, persist as a **proposed revision**, **refuse operational writes**, surface the diff. **No automated reverse/supersede.** Conflict inspection covers **both** ledgers — recognition (`revenue_recognition_event`) **and** billing (`billing_application.project_id`).
+At `create_run`, within the same txn, **parse and classify FIRST, then supersede only if the new run is itself approvable-active**:
+1. **Parse + classify** — determine the new run's resulting status:
+   - **`rejected`** if `source_format ∈ {flat_quote, unsupported}` (§4.1).
+   - else look up `ops.projects` by `project_number`:
+     - **none** → `conflict_kind='none'`, status `parsed`.
+     - **exists, no frozen scope_quote, NO `revenue_recognition_event` row for the project, no billing** → `conflict_kind='none'`, status `parsed` → updatable at approve via the §6.3 full replacement.
+     - **exists AND (any `scope_quote.is_frozen` for its scopes, OR ANY `ops.revenue_recognition_event` EXISTS for the project, OR any `ops.billing_application` for `project_id`)** → `conflict_kind` = `billed` > `recognized` > `frozen` (most-downstream wins), `status='revision_blocked'`, persisted as a **proposed revision**, **operational writes refused**, diff surfaced. **No automated reverse/supersede.**
+2. **Supersede — only if the new run is approvable-active** (its status is `parsed`/`reviewing`): set any prior **active** runs (`status in ('parsed','reviewing')`) for the same `project_number` to `superseded` (DB-backstopped by `uq_intake_one_active`). A `rejected` or `revision_blocked` new run is **recorded without displacing the current active draft** — an accidental bad upload never strands a good draft.
+
+**`recognized` is membership, not balance** (Important): the conflict is **any `revenue_recognition_event` row EXISTING** for the project, **not** `net > 0`. The ledger is append-only with hard FKs to apparatus/scopes/projects (`005`); a recognized-then-fully-reversed apparatus nets 0 but its event rows persist and still reference the very rows the §6.3 full-replacement delete would remove. So *any* historical recognition makes the project a revision (and the FKs protect those rows from deletion).
 
 ## 7. The control-plane API (host-gated)
 
@@ -200,9 +205,11 @@ Migration + package + API tests pin `OPS_DEV_DSN` at `ops_test` (the fixture tru
 - **Task-scope guard** — cross-scope `apparatus.task_id` rejected; `tasks.scope_id` change rejected once the row exists.
 - **Task idempotency** — re-approval / retry does not duplicate tasks (the `uq_ops_tasks_intake` key holds; `legacy_source_id=<section>`).
 - **Full-replacement materialization** — re-intake + approve of an unfrozen project removes scopes/tasks/lines/apparatus dropped from the new payload (no stale rows); count matches the new payload exactly.
-- **Supersede lifecycle** — a second upload for the same `project_number` sets the prior active run `superseded`; only one active run exists; approving the stale/superseded run → 409.
+- **Supersede lifecycle** — a second *approvable* upload for the same `project_number` sets the prior active run `superseded`; only one active run; approving the stale/superseded run → 409. **A `rejected`/`unsupported` or `revision_blocked` upload does NOT displace the current active draft** (the good draft stays the single active run).
 - **Frozen-project revision refusal** — re-parse of a frozen/recognized/billed project → `status=revision_blocked`, `conflict_kind` correct, **zero domain writes**, approve 409.
+- **Recognition is EXISTS, not net** — recognized → fully reversed (net 0) → no billing **still** yields `revision_blocked` / `conflict_kind=recognized` (the append-only event rows persist with FKs to the apparatus/scopes).
 - **Recognition/billing conflict classification** — `frozen`-only vs `recognized` vs `billed` each classified correctly (billing checked independently of recognition).
+- **Approve-time conflict re-check (TOCTOU)** — a run created clean (`parsed`) whose project becomes frozen/recognized/billed before approve → approve aborts 409 + marks `revision_blocked` (no delete attempted).
 - **N4 parity** — `.xlsm` N4 parsed and totals reconcile; JSON default-1 emits an `info` fidelity finding (non-blocking); when default-1 breaks reconciliation, a `blocking` finding blocks approve.
 - **Findings finance-redaction** — the PM/API response contains `message` but **never `diagnostic_detail`**; no dollar value appears in any PM-surface finding field.
 - **Route guard disabled when `OPS_DEV_DSN` absent** — import-isolated subprocess proves the intake routes do not register.
