@@ -122,3 +122,31 @@ begin
   return v_id;
 end;
 $$;
+
+-- ---- reversal primitive ----------------------------------------------------
+create or replace function ops.reverse_recognition(
+  p_event_id uuid, p_actor_person_id uuid, p_reason text
+) returns uuid language plpgsql as $$
+declare e record; v_id uuid;
+begin
+  if p_reason is null or btrim(p_reason) = '' then raise exception 'reason required for reversal'; end if;
+  select apparatus_id, scope_id, project_id, event_type, recognized_amount into e
+    from ops.revenue_recognition_event where id = p_event_id for update;
+  if not found then raise exception 'event % not found', p_event_id; end if;
+  if e.event_type <> 'recognized' then
+    raise exception 'can only reverse a recognized event (% is %)', p_event_id, e.event_type;
+  end if;
+  perform 1 from ops.apparatus where id = e.apparatus_id for update;   -- coordinate with approve
+  if exists (select 1 from ops.revenue_recognition_event where reverses_event_id = p_event_id) then
+    raise exception 'event % already reversed', p_event_id;
+  end if;
+  insert into ops.revenue_recognition_event
+    (apparatus_id, scope_id, project_id, event_type, recognized_amount,
+     actor_person_id, reverses_event_id, reason)
+  values
+    (e.apparatus_id, e.scope_id, e.project_id, 'reversal', -e.recognized_amount,
+     p_actor_person_id, p_event_id, p_reason)
+  returning id into v_id;
+  return v_id;
+end;
+$$;

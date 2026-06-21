@@ -214,3 +214,34 @@ def test_recognize_idempotent(conn):
     _recognize(conn, s)
     with pytest.raises(psycopg.errors.RaiseException, match="already recognized"):
         _recognize(conn, s)
+
+
+# ---- Task 3: reverse_recognition ----
+
+def test_reversal_then_rerecognize(conn):
+    s = _seed_recognizable(conn)
+    eid = _recognize(conn, s)
+    rid = conn.execute("select ops.reverse_recognition(%s,%s,%s)", (eid, s["person"], "rework")).fetchone()[0]
+    net = conn.execute("select coalesce(sum(recognized_amount),0) from ops.revenue_recognition_event "
+                       "where apparatus_id=%s", (s["apparatus"],)).fetchone()[0]
+    assert net == Decimal("0")
+    rev = conn.execute("select event_type, recognized_amount, reverses_event_id from "
+                       "ops.revenue_recognition_event where id=%s", (rid,)).fetchone()
+    assert rev[0] == "reversal" and rev[1] == Decimal("-500") and rev[2] == eid
+    eid2 = _recognize(conn, s)   # re-recognition allowed at net 0
+    assert eid2 is not None
+
+
+def test_reversal_requires_reason(conn):
+    s = _seed_recognizable(conn)
+    eid = _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException, match="reason required"):
+        conn.execute("select ops.reverse_recognition(%s,%s,%s)", (eid, s["person"], "   "))
+
+
+def test_one_reversal_per_event(conn):
+    s = _seed_recognizable(conn)
+    eid = _recognize(conn, s)
+    conn.execute("select ops.reverse_recognition(%s,%s,%s)", (eid, s["person"], "first"))
+    with pytest.raises(psycopg.errors.RaiseException, match="already reversed"):
+        conn.execute("select ops.reverse_recognition(%s,%s,%s)", (eid, s["person"], "second"))
