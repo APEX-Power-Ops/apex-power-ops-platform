@@ -31,6 +31,11 @@ is operator-gated (the `data_write` gate) and produces a redacted evidence packe
   `evidence_ref` (opaque pointer — never PII), `data_fidelity` (`synthetic` | `rehearsal` |
   `authentic`). Exact payload keys: `score_percent` (numeric 0–100) for `assessment_completed`,
   `confidence` (int 1–5) for `self_assessment`.
+- **Acquisition events are content-bound.** `record_acquired_event` requires a non-null
+  `study_content_id` for **every** event type — all four read models are per-content, so a
+  content-less acquisition event would silently vanish from the proof. (This is a 2d tightening over
+  the base 2a `record_event`, which still permits section-only capture.) The envelope is a fixed set
+  of keys; the helper takes **no** free-form `extra` payload (no silent-typo vector).
 - **Engagement-not-mastery.** Generated code/docs never use `mastered`/`mastery`. `coverage_percent`
   is annotated as mapping-breadth, not competence.
 - **Redaction.** Committable artifacts carry handles only. The real person↔handle map + observation
@@ -79,6 +84,12 @@ Replace the Gates line with:
 ```
 - **Gates (human-approval):** `schema` (each `learning_dev` migration apply; `001`/`002` **DONE 2026-06-20**); `data_write` (**NEW** — Slice 2d writes business data: cohort provisioning + event capture into `learning_dev` are operator-approved, distinct from schema apply); promotion (merge to main) is operator-gated.
 ```
+**Extend the Write-boundary (OWNS) list** — the plan creates files the current boundary excludes.
+Append to the `Write-boundary (OWNS)` bullet:
+```
+`scripts/learning/**`, `docs/learning/slice2d/**`, `docs/superpowers/{specs,plans}/2026-06-20-learning-slice2d-*`
+```
+
 Update the Status line to append:
 ```
 NEXT = Slice 2d controlled acquisition pilot (in progress; spec `2c9521d8`).
@@ -158,15 +169,27 @@ def test_assessment_requires_score_and_self_requires_confidence():
                               study_content_id=CONTENT, **ENV)  # no confidence
 
 
-def test_extra_must_not_clobber_envelope():
+@pytest.mark.parametrize("et", ["resource_viewed", "resource_completed",
+                                "assessment_completed", "self_assessment"])
+def test_content_id_required_for_every_event_type(et):
+    kw = dict(ENV)
+    if et == "assessment_completed":
+        kw["score_percent"] = 80
+    if et == "self_assessment":
+        kw["confidence"] = 3
     with pytest.raises(CaptureError):
-        record_acquired_event(user_id=USER, event_type="resource_viewed", study_content_id=CONTENT,
-                              extra={"data_fidelity": "synthetic"}, **ENV)
+        record_acquired_event(user_id=USER, event_type=et, study_content_id=None, **kw)
 
 
-def test_prod_isolation_guard_refuses_non_dev_dsn(monkeypatch):
+def test_prod_isolation_guard_refuses_supabase_host(monkeypatch):
     monkeypatch.setenv("LEARNING_DEV_DSN",
                        "host=db.fxoyniqnrlkxfligbxmg.supabase.co dbname=postgres user=postgres")
+    with pytest.raises(CaptureError):
+        record_acquired_event(user_id=USER, event_type="resource_viewed", study_content_id=CONTENT, **ENV)
+
+
+def test_prod_isolation_guard_refuses_non_dev_dbname(monkeypatch):
+    monkeypatch.setenv("LEARNING_DEV_DSN", "host=127.0.0.1 dbname=postgres user=postgres")
     with pytest.raises(CaptureError):
         record_acquired_event(user_id=USER, event_type="resource_viewed", study_content_id=CONTENT, **ENV)
 ```
@@ -181,28 +204,35 @@ Expected: FAIL — `ModuleNotFoundError: learning_capture.acquisition`.
 # packages/learning-capture/src/learning_capture/acquisition.py
 """Slice 2d acquisition helper: a guarded wrapper over record_event that STRUCTURALLY enforces the
 provenance envelope, so a captured event is auditable -- not byte-indistinguishable from fabricated
-data. Refuses any target that is not learning_dev / learning_test."""
+data. Refuses any target that is not learning_dev / learning_test, and requires every acquisition
+event to be content-bound (study_content_id) so the evidence is always projection-visible. Stricter
+than the base 2a record_event by design."""
+from psycopg.conninfo import conninfo_to_dict
+
 from .capture import CaptureError, record_event
 from .db import dsn
 
 SOURCE_SURFACES = frozenset({"cli", "operations-web/learning-demo", "manual-runbook"})
 DATA_FIDELITIES = frozenset({"synthetic", "rehearsal", "authentic"})
 _ENVELOPE = ("acquisition_run_id", "source_surface", "observed_by", "evidence_ref", "data_fidelity")
-_PROD_MARKERS = (".supabase.co", "fxoyniqnrlkxfligbxmg")
 
 
 def _guard_target() -> None:
-    low = dsn().lower()
-    for m in _PROD_MARKERS:
-        if m in low:
-            raise CaptureError(f"acquisition refuses a prod-looking DSN (matched {m!r})")
-    if "dbname=learning_dev" not in low and "dbname=learning_test" not in low:
-        raise CaptureError("acquisition target DSN must be learning_dev or learning_test")
+    # Parse the DSN robustly (keyword OR url form) instead of brittle substring matching.
+    info = conninfo_to_dict(dsn())
+    host = (info.get("host") or "").lower()
+    db = (info.get("dbname") or "").lower()
+    if host.endswith(".supabase.co") or "fxoyniqnrlkxfligbxmg" in f"{host} {db}":
+        raise CaptureError("acquisition refuses a prod-looking target")
+    if db not in ("learning_dev", "learning_test"):
+        raise CaptureError(f"acquisition dbname must be learning_dev/learning_test, got {db!r}")
+    if host and host not in ("127.0.0.1", "localhost"):
+        raise CaptureError(f"acquisition host must be local, got {host!r}")
 
 
 def record_acquired_event(*, user_id, event_type, acquisition_run_id, source_surface, observed_by,
                           evidence_ref, data_fidelity, study_content_id=None, neta_section=None,
-                          score_percent=None, confidence=None, extra=None):
+                          score_percent=None, confidence=None):
     _guard_target()
     env = {"acquisition_run_id": acquisition_run_id, "source_surface": source_surface,
            "observed_by": observed_by, "evidence_ref": evidence_ref, "data_fidelity": data_fidelity}
@@ -213,22 +243,21 @@ def record_acquired_event(*, user_id, event_type, acquisition_run_id, source_sur
         raise CaptureError(f"source_surface {source_surface!r} not in {sorted(SOURCE_SURFACES)}")
     if data_fidelity not in DATA_FIDELITIES:
         raise CaptureError(f"data_fidelity {data_fidelity!r} not in {sorted(DATA_FIDELITIES)}")
-    payload = dict(env)
-    if extra:
-        for k in _ENVELOPE:
-            if k in extra:
-                raise CaptureError(f"extra must not override envelope key {k!r}")
-        payload.update(extra)
+    if study_content_id is None:
+        raise CaptureError("acquisition events must be content-bound (study_content_id required) so "
+                           "the evidence is projection-visible")
     if event_type == "assessment_completed" and score_percent is None:
         raise CaptureError("assessment_completed requires score_percent")
     if event_type == "self_assessment" and confidence is None:
         raise CaptureError("self_assessment requires confidence")
+    payload = dict(env)
     if score_percent is not None:
         payload["score_percent"] = score_percent
     if confidence is not None:
         payload["confidence"] = confidence
     # record_event enforces the event_type vocab, user/content existence, and score/confidence
-    # ranges, and never passes occurred_at (server now() only -> no backdating).
+    # ranges, and never passes occurred_at (server now() only -> no backdating). The fixed-kwarg
+    # envelope means a typoed key is a TypeError, not a silently-accepted payload field.
     return record_event(user_id, event_type, study_content_id=study_content_id,
                         neta_section=neta_section, payload=payload)
 ```
@@ -376,6 +405,13 @@ script is self-sufficient on the minimal capture fixture.
 -- Preflight is SELF-SUFFICIENT + idempotent: it creates the certification_level enum and every column
 -- this script writes IF MISSING. This is a full no-op on learning_dev (all objects already exist) and
 -- bootstraps the minimal learning_test capture fixture (which has only id/email/employee_id).
+-- DB-IDENTITY GUARD: refuse to run anywhere but learning_dev/learning_test -- a copied command
+-- cannot write outside the lane even if pointed at the wrong connection.
+do $$ begin
+  if current_database() not in ('learning_dev','learning_test') then
+    raise exception 'Slice 2d provisioning refuses to run on %; expected learning_dev/learning_test', current_database();
+  end if;
+end $$;
 do $$ begin
   if not exists (select 1 from pg_type where typname = 'certification_level') then
     create type certification_level as enum ('I','II','III','IV');
@@ -402,6 +438,11 @@ on conflict (id) do nothing;
 ```sql
 -- Slice 2d NON-DESTRUCTIVE reversal: deactivate the rehearsal cohort. NEVER delete (FK cascade into
 -- the immutable learning_events ledger trips the append-only trigger -- evidence is immutable).
+do $$ begin
+  if current_database() not in ('learning_dev','learning_test') then
+    raise exception 'Slice 2d retire refuses to run on %; expected learning_dev/learning_test', current_database();
+  end if;
+end $$;
 update public.user_profiles set is_active = false
 where id = 'a0000000-2d00-4000-8000-000000000001';
 ```
@@ -468,73 +509,111 @@ from learning_capture.acquisition import record_acquired_event
 
 HERE = pathlib.Path(__file__).parent
 REPO = HERE.parents[2]
+MIG = REPO / "infra" / "database" / "migrations" / "learning"
+PREREQ = HERE / "projections_prereq.sql"
+MIG_002 = MIG / "002_learning_events.sql"
+EVENTS = HERE / "projections_events_seed.sql"
 ACQ_PREREQ = HERE / "acquisition_prereq.sql"
 PROVISION = REPO / "scripts" / "learning" / "slice2d_provision_cohort.sql"
 
 COHORT = "a0000000-2d00-4000-8000-000000000001"
 NEG_NOEV = "a0000000-2d00-4000-8000-000000000002"
 NEG_LVL1 = "a0000000-2d00-4000-8000-000000000003"
-C1 = "22222222-0000-0000-0000-000000000001"   # concept-1(II SA1,SA2) + concept-2(III SB1,SB2)
+C1 = "22222222-0000-0000-0000-000000000001"   # concept-1 (II SA1,SA2) + concept-2 (III SB1,SB2)
 C2 = "22222222-0000-0000-0000-000000000002"   # concept-3 -> orphan only (progress, not competency)
 ENV = dict(acquisition_run_id="slice2d-rehearsal-01", source_surface="cli",
            observed_by="JS", evidence_ref="runbook#run01", data_fidelity="rehearsal")
 
 
+def _apply(*paths):
+    with psycopg.connect(_dsn(), autocommit=True) as c:
+        for p in paths:
+            c.execute(p.read_text(encoding="utf-8"))
+
+
 @pytest.fixture(scope="module", autouse=True)
-def _acq(_fixture):  # depends on the projections session fixture (graph + 002 already applied)
-    with psycopg.connect(_dsn(), autocommit=True) as c:
-        c.execute(ACQ_PREREQ.read_text(encoding="utf-8"))
-        c.execute(PROVISION.read_text(encoding="utf-8"))
+def _acq(_fixture):
+    # ISOLATED rebuild WITHOUT the 12-event seed so cohort numbers are absolute + exactly pinnable.
+    # Active users after this = 4 seed (user9 is inactive) + 2 negative-control + 1 cohort = 7.
+    _apply(PREREQ, MIG_002, ACQ_PREREQ, PROVISION)
     yield
+    # restore the standard seeded state for the other projection test modules in this session.
+    _apply(PREREQ, MIG_002, EVENTS)
 
 
-def _iii_total():
+def _scalar(sql, *args):
     with psycopg.connect(_dsn(), autocommit=True) as c:
-        return c.execute("select count(distinct ksa_code) from ksas where certification_level::text='III'").fetchone()[0]
+        return c.execute(sql, args).fetchone()
 
 
 def test_rehearsal_run_moves_all_four_read_models_to_manifest():
-    cohort_before = cohort_aggregate(level="III")
-    # replay the rehearsal sequence through the guarded helper
+    # replay the rehearsal sequence through the guarded helper (all events content-bound)
     record_acquired_event(user_id=COHORT, event_type="resource_viewed", study_content_id=C2,
-                          neta_section="7.2", **ENV)                       # in_progress on C2
+                          neta_section="7.2", **ENV)                        # in_progress on C2
     record_acquired_event(user_id=COHORT, event_type="resource_viewed", study_content_id=C1,
                           neta_section="7.1", **ENV)
     record_acquired_event(user_id=COHORT, event_type="resource_completed", study_content_id=C1,
-                          neta_section="7.1", **ENV)                       # completed + competency
+                          neta_section="7.1", **ENV)                        # completed + competency
     record_acquired_event(user_id=COHORT, event_type="assessment_completed", study_content_id=C1,
                           neta_section="7.1", score_percent=88, **ENV)
 
-    # content_progress: C1 completed, C2 in_progress
+    # --- content_progress: C1 completed (view_count 1), C2 in_progress ---
     progress = {p.study_content_id: p for p in content_progress(COHORT)}
     assert progress[C1].status == "completed" and progress[C1].is_completed is True
+    assert progress[C1].view_count == 1
     assert progress[C2].status == "in_progress" and progress[C2].is_completed is False
 
-    # assessment_summary: latest score 88 on C1
+    # --- assessment_summary: latest 88 on C1, one attempt ---
     asmt = {a.study_content_id: a for a in assessment_summary(COHORT)}
-    assert asmt[C1].latest_score_percent == 88 and asmt[C1].assessment_attempts == 1
+    assert asmt[C1].latest_score_percent == 88.0 and asmt[C1].assessment_attempts == 1
 
-    # competency_rollup: resolved III (target), covered_ksas == 2 (SB1,SB2), pct exact, evidence==2
+    # --- competency_rollup: III, total 3, covered 2, pct 66.7, evidence 2 ---
     comp = competency_rollup(COHORT)
     assert comp.resolved_level == "III" and comp.level_source == "target"
     iii = [lc for lc in comp.coverage if lc.level == "III"][0]
+    assert iii.total_ksas_at_level == 3
     assert iii.covered_ksas == 2
-    assert iii.coverage_percent == round(100.0 * 2 / _iii_total(), 1)
+    assert iii.coverage_percent == 66.7
     assert comp.evidence_event_count == 2   # resource_completed + assessment_completed on C1
 
-    # cohort delta: the rehearsal user now contributes a scored assessment + completed content
-    cohort_after = cohort_aggregate(level="III")
-    assert cohort_after.scored_user_count == cohort_before.scored_user_count + 1
-    assert cohort_after.coverage_user_count >= 1
+    # --- independent KSA-code manifest (the engine exposes only a count, not the set) ---
+    codes = _scalar(
+        """select array_agg(distinct k.ksa_code order by k.ksa_code)
+           from learning_events le
+           join content_concept_links ccl on ccl.content_id = le.study_content_id
+           join edition_ksa_map ekm on ekm.concept_id = ccl.concept_id and ekm.is_active
+           join ksas k on k.ksa_code = ekm.ksa_code and k.certification_level::text = ekm.level
+           where le.user_id = %s and le.event_type in ('resource_completed','assessment_completed')
+             and le.study_content_id is not null and k.certification_level::text = 'III'""", COHORT)[0]
+    assert codes == ["SB1", "SB2"]
+
+    # --- cohort_aggregate(III): exact absolute manifest over the 7 active users ---
+    cohort = cohort_aggregate(level="III")
+    assert cohort.user_count == 7
+    assert cohort.mean_completed_content == 0.1      # 1 completed content / 7 users
+    assert cohort.scored_user_count == 1
+    assert cohort.mean_latest_score == 88.0
+    assert cohort.coverage_user_count == 7           # every active user has non-null III coverage
+    assert cohort.mean_coverage_percent == 9.5       # (66.7 + 0.0*6) / 7
+
+    # --- provenance envelope present on EVERY run event; occurred_at ~ created_at (no backdating) ---
+    with psycopg.connect(_dsn(), autocommit=True) as c:
+        rows = c.execute(
+            "select payload, extract(epoch from (occurred_at - created_at)) "
+            "from learning_events where user_id=%s", (COHORT,)).fetchall()
+    assert len(rows) == 4
+    for payload, drift in rows:
+        assert all(payload.get(k) for k in ("acquisition_run_id", "source_surface", "observed_by",
+                                            "evidence_ref", "data_fidelity"))
+        assert payload["acquisition_run_id"] == "slice2d-rehearsal-01"
+        assert abs(drift) < 2            # server now() for both timestamps -> no client backdating
 
 
 def test_negative_controls():
-    # no content-linked evidence -> covered 0, coverage 0.0 (III has a non-zero denominator)
-    neg = competency_rollup(NEG_NOEV)
+    neg = competency_rollup(NEG_NOEV)         # leveled, no content-linked evidence -> 0 / 0.0
     iii = [lc for lc in neg.coverage if lc.level == "III"][0]
     assert iii.covered_ksas == 0 and iii.coverage_percent == 0.0
-    # Level I -> 0 KSAs -> null coverage
-    lvl1 = competency_rollup(NEG_LVL1)
+    lvl1 = competency_rollup(NEG_LVL1)        # Level I -> 0 KSAs -> null coverage
     i = [lc for lc in lvl1.coverage if lc.level == "I"][0]
     assert i.total_ksas_at_level == 0 and i.coverage_percent is None
 ```
@@ -578,6 +657,12 @@ def _check(text, tmp_path):
 def test_rejects_email_and_passes_clean(tmp_path):
     assert _check("observed_by: jane.doe@apexpowerops.com", tmp_path).returncode != 0
     assert _check("observed_by: JS  evidence_ref: runbook#run01", tmp_path).returncode == 0
+
+
+def test_operator_denylist_file_rejects_named_terms(tmp_path, monkeypatch):
+    deny = tmp_path / "deny.txt"; deny.write_text("Jane Doe\n", encoding="utf-8")
+    monkeypatch.setenv("REDACTION_DENYLIST", str(deny))
+    assert _check("the rehearsal subject was Jane Doe", tmp_path).returncode != 0
 ```
 
 - [ ] **Step 2: Run to verify it fails.** `uv run pytest tests/test_redaction_check.py -v` → FAIL (no script).
@@ -585,20 +670,28 @@ def test_rejects_email_and_passes_clean(tmp_path):
 - [ ] **Step 3: Write the guard** `scripts/learning/redaction_check.sh`:
 ```bash
 #!/usr/bin/env bash
-# Mechanical pre-commit redaction guard for Slice 2d committable artifacts. Rejects email addresses
-# (the most common PII leak). Extend DENY for a name denylist as needed. Usage: redaction_check.sh FILE...
+# Mechanical pre-commit redaction guard for Slice 2d committable artifacts. Rejects (1) email-shaped
+# PII and (2) any literal term in an OPERATOR-HELD denylist file at $REDACTION_DENYLIST (kept OUT of
+# git -- e.g. the real cohort names under .claude/PLATFORM/). The denylist is optional; without it,
+# only the email check runs. Usage: [REDACTION_DENYLIST=path] redaction_check.sh FILE...
 set -euo pipefail
 status=0
 for f in "$@"; do
-  if grep -InE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' "$f" \
-       | grep -viE '@learning\.invalid'; then
+  if grep -InE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' "$f" | grep -viE '@learning\.invalid'; then
     echo "REDACTION FAIL: email-like PII in $f" >&2
     status=1
+  fi
+  if [ -n "${REDACTION_DENYLIST:-}" ] && [ -s "${REDACTION_DENYLIST:-}" ]; then
+    if grep -Inf "$REDACTION_DENYLIST" "$f"; then
+      echo "REDACTION FAIL: denylisted term in $f" >&2
+      status=1
+    fi
   fi
 done
 exit $status
 ```
-(The synthetic `@learning.invalid` handles are allowed; real domains are rejected.)
+(The synthetic `@learning.invalid` handles are allowed; real domains are rejected. The name denylist
+stays operator-held so no real name is committed to enforce redaction.)
 
 - [ ] **Step 4: Run to verify pass.** `uv run pytest tests/test_redaction_check.py -v` → PASS.
 
