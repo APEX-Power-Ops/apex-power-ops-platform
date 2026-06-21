@@ -142,3 +142,75 @@ def test_append_only_blocks_update_and_delete(conn):
     eid = _insert_recognized(conn, s)
     with pytest.raises(psycopg.errors.RaiseException):
         conn.execute("delete from ops.revenue_recognition_event where id=%s", (eid,))
+
+
+# ---- Task 2: approve_and_recognize ----
+
+def _recognize(c, s, ds=("not_applicable", None), cx=("not_applicable", None)):
+    return c.execute("select ops.approve_and_recognize(%s,%s,%s,%s,%s,%s)",
+                     (s["apparatus"], s["person"], ds[0], ds[1], cx[0], cx[1])).fetchone()[0]
+
+
+def test_recognize_happy_path(conn):
+    s = _seed_recognizable(conn)
+    eid = _recognize(conn, s, ds=("provided", "FS-1"), cx=("provided", "CX-1"))
+    row = conn.execute("select event_type, recognized_amount, quoted_hours, blended_rate, basis_frozen_at, "
+                       "actor_person_id from ops.revenue_recognition_event where id=%s", (eid,)).fetchone()
+    assert row[0] == "recognized"
+    assert row[1] == Decimal("500") and row[2] == Decimal("5") and row[3] == Decimal("100")
+    assert row[4] is not None and row[5] == s["person"]
+    net = conn.execute("select sum(recognized_amount) from ops.revenue_recognition_event where apparatus_id=%s",
+                       (s["apparatus"],)).fetchone()[0]
+    assert net == Decimal("500")
+
+
+def test_recognize_requires_complete(conn):
+    s = _seed_recognizable(conn, status="In Progress")
+    with pytest.raises(psycopg.errors.RaiseException, match="not testing-complete"):
+        _recognize(conn, s)
+
+
+def test_recognize_assessment_independent(conn):
+    s = _seed_recognizable(conn)
+    conn.execute("update ops.apparatus set assessment='Fail' where id=%s", (s["apparatus"],))
+    eid = _recognize(conn, s)
+    assert eid is not None
+
+
+def test_recognize_requires_frozen_basis(conn):
+    s = _seed_recognizable(conn, frozen=False)
+    with pytest.raises(psycopg.errors.RaiseException, match="not frozen"):
+        _recognize(conn, s)
+
+
+def test_recognize_requires_valid_quote(conn):
+    s = _seed_recognizable(conn, quoted_revenue=None)   # frozen basis, but apparatus has no quoted_revenue
+    with pytest.raises(psycopg.errors.RaiseException, match="invalid quote basis"):
+        _recognize(conn, s)
+
+
+def test_recognize_requires_both_clearances_fn(conn):
+    s = _seed_recognizable(conn)
+    with pytest.raises(psycopg.errors.RaiseException, match="clearances required"):
+        conn.execute("select ops.approve_and_recognize(%s,%s,null,null,%s,%s)",
+                     (s["apparatus"], s["person"], "not_applicable", None))
+
+
+def test_recognize_active_row_gate(conn):
+    s = _seed_recognizable(conn, scope_status="Cancelled")
+    with pytest.raises(psycopg.errors.RaiseException, match="inactive/cancelled"):
+        _recognize(conn, s)
+
+
+def test_recognize_actor_fk(conn):
+    s = _seed_recognizable(conn)
+    with pytest.raises(psycopg.errors.ForeignKeyViolation):
+        conn.execute("select ops.approve_and_recognize(%s,%s,%s,%s,%s,%s)",
+                     (s["apparatus"], str(uuid.uuid4()), "not_applicable", None, "not_applicable", None))
+
+
+def test_recognize_idempotent(conn):
+    s = _seed_recognizable(conn)
+    _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException, match="already recognized"):
+        _recognize(conn, s)
