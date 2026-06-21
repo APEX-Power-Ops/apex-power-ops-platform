@@ -1,4 +1,4 @@
-﻿from .db import connect
+from .db import connect
 from .models import (
     AssessmentSummary,
     CohortAggregate,
