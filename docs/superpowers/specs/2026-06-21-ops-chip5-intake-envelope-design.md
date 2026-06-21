@@ -1,6 +1,6 @@
 # Ops Chip 5 — Estimator Intake Envelope (design spec)
 
-**Status:** approved-shape, operator-redirected (D1–D7 + structural review-payload addition + testing matrix). Pre-plan.
+**Status:** approved-shape; **v2** after operator review #2 (findings finance-redaction · task idempotency key · supersede lifecycle · full-replacement materialization · raw-bytes posture). Pre-plan.
 **Lane:** Operations (PM). Branch `ops/chip5-intake-envelope` off `main@94db4727` (Chips 1–4 merged). Host worktree `/home/olares/code/apex/apex-ops-chip5`.
 **Dev DB:** tests on throwaway `ops_test`; `ops_dev` for operator review only. **Nothing applied to prod.** Merge to main is operator-gated.
 **SSoT:** `reference/ops/00-MASTER-INDEX.md` §7 (Chip 5) + §8 decisions. This chip also CORRECTS the stale §6/G6 + §7 text (the extractor exists; this chip is the envelope/lifecycle/UI around it).
@@ -20,13 +20,13 @@ The operational `ops.*` revenue substrate (Chips 1–4) is written **only at app
 - **The intake engine exists and produced the live data.** `packages/ops-intake/` (`extract.py` → `validate.py` → `load.py` → `cli.py`, real-Miner e2e) loaded the **$4.69M / 5,344-apparatus** Miner project into `ops_dev`. The SSoT §6/G6 ("intake extraction code does not exist") is **stale** — this chip fixes it.
 - **What the engine is missing** (the Chip 5 gap):
   1. **No envelope** — no `intake_runs`/`source_files`/`validation_findings`; findings (`Check[]`) are computed then discarded.
-  2. **Writes ops.\* immediately** — `load.py` upserts the domain rows on load, with an inline `--approve` flag; there is no staged review and no separation of parse from materialization.
+  2. **Writes ops.\* immediately** — `load.py` upserts the domain rows on load, with an inline `--approve` flag; no staged review, no separation of parse from materialization.
   3. **Hard-coded to Miner** — `_SOURCE='miner_rev10.xlsm'`, `source='project-miner'`.
   4. **No task level** — `ops.tasks` + `ops.apparatus.task_id` exist (Chip 1) but the loader never populates them; the `section` grouping is dropped.
   5. **Approve is a CLI flag** — no `ops.persons` actor; no revision story (re-intake of a frozen project now hard-fails the `005` immutability triggers).
   6. **Writes the `standard_hours` catalog from the upload** (`load.py:43`) — upload-driven mutation of a shared, universal catalog.
 - **The macro is the extraction spec.** `Reference_Files/Excel/Estimator VBA Modules/DataverseExport.bas` encodes which cells map to which fields (scope sheets `Scope1..Scope20`; `J3`=hours, `M4`=multiplier, `P3`=unadjusted grand total; financial rows 14/19/26/33; apparatus rows 6–488 with bold-header **`section`** detection; the `Dataverse_Import` metadata sheet for client/site/project). Its JSON output (`_DATAVERSE_IMPORT_*.json`) is the de-facto payload shape. **Reference only** — we do not rebuild the Dataverse/RESA-web-app workflow.
-- **PowerBI v1 (`RESA_Dashboard.pbix`) — reference concepts (out of scope):** the reporting grain is exactly scope→task→apparatus; completion rolls up hours-weighted; the field view **deliberately hides every dollar column** (the firewall as UX). Harvested into D7; the dashboards themselves are a later serving chip.
+- **PowerBI v1 (`RESA_Dashboard.pbix`) — reference concepts (out of scope):** reporting grain is exactly scope→task→apparatus; completion rolls up hours-weighted; the field view **deliberately hides every dollar column** (the firewall as UX). Harvested into D7; dashboards are a later serving chip.
 
 ## 3. Scope & non-goals
 
@@ -37,8 +37,8 @@ The operational `ops.*` revenue substrate (Chips 1–4) is written **only at app
 - **operations-web** — upload → review/edit tree → approve UI, against the host control-plane API → `ops_dev`. Branding from `resa-complete-theme.json`.
 
 **Explicitly OUT (named so nothing silently expands):**
-- Reporting dashboards / KPIs / work-queue / Gantt (the PowerBI concepts) → a later **serving** chip.
-- `standard_hours` catalog seeding (universal; D-OPS-7) — and Chip 5 **removes** the existing upload-driven catalog mutation.
+- Reporting dashboards / KPIs / work-queue / Gantt → a later **serving** chip.
+- `standard_hours` catalog seeding (universal; D-OPS-7) — Chip 5 **removes** the existing upload-driven catalog mutation.
 - Normalized client/site CRM tables.
 - CPM/P6 scheduling.
 - **Production multi-user rollout** — `ops.*` is host-only today; broad rollout rides the deferred `public/seam → ops` convergence (Chip N). Chip 5 *proves* the product on dev; it is *rolled out* later.
@@ -48,160 +48,176 @@ The operational `ops.*` revenue substrate (Chips 1–4) is written **only at app
 
 ### 4.1 Front door
 - **Server-side `.xlsm` parse is the product.** Operators upload the workbook; the server extracts it. The parser is brought to **macro-parity** (the `DataverseExport.bas` mapping is the spec), adding what the engine currently drops: `section`→task, client/site, the metadata sheet, and **N4**.
-- **JSON-upload is a retained alternate input** (the macro's existing output), normalized to the same canonical payload. It is not the path handed to others.
-- **`source_format` discriminator** classified at the boundary: `decomposed_scope_sheet` (full support, loadable) · `flat_quote` (no apparatus decomposition) and `unsupported` → the run is recorded as **`rejected`** with a boundary finding and never materializes. Reject not-yet-ready quotes at the door.
+- **JSON-upload is a retained alternate input** (the macro's existing output), normalized to the same canonical payload. Not the path handed to others.
+- **Security posture:** the server reads the workbook **as data** (`openpyxl`, `data_only=True` → cached cell values; Excel-owns-compute). **VBA/macros are never executed server-side.** Uploads over a **size cap** (default 25 MB) are rejected at the boundary.
+- **`source_format` discriminator** classified at the boundary: `decomposed_scope_sheet` (full support, loadable) · `flat_quote` (no apparatus decomposition) · `unsupported`. **`flat_quote` and `unsupported` are both REJECTED** — the run is recorded `rejected` with a boundary finding and never materializes (flat quotes lack the apparatus decomposition the recognition grain requires).
 
 ### 4.2 Canonical payload (versioned)
-The parser emits a **canonical payload** (`payload_schema_version`, e.g. `"1"`), superset of the current `IntakePayload`, adding:
+The parser emits a **canonical payload** (`payload_schema_version`, e.g. `"1"`), a superset of the current `IntakePayload`, adding:
 - `project.client_name`, `project.site_{name,address,city,state,zip,contact_name,contact_phone,contact_email}` (from the metadata sheet / JSON `client`+`site`).
 - per-scope `pct_adjust` (**N4**) alongside `unit_multiplier` (M4).
-- per-apparatus-line `section` (drives task grouping).
+- per-apparatus-line `section` (drives task grouping; the stable task key — see §5.2).
 The raw uploaded bytes + sha256 are preserved separately (provenance); the canonical payload is the derived, immutable parse output.
 
-### 4.3 N4 fidelity (D3, strengthened)
-- For `.xlsm`: **N4 is parsed and validated, not optional.** It maps to `scope_quote.pct_adjust` (`002_quote_model.sql`). Validation requires per-scope `P3 × M4 × N4 == quotedAmount` and `Σ adjusted == contract_value` within tolerance.
-- For the JSON fallback: N4 may default to `1`, but this **emits a `fidelity` finding**, and **approve requires the totals to reconcile** (the finding must be resolved/acknowledged or the parse re-sourced) — a default-1 that breaks reconciliation blocks approval.
+### 4.3 N4 fidelity (D3) + finding severity model
+- For `.xlsm`: **N4 is parsed and validated, not optional.** It maps to `scope_quote.pct_adjust` (`002`). Validation requires per-scope `P3 × M4 × N4 == quotedAmount` and `Σ adjusted == contract_value` (reusing the existing `validate.py` tolerances: `0.01` hrs, `$1` contract).
+- For the JSON fallback: N4 may default to `1`. This emits an **`info` (fidelity) finding** — informational, **never blocking on its own**.
+- **Severity model (three levels):** `blocking` (must be `ok` to approve — J3 mismatch, contract-total mismatch, unsupported format), `fidelity`/`info` (recorded, never blocks). A default-1 N4 that *breaks reconciliation* surfaces as a **separate `blocking` reconciliation finding** — so the failure blocks approve while the bare default does not. No acknowledgement/disposition workflow is needed (resolved by re-sourcing, not by acking).
 
 ## 5. Data model — migration 007
 
-Additive + reversible. `007_intake_envelope_down.sql` drops only 007 objects; **Chips 1–6 survive DOWN**.
+Additive + reversible. `007_..._down.sql` drops only 007 objects; **Chips 1–6 survive DOWN**.
 
 ### 5.1 Envelope tables
 
 ```
-ops.intake_run_status        enum: parsed | reviewing | approved | rejected | revision_blocked
+ops.intake_run_status        enum: parsed | reviewing | approved | rejected | revision_blocked | superseded
 ops.intake_conflict_kind     enum: none | frozen | recognized | billed
 ops.intake_source_format     enum: decomposed_scope_sheet | flat_quote | unsupported
 
 ops.intake_runs
   id                     uuid pk
-  project_number         text not null              -- the natural key parsed from the source
-  project_id             uuid null references ops.projects(id)   -- set only at/after approve (or link to an existing project)
+  project_number         text not null                  -- natural key parsed from the source
+  project_id             uuid null references ops.projects(id)   -- set at/after approve
   source_format          ops.intake_source_format not null
   status                 ops.intake_run_status not null default 'parsed'
   conflict_kind          ops.intake_conflict_kind not null default 'none'
   payload_schema_version text not null
   parser_version         text not null
-  canonical_payload_json jsonb not null             -- immutable: the parser output
-  review_payload_json    jsonb not null             -- editable working copy (starts == canonical)
-  review_payload_version int  not null default 1    -- bumped on each PATCH
+  canonical_payload_json jsonb not null                 -- immutable: parser output
+  review_payload_json    jsonb not null                 -- editable working copy (starts == canonical)
+  review_payload_version int  not null default 1        -- bumped on each PATCH
   uploaded_by            uuid not null references ops.persons(person_id)
   uploaded_at            timestamptz not null default now()
-  approved_by            uuid null references ops.persons(person_id)   -- D6: hard FK
+  approved_by            uuid null references ops.persons(person_id)   -- D6 hard FK
   approved_at            timestamptz null
   rejected_reason        text null
   created_at/updated_at  timestamptz
+  -- one approvable active run per project_number (backstop for the supersede lifecycle, §6.4):
+  --   create unique index uq_intake_one_active on ops.intake_runs (project_number)
+  --     where status in ('parsed','reviewing');
 
 ops.intake_source_files
   id            uuid pk
   run_id        uuid not null references ops.intake_runs(id) on delete cascade
   filename      text not null
-  content_type  text not null              -- xlsx / json
-  byte_size     bigint not null
-  sha256        text not null              -- hex; provenance + dedupe signal
-  raw_bytes     bytea null                 -- the uploaded artifact (or a storage ref); keep-vs-discard is an operator call, default keep
+  content_type  text not null              -- discriminator: 'xlsm' | 'json'
+  byte_size     bigint not null            -- enforced <= size cap at the boundary
+  sha256        text not null              -- hex; provenance + dedupe signal (identical re-upload detectable)
+  raw_bytes     bytea not null             -- Chip 5 KEEPS the artifact (re-parse + chain-of-custody); no storage_ref path
   created_at    timestamptz
 
 ops.intake_validation_findings
-  id              uuid pk
-  run_id          uuid not null references ops.intake_runs(id) on delete cascade
-  payload_version int  not null            -- which review_payload_version this was computed against
-  severity        text not null            -- 'blocking' | 'fidelity' | 'info'
-  code            text not null            -- machine code, e.g. 'j3_mismatch', 'contract_total', 'n4_default', 'unsupported_format'
-  ok              boolean not null
-  detail          text not null default ''
-  created_at      timestamptz
-  -- a finding is "open" if severity='blocking' and ok=false at the current review_payload_version
+  id               uuid pk
+  run_id           uuid not null references ops.intake_runs(id) on delete cascade
+  payload_version  int  not null            -- the review_payload_version this was computed against
+  severity         text not null            -- 'blocking' | 'fidelity' | 'info'
+  code             text not null            -- 'j3_mismatch' | 'contract_total' | 'n4_reconcile' | 'n4_default' | 'unsupported_format' ...
+  ok               boolean not null
+  message          text not null default '' -- PM-SAFE display text — NO dollar values
+  diagnostic_detail text null               -- finance-only: may contain money (P3/P4/contract totals). NOT returned to the PM surface.
+  created_at       timestamptz
+  -- "open" finding = severity='blocking' and ok=false at the current review_payload_version
 ```
 
-Immutability: `canonical_payload_json`, `source_format`, `payload_schema_version`, `parser_version`, `uploaded_by` are write-once (trigger rejects UPDATE of these). `approved_by`/`approved_at` set-once at approve.
+**Finance redaction (Important):** every finding carries a **PM-safe `message`** (never dollars) and an optional **finance-only `diagnostic_detail`** (may carry P3/P4/contract figures). The operations-web/PM response returns only `{code, severity, ok, message}`; `diagnostic_detail` is withheld from the PM review surface (a future finance surface may expose it). This keeps the D7 firewall intact even though reconciliation reasons about money.
 
-### 5.2 DB guards (D1)
+Immutability: `canonical_payload_json`, `source_format`, `payload_schema_version`, `parser_version`, `uploaded_by` are write-once (trigger rejects UPDATE). `approved_by`/`approved_at` set-once at approve.
 
-The schema lets `apparatus.task_id` point at a task in a **different** scope, and `apparatus.scope_id` is immutable (`trg_apparatus_scope_immutable`, `001`) but `tasks.scope_id` is not. 007 adds:
+### 5.2 DB guards + task idempotency key (D1 + Important)
+
+The schema lets `apparatus.task_id` point at a task in a **different** scope, `apparatus.scope_id` is immutable (`trg_apparatus_scope_immutable`, `001`), but `tasks.scope_id` is not, and **`ops.tasks` has no intake idempotency key** (003 covers scopes/quote_lines/apparatus, not tasks). 007 adds:
 - **`trg_apparatus_task_same_scope`** (`before insert or update on ops.apparatus`): if `new.task_id is not null`, require `(select scope_id from ops.tasks where id = new.task_id) = new.scope_id`, else `raise exception`.
-- **`trg_task_scope_immutable`** (`before update on ops.tasks`): if any apparatus references the task (or, simpler, unconditionally once a row exists), reject changes to `tasks.scope_id`. Keeps the task→scope binding stable so the apparatus guard cannot be defeated by moving the task.
+- **`trg_task_scope_immutable`** (`before update on ops.tasks`): reject changes to `tasks.scope_id` once the row exists. Keeps the task→scope binding stable so the apparatus guard cannot be defeated by moving the task.
+- **`uq_ops_tasks_intake`** — `create unique index ... on ops.tasks (scope_id, legacy_source_id) where legacy_source_id is not null`. **Stable section key:** `tasks.legacy_source_id = <section>` (the bold-header section text within the scope; unique within a scope). Prevents retry/re-approval task duplication, matching the 003 pattern for scopes/lines/apparatus.
 
 ### 5.3 Minimal source columns (D2)
 
 Add to `ops.projects` (marked source-derived, **not** canonical CRM):
 - `source_client_name text null`
-- `source_site_name text null`, `source_site_address text null`, `source_site_city text null`, `source_site_state text null`, `source_site_zip text null`
+- `source_site_name/address/city/state/zip text null`
 The full client/site/contact set is retained in `intake_runs.canonical_payload_json` / `intake_source_files`. No client/site/contact tables.
 
 ## 6. The package — `ops-intake` generalization
 
 ### 6.1 Parse → envelope (NO operational writes)
 - De-Miner-ize: source identity comes from the run, not `_SOURCE`/`'project-miner'` literals.
-- Parser to macro-parity: `section`→task, client/site, metadata sheet, N4; `source_format` classification.
+- Parser to macro-parity: `section`→task, client/site, metadata sheet, N4; `source_format` classification; size-cap + macro-free read (§4.1).
 - New `envelope.py`: `create_run(dsn, *, uploaded_by, filename, raw_bytes, content_type) -> run_id` — parse → classify → persist `intake_runs` (canonical==review payload v1) + `intake_source_files` (sha256) + `intake_validation_findings`. **Touches only envelope tables.**
 - **No domain writes** before approve: parse/validate/persist-envelope never INSERT/UPDATE `ops.projects|scopes|tasks|apparatus|scope_quote|scope_quote_line`.
 
 ### 6.2 Review/edit
-- `validate_payload(review_payload) -> Check[]` (the existing 3 checks + N4 reconciliation + format) computed against the **review** payload at its version; re-persisted as findings at the new `payload_version` on each PATCH.
+- `validate_payload(review_payload) -> Check[]` (the 3 existing checks + N4 reconciliation + format) computed against the **review** payload at its version; re-persisted as findings at the new `payload_version` on each PATCH (each finding split into `message` + `diagnostic_detail`).
 - Edits permitted on the review payload: task rename/regroup, **move apparatus between tasks within a scope**, edit `hrs_per_unit`, edit metadata. **Forbidden: move apparatus across scopes** (Law 1) — rejected in the package and unreachable in the UI.
 
-### 6.3 Approve (the only domain writer; D6 identity-gated)
-- `approve_run(dsn, run_id, *, approved_by) -> ApproveResult`, transactional:
-  1. Re-validate the current `review_payload`; **refuse if any `blocking` finding is open** (incl. N4 reconciliation).
-  2. Refuse if `status = revision_blocked` (D5).
-  3. Materialize the review payload into `ops.*` scoped to the project (the current `load.py` upsert logic, now creating **tasks** from `section` and linking `apparatus.task_id`; `apparatus.scope_id` set from its scope).
-  4. Freeze: set `scope_quote.is_frozen/frozen_at`, compute `apparatus.quoted_revenue = round(quoted_hours × blended_rate, 2)`, set `provenance_status='approved'` — **project-scoped** (never touches other projects).
-  5. Set `intake_runs.status='approved'`, `approved_by/at`, link `project_id`.
+### 6.3 Approve — the only domain writer (D6 identity-gated; full-replacement materialization)
+`approve_run(dsn, run_id, *, approved_by) -> ApproveResult`, transactional, **under a project lock**:
+1. Re-validate the current `review_payload`; **refuse (422) if any `blocking` finding is open** (incl. N4 reconciliation).
+2. Refuse (409) if `status != active` (not in `parsed`/`reviewing`) — e.g. a stale/superseded run (§6.4).
+3. Refuse (409) if `status = revision_blocked` (D5).
+4. `SELECT ... FOR UPDATE` the project row (by `project_number`; create it if new), then **full replacement of intake-owned children**: `DELETE` the project's **intake-owned** scopes (`legacy_source_id is not null`) → cascades tasks/scope_quote/scope_quote_line/apparatus → then `INSERT` fresh from the review payload, creating **tasks** from `section` (with `legacy_source_id=<section>`) and linking `apparatus.task_id`. This guarantees **no stale rows** for re-intake of an unfrozen project; safe because the frozen/recognized/billed path never reaches here (D5). The project row is updated in place (stable `project_id`).
+5. Freeze: set `scope_quote.is_frozen/frozen_at`, compute `apparatus.quoted_revenue = round(quoted_hours × blended_rate, 2)`, `provenance_status='approved'` — **project-scoped** (never touches other projects).
+6. Set `intake_runs.status='approved'`, `approved_by/at`, link `project_id`.
 - **Removes upload-driven `standard_hours` mutation** (D4): the catalog is not written by intake at all.
 
-### 6.4 Revision detection & refusal (D5, stricter)
-At `create_run`, look up `ops.projects` by `project_number`:
-- **none** → `conflict_kind='none'`, status `parsed` → normal flow.
-- **exists, no frozen scope_quote, no recognition, no billing** → `none` → updatable draft (still materialized only at approve).
-- **exists AND (any `scope_quote.is_frozen` for its scopes, OR `ops.revenue_recognition_event` net>0, OR any `ops.billing_application` for `project_id`)** → classify `conflict_kind` = `billed` > `recognized` > `frozen` (most-downstream wins), set `status='revision_blocked'`, persist the run as a **proposed revision**, and **refuse operational writes**. Surface the diff. **Do not** automate reverse/supersede — that is an explicit, separate operator action outside Chip 5.
-  - Conflict inspection covers **both** ledgers: recognition (`ops.revenue_recognition_event`) **and** billing (`ops.billing_application.project_id`), not recognition alone.
+### 6.4 Revision detection, refusal, and supersede lifecycle (D5 + Important)
+At `create_run`, within the same txn:
+- **Supersede:** set any existing **active** runs (`status in ('parsed','reviewing')`) for the same `project_number` to `superseded`. The new run becomes the single active run (DB-backstopped by `uq_intake_one_active`). Re-intake before approve = a new run that supersedes the prior draft (never an in-place draft edit; that ambiguity is removed).
+- **Conflict classification** — look up `ops.projects` by `project_number`:
+  - **none** → `conflict_kind='none'`, status `parsed` → normal flow.
+  - **exists, no frozen scope_quote, no recognition, no billing** → `none` → updatable at approve via the §6.3 full replacement.
+  - **exists AND (any `scope_quote.is_frozen` for its scopes, OR `ops.revenue_recognition_event` net>0, OR any `ops.billing_application` for `project_id`)** → set `conflict_kind` = `billed` > `recognized` > `frozen` (most-downstream wins), `status='revision_blocked'`, persist as a **proposed revision**, **refuse operational writes**, surface the diff. **No automated reverse/supersede.** Conflict inspection covers **both** ledgers — recognition (`revenue_recognition_event`) **and** billing (`billing_application.project_id`).
 
 ## 7. The control-plane API (host-gated)
 
 Routes register **only when `OPS_DEV_DSN` is set** (env-gated like the learning routes; absent on the prod Render deploy → no 500ing routes). All calls require an `actor_person_id` resolvable to `ops.persons`.
-- `POST /api/v1/ops/intake` — multipart `.xlsm`/`.json` upload → `create_run` → returns `{run_id, status, conflict_kind, preview_tree, findings}`. **No domain writes.**
-- `GET /api/v1/ops/intake/{run_id}` — run + `review_payload` tree + findings.
-- `PATCH /api/v1/ops/intake/{run_id}` — edit the **review payload only** (task regroup, hrs_per_unit, metadata) → bump `review_payload_version` → re-validate → new findings. Enforces PM authority (cross-scope apparatus moves rejected 4xx).
-- `POST /api/v1/ops/intake/{run_id}/approve` — identity-gated `approve_run`. 409 if `revision_blocked`; 422 if open blocking findings.
+- `POST /api/v1/ops/intake` — multipart `.xlsm`/`.json` (size-capped) → `create_run` → `{run_id, status, conflict_kind, preview_tree, findings}`. Findings carry **PM-safe `message` only** (no `diagnostic_detail`). **No domain writes.**
+- `GET /api/v1/ops/intake/{run_id}` — run + `review_payload` tree + findings (PM-safe).
+- `PATCH /api/v1/ops/intake/{run_id}` — edit the **review payload only** → bump version → re-validate → new findings. Cross-scope apparatus moves rejected 4xx. 409 if the run is not active.
+- `POST /api/v1/ops/intake/{run_id}/approve` — identity-gated `approve_run`. 409 if `revision_blocked` or not-active/superseded; 422 if open blocking findings.
 - `POST /api/v1/ops/intake/{run_id}/reject` — record `rejected` + reason.
 
 ## 8. The UI — operations-web
 
 A new intake surface (against the host control-plane API → `ops_dev`):
-1. **Upload** — drop the `.xlsm`; show parse result + `source_format` + findings.
-2. **Review tree** — scope → task → apparatus, editable task groupings and `hrs_per_unit`, inline validation findings, run status. Cross-scope moves not offered.
-3. **Approve** — identity-gated; disabled while blocking findings are open or `revision_blocked` (shows the conflict + diff instead).
-- **D7 firewall:** the review/approve surface shows **structure, hours, validation, status — no dollars.** `quoted_revenue` is computed at approve and lives behind the finance gate.
+1. **Upload** — drop the `.xlsm`; show parse result + `source_format` + findings (**PM-safe `message` only**).
+2. **Review tree** — scope → task → apparatus, editable task groupings and `hrs_per_unit`, inline findings, run status. Cross-scope moves not offered.
+3. **Approve** — identity-gated; disabled while blocking findings are open or `revision_blocked` (shows the conflict + diff).
+- **D7 firewall:** the review/approve surface shows **structure, hours, validation, status — no dollars.** `quoted_revenue` is computed at approve and lives behind the finance gate; finding money values live only in the withheld `diagnostic_detail`.
 - Branding from `resa-complete-theme.json`.
 
 ## 9. Laws & invariants honored
 - **Law 1** (scope→apparatus fixed): no cross-scope apparatus moves; the 007 task-scope guard backstops it in the DB.
-- **Law 3** (recognition firewall): no dollars in review; `quoted_revenue` materialized only at approve; the `005` frozen-basis immutability triggers are respected (intake never mutates a frozen project — it refuses).
+- **Law 3** (recognition firewall): no dollars in review (findings finance-redacted); `quoted_revenue` materialized only at approve; the `005` frozen-basis immutability triggers are respected (intake never mutates a frozen project — it refuses).
 - **No operational writes before approve** (the central new invariant).
 - Identity (`ops.persons`) on `uploaded_by` + `approved_by` (D6).
+- **Single active approvable run per `project_number`** (supersede lifecycle).
 
 ## 10. Testing matrix (TDD, throwaway `ops_test`; `ops_dev` for operator review only)
 
 Migration + package + API tests pin `OPS_DEV_DSN` at `ops_test` (the fixture truncates/down-nukes). Required cases:
 - **No operational writes before approve** — parse + PATCH leave `ops.projects|scopes|tasks|apparatus|scope_quote|scope_quote_line` row-counts unchanged; only envelope tables grow.
-- **Task-scope guard** — `apparatus.task_id` cross-scope INSERT/UPDATE rejected; `tasks.scope_id` change rejected once referenced.
+- **Task-scope guard** — cross-scope `apparatus.task_id` rejected; `tasks.scope_id` change rejected once the row exists.
+- **Task idempotency** — re-approval / retry does not duplicate tasks (the `uq_ops_tasks_intake` key holds; `legacy_source_id=<section>`).
+- **Full-replacement materialization** — re-intake + approve of an unfrozen project removes scopes/tasks/lines/apparatus dropped from the new payload (no stale rows); count matches the new payload exactly.
+- **Supersede lifecycle** — a second upload for the same `project_number` sets the prior active run `superseded`; only one active run exists; approving the stale/superseded run → 409.
 - **Frozen-project revision refusal** — re-parse of a frozen/recognized/billed project → `status=revision_blocked`, `conflict_kind` correct, **zero domain writes**, approve 409.
 - **Recognition/billing conflict classification** — `frozen`-only vs `recognized` vs `billed` each classified correctly (billing checked independently of recognition).
-- **N4 parity** — `.xlsm` N4 parsed and totals reconcile (P3×M4×N4==quotedAmount, Σadjusted==contract_value); JSON default-1 emits a `fidelity` finding; approval blocked when default-1 breaks reconciliation.
+- **N4 parity** — `.xlsm` N4 parsed and totals reconcile; JSON default-1 emits an `info` fidelity finding (non-blocking); when default-1 breaks reconciliation, a `blocking` finding blocks approve.
+- **Findings finance-redaction** — the PM/API response contains `message` but **never `diagnostic_detail`**; no dollar value appears in any PM-surface finding field.
 - **Route guard disabled when `OPS_DEV_DSN` absent** — import-isolated subprocess proves the intake routes do not register.
 - **Identity-gated approve** — approve requires a valid `ops.persons` actor; the FK is enforced.
 - **Source-format rejection** — `unsupported`/`flat_quote` → `rejected` run + boundary finding, no materialization.
 - **Full e2e** — upload a decomposed workbook → review/edit (regroup a task, override an `hrs_per_unit`) → approve → `ops.*` materialized with tasks + `apparatus.task_id` set + frozen quote; Σ apparatus quoted_revenue == scope P4.
-- **Idempotent re-parse pre-approval** — re-uploading before approve creates a new run (or updates the draft) without duplicating domain rows (there are none yet).
+- **Size cap / macro-free** — an over-cap upload is rejected; the parser reads cached values without executing VBA.
 - **DOWN** — `007_down` removes 007 objects; `001`–`006` schema + any data intact.
 
 ## 11. Housekeeping (part of "done")
-- Fix SSoT `00-MASTER-INDEX.md` §6/G6 + §7 (extractor exists; Chip 5 = envelope/lifecycle/UI), add a **D-OPS** decision row (parse/envelope/approve separation · no-writes-before-approve · revision-refusal incl. billing · N4 mandatory for `.xlsm`).
+- Fix SSoT `00-MASTER-INDEX.md` §6/G6 + §7 (extractor exists; Chip 5 = envelope/lifecycle/UI), add a **D-OPS** decision row (parse/envelope/approve separation · no-writes-before-approve · revision-refusal incl. billing · N4 mandatory for `.xlsm` · supersede lifecycle · full-replacement materialization · findings finance-redaction).
 - MANIFEST row 007.
 - RESUME_HERE + `project_ops_pm_lane` memory at the merge checkpoint.
 
-## 12. Open questions for operator review
-1. **Raw artifact retention** — keep `intake_source_files.raw_bytes` (enables re-parse + chain-of-custody) vs discard post-parse (store only sha256)? Default: keep.
-2. **`flat_quote` disposition** — reject as not-ready (current lean) vs accept as a single-scope estimate (like the Miner chiller `is_estimate` lump)?
-3. **Draft update vs new project** — when re-intaking an existing *unfrozen* project, update in place at approve vs always create a distinct revision? Default: update in place (only frozen/recognized/billed triggers `revision_blocked`).
+## 12. Resolved decisions (operator review #2)
+1. **Raw artifact retention** — **keep** `intake_source_files.raw_bytes` for Chip 5 (re-parse + chain-of-custody). Enforce a **size cap** (default 25 MB) at the boundary; `sha256` is the dedupe/identical-re-upload signal; **never execute macros** (data-only read).
+2. **`flat_quote`** — **reject** (lacks the apparatus decomposition the recognition grain needs).
+3. **Unfrozen existing project** — **update in place at approve via full replacement** of intake-owned rows under a project lock (§6.3): delete intake-owned children (cascade) and re-materialize, so removed scopes/tasks/lines/apparatus do not accumulate as stale rows.
