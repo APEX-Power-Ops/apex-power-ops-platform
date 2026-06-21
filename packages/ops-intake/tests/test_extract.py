@@ -16,3 +16,13 @@ def test_extract_mini(mini_workbook):
     assert s.lines[1].apparatus_type == "Transformer - Pad" and s.lines[1].hrs_per_unit == 5.0
     assert any(h.apparatus_type == "Vacuum Interrupter" and h.test_standard == "ATS"
                for h in p.standard_hours)
+
+
+def test_extract_sections_and_metadata(mini_workbook):
+    p = extract_workbook(mini_workbook)
+    s = p.scopes[0]
+    assert any(l.section for l in s.lines)              # section captured
+    assert all(l.line_uid for l in s.lines)             # stable per-line identity minted at parse
+    assert len({l.line_uid for sc in p.scopes for l in sc.lines}) == sum(len(sc.lines) for sc in p.scopes)  # unique
+    assert abs(s.quote.pct_adjust - 1.0) < 1e-9         # N4 read
+    assert p.project.client_name is not None            # metadata sheet read
