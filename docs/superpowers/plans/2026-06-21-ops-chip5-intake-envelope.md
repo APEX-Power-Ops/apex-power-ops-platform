@@ -13,7 +13,7 @@
 - **Dev-only.** Nothing is applied to `ops_dev`/prod by the build. Migration/package/API tests run on **throwaway `ops_test`**; `ops_dev` is for operator review only. Merge to main is **operator-gated**.
 - **Test DSN pinning (hard safety rule):** every test that applies/tears-down schema or truncates pins the DSN at **`ops_test`** and **refuses any DSN whose dbname is not `ops_test`**. The migration-test idiom (`infra/database/migrations/ops/test_006_progress_billing.py`) is the template: `DSN = os.environ.get("OPS_DEV_DSN") or "...dbname=ops_test..."`.
 - **No operational writes before approve.** Parse/validate/review-edit touch only the envelope tables (`ops.intake_runs|intake_source_files|intake_validation_findings`). `ops.projects|scopes|tasks|apparatus|scope_quote|scope_quote_line|standard_hours` are written **only** inside `approve_run`.
-- **Approve is the only domain writer** and is **identity-gated** by `ops.persons(person_id)`. It takes `SELECT ... FOR UPDATE` on the **intake_run row first, then the project row** (fixed order; serializes concurrent approves of the same run before any status/conflict read).
+- **Approve is the only domain writer** and is **identity-gated** by `ops.persons(person_id)`. Lock order **`advisory(project_number) → intake_run row → project → apparatus`** — the project advisory lock is taken **first** (matching `create_run`, so the two can't deadlock), then the run row `FOR UPDATE` (before any status/conflict read), then project, then apparatus.
 - **Intake ownership marker:** rows materialized by approve are stamped `source='ops-intake'`; full-replacement deletes the project's scopes **`where source='ops-intake'`** (cascade) — never the generic `legacy_source_id is not null`, which is a per-row stable key (used by the 003/007 unique indexes), not an exclusive owner marker.
 - **`recognized` conflict is membership, not balance:** any `ops.revenue_recognition_event` row existing for the project (EXISTS), never `net > 0`.
 - **Finance redaction:** findings carry a PM-safe `message` (no dollars) and a finance-only `diagnostic_detail`; API/UI return only `message`.
@@ -107,11 +107,12 @@
 """ops Chip 5 -- intake envelope: structure, guards, reversibility (TDD). Throwaway ops_test ONLY."""
 import os, pathlib, uuid
 import psycopg, pytest
+from psycopg.conninfo import conninfo_to_dict
 
 DSN = os.environ.get("OPS_DEV_DSN") or (
     "host=127.0.0.1 port=5432 dbname=ops_test user=postgres "
     f"password={os.environ.get('OPS_DEV_PGPASSWORD') or os.environ.get('PGPASSWORD','')} sslmode=disable")
-assert "dbname=ops_test" in DSN, "Chip 5 migration tests must run on ops_test only"
+assert conninfo_to_dict(DSN).get("dbname") == "ops_test", "Chip 5 migration tests must run on ops_test only"
 HERE = pathlib.Path(__file__).parent
 DOWN1 = HERE/"001_identity_skeleton_down.sql"
 CHAIN = ["001_identity_skeleton.sql","002_quote_model.sql","003_intake_unique_keys.sql",
@@ -736,9 +737,9 @@ def _canon():
             "scopes": [{"scope_name": "A",
                         "quote": {"onsite_labor": 1000, "offsite_labor": 0, "travel": 0, "outside_services": 0,
                                   "unit_multiplier": 1, "pct_adjust": 1, "total_quoted_hours": 7},
-                        "lines": [{"line_uid": "A:row1", "qty": 1, "apparatus_type": "X",
+                        "lines": [{"line_uid": "A:row1", "qty": 1, "apparatus_type": "X", "line_number": 1,
                                    "test_standard": "ATS", "hrs_per_unit": 2.0, "section": "old"},
-                                  {"line_uid": "A:row2", "qty": 5, "apparatus_type": "Y",
+                                  {"line_uid": "A:row2", "qty": 5, "apparatus_type": "Y", "line_number": 2,
                                    "test_standard": "ATS", "hrs_per_unit": 1.0, "section": "old"}]}]}
 
 def test_allowlist_blocks_qty_and_dollar_tamper():
@@ -775,6 +776,18 @@ def test_allowlist_blocks_added_or_duplicated_line():
 def test_allowlist_allows_section_and_hours_edit():
     ok = _canon(); ok["scopes"][0]["lines"][0]["section"] = "NEW"; ok["scopes"][0]["lines"][0]["hrs_per_unit"] = 3.5
     _assert_review_within_allowlist(_canon(), ok)  # must not raise
+
+def test_allowlist_blocks_identity_and_structural_tamper():
+    bad_pn = _canon(); bad_pn["project"]["project_number"] = "P9"     # project_number pinned
+    with pytest.raises(ValueError):
+        _assert_review_within_allowlist(_canon(), bad_pn)
+    for field, val in [("apparatus_type", "Z"), ("test_standard", "MTS"), ("line_number", 99)]:
+        bad = _canon(); bad["scopes"][0]["lines"][0][field] = val
+        with pytest.raises(ValueError):
+            _assert_review_within_allowlist(_canon(), bad)
+    deleted = _canon(); deleted["scopes"][0]["lines"].pop()           # dropped line -> multiset shrinks
+    with pytest.raises(ValueError):
+        _assert_review_within_allowlist(_canon(), deleted)
 ```
 
 - [ ] **Step 2: Run — FAIL.**
@@ -790,7 +803,7 @@ def test_allowlist_allows_section_and_hours_edit():
 
 **Interfaces:**
 - Consumes: the run + `review_payload_json`; `load.py` row-builders.
-- Produces: `approve_run(dsn, run_id, *, approved_by: uuid) -> dict`. Transactional. **Global lock order: intake_runs → projects → apparatus** (record this in the SSoT, Task 16). Steps per spec §6.3:
+- Produces: `approve_run(dsn, run_id, *, approved_by: uuid) -> dict`. Transactional. **Lock order: `advisory(project_number) → intake_run row → project → apparatus`** (advisory-first matches `create_run` so they can't deadlock; the full cross-chip chain is recorded in Task 16/SSoT). Steps per spec §6.3:
   - **(0) Lock order = advisory(`project_number`) → intake_run row → project → apparatus** (must match `create_run`'s order). First `SELECT project_number FROM ops.intake_runs WHERE id=run_id` (NO lock — just read the key), then `pg_advisory_xact_lock(hashtext(project_number))`, **then** `SELECT ... FROM ops.intake_runs WHERE id=run_id FOR UPDATE` and re-read status. Taking the advisory lock **before** the run-row lock is what prevents the create-vs-approve deadlock — else approve holds the run row while waiting on the advisory lock, and a concurrent `create_run` holds the advisory lock while waiting to supersede (lock) that run row. (Serializes concurrent approves of the same run too.)
   - **(1)** refuse 422 if any open `blocking` finding; **(2)** refuse 409 if run not active; **(3)** refuse 409 if `revision_blocked`.
   - **(4)** with the advisory lock already held (step 0), upsert+`SELECT ... FOR UPDATE` the project row (create if new — the advisory lock covers the brand-new-project case where no row exists to `FOR UPDATE`), **then `SELECT id FROM ops.apparatus WHERE <project> FOR UPDATE`** so any in-flight Chip-3 `approve_and_recognize` (which locks apparatus rows, not the project) serializes and its event becomes visible. Then **re-check conflict** (frozen / **any** `revenue_recognition_event` EXISTS / any `billing_application`) → if now-conflicted: **commit the `status='revision_blocked'` transition and RETURN that outcome** (the API maps it to 409). **Do NOT raise-and-rollback** — a raise in the same txn would roll back the status write, so the conflict outcome must be a committed result the API converts to 409 (same pattern for the 422-blocking-findings and 409-not-active paths).
