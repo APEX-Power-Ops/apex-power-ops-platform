@@ -4,7 +4,7 @@
 
 **Goal:** Add an append-only, apparatus-grain revenue-recognition ledger to the clean `ops.*` substrate so that a tech-lead's *approval* of a completed apparatus produces a durable recognized-revenue event, honoring the recognition firewall (frozen `quoted_*` stays on the apparatus; recognized $ exist only as events).
 
-**Architecture:** One numbered SQL migration on the existing lane rails — `infra/database/migrations/ops/005_recognition_ledger.sql` (+ `_down` + `test_005_recognition_ledger.py`), TDD on a throwaway `ops_test`. It adds: two enums, one append-only ledger table (append-only + insert-integrity triggers), two gated PL/pgSQL functions, four rollup/queue views, guard triggers (narrow un-complete + frozen-basis immutability), and supporting constraints/indexes. No new package, no app, no prod. The lead-review UI, the records datasheet live-verification, and the CxAlloy integration are explicitly **later bridge packets** — Chip 3 is the engine they will call.
+**Architecture:** One numbered SQL migration on the existing lane rails — `infra/database/migrations/ops/005_recognition_ledger.sql` (+ `_down` + `test_005_recognition_ledger.py`), TDD on a throwaway `ops_test`. It adds: two enums, one append-only ledger table (append-only + invariant-enforcing insert triggers), two gated PL/pgSQL functions, four rollup/queue views, recognition-protection guards across apparatus/scope/project + a frozen-basis immutability guard, and supporting constraints/indexes. No new package, no app, no prod. The lead-review UI, the records datasheet live-verification, and the CxAlloy integration are explicitly **later bridge packets** — Chip 3 is the engine they will call.
 
 **Tech Stack:** PostgreSQL 17 (host `ops_dev` / `ops_test`), PL/pgSQL, pytest via `uv run --with "psycopg[binary]" --with pytest`.
 
@@ -20,7 +20,7 @@
 - **Both obligations cleared, explicitly (ruling B):** recognition requires the lead to clear BOTH the datasheet and the CxAlloy obligation, modeled as explicit dispositions — NOT hidden inside a boolean. Live verification of the underlying systems stays out of scope.
 - **Reversible `_down`**; validation gate = up → down → up clean + the `test_005_*.py` invariant suite. `_down` drops ONLY Chip-3 objects; never the `ops` schema or prior chips.
 - All numeric money compares use the frozen quote as the basis; missing/unfrozen basis must **raise**, never silently recognize (field-trust rule).
-- **Active-row only (pinned — no inactive/cancelled recognition):** recognition requires the apparatus AND its parent scope AND project to all be `is_active = true` and not `Cancelled`. Inactive/cancelled objects never recognize; the review queue and rollup views exclude them. (`ops.{projects,scopes,apparatus}` each carry `is_active boolean DEFAULT true`; `project_status`/`scope_status` each include `Cancelled`.)
+- **Active-row only (pinned — no inactive/cancelled recognition):** recognition requires the apparatus AND its parent scope AND project to all be `is_active = true` and not `Cancelled`. Inactive/cancelled objects never recognize; the review queue and rollup views exclude them; **and a row with descendant open recognition cannot be deactivated or cancelled until reversed** (Component 4 protection guards). (`ops.{projects,scopes,apparatus}` each carry `is_active boolean DEFAULT true`; `project_status`/`scope_status` each include `Cancelled`.)
 - **Frozen basis is immutable:** once `ops.scope_quote.is_frozen = true`, the quote/basis columns are locked by a guard trigger (Component 5) so recognized totals stay reconcilable against the snapshot. Chip 3 supplies the enforcement Chip 2 declared but left open (`002_quote_model.sql` leaves `scope_quote` + apparatus quote columns mutable).
 
 ---
@@ -83,11 +83,12 @@ CREATE TRIGGER revrec_immutable BEFORE UPDATE OR DELETE ON ops.revenue_recogniti
 
 ### Write integrity (BEFORE INSERT)
 
-Because `scope_id`/`project_id` are denormalized, a direct `INSERT` outside `approve_and_recognize` could corrupt rollups. A `BEFORE INSERT` trigger validates every row regardless of write path:
-- `NEW.scope_id` must equal `ops.apparatus(NEW.apparatus_id).scope_id`, and `NEW.project_id` must equal `ops.scopes(NEW.scope_id).project_id` — else raise.
-- For `reversal` rows: `reverses_event_id` must reference an existing `recognized` event whose `apparatus_id` equals `NEW.apparatus_id` — else raise.
+Because we chose triggers over role-based function-only grants, a direct `INSERT` outside `approve_and_recognize` must not be able to persist a row the function would have refused. A `BEFORE INSERT` trigger enforces the full invariant set regardless of write path:
+- **Lineage (all rows):** `NEW.scope_id` must equal `ops.apparatus(NEW.apparatus_id).scope_id`, and `NEW.project_id` must equal `ops.scopes(NEW.scope_id).project_id` — else raise.
+- **`recognized` rows additionally require:** the active chain (apparatus + scope + project `is_active` and non-`Cancelled`); `apparatus.status = 'Complete'`; a frozen basis (`scope_quote.is_frozen` AND `frozen_at IS NOT NULL`); `recognized_amount = apparatus.quoted_revenue`; and the snapshot fields matching the current basis (`quoted_hours = apparatus.quoted_hours`, `blended_rate = scope_quote.blended_rate`, `basis_frozen_at = scope_quote.frozen_at`) — else raise.
+- **`reversal` rows require:** `reverses_event_id` references an existing `recognized` event whose `apparatus_id` equals `NEW.apparatus_id`, AND `recognized_amount = -(original.recognized_amount)` — else raise.
 
-This makes the denormalized lineage tamper-evident without requiring role-based function-only writes (which would complicate the dev/test DSN setup).
+So the function path and any direct-insert path converge on identical invariants; the function adds only friendly error messages and the locked idempotency check. (Idempotency — no second *open* recognition per apparatus — remains the function's responsibility via the `FOR UPDATE` net-check, which a stateless insert trigger cannot serialize.)
 
 ### Indexes
 
@@ -131,12 +132,15 @@ Behavior (PL/pgSQL, single transaction):
 4. Already reversed (`EXISTS reversal WHERE reverses_event_id = p_event_id`) → raise. *(Belt-and-suspenders to `uq_revrec_one_reversal`.)*
 5. INSERT a `reversal` row: `recognized_amount = -original.recognized_amount`, `reverses_event_id = p_event_id`, `reason`, `actor_person_id`, copying `apparatus_id/scope_id/project_id`. RETURN its `id`.
 
-## Component 4 — Integrity guard (narrow)
+## Component 4 — Recognition-protection guards
 
-```sql
-CREATE TRIGGER apparatus_block_uncomplete BEFORE UPDATE OF status ON ops.apparatus …
-```
-Behavior: if `OLD.status = 'Complete'` AND `NEW.status <> 'Complete'` AND net recognized for the row `> 0` → raise (`reverse recognition before un-completing`). Only this narrow transition is blocked; everything else is untouched. (Softer `v_recognition_anomalies` view deferred unless useful later.)
+Open recognized revenue must not be silently hidden by a lifecycle transition (the rollups/queue exclude inactive/cancelled rows, so dropping a parent would make recognized $ vanish from view). `BEFORE UPDATE` guards at all three grains raise when a transition would orphan or hide an open recognition; the fix is always **reverse first**. "Open recognition in the subtree" = `EXISTS` an apparatus under the row with net recognized `> 0`.
+
+- **`ops.apparatus`** — raise if the row's net recognized `> 0` AND the update would either move it out of `Complete` (`OLD.status='Complete' AND NEW.status<>'Complete'` — this covers `→ Cancelled`) or deactivate it (`OLD.is_active AND NOT NEW.is_active`).
+- **`ops.scopes`** — raise if the update would deactivate (`OLD.is_active AND NOT NEW.is_active`) or cancel (`NEW.status='Cancelled' AND OLD.status<>'Cancelled'`) a scope that has any apparatus with net recognized `> 0`.
+- **`ops.projects`** — raise if the update would deactivate or cancel a project that has any apparatus (via its scopes) with net recognized `> 0`.
+
+Only these recognition-hiding transitions are blocked; every other edit is untouched. (Softer `v_recognition_anomalies` view deferred unless useful later.)
 
 ## Component 5 — Basis-immutability guard (completes the Chip 2 freeze)
 
@@ -144,6 +148,7 @@ Recognition snapshots the basis on the event, but the rollup views still compare
 
 - **`ops.scope_quote`** — when `OLD.is_frozen = true`, block changes to the financial inputs (`onsite_labor`, `offsite_labor`, `travel`, `outside_services`, `unit_multiplier`, `pct_adjust`, `total_quoted_hours`) and to `is_frozen`/`frozen_at` themselves → raise (`frozen quote basis is immutable`). The generated columns (`adjusted_total`, `blended_rate`) follow automatically and need no rule.
 - **`ops.apparatus`** — when the row's scope quote `is_frozen = true`, block changes to `quoted_hours`, `quoted_revenue`, `quote_line_id` → raise.
+- **`ops.scope_quote_line`** — hours-affecting line edits after freeze are blocked *transitively*: the Chip 2 J3 roll-up trigger recomputes `scope_quote.total_quoted_hours`, which the frozen-`scope_quote` guard above then rejects (a test asserts this path). A non-hours field edit on a line is not a basis change and is harmless.
 
 This makes the snapshot and the live values provably equal post-freeze, so the views' ceiling/residual stay correct. Freezing itself (draft → frozen) remains allowed; only edits *after* freeze are blocked. (Un-freezing, if ever needed, becomes a deliberate future controlled action — out of scope here.)
 
@@ -180,9 +185,12 @@ Run with `uv run --with "psycopg[binary]" --with pytest pytest infra/database/mi
 16. **scope residual surfaced (synthetic)** — seed a scope whose `scope_quote.adjusted_total` deliberately exceeds Σ apparatus `quoted_revenue` (a synthetic residual fixture on `ops_test` — NOT the real Miner data); assert `v_scope_recognition.residual > 0` and `recognized_total` never exceeds `apparatus_ceiling`.
 17. **rollup revenue identity** — recognizing all apparatus in a scope → `recognized_total == apparatus_ceiling` (`< adjusted_total` by the residual).
 18. **migration reversibility** — up → down → up clean; `_down` leaves Chips 1/2 + `ops.persons` intact (verify their objects still present).
-19. **active-row gate** — recognition raises when the apparatus, its scope, or its project is `is_active = false` or `Cancelled`; the review queue excludes such rows.
+19. **active-row gate (initial recognition)** — `approve_and_recognize` raises when the apparatus, its scope, or its project is `is_active = false` or `Cancelled`; the review queue excludes such rows.
 20. **basis-immutability guard** — after `scope_quote.is_frozen = true`, an UPDATE of a quote financial input (or of `apparatus.quoted_revenue`) raises; the same edit *before* freeze succeeds.
-21. **insert integrity** — a direct INSERT whose `scope_id`/`project_id` do not match the apparatus lineage raises; a `reversal` whose `reverses_event_id` points at another apparatus's event raises.
+21. **insert integrity (lineage)** — a direct INSERT whose `scope_id`/`project_id` do not match the apparatus lineage raises; a `reversal` whose `reverses_event_id` points at another apparatus's event raises.
+22. **recognition-protection guards** — with an open recognition present, each of these raises: apparatus `is_active → false`; apparatus `→ Cancelled`; scope deactivate; scope cancel; project deactivate; project cancel. After reversing the recognition, each transition then succeeds.
+23. **insert business invariants** — a direct INSERT of a `recognized` row that violates any invariant raises: non-`Complete` apparatus, unfrozen basis, inactive/cancelled chain, `recognized_amount ≠ apparatus.quoted_revenue`, or any mismatched snapshot field (`quoted_hours`/`blended_rate`/`basis_frozen_at`); and a `reversal` row with `recognized_amount ≠ -(original)` raises.
+24. **post-freeze line edit** — an hours-affecting UPDATE of a `scope_quote_line` after `is_frozen = true` raises (via the J3 roll-up hitting the frozen `scope_quote`).
 
 ## Files
 
