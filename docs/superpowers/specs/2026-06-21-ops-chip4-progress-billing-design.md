@@ -1,12 +1,13 @@
-# Ops Chip 4 — Progress Billing (design spec, v4)
+# Ops Chip 4 — Progress Billing (design spec, v5)
 
 > **Lane SSoT:** `reference/ops/00-MASTER-INDEX.md` (§5 revenue/progress-billing model; D-OPS-3).
 > **Builds on:** Chip 1 (`001` identity), Chip 2 (`002` quote model), the person anchor (`004`),
 > and **Chip 3 (`005` recognition ledger)** — FKs into `ops.revenue_recognition_event`.
 > **Migration:** `006_progress_billing.sql` (+ `_down` + `test_006_progress_billing.py`).
 > **Dev only.** TDD on throwaway `ops_test`; gated apply to `ops_dev`. Nothing applied to prod.
-> **Status:** design v4 — hardened across four adversarial passes (three operator audits + three
-> review workflows, 2026-06-21). Awaiting operator sign-off.
+> **Status:** design v5 — hardened across five adversarial passes (four operator audits + three review
+> workflows, 2026-06-21); posture ratified (Option 1: function-owned write API + trigger backstop).
+> Awaiting operator sign-off.
 
 ---
 
@@ -56,16 +57,20 @@ RECONCILIATION   recognized-to-date vs billed-to-date vs unbilled vs retainage-h
   again — the customer already paid it, so the credit returns full gross instead. A **draw is
   project-grain** (not apparatus-attributed): a bill may be voided while a prior draw stands, as long as
   `held ≥ 0` holds; the residual draw remains valid project retainage already paid (B-5).
-- **Financial mutation is function-only; invariants are still trigger-enforced.** The three billing
-  tables are mutated **only** inside the four PL/pgSQL functions (a txn-local context flag the functions
-  set; the mutation triggers reject changes made outside that context — §8.0). On top of that gate, the
-  triggers/constraints **assert every invariant on the committed state** (header=Σlines, held≥0, lineage,
-  branch eligibility, void-cascade) so a function bug is still caught. This is stronger than per-row
-  validation alone — the credit-release allocation is an atomic multi-line computation that cannot be
-  validated row-by-row — while keeping the trigger-first discipline (the Chip-3 lesson). The app role is
-  superuser/BYPASSRLS, so this is enforced by triggers, never grants.
+- **The four functions are the supported write API; triggers are the invariant backstop.** The billing
+  tables are mutated **only** inside the functions (a txn-local context flag the functions set/reset; the
+  mutation triggers reject changes made outside that context — §8.0). This gate is a **misuse/invariant
+  guard, not a security boundary** — the app role is superuser/BYPASSRLS and the GUC is spoofable, so a
+  *determined* operator can still bypass it; the gate's job is to stop *accidental/buggy* direct DML (an
+  ORM, a migration, a careless `UPDATE`). On top of it the triggers/constraints assert the **structural
+  invariants** on committed state (header=Σlines, held≥0, lineage, branch eligibility, void-cascade), which
+  catch structural drift from a function bug. The **canonical credit-release allocation itself is
+  function-owned and pinned by tests (§11)** — it is deliberately *not* re-derived in a constraint trigger
+  (that would reimplement the billing engine in triggers). This is the chosen posture: a stateful multi-line
+  allocation belongs in one code path, not in per-row validation.
 - **Reverse-first lifecycle.** An application cannot be voided while a later issued application depends
-  on it (a standing credit of its events, or a release/draw of its withheld retainage).
+  on it (a standing credit of its events, or a draw against the **project held pool** the voided app
+  contributed to).
 
 ## 4. Operator decisions (ratified 2026-06-21, incl. all three adversarial passes)
 
@@ -80,18 +85,20 @@ RECONCILIATION   recognized-to-date vs billed-to-date vs unbilled vs retainage-h
 | **B-7** | Reversal-of-billed | **Automatic next-application credit** (§5 credit branch). |
 | **B-8 (v3)** | Retainage grain + credit | **Line-grain retainage (per-line rounding is authoritative).** A credit auto-returns `LEAST(the reversed apparatus's original-line withheld, the project's remaining held)` — never returns retainage already drawn. Customer net-credited = net the customer actually paid for that work. |
 
-### Adversarial findings folded in (four passes)
+### Adversarial findings folded in (four operator audits + three review workflows)
 
-**Workflow #1** (v1, *block*): C-1 void→negative-held, C-2 void→double-credit, C-3 draft-tamper, H-1
-credit-branch-counts-draft, H-2 credit-skips-retainage, H-3 withheld-cap, M-1…M-5. **Operator audit #1**
-(v1): stale-draft-after-reversal, direct-line-writes, header-direct-insert, draft-value-vanishes, timezone.
-**Workflow #2** (v2, *block*): the `LEAST(.,gross)` cap rejected all credit apps; the bill→draw→reverse
-wedge; void-guard/lock only in functions; rounding conventions. **Workflow #3** (v3, *revise*): direct
-header-only void strands an event; §8.5 issued-only filter; recognized_to_date formula; credit-walk order;
-sub-cent line. **Operator audit #3** (v3): Chip-3 reversal race (sweep→insert TOCTOU); direct-DML
-under-release; draw-cap wording; header DELETE arm; duplicate invoice ref. **Every finding is resolved below**
-(the v4 deltas: §8.0 function-only gate, §7b event lock + canonical order, §8.1 void-cascade, §8.4 branch
-eligibility + amount>0, §8.5 issued-only held, §9 recognized formula, `uq_billapp_issued_ref`).
+**Operator audit #1** (design): the original 6 findings + B-rulings (gated approval, clearances, line-grain
+intent). **Workflow #1** (v1, *block*): C-1 void→negative-held, C-2 void→double-credit, C-3 draft-tamper,
+H-1…H-3, M-1…M-5. **Operator audit #2** (v1): stale-draft-after-reversal, direct-line-writes,
+header-direct-insert, draft-value-vanishes, timezone. **Workflow #2** (v2, *block*): `LEAST(.,gross)` cap
+rejected all credit apps; bill→draw→reverse wedge; void-guard/lock only in functions; rounding.
+**Workflow #3** (v3, *revise*): header-only void strands an event; §8.5 issued-only filter;
+recognized_to_date formula; credit-walk order; sub-cent line. **Operator audit #3** (v3): Chip-3 reversal
+race (sweep→insert TOCTOU); direct-DML under-release; draw-cap; header DELETE arm; duplicate invoice ref.
+**Operator audit #4** (v4): the gate is a misuse-guard not a security boundary (contain the txn-local flag;
+deferred assertions flag-independent); soften "catches every function bug" → structural drift + test-pinned
+allocation; gate the draft table explicitly; draw = project-grain wording. **Every finding is resolved**
+(v5 = audit-#4 honesty/containment hardening atop the v4 enforcement layer).
 
 ## 5. The unbilled set — `ops.v_unbilled_recognition`
 
@@ -234,9 +241,11 @@ Tampering a draft is harmless: `issue` recomputes the sweep fresh and never read
 
 ## 7. Functions (the sole mutation path; invariants also asserted by §8 triggers/constraints)
 
-Each of the four functions first sets the **txn-local context flag** `set_config('ops.billing_ctx','1',true)`
-(§8.0) — the billing-table mutation triggers reject any change made without it, so these functions are the
-only way to create/void a billing application. `record`/`issue`/`void` then take
+Each of the four functions sets the **txn-local context flag** `set_config('ops.billing_ctx','1',true)` at
+entry **and resets it to `'0'` immediately before returning** (so the flag does not linger for the rest of an
+explicit transaction — High, audit #3; on an exception the function's subtransaction rollback clears it too).
+The billing-table *mutation* triggers (§8.1–8.4) reject any change made without it, so these functions are the
+only non-accidental way to create/void a billing application. `record`/`issue`/`void` then take
 `select … from ops.projects where id = ? for update` (serialize Chip-4-vs-Chip-4 on a project).
 
 ### 7a. `record_billing_application(p_project_id, p_actor_person_id, p_period_through, p_external_invoice_ref default null, p_exclude_apparatus uuid[] default '{}', p_retainage_draw_request numeric default 0) returns uuid`
@@ -272,12 +281,17 @@ void attempt — which the §8.0 gate already blocks). `application_no` stays bu
 
 ## 8. Integrity & triggers (triggers, not grants; superuser/BYPASSRLS app role)
 
-0. **Function-only mutation gate.** Every mutation trigger below first checks
-   `current_setting('ops.billing_ctx', true) = '1'` (the §7 functions set it txn-local) and **raises if
-   absent** — so the three billing tables can only be created/voided inside the four functions. This makes
-   the function's atomic credit-release allocation the only one that can exist (closing the direct-DML
-   under/over-release — High-B), and blocks a direct header-only void (High/workflow). The per-row +
-   deferred assertions in 1–5 still run inside that context, so a *function* bug is also caught.
+0. **Function-only mutation gate (misuse guard, not a security boundary).** Every *mutation* trigger
+   (1–4) first checks `current_setting('ops.billing_ctx', true) = '1'` (the §7 functions set it at entry,
+   reset at return) and **raises if absent** — so the three billing tables (`billing_application`,
+   `billing_application_line`, **and** `billing_application_draft`) are created/updated/deleted only inside
+   the four functions. This makes the function's atomic credit-release allocation the only one that exists
+   (closing accidental direct-DML under/over-release — High-B) and blocks an accidental direct header-only
+   void. **It is not a security control:** the superuser/BYPASSRLS app role can spoof the GUC; the gate stops
+   buggy/accidental DML (ORM, migration, careless `UPDATE`), not a determined operator. **The deferred
+   assertion trigger (5) does NOT check the flag** — it always runs (it fires at COMMIT, after the function
+   has returned and reset the flag). The triggers catch *structural* drift; the credit-release allocation is
+   function-owned and pinned by tests (Medium, audit #3), not re-derived here.
 1. **Header immutability + void guard** (`before update **or delete** on ops.billing_application`): DELETE
    blocked; UPDATE permitted only for `issued→voided` (writing exactly `status/voided_at/voided_by/void_reason`).
    On that transition the trigger **(i)** `perform 1 from ops.projects where id = old.project_id for update`
@@ -289,6 +303,10 @@ void attempt — which the §8.0 gate already blocks). `application_no` stays bu
    strand). The held-side dependency (C-1) is caught by the §8.5 `held ≥ 0` backstop.
 2. **Line immutability** (`before update or delete on ops.billing_application_line`): DELETE blocked;
    UPDATE permitted only for `is_voided false→true`.
+   - **Draft table** (`before insert or update or delete on ops.billing_application_draft`): the §8.0 gate
+     only — flag required, no further integrity rules. Drafts are non-financial intent; `issue` re-derives
+     the sweep from the draft's params and re-validates every invariant, so a (gate-blocked) draft edit can
+     at worst change *which valid set* bills, never break an invariant.
 3. **Header insert-integrity** (`before insert on ops.billing_application`): `project FOR UPDATE` (serialize
    concurrent inserters), then `external_invoice_ref` non-blank, `application_no = max(existing)+1`,
    `period_through ≥` every issued app's `period_through`, and `retainage_drawn ≤ held_to_date` (a fast
@@ -349,8 +367,9 @@ assertions. Coverage (≈ 45 cases):
   void); header/line DELETE + illegal-UPDATE blocked; **deferred header=Σlines** fires on a (gate-bypassed)
   line insert into a *pre-existing committed* issued app; **deferred held≥0** fires on a (gate-bypassed) over-release.
 - **function-only gate (§8.0):** a direct `INSERT`/`UPDATE`/void on a billing table **without** the
-  `ops.billing_ctx` flag is rejected; the four functions (which set it) succeed. A direct header-only void
-  (flag bypassed) is caught by the §8.1 line-cascade / leaves no stranded event.
+  `ops.billing_ctx` flag is rejected; the four functions (which set it) succeed. **Flag containment:** call a
+  function inside an explicit transaction, then attempt direct DML before commit — it is **rejected** (the
+  function reset the flag at return). The deferred §8.5 assertion still fires at COMMIT regardless of the flag.
 - **credit-bearing apps issue (C-1 fix):** a **pure-credit** application (gross<0) issues; a **mixed** app
   where Σcredits ≥ Σpositives issues; withheld is capped at positive_gross (never blocked by the credit).
 - **bill→draw→reverse (C-2 fix):** bill X, draw its retainage, reverse X → the credit issues with
