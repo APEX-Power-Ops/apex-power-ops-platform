@@ -1,15 +1,397 @@
 """
-Route-guard test for the ops intake router.
+Task 13 -- API route tests for the ops intake router.
 
-Mirrors tests/test_learning_resources.py::test_learning_routes_guarded_by_env.
-Asserts that _ops_intake_enabled() is gated on OPS_DEV_DSN only — it does NOT
-start a subprocess or touch the database; it just tests the guard function.
+Covers:
+  - route-guard (Task 12, kept here)
+  - upload (POST /api/v1/ops/intake)
+  - get run (GET /api/v1/ops/intake/{run_id})
+  - review (POST /api/v1/ops/intake/{run_id}/review)
+  - approve (POST /api/v1/ops/intake/{run_id}/approve)
+  - reject (POST /api/v1/ops/intake/{run_id}/reject)
+  - finance-redaction: no diagnostic_detail field anywhere, no $ in finding messages
+
+OPS_DEV_DSN must target ops_test (enforced by the migration fixture).
 """
+from __future__ import annotations
+
+import os
+import pathlib
+import sys
+import uuid
+
+import psycopg
+import pytest
+
+# ---------------------------------------------------------------------------
+# Locate fixture builder (mirror the package conftest pattern)
+# ---------------------------------------------------------------------------
+_FIXTURE_DIR = (
+    pathlib.Path(__file__).resolve().parents[3]
+    / "packages/ops-intake/tests/fixtures"
+)
+sys.path.insert(0, str(_FIXTURE_DIR))
+from build_fixture import build  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# Migration setup -- mirrors packages/ops-intake/tests/conftest.py exactly
+# ---------------------------------------------------------------------------
+_MIGRATIONS_DIR = (
+    pathlib.Path(__file__).resolve().parents[3]
+    / "infra/database/migrations/ops"
+)
+
+_OPS_TRUNCATE = (
+    "truncate ops.apparatus, ops.scope_quote_line, ops.scope_quote, "
+    "ops.scopes, ops.standard_hours, ops.projects, ops.tasks, "
+    "ops.intake_validation_findings, ops.intake_source_files, ops.intake_runs cascade;"
+)
 
 
+def _require_ops_test(dsn: str) -> None:
+    from psycopg.conninfo import conninfo_to_dict
+
+    db = conninfo_to_dict(dsn).get("dbname")
+    assert db == "ops_test", (
+        "Safety guard: DSN must target dbname=ops_test, got " + repr(db)
+    )
+
+
+def _dsn() -> str:
+    return os.environ["OPS_DEV_DSN"]  # set by the test runner command
+
+
+@pytest.fixture(scope="session", autouse=True)
+def apply_migrations():
+    """Apply migrations 001-007 to ops_test, yield, then teardown."""
+    d = _dsn()
+    _require_ops_test(d)
+
+    def _run_sql(conn, path):
+        sql = path.read_text(encoding="utf-8")
+        conn.execute(sql)
+
+    mig_dir = _MIGRATIONS_DIR
+    with psycopg.connect(d, autocommit=True) as c:
+        _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
+
+    up_migrations = [
+        "001_identity_skeleton.sql",
+        "002_quote_model.sql",
+        "003_intake_unique_keys.sql",
+        "004_person_anchor.sql",
+        "005_recognition_ledger.sql",
+        "006_progress_billing.sql",
+        "007_intake_envelope.sql",
+    ]
+    with psycopg.connect(d, autocommit=True) as c:
+        for name in up_migrations:
+            _run_sql(c, mig_dir / name)
+
+    yield
+
+    with psycopg.connect(d, autocommit=True) as c:
+        _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
+
+
+@pytest.fixture(scope="session")
+def mini_wb_bytes(tmp_path_factory) -> bytes:
+    """Build mini estimator workbook once per session; return raw bytes."""
+    path = build(tmp_path_factory.mktemp("wb") / "mini_estimator.xlsx")
+    return path.read_bytes()
+
+
+@pytest.fixture(scope="session")
+def person_id(apply_migrations) -> str:
+    """Insert one ops.persons row; return the person_id UUID (as str)."""
+    d = _dsn()
+    with psycopg.connect(d, autocommit=True) as c:
+        row = c.execute(
+            "insert into ops.persons (display_name) values (%s) returning person_id",
+            ("Test PM",),
+        ).fetchone()
+    return str(row[0])
+
+
+@pytest.fixture(autouse=True)
+def clean_ops_between_tests(apply_migrations):
+    """Truncate envelope tables before each test to keep tests independent."""
+    d = _dsn()
+    _require_ops_test(d)
+    with psycopg.connect(d, autocommit=True) as c:
+        c.execute(_OPS_TRUNCATE)
+    yield
+
+
+# ---------------------------------------------------------------------------
+# App client -- OPS_DEV_DSN is already in os.environ from the shell command
+# ---------------------------------------------------------------------------
+@pytest.fixture(scope="session")
+def client(apply_migrations):
+    from fastapi.testclient import TestClient
+    from main import app
+
+    return TestClient(app)
+
+
+# ---------------------------------------------------------------------------
+# Helper: recursively scan JSON value for substring presence
+# ---------------------------------------------------------------------------
+def _contains_substring(obj, sub: str) -> bool:
+    """Return True if any string value anywhere in the JSON tree contains sub."""
+    if isinstance(obj, str):
+        return sub in obj
+    if isinstance(obj, dict):
+        return any(_contains_substring(v, sub) for v in obj.values()) or any(
+            _contains_substring(k, sub) for k in obj.keys()
+        )
+    if isinstance(obj, (list, tuple)):
+        return any(_contains_substring(item, sub) for item in obj)
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Task 12 route-guard test (kept here per brief)
+# ---------------------------------------------------------------------------
 def test_ops_intake_routes_guarded_by_env(monkeypatch):
     from main import _ops_intake_enabled
+
     monkeypatch.delenv("OPS_DEV_DSN", raising=False)
     assert _ops_intake_enabled() is False
     monkeypatch.setenv("OPS_DEV_DSN", "host=127.0.0.1 dbname=ops_test")
     assert _ops_intake_enabled() is True
+
+
+# ---------------------------------------------------------------------------
+# Task 13 tests
+# ---------------------------------------------------------------------------
+
+
+class TestUpload:
+    """POST /api/v1/ops/intake"""
+
+    def test_upload_mini_workbook_returns_200_parsed(
+        self, client, mini_wb_bytes, person_id
+    ):
+        resp = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "xlsm"},
+            files={
+                "file": (
+                    "mini_estimator.xlsm",
+                    mini_wb_bytes,
+                    "application/vnd.ms-excel.sheet.macroEnabled.12",
+                )
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "parsed"
+
+    def test_upload_response_has_no_diagnostic_detail(
+        self, client, mini_wb_bytes, person_id
+    ):
+        resp = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "xlsm"},
+            files={
+                "file": (
+                    "mini_estimator.xlsm",
+                    mini_wb_bytes,
+                    "application/vnd.ms-excel.sheet.macroEnabled.12",
+                )
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert not _contains_substring(body, "diagnostic_detail"), (
+            "diagnostic_detail must not appear anywhere in the upload response"
+        )
+
+    def test_upload_findings_have_no_dollar_sign(
+        self, client, mini_wb_bytes, person_id
+    ):
+        resp = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "xlsm"},
+            files={
+                "file": (
+                    "mini_estimator.xlsm",
+                    mini_wb_bytes,
+                    "application/vnd.ms-excel.sheet.macroEnabled.12",
+                )
+            },
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        for finding in body.get("findings", []):
+            msg = finding.get("message", "")
+            assert "$" not in msg, f"Finding message must not contain $: {msg!r}"
+
+    def test_upload_response_has_expected_fields(
+        self, client, mini_wb_bytes, person_id
+    ):
+        resp = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "xlsm"},
+            files={
+                "file": (
+                    "mini_estimator.xlsm",
+                    mini_wb_bytes,
+                    "application/vnd.ms-excel.sheet.macroEnabled.12",
+                )
+            },
+        )
+        body = resp.json()
+        for field in (
+            "run_id",
+            "status",
+            "conflict_kind",
+            "source_format",
+            "review_payload",
+            "findings",
+        ):
+            assert field in body, f"Missing field {field!r} in upload response"
+
+    def test_upload_over_25mb_returns_413(self, client, person_id):
+        big = b"X" * (25 * 1024 * 1024 + 1)
+        resp = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "xlsm"},
+            files={"file": ("huge.xlsm", big, "application/octet-stream")},
+        )
+        assert resp.status_code == 413, resp.text
+
+
+class TestGetRun:
+    """GET /api/v1/ops/intake/{run_id}"""
+
+    def test_get_run_returns_run(self, client, mini_wb_bytes, person_id):
+        up = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "xlsm"},
+            files={
+                "file": (
+                    "mini_estimator.xlsm",
+                    mini_wb_bytes,
+                    "application/vnd.ms-excel.sheet.macroEnabled.12",
+                )
+            },
+        )
+        run_id = up.json()["run_id"]
+        resp = client.get(f"/api/v1/ops/intake/{run_id}")
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["run_id"] == run_id
+        assert body["status"] == "parsed"
+
+    def test_get_run_no_diagnostic_detail(self, client, mini_wb_bytes, person_id):
+        up = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "xlsm"},
+            files={
+                "file": (
+                    "mini_estimator.xlsm",
+                    mini_wb_bytes,
+                    "application/vnd.ms-excel.sheet.macroEnabled.12",
+                )
+            },
+        )
+        run_id = up.json()["run_id"]
+        body = client.get(f"/api/v1/ops/intake/{run_id}").json()
+        assert not _contains_substring(body, "diagnostic_detail")
+
+    def test_get_run_unknown_id_returns_404(self, client):
+        fake_id = str(uuid.uuid4())
+        resp = client.get(f"/api/v1/ops/intake/{fake_id}")
+        assert resp.status_code == 404
+
+
+class TestApprove:
+    """POST /api/v1/ops/intake/{run_id}/approve"""
+
+    def test_approve_clean_upload_returns_approved(
+        self, client, mini_wb_bytes, person_id
+    ):
+        up = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "xlsm"},
+            files={
+                "file": (
+                    "mini_estimator.xlsm",
+                    mini_wb_bytes,
+                    "application/vnd.ms-excel.sheet.macroEnabled.12",
+                )
+            },
+        )
+        assert up.status_code == 200, up.text
+        run_id = up.json()["run_id"]
+        resp = client.post(
+            f"/api/v1/ops/intake/{run_id}/approve",
+            json={"approved_by": person_id},
+        )
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["status"] == "approved"
+
+    def test_approve_unknown_id_returns_404(self, client):
+        resp = client.post(
+            f"/api/v1/ops/intake/{uuid.uuid4()}/approve",
+            json={"approved_by": "someone"},
+        )
+        assert resp.status_code == 404
+
+
+class TestReject:
+    """POST /api/v1/ops/intake/{run_id}/reject"""
+
+    def test_reject_returns_rejected_status(self, client, mini_wb_bytes, person_id):
+        up = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "xlsm"},
+            files={
+                "file": (
+                    "mini_estimator.xlsm",
+                    mini_wb_bytes,
+                    "application/vnd.ms-excel.sheet.macroEnabled.12",
+                )
+            },
+        )
+        run_id = up.json()["run_id"]
+        resp = client.post(
+            f"/api/v1/ops/intake/{run_id}/reject",
+            json={"reason": "duplicate submission"},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected"
+
+    def test_reject_unknown_id_returns_404(self, client):
+        resp = client.post(
+            f"/api/v1/ops/intake/{uuid.uuid4()}/reject",
+            json={"reason": "no"},
+        )
+        assert resp.status_code == 404
+
+    def test_reject_already_approved_returns_409(
+        self, client, mini_wb_bytes, person_id
+    ):
+        up = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "xlsm"},
+            files={
+                "file": (
+                    "mini_estimator.xlsm",
+                    mini_wb_bytes,
+                    "application/vnd.ms-excel.sheet.macroEnabled.12",
+                )
+            },
+        )
+        run_id = up.json()["run_id"]
+        client.post(
+            f"/api/v1/ops/intake/{run_id}/approve",
+            json={"approved_by": person_id},
+        )
+        resp = client.post(
+            f"/api/v1/ops/intake/{run_id}/reject",
+            json={"reason": "too late"},
+        )
+        assert resp.status_code == 409

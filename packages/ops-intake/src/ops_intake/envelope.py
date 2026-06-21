@@ -473,3 +473,39 @@ def get_run(dsn, run_id):
         "rejected_reason": rejected_reason,
         "findings": findings,
     }
+
+def reject_run(dsn, run_id, *, reason):
+    """Reject an active intake run (parsed or reviewing only).
+
+    Sets status='rejected' and records the reason.  Returns the updated run dict.
+    Raises KeyError if the run is unknown; raises ValueError if the run is not in
+    an active status (parsed/reviewing), so the route can return 409.
+    """
+    _ACTIVE_STATUSES = {"parsed", "reviewing"}
+
+    with psycopg.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "select status from ops.intake_runs where id = %s",
+                (run_id,),
+            )
+            row = cur.fetchone()
+            if row is None:
+                raise KeyError("run not found: " + repr(run_id))
+            status = row[0]
+            if status not in _ACTIVE_STATUSES:
+                raise ValueError(
+                    "reject_run only allowed on parsed/reviewing runs; "
+                    "run " + repr(run_id) + " has status " + repr(status)
+                )
+            cur.execute(
+                "update ops.intake_runs"
+                " set status = %s::ops.intake_run_status,"
+                "     rejected_reason = %s,"
+                "     updated_at = now()"
+                " where id = %s",
+                ("rejected", reason, run_id),
+            )
+        conn.commit()
+
+    return get_run(dsn, run_id)
