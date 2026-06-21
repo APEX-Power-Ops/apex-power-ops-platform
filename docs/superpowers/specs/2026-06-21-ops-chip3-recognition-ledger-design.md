@@ -88,7 +88,7 @@ Because we chose triggers over role-based function-only grants, a direct `INSERT
 - **`recognized` rows additionally require:** the active chain (apparatus + scope + project `is_active` and non-`Cancelled`); `apparatus.status = 'Complete'`; a frozen basis (`scope_quote.is_frozen` AND `frozen_at IS NOT NULL`); `recognized_amount = apparatus.quoted_revenue`; and the snapshot fields matching the current basis (`quoted_hours = apparatus.quoted_hours`, `blended_rate = scope_quote.blended_rate`, `basis_frozen_at = scope_quote.frozen_at`) — else raise.
 - **`reversal` rows require:** `reverses_event_id` references an existing `recognized` event whose `apparatus_id` equals `NEW.apparatus_id`, AND `recognized_amount = -(original.recognized_amount)` — else raise.
 
-So the function path and any direct-insert path converge on identical invariants; the function adds only friendly error messages and the locked idempotency check. (Idempotency — no second *open* recognition per apparatus — remains the function's responsibility via the `FOR UPDATE` net-check, which a stateless insert trigger cannot serialize.)
+So the function path and any direct-insert path converge on identical invariants. **The BEFORE INSERT trigger also enforces idempotency directly:** it takes `FOR UPDATE` on the apparatus row in the recognized branch (serializing concurrent direct inserts) and then rejects the insert when prior net recognized > 0 — so the direct-insert path cannot bypass idempotency. The function keeps its own `FOR UPDATE` net-check as the friendlier-error path; both coexist.
 
 ### Indexes
 
@@ -156,8 +156,8 @@ This makes the snapshot and the live values provably equal post-freeze, so the v
 
 - **`ops.v_recognition_review_queue`** — `apparatus WHERE status = 'Complete'` AND `is_active` AND its scope+project are active and not `Cancelled` AND net recognized `<= 0`. The lead's queue (what the future UI renders). Columns: apparatus id/designation, scope_id, project_id, quoted_revenue, quoted_hours, date_due, assessment.
 - **`ops.v_apparatus_recognition`** — per apparatus: net_recognized, is_recognized, the open recognized event (id, actor, recognized_at, both clearances + refs, basis), status, quoted_revenue.
-- **`ops.v_scope_recognition`** — per **active, non-cancelled** scope: `recognized_total` (Σ events), `apparatus_ceiling` (Σ `apparatus.quoted_revenue` for active apparatus in scope), `scope_adjusted_total` (`scope_quote.adjusted_total` = P4), **`residual = scope_adjusted_total - apparatus_ceiling`**, `pct_of_ceiling`, `pct_of_scope`. Surfaces the scope-grain residual explicitly.
-- **`ops.v_project_recognition`** — per **active, non-cancelled** project rollup of the above (Σ recognized, Σ ceiling, Σ adjusted_total, residual, pct).
+- **`ops.v_scope_recognition`** — per **active, non-cancelled** scope: `recognized_total` (Σ events), `apparatus_ceiling` (Σ `apparatus.quoted_revenue` for **active, non-cancelled** apparatus in scope — `is_active AND status <> 'Cancelled'`), `scope_adjusted_total` (`scope_quote.adjusted_total` = P4), **`residual = scope_adjusted_total - apparatus_ceiling`**, `pct_of_ceiling`, `pct_of_scope`. Surfaces the scope-grain residual explicitly.
+- **`ops.v_project_recognition`** — per **active, non-cancelled** project rollup of the above (Σ recognized, Σ ceiling for **active, non-cancelled** apparatus across **active, non-cancelled** scopes, Σ adjusted_total for **active, non-cancelled** scopes, residual, pct).
 
 ## Scope-residual treatment (boundary, not a fix)
 

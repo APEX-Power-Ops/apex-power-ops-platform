@@ -561,7 +561,7 @@ $$;
 **Files:** Modify `005_recognition_ledger.sql` (append the trigger) + the test file.
 
 **Interfaces:**
-- Produces: `ops.trg_revrec_insert_integrity()` + trigger `revrec_insert_integrity`. After this, ANY direct insert must satisfy lineage + (recognized: active chain, Complete, frozen basis, `recognized_amount = apparatus.quoted_revenue`, snapshot match) + (reversal: target is a recognized event for the same apparatus, `recognized_amount = -(original)`). The functions already produce conforming rows.
+- Produces: `ops.trg_revrec_insert_integrity()` + trigger `revrec_insert_integrity`. After this, ANY direct insert must satisfy lineage + (recognized: active chain, Complete, frozen basis, `recognized_amount = apparatus.quoted_revenue`, snapshot match, **idempotency — no second open recognition per apparatus**) + (reversal: target is a recognized event for the same apparatus, `recognized_amount = -(original)`). The trigger takes `FOR UPDATE` on the apparatus row in the recognized branch, serializing concurrent direct inserts the same way the function does, and then rejects the insert when prior net recognized > 0. The direct-insert path therefore cannot bypass idempotency enforcement. The function keeps its own net-check as the friendlier-error path; both coexist. The functions already produce conforming rows.
 
 - [ ] **Step 1: Append the Task-4 failing tests:**
 
@@ -644,7 +644,8 @@ begin
            p.is_active as project_active, p.status as project_status
       into a
       from ops.apparatus a2 join ops.scopes s on s.id=a2.scope_id join ops.projects p on p.id=s.project_id
-     where a2.id = new.apparatus_id;
+     where a2.id = new.apparatus_id
+     for update of a2;                         -- FIX-A: lock serializes concurrent direct inserts
     if not (a.is_active and a.scope_active and a.project_active
             and a.scope_status <> 'Cancelled' and a.project_status <> 'Cancelled') then
       raise exception 'recognized row for inactive/cancelled chain';
@@ -654,13 +655,19 @@ begin
     if not found or not sq.is_frozen or sq.frozen_at is null then
       raise exception 'recognized row on unfrozen basis';
     end if;
-    if new.recognized_amount <> a.quoted_revenue then
+    if new.recognized_amount is distinct from a.quoted_revenue then  -- FIX-B: null-safe comparison
       raise exception 'recognized_amount must equal apparatus.quoted_revenue';
     end if;
     if new.quoted_hours is distinct from a.quoted_hours
        or new.blended_rate is distinct from sq.blended_rate
        or new.basis_frozen_at is distinct from sq.frozen_at then
       raise exception 'recognized row snapshot does not match current basis';
+    end if;
+    -- FIX-A: idempotency gate — reject if apparatus already has an open net recognition
+    -- (BEFORE INSERT fires before the new row exists, so sum reflects only prior rows)
+    if (select coalesce(sum(recognized_amount),0)
+          from ops.revenue_recognition_event where apparatus_id = new.apparatus_id) > 0 then
+      raise exception 'apparatus % already has an open recognition', new.apparatus_id;
     end if;
   elsif new.event_type = 'reversal' then
     select apparatus_id, recognized_amount into orig
@@ -676,7 +683,9 @@ create trigger revrec_insert_integrity before insert on ops.revenue_recognition_
   for each row execute function ops.trg_revrec_insert_integrity();
 ```
 
-- [ ] **Step 4: Run — verify all Tasks 1–4 pass.** Expected: 22 passed. (The Task-1 CHECK tests still pass — `_insert_recognized` keeps every other field basis-consistent, so the insert trigger passes the row through and the targeted CHECK/FK fires; the function tests still pass — functions emit conforming rows.)
+**Note (post-review fix waves):** The live trigger above reflects two fix waves applied after the initial implementation: FIX-A adds `for update of a2` on the recognized-branch apparatus select (serializes concurrent direct inserts, same as the function) and appends an idempotency gate at the end of the recognized branch (rejects a second recognized insert when prior net > 0); FIX-B changes the `recognized_amount` equality check from `<>` to `is distinct from` for null-safety. The trigger therefore enforces idempotency directly — the direct-insert path cannot bypass it. The function keeps its own net-check as a friendlier-error path; both coexist.
+
+- [ ] **Step 4: Run — verify all Tasks 1–4 pass.** Expected: 22 passed (+ 5 net-new tests from the two fix waves covering idempotency/null-safety/ceiling-grain hardening; final suite = 36 after all fix-wave tests added). (The Task-1 CHECK tests still pass — `_insert_recognized` keeps every other field basis-consistent, so the insert trigger passes the row through and the targeted CHECK/FK fires; the function tests still pass — functions emit conforming rows.)
 
 - [ ] **Step 5: Commit.** `git add -A && git commit -m "feat(ops): Chip 3 task 4 — insert-invariant trigger"`
 
@@ -930,10 +939,14 @@ left join lateral (
 create view ops.v_scope_recognition as
 select s.id as scope_id, s.project_id,
        coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.scope_id=s.id),0) as recognized_total,
-       coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active),0) as apparatus_ceiling,
+       coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active and a.status <> 'Cancelled'),0) as apparatus_ceiling,  -- FIX-C
        sq.adjusted_total as scope_adjusted_total,
        sq.adjusted_total
-         - coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active),0) as residual
+         - coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active and a.status <> 'Cancelled'),0) as residual,  -- FIX-C
+       coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.scope_id=s.id),0)
+         / NULLIF(coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active and a.status <> 'Cancelled'),0), 0) as pct_of_ceiling,  -- FIX-C
+       coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.scope_id=s.id),0)
+         / NULLIF(sq.adjusted_total, 0) as pct_of_scope
 from ops.scopes s
 join ops.projects p on p.id = s.project_id
 left join ops.scope_quote sq on sq.scope_id = s.id
@@ -942,10 +955,26 @@ where s.is_active and s.status <> 'Cancelled' and p.is_active and p.status <> 'C
 create view ops.v_project_recognition as
 select p.id as project_id,
        coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.project_id=p.id),0) as recognized_total,
-       coalesce((select sum(a.quoted_revenue) from ops.apparatus a
-                 join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active),0) as apparatus_ceiling,
+       coalesce((select sum(a.quoted_revenue) from ops.apparatus a                              -- FIX-C: add scope+cancelled filters
+                 join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active
+                 and s.is_active and s.status <> 'Cancelled' and a.status <> 'Cancelled'),0) as apparatus_ceiling,
        coalesce((select sum(sq.adjusted_total) from ops.scope_quote sq
-                 join ops.scopes s on s.id=sq.scope_id where s.project_id=p.id),0) as scope_adjusted_total
+                 join ops.scopes s on s.id=sq.scope_id
+                 where s.project_id=p.id and s.is_active and s.status <> 'Cancelled'),0) as scope_adjusted_total,
+       coalesce((select sum(sq.adjusted_total) from ops.scope_quote sq
+                 join ops.scopes s on s.id=sq.scope_id
+                 where s.project_id=p.id and s.is_active and s.status <> 'Cancelled'),0)
+         - coalesce((select sum(a.quoted_revenue) from ops.apparatus a                          -- FIX-C: add scope+cancelled filters
+                     join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active
+                     and s.is_active and s.status <> 'Cancelled' and a.status <> 'Cancelled'),0) as residual,
+       coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.project_id=p.id),0)
+         / NULLIF(coalesce((select sum(a.quoted_revenue) from ops.apparatus a                   -- FIX-C: add scope+cancelled filters
+                            join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active
+                            and s.is_active and s.status <> 'Cancelled' and a.status <> 'Cancelled'),0), 0) as pct_of_ceiling,
+       coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.project_id=p.id),0)
+         / NULLIF(coalesce((select sum(sq.adjusted_total) from ops.scope_quote sq
+                            join ops.scopes s on s.id=sq.scope_id
+                            where s.project_id=p.id and s.is_active and s.status <> 'Cancelled'),0), 0) as pct_of_scope
 from ops.projects p
 where p.is_active and p.status <> 'Cancelled';
 ```
@@ -1009,7 +1038,7 @@ def test_migration_reversible():
     assert _scalar("select to_regclass('ops.revenue_recognition_event')") is not None
 ```
 
-- [ ] **Step 2: Run — verify the full suite passes.** Expected: 33 tests passed (the spec's 24 named cases — some consolidated, e.g. the basis-snapshot CHECK is exercised by the Task-4 snapshot-match test). Confirm no warnings.
+- [ ] **Step 2: Run — verify the full suite passes.** Expected: 33 tests passed at this point (the spec's 24 named cases — some consolidated, e.g. the basis-snapshot CHECK is exercised by the Task-4 snapshot-match test); two post-review fix waves added `pct`/`residual` columns + idempotency/null-safety/ceiling-grain hardening and 5 additional tests (final suite = 36). Confirm no warnings.
 
 Run: `… pytest test_005_recognition_ledger.py -q`
 
@@ -1037,7 +1066,7 @@ git add -A && git commit -m "feat(ops): Chip 3 task 7 — firewall/identity/reve
 
 ## Self-Review (author checklist — completed)
 
-- **Spec coverage:** every spec component maps to a task — enums/table/CHECKs/append-only/indexes (T1), `approve_and_recognize` + all gates (T2), `reverse_recognition` (T3), insert-invariant trigger (T4), protection + freeze guards incl. transitive line block (T5), four views + residual (T6), firewall + revenue identity + reversibility + MANIFEST + SSoT decision (T7). All 24 spec test cases are covered; the basis-snapshot CHECK (spec case) is intentionally exercised by the Task-4 snapshot-match trigger test rather than a standalone CHECK test, because the BEFORE-INSERT trigger is strictly stronger than that CHECK and would shadow it.
+- **Spec coverage:** every spec component maps to a task — enums/table/CHECKs/append-only/indexes (T1), `approve_and_recognize` + all gates (T2), `reverse_recognition` (T3), insert-invariant trigger (T4), protection + freeze guards incl. transitive line block (T5), four views + residual (T6), firewall + revenue identity + reversibility + MANIFEST + SSoT decision (T7). All 24 spec test cases are covered; the basis-snapshot CHECK (spec case) is intentionally exercised by the Task-4 snapshot-match trigger test rather than a standalone CHECK test, because the BEFORE-INSERT trigger is strictly stronger than that CHECK and would shadow it. Two post-review fix waves (FIX-A: idempotency gate + `FOR UPDATE` in insert trigger; FIX-B: null-safe `is distinct from`; FIX-C: cancelled-apparatus ceiling filter + `pct_of_ceiling`/`pct_of_scope`/`residual` columns in both rollup views) added 5 tests; final suite = 36.
 - **Type/signature consistency:** `approve_and_recognize(uuid,uuid,obligation_clearance,text,obligation_clearance,text)` and `reverse_recognition(uuid,uuid,text)` are used identically in tests, SQL, and the `_down` drops. Column names match `002_quote_model.sql` (`quoted_hours`/`quoted_revenue`/`adjusted_total`/`blended_rate`/`is_frozen`/`frozen_at`/`total_quoted_hours`) and `004` (`person_id`).
 - **No placeholders:** every step carries full SQL or full test code and an exact run/commit command.
 - **Ordering note:** the insert-invariant trigger (T4) is stricter than the recognized-amount CHECK; the T1 CHECK tests deliberately target fields the trigger does not police (clearance presence, ref coherence, basis-snapshot presence), so both layers are exercised without collision.
