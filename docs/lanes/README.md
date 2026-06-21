@@ -54,17 +54,17 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 
 ### Lane: learning (enablement / capture + ROI)
 - **Scope:** the flagship learning lane — contextual resource surfacing (Slice 1, merged) + the capture/tracking path (Slice 2) — DEV ONLY.
-- **Branch:** (none active -- Slice 2b merged; next slice branches off main)   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
+- **Branch:** `learning/slice2d-acquisition-pilot`   **Worktree:** `/home/olares/code/apex/apex-learning-lane`
 - **Dev DB / schema:** `learning_dev` → `public.*` (frozen rev-2.3/2.4 baseline; lane isolation = the database, per separate-DB-per-lane D-ARCH-1)
 - **Write-boundary (OWNS):** `infra/database/migrations/learning/**`, `packages/learning-capture/**`,
   `packages/learning-resolver/**` (Slice-1 hardening), `packages/learning-projections/**` (Slice 2b), `apps/control-plane-api/services/learning/**`
   (+ the `-e ../../packages/learning-capture` line in `requirements.txt`; + the learning-router guard in `main.py`),
   `apps/operations-web/app/learning-demo/**`, `apps/operations-web/lib/learning-*.ts`,
-  `apps/operations-web/tests/learning-*.spec.ts`, `docs/superpowers/{specs,plans}/2026-06-20-learning-slice2*`.
+  `apps/operations-web/tests/learning-*.spec.ts`, `docs/superpowers/{specs,plans}/2026-06-20-learning-slice2*`, `scripts/learning/**`, `docs/learning/slice2d/**`.
 - **Must NOT touch:** `records.*` / `ops.*` migrations + packages; the parallel `packages/power-test-converters/**` WIP; prod Supabase.
-- **Gates (human-approval):** `schema` (each `learning_dev` migration apply; `001`/`002` **DONE 2026-06-20**; Slice 2b migrations pending); promotion (merge to main) is operator-gated.
+- **Gates (human-approval):** `schema` (each `learning_dev` migration apply; `001`/`002` **DONE 2026-06-20**); `data_write` (Slice 2d writes business data: cohort provisioning + event capture into `learning_dev` are operator-approved, distinct from schema apply); promotion (merge to main) is operator-gated.
 - **Escalation / owner:** CC (technical authority); operator gates schema apply + merge.
-- **Status:** active (Slices 1 + 2a + **2b** all MERGED to main; 2b projection engine = PR #24 → `3a1c45a9`. `learning_dev` apply DONE + e2e-verified. NEXT = real DATA ACQUISITION (the value gate) · 2c ROI correlation · management dashboard UI).
+- **Status:** active (Slices 1 + 2a + **2b** all MERGED to main; 2b projection engine = PR #24 → `3a1c45a9`. `learning_dev` apply DONE + e2e-verified. NEXT = real DATA ACQUISITION (the value gate) · 2c ROI correlation · management dashboard UI). Slice 2d controlled acquisition pilot IN PROGRESS (spec `2c9521d8`, plan `235abaed`).
 
 > Merged/closed lanes (orchestration/chip3-apex-jobs, docs/chip2-governance-supersede) are pruned;
 > their work is on `main`.
