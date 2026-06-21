@@ -66,8 +66,8 @@ Replace `<initials>` with the observer handle (e.g. `JLS`) and `<pointer>` with 
 
 ```bash
 learning-capture acquire resource_viewed \
-  --content-id 9c47a9ed-c46b-4d1d-a604-7c68647c913c \
-  --user-id <rehearsal-user-uuid> \
+  --content 9c47a9ed-c46b-4d1d-a604-7c68647c913c \
+  --user <rehearsal-user-uuid> \
   --run-id slice2d-rehearsal-01 \
   --observed-by <initials> \
   --evidence-ref <pointer> \
@@ -78,8 +78,8 @@ learning-capture acquire resource_viewed \
 
 ```bash
 learning-capture acquire self_assessment \
-  --content-id 9c47a9ed-c46b-4d1d-a604-7c68647c913c \
-  --user-id <rehearsal-user-uuid> \
+  --content 9c47a9ed-c46b-4d1d-a604-7c68647c913c \
+  --user <rehearsal-user-uuid> \
   --run-id slice2d-rehearsal-01 \
   --observed-by <initials> \
   --evidence-ref <pointer> \
@@ -91,8 +91,8 @@ learning-capture acquire self_assessment \
 
 ```bash
 learning-capture acquire assessment_completed \
-  --content-id 9c47a9ed-c46b-4d1d-a604-7c68647c913c \
-  --user-id <rehearsal-user-uuid> \
+  --content 9c47a9ed-c46b-4d1d-a604-7c68647c913c \
+  --user <rehearsal-user-uuid> \
   --run-id slice2d-rehearsal-01 \
   --observed-by <initials> \
   --evidence-ref <pointer> \
@@ -107,8 +107,8 @@ line-of-sight to the instrument result or the attestation from the person themse
 
 ```bash
 learning-capture acquire ksa_mapped \
-  --content-id 9c47a9ed-c46b-4d1d-a604-7c68647c913c \
-  --user-id <rehearsal-user-uuid> \
+  --content 9c47a9ed-c46b-4d1d-a604-7c68647c913c \
+  --user <rehearsal-user-uuid> \
   --run-id slice2d-rehearsal-01 \
   --observed-by <initials> \
   --evidence-ref <pointer> \

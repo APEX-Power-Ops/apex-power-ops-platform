@@ -129,8 +129,8 @@ The helper hard-refuses writes to any DSN containing `*.supabase.co` or the prod
 ```bash
 LEARNING_DEV_DSN="postgresql://user:pw@db.fxoyniqnrlkxfligbxmg.supabase.co/postgres" \
   learning-capture acquire resource_viewed \
-  --content-id 9c47a9ed-c46b-4d1d-a604-7c68647c913c \
-  --user-id 00000000-0000-0000-0000-000000000001 \
+  --content 9c47a9ed-c46b-4d1d-a604-7c68647c913c \
+  --user 00000000-0000-0000-0000-000000000001 \
   --run-id negative-control \
   --observed-by test \
   --evidence-ref nc-01 \
