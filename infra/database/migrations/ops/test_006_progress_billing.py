@@ -505,8 +505,9 @@ def test_credit_amount_negative(conn):
 
 
 def test_sub_cent_credit_skipped(conn):
-    """A credit line with amount=0 (round(recognized_amount,2)=0) is rejected by §8.4 trigger.
-    Sub-cent reversal events cannot produce valid credit lines -- the amount<0 check enforces this."""
+    """§8.4 trigger rejects a credit line with amount=0.00 (must be < 0 for reversal event_type).
+    Verifies the line-level guard: a reversal line with a zero amount (as would result from a
+    sub-cent recognized_amount rounding to 0.00) is not a valid credit and must be rejected."""
     _set_ctx(conn); s = _seed_recognizable(conn, pct=Decimal("0.10")); ev = _recognize(conn, s)
     # Bill the positive event
     app1 = conn.execute(
@@ -840,3 +841,77 @@ def test_subcent_excluded_from_unbilled_view(conn):
         f"after reversing a sub-cent event, neither the positive nor the reversal should appear "
         f"in v_unbilled_recognition; got count={cnt_after_reverse}"
     )
+
+
+# ---- Task 10: recognition firewall + sub-cent parity in issue() + reversibility ----
+
+def test_recognition_firewall_intact(conn):
+    """Law 3: Chip 4 must not add any recognized-$ column to the Chip 1-3 tables."""
+    cols = conn.execute(
+        "select count(*) from information_schema.columns "
+        "where table_schema='ops' "
+        "and table_name in ('apparatus','scopes','projects') "
+        "and column_name like '%recognized%'"
+    ).fetchone()[0]
+    assert cols == 0, (
+        f"recognized-$ column leaked onto Chip 1-3 table by Chip 4; found {cols} columns"
+    )
+
+
+def test_issue_skips_subcent_apparatus_bills_real(conn):
+    """Parity fix: issue() must skip sub-cent apparatus and successfully bill the real one.
+
+    A project with two apparatus:
+      - A-subcent: quoted_revenue=0.004 -> recognized_amount=0.004 -> round=0.00 (sub-cent)
+      - A-real:    quoted_revenue=500   -> round=500.00 (billable)
+
+    Before the fix, the sub-cent event was included in candidate_ids and then the
+    §8.4 trigger (amount must be > 0 for positive lines) would reject the insert,
+    erroring the entire issue() call.  After the fix, the sub-cent event is filtered
+    out in the sweep; issue() succeeds and bills only the real apparatus.
+    """
+    # Seed real apparatus (recognized by _seed_recognizable / _recognize)
+    s = _seed_recognizable(conn, quoted_revenue=500, quoted_hours=5)
+    _recognize(conn, s)
+
+    # Seed sub-cent apparatus in the SAME project+scope
+    aid_sub = conn.execute(
+        "insert into ops.apparatus (scope_id,apparatus_designation,status,is_active,assessment,"
+        "quoted_hours,quoted_revenue) values (%s,'A-subcent','Complete',true,'Pass',1,0.004) returning id",
+        (s["scope"],)).fetchone()[0]
+    # Recognize the sub-cent apparatus (produces a recognized_amount=0.004 event)
+    conn.execute(
+        "select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",
+        (aid_sub, s["person"]))
+
+    # issue() must succeed (no RaiseException from the §8.4 trigger) and bill only the real apparatus
+    app = _issue(conn, s["project"], s["person"])
+    line_count = conn.execute(
+        "select count(*) from ops.billing_application_line where application_id=%s", (app,)
+    ).fetchone()[0]
+    gross = conn.execute(
+        "select gross_amount from ops.billing_application where id=%s", (app,)
+    ).fetchone()[0]
+    assert line_count == 1, f"expected 1 line (real apparatus only); got {line_count}"
+    assert gross == Decimal("500.00"), f"expected gross=500.00 (sub-cent skipped); got {gross}"
+
+
+def _regclass(c, name):
+    return c.execute("select to_regclass(%s)", (name,)).fetchone()[0]
+
+
+def test_full_down_up_down_clean():
+    """Idempotent both directions: Chip 4 recreates cleanly; a Chip-4 DOWN must NOT touch Chips 1-3.
+
+    Sequence: DOWN->UP->DOWN->UP (round-trip twice); verify Chip 4 objects present after final UP;
+    then DOWN once more and verify Chip 4 dropped while Chips 1-3 survive; finally restore UP.
+    """
+    _exec_file(DOWN6); _exec_file(UP6); _exec_file(DOWN6); _exec_file(UP6)   # round-trips cleanly
+    with psycopg.connect(DSN, autocommit=True) as c:
+        assert _regclass(c, "ops.billing_application") is not None            # Chip 4 present after re-up
+        _exec_file(DOWN6)
+        assert _regclass(c, "ops.billing_application") is None                # Chip 4 dropped
+        assert _regclass(c, "ops.revenue_recognition_event") is not None      # Chip 3 SURVIVES
+        assert _regclass(c, "ops.apparatus") is not None                      # Chip 1 SURVIVES
+        assert c.execute("select 1 from ops.scope_quote limit 1") is not None # Chip 2 SURVIVES
+        _exec_file(UP6)                                                       # restore for any later test

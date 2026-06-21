@@ -205,7 +205,7 @@ begin
            select 1
              from ops.revenue_recognition_event rev_evt
             where rev_evt.reverses_event_id = this_line.recognition_event_id
-              -- that reversal event has an active line on another issued application
+              -- that reversal event has an active line on ANOTHER issued application (not this one)
               and exists (
                 select 1
                   from ops.billing_application_line other_line
@@ -214,6 +214,7 @@ begin
                  where other_line.recognition_event_id = rev_evt.id
                    and other_line.is_voided = false
                    and other_app.status = 'issued'
+                   and other_app.id <> old.id
               )
          )
     ) then
@@ -538,13 +539,17 @@ begin
   v_cutoff := (p_period_through + 1)::timestamp at time zone 'America/Phoenix';
 
   -- 3. Preliminary positive sweep: recognized events not reversed, not already on an active line,
-  --    within period cutoff, apparatus not excluded.
+  --    within period cutoff, apparatus not excluded, sub-cent events skipped (mirrors view guard and
+  --    §8.4 line trigger: a round(recognized_amount,2)=0 line would be rejected anyway, and including
+  --    it in the sweep causes a trigger error that aborts the whole call).
   select array_agg(e.id)
     into candidate_ids
     from ops.revenue_recognition_event e
    where e.project_id = p_project_id
      and e.event_type = 'recognized'
      and e.recognized_at < v_cutoff
+     -- sub-cent: skip events where round(recognized_amount,2) = 0 (§8.4 would reject the line)
+     and round(e.recognized_amount, 2) <> 0
      -- not reversed
      and not exists (
        select 1 from ops.revenue_recognition_event r
@@ -577,6 +582,8 @@ begin
       into candidate_ids
       from ops.revenue_recognition_event e
      where e.id = any(candidate_ids)
+       -- sub-cent guard preserved under lock (defensive; preliminary sweep already excluded these)
+       and round(e.recognized_amount, 2) <> 0
        and not exists (
          select 1 from ops.revenue_recognition_event r
           where r.reverses_event_id = e.id
