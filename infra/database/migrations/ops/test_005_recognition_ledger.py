@@ -356,3 +356,44 @@ def test_post_freeze_line_edit_blocked(conn):
     conn.execute("update ops.scope_quote set is_frozen=true, frozen_at=now() where scope_id=%s", (sid,))
     with pytest.raises(psycopg.errors.RaiseException, match="immutable"):
         conn.execute("update ops.scope_quote_line set hrs_per_unit=9 where id=%s", (lid,))  # J3 recompute hits frozen guard
+
+
+# ---- Task 6: views + rollups ----
+
+def test_review_queue_lists_complete_unrecognized(conn):
+    s = _seed_recognizable(conn)
+    n = conn.execute("select count(*) from ops.v_recognition_review_queue where apparatus_id=%s",
+                     (s["apparatus"],)).fetchone()[0]
+    assert n == 1
+    _recognize(conn, s)
+    n2 = conn.execute("select count(*) from ops.v_recognition_review_queue where apparatus_id=%s",
+                      (s["apparatus"],)).fetchone()[0]
+    assert n2 == 0   # leaves the queue once recognized
+
+
+def test_apparatus_recognition_view(conn):
+    s = _seed_recognizable(conn)
+    _recognize(conn, s)
+    row = conn.execute("select net_recognized, is_recognized, actor_person_id "
+                       "from ops.v_apparatus_recognition where apparatus_id=%s", (s["apparatus"],)).fetchone()
+    assert row[0] == Decimal("500") and row[1] is True and row[2] == s["person"]
+
+
+def test_scope_recognition_surfaces_synthetic_residual(conn):
+    # the default seed IS synthetic-residual: scope adjusted_total=1000 (P4) but the single
+    # apparatus ceiling is 500 -> residual 500. (No un-freeze needed; the freeze guard forbids it.)
+    s = _seed_recognizable(conn)
+    _recognize(conn, s)
+    row = conn.execute("select recognized_total, apparatus_ceiling, scope_adjusted_total, residual "
+                       "from ops.v_scope_recognition where scope_id=%s", (s["scope"],)).fetchone()
+    assert row[0] == Decimal("500") and row[1] == Decimal("500")
+    assert row[2] == Decimal("1000") and row[3] == Decimal("500")   # 1000 - 500
+    assert row[0] <= row[1]   # recognized never exceeds the apparatus ceiling
+
+
+def test_project_recognition_rollup(conn):
+    s = _seed_recognizable(conn)
+    _recognize(conn, s)
+    rec = conn.execute("select recognized_total from ops.v_project_recognition where project_id=%s",
+                       (s["project"],)).fetchone()[0]
+    assert rec == Decimal("500")
