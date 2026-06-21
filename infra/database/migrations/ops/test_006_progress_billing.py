@@ -342,3 +342,45 @@ def test_flag_containment_exception_savepoint(conn):
         conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
                      "apparatus_id,scope_id,project_id,amount,billable_hours) values "
                      "(gen_random_uuid(),gen_random_uuid(),'recognized',%s,%s,%s,1,1)",(s["apparatus"],s["scope"],s["project"]))
+
+
+# ---- Task 4: header + line insert-integrity + deferred header=sum-lines ----
+
+def test_line_lineage_mismatch_rejected(conn):
+    _set_ctx(conn); s = _seed_recognizable(conn); ev = _recognize(conn, s)
+    other = _seed_recognizable(conn)
+    app = conn.execute("insert into ops.billing_application (project_id,application_no,status,period_through,"
+        "external_invoice_ref,billable_hours,gross_amount,positive_gross,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV',5,500,500,500,%s) returning id",(s["project"],s["person"])).fetchone()[0]
+    with pytest.raises(psycopg.errors.RaiseException):  # scope_id of OTHER seed mismatches the event
+        conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
+            "apparatus_id,scope_id,project_id,amount,billable_hours) values (%s,%s,'recognized',%s,%s,%s,500,5)",
+            (app, ev, s["apparatus"], other["scope"], s["project"]))
+
+
+def test_header_neq_sum_lines_deferred_fires(conn):
+    # an issued app with header gross != sum lines must fail at COMMIT.
+    # Uses a fresh connection so conn.transaction() issues a real BEGIN/COMMIT
+    # (the deferred constraint fires at COMMIT, not at savepoint release).
+    # The seed is done on the main conn (rolled back at teardown; ops_test is throwaway),
+    # but the failing billing inserts run on a fresh connection within a real txn block.
+    s = _seed_recognizable(conn); ev = _recognize(conn, s)
+    # Flush seed to ops_test (visible to other connections) -- ops_test is throwaway
+    conn.commit()
+    try:
+        with psycopg.connect(DSN) as c2:
+            with pytest.raises(psycopg.errors.RaiseException):
+                with c2.transaction():
+                    c2.execute("select set_config('ops.billing_ctx','1',true)")
+                    app = c2.execute(
+                        "insert into ops.billing_application (project_id,application_no,status,period_through,"
+                        "external_invoice_ref,billable_hours,gross_amount,positive_gross,net_invoiced,actor_person_id) "
+                        "values (%s,1,'issued',current_date,'INV',5,999,999,999,%s) returning id",
+                        (s["project"],s["person"])).fetchone()[0]
+                    c2.execute(
+                        "insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
+                        "apparatus_id,scope_id,project_id,amount,billable_hours) values (%s,%s,'recognized',%s,%s,%s,500,5)",
+                        (app, ev, s["apparatus"], s["scope"], s["project"]))
+    finally:
+        # Rollback the seed data left on conn (ops_test is throwaway; belt+suspenders)
+        conn.rollback()
