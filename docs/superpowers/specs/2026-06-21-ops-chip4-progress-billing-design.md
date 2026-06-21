@@ -1,12 +1,12 @@
-# Ops Chip 4 — Progress Billing (design spec, v3)
+# Ops Chip 4 — Progress Billing (design spec, v4)
 
 > **Lane SSoT:** `reference/ops/00-MASTER-INDEX.md` (§5 revenue/progress-billing model; D-OPS-3).
 > **Builds on:** Chip 1 (`001` identity), Chip 2 (`002` quote model), the person anchor (`004`),
 > and **Chip 3 (`005` recognition ledger)** — FKs into `ops.revenue_recognition_event`.
 > **Migration:** `006_progress_billing.sql` (+ `_down` + `test_006_progress_billing.py`).
 > **Dev only.** TDD on throwaway `ops_test`; gated apply to `ops_dev`. Nothing applied to prod.
-> **Status:** design v3 — hardened across three adversarial passes (two operator audits + two
-> 5-lens review workflows, 2026-06-21). Awaiting operator sign-off.
+> **Status:** design v4 — hardened across four adversarial passes (three operator audits + three
+> review workflows, 2026-06-21). Awaiting operator sign-off.
 
 ---
 
@@ -50,13 +50,20 @@ RECONCILIATION   recognized-to-date vs billed-to-date vs unbilled vs retainage-h
   drives AR/GL. No payment receipt / cash application in this chip.
 - **Header is a pure rollup of its lines.** Every financial aggregate on `billing_application` equals
   the sum over its active lines (deferred constraint, §8.5). Retainage is allocated at **line grain**.
-- **Retainage conservation.** `held_to_date = Σwithheld − Σreleased − Σdrawn ≥ 0` always. A credit
-  returns the retainage **still held** for the reversed apparatus (capped at the project's remaining
-  held); retainage already **drawn** (billed) to the customer is not returned again — the customer
-  already paid it, so the credit returns full gross instead.
-- **Cross-row invariants bind against direct DML, not just the functions.** Serialization (project
-  `FOR UPDATE`) and the void-dependency guard live in the **trigger layer** (the Chip-3 lesson),
-  because the app role is superuser/BYPASSRLS.
+- **Retainage conservation.** `held_to_date = Σwithheld − Σreleased − Σdrawn ≥ 0` always (over
+  **issued** apps). A credit returns the retainage **still held** for the reversed apparatus (capped at
+  the project's remaining held); retainage already **drawn** (billed) to the customer is not returned
+  again — the customer already paid it, so the credit returns full gross instead. A **draw is
+  project-grain** (not apparatus-attributed): a bill may be voided while a prior draw stands, as long as
+  `held ≥ 0` holds; the residual draw remains valid project retainage already paid (B-5).
+- **Financial mutation is function-only; invariants are still trigger-enforced.** The three billing
+  tables are mutated **only** inside the four PL/pgSQL functions (a txn-local context flag the functions
+  set; the mutation triggers reject changes made outside that context — §8.0). On top of that gate, the
+  triggers/constraints **assert every invariant on the committed state** (header=Σlines, held≥0, lineage,
+  branch eligibility, void-cascade) so a function bug is still caught. This is stronger than per-row
+  validation alone — the credit-release allocation is an atomic multi-line computation that cannot be
+  validated row-by-row — while keeping the trigger-first discipline (the Chip-3 lesson). The app role is
+  superuser/BYPASSRLS, so this is enforced by triggers, never grants.
 - **Reverse-first lifecycle.** An application cannot be voided while a later issued application depends
   on it (a standing credit of its events, or a release/draw of its withheld retainage).
 
@@ -73,14 +80,18 @@ RECONCILIATION   recognized-to-date vs billed-to-date vs unbilled vs retainage-h
 | **B-7** | Reversal-of-billed | **Automatic next-application credit** (§5 credit branch). |
 | **B-8 (v3)** | Retainage grain + credit | **Line-grain retainage (per-line rounding is authoritative).** A credit auto-returns `LEAST(the reversed apparatus's original-line withheld, the project's remaining held)` — never returns retainage already drawn. Customer net-credited = net the customer actually paid for that work. |
 
-### Adversarial findings folded into v3
+### Adversarial findings folded in (four passes)
 
-**Workflow pass #1** (v1, *block*): C-1 void→negative-held, C-2 void→double-credit, C-3 draft-tamper,
-H-1 credit-branch-counts-draft, H-2 credit-skips-retainage, H-3 withheld-cap, M-1…M-5.
-**Operator audit #2** (v1): stale-draft-after-reversal, direct-line-writes-lie, header-direct-insert-bypass,
-draft-value-vanishes, timezone cutoff. **Workflow pass #2** (v2, *block*): the v2 `LEAST(.,gross)` cap
-rejected all credit apps; the bill→draw→reverse wedge; void-guard/lock only in functions; rounding
-conventions; trigger-coverage details. **Every finding is resolved below.**
+**Workflow #1** (v1, *block*): C-1 void→negative-held, C-2 void→double-credit, C-3 draft-tamper, H-1
+credit-branch-counts-draft, H-2 credit-skips-retainage, H-3 withheld-cap, M-1…M-5. **Operator audit #1**
+(v1): stale-draft-after-reversal, direct-line-writes, header-direct-insert, draft-value-vanishes, timezone.
+**Workflow #2** (v2, *block*): the `LEAST(.,gross)` cap rejected all credit apps; the bill→draw→reverse
+wedge; void-guard/lock only in functions; rounding conventions. **Workflow #3** (v3, *revise*): direct
+header-only void strands an event; §8.5 issued-only filter; recognized_to_date formula; credit-walk order;
+sub-cent line. **Operator audit #3** (v3): Chip-3 reversal race (sweep→insert TOCTOU); direct-DML
+under-release; draw-cap wording; header DELETE arm; duplicate invoice ref. **Every finding is resolved below**
+(the v4 deltas: §8.0 function-only gate, §7b event lock + canonical order, §8.1 void-cascade, §8.4 branch
+eligibility + amount>0, §8.5 issued-only held, §9 recognized formula, `uq_billapp_issued_ref`).
 
 ## 5. The unbilled set — `ops.v_unbilled_recognition`
 
@@ -165,6 +176,9 @@ create table ops.billing_application (
   constraint ck_billapp_net check (
     net_invoiced = gross_amount - retainage_withheld + retainage_released + retainage_drawn)
 );
+-- no two ISSUED apps may record the same RESA invoice ref for a project (voided refs may be re-used)
+create unique index uq_billapp_issued_ref
+  on ops.billing_application (project_id, lower(btrim(external_invoice_ref))) where status = 'issued';
 ```
 *Cross-row caps* (`retainage_drawn ≤ held_to_date`, `application_no = max+1`, monotonic `period_through`,
 `held_to_date ≥ 0`) are enforced by the **header insert-integrity trigger** under a project lock (§8.3)
@@ -218,69 +232,89 @@ create table ops.billing_application_draft (
 A draft holds **no lines, no number, no totals**; its preview is advisory (`v_draft_preview`, §9).
 Tampering a draft is harmless: `issue` recomputes the sweep fresh and never reads draft aggregates.
 
-## 7. Functions (gated entry points; correctness ultimately enforced by §8 triggers/constraints)
+## 7. Functions (the sole mutation path; invariants also asserted by §8 triggers/constraints)
+
+Each of the four functions first sets the **txn-local context flag** `set_config('ops.billing_ctx','1',true)`
+(§8.0) — the billing-table mutation triggers reject any change made without it, so these functions are the
+only way to create/void a billing application. `record`/`issue`/`void` then take
+`select … from ops.projects where id = ? for update` (serialize Chip-4-vs-Chip-4 on a project).
 
 ### 7a. `record_billing_application(p_project_id, p_actor_person_id, p_period_through, p_external_invoice_ref default null, p_exclude_apparatus uuid[] default '{}', p_retainage_draw_request numeric default 0) returns uuid`
 - `p_external_invoice_ref` non-blank → **issue immediately** (the §7b logic). Else → insert a draft; return its id.
 
 ### 7b. `issue_billing_application(…, p_external_invoice_ref, …) returns uuid`
-1. `select … from ops.projects where id = ? for update`; reject if not found / `not is_active` /
-   `status='Cancelled'`. Require non-blank ref.
+1. Project `FOR UPDATE`; reject if not found / `not is_active` / `status='Cancelled'`. Require non-blank ref.
 2. **Monotonic period:** reject if any *issued* app for the project has `period_through > p_period_through`.
-3. **Fresh sweep** of the §5 set. `held_before = Σwithheld − Σreleased − Σdrawn over issued apps`.
-   Build lines, walking the **credit** lines in a deterministic order, each releasing
-   `LEAST(orig-line.retainage_withheld, remaining_held)` and decrementing `remaining_held` (B-8 / C-2 fix —
-   the running clamp keeps held ≥ 0 by construction). Positive lines: `retainage_withheld = round(amount*pct,2)`,
-   `retainage_released = 0`.
-4. `gross = Σ amount`; `positive_gross = Σ amount where >0`; `billable_hours = Σ hours`;
-   `retainage_withheld = Σ line.retainage_withheld`; `retainage_released = Σ line.retainage_released`.
-5. Validate `0 ≤ p_retainage_draw_request ≤ held_before − Σ(this app's releases)`; `retainage_drawn = request`.
-6. Empty sweep **and** `retainage_drawn = 0` → raise `nothing to bill`.
-7. `net = gross − retainage_withheld + retainage_released + retainage_drawn`.
-8. `application_no = coalesce(max(application_no),0)+1` (under the project lock; burned forever).
-9. Insert the `billing_application` (status `issued`) + its lines atomically; if promoting a draft, delete it.
+3. **Preliminary sweep** of the §5 set → the candidate recognition-event ids.
+4. **Lock the candidate events to close the Chip-3 reversal race (High-A):**
+   `perform 1 from ops.revenue_recognition_event where id = any(candidate_ids) order by id for update`
+   (deterministic order avoids deadlock; the row lock **conflicts with Chip 3's `reverse_recognition`**,
+   which `FOR UPDATE`s the event row). Then **re-evaluate §5 eligibility under the lock** — a reversal that
+   committed before the lock is now visible and drops the positive event; from here the set is stable.
+5. **Build lines.** Positive lines: `retainage_withheld = round(amount*pct,2)`, `retainage_released = 0`.
+   Credit lines, walked in the **canonical order `ORDER BY orig-event.recognized_at, recognition_event_id`**
+   (so the per-line split is reproducible), each releasing `LEAST(orig-line.retainage_withheld, remaining_held)`
+   and decrementing `remaining_held` (starts at `held_before = Σwithheld−Σreleased−Σdrawn over issued apps`).
+   The running clamp keeps `held ≥ 0` by construction (B-8 / C-2).
+6. `gross/positive_gross/billable_hours/retainage_withheld/retainage_released = Σ` over the lines.
+7. Validate `0 ≤ p_retainage_draw_request ≤ held_before − Σ(this app's releases)`; `retainage_drawn = request`.
+8. Empty sweep **and** `retainage_drawn = 0` → raise `nothing to bill`. `net = gross − withheld + released + drawn`.
+9. `application_no = coalesce(max(application_no),0)+1` (under the project lock; burned forever).
+10. Insert the `billing_application` (status `issued`) + its lines atomically; if promoting a draft, delete it.
 
 ### 7c. `discard_draft_billing_application(p_draft_id, p_actor_person_id)` — delete a draft.
 
 ### 7d. `void_billing_application(p_application_id, p_actor_person_id, p_reason) returns void`
 Require non-blank reason; `select … for update` on the app + project; reject if `status <> 'issued'`. The
-**void-dependency guard is enforced in the §8.1 trigger** (so it also binds direct DML); the function sets
-`status='voided'`, `voided_at/by`, `void_reason`, and flips every line `is_voided=true`. `application_no` stays burned.
+function sets `status='voided'`, `voided_at/by`, `void_reason`; the **§8.1 trigger** runs the void-dependency
+guard **and cascades `is_voided=true` to every line** (so lines always follow the header, even on a direct
+void attempt — which the §8.0 gate already blocks). `application_no` stays burned.
 
-## 8. Integrity & triggers (Chip-3-consistent — triggers, not grants; superuser/BYPASSRLS app role)
+## 8. Integrity & triggers (triggers, not grants; superuser/BYPASSRLS app role)
 
-1. **Header immutability + void guard** (`before update on ops.billing_application`): DELETE blocked;
-   UPDATE permitted only for `issued→voided` (writing exactly `status/voided_at/voided_by/void_reason`).
-   On that transition the trigger **(i)** takes `perform 1 from ops.projects where id = old.project_id for
-   update` (serialize), and **(ii) enforces the void-dependency guard:** reject if EXISTS another *issued*
-   application with an active (`is_voided=false`) line `L` whose `L.recognition_event_id` is a **reversal
-   event** (`revenue_recognition_event.event_type='reversal'`) whose `reverses_event_id` ∈ {the
-   `recognition_event_id` of THIS application's active lines} (a standing credit — C-2). The held-side
-   dependency (C-1) is caught by the §8.5 `held ≥ 0` backstop.
+0. **Function-only mutation gate.** Every mutation trigger below first checks
+   `current_setting('ops.billing_ctx', true) = '1'` (the §7 functions set it txn-local) and **raises if
+   absent** — so the three billing tables can only be created/voided inside the four functions. This makes
+   the function's atomic credit-release allocation the only one that can exist (closing the direct-DML
+   under/over-release — High-B), and blocks a direct header-only void (High/workflow). The per-row +
+   deferred assertions in 1–5 still run inside that context, so a *function* bug is also caught.
+1. **Header immutability + void guard** (`before update **or delete** on ops.billing_application`): DELETE
+   blocked; UPDATE permitted only for `issued→voided` (writing exactly `status/voided_at/voided_by/void_reason`).
+   On that transition the trigger **(i)** `perform 1 from ops.projects where id = old.project_id for update`
+   (serialize); **(ii)** runs the **void-dependency guard** — reject if EXISTS another *issued* application
+   with an active (`is_voided=false`) line `L` where `L.recognition_event_id` is a **reversal event** whose
+   `reverses_event_id` ∈ {the `recognition_event_id` of THIS app's active lines} (a standing credit — C-2);
+   and **(iii) cascades the line-void:** `update ops.billing_application_line set is_voided=true where
+   application_id = old.id and is_voided=false` (lines always follow the header — closes the header-only-void
+   strand). The held-side dependency (C-1) is caught by the §8.5 `held ≥ 0` backstop.
 2. **Line immutability** (`before update or delete on ops.billing_application_line`): DELETE blocked;
    UPDATE permitted only for `is_voided false→true`.
-3. **Header insert-integrity** (`before insert on ops.billing_application`): take `project FOR UPDATE`
-   (serialize concurrent inserters — C-1(b) race), then enforce `external_invoice_ref` non-blank,
-   `application_no = max(existing)+1`, `period_through ≥` every issued app's `period_through`, and
-   `retainage_drawn ≤ held_to_date`. Direct inserts cannot bypass these cross-row rules.
-4. **Line insert-integrity** (`before insert on ops.billing_application_line`), validating each line against
-   **committed** state only (M-5): the event exists; `event_type/apparatus_id/scope_id/project_id` match
-   it; `amount = round(event.recognized_amount,2)`; `billable_hours` = `round(quoted_hours,2)` (positive) /
-   `−round(orig.quoted_hours,2)` (credit, M-4); `retainage_withheld` matches the §5 positive rule;
-   `retainage_released` is `0` (positive) or `≤ orig-line.retainage_withheld` (credit — the exact value is
-   the function's clamp; the deferred `held≥0` backstops over-release); `project_id` = the application's project.
+3. **Header insert-integrity** (`before insert on ops.billing_application`): `project FOR UPDATE` (serialize
+   concurrent inserters), then `external_invoice_ref` non-blank, `application_no = max(existing)+1`,
+   `period_through ≥` every issued app's `period_through`, and `retainage_drawn ≤ held_to_date` (a fast
+   upper-bound; the **exact** draw+release interaction is the §8.5 `held≥0` enforcer — Med-C).
+4. **Line insert-integrity** (`before insert on ops.billing_application_line`), against **committed** state
+   only (M-5): the event exists; `event_type/apparatus_id/scope_id/project_id` match it;
+   `amount = round(event.recognized_amount,2)` and (positive line) **`amount > 0`** (skip sub-cent rows that
+   round to 0 — they must not consume the no-double-bill slot); `billable_hours = round(quoted_hours,2)`
+   (positive) / `−round(orig.quoted_hours,2)` (credit, M-4); `retainage_withheld` matches the §5 positive
+   rule; `retainage_released` is `0` (positive) or `≤ orig-line.retainage_withheld` (credit); `project_id` =
+   the application's project. **Branch eligibility (High-A):** a positive line's event must still be
+   **unreversed** (`not exists` a reversal of it); a credit line's original must still have an **active
+   issued** line. No-double-bill rests solely on `uq_billline_active_event`, not on these cross-checks.
 5. **Deferred consistency** (`constraint trigger after insert or update on both tables, deferrable initially
-   deferred`; DELETE blocked by 8.1/8.2 so a DELETE arm is defensive-only). "Touched application" =
-   DISTINCT `application_id` over inserted/updated **line** rows ∪ inserted/updated **header** rows
-   (resolve the parent via `line.application_id` so a line-only injection is caught — M-3). For each touched
-   **issued** application, re-aggregate and assert
+   deferred`; DELETE is blocked by 1/2 so the DELETE arm is defensive-only). "Touched application" = DISTINCT
+   `application_id` over inserted/updated **line** rows ∪ inserted/updated **header** rows (resolved via
+   `line.application_id` so a line-only injection is caught — M-3). For each touched **issued** application,
+   re-aggregate and assert
    `gross_amount/positive_gross/billable_hours/retainage_withheld/retainage_released = Σ over its active lines`.
-   For each touched **project**, assert `held_to_date ≥ 0`. Voided headers retain historical aggregates and
-   are exempt from header=Σlines (their lines are all `is_voided`).
-6. **Lock-seam note (M-4 / §8.6):** the project lock serializes only Chip-4-vs-Chip-4 on one project; it
-   does **not** exclude Chip-3 recognition/reversal (which lock the apparatus). Correctness against
-   concurrent Chip-3 activity rests on the live §5 re-evaluation at issue + `uq_billline_active_event`
-   (the primary no-double-bill guard) — never weaken that index to non-unique.
+   For each touched **project**, assert `held_to_date = Σ(withheld − released − drawn) over **status='issued'
+   apps only** ≥ 0` (the just-voided app drops out — this is the authoritative held + draw-cap enforcer, Med).
+   Voided headers retain historical aggregates and are exempt from header=Σlines (their lines are all `is_voided`).
+6. **Lock-seam note:** the project lock serializes only Chip-4-vs-Chip-4 on one project. Correctness against
+   concurrent Chip-3 reversal rests on the **event-row `FOR UPDATE` taken in `issue` (§7b step 4)** — which
+   conflicts with `reverse_recognition`'s event lock — plus `uq_billline_active_event` (the primary
+   no-double-bill guard; never weaken it to non-unique).
 
 ## 9. Views
 
@@ -289,8 +323,10 @@ Require non-blank reason; `select … for update` on the app + project; reject i
 - **`ops.v_billing_application_sov`** — per `(application_id, scope_id)` over non-voided lines:
   `apparatus_count, billable_hours, amount, retainage_withheld, retainage_released` (schedule-of-values).
 - **`ops.v_project_billing`** — per project, fully derived, isolated from RESA: `contract_value`,
-  `recognized_to_date` (= **Σ round(recognized_amount,2)** over the net active event set — same rounding as
-  the lines, so `recognized = billed + unbilled` ties to the cent, M-2), `billed_gross_to_date` (Σ gross
+  `recognized_to_date` (= **Σ round(e.recognized_amount,2)** over **ALL** `revenue_recognition_event` rows
+  for the project — both `recognized` and `reversal`, signed; a `+X` and its `−X` each round then cancel, so
+  this is *not* a reversed-event-filtered subset — same per-event rounding as the lines, so
+  `recognized = billed + unbilled` ties to the cent, M-2), `billed_gross_to_date` (Σ gross
   over issued), `net_invoiced_to_date` (Σ net over issued), `retainage_held_to_date`
   (Σwithheld − Σreleased − Σdrawn over issued), `unbilled_recognized` (Σ amount from `v_unbilled_recognition`),
   `open_draft_count`.
@@ -309,9 +345,12 @@ assertions. Coverage (≈ 45 cases):
 
 - **Schema/guards:** retainage_pct bounds; header CHECKs (ref-nonblank, void-shape, **withheld ≤
   positive_gross**, net arithmetic incl. drawn); `uq_billline_active_event` blocks a second active line;
-  header/line DELETE + illegal-UPDATE blocked; **header insert-integrity** rejects a direct insert with bad
-  app_no / stale period / over-draw; **deferred header=Σlines** fires on a direct line insert into a
-  *pre-existing committed* issued app; **deferred held≥0** fires on a direct over-release.
+  `uq_billapp_issued_ref` blocks a **duplicate RESA invoice ref** among issued apps (but allows reuse after a
+  void); header/line DELETE + illegal-UPDATE blocked; **deferred header=Σlines** fires on a (gate-bypassed)
+  line insert into a *pre-existing committed* issued app; **deferred held≥0** fires on a (gate-bypassed) over-release.
+- **function-only gate (§8.0):** a direct `INSERT`/`UPDATE`/void on a billing table **without** the
+  `ops.billing_ctx` flag is rejected; the four functions (which set it) succeed. A direct header-only void
+  (flag bypassed) is caught by the §8.1 line-cascade / leaves no stranded event.
 - **credit-bearing apps issue (C-1 fix):** a **pure-credit** application (gross<0) issues; a **mixed** app
   where Σcredits ≥ Σpositives issues; withheld is capped at positive_gross (never blocked by the credit).
 - **bill→draw→reverse (C-2 fix):** bill X, draw its retainage, reverse X → the credit issues with
@@ -330,9 +369,15 @@ assertions. Coverage (≈ 45 cases):
   when the reversal's `recognized_at` is after `period_through`; monotonic-period rejection.
 - **excludes (B-6):** an excluded positive apparatus is held back; a credit for an excluded apparatus still sweeps.
 - **unbilled set:** never-billed-then-reversed pair never bills; billed-then-reversed surfaces a credit.
-- **void-dependency (trigger layer, H-3):** void releases lines → events return to unbilled; **a direct
-  UPDATE void** of an app whose event has a **standing issued credit** is rejected by the §8.1 trigger; a
-  void that would drive held<0 is rejected; `application_no` stays burned after void.
+- **void-dependency (trigger layer, H-3):** void releases lines → events return to unbilled; void of an app
+  whose event has a **standing issued credit** is rejected by the §8.1 guard; a void that would drive held<0
+  is rejected (§8.5); `application_no` stays burned; the §8.1 line-cascade voids every line.
+- **Chip-3 reversal race (High-A):** an `issue` whose candidate event is reversed mid-flight re-evaluates
+  under the §7b event lock and excludes it (positive) / handles the credit; the §8.4 branch-eligibility check
+  rejects a (gate-bypassed) positive line whose event is now reversed.
+- **canonical credit order (B-8):** a partial reversal where remaining_held < Σ orig-withheld produces a
+  reproducible per-line `released` split under the `ORDER BY orig recognized_at, event_id` walk (and aggregate
+  held/customer-net are order-invariant); a sub-cent recognized_amount that rounds to 0.00 is skipped, not billed.
 - **draw (B-5):** explicit draw capped by held-to-date (over-draw rejected); a pure-draw app (empty sweep,
   drawn>0) issues.
 - **reconciliation:** `v_project_billing` / `v_billing_application_sov` tie out across a multi-app,
@@ -342,8 +387,8 @@ assertions. Coverage (≈ 45 cases):
 
 - Customer-invoice / pay-app document **generation**, AR/GL posting, cash-receipt application (RESA accounting).
 - **Automatic** end-of-job retainage draw (draw stays explicit — B-5).
-- A header-level `retainage_withheld` **override** (v3 uses line-grain pct as the control; recording a RESA
-  actual that differs from pct×amount is a future reconciliation extension).
+- A header-level `retainage_withheld` **override** (the chip uses line-grain pct as the control; recording a
+  RESA actual that differs from pct×amount is a future reconciliation extension).
 - Override-with-reason exclusion of credits (credits non-excludable — B-6).
 - The `/pm-review` app-bridge surfacing `record`/`issue`/`void` + the views through the control-plane API
   (a later bounded packet).
@@ -353,4 +398,4 @@ assertions. Coverage (≈ 45 cases):
 
 - Lane SSoT `reference/ops/00-MASTER-INDEX.md` §5 / §5a + D-OPS-3.
 - Chip 3 ledger `005_recognition_ledger.sql` (the immutable event substrate this chip reads).
-- Operator ratification (B-1…B-8) + two operator audits + two 5-lens review workflows, 2026-06-21.
+- Operator ratification (B-1…B-8) + three operator audits + three review workflows, 2026-06-21.
