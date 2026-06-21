@@ -144,16 +144,16 @@ USER="<rehearsal-user-uuid>"
 CONTENT="9c47a9ed-c46b-4d1d-a604-7c68647c913c"
 
 # 1. Progress
-curl -s "$BASE_URL/api/v1/learning/progress?user_id=$USER&content_id=$CONTENT" | jq .
+curl -s "$BASE_URL/api/v1/learning/progress?user_id=$USER" | jq .
 
 # 2. Assessments
-curl -s "$BASE_URL/api/v1/learning/assessments?user_id=$USER&content_id=$CONTENT" | jq .
+curl -s "$BASE_URL/api/v1/learning/assessments?user_id=$USER" | jq .
 
 # 3. Competency
-curl -s "$BASE_URL/api/v1/learning/competency?user_id=$USER&content_id=$CONTENT" | jq .
+curl -s "$BASE_URL/api/v1/learning/competency?user_id=$USER&level=III" | jq .
 
-# 4. Cohort (run-level)
-curl -s "$BASE_URL/api/v1/learning/cohort?run_id=slice2d-rehearsal-01" | jq .
+# 4. Cohort (level-scoped; the cohort route aggregates all active users at the level)
+curl -s "$BASE_URL/api/v1/learning/cohort?level=III" | jq .
 ```
 
 ### Independent SQL manifest
@@ -161,10 +161,17 @@ curl -s "$BASE_URL/api/v1/learning/cohort?run_id=slice2d-rehearsal-01" | jq .
 Verify the exact KSA set surfaced by the resolver for this content:
 
 ```sql
-SELECT kc.ksa_code, kc.ksa_label, kc.mapping_strength
-FROM   learning.content_ksa_map kc
-WHERE  kc.study_content_id = '9c47a9ed-c46b-4d1d-a604-7c68647c913c'
-ORDER  BY kc.ksa_code;
+SELECT DISTINCT k.ksa_code, k.certification_level
+FROM   public.learning_events le
+JOIN   public.content_concept_links ccl ON ccl.content_id = le.study_content_id
+JOIN   public.edition_ksa_map ekm ON ekm.concept_id = ccl.concept_id AND ekm.is_active
+JOIN   public.ksas k ON k.ksa_code = ekm.ksa_code AND k.certification_level::text = ekm.level
+WHERE  le.user_id = '<rehearsal-user-uuid>'
+  AND  le.study_content_id = '9c47a9ed-c46b-4d1d-a604-7c68647c913c'
+  AND  le.event_type IN ('resource_completed','assessment_completed')
+  AND  k.certification_level::text = 'III'
+ORDER  BY k.ksa_code;
+-- Expected for the SCADA content at Level III: KSA-III-SC-002, KSA-III-SC-003.
 ```
 
 Paste the output into the manifest assertion table in the evidence packet.
@@ -175,9 +182,9 @@ Confirm `occurred_at` is within a reasonable window of `created_at` (record inse
 gap indicates a manual or erroneous timestamp:
 
 ```sql
-SELECT id, event_type, occurred_at, created_at,
+SELECT event_id, event_type, occurred_at, created_at,
        EXTRACT(EPOCH FROM (created_at - occurred_at)) AS lag_seconds
-FROM   learning.learning_events
+FROM   public.learning_events
 WHERE  (payload->>'acquisition_run_id') = 'slice2d-rehearsal-01'
 ORDER  BY occurred_at;
 ```
