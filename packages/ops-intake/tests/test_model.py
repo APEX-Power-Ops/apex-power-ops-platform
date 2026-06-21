@@ -24,3 +24,22 @@ def test_payload_constructs_and_totals():
                                        default_hours=8.0, neta_section="7.2")])
     assert payload.scopes[0].lines[0].qty == 9
     assert payload.project.contract_value == 4692078.98
+
+
+from ops_intake.model import ProjectIn, QuoteLineIn, PAYLOAD_SCHEMA_VERSION
+
+def test_project_carries_client_site():
+    p = ProjectIn(project_number="J1", project_name="N", client_name="Garney", site_city="Mesa")
+    assert p.client_name == "Garney" and p.site_city == "Mesa"
+
+def test_line_carries_section():
+    assert QuoteLineIn(apparatus_type="X", test_standard="ATS", qty=1, hrs_per_unit=2.0,
+                       section="SES-00-001").section == "SES-00-001"
+
+def test_line_carries_stable_uid():
+    l = QuoteLineIn(apparatus_type="X", test_standard="ATS", qty=1, hrs_per_unit=2.0,
+                    section="SES-00-001", line_uid="ScopeA:row7")
+    assert l.line_uid == "ScopeA:row7"
+
+def test_schema_version_constant():
+    assert PAYLOAD_SCHEMA_VERSION == "1"

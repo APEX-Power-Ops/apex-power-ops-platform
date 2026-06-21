@@ -3,10 +3,16 @@
 Numbers are chosen to reconcile exactly:
   one scope, J3 = 25 hrs (lines 2x5 + 3x5), categories 800/100/50/50 = P3 1000, M4=N4=1 => P4 1000,
   Print_Template TOTAL COST 1000.
+
+Task 4 additions:
+  - row 6: bold section header above apparatus rows
+  - N4: explicit 1.0 (pct-adjust)
+  - Dataverse_Import sheet: Client / Site City / Job # label-value rows
 """
 import pathlib
 
 import openpyxl
+from openpyxl.styles import Font
 
 
 def build(path: pathlib.Path) -> pathlib.Path:
@@ -19,7 +25,7 @@ def build(path: pathlib.Path) -> pathlib.Path:
     ws["L3"] = "TOTAL SHEET $$$ -NOT ADJUSTED"
     ws["P3"] = 1000.0
     ws["M4"] = 1
-    ws["N4"] = 1
+    ws["N4"] = 1.0
     ws["L4"] = "TOTAL SHEET $$$ - ADJUSTED"
     ws["P4"] = 1000.0
     ws["C5"] = "QTY"
@@ -28,6 +34,12 @@ def build(path: pathlib.Path) -> pathlib.Path:
     ws["G5"] = "Drawing"
     ws["I5"] = "Hrs/Unit"
     ws["J5"] = "Hrs/Line"
+
+    # Bold section header row above apparatus rows (Task 4)
+    section_cell = ws["E6"]
+    section_cell.value = "Switchgear — Section A"
+    section_cell.font = Font(bold=True)
+
     ws["D7"] = 0
     ws["E7"] = "SLD - sub-header (skip)"  # no QTY -> skipped
     ws["C8"] = 2
@@ -68,6 +80,15 @@ def build(path: pathlib.Path) -> pathlib.Path:
     pt["R13"] = 1000.0
     pt["L14"] = "  A1) MV - Test"
     pt["R14"] = 1000.0
+
+    # Dataverse_Import metadata sheet (Task 4)
+    dv = wb.create_sheet("Dataverse_Import")
+    dv["A1"] = "Client:"
+    dv["B1"] = "ACME Power Co."
+    dv["A2"] = "Site City:"
+    dv["B2"] = "Mesa"
+    dv["A3"] = "Job #:"
+    dv["B3"] = "J1-TEST-001"
 
     path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(path)
