@@ -4,7 +4,7 @@
 
 **Goal:** Wrap the existing `ops-intake` engine in a server-side, governed, multi-project intake envelope — upload `.xlsm` → parse → review/edit the **scope→task→line** tree (the PM regroups lines into tasks + edits hours; apparatus are the QTY-expansion materialized at approve, shown read-only) → identity-gated approve materializes & freezes the quote — with `ops.*` written **only at approve**.
 
-**Architecture:** Four layers on `main@94db4727` (Chips 1–4): (A) migration `007` adds the envelope tables + DB guards; (B) `packages/ops-intake` is generalized so parse persists only to the envelope and approve is the sole domain writer (full-replacement under a project lock, with an approve-time conflict re-check); (C) a host-gated control-plane API exposes upload/preview/PATCH/approve/reject with findings finance-redaction; (D) an `operations-web` page gives the upload→review→approve UI (no dollars).
+**Architecture:** Four layers on `main@94db4727` (Chips 1–4): (A) migration `007` adds the envelope tables + DB guards; (B) `packages/ops-intake` is generalized so parse persists only to the envelope and approve is the sole domain writer (full-replacement under a project lock, with an approve-time conflict re-check); (C) a host-gated control-plane API exposes upload/preview/review/approve/reject with findings finance-redaction; (D) an `operations-web` page gives the upload→review→approve UI (no dollars).
 
 **Tech Stack:** PostgreSQL (host `ops_dev` / throwaway `ops_test`), Python 3.11 + `psycopg[binary]` + `openpyxl` (`uv run`), FastAPI (control-plane-api), Next 16 / React 19 / Playwright (operations-web). All work on the Olares host over mesh SSH (`ssh olares-mesh`); the worktree is `/home/olares/code/apex/apex-ops-chip5` on branch `ops/chip5-intake-envelope`.
 
@@ -12,7 +12,7 @@
 
 - **Dev-only.** Nothing is applied to `ops_dev`/prod by the build. Migration/package/API tests run on **throwaway `ops_test`**; `ops_dev` is for operator review only. Merge to main is **operator-gated**.
 - **Test DSN pinning (hard safety rule):** every test that applies/tears-down schema or truncates pins the DSN at **`ops_test`** and **refuses any DSN whose dbname is not `ops_test`**. The migration-test idiom (`infra/database/migrations/ops/test_006_progress_billing.py`) is the template: `DSN = os.environ.get("OPS_DEV_DSN") or "...dbname=ops_test..."`.
-- **No operational writes before approve.** Parse/validate/PATCH touch only the envelope tables (`ops.intake_runs|intake_source_files|intake_validation_findings`). `ops.projects|scopes|tasks|apparatus|scope_quote|scope_quote_line|standard_hours` are written **only** inside `approve_run`.
+- **No operational writes before approve.** Parse/validate/review-edit touch only the envelope tables (`ops.intake_runs|intake_source_files|intake_validation_findings`). `ops.projects|scopes|tasks|apparatus|scope_quote|scope_quote_line|standard_hours` are written **only** inside `approve_run`.
 - **Approve is the only domain writer** and is **identity-gated** by `ops.persons(person_id)`. It takes `SELECT ... FOR UPDATE` on the **intake_run row first, then the project row** (fixed order; serializes concurrent approves of the same run before any status/conflict read).
 - **Intake ownership marker:** rows materialized by approve are stamped `source='ops-intake'`; full-replacement deletes the project's scopes **`where source='ops-intake'`** (cascade) — never the generic `legacy_source_id is not null`, which is a per-row stable key (used by the 003/007 unique indexes), not an exclusive owner marker.
 - **`recognized` conflict is membership, not balance:** any `ops.revenue_recognition_event` row existing for the project (EXISTS), never `net > 0`.
@@ -76,7 +76,7 @@
 | source_format classify + reject flat/unsupported | 6 |
 | findings: message/diagnostic split + severity + N4 reconciliation (info vs blocking) | 7 |
 | create_run: no domain writes + sha256 + supersede-only-if-active + conflict (recognized=EXISTS, +billing) | 8 |
-| review PATCH: version bump, re-validate, no cross-scope moves | 9 |
+| review edit (POST /review): version bump, re-validate, allowlist diff + no cross-scope moves | 9 |
 | approve: identity-gated, full-replacement under lock, TOCTOU re-check, freeze, no standard_hours | 10 |
 | stable `line_uid` line key + cross-scope guard keyed on it (not legacy_source_id) | 4, 5, 9 |
 | foreign-source refusal + Miner coexistence decision | 10, 16 |
@@ -267,30 +267,34 @@ create unique index uq_intake_one_active on ops.intake_runs (project_number)
 -- write-once provenance fields on intake_runs
 create or replace function ops.trg_intake_run_immutable() returns trigger language plpgsql as $$
 begin
-  if new.canonical_payload_json is distinct from old.canonical_payload_json
-     or new.source_format        is distinct from old.source_format
-     or new.payload_schema_version is distinct from old.payload_schema_version
-     or new.parser_version        is distinct from old.parser_version
-     or new.uploaded_by           is distinct from old.uploaded_by then
-    raise exception 'intake_runs provenance fields are immutable (run %)', old.id;
-  end if;
-  if old.approved_by is not null and new.approved_by is distinct from old.approved_by then
-    raise exception 'intake_runs.approved_by is set-once (run %)', old.id;
-  end if;
-  if old.approved_at is not null and new.approved_at is distinct from old.approved_at then
-    raise exception 'intake_runs.approved_at is set-once (run %)', old.id;
-  end if;
-  -- approval shape: approved_by and approved_at are set together, and only on the approved status
+  -- approval shape (INSERT *and* UPDATE): by/at set together; status='approved' IFF approved_by set
+  -- (blocks a direct insert of status='approved' with null actor, and approval fields on a non-approved row).
   if (new.approved_by is null) <> (new.approved_at is null) then
-    raise exception 'intake_runs approval requires approved_by and approved_at together (run %)', old.id;
+    raise exception 'intake_runs: approved_by and approved_at must be set together';
   end if;
-  if new.approved_by is not null and new.status <> 'approved' then
-    raise exception 'intake_runs approved_by set but status is % (run %)', new.status, old.id;
+  if (new.status = 'approved') <> (new.approved_by is not null) then
+    raise exception 'intake_runs: status=approved iff approved_by is set';
   end if;
-  new.updated_at := now();
+  if tg_op = 'UPDATE' then
+    if new.canonical_payload_json   is distinct from old.canonical_payload_json
+       or new.source_format         is distinct from old.source_format
+       or new.payload_schema_version is distinct from old.payload_schema_version
+       or new.parser_version         is distinct from old.parser_version
+       or new.uploaded_by            is distinct from old.uploaded_by
+       or new.project_number         is distinct from old.project_number then   -- project_number write-once
+      raise exception 'intake_runs provenance fields are immutable (run %)', old.id;
+    end if;
+    if old.approved_by is not null and new.approved_by is distinct from old.approved_by then
+      raise exception 'intake_runs.approved_by is set-once (run %)', old.id;
+    end if;
+    if old.approved_at is not null and new.approved_at is distinct from old.approved_at then
+      raise exception 'intake_runs.approved_at is set-once (run %)', old.id;
+    end if;
+    new.updated_at := now();
+  end if;
   return new;
 end $$;
-create trigger trg_intake_run_immutable before update on ops.intake_runs
+create trigger trg_intake_run_immutable before insert or update on ops.intake_runs
   for each row execute function ops.trg_intake_run_immutable();
 ```
 
@@ -632,7 +636,7 @@ def test_n4_default_is_info_when_reconciles():
   - `get_run(dsn, run_id) -> dict`.
   - Helper `_classify_conflict(cur, project_number) -> (project_id|None, conflict_kind)` — `recognized` if **any** `ops.revenue_recognition_event` row references the project; `billed` if any `ops.billing_application.project_id`; `frozen` if any `ops.scope_quote.is_frozen` for the project's scopes; precedence `billed>recognized>frozen`.
 
-- [ ] **Step 1: Update `conftest.py`** — (a) add a session **`apply_migrations` fixture with `autouse=True`** (chains 001–007, DOWN1 teardown); (b) extend `_OPS_TRUNCATE` to include `ops.tasks, ops.intake_validation_findings, ops.intake_source_files, ops.intake_runs`; (c) add a helper **`_require_ops_test(dsn)`** = `assert "dbname=ops_test" in dsn, "ops-intake DB tests must run on ops_test"`, and call it at the TOP of `_dsn()` AND inside `clean_ops` **before the truncate** (not only in `apply_migrations`). The conftest's `_dsn()` default is `ops_dev` and `clean_ops` truncates immediately ([conftest.py:30]); the guard must fire before any truncate so a mis-pinned run fails loudly instead of nuking Miner data. Exposing it as a named helper lets a test assert it raises.
+- [ ] **Step 1: Update `conftest.py`** — (a) add a session **`apply_migrations` fixture with `autouse=True`** (chains 001–007, DOWN1 teardown); (b) extend `_OPS_TRUNCATE` to include `ops.tasks, ops.intake_validation_findings, ops.intake_source_files, ops.intake_runs`; (c) add a helper **`_require_ops_test(dsn)`** that parses the conninfo (`from psycopg.conninfo import conninfo_to_dict`) and asserts `conninfo_to_dict(dsn).get("dbname") == "ops_test"` (**exact** match — a substring check false-passes on `ops_test_backup`/`ops_test2`), and call it at the TOP of `_dsn()` AND inside `clean_ops` **before the truncate** (not only in `apply_migrations`). The conftest's `_dsn()` default is `ops_dev` and `clean_ops` truncates immediately ([conftest.py:30]); the guard must fire before any truncate so a mis-pinned run fails loudly instead of nuking Miner data. Exposing it as a named helper lets a test assert it raises.
 
 - [ ] **Step 2: Write failing test** (`test_envelope.py`):
 
@@ -690,6 +694,7 @@ def test_dsn_guard_blocks_non_ops_test():
 
 **Interfaces:**
 - Produces: `patch_review(dsn, run_id, *, review_payload: dict) -> dict` — replaces `review_payload_json`, bumps `review_payload_version`, re-runs `validate_payload`, replaces findings at the new version; returns the updated run. Only valid on `parsed`/`reviewing` runs (else `ValueError`/409 at the API). Exposes a pure helper `_assert_no_cross_scope_move(canonical: dict, review: dict) -> None` that builds a `line_uid → scope_name` map from each payload and raises `ValueError("cross-scope line move forbidden")` when any `line_uid` sits under a different `scope_name` in `review` than in `canonical`. The review tree is **line-grain** (scope→task→line); apparatus are the QTY-expansion materialized at approve and are not individually edited. **The guard keys on `line_uid`** (the stable parse-time identity from Task 4) — NOT `legacy_source_id` (absent from payload lines — it is synthesized only at DB write) and NOT `line_number` (scope-relative, collides on a move).
+- **Also exposes `_assert_review_within_allowlist(canonical: dict, review: dict) -> None`** — the integrity gate. The review payload may differ from canonical ONLY in allowed ways: same `project_number`; same set of `scope_name`s; the **exact same multiset of `line_uid`s** (no added/deleted/duplicated line); per line, **only `section` (task regroup) and `hrs_per_unit` are mutable** — `qty`/`apparatus_type`/`test_standard`/`line_number`, every `scope_quote` dollar field, and every project field must equal canonical; task names may be renamed. Any other drift raises `ValueError`. `patch_review` calls **both** guards before persisting. Without this, a caller could tamper `qty`/type/dollars/`project_number` or inject lines and approve would materialize the altered basis.
 
 - [ ] **Step 1: Write failing test:**
 
@@ -697,7 +702,8 @@ def test_dsn_guard_blocks_non_ops_test():
 import pytest
 from dataclasses import asdict
 from ops_intake.extract import extract_workbook
-from ops_intake.envelope import create_run, patch_review, _assert_no_cross_scope_move
+from ops_intake.envelope import (create_run, patch_review,
+                                 _assert_no_cross_scope_move, _assert_review_within_allowlist)
 
 def test_patch_bumps_version_and_revalidates(mini_workbook, clean_ops):
     dsn = clean_ops; who = _person(dsn)
@@ -724,10 +730,36 @@ def test_within_scope_regroup_ok():
     canon = {"scopes": [{"scope_name": "A", "lines": [{"line_uid": "A:row1", "section": "old"}]}]}
     same  = {"scopes": [{"scope_name": "A", "lines": [{"line_uid": "A:row1", "section": "NEW TASK"}]}]}
     _assert_no_cross_scope_move(canon, same)  # must not raise
+
+def _canon():
+    return {"project": {"project_number": "P1"},
+            "scopes": [{"scope_name": "A", "quote": {"onsite_labor": 1000},
+                        "lines": [{"line_uid": "A:row1", "qty": 1, "apparatus_type": "X",
+                                   "test_standard": "ATS", "hrs_per_unit": 2.0, "section": "old"}]}]}
+
+def test_allowlist_blocks_qty_and_dollar_tamper():
+    bad = _canon(); bad["scopes"][0]["lines"][0]["qty"] = 99
+    with pytest.raises(ValueError):
+        _assert_review_within_allowlist(_canon(), bad)
+    bad2 = _canon(); bad2["scopes"][0]["quote"]["onsite_labor"] = 5000
+    with pytest.raises(ValueError):
+        _assert_review_within_allowlist(_canon(), bad2)
+
+def test_allowlist_blocks_added_or_duplicated_line():
+    add = _canon(); add["scopes"][0]["lines"].append({"line_uid": "A:row2", "qty": 1})
+    with pytest.raises(ValueError):
+        _assert_review_within_allowlist(_canon(), add)
+    dup = _canon(); dup["scopes"][0]["lines"].append({**_canon()["scopes"][0]["lines"][0]})  # duplicate line_uid
+    with pytest.raises(ValueError):
+        _assert_review_within_allowlist(_canon(), dup)
+
+def test_allowlist_allows_section_and_hours_edit():
+    ok = _canon(); ok["scopes"][0]["lines"][0]["section"] = "NEW"; ok["scopes"][0]["lines"][0]["hrs_per_unit"] = 3.5
+    _assert_review_within_allowlist(_canon(), ok)  # must not raise
 ```
 
 - [ ] **Step 2: Run — FAIL.**
-- [ ] **Step 3: Implement** `patch_review` (membership check vs `canonical_payload_json`; status guard; version bump; re-findings). Replace the placeholder `_force_cross_scope_move` test hook with a real membership-drift assertion once the payload shape is settled.
+- [ ] **Step 3: Implement** `patch_review` — status guard (active runs only); run **`_assert_review_within_allowlist`** then **`_assert_no_cross_scope_move`** against `canonical_payload_json`; replace `review_payload_json`; bump `review_payload_version`; re-run `validate_payload` and replace findings at the new version.
 - [ ] **Step 4: Run — PASS.**
 - [ ] **Step 5: Commit** (`-m "feat(ops-intake): patch_review -- version bump, re-validate, cross-scope guard"`)
 
@@ -740,12 +772,13 @@ def test_within_scope_regroup_ok():
 **Interfaces:**
 - Consumes: the run + `review_payload_json`; `load.py` row-builders.
 - Produces: `approve_run(dsn, run_id, *, approved_by: uuid) -> dict`. Transactional. **Global lock order: intake_runs → projects → apparatus** (record this in the SSoT, Task 16). Steps per spec §6.3:
-  - **(0)** `SELECT ... FROM ops.intake_runs WHERE id=run_id FOR UPDATE` before any status/finding read (serializes concurrent approves of the same run — else a second approve reads `parsed`, blocks downstream, then mis-marks the now-approved run `revision_blocked`).
+  - **(0) Lock order = advisory(`project_number`) → intake_run row → project → apparatus** (must match `create_run`'s order). First `SELECT project_number FROM ops.intake_runs WHERE id=run_id` (NO lock — just read the key), then `pg_advisory_xact_lock(hashtext(project_number))`, **then** `SELECT ... FROM ops.intake_runs WHERE id=run_id FOR UPDATE` and re-read status. Taking the advisory lock **before** the run-row lock is what prevents the create-vs-approve deadlock — else approve holds the run row while waiting on the advisory lock, and a concurrent `create_run` holds the advisory lock while waiting to supersede (lock) that run row. (Serializes concurrent approves of the same run too.)
   - **(1)** refuse 422 if any open `blocking` finding; **(2)** refuse 409 if run not active; **(3)** refuse 409 if `revision_blocked`.
-  - **(4)** lock the project: `pg_advisory_xact_lock(hashtext(project_number))` (covers the brand-new-project case where no row exists to `FOR UPDATE`), then upsert+`SELECT ... FOR UPDATE` the project row, **then `SELECT id FROM ops.apparatus WHERE <project> FOR UPDATE`** so any in-flight Chip-3 `approve_and_recognize` (which locks apparatus rows, not the project) serializes and its event becomes visible. Then **re-check conflict** (frozen / **any** `revenue_recognition_event` EXISTS / any `billing_application`) → if now-conflicted, set `revision_blocked` + raise 409.
+  - **(4)** with the advisory lock already held (step 0), upsert+`SELECT ... FOR UPDATE` the project row (create if new — the advisory lock covers the brand-new-project case where no row exists to `FOR UPDATE`), **then `SELECT id FROM ops.apparatus WHERE <project> FOR UPDATE`** so any in-flight Chip-3 `approve_and_recognize` (which locks apparatus rows, not the project) serializes and its event becomes visible. Then **re-check conflict** (frozen / **any** `revenue_recognition_event` EXISTS / any `billing_application`) → if now-conflicted: **commit the `status='revision_blocked'` transition and RETURN that outcome** (the API maps it to 409). **Do NOT raise-and-rollback** — a raise in the same txn would roll back the status write, so the conflict outcome must be a committed result the API converts to 409 (same pattern for the 422-blocking-findings and 409-not-active paths).
   - **(4b) foreign-source guard:** if the project has any scope with `source IS DISTINCT FROM 'ops-intake'` (e.g. legacy Miner rows stamped `miner_rev10.xlsm`), **abort 409** — refuse to manage a project the intake engine does not own (prevents delete-by-marker from orphaning foreign rows). See the Miner-coexistence decision (Task 16 / spec §12).
   - **(5) full replacement:** delete the project's scopes `where source='ops-intake'` (cascade), insert fresh from `review_payload`, **stamping `source='ops-intake'`** on every scope/task/scope_quote_line/apparatus **and on the project row**; create tasks from `section`, with a deterministic **`__ungrouped__`** fallback for null-section lines (so `tasks.legacy_source_id` is never null and `uq_ops_tasks_intake` always applies); set `scope_quote_line.legacy_source_id = line_uid` and `apparatus.legacy_source_id = f"{project_number}:{line_uid}:u{i}"` (**project-qualified** — `uq_ops_apparatus_intake` is GLOBALLY unique, so a bare scope-relative key collides across projects); link `apparatus.task_id`; write `ops.projects.source_client_name/source_site_*` from `review_payload.project`.
   - **(6) freeze** (`is_frozen`, `quoted_revenue = round(quoted_hours*blended_rate,2)`, `provenance_status='approved'`); **(7)** set run `approved` + `approved_by/at` + `project_id`. **No `standard_hours` write.**
+- **Return contract:** `approve_run` returns `{outcome, run_id, ...}` with `outcome ∈ {approved, revision_blocked, blocked_findings, not_active, foreign_source}`. Each non-approved outcome **commits** any status transition it made and returns it (the API maps outcome→HTTP: `approved`→200, `revision_blocked`/`not_active`/`foreign_source`→409, `blocked_findings`→422). It **raises** only on genuine errors (unknown run_id, DB failure) — never to signal a business outcome (which would roll back the committed status write).
 - Exposes `materialize(cur, project_number, review_payload) -> None` (project upsert stamping `source='ops-intake'` + delete `source='ops-intake'` scopes cascade + insert fresh with the marker + tasks from `section`/`__ungrouped__` + `apparatus.legacy_source_id` project-qualified + source_* columns), unit-testable directly.
 
 - [ ] **Step 1: Write failing tests** (`test_approve_envelope.py`):
@@ -893,7 +926,7 @@ if _ops_intake_enabled():
 - [ ] **Step 2: Run — FAIL.**
 - [ ] **Step 3: Implement** the 5 handlers; map package exceptions to 400/409/422; shape findings to PM-safe (`{code,severity,ok,message}` only — drop `diagnostic_detail`); enforce the 25 MB cap before reading.
 - [ ] **Step 4: Run — PASS.**
-- [ ] **Step 5: Commit** (`-m "feat(control-plane): ops intake routes -- upload/preview/patch/approve/reject + finance-redaction"`)
+- [ ] **Step 5: Commit** (`-m "feat(control-plane): ops intake routes -- upload/preview/review/approve/reject + finance-redaction"`)
 
 ---
 
