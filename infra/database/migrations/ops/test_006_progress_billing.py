@@ -214,8 +214,8 @@ def test_billline_retainage_nonneg_check(conn):
             (app_id, eid, s["apparatus"], s["scope"], s["project"]))
 
 def test_draft_fk_to_project(conn):
+    _set_ctx(conn)
     s = _seed_recognizable(conn)
-    # insert a valid draft (no billing_ctx required for Task 1 -- gate added in Task 2)
     draft_id = conn.execute(
         "insert into ops.billing_application_draft "
         "(project_id,period_through,actor_person_id) values (%s,current_date,%s) returning id",
@@ -223,12 +223,40 @@ def test_draft_fk_to_project(conn):
     assert draft_id is not None
 
 def test_draft_rejects_bad_project_fk(conn):
+    _set_ctx(conn)
     s = _seed_recognizable(conn)
     with pytest.raises(psycopg.errors.ForeignKeyViolation):
         conn.execute(
             "insert into ops.billing_application_draft "
             "(project_id,period_through,actor_person_id) values (%s,current_date,%s)",
             (str(uuid.uuid4()), s["person"]))
+
+
+# ---- Task 2: mutation gate + immutability triggers ----
+
+def test_gate_blocks_unflagged_insert(conn):
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException):   # no _set_ctx -> gate rejects
+        conn.execute("insert into ops.billing_application (project_id,application_no,status,period_through,"
+                     "external_invoice_ref,billable_hours,gross_amount,positive_gross,net_invoiced,actor_person_id) "
+                     "values (%s,1,'issued',current_date,'INV',5,500,500,500,%s)", (s["project"], s["person"]))
+
+def test_header_delete_blocked_with_ctx(conn):
+    _set_ctx(conn); s = _seed_recognizable(conn); _recognize(conn, s)
+    aid = conn.execute("insert into ops.billing_application (project_id,application_no,status,period_through,"
+        "external_invoice_ref,billable_hours,gross_amount,positive_gross,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV',5,500,500,500,%s) returning id",(s["project"],s["person"])).fetchone()[0]
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute("delete from ops.billing_application where id=%s", (aid,))
+
+def test_illegal_header_update_blocked(conn):
+    _set_ctx(conn); s = _seed_recognizable(conn); _recognize(conn, s)
+    aid = conn.execute("insert into ops.billing_application (project_id,application_no,status,period_through,"
+        "external_invoice_ref,billable_hours,gross_amount,positive_gross,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV',5,500,500,500,%s) returning id",(s["project"],s["person"])).fetchone()[0]
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute("update ops.billing_application set gross_amount=999 where id=%s", (aid,))
+
 
 def test_down_up_clean():
     """DOWN6 + UP6 round-trip: tables still resolve after reapplication."""
