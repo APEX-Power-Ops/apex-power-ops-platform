@@ -450,6 +450,11 @@ begin
   if current_setting('ops.billing_ctx', true) is distinct from '1' then
     raise exception 'ops billing tables are function-only (set ops.billing_ctx)';
   end if;
+  -- For DELETE, new is NULL; return old so the DELETE proceeds.
+  -- For INSERT/UPDATE, return new.
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
   return new;
 end;
 $$;
@@ -930,9 +935,12 @@ create constraint trigger trg_billing_consistency_line
   for each row execute function ops.trg_billing_consistency();
 
 -- ============================================================================
+-- Task 8: draft intent path
+-- ============================================================================
+
 -- 7a. record_billing_application -- entry point.
 --     With a non-blank ref: delegates to issue immediately.
---     With a null ref: draft path (Task 8); for now raise "draft not yet supported".
+--     With a null/blank ref: saves a draft and returns its id.
 create or replace function ops.record_billing_application(
   p_project_id             uuid,
   p_actor_person_id        uuid,
@@ -941,6 +949,8 @@ create or replace function ops.record_billing_application(
   p_exclude_apparatus      uuid[]  default '{}',
   p_retainage_draw_request numeric default 0
 ) returns uuid language plpgsql as $$
+declare
+  v_draft_id uuid;
 begin
   if p_external_invoice_ref is not null and btrim(p_external_invoice_ref) <> '' then
     -- Issue path: delegate to issue_billing_application
@@ -953,9 +963,107 @@ begin
       p_retainage_draw_request
     );
   else
-    -- Draft path: Task 8
-    raise exception 'draft billing application not yet supported; provide external_invoice_ref to issue immediately';
+    -- Draft path: insert a billing_application_draft and return its id.
+    -- A draft is pure intent: no lines, no application_no, no financials.
+    -- Drafts reserve nothing -- the sweep is re-derived fresh at issue time.
+    perform set_config('ops.billing_ctx', '1', true);
+    insert into ops.billing_application_draft (
+      project_id,
+      period_through,
+      exclude_apparatus_ids,
+      retainage_draw_request,
+      external_invoice_ref,
+      actor_person_id
+    ) values (
+      p_project_id,
+      p_period_through,
+      coalesce(p_exclude_apparatus, '{}'),
+      coalesce(p_retainage_draw_request, 0),
+      p_external_invoice_ref,  -- may be null
+      p_actor_person_id
+    ) returning id into v_draft_id;
+    perform set_config('ops.billing_ctx', '0', true);
+    return v_draft_id;
   end if;
+exception when others then
+  perform set_config('ops.billing_ctx', '0', true);
+  raise;
+end;
+$$;
+
+-- 7b (3-param overload). issue_billing_application(draft_id, actor, ref) -- promote a draft.
+--   Loads the draft's params, requires non-blank ref, delegates to the 6-param worker,
+--   then deletes the draft (it was consumed).
+--   Use CREATE (not CREATE OR REPLACE) so both arities coexist; Postgres resolves by arity.
+create function ops.issue_billing_application(
+  p_draft_id        uuid,
+  p_actor_person_id uuid,
+  p_ref             text
+) returns uuid language plpgsql as $$
+declare
+  v_draft  record;
+  v_app_id uuid;
+begin
+  -- Require non-blank ref up front (clear message before touching the draft)
+  if p_ref is null or btrim(p_ref) = '' then
+    raise exception 'external_invoice_ref is required to promote a draft';
+  end if;
+
+  -- Load the draft (no lock needed -- drafts are not financial records;
+  -- the 6-param worker will take the project FOR UPDATE)
+  select project_id, period_through, exclude_apparatus_ids, retainage_draw_request
+    into v_draft
+    from ops.billing_application_draft
+   where id = p_draft_id;
+
+  if not found then
+    raise exception 'billing_application_draft % not found', p_draft_id;
+  end if;
+
+  -- Delegate to the 6-param worker (does the fresh sweep, inserts header+lines)
+  v_app_id := ops.issue_billing_application(
+    v_draft.project_id,
+    p_actor_person_id,
+    v_draft.period_through,
+    p_ref,
+    v_draft.exclude_apparatus_ids,
+    v_draft.retainage_draw_request
+  );
+
+  -- Delete the consumed draft (ctx flag is already clear after the worker returns;
+  -- re-set it briefly for the DELETE so the gate permits it)
+  perform set_config('ops.billing_ctx', '1', true);
+  delete from ops.billing_application_draft where id = p_draft_id;
+  perform set_config('ops.billing_ctx', '0', true);
+
+  return v_app_id;
+
+exception when others then
+  perform set_config('ops.billing_ctx', '0', true);
+  raise;
+end;
+$$;
+
+-- 7c. discard_draft_billing_application -- delete a draft (no financial effect).
+create or replace function ops.discard_draft_billing_application(
+  p_draft_id        uuid,
+  p_actor_person_id uuid
+) returns void language plpgsql as $$
+begin
+  perform set_config('ops.billing_ctx', '1', true);
+
+  if not exists (select 1 from ops.billing_application_draft where id = p_draft_id) then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'billing_application_draft % not found', p_draft_id;
+  end if;
+
+  delete from ops.billing_application_draft where id = p_draft_id;
+
+  perform set_config('ops.billing_ctx', '0', true);
+
+exception when others then
+  perform set_config('ops.billing_ctx', '0', true);
+  raise;
 end;
 $$;
 

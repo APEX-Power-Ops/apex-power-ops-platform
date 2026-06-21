@@ -666,3 +666,73 @@ def test_ref_reusable_after_void(conn):
     # Re-use the same ref -- must succeed since app1 is now voided
     app2 = _issue(conn, s["project"], s["person"], ref="'INV-REUSE'")
     assert app2 is not None
+
+
+# ---- Task 8: draft = intent (record->draft, issue-from-draft, discard) ----
+
+def test_draft_saved_then_issued_fresh(conn):
+    """record with null ref saves a draft (no billing_application row); 3-param issue promotes it."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    d = conn.execute("select ops.record_billing_application(%s,%s,current_date,null,'{}'::uuid[],0)",
+                     (s["project"], s["person"])).fetchone()[0]
+    # Draft row exists; no issued application yet
+    assert conn.execute("select count(*) from ops.billing_application_draft where id=%s", (d,)).fetchone()[0] == 1
+    assert conn.execute("select count(*) from ops.billing_application where project_id=%s", (s["project"],)).fetchone()[0] == 0
+    # Promote via 3-param overload: fresh sweep is re-derived at issue time
+    app = conn.execute("select ops.issue_billing_application(%s,%s,'INV-1')", (d, s["person"])).fetchone()[0]
+    assert conn.execute("select status from ops.billing_application where id=%s", (app,)).fetchone()[0] == "issued"
+    # Draft is consumed (deleted) after promotion
+    assert conn.execute("select count(*) from ops.billing_application_draft where id=%s", (d,)).fetchone()[0] == 0
+
+
+def test_draft_reserves_nothing(conn):
+    """A saved draft does not create any billing_application_line -- it reserves nothing.
+    The apparatus still appears on the unbilled set (confirmed via inline query; Task 9 will
+    switch this assertion to ops.v_unbilled_recognition once the view lands)."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    conn.execute("select ops.record_billing_application(%s,%s,current_date,null,'{}'::uuid[],0)",
+                 (s["project"], s["person"]))
+    # Inline unbilled-equivalent: a recognized event with no active billing line -- drafts must not consume this slot.
+    # Task 9 TODO: replace this inline query with:
+    #   select count(*) from ops.v_unbilled_recognition where apparatus_id=%s
+    unbilled_count = conn.execute(
+        "select count(*) from ops.revenue_recognition_event e "
+        "where e.apparatus_id = %s "
+        "  and e.event_type = 'recognized' "
+        "  and not exists ("
+        "    select 1 from ops.billing_application_line bl "
+        "    join ops.billing_application ba on ba.id = bl.application_id "
+        "    where bl.recognition_event_id = e.id "
+        "      and bl.is_voided = false "
+        "      and ba.status = 'issued'"
+        "  )",
+        (s["apparatus"],)).fetchone()[0]
+    assert unbilled_count >= 1
+
+
+def test_draft_discard(conn):
+    """discard_draft_billing_application removes the draft row; no billing_application created."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    d = conn.execute("select ops.record_billing_application(%s,%s,current_date,null,'{}'::uuid[],0)",
+                     (s["project"], s["person"])).fetchone()[0]
+    assert conn.execute("select count(*) from ops.billing_application_draft where id=%s", (d,)).fetchone()[0] == 1
+    conn.execute("select ops.discard_draft_billing_application(%s,%s)", (d, s["person"]))
+    assert conn.execute("select count(*) from ops.billing_application_draft where id=%s", (d,)).fetchone()[0] == 0
+    assert conn.execute("select count(*) from ops.billing_application where project_id=%s", (s["project"],)).fetchone()[0] == 0
+
+
+def test_draft_promote_blank_ref_rejected(conn):
+    """Promoting a draft with a blank ref must raise an exception."""
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    d = conn.execute("select ops.record_billing_application(%s,%s,current_date,null,'{}'::uuid[],0)",
+                     (s["project"], s["person"])).fetchone()[0]
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute("select ops.issue_billing_application(%s,%s,'')", (d, s["person"]))
+
+
+def test_draft_promote_nonexistent_id_rejected(conn):
+    """Promoting a draft_id that does not exist must raise an exception."""
+    s = _seed_recognizable(conn)
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute("select ops.issue_billing_application(%s,%s,'INV-GHOST')",
+                     (str(uuid.uuid4()), s["person"]))
