@@ -6,8 +6,6 @@ import json
 import sys
 
 from .extract import extract_workbook
-from .load import load_payload
-from .validate import assert_valid
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -19,11 +17,6 @@ def main(argv: list[str] | None = None) -> int:
     ex.add_argument("xlsm")
     ex.add_argument("--out", required=True)
 
-    ld = sub.add_parser("load", help="extract + validate + idempotent load into ops.*")
-    ld.add_argument("xlsm")
-    ld.add_argument("--dsn", required=True)
-    ld.add_argument("--approve", action="store_true", help="freeze quoted_revenue after load")
-
     args = ap.parse_args(argv)
 
     if args.cmd == "extract":
@@ -32,14 +25,6 @@ def main(argv: list[str] | None = None) -> int:
             json.dump(dataclasses.asdict(payload), f, indent=2, ensure_ascii=False)
         print(f"wrote {args.out}: contract_value={payload.project.contract_value}, "
               f"scopes={len(payload.scopes)}")
-        return 0
-
-    if args.cmd == "load":
-        payload = extract_workbook(args.xlsm)
-        assert_valid(payload)
-        res = load_payload(payload, args.dsn, approve=args.approve)
-        print(f"loaded: projects={res.projects} scopes={res.scopes} lines={res.lines} "
-              f"apparatus={res.apparatus} standard_hours={res.standard_hours} approve={args.approve}")
         return 0
 
     return 1
