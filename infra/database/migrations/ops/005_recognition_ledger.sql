@@ -317,7 +317,11 @@ select s.id as scope_id, s.project_id,
        coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active),0) as apparatus_ceiling,
        sq.adjusted_total as scope_adjusted_total,
        sq.adjusted_total
-         - coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active),0) as residual
+         - coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active),0) as residual,
+       coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.scope_id=s.id),0)
+         / NULLIF(coalesce((select sum(a.quoted_revenue) from ops.apparatus a where a.scope_id=s.id and a.is_active),0), 0) as pct_of_ceiling,
+       coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.scope_id=s.id),0)
+         / NULLIF(sq.adjusted_total, 0) as pct_of_scope
 from ops.scopes s
 join ops.projects p on p.id = s.project_id
 left join ops.scope_quote sq on sq.scope_id = s.id
@@ -329,6 +333,19 @@ select p.id as project_id,
        coalesce((select sum(a.quoted_revenue) from ops.apparatus a
                  join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active),0) as apparatus_ceiling,
        coalesce((select sum(sq.adjusted_total) from ops.scope_quote sq
-                 join ops.scopes s on s.id=sq.scope_id where s.project_id=p.id),0) as scope_adjusted_total
+                 join ops.scopes s on s.id=sq.scope_id
+                 where s.project_id=p.id and s.is_active and s.status <> 'Cancelled'),0) as scope_adjusted_total,
+       coalesce((select sum(sq.adjusted_total) from ops.scope_quote sq
+                 join ops.scopes s on s.id=sq.scope_id
+                 where s.project_id=p.id and s.is_active and s.status <> 'Cancelled'),0)
+         - coalesce((select sum(a.quoted_revenue) from ops.apparatus a
+                     join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active),0) as residual,
+       coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.project_id=p.id),0)
+         / NULLIF(coalesce((select sum(a.quoted_revenue) from ops.apparatus a
+                            join ops.scopes s on s.id=a.scope_id where s.project_id=p.id and a.is_active),0), 0) as pct_of_ceiling,
+       coalesce((select sum(recognized_amount) from ops.revenue_recognition_event e where e.project_id=p.id),0)
+         / NULLIF(coalesce((select sum(sq.adjusted_total) from ops.scope_quote sq
+                            join ops.scopes s on s.id=sq.scope_id
+                            where s.project_id=p.id and s.is_active and s.status <> 'Cancelled'),0), 0) as pct_of_scope
 from ops.projects p
 where p.is_active and p.status <> 'Cancelled';

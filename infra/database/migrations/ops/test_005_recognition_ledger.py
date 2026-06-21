@@ -382,21 +382,34 @@ def test_apparatus_recognition_view(conn):
 def test_scope_recognition_surfaces_synthetic_residual(conn):
     # the default seed IS synthetic-residual: scope adjusted_total=1000 (P4) but the single
     # apparatus ceiling is 500 -> residual 500. (No un-freeze needed; the freeze guard forbids it.)
+    # With one recognition of 500: pct_of_ceiling = 500/500 = 1, pct_of_scope = 500/1000 = 0.5
     s = _seed_recognizable(conn)
     _recognize(conn, s)
-    row = conn.execute("select recognized_total, apparatus_ceiling, scope_adjusted_total, residual "
+    row = conn.execute("select recognized_total, apparatus_ceiling, scope_adjusted_total, residual, "
+                       "pct_of_ceiling, pct_of_scope "
                        "from ops.v_scope_recognition where scope_id=%s", (s["scope"],)).fetchone()
     assert row[0] == Decimal("500") and row[1] == Decimal("500")
     assert row[2] == Decimal("1000") and row[3] == Decimal("500")   # 1000 - 500
     assert row[0] <= row[1]   # recognized never exceeds the apparatus ceiling
+    assert row[4] == Decimal("1")     # pct_of_ceiling: 500/500
+    assert row[5] == Decimal("0.5")   # pct_of_scope:   500/1000
 
 
 def test_project_recognition_rollup(conn):
+    # Default seed: scope adjusted_total=1000, apparatus ceiling=500, recognition=500
+    # residual=500, pct_of_ceiling=1, pct_of_scope=0.5
     s = _seed_recognizable(conn)
     _recognize(conn, s)
-    rec = conn.execute("select recognized_total from ops.v_project_recognition where project_id=%s",
-                       (s["project"],)).fetchone()[0]
-    assert rec == Decimal("500")
+    row = conn.execute("select recognized_total, apparatus_ceiling, scope_adjusted_total, "
+                       "residual, pct_of_ceiling, pct_of_scope "
+                       "from ops.v_project_recognition where project_id=%s",
+                       (s["project"],)).fetchone()
+    assert row[0] == Decimal("500")    # recognized_total
+    assert row[1] == Decimal("500")    # apparatus_ceiling
+    assert row[2] == Decimal("1000")   # scope_adjusted_total (active scopes only)
+    assert row[3] == Decimal("500")    # residual: 1000 - 500
+    assert row[4] == Decimal("1")      # pct_of_ceiling: 500/500
+    assert row[5] == Decimal("0.5")    # pct_of_scope:   500/1000
 
 
 # ---- Task 7: firewall, revenue identity, reversibility ----
