@@ -397,3 +397,44 @@ def test_project_recognition_rollup(conn):
     rec = conn.execute("select recognized_total from ops.v_project_recognition where project_id=%s",
                        (s["project"],)).fetchone()[0]
     assert rec == Decimal("500")
+
+
+# ---- Task 7: firewall, revenue identity, reversibility ----
+
+def test_firewall_no_recognized_dollar_columns(conn):
+    s = _seed_recognizable(conn)
+    before = conn.execute("select quoted_hours, quoted_revenue from ops.apparatus where id=%s",
+                          (s["apparatus"],)).fetchone()
+    _recognize(conn, s)
+    after = conn.execute("select quoted_hours, quoted_revenue from ops.apparatus where id=%s",
+                         (s["apparatus"],)).fetchone()
+    assert before == after   # apparatus quote columns untouched by recognition
+    # no recognized-$ column leaked onto apparatus
+    cols = {r[0] for r in conn.execute(
+        "select column_name from information_schema.columns where table_schema='ops' and table_name='apparatus'")}
+    assert not {"recognized_revenue", "recognized_amount"} & cols
+
+
+def test_rollup_revenue_identity(conn):
+    # two apparatus in one scope, both recognized -> recognized_total == apparatus_ceiling
+    s = _seed_recognizable(conn)
+    a2 = conn.execute("insert into ops.apparatus (scope_id, apparatus_designation, status, quoted_hours, quoted_revenue) "
+                      "values (%s,'A-2','Complete',5,500) returning id", (s["scope"],)).fetchone()[0]
+    conn.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",
+                 (s["apparatus"], s["person"]))
+    conn.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",
+                 (a2, s["person"]))
+    row = conn.execute("select recognized_total, apparatus_ceiling from ops.v_scope_recognition where scope_id=%s",
+                       (s["scope"],)).fetchone()
+    assert row[0] == row[1] == Decimal("1000")
+
+
+def test_migration_reversible():
+    _exec_file(DOWN5)
+    assert _scalar("select to_regclass('ops.revenue_recognition_event')") is None
+    # Chips 1/2/4 intact
+    assert _scalar("select to_regclass('ops.apparatus')") is not None
+    assert _scalar("select to_regclass('ops.scope_quote')") is not None
+    assert _scalar("select to_regclass('ops.persons')") is not None
+    _exec_file(UP5)
+    assert _scalar("select to_regclass('ops.revenue_recognition_event')") is not None
