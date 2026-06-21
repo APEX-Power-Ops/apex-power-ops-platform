@@ -279,3 +279,66 @@ def test_down_up_clean():
         "select column_name from information_schema.columns "
         "where table_schema='ops' and table_name='projects' and column_name='retainage_pct'")
     assert col2 == "retainage_pct"
+
+
+# ---- Task 3: record/issue positive-branch sweep + flag containment ----
+
+def _issue(c, project, person, period="current_date", ref="'INV-1'", exclude="'{}'::uuid[]", draw=0):
+    return c.execute(f"select ops.record_billing_application(%s,%s,{period},{ref},{exclude},{draw})",
+                     (project, person)).fetchone()[0]
+
+
+def test_single_apparatus_issue(conn):
+    s = _seed_recognizable(conn, quoted_revenue=500, quoted_hours=5); _recognize(conn, s)
+    app = _issue(conn, s["project"], s["person"])
+    row = conn.execute("select status,application_no,gross_amount,positive_gross,billable_hours,net_invoiced "
+                       "from ops.billing_application where id=%s", (app,)).fetchone()
+    assert row[0] == "issued" and row[1] == 1
+    assert row[2] == Decimal("500.00") and row[3] == Decimal("500.00")
+    assert row[4] == Decimal("5.00") and row[5] == Decimal("500.00")
+    assert conn.execute("select count(*) from ops.billing_application_line where application_id=%s",(app,)).fetchone()[0]==1
+
+
+def test_nothing_to_bill_raises(conn):
+    s = _seed_recognizable(conn)  # recognized NOTHING
+    with pytest.raises(psycopg.errors.RaiseException):
+        _issue(conn, s["project"], s["person"])
+
+
+def test_period_cutoff_excludes_future_recognition(conn):
+    s = _seed_recognizable(conn); _recognize(conn, s)
+    # period_through in the past (yesterday Phoenix) excludes today's recognition -> nothing to bill
+    with pytest.raises(psycopg.errors.RaiseException):
+        _issue(conn, s["project"], s["person"], period="current_date - 1")
+
+
+def test_application_no_sequential(conn):
+    s = _seed_recognizable(conn); _recognize(conn, s); _issue(conn, s["project"], s["person"], ref="'INV-1'")
+    # second recognizable apparatus in same project
+    a2 = conn.execute("insert into ops.apparatus (scope_id,apparatus_designation,status,is_active,assessment,"
+        "quoted_hours,quoted_revenue) values (%s,'A-2','Complete',true,'Pass',5,500) returning id",(s["scope"],)).fetchone()[0]
+    conn.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(a2,s["person"]))
+    app2 = _issue(conn, s["project"], s["person"], ref="'INV-2'")
+    assert conn.execute("select application_no from ops.billing_application where id=%s",(app2,)).fetchone()[0]==2
+
+
+def test_flag_containment_success(conn):
+    s = _seed_recognizable(conn); _recognize(conn, s); _issue(conn, s["project"], s["person"])
+    # after the function returns it reset ops.billing_ctx -> a raw insert now is rejected
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
+                     "apparatus_id,scope_id,project_id,amount,billable_hours) values "
+                     "(gen_random_uuid(),gen_random_uuid(),'recognized',%s,%s,%s,1,1)",
+                     (s["apparatus"], s["scope"], s["project"]))
+
+
+def test_flag_containment_exception_savepoint(conn):
+    s = _seed_recognizable(conn)  # nothing recognized -> issue raises
+    conn.execute("savepoint sp")
+    try: _issue(conn, s["project"], s["person"])
+    except psycopg.errors.RaiseException: pass
+    conn.execute("rollback to savepoint sp")
+    with pytest.raises(psycopg.errors.RaiseException):  # flag cleared by subtxn rollback
+        conn.execute("insert into ops.billing_application_line (application_id,recognition_event_id,event_type,"
+                     "apparatus_id,scope_id,project_id,amount,billable_hours) values "
+                     "(gen_random_uuid(),gen_random_uuid(),'recognized',%s,%s,%s,1,1)",(s["apparatus"],s["scope"],s["project"]))

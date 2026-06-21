@@ -219,3 +219,249 @@ $$;
 create trigger trg_billdraft_gate
   before insert or update or delete on ops.billing_application_draft
   for each row execute function ops.trg_billdraft_gate();
+
+-- ============================================================================
+-- Task 3: record_billing_application / issue_billing_application
+--         Positive-branch sweep + Chip-3 event FOR UPDATE lock + flag containment.
+--         No retainage math (pct=0 in seeds), no credits, no draft path yet.
+-- ============================================================================
+
+-- 7b. issue_billing_application -- the core write path.
+--     Signature: (p_project_id, p_actor_person_id, p_period_through, p_external_invoice_ref,
+--                 p_exclude_apparatus, p_retainage_draw_request)
+create or replace function ops.issue_billing_application(
+  p_project_id             uuid,
+  p_actor_person_id        uuid,
+  p_period_through         date,
+  p_external_invoice_ref   text,
+  p_exclude_apparatus      uuid[]   default '{}',
+  p_retainage_draw_request numeric  default 0
+) returns uuid language plpgsql as $$
+declare
+  v_proj            record;
+  v_retainage_pct   numeric;
+  candidate_ids     uuid[];
+  v_app_id          uuid;
+  v_app_no          int;
+  v_gross           numeric(14,2);
+  v_positive_gross  numeric(14,2);
+  v_billable_hours  numeric(14,2);
+  v_withheld        numeric(14,2);
+  v_released        numeric(14,2);
+  v_net             numeric(14,2);
+  v_cutoff          timestamptz;
+  rec               record;
+begin
+  -- set the billing context flag so the mutation gate permits our inserts
+  perform set_config('ops.billing_ctx', '1', true);
+
+  -- 1. Lock the project (serialize Chip-4 vs Chip-4)
+  select id, is_active, status, retainage_pct
+    into v_proj
+    from ops.projects
+   where id = p_project_id
+   for update;
+  if not found then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'project % not found', p_project_id;
+  end if;
+  if not v_proj.is_active or v_proj.status = 'Cancelled' then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'project % is inactive or cancelled', p_project_id;
+  end if;
+  if p_external_invoice_ref is null or btrim(p_external_invoice_ref) = '' then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'external_invoice_ref is required for issue';
+  end if;
+
+  v_retainage_pct := v_proj.retainage_pct;
+
+  -- 2. Monotonic period: reject if any issued app has period_through > p_period_through
+  if exists (
+    select 1 from ops.billing_application
+     where project_id = p_project_id
+       and status = 'issued'
+       and period_through > p_period_through
+  ) then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'period_through % is not monotonically increasing for project %',
+                    p_period_through, p_project_id;
+  end if;
+
+  -- Phoenix cutoff: events with recognized_at < (period_through+1) day at America/Phoenix midnight
+  v_cutoff := (p_period_through + 1)::timestamp at time zone 'America/Phoenix';
+
+  -- 3. Preliminary positive sweep: recognized events not reversed, not already on an active line,
+  --    within period cutoff, apparatus not excluded.
+  select array_agg(e.id)
+    into candidate_ids
+    from ops.revenue_recognition_event e
+   where e.project_id = p_project_id
+     and e.event_type = 'recognized'
+     and e.recognized_at < v_cutoff
+     -- not reversed
+     and not exists (
+       select 1 from ops.revenue_recognition_event r
+        where r.reverses_event_id = e.id
+     )
+     -- no active line (is_voided=false on an issued app)
+     and not exists (
+       select 1 from ops.billing_application_line bl
+        join ops.billing_application ba on ba.id = bl.application_id
+        where bl.recognition_event_id = e.id
+          and bl.is_voided = false
+          and ba.status = 'issued'
+     )
+     -- apparatus not excluded
+     and (p_exclude_apparatus is null
+          or cardinality(p_exclude_apparatus) = 0
+          or e.apparatus_id <> all(p_exclude_apparatus));
+
+  -- 4. Lock the candidate events to close the Chip-3 reversal race.
+  --    Deterministic order avoids deadlock (conflicts with reverse_recognition FOR UPDATE).
+  if candidate_ids is not null and cardinality(candidate_ids) > 0 then
+    perform 1
+      from ops.revenue_recognition_event
+     where id = any(candidate_ids)
+     order by id
+     for update;
+
+    -- Re-evaluate eligibility under the lock (a reversal that committed before the lock is now visible)
+    select array_agg(e.id)
+      into candidate_ids
+      from ops.revenue_recognition_event e
+     where e.id = any(candidate_ids)
+       and not exists (
+         select 1 from ops.revenue_recognition_event r
+          where r.reverses_event_id = e.id
+       )
+       and not exists (
+         select 1 from ops.billing_application_line bl
+          join ops.billing_application ba on ba.id = bl.application_id
+          where bl.recognition_event_id = e.id
+            and bl.is_voided = false
+            and ba.status = 'issued'
+       );
+  end if;
+
+  -- 8. Nothing-to-bill check (positive branch only; draw cap is a later task)
+  if (candidate_ids is null or cardinality(candidate_ids) = 0)
+     and p_retainage_draw_request = 0 then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'nothing to bill for project %', p_project_id;
+  end if;
+
+  -- 9. application_no (under project lock; burned forever)
+  select coalesce(max(application_no), 0) + 1
+    into v_app_no
+    from ops.billing_application
+   where project_id = p_project_id;
+
+  -- 5. Build aggregate totals from positive lines (retainage is 0 for now; Task 5/6 fill the math)
+  v_gross          := 0;
+  v_positive_gross := 0;
+  v_billable_hours := 0;
+  v_withheld       := 0;
+  v_released       := 0;
+
+  if candidate_ids is not null then
+    select coalesce(sum(round(e.recognized_amount, 2)), 0),
+           coalesce(sum(round(e.recognized_amount, 2)), 0),
+           coalesce(sum(round(e.quoted_hours, 2)), 0)
+      into v_gross, v_positive_gross, v_billable_hours
+      from ops.revenue_recognition_event e
+     where e.id = any(candidate_ids);
+
+    -- retainage withheld: round(amount*pct,2) per line then sum
+    -- pct=0 in Task 3 seeds so this is 0; guard so it is a no-op when pct=0
+    if v_retainage_pct > 0 then
+      select coalesce(sum(round(round(e.recognized_amount, 2) * v_retainage_pct, 2)), 0)
+        into v_withheld
+        from ops.revenue_recognition_event e
+       where e.id = any(candidate_ids);
+    end if;
+  end if;
+
+  -- credit walk: no credits in Task 3 (Tasks 5/6 add the walk)
+  -- v_released stays 0
+
+  -- retainage draw: Task 6 caps this; for now just pass it through (pct=0 => withheld=0 => draw stays 0)
+  v_net := v_gross - v_withheld + v_released + p_retainage_draw_request;
+
+  -- 10. Insert header
+  insert into ops.billing_application (
+    project_id, application_no, status, period_through, external_invoice_ref,
+    billable_hours, gross_amount, positive_gross,
+    retainage_withheld, retainage_released, retainage_drawn,
+    net_invoiced, actor_person_id
+  ) values (
+    p_project_id, v_app_no, 'issued', p_period_through, p_external_invoice_ref,
+    v_billable_hours, v_gross, v_positive_gross,
+    v_withheld, v_released, p_retainage_draw_request,
+    v_net, p_actor_person_id
+  ) returning id into v_app_id;
+
+  -- Insert positive lines
+  if candidate_ids is not null and cardinality(candidate_ids) > 0 then
+    insert into ops.billing_application_line (
+      application_id, recognition_event_id, event_type,
+      apparatus_id, scope_id, project_id,
+      amount, billable_hours,
+      retainage_withheld, retainage_released
+    )
+    select
+      v_app_id,
+      e.id,
+      'recognized'::ops.recognition_event_type,
+      e.apparatus_id,
+      e.scope_id,
+      e.project_id,
+      round(e.recognized_amount, 2),
+      round(e.quoted_hours, 2),
+      case when v_retainage_pct > 0 then round(round(e.recognized_amount, 2) * v_retainage_pct, 2) else 0 end,
+      0
+    from ops.revenue_recognition_event e
+    where e.id = any(candidate_ids);
+  end if;
+
+  -- Reset flag before returning
+  perform set_config('ops.billing_ctx', '0', true);
+  return v_app_id;
+
+exception when others then
+  -- On any error: reset flag so it does not linger in explicit transactions.
+  -- In a subtransaction (savepoint) the SET CONFIG with is_local=true is rolled back automatically,
+  -- so this is belt-and-suspenders for top-level transactions.
+  perform set_config('ops.billing_ctx', '0', true);
+  raise;
+end;
+$$;
+
+-- 7a. record_billing_application -- entry point.
+--     With a non-blank ref: delegates to issue immediately.
+--     With a null ref: draft path (Task 8); for now raise "draft not yet supported".
+create or replace function ops.record_billing_application(
+  p_project_id             uuid,
+  p_actor_person_id        uuid,
+  p_period_through         date,
+  p_external_invoice_ref   text    default null,
+  p_exclude_apparatus      uuid[]  default '{}',
+  p_retainage_draw_request numeric default 0
+) returns uuid language plpgsql as $$
+begin
+  if p_external_invoice_ref is not null and btrim(p_external_invoice_ref) <> '' then
+    -- Issue path: delegate to issue_billing_application
+    return ops.issue_billing_application(
+      p_project_id,
+      p_actor_person_id,
+      p_period_through,
+      p_external_invoice_ref,
+      p_exclude_apparatus,
+      p_retainage_draw_request
+    );
+  else
+    -- Draft path: Task 8
+    raise exception 'draft billing application not yet supported; provide external_invoice_ref to issue immediately';
+  end if;
+end;
+$$;
