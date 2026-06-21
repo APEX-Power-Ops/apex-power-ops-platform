@@ -191,7 +191,7 @@ begin
     end if;
 
     -- §8.1 void-dependency guard (standing-credit guard):
-    -- Reject if EXISTS another issued application with an active (is_voided=false) line L
+    -- Part A: Reject if EXISTS another issued application with an active (is_voided=false) line L
     -- where L.recognition_event_id is a reversal event whose reverses_event_id is in
     -- {the recognition_event_id of THIS app's active lines}.
     -- A standing credit means voiding the original app would orphan the credit line.
@@ -220,6 +220,32 @@ begin
     ) then
       raise exception 'cannot void billing application %: a standing credit on another issued application depends on one of its lines (standing-credit guard)',
                       old.id;
+    end if;
+
+    -- §8.1 void-dependency guard Part B (draw-void guard):
+    -- A pure-draw app has no lines so Part A never fires.  But voiding a draw raises held_to_date,
+    -- which can leave a later credit application (app3) overstated: app3 released LEAST(withheld, 0)=0
+    -- at issue time (held was 0 after the draw), but now held would be restored to 50, making the
+    -- credit's net_invoiced wrong relative to the re-computed held pool.
+    -- Conservative rule: reject the void if the app has a non-zero draw AND there exists a later
+    -- issued application (higher application_no, same project) that carries an active credit line
+    -- (event_type='reversal' with is_voided=false).  The operator must void the later credit app(s)
+    -- first (reverse-first rule).
+    if old.retainage_drawn > 0 then
+      if exists (
+        select 1
+          from ops.billing_application later_app
+          join ops.billing_application_line later_line
+            on later_line.application_id = later_app.id
+         where later_app.project_id = old.project_id
+           and later_app.status = 'issued'
+           and later_app.application_no > old.application_no
+           and later_line.is_voided = false
+           and later_line.event_type = 'reversal'
+      ) then
+        raise exception 'cannot void billing application % (retainage_drawn=%): a later credit application depends on the held pool it consumed -- void the later credit application(s) first (draw-void guard)',
+                        old.id, old.retainage_drawn;
+      end if;
     end if;
 
     -- cascade the line-void: all active lines for this application become voided
@@ -383,6 +409,12 @@ begin
         end if;
       end;
 
+      -- §6d / spec: credit line retainage_withheld must be 0 (only retainage_released applies)
+      if new.retainage_withheld is distinct from 0 then
+        raise exception 'credit line retainage_withheld must be 0 for a reversal line (got %) -- spec §6d',
+                        new.retainage_withheld;
+      end if;
+
       -- retainage_released <= original active line retainage_withheld
       select bl.retainage_withheld
         into v_orig_line
@@ -519,6 +551,12 @@ begin
   if p_external_invoice_ref is null or btrim(p_external_invoice_ref) = '' then
     perform set_config('ops.billing_ctx', '0', true);
     raise exception 'external_invoice_ref is required for issue';
+  end if;
+
+  -- §7b: draw request must be >= 0 (spec: 0 <= p_retainage_draw_request)
+  if p_retainage_draw_request < 0 then
+    perform set_config('ops.billing_ctx', '0', true);
+    raise exception 'p_retainage_draw_request must be >= 0 (got %)', p_retainage_draw_request;
   end if;
 
   v_retainage_pct := v_proj.retainage_pct;
@@ -973,6 +1011,12 @@ begin
     -- Draft path: insert a billing_application_draft and return its id.
     -- A draft is pure intent: no lines, no application_no, no financials.
     -- Drafts reserve nothing -- the sweep is re-derived fresh at issue time.
+
+    -- §7b: draw request must be >= 0 even for a draft (mirrors the issue-path guard)
+    if p_retainage_draw_request < 0 then
+      raise exception 'p_retainage_draw_request must be >= 0 (got %)', p_retainage_draw_request;
+    end if;
+
     perform set_config('ops.billing_ctx', '1', true);
     insert into ops.billing_application_draft (
       project_id,

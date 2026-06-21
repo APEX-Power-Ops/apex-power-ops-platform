@@ -915,3 +915,153 @@ def test_full_down_up_down_clean():
         assert _regclass(c, "ops.apparatus") is not None                      # Chip 1 SURVIVES
         assert c.execute("select 1 from ops.scope_quote limit 1") is not None # Chip 2 SURVIVES
         _exec_file(UP6)                                                       # restore for any later test
+
+
+# ---- Post-audit fixes (F1-F4) ----
+
+# F1: draw-void guard -- voiding a draw app blocked when a later credit exists
+
+def test_void_draw_blocked_by_later_credit(conn):
+    """F1 CRITICAL: void of a draw app is blocked when a later issued credit depends on the
+    held pool the draw consumed.
+
+    Scenario: bill X $500 @ 10% (app1: net=450, withheld=50, held=50)
+              -> draw 50 (app2: net=50, held=0)
+              -> reverse X -> issue credit (app3: released=LEAST(50,0)=0, net=-500)
+    Voiding app2 (the draw) would restore held to 50, making app3's net wrong (-500 vs -450).
+    The draw-void guard must reject this.
+    """
+    s = _seed_recognizable(conn, pct=Decimal("0.10"), quoted_revenue=500)
+    ev = _recognize(conn, s)
+    app1 = _issue(conn, s["project"], s["person"], ref="'INV-1'")  # withheld=50, held=50
+    app2 = _issue(conn, s["project"], s["person"], ref="'INV-2'", draw=50)  # draw held to 0
+    conn.execute("select ops.reverse_recognition(%s,%s,'rework')", (ev, s["person"]))
+    app3 = _issue(conn, s["project"], s["person"], ref="'INV-3'")  # credit: released=LEAST(50,0)=0
+    # Verify app3 is the standing credit with released=0
+    h3 = conn.execute(
+        "select retainage_released, net_invoiced from ops.billing_application where id=%s",
+        (app3,)).fetchone()
+    assert h3 == (Decimal("0.00"), Decimal("-500.00")), f"unexpected app3 state: {h3}"
+    # Now void app2 (the draw) -- draw-void guard must block this
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute("select ops.void_billing_application(%s,%s,'test')", (app2, s["person"]))
+
+
+def test_void_draw_allowed_when_no_later_credit(conn):
+    """F1 positive control: voiding a draw app succeeds when no later credit application exists."""
+    s = _seed_recognizable(conn, pct=Decimal("0.10"), quoted_revenue=500)
+    _recognize(conn, s)
+    _issue(conn, s["project"], s["person"], ref="'INV-1'")  # withheld=50
+    app2 = _issue(conn, s["project"], s["person"], ref="'INV-2'", draw=50)  # draw held to 0
+    # No credit app issued -- voiding the draw must succeed
+    conn.execute("select ops.void_billing_application(%s,%s,'issued-in-error')", (app2, s["person"]))
+    assert conn.execute(
+        "select status from ops.billing_application where id=%s", (app2,)).fetchone()[0] == "voided"
+
+
+# F2: credit line retainage_withheld = 0 enforced by line trigger
+
+def test_credit_line_nonzero_withheld_rejected(conn):
+    """F2 IMPORTANT: §8.4 line trigger must reject a credit line with retainage_withheld != 0.
+    Spec §6d: credit line retainage_withheld = 0.
+    Test uses gate-bypassed direct DML (_set_ctx) to reach the trigger without going through issue().
+    """
+    _set_ctx(conn)
+    s = _seed_recognizable(conn, pct=Decimal("0.10"), quoted_revenue=500)
+    ev = _recognize(conn, s)
+    # Insert the positive app + line directly (gate-bypassed)
+    app1 = conn.execute(
+        "insert into ops.billing_application "
+        "(project_id,application_no,status,period_through,external_invoice_ref,"
+        "billable_hours,gross_amount,positive_gross,retainage_withheld,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV-P',5,500,500,50,450,%s) returning id",
+        (s["project"], s["person"])).fetchone()[0]
+    conn.execute(
+        "insert into ops.billing_application_line "
+        "(application_id,recognition_event_id,event_type,apparatus_id,scope_id,project_id,"
+        "amount,billable_hours,retainage_withheld,retainage_released) "
+        "values (%s,%s,'recognized',%s,%s,%s,500,5,50,0)",
+        (app1, ev, s["apparatus"], s["scope"], s["project"]))
+    # Reverse the event
+    rev_ev = conn.execute("select ops.reverse_recognition(%s,%s,'test')", (ev, s["person"])).fetchone()[0]
+    # Insert a credit app header
+    app2 = conn.execute(
+        "insert into ops.billing_application "
+        "(project_id,application_no,status,period_through,external_invoice_ref,"
+        "billable_hours,gross_amount,positive_gross,retainage_withheld,retainage_released,net_invoiced,actor_person_id) "
+        "values (%s,2,'issued',current_date,'INV-C',-5,-500,0,0,50,-450,%s) returning id",
+        (s["project"], s["person"])).fetchone()[0]
+    # Attempt a credit line with retainage_withheld = 25 (non-zero) -- trigger must reject
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute(
+            "insert into ops.billing_application_line "
+            "(application_id,recognition_event_id,event_type,apparatus_id,scope_id,project_id,"
+            "amount,billable_hours,retainage_withheld,retainage_released) "
+            "values (%s,%s,'reversal',%s,%s,%s,-500,-5,25,50)",
+            (app2, rev_ev, s["apparatus"], s["scope"], s["project"]))
+
+
+# F3: negative draw request rejected at function boundaries
+
+def test_negative_draw_rejected_in_issue(conn):
+    """F3 MINOR: issue_billing_application must reject p_retainage_draw_request < 0 (spec §7b)."""
+    s = _seed_recognizable(conn, pct=Decimal("0.10"), quoted_revenue=500)
+    _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute(
+            "select ops.record_billing_application(%s,%s,current_date,'INV-NEG','{}'::uuid[],-1)",
+            (s["project"], s["person"]))
+
+
+def test_negative_draw_rejected_in_draft(conn):
+    """F3 MINOR: record_billing_application draft path must also reject p_retainage_draw_request < 0."""
+    s = _seed_recognizable(conn)
+    _recognize(conn, s)
+    with pytest.raises(psycopg.errors.RaiseException):
+        conn.execute(
+            "select ops.record_billing_application(%s,%s,current_date,null,'{}'::uuid[],-5)",
+            (s["project"], s["person"]))
+
+
+# F4: self-referential credit does not block its own app's void
+
+def test_void_not_blocked_by_own_credit_line(conn):
+    """F4 MINOR: the §8.1 standing-credit guard (other_app.id <> old.id) must not block voiding
+    an app that carries both a positive line and its own reversal-credit line.
+
+    This state is unreachable via issue() (a recognized event cannot be both billed and reversed
+    in a single sweep) but is reachable under _set_ctx gate-bypass.  The guard must treat the
+    self-referential credit as non-blocking (the id exclusion already implements this).
+
+    Build the state: bill event A (positive line on app1), then reverse A, then insert the credit
+    line for the reversal also on app1 (same application_id).  Voiding app1 must succeed.
+    """
+    _set_ctx(conn)
+    s = _seed_recognizable(conn, pct=Decimal("0.10"), quoted_revenue=500)
+    ev = _recognize(conn, s)
+    # Insert app1 with positive line
+    app1 = conn.execute(
+        "insert into ops.billing_application "
+        "(project_id,application_no,status,period_through,external_invoice_ref,"
+        "billable_hours,gross_amount,positive_gross,retainage_withheld,retainage_released,net_invoiced,actor_person_id) "
+        "values (%s,1,'issued',current_date,'INV-SELF',0,0,0,0,0,0,%s) returning id",
+        (s["project"], s["person"])).fetchone()[0]
+    conn.execute(
+        "insert into ops.billing_application_line "
+        "(application_id,recognition_event_id,event_type,apparatus_id,scope_id,project_id,"
+        "amount,billable_hours,retainage_withheld,retainage_released) "
+        "values (%s,%s,'recognized',%s,%s,%s,500,5,50,0)",
+        (app1, ev, s["apparatus"], s["scope"], s["project"]))
+    # Reverse the event to create a reversal event
+    rev_ev = conn.execute("select ops.reverse_recognition(%s,%s,'self-test')", (ev, s["person"])).fetchone()[0]
+    # Insert the credit line on the SAME app1 (self-referential)
+    conn.execute(
+        "insert into ops.billing_application_line "
+        "(application_id,recognition_event_id,event_type,apparatus_id,scope_id,project_id,"
+        "amount,billable_hours,retainage_withheld,retainage_released) "
+        "values (%s,%s,'reversal',%s,%s,%s,-500,-5,0,50)",
+        (app1, rev_ev, s["apparatus"], s["scope"], s["project"]))
+    # Voiding app1 must succeed: the guard excludes self-referential credits (other_app.id <> old.id)
+    conn.execute("select ops.void_billing_application(%s,%s,'self-void-test')", (app1, s["person"]))
+    assert conn.execute(
+        "select status from ops.billing_application where id=%s", (app1,)).fetchone()[0] == "voided"
