@@ -1,13 +1,14 @@
-# Ops Chip 4 — Progress Billing (design spec, v5)
+# Ops Chip 4 — Progress Billing (design spec, v6)
 
 > **Lane SSoT:** `reference/ops/00-MASTER-INDEX.md` (§5 revenue/progress-billing model; D-OPS-3).
 > **Builds on:** Chip 1 (`001` identity), Chip 2 (`002` quote model), the person anchor (`004`),
 > and **Chip 3 (`005` recognition ledger)** — FKs into `ops.revenue_recognition_event`.
 > **Migration:** `006_progress_billing.sql` (+ `_down` + `test_006_progress_billing.py`).
 > **Dev only.** TDD on throwaway `ops_test`; gated apply to `ops_dev`. Nothing applied to prod.
-> **Status:** design v5 — hardened across five adversarial passes (four operator audits + three review
-> workflows, 2026-06-21); posture ratified (Option 1: function-owned write API + trigger backstop).
-> Awaiting operator sign-off.
+> **Status:** design v6 — **APPROVED for implementation planning** (operator, 2026-06-21), after four
+> operator audits + three review workflows; posture ratified (Option 1: function-owned write API + trigger
+> backstop). v6 folds the final four low nits (credit `amount < 0`; exception-path flag-containment test;
+> immutability tests run with the gate set; provenance count).
 
 ---
 
@@ -313,8 +314,9 @@ void attempt — which the §8.0 gate already blocks). `application_no` stays bu
    upper-bound; the **exact** draw+release interaction is the §8.5 `held≥0` enforcer — Med-C).
 4. **Line insert-integrity** (`before insert on ops.billing_application_line`), against **committed** state
    only (M-5): the event exists; `event_type/apparatus_id/scope_id/project_id` match it;
-   `amount = round(event.recognized_amount,2)` and (positive line) **`amount > 0`** (skip sub-cent rows that
-   round to 0 — they must not consume the no-double-bill slot); `billable_hours = round(quoted_hours,2)`
+   `amount = round(event.recognized_amount,2)` and **`amount > 0` for a positive line / `amount < 0` for a
+   credit line** (skip sub-cent rows that round to 0 — they must not consume the no-double-bill slot);
+   `billable_hours = round(quoted_hours,2)`
    (positive) / `−round(orig.quoted_hours,2)` (credit, M-4); `retainage_withheld` matches the §5 positive
    rule; `retainage_released` is `0` (positive) or `≤ orig-line.retainage_withheld` (credit); `project_id` =
    the application's project. **Branch eligibility (High-A):** a positive line's event must still be
@@ -364,12 +366,16 @@ assertions. Coverage (≈ 45 cases):
 - **Schema/guards:** retainage_pct bounds; header CHECKs (ref-nonblank, void-shape, **withheld ≤
   positive_gross**, net arithmetic incl. drawn); `uq_billline_active_event` blocks a second active line;
   `uq_billapp_issued_ref` blocks a **duplicate RESA invoice ref** among issued apps (but allows reuse after a
-  void); header/line DELETE + illegal-UPDATE blocked; **deferred header=Σlines** fires on a (gate-bypassed)
-  line insert into a *pre-existing committed* issued app; **deferred held≥0** fires on a (gate-bypassed) over-release.
+  void); header/line DELETE + illegal-UPDATE blocked **with `ops.billing_ctx` manually set** (so the test
+  proves the immutability triggers themselves, not just the outer §8.0 gate); **deferred header=Σlines** fires
+  on a (gate-bypassed) line insert into a *pre-existing committed* issued app; **deferred held≥0** fires on a
+  (gate-bypassed) over-release.
 - **function-only gate (§8.0):** a direct `INSERT`/`UPDATE`/void on a billing table **without** the
-  `ops.billing_ctx` flag is rejected; the four functions (which set it) succeed. **Flag containment:** call a
-  function inside an explicit transaction, then attempt direct DML before commit — it is **rejected** (the
-  function reset the flag at return). The deferred §8.5 assertion still fires at COMMIT regardless of the flag.
+  `ops.billing_ctx` flag is rejected; the four functions (which set it) succeed. **Flag containment (success):**
+  call a function inside an explicit transaction, then attempt direct DML before commit — **rejected** (reset
+  at return). **Flag containment (exception):** a function that raises inside a savepoint, then direct DML
+  after `rollback to savepoint` — **rejected** (the subtransaction rollback cleared the local flag). The
+  deferred §8.5 assertion still fires at COMMIT regardless of the flag.
 - **credit-bearing apps issue (C-1 fix):** a **pure-credit** application (gross<0) issues; a **mixed** app
   where Σcredits ≥ Σpositives issues; withheld is capped at positive_gross (never blocked by the credit).
 - **bill→draw→reverse (C-2 fix):** bill X, draw its retainage, reverse X → the credit issues with
@@ -396,7 +402,8 @@ assertions. Coverage (≈ 45 cases):
   rejects a (gate-bypassed) positive line whose event is now reversed.
 - **canonical credit order (B-8):** a partial reversal where remaining_held < Σ orig-withheld produces a
   reproducible per-line `released` split under the `ORDER BY orig recognized_at, event_id` walk (and aggregate
-  held/customer-net are order-invariant); a sub-cent recognized_amount that rounds to 0.00 is skipped, not billed.
+  held/customer-net are order-invariant); a sub-cent recognized_amount that rounds to 0.00 is skipped on **both**
+  the positive branch and the credit branch (`amount > 0` / `amount < 0` required — §8.4), not billed.
 - **draw (B-5):** explicit draw capped by held-to-date (over-draw rejected); a pure-draw app (empty sweep,
   drawn>0) issues.
 - **reconciliation:** `v_project_billing` / `v_billing_application_sov` tie out across a multi-app,
@@ -417,4 +424,4 @@ assertions. Coverage (≈ 45 cases):
 
 - Lane SSoT `reference/ops/00-MASTER-INDEX.md` §5 / §5a + D-OPS-3.
 - Chip 3 ledger `005_recognition_ledger.sql` (the immutable event substrate this chip reads).
-- Operator ratification (B-1…B-8) + three operator audits + three review workflows, 2026-06-21.
+- Operator ratification (B-1…B-8) + four operator audits + three review workflows, 2026-06-21.
