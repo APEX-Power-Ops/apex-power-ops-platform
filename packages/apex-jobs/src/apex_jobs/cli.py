@@ -1,12 +1,14 @@
 """apex-jobs CLI - thin argparse wrapper over the engine. `apex-jobs <verb> ...`.
 
-Verbs: enqueue, enqueue-review, queue, claim, start, report, request-gate, approve, reject,
+Verbs: enqueue, enqueue-review, review-run, queue, claim, start, report, request-gate, approve, reject,
 gates, status, ledger, reap, promotions, review, unblock. Returns an int exit
 code (3 = gated/refused).
 """
 import argparse
 import json
+import os
 import sys
+import uuid
 
 from . import engine
 
@@ -159,6 +161,8 @@ def cmd_enqueue_review(a):
     misconfigure them; the job runs on the host (where codex lives)."""
     payload = json.loads(a.payload) if a.payload else {}
     payload["review_head"] = a.review_head
+    if a.prompt:
+        payload["prompt"] = a.prompt
     title = a.title or f"codex review: {a.review_head} vs {a.base_ref}"
     jid = engine.enqueue(
         dispatch_id=a.dispatch_id, title=title, payload=payload,
@@ -166,6 +170,36 @@ def cmd_enqueue_review(a):
         env_required=a.env_required, priority=a.priority, created_by=a.by)
     print(jid)
     return 0
+
+
+def cmd_review_run(a):
+    """Synchronous cross-engine review (the IRP front door): enqueue a codex review
+    job, RUN it in-process (REAL codex unless APEX_JOBS_AGENT_CMD overrides the CLI,
+    for tests), and print the findings. Exit 0 if the review ran (succeeded), 3 if it
+    failed. No promotion gate -- a review only reports."""
+    from . import agent_runner
+    disp = a.dispatch_id or f"review-{uuid.uuid4().hex[:8]}"
+    payload = {"review_head": a.review_head}
+    if a.prompt:
+        payload["prompt"] = a.prompt
+    engine.enqueue(dispatch_id=disp,
+                   title=a.title or f"codex review: {a.review_head} vs {a.base_ref}",
+                   payload=payload, target="codex", kind="agent", base_ref=a.base_ref,
+                   env_required="host", created_by=a.by)
+    job = engine.get_job(disp)
+    seam = os.environ.get("APEX_JOBS_AGENT_CMD")
+    agent_cmd = json.loads(seam) if seam else None
+    summary = agent_runner.run_review_job(job, env="host", agent_cmd=agent_cmd)
+    res = (engine.runs_for(disp)[-1]["result"]) or {}
+    if a.json:
+        print(json.dumps({"dispatch_id": disp, "status": summary["status"],
+                          "review_head": a.review_head, "base_ref": a.base_ref,
+                          "findings": res.get("findings", "")}, indent=2))
+    else:
+        print(f"dispatch_id={disp} status={summary['status']}")
+        print("---- findings ----")
+        print(res.get("findings", ""))
+    return 0 if summary["status"] == "succeeded" else 3
 
 
 def build_parser():
@@ -199,8 +233,19 @@ def build_parser():
     er.add_argument("--payload", default=None)
     er.add_argument("--env-required", default="host", dest="env_required")
     er.add_argument("--priority", type=int, default=100)
+    er.add_argument("--prompt", default=None)
     er.add_argument("--by", default=None)
     er.set_defaults(fn=cmd_enqueue_review)
+
+    rr = sub.add_parser("review-run")
+    rr.add_argument("--review-head", required=True, dest="review_head")
+    rr.add_argument("--base-ref", required=True, dest="base_ref")
+    rr.add_argument("--dispatch-id", default=None, dest="dispatch_id")
+    rr.add_argument("--title", default=None)
+    rr.add_argument("--prompt", default=None)
+    rr.add_argument("--json", action="store_true")
+    rr.add_argument("--by", default=None)
+    rr.set_defaults(fn=cmd_review_run)
 
     q = sub.add_parser("queue")
     q.set_defaults(fn=cmd_queue)
