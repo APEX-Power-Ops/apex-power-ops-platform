@@ -169,3 +169,62 @@ def test_review_argv_builds_codex_review_command():
     assert agent_runner._review_argv("main") == [
         "codex", "exec", "review", "--base", "main",
     ]
+
+
+def _enqueue_review_unclaimed(disp, base, created, review_head="HEAD"):
+    """Enqueue a kind='agent' REVIEW job (payload.review_head set, target=codex) and
+    leave it pending so run_pool can claim it. Returns the job id."""
+    created.append(disp)
+    jid = engine.enqueue(dispatch_id=disp, title="review job", env_required="host",
+                         payload={"review_head": review_head})
+    with engine._conn() as c:
+        with c.cursor() as cur:
+            cur.execute("update jobs.job set kind='agent', target='codex', base_ref=%s "
+                        "where id=%s", (base, jid))
+        c.commit()
+    return jid
+
+
+def _enqueue_review(disp, base, created, review_head="HEAD"):
+    """Enqueue + claim — the single-job tests drive run_review_job on the claimed job."""
+    _enqueue_review_unclaimed(disp, base, created, review_head)
+    return engine.claim(as_="cc", env="host")
+
+
+def test_review_job_captures_findings_no_promotion(agent_env):
+    base, created, runs = agent_env
+    j = _enqueue_review("rev-ok", base, created)
+    r = agent_runner.run_review_job(j, env="host", agent_cmd=FAKE)
+    assert r["status"] == "succeeded"
+    assert r["review_head"] == "HEAD"
+    # findings captured from the agent's stdout, tagged as a review result
+    run = engine.runs_for("rev-ok")[-1]
+    assert run["result"]["is_review"] is True
+    assert run["result"]["findings"].strip() != ""
+    assert run["result"]["base_ref"] == base
+    assert run["branch"] == "HEAD"            # the ref under review, recorded for audit
+    # a review only REPORTS: no promotion gate, job terminal at 'succeeded' (NOT awaiting_promotion)
+    assert not any(g["gate_type"] == "promotion" for g in engine.gates_for("rev-ok"))
+    assert engine.get_job("rev-ok")["status"] == "succeeded"
+
+
+def test_review_job_failure_no_promotion(agent_env):
+    base, created, runs = agent_env
+    j = _enqueue_review("rev-fail", base, created)
+    r = agent_runner.run_review_job(j, env="host", agent_cmd=FAKE + ["--fail"])
+    assert r["status"] == "failed"
+    assert not any(g["gate_type"] == "promotion" for g in engine.gates_for("rev-fail"))
+    assert engine.get_job("rev-fail")["status"] == "failed"
+
+
+def test_run_pool_routes_review_job(agent_env):
+    base, created, runs = agent_env
+    _enqueue_review_unclaimed("rev-pool", base, created)
+    summaries = agent_runner.run_pool(as_="cc", env="host", concurrency=2, agent_cmd=FAKE)
+    # the pool routed it down the review path (summary carries review_head, not no_changes)
+    assert len(summaries) == 1
+    assert summaries[0]["status"] == "succeeded"
+    assert "review_head" in summaries[0]
+    # review path => no promotion gate, job NOT parked awaiting_promotion
+    assert engine.get_job("rev-pool")["status"] == "succeeded"
+    assert not any(g["gate_type"] == "promotion" for g in engine.gates_for("rev-pool"))
