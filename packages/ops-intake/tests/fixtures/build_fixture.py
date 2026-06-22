@@ -15,11 +15,16 @@ import openpyxl
 from openpyxl.styles import Font
 
 
-def build(path: pathlib.Path) -> pathlib.Path:
+def build(path: pathlib.Path, job_number: str = "J1-TEST-001",
+          scope_name: str = "A1) MV - Test") -> pathlib.Path:
+    # job_number sets the Dataverse_Import "Job #" (the parsed project_number); scope_name sets the
+    # scope sheet B2 (the line_uid prefix). Both are parameterized so a caller can build a SECOND,
+    # distinct-project workbook for multi-project / collision tests. Keep "A_n)" prefix so the scope
+    # sheet is detected (SCOPE_RE) and the default reconciliation (2 lines, 25h, P4=1000) holds.
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "A1) MV - Test"
-    ws["B2"] = "A1) MV - Test"
+    ws.title = scope_name[:31]
+    ws["B2"] = scope_name
     ws["I3"] = "Total App Hours"
     ws["J3"] = 25.0
     ws["L3"] = "TOTAL SHEET $$$ -NOT ADJUSTED"
@@ -88,7 +93,7 @@ def build(path: pathlib.Path) -> pathlib.Path:
     dv["A2"] = "Site City:"
     dv["B2"] = "Mesa"
     dv["A3"] = "Job #:"
-    dv["B3"] = "J1-TEST-001"
+    dv["B3"] = job_number
 
     path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(path)

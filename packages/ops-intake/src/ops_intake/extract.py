@@ -107,6 +107,10 @@ def _extract_metadata(wb) -> dict:
             mapping["site_state"] = value
         elif label_upper in ("SITE ZIP", "ZIP"):
             mapping["site_zip"] = value
+        elif label_upper in ("JOB #", "JOB#", "JOB NO", "JOB NO.", "JOB NUMBER", "PROJECT NUMBER", "PROJECT NO", "PROJECT NO."):
+            mapping["project_number"] = value
+        elif label_upper in ("PROJECT NAME", "PROJECT TITLE"):
+            mapping["project_name"] = value
     return mapping
 
 
@@ -168,14 +172,17 @@ def extract_workbook(path) -> IntakePayload:
             scopes.append(s)
     scopes.extend(_extract_chiller_scopes(wb, len(scopes) + 1))
     metadata = _extract_metadata(wb)
+    # Project identity is DERIVED from the workbook (Dataverse_Import "Job #"), never hard-coded.
+    # Fall back to a Project/Project-Name label, then the site name; if none, refuse to invent an identity.
+    project_number = metadata.get("project_number") or metadata.get("project_name") or metadata.get("site_name")
+    if not project_number:
+        raise ValueError(
+            "workbook has no project identity (expected a Dataverse_Import 'Job #:' / 'Project Name:' row)"
+        )
     project = ProjectIn(
-        project_number="MINER-PHX-AB-MV",
-        project_name="Project Miner — PHX Bldg A & B MV",
-        status="Won",
-        quote_revision="Rev10",
+        project_number=project_number,
+        project_name=metadata.get("project_name") or project_number,
         contract_value=_contract_value(wb),
-        description=("Public/product name: Project Jupiter — Oracle/STACK data-center campus, "
-                     "Doña Ana County NM."),
         client_name=metadata.get("client_name"),
         site_name=metadata.get("site_name"),
         site_address=metadata.get("site_address"),

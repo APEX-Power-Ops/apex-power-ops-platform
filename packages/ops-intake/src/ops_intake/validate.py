@@ -130,8 +130,8 @@ def validate_payload(
             code="n4_default",
             severity="info",
             ok=True,
-            message="Unit multiplier (N4) was not found and has been defaulted",
-            diagnostic_detail="n4_defaulted=True; unit_multiplier defaulted to 1",
+            message="Pct-adjust (N4) was not found and has been defaulted to 1",
+            diagnostic_detail="n4_defaulted=True; pct_adjust (N4) defaulted to 1 (M4 is the unit multiplier)",
         ))
 
     return findings
