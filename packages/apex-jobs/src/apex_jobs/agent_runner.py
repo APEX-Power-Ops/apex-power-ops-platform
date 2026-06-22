@@ -57,8 +57,11 @@ def _agent_argv(target, prompt):
 REVIEW_CMD = ["codex", "exec", "review", "--base", "{base}"]
 
 
-def _review_argv(base_ref):
-    return [a.replace("{base}", base_ref) for a in REVIEW_CMD]
+def _review_argv(base_ref, prompt=None):
+    argv = [a.replace("{base}", base_ref) for a in REVIEW_CMD]
+    if prompt:
+        argv.append(prompt)            # codex exec review [PROMPT] = custom review instructions
+    return argv
 
 
 _DEFAULT_AGENT_PATH = os.pathsep.join([
@@ -158,7 +161,8 @@ def run_review_job(job, env, as_="cc", agent_cmd=None):
         _git("worktree", "remove", "--force", wt, cwd=repo, check=False)   # idempotent (requeue-safe)
         _git("worktree", "add", "--detach", wt, review_head, cwd=repo)
 
-    argv = agent_cmd or _review_argv(base_ref)
+    prompt = (job.get("payload") or {}).get("prompt")
+    argv = agent_cmd or _review_argv(base_ref, prompt)
 
     # Heartbeat the lease during long reviews; harmless for fast (fake) runs.
     stop = threading.Event()
