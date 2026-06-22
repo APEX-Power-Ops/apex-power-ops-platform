@@ -2,6 +2,7 @@
 reap, promotions, review, unblock, and approve/reject routing a promotion gate to
 engine.promote / discard_promotion. Reuses the offline fake-agent harness to park
 a job at awaiting_promotion - no claude, no tokens."""
+import json
 import os
 import subprocess
 import sys
@@ -132,3 +133,39 @@ def test_enqueue_review_default_title(conn_test):
                      "--review-head", "br", "--base-ref", "main"]) == 0
     title = engine.get_job("rv-2")["title"]
     assert "br" in title and "main" in title
+
+
+def test_review_run_synchronous_findings(conn_test, tmp_path, monkeypatch, capsys):
+    base = f"rr-base-{os.path.basename(str(tmp_path))}"
+    head = f"rr-head-{os.path.basename(str(tmp_path))}"
+    _git("branch", "-f", base, "HEAD")
+    hwt = str(tmp_path / "hwt")
+    _git("worktree", "add", "-b", head, hwt, base)
+    runs = str(tmp_path / "runs")
+    monkeypatch.setenv("APEX_JOBS_REPO", REPO)
+    monkeypatch.setenv("APEX_JOBS_RUNS_DIR", runs)
+    monkeypatch.setenv("APEX_JOBS_AGENT_CMD", json.dumps(FAKE))   # offline: drive the fake agent
+    disp = "rr-1"
+    try:
+        rc = cli.main(["review-run", "--dispatch-id", disp, "--review-head", head,
+                       "--base-ref", base, "--json"])
+        assert rc == 0
+        out = json.loads(capsys.readouterr().out)
+        assert out["status"] == "succeeded"
+        assert out["review_head"] == head and out["base_ref"] == base
+        assert out["findings"].strip() != ""
+        # synchronous review => no promotion gate, job terminal succeeded
+        assert not any(g["gate_type"] == "promotion" for g in engine.gates_for(disp))
+        assert engine.get_job(disp)["status"] == "succeeded"
+    finally:
+        _git("worktree", "remove", "--force", hwt, check=False)
+        _git("worktree", "remove", "--force", os.path.join(runs, disp), check=False)
+        _git("worktree", "prune", check=False)
+        _git("branch", "-D", head, check=False)
+        _git("branch", "-D", base, check=False)
+
+
+def test_enqueue_review_accepts_prompt(conn_test):
+    assert cli.main(["enqueue-review", "--dispatch-id", "rv-p", "--review-head", "h",
+                     "--base-ref", "b", "--prompt", "check the auth path"]) == 0
+    assert engine.get_job("rv-p")["payload"]["prompt"] == "check the auth path"
