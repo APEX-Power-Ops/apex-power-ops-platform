@@ -161,3 +161,11 @@ def test_agent_env_default_includes_codex_bin(monkeypatch):
     monkeypatch.delenv("APEX_JOBS_AGENT_PATH", raising=False)
     env = agent_runner._agent_env("host")
     assert "/home/olares/.nvm/versions/node/v20.20.2/bin" in env["PATH"].split(os.pathsep)
+
+
+def test_review_argv_builds_codex_review_command():
+    # A cross-engine review checks out review_head (detached) and diffs it against
+    # base_ref via `codex exec review --base <base_ref>` (findings go to stdout).
+    assert agent_runner._review_argv("main") == [
+        "codex", "exec", "review", "--base", "main",
+    ]

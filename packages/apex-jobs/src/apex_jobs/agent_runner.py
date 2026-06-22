@@ -51,6 +51,16 @@ def _agent_argv(target, prompt):
 
 
 
+# A cross-engine (Codex) review: the worktree is checked out (detached) at the ref
+# under review, so `codex exec review --base <base_ref>` diffs review_head against
+# base_ref and prints findings to stdout (the review subcommand has no --json/-o).
+REVIEW_CMD = ["codex", "exec", "review", "--base", "{base}"]
+
+
+def _review_argv(base_ref):
+    return [a.replace("{base}", base_ref) for a in REVIEW_CMD]
+
+
 _DEFAULT_AGENT_PATH = os.pathsep.join([
     "/home/olares/.local/share/fnm/node-versions/v22.22.2/installation/bin",  # claude (fnm)
     "/home/olares/.nvm/versions/node/v20.20.2/bin",                            # codex (nvm v20)
