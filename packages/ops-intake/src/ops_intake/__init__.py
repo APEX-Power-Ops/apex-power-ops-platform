@@ -1,1 +1,1 @@
-"""ops-intake: Estimator .xlsm -> ops.* intake (Project Miner; ops Chip 5)."""
+"""ops-intake: Estimator .xlsm / DataverseExport JSON -> ops.* intake (ops Chip 5)."""

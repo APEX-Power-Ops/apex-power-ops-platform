@@ -244,4 +244,3 @@ cadence (design → spec → plan → TDD → chip-sized PR into `main`).
 ---
 
 *End — Operations (PM) lane re-baseline v1 (draft for review; nothing applied). On approval: commit to `reference/ops/`, then pick the first chip → its design/spec/plan/TDD pass.*
-

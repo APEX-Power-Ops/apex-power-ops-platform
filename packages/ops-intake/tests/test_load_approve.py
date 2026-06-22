@@ -50,7 +50,7 @@ def test_approve_is_scoped_to_its_project(mini_workbook, clean_ops):
 
     r = create_run(dsn, uploaded_by=who, filename="m.xlsm",
                    raw_bytes=mini_workbook.read_bytes(), content_type="xlsm")
-    approve_run(dsn, r["run_id"], approved_by=who)  # approves MINER-PHX-AB-MV only
+    approve_run(dsn, r["run_id"], approved_by=who)  # approves the intake-owned project only (fixture project_number, derived from Job#)
 
     with psycopg.connect(dsn) as c:
         frozen = c.execute(

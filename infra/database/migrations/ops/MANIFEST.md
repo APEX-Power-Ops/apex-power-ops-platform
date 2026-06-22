@@ -25,4 +25,3 @@ The Estimator `.xlsm` → `ops.*` loader lives at [`packages/ops-intake/`](../..
 Production tracking (Chip 6+) · `public`/`seam`/`schedule` → `ops` convergence (Chip N) · prod application of `ops.*`.
 
 > **Chip 5 BUILT** (2026-06-21): intake envelope (mig 007) + `ops-intake` parse/approve package + host-gated control-plane API + `operations-web` pm-review page. Dev-only on `ops_test`; operator-gated merge.
-

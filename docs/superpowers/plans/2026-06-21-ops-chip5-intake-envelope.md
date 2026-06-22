@@ -456,7 +456,7 @@ def test_down_then_up_is_idempotent_and_chips_survive():
         assert c.execute("select to_regclass('ops.intake_runs')").fetchone()[0] is not None
 ```
 
-- [ ] **Step 2: Run — expect FAIL** if the down is incomplete (re-running `007.sql` errors on existing types, or down leaves an object). 
+- [ ] **Step 2: Run — expect FAIL** if the down is incomplete (re-running `007.sql` errors on existing types, or down leaves an object).
 - [ ] **Step 3: Verify `007_intake_envelope_down.sql` is complete** (Tasks 1+2 drops cover every 007 object: 3 tables, 3 enums, 2 immutability fns/triggers, 2 guard fns/triggers, 2 indexes created outside the tables [`uq_intake_one_active`, `uq_ops_tasks_intake`], 6 columns). Add the missing index drop:
 
 ```sql
@@ -907,7 +907,7 @@ def test_recognized_then_reversed_still_blocks(mini_workbook, clean_ops):
 **Interfaces:** `extract <xlsm> --out` (unchanged) · `intake <xlsm> --dsn --uploaded-by` (calls `create_run`, prints run_id/status/conflict) · `approve <run_id> --dsn --approved-by` (calls `approve_run`). Drop the old `load --approve`.
 
 - [ ] **Step 1: Write failing test** (`test_cli.py`): invoke `main(["intake", str(mini_workbook), "--dsn", dsn, "--uploaded-by", str(who)])` → returns 0, a run exists with status `parsed`.
-- [ ] **Step 2: Run — FAIL.** 
+- [ ] **Step 2: Run — FAIL.**
 - [ ] **Step 3: Implement** the `intake`/`approve` subcommands.
 - [ ] **Step 4: Run — PASS.**
 - [ ] **Step 5: Commit** (`-m "feat(ops-intake): CLI intake/approve subcommands"`)
