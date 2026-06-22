@@ -145,3 +145,19 @@ def test_run_pool_isolates_failing_job(agent_env, monkeypatch):
     assert any("error" in r for r in res)
     assert any(r.get("status") == "succeeded" for r in res)
     assert engine.get_job("q-1")["status"] == "awaiting_promotion"
+
+
+def test_agent_env_prepends_agent_bins_to_path(monkeypatch):
+    monkeypatch.setenv("APEX_JOBS_AGENT_PATH", "/opt/agent/bin")
+    monkeypatch.setenv("PATH", "/usr/bin")
+    env = agent_runner._agent_env("host")
+    assert env["APEX_JOB_ENV"] == "host"
+    parts = env["PATH"].split(os.pathsep)
+    assert parts[0] == "/opt/agent/bin", parts
+    assert "/usr/bin" in parts
+
+
+def test_agent_env_default_includes_codex_bin(monkeypatch):
+    monkeypatch.delenv("APEX_JOBS_AGENT_PATH", raising=False)
+    env = agent_runner._agent_env("host")
+    assert "/home/olares/.nvm/versions/node/v20.20.2/bin" in env["PATH"].split(os.pathsep)

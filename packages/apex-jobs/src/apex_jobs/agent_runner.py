@@ -50,6 +50,25 @@ def _agent_argv(target, prompt):
     return [a.replace("{prompt}", prompt) for a in tmpl]
 
 
+
+_DEFAULT_AGENT_PATH = os.pathsep.join([
+    "/home/olares/.local/share/fnm/node-versions/v22.22.2/installation/bin",  # claude (fnm)
+    "/home/olares/.nvm/versions/node/v20.20.2/bin",                            # codex (nvm v20)
+])
+
+
+def _agent_env(job_env):
+    """Subprocess env for the agent CLI: os.environ + the job-env marker, with the
+    agent bin dir(s) prepended to PATH so `claude` / `codex` (and their node)
+    resolve under the non-interactive worker (neither is on the login PATH).
+    Override the bins via APEX_JOBS_AGENT_PATH."""
+    env = {**os.environ, "APEX_JOB_ENV": job_env}
+    extra = os.environ.get("APEX_JOBS_AGENT_PATH", _DEFAULT_AGENT_PATH)
+    if extra:
+        env["PATH"] = extra + os.pathsep + env.get("PATH", "")
+    return env
+
+
 def run_agent_job(job, env, as_="cc", agent_cmd=None):
     """Run a kind='agent' job in an isolated worktree; capture diff + result; on
     success open a promotion gate (leaving the worktree intact for review).
@@ -84,7 +103,7 @@ def run_agent_job(job, env, as_="cc", agent_cmd=None):
 
     threading.Thread(target=_hb, daemon=True).start()
     try:
-        proc = subprocess.run(argv, cwd=wt, env={**os.environ, "APEX_JOB_ENV": env},
+        proc = subprocess.run(argv, cwd=wt, env=_agent_env(env),
                               capture_output=True, text=True, timeout=TIMEOUT_S)
         rc, out, err = proc.returncode, proc.stdout, proc.stderr
     except subprocess.TimeoutExpired as e:
