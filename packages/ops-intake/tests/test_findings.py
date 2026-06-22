@@ -27,3 +27,15 @@ def test_n4_default_is_info_when_reconciles():
     n4 = [f for f in fs if f.code == "n4_default"][0]
     assert n4.severity in ("info","fidelity") and n4.ok is True
     assert all(f.ok for f in fs if f.severity == "blocking")
+
+
+def test_scope_name_with_dollar_does_not_leak_into_message():
+    """A workbook scope literally named with a '$' must NOT put a '$' into any PM-safe finding message
+    (the name lives in diagnostic_detail; the message references the scope by index). (Codex finding 4)"""
+    q = ScopeQuoteIn(onsite_labor=1000, total_quoted_hours=5)  # J3=5 != line 2 -> j3_mismatch fires
+    s = ScopeIn(scope_name="Switchgear $1234", quote=q, lines=[QuoteLineIn("X", "ATS", 1, 2.0)])
+    p = IntakePayload(ProjectIn(project_number="J", project_name="N", contract_value=1000.0), [s])
+    fs = validate_payload(p, source_format="decomposed_scope_sheet")
+    assert fs  # at least the j3_mismatch finding
+    for f in fs:
+        assert "$" not in f.message, f.message

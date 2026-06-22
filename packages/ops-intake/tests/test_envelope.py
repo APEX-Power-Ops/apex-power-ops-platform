@@ -243,3 +243,32 @@ def test_create_run_json_intake(clean_ops):
                      raw_bytes=b"{not valid json", content_type="json")
     assert bad["status"] == "rejected"
     assert any(f["code"] == "parse_error" and f["severity"] == "blocking" for f in bad["findings"])
+
+
+def test_allowlist_error_message_is_value_free():
+    """A guard rejection must NOT leak the quote dollar values in its message -- finance redaction
+    applies to guard errors too (the API returns a generic 400, and the message itself is value-free).
+    (Codex finding 1)"""
+    import pytest
+    bad = _canon()
+    bad["scopes"][0]["quote"]["onsite_labor"] = 99999
+    with pytest.raises(ValueError) as ei:
+        _assert_review_within_allowlist(_canon(), bad)
+    msg = str(ei.value)
+    assert "$" not in msg
+    assert "99999" not in msg and "1000" not in msg  # neither the review nor the canonical dollar value
+
+
+def test_patch_review_on_inactive_run_raises_run_not_active(mini_workbook, clean_ops):
+    """patch_review on an approved (inactive) run raises RunNotActive (API maps to 409), re-checked
+    under the run-row FOR UPDATE lock -- never a silent revert of an approved run. (Codex finding 2)"""
+    import pytest
+    from ops_intake.envelope import RunNotActive
+    from ops_intake.approve import approve_run
+    dsn = clean_ops
+    who = _person(dsn)
+    r = create_run(dsn, uploaded_by=who, filename="m.xlsm",
+                   raw_bytes=_bytes(mini_workbook), content_type="xlsm")
+    approve_run(dsn, r["run_id"], approved_by=who)  # -> status 'approved' (inactive)
+    with pytest.raises(RunNotActive):
+        patch_review(dsn, r["run_id"], review_payload=r["review_payload"])

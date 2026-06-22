@@ -25,17 +25,23 @@ from __future__ import annotations
 import os
 from typing import Any
 
+import psycopg
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import JSONResponse
 
 from ops_intake.approve import approve_run
 from ops_intake.envelope import (
     ActiveRunExists,
+    RunNotActive,
     create_run,
     get_run,
     patch_review,
     reject_run,
 )
+
+# content_type values the DB CHECK (mig 007) accepts; anything else is a 422 at the boundary so a
+# stale/adversarial client can never turn an unexpected value into a DB constraint failure (500).
+_ALLOWED_CONTENT_TYPES = {"xlsm", "json"}
 
 router = APIRouter(prefix="/api/v1/ops/intake", tags=["ops-intake"])
 
@@ -79,6 +85,14 @@ async def upload_workbook(
 
     Enforces 25 MB cap before reading.  Returns PM-safe run summary.
     """
+    # Validate content_type at the boundary (the DB CHECK only accepts xlsm|json). A 422 here keeps a
+    # stale/adversarial value from becoming a DB constraint failure (500) downstream.
+    if content_type not in _ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="content_type must be one of: xlsm, json",
+        )
+
     # Enforce size cap before reading the body (check Content-Length via size
     # if provided by the client, then verify after reading).
     if file.size is not None and file.size > _MAX_UPLOAD_BYTES:
@@ -107,6 +121,12 @@ async def upload_workbook(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(exc),
+        )
+    except psycopg.errors.ForeignKeyViolation:
+        # uploaded_by must reference a known ops.persons row -- a clean 400, not an uncaught 500.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="uploaded_by is not a known person (configure a valid ops.persons UUID)",
         )
 
     return JSONResponse(
@@ -186,10 +206,20 @@ async def post_review(run_id: str, request: Request) -> JSONResponse:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="run not found: " + run_id,
         )
-    except ValueError as exc:
+    except RunNotActive:
+        # Lifecycle race: the run was approved/rejected/superseded between the status check and the
+        # FOR UPDATE lock inside patch_review. A controlled 409, not a 400.
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="run " + run_id + " is no longer active",
+        )
+    except ValueError:
+        # GENERIC PM-safe detail -- NEVER str(exc). The allowlist/cross-scope guards can reference the
+        # quote dollar basis; returning the raw message would leak protected values to the PM surface.
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
+            detail=("Review edit rejected: only the task grouping (section) and hours-per-unit are "
+                    "editable; every other field must match the parsed quote."),
         )
 
     updated = dict(updated)
@@ -226,6 +256,12 @@ async def post_approve(run_id: str, request: Request) -> JSONResponse:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="run not found: " + run_id,
+        )
+    except psycopg.errors.ForeignKeyViolation:
+        # approved_by must reference a known ops.persons row -- a clean 400, not an uncaught 500.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="approved_by is not a known person (configure a valid ops.persons UUID)",
         )
 
     outcome = result.get("outcome")

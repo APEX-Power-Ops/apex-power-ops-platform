@@ -395,3 +395,49 @@ class TestReject:
             json={"reason": "too late"},
         )
         assert resp.status_code == 409
+
+
+class TestCodexAuditHardening:
+    """Post-audit boundary hardening from the Codex review (content_type validation, unknown-actor
+    4xx, generic value-free review-guard detail)."""
+
+    _MIME = "application/vnd.ms-excel.sheet.macroEnabled.12"
+
+    def test_invalid_content_type_returns_422(self, client, mini_wb_bytes, person_id):
+        # finding 3: a content_type outside {xlsm,json} is a 422 at the boundary, never a DB CHECK 500.
+        resp = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "application/octet-stream"},
+            files={"file": ("x.bin", mini_wb_bytes, "application/octet-stream")},
+        )
+        assert resp.status_code == 422, resp.text
+
+    def test_unknown_actor_returns_400_not_500(self, client, mini_wb_bytes):
+        # finding 6: an uploaded_by UUID not in ops.persons is a clean 400, not an uncaught FK 500.
+        import uuid
+        resp = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": str(uuid.uuid4()), "content_type": "xlsm"},
+            files={"file": ("mini.xlsm", mini_wb_bytes, self._MIME)},
+        )
+        assert resp.status_code == 400, resp.text
+
+    def test_review_guard_rejection_is_generic_and_dollar_free(self, client, mini_wb_bytes, person_id):
+        # finding 1: a review tamper that trips the allowlist returns a GENERIC 400 with NO dollar
+        # value -- never the raw canonical=/review= leak.
+        up = client.post(
+            "/api/v1/ops/intake",
+            data={"uploaded_by": person_id, "content_type": "xlsm"},
+            files={"file": ("mini.xlsm", mini_wb_bytes, self._MIME)},
+        )
+        assert up.status_code == 200, up.text
+        run = up.json()
+        rp = run["review_payload"]
+        rp["scopes"][0]["quote"]["onsite_labor"] = 999999  # tamper a pinned dollar field
+        resp = client.post(
+            f"/api/v1/ops/intake/{run['run_id']}/review",
+            json={"review_payload": rp},
+        )
+        assert resp.status_code == 400, resp.text
+        assert not _contains_substring(resp.json(), "999999")
+        assert not _contains_substring(resp.json(), "$")

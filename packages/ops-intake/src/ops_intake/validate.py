@@ -100,7 +100,10 @@ def validate_payload(
         ))
 
     # 3. J3 vs sum(line_hours) per scope (blocking)
-    for s in p.scopes:
+    # The PM-safe message references the scope by INDEX, not its raw name: a workbook-supplied scope
+    # name can contain a "$" and would otherwise violate the no-dollar-text rule on the PM surface. The
+    # name lives in the finance-only diagnostic_detail.
+    for i, s in enumerate(p.scopes, start=1):
         if s.lines:
             lh = round(sum(l.line_hours for l in s.lines), 4)
             ok = abs(lh - s.quote.total_quoted_hours) <= TOL
@@ -108,8 +111,8 @@ def validate_payload(
                 code="j3_mismatch",
                 severity="blocking",
                 ok=ok,
-                message=f"Scope {s.scope_name!r} hours do not reconcile",
-                diagnostic_detail=f"J3={s.quote.total_quoted_hours} vs Σline={lh}",
+                message=f"Scope #{i} hours do not reconcile",
+                diagnostic_detail=f"scope={s.scope_name!r}; J3={s.quote.total_quoted_hours} vs Σline={lh}",
             ))
 
     # 4. Contract total (blocking)

@@ -24,6 +24,13 @@ class ActiveRunExists(Exception):
     pass
 
 
+class RunNotActive(Exception):
+    """patch_review was called on a run that is no longer parsed/reviewing (the API maps this to 409,
+    distinct from a guard ValueError which is a 400). Raised under the run-row FOR UPDATE lock, so it
+    reflects the committed lifecycle state, not a stale read."""
+    pass
+
+
 def _payload_from_dict(d):
     """Reconstruct an IntakePayload from a plain dict (e.g. review_payload_json)."""
     proj = ProjectIn(**{
@@ -100,11 +107,7 @@ def _assert_review_within_allowlist(canonical, review):
     all_proj_keys = set(canon_proj) | set(rev_proj)
     for k in all_proj_keys:
         if canon_proj.get(k) != rev_proj.get(k):
-            raise ValueError(
-                "project field " + repr(k) + " is not mutable: " +
-                "canonical=" + repr(canon_proj.get(k)) +
-                ", review=" + repr(rev_proj.get(k))
-            )
+            raise ValueError("project field " + repr(k) + " is not editable")
 
     # 2. Scope set
     canon_scopes = {s["scope_name"]: s for s in canonical.get("scopes", [])}
@@ -126,11 +129,11 @@ def _assert_review_within_allowlist(canonical, review):
         all_quote_keys = set(cq) | set(rq)
         for k in all_quote_keys:
             if cq.get(k) != rq.get(k):
+                # NB: message is value-FREE -- the quote dollar figures must never appear in an error
+                # that can reach the PM surface (finance redaction applies to guard errors too).
                 raise ValueError(
                     "scope " + repr(scope_name) +
-                    " quote field " + repr(k) + " is not mutable: " +
-                    "canonical=" + repr(cq.get(k)) +
-                    ", review=" + repr(rq.get(k))
+                    " quote field " + repr(k) + " is not editable"
                 )
 
         # 4. Lines: exact same multiset of line_uid values
@@ -172,9 +175,7 @@ def _assert_review_within_allowlist(canonical, review):
                     raise ValueError(
                         "scope " + repr(scope_name) +
                         " line " + repr(uid) +
-                        ": field " + repr(k) + " is not mutable: " +
-                        "canonical=" + repr(canon_line.get(k)) +
-                        ", review=" + repr(rev_line.get(k))
+                        ": field " + repr(k) + " is not editable"
                     )
 
 
@@ -184,10 +185,15 @@ def patch_review(dsn, run_id, *, review_payload):
 
     with psycopg.connect(dsn) as conn:
         with conn.cursor() as cur:
+            # FOR UPDATE serializes concurrent patches (no lost-update / mixed-version findings) and
+            # coordinates with approve_run's run-row lock: a save racing an approval either sees the
+            # approved status here (-> ValueError, mapped to 409) or commits before approve takes the
+            # row. patch_review takes only the run-row lock (never the project advisory lock), so it
+            # cannot deadlock against approve (which takes advisory first, then the run row).
             cur.execute(
                 "select status, canonical_payload_json, review_payload_version, source_format"
                 "  from ops.intake_runs"
-                " where id = %s",
+                " where id = %s for update",
                 (run_id,),
             )
             row = cur.fetchone()
@@ -197,7 +203,7 @@ def patch_review(dsn, run_id, *, review_payload):
             status, canonical_json, current_version, source_format = row
 
             if status not in _ACTIVE_STATUSES:
-                raise ValueError(
+                raise RunNotActive(
                     "patch_review only allowed on parsed/reviewing runs; " +
                     "run " + repr(run_id) + " has status " + repr(status)
                 )
@@ -215,7 +221,8 @@ def patch_review(dsn, run_id, *, review_payload):
                 "     review_payload_version = %s,"
                 "     status = %s::ops.intake_run_status,"
                 "     updated_at = now()"
-                " where id = %s",
+                " where id = %s"
+                "   and status in ('parsed'::ops.intake_run_status, 'reviewing'::ops.intake_run_status)",
                 (
                     json.dumps(review_payload, default=str),
                     new_version,

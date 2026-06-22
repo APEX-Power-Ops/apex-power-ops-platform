@@ -397,7 +397,7 @@ export default function EstimatorIntakePage() {
         <h2 className="mb-2 text-sm font-semibold text-gray-700">Upload Workbook</h2>
         <input
           type="file"
-          accept=".xlsm,.xlsx,.xls"
+          accept=".xlsm,.xlsx,.xls,.json"
           onChange={handleFileChange}
           disabled={uploading}
           aria-label="Upload estimator workbook"
