@@ -2,8 +2,11 @@ import { expect, test } from '@playwright/test'
 
 import {
   buildTree,
+  treeToReviewPayload,
+  workbookContentType,
   type IntakeFinding,
   type LineNode,
+  type ReviewPayload,
   type ScopeNode,
   type TaskNode,
 } from '../lib/estimator-intake'
@@ -229,4 +232,60 @@ test('ScopeNode type is assignable', () => {
     tasks: [],
   }
   expect(node.scopeName).toBe('Test')
+})
+
+test('treeToReviewPayload preserves all pinned fields, overlays only section + hrs_per_unit', () => {
+  // Server-pinned fields the allowlist requires preserved: the scope `quote` and the line `line_number`
+  // (deliberately untyped on RawScope/RawLine, but present at runtime). The lossy rebuild dropped them
+  // and a real Save-Review 400'd; this round-trip proves the deep-clone+overlay preserves them.
+  const original: ReviewPayload = {
+    project: { project_number: 'P1', project_name: 'N', client_name: 'C' },
+    scopes: [
+      {
+        scope_name: 'A',
+        scope_type: 'ATS',
+        sort_order: 1,
+        quote: { onsite_labor: 1000, offsite_labor: 0, travel: 0, outside_services: 0,
+                 unit_multiplier: 1, pct_adjust: 1, total_quoted_hours: 7 },
+        lines: [
+          { apparatus_type: 'X', test_standard: 'ATS', qty: 2, hrs_per_unit: 2.0,
+            section: 'old', line_uid: 'A:row1', line_number: 1, neta_section: '7.1' },
+          { apparatus_type: 'Y', test_standard: 'ATS', qty: 3, hrs_per_unit: 1.0,
+            section: 'old', line_uid: 'A:row2', line_number: 2, neta_section: '7.2' },
+        ],
+      },
+    ],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any
+
+  const tree = buildTree(original)
+  // Edit row1: change hours AND move it to a NEW task (a section change == task regroup).
+  for (const t of tree[0].tasks) {
+    for (const l of t.lines) {
+      if (l.lineUid === 'A:row1') { l.hoursPerUnit = 9.5; l.section = 'NEW TASK' }
+    }
+  }
+  const out = treeToReviewPayload(tree, original)
+
+  const expected = JSON.parse(JSON.stringify(original))
+  expected.scopes[0].lines[0].section = 'NEW TASK'
+  expected.scopes[0].lines[0].hrs_per_unit = 9.5
+  // Deep-equality: EVERYTHING except the two overlaid fields must match byte-for-byte (incl. quote,
+  // line_number, neta_section -- the fields the old rebuild silently dropped).
+  expect(out).toEqual(expected)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const outScope = out.scopes[0] as any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const origScope = original.scopes[0] as any
+  expect(outScope.quote).toEqual(origScope.quote)            // scope dollar basis preserved
+  expect(outScope.lines[0].line_number).toBe(1)              // line_number preserved
+  expect(outScope.lines[1].hrs_per_unit).toBe(1.0)           // untouched line unchanged
+})
+
+test('workbookContentType derives from the file extension, not the browser MIME', () => {
+  expect(workbookContentType('estimator.xlsm')).toBe('xlsm')
+  expect(workbookContentType('ESTIMATOR.XLSX')).toBe('xlsm')
+  expect(workbookContentType('export.json')).toBe('json')
+  expect(workbookContentType('notes.txt')).toBeNull()
+  expect(workbookContentType('noextension')).toBeNull()
 })

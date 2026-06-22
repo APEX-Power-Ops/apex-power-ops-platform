@@ -14,11 +14,19 @@ import {
   editReview,
   approveRun,
   uploadWorkbook,
+  treeToReviewPayload,
+  workbookContentType,
 } from '../../../lib/estimator-intake'
 
 const { useCallback, useState } = React
 
-const PM_ACTOR_ID = 'pm-001'
+// The intake actor must be a real ops.persons(person_id) UUID (the DB FKs uploaded_by / approved_by).
+// In dev, configure NEXT_PUBLIC_OPS_DEV_PM_ID to a real seeded person; real multi-user auth is the
+// named prod follow-on. The fallback is a valid-FORMAT placeholder UUID (NOT the old non-UUID
+// "pm-001"): if it ever reaches a real backend unconfigured, the ops.persons FK rejects it LOUDLY
+// (a clear 4xx), never silently mis-attributing a run.
+const PM_ACTOR_ID =
+  process.env.NEXT_PUBLIC_OPS_DEV_PM_ID || '00000000-0000-0000-0000-000000000001'
 
 // ---------------------------------------------------------------------------
 // Sub-components
@@ -265,29 +273,8 @@ function applyRegroup(
 // reviewPayload rebuild from ScopeNode[] (for editReview)
 // ---------------------------------------------------------------------------
 
-function treeToReviewPayload(tree: ScopeNode[], original: ReviewPayload): ReviewPayload {
-  return {
-    ...original,
-    scopes: tree.map((scope) => ({
-      scope_name: scope.scopeName,
-      scope_type: scope.scopeType,
-      sort_order: scope.sortOrder,
-      lines: scope.tasks.flatMap((task) =>
-        task.lines.map((line) => ({
-          apparatus_type: line.apparatusType,
-          test_standard: line.testStandard,
-          qty: line.qty,
-          hrs_per_unit: line.hoursPerUnit,
-          section: line.section,
-          line_uid: line.lineUid,
-          drawing: line.drawing,
-          designation: line.designation,
-          notes: line.notes,
-        })),
-      ),
-    })),
-  }
-}
+// treeToReviewPayload + workbookContentType now live in lib/estimator-intake.ts (testable, co-located
+// with buildTree). Imported above.
 
 // ---------------------------------------------------------------------------
 // Main page component
@@ -317,11 +304,17 @@ export default function EstimatorIntakePage() {
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
       if (!file) return
+      const contentType = workbookContentType(file.name)
+      if (!contentType) {
+        setError('Unsupported file type — upload a .xlsm/.xlsx workbook or a .json export.')
+        e.target.value = ''
+        return
+      }
       setUploading(true)
       setError(null)
       setSuccessMsg(null)
       try {
-        const result = await uploadWorkbook(file, PM_ACTOR_ID, file.type || 'application/octet-stream')
+        const result = await uploadWorkbook(file, PM_ACTOR_ID, contentType)
         setRun(result)
         setTree(buildTree(result.review_payload))
       } catch (err) {

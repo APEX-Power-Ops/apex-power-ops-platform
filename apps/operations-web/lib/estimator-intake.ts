@@ -43,6 +43,7 @@ export type IntakeRunStatus =
   | 'approved'
   | 'rejected'
   | 'revision_blocked'
+  | 'superseded'
 
 export interface IntakeRun {
   run_id: string
@@ -315,4 +316,51 @@ export async function rejectRun(runId: string, reason: string): Promise<IntakeRu
     body: JSON.stringify({ reason }),
   })
   return parseResponse<IntakeRun>(res)
+}
+
+// ---------------------------------------------------------------------------
+// Upload helpers + inverse of buildTree (fold the edited tree back to a payload)
+// ---------------------------------------------------------------------------
+
+/** The DB-allowed content_type literal ('xlsm' | 'json'), derived from the file NAME (not the browser
+ *  MIME, which is application/vnd... and would violate the 007 check), or null for an unsupported ext. */
+export function workbookContentType(filename: string): 'xlsm' | 'json' | null {
+  const lower = filename.toLowerCase()
+  if (lower.endsWith('.xlsm') || lower.endsWith('.xlsx')) return 'xlsm'
+  if (lower.endsWith('.json')) return 'json'
+  return null
+}
+
+/**
+ * Fold the edited tree back into a review_payload for editReview.
+ *
+ * The server allowlist pins EVERY field except per-line `section` + `hrs_per_unit`. Rebuilding the
+ * payload from the (lossy) tree drops server-pinned fields the tree never carries -- the scope
+ * `quote` (the dollar basis) and the line `line_number`/catalog fields -- so the edit would 400.
+ * Instead we DEEP-CLONE the original (preserving every runtime field, including ones these TS types
+ * deliberately omit) and overlay ONLY the two mutable fields per line, matched by line_uid. Cross-scope
+ * moves are forbidden server-side, so a line keeps its scope; "regroup into a task" is a section change.
+ */
+export function treeToReviewPayload(tree: ScopeNode[], original: ReviewPayload): ReviewPayload {
+  const edits = new Map<string, { section: string | null; hrs_per_unit: number }>()
+  for (const scope of tree) {
+    for (const task of scope.tasks) {
+      for (const line of task.lines) {
+        if (line.lineUid != null) {
+          edits.set(line.lineUid, { section: line.section ?? null, hrs_per_unit: line.hoursPerUnit })
+        }
+      }
+    }
+  }
+  const clone: ReviewPayload = JSON.parse(JSON.stringify(original))
+  for (const scope of clone.scopes ?? []) {
+    for (const line of scope.lines ?? []) {
+      const e = line.line_uid != null ? edits.get(line.line_uid) : undefined
+      if (e) {
+        line.section = e.section
+        line.hrs_per_unit = e.hrs_per_unit
+      }
+    }
+  }
+  return clone
 }
