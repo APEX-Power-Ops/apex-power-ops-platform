@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import pathlib
 import re
 
@@ -191,3 +192,72 @@ def extract_workbook(path) -> IntakePayload:
         site_zip=metadata.get("site_zip"),
     )
     return IntakePayload(project=project, scopes=scopes, standard_hours=_extract_standard_hours(wb))
+
+
+def parse_json_payload(raw_bytes: bytes) -> IntakePayload:
+    """Parse a DataverseExport JSON export into an IntakePayload (the operator-supported JSON upload
+    path; the alternative to the .xlsm parser above). Shape (all values are strings):
+      { "client": {"name"}, "site": {name,address,city,state,zipCode,contact*},
+        "project": {name, projectNumber, businessUnit, quoteRevision},
+        "scopes": [ {name, scopeType, totalHours, multiplier,
+                     "financials": {onsiteLaborTotal, offsiteLaborTotal, travelTotal, outsideServicesTotal},
+                     "apparatus": [ {row, section, quantity, equipmentType, hoursPerUnit} ]} ],
+        "summary": {grandTotal} }
+    line_uid is minted as f"{scope_name}:row{row}", consistent with the .xlsm parser, so the cross-scope
+    guard and the materialize idempotency key work identically for JSON-origin runs.
+    """
+    data = json.loads(raw_bytes.decode("utf-8"))
+    proj = data.get("project") or {}
+    client = data.get("client") or {}
+    site = data.get("site") or {}
+    summary = data.get("summary") or {}
+    project_number = _str(proj.get("projectNumber")) or _str(proj.get("name"))
+    if not project_number:
+        raise ValueError("JSON payload has no project identity (project.projectNumber / project.name)")
+    project = ProjectIn(
+        project_number=project_number,
+        project_name=_str(proj.get("name")) or project_number,
+        quote_revision=_str(proj.get("quoteRevision")),
+        business_unit=_str(proj.get("businessUnit")),
+        contract_value=_num(summary.get("grandTotal")) or 0.0,
+        client_name=_str(client.get("name")),
+        site_name=_str(site.get("name")),
+        site_address=_str(site.get("address")),
+        site_city=_str(site.get("city")),
+        site_state=_str(site.get("state")),
+        site_zip=_str(site.get("zipCode")),
+        site_contact_name=_str(site.get("contactName")),
+        site_contact_phone=_str(site.get("contactPhone")),
+        site_contact_email=_str(site.get("contactEmail")),
+    )
+    scopes: list[ScopeIn] = []
+    for si, sc in enumerate(data.get("scopes") or [], start=1):
+        scope_name = _str(sc.get("name")) or f"Scope {si}"
+        fin = sc.get("financials") or {}
+        q = ScopeQuoteIn(
+            onsite_labor=_num(fin.get("onsiteLaborTotal")) or 0.0,
+            offsite_labor=_num(fin.get("offsiteLaborTotal")) or 0.0,
+            travel=_num(fin.get("travelTotal")) or 0.0,
+            outside_services=_num(fin.get("outsideServicesTotal")) or 0.0,
+            unit_multiplier=_num(sc.get("multiplier")) or 1.0,
+            pct_adjust=1.0,
+            total_quoted_hours=_num(sc.get("totalHours")) or 0.0,
+        )
+        std = _str(sc.get("scopeType")) or "ATS"
+        lines: list[QuoteLineIn] = []
+        for ai, ap in enumerate(sc.get("apparatus") or [], start=1):
+            qty = _num(ap.get("quantity"))
+            if qty is None or qty <= 0:
+                continue
+            row = _str(ap.get("row")) or str(ai)
+            lines.append(QuoteLineIn(
+                apparatus_type=_str(ap.get("equipmentType")) or "Unknown",
+                test_standard=std,
+                qty=int(round(qty)),
+                hrs_per_unit=_num(ap.get("hoursPerUnit")) or 0.0,
+                section=_str(ap.get("section")),
+                line_number=int(_num(ap.get("row")) or ai),
+                line_uid=f"{scope_name}:row{row}",
+            ))
+        scopes.append(ScopeIn(scope_name=scope_name, sort_order=si, quote=q, lines=lines))
+    return IntakePayload(project=project, scopes=scopes, standard_hours=[])

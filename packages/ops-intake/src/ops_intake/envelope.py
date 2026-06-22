@@ -12,7 +12,7 @@ import psycopg
 import psycopg.errors
 
 from .classify import classify
-from .extract import extract_workbook
+from .extract import extract_workbook, parse_json_payload
 from .model import (
     PARSER_VERSION, PAYLOAD_SCHEMA_VERSION,
     IntakePayload, ProjectIn, ScopeIn, ScopeQuoteIn, QuoteLineIn, StandardHourIn,
@@ -289,6 +289,53 @@ def _classify_conflict(cur, project_number):
     return project_id, "none"
 
 
+def _create_rejected_parse_envelope(dsn, *, uploaded_by, filename, content_type, raw_bytes,
+                                    sha256, byte_size, parse_error):
+    """Persist a GOVERNED rejected envelope for an UNPARSEABLE upload: a rejected intake_run + a
+    blocking finding + the stored source bytes (for audit). No advisory lock and no domain writes --
+    there is no real project. status='rejected' is outside uq_intake_one_active, so repeated bad
+    uploads don't collide. Returns the same dict shape as a successful create_run."""
+    project_number = ("UNPARSED:" + (filename or "upload"))[:200]
+    detail = json.dumps({"parse_error": parse_error, "filename": filename}, default=str)
+    message = "The uploaded file could not be parsed for intake"
+    with psycopg.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "insert into ops.intake_runs ("
+                "   project_number, source_format, status, conflict_kind,"
+                "   payload_schema_version, parser_version,"
+                "   canonical_payload_json, review_payload_json, review_payload_version, uploaded_by"
+                ") values ("
+                "   %s, %s::ops.intake_source_format, %s::ops.intake_run_status,"
+                "   %s::ops.intake_conflict_kind, %s, %s, %s::jsonb, %s::jsonb, 1, %s"
+                ") returning id",
+                (project_number, "unsupported", "rejected", "none",
+                 PAYLOAD_SCHEMA_VERSION, PARSER_VERSION, detail, detail, str(uploaded_by)),
+            )
+            run_id = str(cur.fetchone()[0])
+            cur.execute(
+                "insert into ops.intake_source_files ("
+                "   run_id, filename, content_type, byte_size, sha256, raw_bytes"
+                ") values (%s, %s, %s, %s, %s, %s)",
+                (run_id, filename, content_type, byte_size, sha256, raw_bytes),
+            )
+            cur.execute(
+                "insert into ops.intake_validation_findings ("
+                "   run_id, payload_version, severity, code, ok, message, diagnostic_detail"
+                ") values (%s, 1, 'blocking', 'parse_error', false, %s, %s)",
+                (run_id, message, parse_error),
+            )
+        conn.commit()
+    return {
+        "run_id": run_id,
+        "status": "rejected",
+        "conflict_kind": "none",
+        "source_format": "unsupported",
+        "findings": [{"code": "parse_error", "severity": "blocking", "ok": False, "message": message}],
+        "review_payload": {"parse_error": parse_error, "filename": filename},
+    }
+
+
 def create_run(
     dsn,
     *,
@@ -297,18 +344,40 @@ def create_run(
     raw_bytes,
     content_type,
 ):
-    with tempfile.NamedTemporaryFile(suffix=".xlsm", delete=False) as tf:
-        tf.write(raw_bytes)
-        tmp_path = pathlib.Path(tf.name)
+    sha256 = hashlib.sha256(raw_bytes).hexdigest()
+    byte_size = len(raw_bytes)
 
+    # Parse by content_type: .xlsm via openpyxl (temp file), .json via the DataverseExport parser.
+    # ANY parse failure becomes a GOVERNED rejected envelope (a persisted run + blocking finding),
+    # never an uncaught 500 -- so a malformed upload is still recorded and surfaced to the PM.
+    payload = None
+    parse_error = None
     try:
-        payload = extract_workbook(tmp_path)
-    finally:
-        tmp_path.unlink(missing_ok=True)
+        if content_type == "json":
+            payload = parse_json_payload(raw_bytes)
+        else:
+            with tempfile.NamedTemporaryFile(suffix=".xlsm", delete=False) as tf:
+                tf.write(raw_bytes)
+                tmp_path = pathlib.Path(tf.name)
+            try:
+                payload = extract_workbook(tmp_path)
+            finally:
+                tmp_path.unlink(missing_ok=True)
+    except Exception as exc:  # any parse failure -> governed rejected envelope (below)
+        parse_error = str(exc)
+
+    if parse_error is not None:
+        return _create_rejected_parse_envelope(
+            dsn, uploaded_by=uploaded_by, filename=filename, content_type=content_type,
+            raw_bytes=raw_bytes, sha256=sha256, byte_size=byte_size, parse_error=parse_error,
+        )
 
     project_number = payload.project.project_number
     source_format = classify(payload)
-    findings = validate_payload(payload, source_format=source_format, n4_defaulted=False)
+    # n4_defaulted is surfaced by the parser when an N4 cell was blank (getattr keeps this
+    # forward-compatible if the payload does not carry the flag).
+    n4_defaulted = bool(getattr(payload, "n4_defaulted", False))
+    findings = validate_payload(payload, source_format=source_format, n4_defaulted=n4_defaulted)
 
     if source_format in ("flat_quote", "unsupported"):
         pre_status = "rejected"
@@ -316,8 +385,6 @@ def create_run(
         pre_status = None
 
     payload_json = json.dumps(dataclasses.asdict(payload), default=str)
-    sha256 = hashlib.sha256(raw_bytes).hexdigest()
-    byte_size = len(raw_bytes)
 
     try:
         with psycopg.connect(dsn) as conn:

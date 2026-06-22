@@ -1,4 +1,5 @@
 import hashlib
+import json
 import psycopg
 from ops_intake.envelope import create_run, get_run
 
@@ -203,3 +204,42 @@ def test_get_run_returns_only_current_version_findings(mini_workbook, clean_ops)
     assert out["review_payload_version"] == 2
     # The stale v1 blocker must NOT be returned (get_run filters to the current version).
     assert all(f["code"] != "stale_v1" for f in out["findings"]), out["findings"]
+
+
+def test_create_run_json_intake(clean_ops):
+    """JSON upload (DataverseExport shape) creates a GOVERNED envelope, envelope-only; a malformed
+    JSON yields a rejected envelope rather than a 500 (operator I3 -- JSON must be allowed)."""
+    dsn = clean_ops
+    who = _person(dsn)
+    doc = {
+        "project": {"name": "JSON Proj", "projectNumber": "JSON-001"},
+        "client": {"name": "Acme"},
+        "site": {"city": "Mesa"},
+        "scopes": [{
+            "name": "S1", "scopeType": "ATS", "totalHours": "10", "multiplier": "1",
+            "financials": {"onsiteLaborTotal": "1000", "offsiteLaborTotal": "0",
+                           "travelTotal": "0", "outsideServicesTotal": "0"},
+            "apparatus": [
+                {"row": "8", "section": "SES-1", "quantity": "2",
+                 "equipmentType": "Switchgear", "hoursPerUnit": "2.5"},
+            ],
+        }],
+        "summary": {"grandTotal": "1000"},
+    }
+    raw = json.dumps(doc).encode("utf-8")
+    out = create_run(dsn, uploaded_by=who, filename="export.json", raw_bytes=raw, content_type="json")
+    assert out["status"] == "parsed"
+    assert out["source_format"] == "decomposed_scope_sheet"
+    with psycopg.connect(dsn) as c:
+        (pn,) = c.execute(
+            "select project_number from ops.intake_runs where id=%s", (out["run_id"],)
+        ).fetchone()
+        assert pn == "JSON-001"  # project identity comes from the JSON, not hard-coded
+        for t in ("projects", "scopes", "tasks", "apparatus", "scope_quote", "scope_quote_line"):
+            assert c.execute(f"select count(*) from ops.{t}").fetchone()[0] == 0, t  # envelope-only
+
+    # Malformed JSON -> a GOVERNED rejected envelope (a persisted run + blocking finding), not a crash.
+    bad = create_run(dsn, uploaded_by=who, filename="bad.json",
+                     raw_bytes=b"{not valid json", content_type="json")
+    assert bad["status"] == "rejected"
+    assert any(f["code"] == "parse_error" and f["severity"] == "blocking" for f in bad["findings"])
