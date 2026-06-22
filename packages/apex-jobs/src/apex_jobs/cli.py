@@ -1,6 +1,6 @@
 """apex-jobs CLI - thin argparse wrapper over the engine. `apex-jobs <verb> ...`.
 
-Verbs: enqueue, queue, claim, start, report, request-gate, approve, reject,
+Verbs: enqueue, enqueue-review, queue, claim, start, report, request-gate, approve, reject,
 gates, status, ledger, reap, promotions, review, unblock. Returns an int exit
 code (3 = gated/refused).
 """
@@ -152,6 +152,22 @@ def cmd_unblock(a):
     return 0
 
 
+def cmd_enqueue_review(a):
+    """Enqueue a cross-engine (Codex) review job: `codex exec review` of review_head
+    vs base_ref, captured as findings (no promotion gate). kind=agent + target=codex
+    + payload.review_head are fixed here so the IRP cross-engine step cannot
+    misconfigure them; the job runs on the host (where codex lives)."""
+    payload = json.loads(a.payload) if a.payload else {}
+    payload["review_head"] = a.review_head
+    title = a.title or f"codex review: {a.review_head} vs {a.base_ref}"
+    jid = engine.enqueue(
+        dispatch_id=a.dispatch_id, title=title, payload=payload,
+        target="codex", kind="agent", base_ref=a.base_ref,
+        env_required=a.env_required, priority=a.priority, created_by=a.by)
+    print(jid)
+    return 0
+
+
 def build_parser():
     p = argparse.ArgumentParser(prog="apex-jobs", description="APEX orchestration task bus")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -174,6 +190,17 @@ def build_parser():
     e.add_argument("--max-attempts", type=int, default=1, dest="max_attempts")
     e.add_argument("--prompt", default=None)
     e.set_defaults(fn=cmd_enqueue)
+
+    er = sub.add_parser("enqueue-review")
+    er.add_argument("--dispatch-id", required=True, dest="dispatch_id")
+    er.add_argument("--review-head", required=True, dest="review_head")
+    er.add_argument("--base-ref", required=True, dest="base_ref")
+    er.add_argument("--title", default=None)
+    er.add_argument("--payload", default=None)
+    er.add_argument("--env-required", default="host", dest="env_required")
+    er.add_argument("--priority", type=int, default=100)
+    er.add_argument("--by", default=None)
+    er.set_defaults(fn=cmd_enqueue_review)
 
     q = sub.add_parser("queue")
     q.set_defaults(fn=cmd_queue)

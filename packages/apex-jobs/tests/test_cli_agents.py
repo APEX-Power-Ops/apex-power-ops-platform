@@ -112,3 +112,23 @@ def test_reject_promotion_gate_discards(promo_env):
                 if g["gate_type"] == "promotion" and g["state"] == "pending")
     assert cli.main(["reject", "--gate", str(gate["id"]), "--by", "operator"]) == 0
     assert engine.get_job("a-4")["status"] == "cancelled"
+
+
+def test_enqueue_review_sets_codex_review_job(conn_test):
+    # Purpose-built front door for the IRP cross-engine step: kind/target/review_head
+    # are fixed here so the caller can't misconfigure the codex review job.
+    assert cli.main(["enqueue-review", "--dispatch-id", "rv-1",
+                     "--review-head", "feature-x", "--base-ref", "main"]) == 0
+    job = engine.get_job("rv-1")
+    assert job["kind"] == "agent"
+    assert job["target"] == "codex"
+    assert job["base_ref"] == "main"
+    assert job["payload"]["review_head"] == "feature-x"
+    assert job["env_required"] == "host"          # codex runs on the host
+
+
+def test_enqueue_review_default_title(conn_test):
+    assert cli.main(["enqueue-review", "--dispatch-id", "rv-2",
+                     "--review-head", "br", "--base-ref", "main"]) == 0
+    title = engine.get_job("rv-2")["title"]
+    assert "br" in title and "main" in title
