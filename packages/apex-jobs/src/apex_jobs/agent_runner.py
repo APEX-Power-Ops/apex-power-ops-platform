@@ -138,10 +138,63 @@ def run_agent_job(job, env, as_="cc", agent_cmd=None):
             "no_changes": result["no_changes"]}
 
 
+def run_review_job(job, env, as_="cc", agent_cmd=None):
+    """Run a kind='agent' REVIEW job: check out the ref under review
+    (payload.review_head, DETACHED) in an isolated worktree, run
+    `codex exec review --base <base_ref>`, and capture the findings (stdout) as the
+    run result. Read-only — NO commit, NO diff, and NO promotion gate: a review only
+    reports, there is nothing to merge. agent_cmd overrides the CLI (fake, in tests)."""
+    repo, runs = _repo(), _runs_dir()
+    run_id = engine.start(job["id"], claimed_by=as_, run_env=env)   # raises GateError if gated
+
+    base_ref = job.get("base_ref") or _git("rev-parse", "--abbrev-ref", "HEAD",
+                                            cwd=repo).stdout.strip()
+    if not job.get("base_ref"):
+        engine.set_base_ref(job["id"], base_ref)
+    review_head = (job.get("payload") or {}).get("review_head") or "HEAD"
+    wt = os.path.join(runs, job["dispatch_id"])
+    os.makedirs(runs, exist_ok=True)
+    with _WORKTREE_LOCK:                                            # serialize repo-admin plumbing
+        _git("worktree", "remove", "--force", wt, cwd=repo, check=False)   # idempotent (requeue-safe)
+        _git("worktree", "add", "--detach", wt, review_head, cwd=repo)
+
+    argv = agent_cmd or _review_argv(base_ref)
+
+    # Heartbeat the lease during long reviews; harmless for fast (fake) runs.
+    stop = threading.Event()
+
+    def _hb():
+        while not stop.wait(max(1, engine.LEASE_TTL_S // 3)):
+            try:
+                engine.heartbeat(run_id)
+            except Exception:
+                pass
+
+    threading.Thread(target=_hb, daemon=True).start()
+    try:
+        proc = subprocess.run(argv, cwd=wt, env=_agent_env(env),
+                              capture_output=True, text=True, timeout=TIMEOUT_S)
+        rc, out, err = proc.returncode, proc.stdout, proc.stderr
+    except subprocess.TimeoutExpired as e:
+        rc, out, err = 124, (e.stdout or ""), f"timeout after {TIMEOUT_S}s"
+    finally:
+        stop.set()
+
+    result = {"findings": out[-8000:], "stderr": err[-4000:],
+              "review_head": review_head, "base_ref": base_ref, "is_review": True}
+    status = engine.report(run_id, exit_code=rc, result=result)
+    engine.set_run_artifacts(run_id, worktree_path=wt, branch=review_head)
+    # NO open_promotion: a review reports findings; there is nothing to merge.
+    return {"job": job["dispatch_id"], "run": str(run_id), "status": status,
+            "review_head": review_head, "findings_len": len(out)}
+
+
 def _run_one(job, env, as_, agent_cmd):
     """Dispatch one already-claimed job: agent → the runner, command → the worker
     (lazy import avoids an import cycle — worker imports engine, agent_runner does too)."""
     if job.get("kind") == "agent":
+        if (job.get("payload") or {}).get("review_head"):
+            return run_review_job(job, env, as_=as_, agent_cmd=agent_cmd)
         return run_agent_job(job, env, as_=as_, agent_cmd=agent_cmd)
     from .worker import _run_command_job
     return _run_command_job(job, env, as_)
