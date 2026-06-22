@@ -21,16 +21,20 @@ Runs the Independent Review Protocol. **Full standard:** `C:\APEX Platform\.clau
    - Audit, verify against source → `C:\APEX Platform\.claude\workflows\irp-grounded-audit.js`
    - Pass `args = { subject, problem/constraints, depth, … }` (see each template's `meta.description`). For Deep, supply distinct `lenses`/`probes`/`seeds` so the agents diverge.
 
-3. **Cross-engine pass (mandatory).** Run Codex on the same artifact:
-   - **Preferred:** enqueue an apex-jobs `kind=agent` job, executor `codex` (durable/async/host-local) — once that executor is wired.
-   - **Fallback (now):** emit a ready-to-run command for the operator and fold the returned findings into the synthesis:
+3. **Cross-engine pass (mandatory).** Run Codex on the same artifact via the **wired apex-jobs front door** (proven end-to-end 2026-06-22 — codex caught a planted bug; apex-jobs PR #29):
+   - **Preferred — `apex-jobs review-run`** (synchronous: runs `codex exec review --base` in an isolated *detached* worktree on the host, captures the findings, opens **no promotion gate**). Returns a JSON envelope; parse `.findings` and fold into the synthesis:
      ```
-     ssh olares-mesh "export PATH=/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH; \
-       codex exec review --base <base_ref> --json -o /tmp/irp-codex.json -c model_reasoning_effort=high" <<'PROMPT'
-     <the review packet>
-     PROMPT
+     ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform/packages/apex-jobs && \
+       set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a; \
+       export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH; \
+       export APEX_JOBS_REPO=/home/olares/code/apex/apex-power-ops-platform; \
+       APEX_JOBS_DB=orchestration_dev uv run apex-jobs review-run \
+         --review-head <ref-under-review> --base-ref <diff-base> --json'
      ```
-   - Use `--output-schema` when you want Codex findings in the same shape as the Claude side.
+     `APEX_JOBS_REPO` must contain **both** refs (fetch the branch first if it is a PR). **Requires apex-jobs PR #29 merged to main** (the verb lives in `packages/apex-jobs`).
+   - **Durable/async variant:** `apex-jobs enqueue-review --review-head <ref> --base-ref <base>` queues the same job (audit row in `orchestration_dev`) for a worker to drain; read findings later via `apex-jobs review <dispatch-id>`.
+   - **Fallback (mesh/CLI issues):** run codex directly and fold the stdout findings in — `ssh olares-mesh "export PATH=/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH; codex exec review --base <base_ref>"`.
+   - **Constraint (verified):** `codex exec review --base` takes **no `[PROMPT]`** (mutually exclusive with `--base`) and **no `--json`/`-o`/`--output-schema`** (unavailable on the review subcommand). Findings are free-text stdout (the `--json` above is *apex-jobs'* envelope, not codex's). Apply review **focus in the synthesis**, not the command. Default reasoning effort = **xhigh**.
 
 4. **Synthesize the review record:** convergence vs genuine forks · findings (severity + grounded evidence) · **cross-engine delta** (what Codex caught that Claude didn't, and vice-versa) · verdict · unverified/caveats · operator decisions with leans.
 
