@@ -179,3 +179,27 @@ def test_allowlist_blocks_identity_and_structural_tamper():
     deleted = _canon(); deleted["scopes"][0]["lines"].pop()
     with pytest.raises(ValueError):
         _assert_review_within_allowlist(_canon(), deleted)
+
+
+def test_get_run_returns_only_current_version_findings(mini_workbook, clean_ops):
+    """get_run must return ONLY current-version findings; a stale prior-version blocker (one the PM
+    resolved in a later revision) must NOT keep the UI Approve button disabled (operator defect I2)."""
+    dsn = clean_ops
+    who = _person(dsn)
+    r = create_run(dsn, uploaded_by=who, filename="m.xlsm",
+                   raw_bytes=_bytes(mini_workbook), content_type="xlsm")
+    rid = r["run_id"]
+    # Inject a STALE v1 blocking finding directly (simulating a blocker resolved by a later patch).
+    with psycopg.connect(dsn, autocommit=True) as c:
+        c.execute(
+            "insert into ops.intake_validation_findings "
+            "(run_id, payload_version, severity, code, ok, message) "
+            "values (%s, 1, 'blocking', 'stale_v1', false, 'old blocker')",
+            (rid,),
+        )
+    # A valid (identity) edit bumps the run to review_payload_version 2 and writes fresh v2 findings.
+    patch_review(dsn, rid, review_payload=r["review_payload"])
+    out = get_run(dsn, rid)
+    assert out["review_payload_version"] == 2
+    # The stale v1 blocker must NOT be returned (get_run filters to the current version).
+    assert all(f["code"] != "stale_v1" for f in out["findings"]), out["findings"]

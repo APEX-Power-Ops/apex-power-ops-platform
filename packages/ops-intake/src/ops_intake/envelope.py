@@ -443,12 +443,15 @@ def get_run(dsn, run_id):
                 uploaded_by, uploaded_at, approved_by, approved_at, rejected_reason,
             ) = row
 
+            # Return ONLY the CURRENT review-version findings (match approve_run's filter). Prior
+            # versions stay in the table as history but must NOT surface, else a blocker the PM
+            # already resolved in v2 keeps the UI Approve button disabled via a stale v1 row.
             cur.execute(
                 "select code, severity, ok, message"
                 "  from ops.intake_validation_findings"
-                " where run_id = %s"
+                " where run_id = %s and payload_version = %s"
                 " order by created_at",
-                (run_id,),
+                (run_id, review_payload_version),
             )
             findings = [
                 {"code": c, "severity": s, "ok": o, "message": m}
