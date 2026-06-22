@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+PAYLOAD_SCHEMA_VERSION = "1"
+PARSER_VERSION = "ops-intake/0.2.0"
+
 
 @dataclass
 class QuoteLineIn:
@@ -15,6 +18,8 @@ class QuoteLineIn:
     notes: str | None = None
     line_number: int | None = None
     catalog_default_hours: float | None = None
+    section: str | None = None
+    line_uid: str | None = None
 
     @property
     def line_hours(self) -> float:
@@ -70,6 +75,15 @@ class ProjectIn:
     contract_value: float = 0.0
     business_unit: str | None = None
     description: str | None = None
+    client_name: str | None = None
+    site_name: str | None = None
+    site_address: str | None = None
+    site_city: str | None = None
+    site_state: str | None = None
+    site_zip: str | None = None
+    site_contact_name: str | None = None
+    site_contact_phone: str | None = None
+    site_contact_email: str | None = None
 
 
 @dataclass

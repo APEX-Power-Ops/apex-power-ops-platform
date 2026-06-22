@@ -1,5 +1,6 @@
 # Runtime dependencies
 -e ../../packages/calc-engine
+-e ../../packages/ops-intake
 -e ../../packages/learning-resolver
 -e ../../packages/learning-capture
 -e ../../packages/learning-projections
@@ -12,3 +13,4 @@ pydantic>=2.0.0
 PyJWT[crypto]>=2.10.0
 
 # Install test and local-development tools from requirements-dev.txt
+python-multipart>=0.0.9

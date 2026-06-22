@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ops-intake"
 version = "0.1.0"
-description = "Estimator (.xlsm) -> ops.* intake (Project Miner; ops Chip 5)"
+description = "Estimator (.xlsm / DataverseExport JSON) -> ops.* intake (ops Chip 5)"
 requires-python = ">=3.11"
 dependencies = ["openpyxl>=3.1", "psycopg[binary]>=3.1"]
 

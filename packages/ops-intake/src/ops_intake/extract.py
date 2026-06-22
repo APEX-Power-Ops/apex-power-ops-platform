@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import pathlib
 import re
 
@@ -7,7 +8,7 @@ import openpyxl
 
 from .model import IntakePayload, ProjectIn, QuoteLineIn, ScopeIn, ScopeQuoteIn, StandardHourIn
 
-SKIP_SHEETS = {"Submittal Specs", "Equipment Reference", "Print_Template"}
+SKIP_SHEETS = {"Submittal Specs", "Equipment Reference", "Print_Template", "Dataverse_Import"}
 SCOPE_RE = re.compile(r"^[AB]\d\)")
 
 
@@ -27,6 +28,14 @@ def _str(v):
     return s or None
 
 
+def _is_bold(cell) -> bool:
+    """Return True if the cell has bold formatting (works for ReadOnlyCell in openpyxl 3.x)."""
+    try:
+        return bool(cell.font and cell.font.b)
+    except Exception:
+        return False
+
+
 def _is_scope_sheet(ws) -> bool:
     name = ws["B2"].value
     if not name or ws.title in SKIP_SHEETS or ws.title.endswith(".X"):
@@ -35,21 +44,31 @@ def _is_scope_sheet(ws) -> bool:
 
 
 def _extract_scope(ws) -> ScopeIn:
+    scope_name = str(ws["B2"].value).strip()
     q = ScopeQuoteIn(
         onsite_labor=_num(ws["P14"].value) or 0.0,
         offsite_labor=_num(ws["P19"].value) or 0.0,
         travel=_num(ws["P26"].value) or 0.0,
         outside_services=_num(ws["P33"].value) or 0.0,
         unit_multiplier=_num(ws["M4"].value) or 1.0,
-        pct_adjust=_num(ws["N4"].value) or 1.0,
+        pct_adjust=_num(ws["N4"].value) if _num(ws["N4"].value) is not None else 1.0,
         total_quoted_hours=_num(ws["J3"].value) or 0.0,
     )
     lines: list[QuoteLineIn] = []
+    current_section: str | None = None
     for r in range(6, ws.max_row + 1):
-        qty = _num(ws.cell(r, 3).value)  # col C = QTY (text or number)
-        atype = _str(ws.cell(r, 5).value)  # col E = Apparatus Type
-        # a real apparatus line needs a positive QTY and a type; sub-headers / noise rows lack one
-        if qty is None or qty <= 0 or atype is None:
+        # Check col E for a bold section-header row (mirrors BuildApparatusJSON macro logic)
+        e_cell = ws.cell(r, 5)  # col E
+        c_cell = ws.cell(r, 3)  # col C = QTY
+        qty = _num(c_cell.value)
+        if qty is None or qty <= 0:
+            # Might be a section header — check bold on col E
+            e_val = _str(e_cell.value)
+            if e_val and _is_bold(e_cell):
+                current_section = e_val
+            continue
+        atype = _str(e_cell.value)  # col E = Apparatus Type
+        if atype is None:
             continue
         lines.append(QuoteLineIn(
             apparatus_type=atype,
@@ -59,8 +78,41 @@ def _extract_scope(ws) -> ScopeIn:
             neta_section=_str(ws.cell(r, 4).value),  # col D
             drawing=_str(ws.cell(r, 7).value),  # col G
             line_number=r,
+            section=current_section,
+            line_uid=f"{scope_name}:row{r}",
         ))
-    return ScopeIn(scope_name=str(ws["B2"].value).strip(), quote=q, lines=lines)
+    return ScopeIn(scope_name=scope_name, quote=q, lines=lines)
+
+
+def _extract_metadata(wb) -> dict:
+    """Read label/value rows from the Dataverse_Import sheet onto a dict for ProjectIn."""
+    if "Dataverse_Import" not in wb.sheetnames:
+        return {}
+    dv = wb["Dataverse_Import"]
+    mapping = {}
+    for r in range(1, dv.max_row + 1):
+        label = _str(dv.cell(r, 1).value)
+        value = _str(dv.cell(r, 2).value)
+        if not label:
+            continue
+        label_upper = label.upper().rstrip(":")
+        if label_upper == "CLIENT":
+            mapping["client_name"] = value
+        elif label_upper in ("SITE NAME", "PROJECT"):
+            mapping["site_name"] = value
+        elif label_upper == "SITE ADDRESS":
+            mapping["site_address"] = value
+        elif label_upper == "SITE CITY":
+            mapping["site_city"] = value
+        elif label_upper == "SITE STATE":
+            mapping["site_state"] = value
+        elif label_upper in ("SITE ZIP", "ZIP"):
+            mapping["site_zip"] = value
+        elif label_upper in ("JOB #", "JOB#", "JOB NO", "JOB NO.", "JOB NUMBER", "PROJECT NUMBER", "PROJECT NO", "PROJECT NO."):
+            mapping["project_number"] = value
+        elif label_upper in ("PROJECT NAME", "PROJECT TITLE"):
+            mapping["project_name"] = value
+    return mapping
 
 
 def _extract_standard_hours(wb) -> list[StandardHourIn]:
@@ -112,7 +164,7 @@ def _extract_chiller_scopes(wb, start_sort: int) -> list[ScopeIn]:
 
 def extract_workbook(path) -> IntakePayload:
     path = pathlib.Path(path)
-    wb = openpyxl.load_workbook(path, data_only=True)
+    wb = openpyxl.load_workbook(path, data_only=True, read_only=True)
     scopes: list[ScopeIn] = []
     for ws in wb.worksheets:
         if _is_scope_sheet(ws):
@@ -120,13 +172,92 @@ def extract_workbook(path) -> IntakePayload:
             s.sort_order = len(scopes) + 1
             scopes.append(s)
     scopes.extend(_extract_chiller_scopes(wb, len(scopes) + 1))
+    metadata = _extract_metadata(wb)
+    # Project identity is DERIVED from the workbook (Dataverse_Import "Job #"), never hard-coded.
+    # Fall back to a Project/Project-Name label, then the site name; if none, refuse to invent an identity.
+    project_number = metadata.get("project_number") or metadata.get("project_name") or metadata.get("site_name")
+    if not project_number:
+        raise ValueError(
+            "workbook has no project identity (expected a Dataverse_Import 'Job #:' / 'Project Name:' row)"
+        )
     project = ProjectIn(
-        project_number="MINER-PHX-AB-MV",
-        project_name="Project Miner — PHX Bldg A & B MV",
-        status="Won",
-        quote_revision="Rev10",
+        project_number=project_number,
+        project_name=metadata.get("project_name") or project_number,
         contract_value=_contract_value(wb),
-        description=("Public/product name: Project Jupiter — Oracle/STACK data-center campus, "
-                     "Doña Ana County NM."),
+        client_name=metadata.get("client_name"),
+        site_name=metadata.get("site_name"),
+        site_address=metadata.get("site_address"),
+        site_city=metadata.get("site_city"),
+        site_state=metadata.get("site_state"),
+        site_zip=metadata.get("site_zip"),
     )
     return IntakePayload(project=project, scopes=scopes, standard_hours=_extract_standard_hours(wb))
+
+
+def parse_json_payload(raw_bytes: bytes) -> IntakePayload:
+    """Parse a DataverseExport JSON export into an IntakePayload (the operator-supported JSON upload
+    path; the alternative to the .xlsm parser above). Shape (all values are strings):
+      { "client": {"name"}, "site": {name,address,city,state,zipCode,contact*},
+        "project": {name, projectNumber, businessUnit, quoteRevision},
+        "scopes": [ {name, scopeType, totalHours, multiplier,
+                     "financials": {onsiteLaborTotal, offsiteLaborTotal, travelTotal, outsideServicesTotal},
+                     "apparatus": [ {row, section, quantity, equipmentType, hoursPerUnit} ]} ],
+        "summary": {grandTotal} }
+    line_uid is minted as f"{scope_name}:row{row}", consistent with the .xlsm parser, so the cross-scope
+    guard and the materialize idempotency key work identically for JSON-origin runs.
+    """
+    data = json.loads(raw_bytes.decode("utf-8"))
+    proj = data.get("project") or {}
+    client = data.get("client") or {}
+    site = data.get("site") or {}
+    summary = data.get("summary") or {}
+    project_number = _str(proj.get("projectNumber")) or _str(proj.get("name"))
+    if not project_number:
+        raise ValueError("JSON payload has no project identity (project.projectNumber / project.name)")
+    project = ProjectIn(
+        project_number=project_number,
+        project_name=_str(proj.get("name")) or project_number,
+        quote_revision=_str(proj.get("quoteRevision")),
+        business_unit=_str(proj.get("businessUnit")),
+        contract_value=_num(summary.get("grandTotal")) or 0.0,
+        client_name=_str(client.get("name")),
+        site_name=_str(site.get("name")),
+        site_address=_str(site.get("address")),
+        site_city=_str(site.get("city")),
+        site_state=_str(site.get("state")),
+        site_zip=_str(site.get("zipCode")),
+        site_contact_name=_str(site.get("contactName")),
+        site_contact_phone=_str(site.get("contactPhone")),
+        site_contact_email=_str(site.get("contactEmail")),
+    )
+    scopes: list[ScopeIn] = []
+    for si, sc in enumerate(data.get("scopes") or [], start=1):
+        scope_name = _str(sc.get("name")) or f"Scope {si}"
+        fin = sc.get("financials") or {}
+        q = ScopeQuoteIn(
+            onsite_labor=_num(fin.get("onsiteLaborTotal")) or 0.0,
+            offsite_labor=_num(fin.get("offsiteLaborTotal")) or 0.0,
+            travel=_num(fin.get("travelTotal")) or 0.0,
+            outside_services=_num(fin.get("outsideServicesTotal")) or 0.0,
+            unit_multiplier=_num(sc.get("multiplier")) or 1.0,
+            pct_adjust=1.0,
+            total_quoted_hours=_num(sc.get("totalHours")) or 0.0,
+        )
+        std = _str(sc.get("scopeType")) or "ATS"
+        lines: list[QuoteLineIn] = []
+        for ai, ap in enumerate(sc.get("apparatus") or [], start=1):
+            qty = _num(ap.get("quantity"))
+            if qty is None or qty <= 0:
+                continue
+            row = _str(ap.get("row")) or str(ai)
+            lines.append(QuoteLineIn(
+                apparatus_type=_str(ap.get("equipmentType")) or "Unknown",
+                test_standard=std,
+                qty=int(round(qty)),
+                hrs_per_unit=_num(ap.get("hoursPerUnit")) or 0.0,
+                section=_str(ap.get("section")),
+                line_number=int(_num(ap.get("row")) or ai),
+                line_uid=f"{scope_name}:row{row}",
+            ))
+        scopes.append(ScopeIn(scope_name=scope_name, sort_order=si, quote=q, lines=lines))
+    return IntakePayload(project=project, scopes=scopes, standard_hours=[])

@@ -105,6 +105,16 @@ def _learning_routes_enabled() -> bool:
 if _learning_routes_enabled():
     app.include_router(learning_router)
 
+
+def _ops_intake_enabled() -> bool:
+    # ops intake is host-only (mesh PG17); only mount when OPS_DEV_DSN is set.
+    return bool(os.environ.get("OPS_DEV_DSN"))
+
+
+if _ops_intake_enabled():
+    from services.ops.intake_router import router as ops_intake_router  # import-gated
+    app.include_router(ops_intake_router)
+
 # ── PM idempotency seam: swap to durable DB-backed backend ──
 # Packet 2026-04-16-pm-schema-019f
 # The ``idempotency_cache`` singleton starts on the process-local

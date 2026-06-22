@@ -6,8 +6,8 @@ import json
 import sys
 
 from .extract import extract_workbook
-from .load import load_payload
-from .validate import assert_valid
+from .envelope import create_run
+from .approve import approve_run
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -19,10 +19,15 @@ def main(argv: list[str] | None = None) -> int:
     ex.add_argument("xlsm")
     ex.add_argument("--out", required=True)
 
-    ld = sub.add_parser("load", help="extract + validate + idempotent load into ops.*")
-    ld.add_argument("xlsm")
-    ld.add_argument("--dsn", required=True)
-    ld.add_argument("--approve", action="store_true", help="freeze quoted_revenue after load")
+    it = sub.add_parser("intake", help="upload .xlsm and create intake run")
+    it.add_argument("xlsm")
+    it.add_argument("--dsn", required=True)
+    it.add_argument("--uploaded-by", required=True, metavar="UUID")
+
+    ap_cmd = sub.add_parser("approve", help="approve an intake run")
+    ap_cmd.add_argument("run_id")
+    ap_cmd.add_argument("--dsn", required=True)
+    ap_cmd.add_argument("--approved-by", required=True, metavar="UUID")
 
     args = ap.parse_args(argv)
 
@@ -34,12 +39,23 @@ def main(argv: list[str] | None = None) -> int:
               f"scopes={len(payload.scopes)}")
         return 0
 
-    if args.cmd == "load":
-        payload = extract_workbook(args.xlsm)
-        assert_valid(payload)
-        res = load_payload(payload, args.dsn, approve=args.approve)
-        print(f"loaded: projects={res.projects} scopes={res.scopes} lines={res.lines} "
-              f"apparatus={res.apparatus} standard_hours={res.standard_hours} approve={args.approve}")
+    if args.cmd == "intake":
+        import pathlib
+        xlsm_path = pathlib.Path(args.xlsm)
+        raw_bytes = xlsm_path.read_bytes()
+        result = create_run(
+            args.dsn,
+            uploaded_by=args.uploaded_by,
+            filename=xlsm_path.name,
+            raw_bytes=raw_bytes,
+            content_type="xlsm",
+        )
+        print(f"run_id={result['run_id']} status={result['status']} conflict_kind={result['conflict_kind']}")
+        return 0
+
+    if args.cmd == "approve":
+        result = approve_run(args.dsn, args.run_id, approved_by=args.approved_by)
+        print(f"outcome={result['outcome']}")
         return 0
 
     return 1
