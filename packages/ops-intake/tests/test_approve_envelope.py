@@ -72,3 +72,70 @@ def test_recognized_then_reversed_still_blocks(mini_workbook, clean_ops):
         c.execute("select ops.reverse_recognition(%s,%s,'correction')", (ev, who))  # confirm arg order vs 005
     out = create_run(dsn, uploaded_by=who, filename="m.xlsm", raw_bytes=mini_workbook.read_bytes(), content_type="xlsm")
     assert out["conflict_kind"] == "recognized" and out["status"] == "revision_blocked"
+
+
+def test_approve_refuses_foreign_source_project(clean_ops):
+    """A project bearing a non-ops-intake scope (legacy Miner rows) must be REFUSED by approve
+    (outcome 'foreign_source') with NO scopes deleted -- so delete-by-marker can never orphan
+    foreign rows. (operator missing-coverage: foreign-source refusal)"""
+    import pathlib
+    import tempfile
+
+    from fixtures.build_fixture import build
+
+    dsn = clean_ops
+    who = _person(dsn)
+    # Seed a project "FS-1" carrying a FOREIGN (non-ops-intake) scope.
+    with psycopg.connect(dsn, autocommit=True) as c:
+        pid = c.execute(
+            "insert into ops.projects (project_number, project_name, source) "
+            "values ('FS-1','Foreign','manual') returning id"
+        ).fetchone()[0]
+        c.execute(
+            "insert into ops.scopes (project_id, scope_name, source) values (%s,'legacy',%s)",
+            (pid, "miner_rev10.xlsm"),
+        )
+    # An intake workbook whose Job# == FS-1 (so the run targets the foreign-bearing project).
+    wb = build(pathlib.Path(tempfile.mkdtemp()) / "fs.xlsx", job_number="FS-1")
+    r = create_run(dsn, uploaded_by=who, filename="fs.xlsm",
+                   raw_bytes=wb.read_bytes(), content_type="xlsm")
+    out = approve_run(dsn, r["run_id"], approved_by=who)
+    assert out["outcome"] == "foreign_source"
+    with psycopg.connect(dsn) as c:
+        assert c.execute(
+            "select count(*) from ops.scopes where source='miner_rev10.xlsm'"
+        ).fetchone()[0] == 1  # the foreign scope survived
+        assert c.execute(
+            "select count(*) from ops.scopes where source='ops-intake'"
+        ).fetchone()[0] == 0  # nothing materialized
+
+
+def test_two_projects_share_line_uid_no_apparatus_key_collision(clean_ops):
+    """Two DIFFERENT projects whose lines share a line_uid must BOTH materialize -- apparatus
+    legacy_source_id is project-qualified (f'{project_number}:{line_uid}:u{i}'), so the GLOBALLY
+    unique uq_ops_apparatus_intake does not collide. (operator missing-coverage: two-project key)"""
+    import pathlib
+    import tempfile
+
+    from fixtures.build_fixture import build
+
+    dsn = clean_ops
+    who = _person(dsn)
+    d = pathlib.Path(tempfile.mkdtemp())
+    # Same default scope_name -> identical line_uids (e.g. "A1) MV - Test:row8") across both projects.
+    a = build(d / "a.xlsx", job_number="P-AAA")
+    b = build(d / "b.xlsx", job_number="P-BBB")
+    ra = create_run(dsn, uploaded_by=who, filename="a.xlsm", raw_bytes=a.read_bytes(), content_type="xlsm")
+    approve_run(dsn, ra["run_id"], approved_by=who)
+    rb = create_run(dsn, uploaded_by=who, filename="b.xlsm", raw_bytes=b.read_bytes(), content_type="xlsm")
+    approve_run(dsn, rb["run_id"], approved_by=who)
+    with psycopg.connect(dsn) as c:
+        for pn in ("P-AAA", "P-BBB"):
+            n = c.execute(
+                "select count(*) from ops.apparatus a "
+                "join ops.scopes s on s.id = a.scope_id "
+                "join ops.projects p on p.id = s.project_id "
+                "where p.project_number = %s",
+                (pn,),
+            ).fetchone()[0]
+            assert n >= 1, pn  # both projects materialized apparatus despite shared line_uids

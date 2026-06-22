@@ -227,8 +227,8 @@ def approve_run(dsn, run_id, *, approved_by) -> dict:
                     "select id from ops.projects where id = %s for update", (project_id,)
                 )
                 cur.execute(
-                    "select id from ops.apparatus a join ops.scopes s on s.id = a.scope_id"
-                    " where s.project_id = %s for update",
+                    "select a.id from ops.apparatus a join ops.scopes s on s.id = a.scope_id"
+                    " where s.project_id = %s for update of a",
                     (project_id,),
                 )
                 # (4) approve-time conflict re-check (TOCTOU): commit revision_blocked, don't raise.
