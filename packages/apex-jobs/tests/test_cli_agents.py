@@ -163,9 +163,3 @@ def test_review_run_synchronous_findings(conn_test, tmp_path, monkeypatch, capsy
         _git("worktree", "prune", check=False)
         _git("branch", "-D", head, check=False)
         _git("branch", "-D", base, check=False)
-
-
-def test_enqueue_review_accepts_prompt(conn_test):
-    assert cli.main(["enqueue-review", "--dispatch-id", "rv-p", "--review-head", "h",
-                     "--base-ref", "b", "--prompt", "check the auth path"]) == 0
-    assert engine.get_job("rv-p")["payload"]["prompt"] == "check the auth path"

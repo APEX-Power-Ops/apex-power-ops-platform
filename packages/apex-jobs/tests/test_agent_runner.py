@@ -230,19 +230,14 @@ def test_run_pool_routes_review_job(agent_env):
     assert not any(g["gate_type"] == "promotion" for g in engine.gates_for("rev-pool"))
 
 
-def test_review_argv_includes_optional_prompt():
-    # codex exec review takes an optional trailing PROMPT = custom review instructions.
-    assert agent_runner._review_argv("main") == ["codex", "exec", "review", "--base", "main"]
-    assert agent_runner._review_argv("main", "focus on auth") == [
-        "codex", "exec", "review", "--base", "main", "focus on auth",
-    ]
-
-
-def test_review_job_threads_payload_prompt_into_argv(agent_env, monkeypatch):
+def test_review_job_never_passes_prompt_with_base(agent_env, monkeypatch):
+    # codex `exec review --base` is mutually exclusive with a [PROMPT] positional
+    # ("--base cannot be used with [PROMPT]"), so run_review_job must NOT append
+    # payload.prompt to the codex argv even when one is set.
     base, created, runs = agent_env
-    created.append("rev-prompt")
-    jid = engine.enqueue(dispatch_id="rev-prompt", title="x", env_required="host",
-                         payload={"review_head": "HEAD", "prompt": "focus on auth bugs"})
+    created.append("rev-np")
+    jid = engine.enqueue(dispatch_id="rev-np", title="x", env_required="host",
+                         payload={"review_head": "HEAD", "prompt": "focus on auth"})
     with engine._conn() as c:
         with c.cursor() as cur:
             cur.execute("update jobs.job set kind='agent', target='codex', base_ref=%s "
@@ -254,12 +249,11 @@ def test_review_job_threads_payload_prompt_into_argv(agent_env, monkeypatch):
     real_run = agent_runner.subprocess.run
 
     def fake_run(argv, **kw):
-        if argv and argv[0] == "codex":          # intercept only the agent call
+        if argv and argv[0] == "codex":
             captured["argv"] = argv
             return real_run(["true"], capture_output=True, text=True)
-        return real_run(argv, **kw)              # let the git worktree plumbing run for real
+        return real_run(argv, **kw)
 
     monkeypatch.setattr(agent_runner.subprocess, "run", fake_run)
-    agent_runner.run_review_job(job, env="host")   # no agent_cmd -> builds _review_argv(base, prompt)
-    assert captured["argv"][:5] == ["codex", "exec", "review", "--base", base]
-    assert "focus on auth bugs" in captured["argv"]
+    agent_runner.run_review_job(job, env="host")
+    assert captured["argv"] == ["codex", "exec", "review", "--base", base]   # NO prompt

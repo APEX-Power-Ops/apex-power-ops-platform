@@ -161,8 +161,6 @@ def cmd_enqueue_review(a):
     misconfigure them; the job runs on the host (where codex lives)."""
     payload = json.loads(a.payload) if a.payload else {}
     payload["review_head"] = a.review_head
-    if a.prompt:
-        payload["prompt"] = a.prompt
     title = a.title or f"codex review: {a.review_head} vs {a.base_ref}"
     jid = engine.enqueue(
         dispatch_id=a.dispatch_id, title=title, payload=payload,
@@ -180,8 +178,6 @@ def cmd_review_run(a):
     from . import agent_runner
     disp = a.dispatch_id or f"review-{uuid.uuid4().hex[:8]}"
     payload = {"review_head": a.review_head}
-    if a.prompt:
-        payload["prompt"] = a.prompt
     engine.enqueue(dispatch_id=disp,
                    title=a.title or f"codex review: {a.review_head} vs {a.base_ref}",
                    payload=payload, target="codex", kind="agent", base_ref=a.base_ref,
@@ -233,7 +229,6 @@ def build_parser():
     er.add_argument("--payload", default=None)
     er.add_argument("--env-required", default="host", dest="env_required")
     er.add_argument("--priority", type=int, default=100)
-    er.add_argument("--prompt", default=None)
     er.add_argument("--by", default=None)
     er.set_defaults(fn=cmd_enqueue_review)
 
@@ -242,7 +237,6 @@ def build_parser():
     rr.add_argument("--base-ref", required=True, dest="base_ref")
     rr.add_argument("--dispatch-id", default=None, dest="dispatch_id")
     rr.add_argument("--title", default=None)
-    rr.add_argument("--prompt", default=None)
     rr.add_argument("--json", action="store_true")
     rr.add_argument("--by", default=None)
     rr.set_defaults(fn=cmd_review_run)
