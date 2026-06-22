@@ -272,3 +272,37 @@ def test_patch_review_on_inactive_run_raises_run_not_active(mini_workbook, clean
     approve_run(dsn, r["run_id"], approved_by=who)  # -> status 'approved' (inactive)
     with pytest.raises(RunNotActive):
         patch_review(dsn, r["run_id"], review_payload=r["review_payload"])
+
+
+def test_guard_messages_are_dollar_free_even_with_dollar_named_scope():
+    """Guard errors must be value-free even when a scope is NAMED with a '$' (and the line_uid it
+    prefixes inherits it). Finance redaction covers guard error messages across the WHOLE class of
+    guards, not just the quote/line field guards. (Codex 2nd-round finding)"""
+    import pytest
+    SN = "Switchgear $1234"
+
+    def _canon_dollar():
+        return {"project": {"project_number": "P1"},
+                "scopes": [{"scope_name": SN,
+                            "quote": {"onsite_labor": 1000, "total_quoted_hours": 7},
+                            "lines": [{"line_uid": SN + ":row1", "qty": 1, "apparatus_type": "X",
+                                       "test_standard": "ATS", "line_number": 1, "section": "old"}]}]}
+
+    # quote-field guard
+    q = _canon_dollar(); q["scopes"][0]["quote"]["onsite_labor"] = 5000
+    # pinned line-field guard
+    ln = _canon_dollar(); ln["scopes"][0]["lines"][0]["qty"] = 99
+    # cross-scope guard (move the $-named line's uid under a different scope)
+    cs_c = {"scopes": [{"scope_name": SN, "lines": [{"line_uid": SN + ":row1"}]},
+                       {"scope_name": "B", "lines": []}]}
+    cs_r = {"scopes": [{"scope_name": SN, "lines": []},
+                       {"scope_name": "B", "lines": [{"line_uid": SN + ":row1"}]}]}
+
+    for canon, review, fn in [
+        (_canon_dollar(), q, _assert_review_within_allowlist),
+        (_canon_dollar(), ln, _assert_review_within_allowlist),
+        (cs_c, cs_r, _assert_no_cross_scope_move),
+    ]:
+        with pytest.raises(ValueError) as ei:
+            fn(canon, review)
+        assert "$" not in str(ei.value), str(ei.value)  # no dollar char in ANY guard message

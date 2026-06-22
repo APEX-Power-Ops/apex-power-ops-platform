@@ -69,6 +69,14 @@ def _payload_from_dict(d):
     return IntakePayload(project=proj, scopes=scopes, standard_hours=standard_hours)
 
 
+def _ve(msg):
+    """Finance-redaction-safe ValueError for the review guards: strip any '$' from the
+    message. A workbook-chosen scope name (and the line_uid it prefixes) is user-controlled and
+    can carry a dollar sign; guard error messages must be value-free, like findings and the API
+    error channel."""
+    return ValueError(msg.replace("$", ""))
+
+
 def _assert_no_cross_scope_move(canonical, review):
     """Build line_uid -> scope_name maps; raise if any uid moved across scopes."""
     canon_map = {}
@@ -89,7 +97,7 @@ def _assert_no_cross_scope_move(canonical, review):
 
     for uid, canon_scope in canon_map.items():
         if uid in review_map and review_map[uid] != canon_scope:
-            raise ValueError(
+            raise _ve(
                 "cross-scope line move forbidden: line_uid=" + repr(uid) +
                 " moved from scope " + repr(canon_scope) +
                 " to " + repr(review_map[uid])
@@ -107,13 +115,13 @@ def _assert_review_within_allowlist(canonical, review):
     all_proj_keys = set(canon_proj) | set(rev_proj)
     for k in all_proj_keys:
         if canon_proj.get(k) != rev_proj.get(k):
-            raise ValueError("project field " + repr(k) + " is not editable")
+            raise _ve("project field " + repr(k) + " is not editable")
 
     # 2. Scope set
     canon_scopes = {s["scope_name"]: s for s in canonical.get("scopes", [])}
     rev_scopes = {s["scope_name"]: s for s in review.get("scopes", [])}
     if set(canon_scopes) != set(rev_scopes):
-        raise ValueError(
+        raise _ve(
             "scope set changed: " +
             "canonical=" + str(sorted(canon_scopes)) +
             ", review=" + str(sorted(rev_scopes))
@@ -131,7 +139,7 @@ def _assert_review_within_allowlist(canonical, review):
             if cq.get(k) != rq.get(k):
                 # NB: message is value-FREE -- the quote dollar figures must never appear in an error
                 # that can reach the PM surface (finance redaction applies to guard errors too).
-                raise ValueError(
+                raise _ve(
                     "scope " + repr(scope_name) +
                     " quote field " + repr(k) + " is not editable"
                 )
@@ -145,7 +153,7 @@ def _assert_review_within_allowlist(canonical, review):
 
         for uid, cnt in rev_uid_counts.items():
             if cnt > 1:
-                raise ValueError(
+                raise _ve(
                     "scope " + repr(scope_name) +
                     ": line_uid " + repr(uid) +
                     " appears " + str(cnt) +
@@ -155,7 +163,7 @@ def _assert_review_within_allowlist(canonical, review):
         if canon_uid_counts != rev_uid_counts:
             added = set(rev_uid_counts) - set(canon_uid_counts)
             removed = set(canon_uid_counts) - set(rev_uid_counts)
-            raise ValueError(
+            raise _ve(
                 "scope " + repr(scope_name) + ": line_uid multiset changed " +
                 "(added=" + str(sorted(str(u) for u in added)) +
                 ", removed=" + str(sorted(str(u) for u in removed)) + ")"
@@ -172,7 +180,7 @@ def _assert_review_within_allowlist(canonical, review):
                 if k in _LINE_MUTABLE:
                     continue
                 if canon_line.get(k) != rev_line.get(k):
-                    raise ValueError(
+                    raise _ve(
                         "scope " + repr(scope_name) +
                         " line " + repr(uid) +
                         ": field " + repr(k) + " is not editable"
