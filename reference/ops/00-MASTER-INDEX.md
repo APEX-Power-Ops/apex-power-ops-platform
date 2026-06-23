@@ -81,7 +81,7 @@ master got the *ordering* half-right. The amendment is to elevate the operationa
 
 | Concern | Model | Disposition in `ops` |
 |---|---|---|
-| **Identity** (apparatus-instance on the spine) | C — `MASTER-SCHEMA ops` | **Foundation, kept.** Apparatus-instance FKs `core.equipment_models` (soft-UUID now → hard FK at co-location). |
+| **Identity** (apparatus-instance on the spine) | C — `MASTER-SCHEMA ops` | **Foundation, kept.** Apparatus-instance FKs `core.equipment_models` (soft-UUID now → hard FK at co-location — **DONE (Step 4a, mig 008)**). |
 | **Intake + revenue** (scope-anchored, apparatus-grain, hours-based) | B — `seam` + `pm_core` | **Elevated to first-class `ops`** (the ruling). The 5-phase intake + hours-based binary-completion progress billing. |
 | **Scheduling / execution** (work_package + CPM) | A — `work.*` | **Growth-backlog, deferred.** Harvest `org`, work_package lifecycle, provenance into `ops` design now; build P6/CPM when a real consumer arrives. |
 
@@ -102,7 +102,7 @@ apparatus→scope binding**, which seam left nullable) and work's normalized `or
 2. **Identity = Supabase `auth.users`.** `seam.users`/`user_roles` become legacy read-model; new actor refs FK `auth.users`.
 3. **Recognition firewall.** Revenue is **never** an operational-row column (the `public.scopes.actual_revenue` / `public.apparatus.actual_revenue` anti-pattern is rejected). Revenue lives in a dedicated, append-only recognition ledger + frozen contract snapshot (seam's discipline, made mandatory).
 4. **Field-trust on money (G4 analog).** A recognized/billable amount is only emitted when its basis is present (a frozen quote + a completion event); missing basis = withhold, never fabricate.
-5. **Soft-UUID seam to `core`.** The `core.equipment_models` spine (D-003) stays deferred; `ops` apparatus carries a nullable `equipment_model_ref` until a chip forces the join (records-lane pattern).
+5. **Soft-UUID seam to `core` — CO-LOCATED (Step 4a, mig 008).** The `core.equipment_models` spine is now built **in `ops_dev`** (co-located so a real FK is possible) and `ops.apparatus.equipment_model_ref` is a **hard nullable FK** to `core.equipment_models(id)`. Reads go through `core.v_equipment_models_resolved` (cycle-safe merge-chasing, enterable by `id` OR `model_key`). **Forward (4b):** 4b is a catalog-aware upgrade to `approve_run` (the existing SOLE `ops.*` writer; qty-expansion already there) — it resolves each unit's estimator `ref` through `core.v_equipment_models_resolved.requested_model_key` to the terminal active `resolved_id` and binds `equipment_model_ref` to it; NOT a parallel writer, NEVER the raw origin id.
 6. **Migration invariants (`MASTER-SCHEMA.md` §7) are HARD** for any convergence step: schema-qualify cross-schema refs / pin `search_path`; re-create RLS + grants on any namespace move (default-deny returns *zero rows, HTTP 200* otherwise); parity-check served row-count, not "table exists"; ordered teardown. **`lvbreakertcc` never breaks.**
 7. **Estimator owns compute.** Platform consumes output values; never reimplements workbook formulas.
 
@@ -190,7 +190,7 @@ explicit dollar lines). Per-apparatus revenue is *derivable* (hour-share) but no
 |---|---|---|
 | G1 | **Estimator intake has no home in `MASTER-SCHEMA`** (neither `records` nor `ops` models it). | **Blocking** — closed by this re-baseline's §3 amendment. |
 | G2 | **`ops` namespace does not exist**; three project + two apparatus identities live unconverged. | Foundational — Chip 1. |
-| G3 | **`core.equipment_models` spine unbuilt** (D-003). | Deferred — soft-UUID seam (Law 5); built when a chip forces it. |
+| G3 | **`core.equipment_models` spine unbuilt** (D-003). | **CLOSED (Step 4a, mig 008)** — spine built + co-located in `ops_dev`; the soft-UUID seam (Law 5) is now a hard FK. |
 | G4 | **Revenue model never ran end-to-end** (`seam.scopes` 0 rows; all financial + hours tables empty). | The Chip 2–4 build proves it. |
 | G5 | **Identity-source contradiction** (`seam.users` vs `auth.users`) resolved on paper, not in data. | Closed by Law 2. |
 | G6 | **Intake extraction code does not exist** (Estimator `.xlsm` parser; the 5-phase flow). | **CLOSED — Chip 5.** `ops-intake` package (openpyxl extractor + validate + envelope + approve) exists and is tested. The governed envelope (`intake_runs`/`source_files`/`validation_findings`, mig 007) wraps it; `approve_run` is the sole `ops.*` domain writer; host-gated API + pm-review UI complete the 5-phase flow. |
