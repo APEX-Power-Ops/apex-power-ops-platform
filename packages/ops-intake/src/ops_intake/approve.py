@@ -30,6 +30,10 @@ _SOURCE = "ops-intake"
 _UNGROUPED = "__ungrouped__"
 _ACTIVE = ("parsed", "reviewing")
 
+def _pm_safe(m: str) -> str:
+    """Strip dollar values from a PM-surfaced finding message (Chip-5 $-leak guard)."""
+    return m.replace("$", "")
+
 
 def materialize(cur, project_number, review_payload, resolved) -> None:
     """Full-replacement materialization of one project's intake-owned domain rows.
@@ -258,29 +262,33 @@ def approve_run(dsn, run_id, *, approved_by) -> dict:
                 s.get("scope_name", "?") for s in scopes
                 if not m4_ok(s.get("quote", {}) or {})
             })
-            types = [
-                line["apparatus_type"]
+            # EVERY apparatus line must carry a resolvable type. A falsey/missing
+            # apparatus_type can never resolve (resolve_models drops it), so it MUST
+            # force a reject here -- otherwise materialize would KeyError on
+            # resolved[apparatus_type]. Do NOT filter falsey types out of the check.
+            line_types = [
+                line.get("apparatus_type")
                 for s in scopes for line in (s.get("lines", []) or [])
-                if line.get("apparatus_type")
             ]
-            resolved = resolve_models(cur, types)
-            uncatalogued = sorted({t for t in types if t not in resolved})
+            resolved = resolve_models(cur, [t for t in line_types if t])
+            uncatalogued = sorted({
+                (t if t else "<missing apparatus_type>")
+                for t in line_types if not t or t not in resolved
+            })
             if m4_unsupported or uncatalogued:
-                def _safe(m):  # PM-safe finding message (Chip-5 $-leak guard)
-                    return m.replace("$", "")
                 for t in uncatalogued:
                     cur.execute(
                         "insert into ops.intake_validation_findings"
                         " (run_id, payload_version, severity, code, ok, message)"
                         " values (%s,%s,'blocking','uncatalogued_apparatus',false,%s)",
-                        (run_id, review_version, _safe("uncatalogued apparatus: " + t)))
+                        (run_id, review_version, _pm_safe("uncatalogued apparatus: " + t)))
                 for sc in m4_unsupported:
                     cur.execute(
                         "insert into ops.intake_validation_findings"
                         " (run_id, payload_version, severity, code, ok, message)"
                         " values (%s,%s,'blocking','m4_unsupported',false,%s)",
                         (run_id, review_version,
-                         _safe("unit_multiplier must be exactly 1 (4b.2 deferred): scope " + sc)))
+                         _pm_safe("unit_multiplier must be exactly 1 (4b.2 deferred): scope " + sc)))
                 conn.commit()
                 return {"outcome": "rejected_precheck", "run_id": run_id,
                         "m4_unsupported": m4_unsupported, "uncatalogued": uncatalogued}

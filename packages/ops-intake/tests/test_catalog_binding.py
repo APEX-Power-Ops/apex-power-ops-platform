@@ -64,3 +64,15 @@ def test_approve_binds_every_apparatus(clean_ops):
         n, nulls = c.execute("select count(*), count(*) filter (where equipment_model_ref is null)"
                              " from ops.apparatus").fetchone()
     assert n >= 1 and nulls == 0
+
+
+def test_falsey_apparatus_type_rejects_not_crashes(clean_ops):
+    # A line with an empty apparatus_type must REJECT cleanly (governed finding),
+    # not raise KeyError inside materialize. (4b.1 review I-1 regression.)
+    dsn = clean_ops; who = _person(dsn)
+    rid = _seed_run(dsn, _payload("EMPTY-1", ""), who)
+    out = approve_run(dsn, rid, approved_by=who)
+    assert out["outcome"] == "rejected_precheck"
+    assert "<missing apparatus_type>" in out["uncatalogued"]
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0
