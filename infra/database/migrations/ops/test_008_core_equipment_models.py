@@ -16,15 +16,23 @@ def _exec(path):                            # autocommit, lane idiom (test_007)
     with psycopg.connect(DSN, autocommit=True) as c:
         c.execute(pathlib.Path(path).read_text(encoding="utf-8"))
 
+def _clean_slate():
+    # idempotent pre-clean: 001_down drops `ops` (cascade, taking the 008 FK with it); the 008
+    # objects live in their own `core` schema, so clear that too. Mirrors the lane idiom of running
+    # the (idempotent, IF EXISTS) downs before an up so re-runs start from a clean DB.
+    with psycopg.connect(DSN, autocommit=True) as c:
+        c.execute("drop schema if exists core cascade")
+    _exec(DOWN1)
+
 @pytest.fixture(scope="session", autouse=True)
 def apply_migrations():
     with psycopg.connect(DSN) as c, c.cursor() as cur:       # review must-fix #1: hard runtime guard
         cur.execute("select current_database()")
         assert cur.fetchone()[0] == "ops_test", "REFUSING DDL: current_database() != ops_test"
-    _exec(DOWN1)
+    _clean_slate()
     for f in CHAIN: _exec(HERE / f)         # applies 001..008
     yield
-    _exec(DOWN1)
+    _clean_slate()
 
 @pytest.fixture
 def conn():
@@ -78,3 +86,76 @@ def test_committed_seed_block_matches_generator():    # review should-fix #5(c) 
     block = sql.split(BEGIN, 1)[1].split(END, 1)[0] + "\n"
     assert block == gen.emit_inserts(), "committed seed block != generator output (must be byte-exact)"
     assert block.count("insert into core.equipment_models") == 120, "seed block must hold EXACTLY 120 inserts"
+
+def test_resolver_by_id_and_model_key_and_merge(): # must-fix #3 + true-terminal + operator audit: id entry
+    with psycopg.connect(DSN) as c, c.cursor() as cur:
+        cur.execute("select id, model_key from core.equipment_models order by model_key limit 2")
+        (a_id, a_key), (b_id, b_key) = cur.fetchall()
+        # entry by model_key AND by id both resolve to self (active)
+        cur.execute("select resolved_id, resolved_model_key from core.v_equipment_models_resolved where requested_model_key=%s", (a_key,))
+        assert cur.fetchone() == (a_id, a_key)
+        cur.execute("select resolved_id from core.v_equipment_models_resolved where requested_id=%s", (a_id,))
+        assert cur.fetchone() == (a_id,)
+        # merge A -> B (savepoint); BOTH the model_key and the ORIGIN id redirect to terminal B
+        cur.execute("update core.equipment_models set lifecycle_status='merged', merged_into_id=%s where id=%s", (b_id, a_id))
+        cur.execute("select resolved_id, resolved_model_key from core.v_equipment_models_resolved where requested_model_key=%s", (a_key,))
+        assert cur.fetchone() == (b_id, b_key)
+        cur.execute("select resolved_id from core.v_equipment_models_resolved where requested_id=%s", (a_id,))
+        assert cur.fetchone() == (b_id,)
+        c.rollback()
+
+def test_resolver_active_only_terminal(): # operator audit: chase only to an ACTIVE identity
+    with psycopg.connect(DSN) as c, c.cursor() as cur:
+        cur.execute("select id, model_key from core.equipment_models order by model_key limit 2")
+        (a_id, _), (b_id, _) = cur.fetchall()
+        # B deprecated (leaf); A merged -> B. A resolves to NO row (terminal not active); B (deprecated leaf) too.
+        cur.execute("update core.equipment_models set lifecycle_status='deprecated' where id=%s", (b_id,))
+        cur.execute("update core.equipment_models set lifecycle_status='merged', merged_into_id=%s where id=%s", (b_id, a_id))
+        cur.execute("select count(*) from core.v_equipment_models_resolved where requested_id=%s", (a_id,))
+        assert cur.fetchone()[0] == 0
+        cur.execute("select count(*) from core.v_equipment_models_resolved where requested_id=%s", (b_id,))
+        assert cur.fetchone()[0] == 0
+        c.rollback()
+
+def test_every_resolution_terminates_at_active(): # review nit #10
+    with psycopg.connect(DSN) as c, c.cursor() as cur:
+        cur.execute("select count(*) from core.v_equipment_models_resolved where lifecycle_status <> 'active'")
+        assert cur.fetchone()[0] == 0
+        cur.execute("select count(*) from core.equipment_models"), cur.fetchone()
+        cur.execute("select count(distinct requested_id) from core.v_equipment_models_resolved")
+        assert cur.fetchone()[0] == 120   # every (active) origin resolves to exactly one terminal
+
+def test_resolver_cycle_yields_no_row(): # review nit #8
+    with psycopg.connect(DSN) as c, c.cursor() as cur:
+        cur.execute("select id from core.equipment_models order by model_key limit 2")
+        a_id, b_id = (r[0] for r in cur.fetchall())
+        cur.execute("update core.equipment_models set lifecycle_status='merged', merged_into_id=%s where id=%s", (b_id, a_id))
+        cur.execute("update core.equipment_models set lifecycle_status='merged', merged_into_id=%s where id=%s", (a_id, b_id))
+        cur.execute("select count(*) from core.v_equipment_models_resolved where requested_id in (%s,%s)", (a_id, b_id))
+        assert cur.fetchone()[0] == 0   # a cycle resolves to NO terminal, not a silent wrong row
+        c.rollback()
+
+def test_apparatus_fk_present_nullable_enforced(): # review must-fix #2
+    import uuid
+    with psycopg.connect(DSN) as c, c.cursor() as cur:
+        cur.execute("select is_nullable from information_schema.columns where table_schema='ops' and table_name='apparatus' and column_name='equipment_model_ref'")
+        assert cur.fetchone()[0] == "YES"
+        # verify the FK constrains the RIGHT column AND references the RIGHT target (not just a name)
+        cur.execute("""select kcu.column_name, ccu.table_schema, ccu.table_name, ccu.column_name
+                       from information_schema.table_constraints tc
+                       join information_schema.key_column_usage kcu on kcu.constraint_name=tc.constraint_name
+                       join information_schema.constraint_column_usage ccu on ccu.constraint_name=tc.constraint_name
+                       where tc.constraint_name='apparatus_equipment_model_ref_fkey' and tc.constraint_type='FOREIGN KEY'""")
+        assert cur.fetchone() == ("equipment_model_ref", "core", "equipment_models", "id")
+        # ENFORCEMENT: self-seed a scope, attempt a bogus ref, assert it is rejected (unconditional)
+        cur.execute("savepoint s")
+        cur.execute("insert into ops.projects (project_number, project_name) values ('STEP4A-TEST','t') returning id")
+        proj = cur.fetchone()[0]
+        cur.execute("insert into ops.scopes (project_id, scope_name) values (%s,'t') returning id", (proj,))
+        scope = cur.fetchone()[0]
+        try:
+            cur.execute("insert into ops.apparatus (scope_id, apparatus_designation, equipment_model_ref) values (%s,'X',%s)", (scope, str(uuid.uuid4())))
+            assert False, "bogus equipment_model_ref accepted — FK not enforcing"
+        except psycopg.errors.ForeignKeyViolation:
+            pass
+        cur.execute("rollback to savepoint s"); c.rollback()

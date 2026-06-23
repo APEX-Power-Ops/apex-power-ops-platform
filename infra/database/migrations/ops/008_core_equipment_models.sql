@@ -184,3 +184,10 @@ insert into core.equipment_models (model_key, apparatus, neta_section_ats, neta_
 insert into core.equipment_models (model_key, apparatus, neta_section_ats, neta_section_mts, ref_hours_ats, ref_hours_mts, unit_of_issue, lifecycle_status) values ('VFD - Adustable Speed Drives', 'VFD - Adustable Speed Drives', '7.17', '7.17', 8.0, 8.0, 'each'::core.unit_of_issue, 'active'::core.equipment_lifecycle);
 insert into core.equipment_models (model_key, apparatus, neta_section_ats, neta_section_mts, ref_hours_ats, ref_hours_mts, unit_of_issue, lifecycle_status) values ('Vaccum Frequency Interrupter', 'Vaccum Frequency Interrupter', '7.6', '7.6', 3.0, 4.0, 'each'::core.unit_of_issue, 'active'::core.equipment_lifecycle);
 -- SEED:END
+
+-- ---- co-location: harden the mig-001 soft seam to a real FK (nullable; 0 non-null rows on ops_dev) ----
+alter table ops.apparatus
+  add constraint apparatus_equipment_model_ref_fkey
+  foreign key (equipment_model_ref) references core.equipment_models(id);
+comment on constraint apparatus_equipment_model_ref_fkey on ops.apparatus is
+  'Step 4a co-location: hard FK to canonical equipment identity (was SSoT Law 5 soft seam). 4b binds the resolver terminal (active) id.';
