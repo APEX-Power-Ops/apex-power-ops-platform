@@ -62,7 +62,7 @@ def _dsn() -> str:
 
 @pytest.fixture(scope="session", autouse=True)
 def apply_migrations():
-    """Apply migrations 001-007 to ops_test, yield, then teardown."""
+    """Apply migrations 001-008 to ops_test, yield, then teardown."""
     d = _dsn()
     _require_ops_test(d)
 
@@ -71,7 +71,10 @@ def apply_migrations():
         conn.execute(sql)
 
     mig_dir = _MIGRATIONS_DIR
+    # pre-up reset: drop 008 (core + FK) THEN 001 (ops) so a leaked `core` from a prior
+    # session cannot make the 008 up-migration fail (008 is not CREATE ... IF NOT EXISTS).
     with psycopg.connect(d, autocommit=True) as c:
+        _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
 
     up_migrations = [
@@ -82,6 +85,7 @@ def apply_migrations():
         "005_recognition_ledger.sql",
         "006_progress_billing.sql",
         "007_intake_envelope.sql",
+        "008_core_equipment_models.sql",
     ]
     with psycopg.connect(d, autocommit=True) as c:
         for name in up_migrations:
@@ -90,6 +94,7 @@ def apply_migrations():
     yield
 
     with psycopg.connect(d, autocommit=True) as c:
+        _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
 
 
@@ -338,6 +343,104 @@ class TestApprove:
             json={"approved_by": "someone"},
         )
         assert resp.status_code == 404
+
+    def test_approve_uncatalogued_returns_422_and_findings_visible(
+        self, client, person_id
+    ):
+        """Precheck-reject (uncatalogued apparatus) surfaces its findings via GET run.
+
+        Contract under test:
+          1. POST /approve → 422 with outcome=blocked_findings (body has run_id only)
+          2. GET /intake/{run_id} → 200 with at least one blocking uncatalogued_apparatus
+             finding whose message mentions the uncatalogued type.
+          3. PM-safety: no diagnostic_detail key, no $ in any finding message.
+        """
+        import json as _json
+
+        # Seed a run in 'reviewing' status with an uncatalogued apparatus_type directly
+        # via psycopg (mirrors packages/ops-intake/tests/test_catalog_binding._seed_run).
+        d = _dsn()
+        payload = {
+            "project": {
+                "project_number": "UC-ROUTE-1",
+                "project_name": "Route Test",
+                "contract_value": 1.0,
+            },
+            "scopes": [
+                {
+                    "scope_name": "S",
+                    "legacy_source_id": "S",
+                    "quote": {
+                        "onsite_labor": 100,
+                        "unit_multiplier": 1,
+                        "pct_adjust": 1,
+                        "total_quoted_hours": 2,
+                    },
+                    "lines": [
+                        {
+                            "apparatus_type": "Not In Catalog",
+                            "test_standard": "ATS",
+                            "qty": 1,
+                            "hrs_per_unit": 2.0,
+                            "section": "S1",
+                            "line_number": 1,
+                            "line_uid": "S:r1",
+                        }
+                    ],
+                }
+            ],
+        }
+        with psycopg.connect(d, autocommit=True) as c:
+            row = c.execute(
+                "insert into ops.intake_runs"
+                " (project_number, source_format, status, payload_schema_version,"
+                "  parser_version, canonical_payload_json, review_payload_json, uploaded_by)"
+                " values (%s,'decomposed_scope_sheet','reviewing','1','t',%s,%s,%s)"
+                " returning id",
+                (
+                    "UC-ROUTE-1",
+                    _json.dumps(payload),
+                    _json.dumps(payload),
+                    person_id,
+                ),
+            ).fetchone()
+        run_id = str(row[0])
+
+        # 1. POST approve → expect 422 blocked_findings
+        resp = client.post(
+            f"/api/v1/ops/intake/{run_id}/approve",
+            json={"approved_by": person_id},
+        )
+        assert resp.status_code == 422, resp.text
+        body422 = resp.json()
+        assert body422.get("detail", {}).get("outcome") == "blocked_findings", body422
+
+        # 2. GET run → findings contain the blocking uncatalogued_apparatus finding
+        resp2 = client.get(f"/api/v1/ops/intake/{run_id}")
+        assert resp2.status_code == 200, resp2.text
+        body_get = resp2.json()
+        findings = body_get.get("findings", [])
+        blocking = [
+            f
+            for f in findings
+            if f.get("severity") == "blocking"
+            and f.get("ok") is False
+            and f.get("code") == "uncatalogued_apparatus"
+        ]
+        assert blocking, (
+            f"Expected at least one blocking uncatalogued_apparatus finding; got: {findings}"
+        )
+        assert any("Not In Catalog" in f.get("message", "") for f in blocking), (
+            f"Expected 'Not In Catalog' in a blocking finding message; got: {blocking}"
+        )
+
+        # 3. PM-safety: no diagnostic_detail anywhere, no $ in finding messages
+        assert not _contains_substring(body_get, "diagnostic_detail"), (
+            "diagnostic_detail must not appear anywhere in GET run response"
+        )
+        for f in findings:
+            msg = f.get("message", "")
+            assert "$" not in msg, f"Finding message must not contain $: {msg!r}"
 
 
 class TestReject:

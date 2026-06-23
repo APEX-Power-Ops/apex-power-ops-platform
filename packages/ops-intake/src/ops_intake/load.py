@@ -157,23 +157,24 @@ def insert_scope_quote_line(cur, scope_id, line: dict) -> str:
 
 
 def insert_apparatus(cur, scope_id, task_id, quote_line_id, *, legacy_source_id: str,
-                     designation: str, apparatus_type: str, drawing, quoted_hours) -> None:
-    """Insert ONE apparatus unit (QTY-expansion) stamped source='ops-intake'.
-
-    legacy_source_id is PROJECT-QUALIFIED by the caller (uq_ops_apparatus_intake is
-    GLOBALLY unique, so a bare scope-relative key would collide across projects)."""
+                     designation: str, apparatus_type: str, drawing, quoted_hours,
+                     equipment_model_ref: str) -> None:
+    """Insert ONE apparatus unit (QTY-expansion). equipment_model_ref (required) =
+    the resolved TERMINAL-ACTIVE core.equipment_models id (4b.1; never null on the
+    live path). legacy_source_id is PROJECT-QUALIFIED by the caller."""
     cur.execute(
         """
         insert into ops.apparatus (scope_id, task_id, apparatus_designation, apparatus_type,
-            status, drawing_reference, quoted_hours, quote_line_id,
+            equipment_model_ref, status, drawing_reference, quoted_hours, quote_line_id,
             source, legacy_source_id, provenance_status)
-        values (%s,%s,%s,%s,'Not Started',%s,%s,%s,%s,%s,'draft')
+        values (%s,%s,%s,%s,%s,'Not Started',%s,%s,%s,%s,%s,'draft')
         """,
         (
             scope_id,
             task_id,
             designation,
             apparatus_type,
+            equipment_model_ref,
             drawing,
             quoted_hours,
             quote_line_id,

@@ -17,8 +17,8 @@ def test_extract_mini(mini_workbook):
     )
     assert len(s.lines) == 2  # sub-header row 7 skipped
     assert [l.qty for l in s.lines] == [2, 3]
-    assert s.lines[1].apparatus_type == "Transformer - Pad" and s.lines[1].hrs_per_unit == 5.0
-    assert any(h.apparatus_type == "Vacuum Interrupter" and h.test_standard == "ATS"
+    assert s.lines[1].apparatus_type == "Capcitors - Per Unit" and s.lines[1].hrs_per_unit == 5.0
+    assert any(h.apparatus_type == "Circuit Breaker MV - Vacuum Bkr" and h.test_standard == "ATS"
                for h in p.standard_hours)
 
 

@@ -40,16 +40,21 @@ def test_reapprove_is_full_replacement_not_growth(mini_workbook, clean_ops):
     re-materialize idempotency is proved on the directly-unit-testable materialize.)
     """
     from ops_intake.approve import materialize
+    from ops_intake.catalog import resolve_models
     from ops_intake.extract import extract_workbook
     import dataclasses
 
     dsn = clean_ops
     payload = dataclasses.asdict(extract_workbook(mini_workbook))
     pn = payload["project"]["project_number"]
+    # collect all apparatus_type values from the payload to build the resolved map
+    types = [line["apparatus_type"] for sc in payload.get("scopes", []) or []
+             for line in (sc.get("lines", []) or []) if line.get("apparatus_type")]
     with psycopg.connect(dsn) as c:
-        materialize(c, pn, payload); c.commit()
+        resolved = resolve_models(c.cursor(), types)
+        materialize(c, pn, payload, resolved); c.commit()
         a1 = c.execute("select count(*) from ops.apparatus").fetchone()[0]
-        materialize(c, pn, payload); c.commit()
+        materialize(c, pn, payload, resolved); c.commit()
         a2 = c.execute("select count(*) from ops.apparatus").fetchone()[0]
         assert a1 == 5 and a2 == 5
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 1
