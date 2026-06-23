@@ -40,7 +40,7 @@ def test_unresolved_rejects_zero_writes_with_finding(clean_ops):
     dsn = clean_ops; who = _person(dsn)
     rid = _seed_run(dsn, _payload("UC-1", "Not In Catalog"), who)
     out = approve_run(dsn, rid, approved_by=who)
-    assert out["outcome"] == "rejected_precheck" and "Not In Catalog" in out["uncatalogued"]
+    assert out["outcome"] == "blocked_findings" and "Not In Catalog" in out["uncatalogued"]
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0          # zero writes
         assert c.execute("select status from ops.intake_runs where id=%s", (rid,)).fetchone()[0] == "reviewing"
@@ -52,7 +52,7 @@ def test_m4_not_one_rejects(clean_ops):
     dsn = clean_ops; who = _person(dsn)
     rid = _seed_run(dsn, _payload("M4-1", "Capcitors - Per Unit", unit_multiplier=3), who)
     out = approve_run(dsn, rid, approved_by=who)
-    assert out["outcome"] == "rejected_precheck" and "S" in out["m4_unsupported"]
+    assert out["outcome"] == "blocked_findings" and "S" in out["m4_unsupported"]
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0
 
@@ -72,11 +72,23 @@ def test_falsey_apparatus_type_rejects_not_crashes(clean_ops):
     dsn = clean_ops; who = _person(dsn)
     rid = _seed_run(dsn, _payload("EMPTY-1", ""), who)
     out = approve_run(dsn, rid, approved_by=who)
-    assert out["outcome"] == "rejected_precheck"
+    assert out["outcome"] == "blocked_findings"
     assert "<missing apparatus_type>" in out["uncatalogued"]
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0
 
+
+
+def test_nonstring_apparatus_type_rejects_not_crashes(clean_ops):
+    # A TRUTHY non-string apparatus_type (e.g. an int) must REJECT cleanly -- not crash
+    # the resolver's "= any(%s)" lookup (text = int[]) or the sorted() set. (cross-engine.)
+    dsn = clean_ops; who = _person(dsn)
+    rid = _seed_run(dsn, _payload("BADTYPE-1", 123), who)
+    out = approve_run(dsn, rid, approved_by=who)
+    assert out["outcome"] == "blocked_findings"
+    assert "<missing apparatus_type>" in out["uncatalogued"]
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0
 
 def test_backfill_binds_only_target_frozen_resolvable(clean_ops):
     dsn = clean_ops; who = _person(dsn)

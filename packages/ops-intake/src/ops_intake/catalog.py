@@ -13,7 +13,7 @@ from decimal import Decimal, InvalidOperation
 
 def resolve_models(cur, model_keys: list[str]) -> dict[str, str]:
     """Return {model_key: resolved_id} for the RESOLVABLE subset. Resolver-only read."""
-    keys = sorted({k for k in model_keys if k})
+    keys = sorted({k for k in model_keys if isinstance(k, str) and k})
     if not keys:
         return {}
     rows = cur.execute(
