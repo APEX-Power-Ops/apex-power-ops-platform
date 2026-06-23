@@ -16,6 +16,7 @@ import json
 
 import psycopg
 
+from .catalog import m4_ok, resolve_models
 from .load import (
     insert_apparatus,
     insert_scope,
@@ -30,7 +31,7 @@ _UNGROUPED = "__ungrouped__"
 _ACTIVE = ("parsed", "reviewing")
 
 
-def materialize(cur, project_number, review_payload) -> None:
+def materialize(cur, project_number, review_payload, resolved) -> None:
     """Full-replacement materialization of one project's intake-owned domain rows.
 
     Project upsert (stamp source='ops-intake') + delete this project's
@@ -89,6 +90,7 @@ def materialize(cur, project_number, review_payload) -> None:
                     apparatus_type=apparatus_type,
                     drawing=drawing,
                     quoted_hours=hrs_per_unit,
+                    equipment_model_ref=resolved[apparatus_type],  # precheck guarantees coverage
                 )
 
 
@@ -248,8 +250,43 @@ def approve_run(dsn, run_id, *, approved_by) -> dict:
                     conn.commit()
                     return {"outcome": "foreign_source", "run_id": run_id}
 
+            # (4c) 4b.1 precheck: strict M4 gate + resolve-all-or-reject. No ops.* domain
+            #      rows are written before this point (the conflict/foreign-source paths
+            #      return earlier), so committing here persists ONLY the blocking findings.
+            scopes = review_payload.get("scopes", []) or []
+            m4_unsupported = sorted({
+                s.get("scope_name", "?") for s in scopes
+                if not m4_ok(s.get("quote", {}) or {})
+            })
+            types = [
+                line["apparatus_type"]
+                for s in scopes for line in (s.get("lines", []) or [])
+                if line.get("apparatus_type")
+            ]
+            resolved = resolve_models(cur, types)
+            uncatalogued = sorted({t for t in types if t not in resolved})
+            if m4_unsupported or uncatalogued:
+                def _safe(m):  # PM-safe finding message (Chip-5 $-leak guard)
+                    return m.replace("$", "")
+                for t in uncatalogued:
+                    cur.execute(
+                        "insert into ops.intake_validation_findings"
+                        " (run_id, payload_version, severity, code, ok, message)"
+                        " values (%s,%s,'blocking','uncatalogued_apparatus',false,%s)",
+                        (run_id, review_version, _safe("uncatalogued apparatus: " + t)))
+                for sc in m4_unsupported:
+                    cur.execute(
+                        "insert into ops.intake_validation_findings"
+                        " (run_id, payload_version, severity, code, ok, message)"
+                        " values (%s,%s,'blocking','m4_unsupported',false,%s)",
+                        (run_id, review_version,
+                         _safe("unit_multiplier must be exactly 1 (4b.2 deferred): scope " + sc)))
+                conn.commit()
+                return {"outcome": "rejected_precheck", "run_id": run_id,
+                        "m4_unsupported": m4_unsupported, "uncatalogued": uncatalogued}
+
             # (5) full-replacement materialization (project upsert happens inside).
-            materialize(cur, project_number, review_payload)
+            materialize(cur, project_number, review_payload, resolved)
 
             cur.execute(
                 "select id from ops.projects where project_number = %s", (project_number,)

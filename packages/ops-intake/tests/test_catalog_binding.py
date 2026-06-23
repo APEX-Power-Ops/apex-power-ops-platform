@@ -12,3 +12,55 @@ def test_m4_ok_is_strict():
     for bad in [{}, {"unit_multiplier": None}, {"unit_multiplier": ""}, {"unit_multiplier": 0},
                 {"unit_multiplier": -1}, {"unit_multiplier": 2}, {"unit_multiplier": "abc"}]:
         assert not m4_ok(bad), bad     # missing / falsey / invalid / non-1 all rejected
+
+import json
+from ops_intake.approve import approve_run
+
+def _person(dsn):
+    with psycopg.connect(dsn, autocommit=True) as c:
+        return c.execute("insert into ops.persons (display_name) values ('Lead') returning person_id").fetchone()[0]
+
+def _seed_run(dsn, payload, who):
+    with psycopg.connect(dsn, autocommit=True) as c:
+        return c.execute(
+            "insert into ops.intake_runs (project_number, source_format, status, payload_schema_version,"
+            " parser_version, canonical_payload_json, review_payload_json, uploaded_by)"
+            " values (%s,'decomposed_scope_sheet','reviewing','1','t',%s,%s,%s) returning id",
+            (payload["project"]["project_number"], json.dumps(payload), json.dumps(payload), who)).fetchone()[0]
+
+def _payload(pn, apparatus_type, unit_multiplier=1):
+    return {"project": {"project_number": pn, "project_name": "n", "contract_value": 1.0},
+            "scopes": [{"scope_name": "S", "legacy_source_id": "S",
+                        "quote": {"onsite_labor": 100, "unit_multiplier": unit_multiplier, "pct_adjust": 1,
+                                  "total_quoted_hours": 2},
+                        "lines": [{"apparatus_type": apparatus_type, "test_standard": "ATS", "qty": 1,
+                                   "hrs_per_unit": 2.0, "section": "S1", "line_number": 1, "line_uid": "S:r1"}]}]}
+
+def test_unresolved_rejects_zero_writes_with_finding(clean_ops):
+    dsn = clean_ops; who = _person(dsn)
+    rid = _seed_run(dsn, _payload("UC-1", "Not In Catalog"), who)
+    out = approve_run(dsn, rid, approved_by=who)
+    assert out["outcome"] == "rejected_precheck" and "Not In Catalog" in out["uncatalogued"]
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0          # zero writes
+        assert c.execute("select status from ops.intake_runs where id=%s", (rid,)).fetchone()[0] == "reviewing"
+        assert c.execute("select count(*) from ops.intake_validation_findings where run_id=%s"
+                         " and code='uncatalogued_apparatus' and severity='blocking' and ok=false",
+                         (rid,)).fetchone()[0] == 1                                          # durable finding
+
+def test_m4_not_one_rejects(clean_ops):
+    dsn = clean_ops; who = _person(dsn)
+    rid = _seed_run(dsn, _payload("M4-1", "Capcitors - Per Unit", unit_multiplier=3), who)
+    out = approve_run(dsn, rid, approved_by=who)
+    assert out["outcome"] == "rejected_precheck" and "S" in out["m4_unsupported"]
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0
+
+def test_approve_binds_every_apparatus(clean_ops):
+    dsn = clean_ops; who = _person(dsn)
+    rid = _seed_run(dsn, _payload("OK-1", "Capcitors - Per Unit"), who)
+    assert approve_run(dsn, rid, approved_by=who)["outcome"] == "approved"
+    with psycopg.connect(dsn) as c:
+        n, nulls = c.execute("select count(*), count(*) filter (where equipment_model_ref is null)"
+                             " from ops.apparatus").fetchone()
+    assert n >= 1 and nulls == 0
