@@ -16,7 +16,12 @@
 # Exit: 0 = clean, 1 = findings (perms FAIL or possible leak).
 set -uo pipefail
 
-ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+# ROOT = the apex repo root, derived from THIS script's own location (not the
+# caller's cwd) so the checks can never be silently skipped from another dir.
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
+if [[ ! -f "$ROOT/infra/secret-audit.sh" ]]; then
+  echo "FATAL: cannot locate apex repo root (ROOT=$ROOT)" >&2; exit 2
+fi
 rc=0
 say() { printf '%s\n' "$*"; }
 
@@ -69,7 +74,7 @@ if [[ -f "$ROOT/infra/.env" ]]; then
     else
       say "  FAIL  infra/.env non-allowlisted key: $k  (move to Vault; allowed: $ENV_ALLOWED_KEYS)"; rc=1
     fi
-  done < <(grep -oE '^[A-Za-z_][A-Za-z0-9_]*=' "$ROOT/infra/.env" 2>/dev/null | tr -d '=')
+  done < <(grep -oE '^[[:space:]]*(export[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=' "$ROOT/infra/.env" 2>/dev/null | sed -E 's/^[[:space:]]*(export[[:space:]]+)?//; s/[[:space:]]*=$//')
 fi
 
 # ---- Check 1c: Infisical drift -- a migrated secret must not linger in caches --
@@ -84,11 +89,14 @@ if [[ -f "$MANAGED" ]]; then
     [[ -n "$line" ]] && MNAMES+=("$line")
   done < "$MANAGED"
   if [[ "${#MNAMES[@]}" -gt 0 ]]; then
-    for cache in "$ROOT/infra/.env" "$HOME/code/apex/.env.dev-pg-offsite-backup"; do
+    for entry in "${CACHES[@]}"; do
+      cache="${entry%:*}"
       [[ -f "$cache" ]] || continue
       for nm in "${MNAMES[@]}"; do
-        if grep -qE "^${nm}=" "$cache" 2>/dev/null; then
-          say "  FAIL  drift: '$nm' is Infisical-managed but still copied in $cache"; rc=1
+        if grep -qE "^[[:space:]]*(export[[:space:]]+)?${nm}[[:space:]]*=" "$cache" 2>/dev/null; then
+          hint=""
+          for a in $ENV_ALLOWED_KEYS; do [[ "$nm" == "$a" ]] && hint="  (also in ENV_ALLOWED_KEYS - drop it there once removed)"; done
+          say "  FAIL  drift: '$nm' is Infisical-managed but still copied in $cache$hint"; rc=1
         fi
       done
     done

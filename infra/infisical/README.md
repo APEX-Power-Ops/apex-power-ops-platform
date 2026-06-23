@@ -21,6 +21,8 @@ secret-distribution layer. Host processes get secrets at runtime via the
 2. Verify it works through Infisical.
 3. Remove the secret's copy from the local cache(s).
 4. Add the secret NAME to `.managed-secrets` so the audit enforces no-copy.
+   (Do this ONLY after step 3 -- arming a name whose value still sits in a
+   cache will correctly FAIL Check 1c; also drop it from `ENV_ALLOWED_KEYS`.)
 5. `infra/secret-audit.sh` -> clean.
 
 Project id `985aac34-9665-423b-b472-78ddbd707ca7`; env slugs `dev`/`staging`/`prod`.
