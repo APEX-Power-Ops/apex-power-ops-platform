@@ -61,7 +61,10 @@ def apply_migrations(tmp_path_factory):
         conn.execute(sql)
 
     mig_dir = _MIGRATIONS_DIR
+    # pre-up reset: drop 008 (core + FK) THEN 001 (ops) so a leaked `core` from a prior
+    # session cannot make the 008 up-migration fail (008 is not CREATE ... IF NOT EXISTS).
     with psycopg.connect(d, autocommit=True) as c:
+        _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
 
     up_migrations = [
@@ -72,6 +75,7 @@ def apply_migrations(tmp_path_factory):
         "005_recognition_ledger.sql",
         "006_progress_billing.sql",
         "007_intake_envelope.sql",
+        "008_core_equipment_models.sql",
     ]
     with psycopg.connect(d, autocommit=True) as c:
         for name in up_migrations:
@@ -80,6 +84,7 @@ def apply_migrations(tmp_path_factory):
     yield
 
     with psycopg.connect(d, autocommit=True) as c:
+        _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
 
 
