@@ -10,6 +10,8 @@
 1. **Migration 008 live:** `ops_dev` must have `core.equipment_models`, the merge-chasing resolver view `core.v_equipment_models_resolved`, and the nullable FK `ops.apparatus.equipment_model_ref` — all landed by mig 008.
 2. **Safety dump first:** `docker exec apex-dev-pg pg_dump -U postgres -Fc ops_dev > ops_dev_pre_4b1_backfill_$(date +%Y%m%d).dump` — take this before running the script.
 3. **Target:** `project_number = 'MINER-PHX-AB-MV'` ("Project Miner — PHX Bldg A & B MV"), 5344 apparatus, all frozen, all `provenance_status='approved'`.
+   The preflight now **self-enforces** both the frozen and approved preconditions: it aborts with a `raise exception` if any `ops.apparatus.provenance_status <> 'approved'` or any `ops.scope_quote.is_frozen = false` for the target project.
+4. **Missing `-v project_number` now aborts non-zero:** the top guard uses `raise exception` (not `\quit`) so `-v ON_ERROR_STOP=1` produces a non-zero exit — a silent success on a missing var is no longer possible.
 4. **pg_trgm (optional triage only):** the steward triage query in the "Triage" section requires the `pg_trgm` extension. The apply role can run `create extension if not exists pg_trgm;` on `ops_dev` before the triage step. The main backfill script does NOT require pg_trgm.
 
 ---
@@ -25,11 +27,13 @@ cat infra/database/migrations/ops/backfill/4b1_bind_equipment_model_ref.sql \
       -v project_number=MINER-PHX-AB-MV -f -"
 ```
 
-The script aborts (`\quit` / `raise exception`) if:
-- `-v project_number=...` is not passed
+The script aborts (non-zero exit under `ON_ERROR_STOP=1`) if:
+- `-v project_number=...` is not passed (forced SQL error — not `\quit` — ensures non-zero exit)
 - `current_database()` is not `ops_dev`
 - The project does not exist (matched rows ≠ 1)
 - Apparatus count ≠ 5344
+- Any apparatus in the target project has `provenance_status <> 'approved'`
+- Any `scope_quote` in the target project has `is_frozen = false`
 
 Because it runs `--single-transaction`, any abort rolls back the entire transaction.
 

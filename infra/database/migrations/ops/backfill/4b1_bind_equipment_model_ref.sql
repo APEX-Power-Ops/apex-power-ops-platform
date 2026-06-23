@@ -3,7 +3,7 @@
 \if :{?project_number}
 \else
   \echo 'FATAL: pass -v project_number=<target project_number>'
-  \quit
+  do $$ begin raise exception 'project_number not supplied -- pass -v project_number=<target project_number>'; end $$;
 \endif
 
 -- (0) aborting preflight: ops_dev + the project exists + EXACTLY the expected population.
@@ -27,6 +27,24 @@ begin
    where p.project_number = target_project_number;
   if v_apparatus <> 5344 then
     raise exception 'project % apparatus=% (expected 5344) -- verify population before running', target_project_number, v_apparatus;
+  end if;
+  if exists (
+    select 1 from ops.apparatus a
+      join ops.scopes s on s.id = a.scope_id
+      join ops.projects p on p.id = s.project_id
+     where p.project_number = target_project_number
+       and a.provenance_status <> 'approved'
+  ) then
+    raise exception 'project % has non-approved apparatus -- this backfill is for the approved Miner set only', target_project_number;
+  end if;
+  if exists (
+    select 1 from ops.scope_quote sq
+      join ops.scopes s on s.id = sq.scope_id
+      join ops.projects p on p.id = s.project_id
+     where p.project_number = target_project_number
+       and sq.is_frozen = false
+  ) then
+    raise exception 'project % has unfrozen scope_quote(s) -- this backfill is for the frozen Miner set only', target_project_number;
   end if;
 end $$;
 
