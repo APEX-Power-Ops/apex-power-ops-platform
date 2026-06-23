@@ -4,6 +4,8 @@
 # Check 1: runtime secret-cache files are mode 0600/0400 and gitignored.
 # Check 1b: infra/.env holds only allowlisted keys (an orphan secret in the
 #           gitignored cache is invisible to Check 2 - flag it by key name).
+# Check 1c: Infisical-managed secrets (infra/infisical/.managed-secrets) must not
+#           linger in any local cache once migrated (drift; names only).
 # Check 2: high-precision scan for leaked CREDENTIALS in tracked files -
 #          provider token signatures (GitHub/AWS/Slack/Google/OpenAI), JWTs,
 #          private-key blocks, and inline DSN passwords. Example-bearing paths
@@ -68,6 +70,30 @@ if [[ -f "$ROOT/infra/.env" ]]; then
       say "  FAIL  infra/.env non-allowlisted key: $k  (move to Vault; allowed: $ENV_ALLOWED_KEYS)"; rc=1
     fi
   done < <(grep -oE '^[A-Za-z_][A-Za-z0-9_]*=' "$ROOT/infra/.env" 2>/dev/null | tr -d '=')
+fi
+
+# ---- Check 1c: Infisical drift -- a migrated secret must not linger in caches --
+# Once a secret is SOURCED from Infisical (named in infra/infisical/.managed-secrets),
+# any leftover copy in a local cache is DRIFT to remove (rotation runbook step 6:
+# "no value outside Infisical"). Dormant until the manifest names a secret. NAMES only.
+MANAGED="$ROOT/infra/infisical/.managed-secrets"
+if [[ -f "$MANAGED" ]]; then
+  declare -a MNAMES=()
+  while IFS= read -r line; do
+    line="${line%%#*}"; line="${line//[[:space:]]/}"
+    [[ -n "$line" ]] && MNAMES+=("$line")
+  done < "$MANAGED"
+  if [[ "${#MNAMES[@]}" -gt 0 ]]; then
+    for cache in "$ROOT/infra/.env" "$HOME/code/apex/.env.dev-pg-offsite-backup"; do
+      [[ -f "$cache" ]] || continue
+      for nm in "${MNAMES[@]}"; do
+        if grep -qE "^${nm}=" "$cache" 2>/dev/null; then
+          say "  FAIL  drift: '$nm' is Infisical-managed but still copied in $cache"; rc=1
+        fi
+      done
+    done
+    say "  PASS  Infisical drift check ran (${#MNAMES[@]} managed name(s))"
+  fi
 fi
 
 # ---- Check 2: leaked credentials in tracked files ------------------------
