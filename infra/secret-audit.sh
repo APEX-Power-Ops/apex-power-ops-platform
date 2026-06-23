@@ -2,6 +2,8 @@
 # secret-audit.sh - APEX platform secret-hygiene tripwire (L6 custody model).
 #
 # Check 1: runtime secret-cache files are mode 0600/0400 and gitignored.
+# Check 1b: infra/.env holds only allowlisted keys (an orphan secret in the
+#           gitignored cache is invisible to Check 2 - flag it by key name).
 # Check 2: high-precision scan for leaked CREDENTIALS in tracked files -
 #          provider token signatures (GitHub/AWS/Slack/Google/OpenAI), JWTs,
 #          private-key blocks, and inline DSN passwords. Example-bearing paths
@@ -48,6 +50,24 @@ if [[ -f "$ROOT/infra/.env" ]]; then
   else
     say "  FAIL  infra/.env is NOT gitignored"; rc=1
   fi
+fi
+
+# ---- Check 1b: infra/.env carries only allowlisted keys ------------------
+# An orphan secret (e.g. a prod DSN) parked in this gitignored 0600 cache is
+# invisible to Check 2, which scans TRACKED files only. The cache is meant to
+# hold exactly the dev-pg password; flag anything else (key NAMES only).
+ENV_ALLOWED_KEYS="${APEX_ENV_ALLOWED_KEYS:-DEV_PG_PASSWORD}"
+if [[ -f "$ROOT/infra/.env" ]]; then
+  while IFS= read -r k; do
+    [[ -z "$k" ]] && continue
+    ok=0
+    for a in $ENV_ALLOWED_KEYS; do [[ "$k" == "$a" ]] && ok=1; done
+    if [[ "$ok" == "1" ]]; then
+      say "  PASS  infra/.env key allowed: $k"
+    else
+      say "  FAIL  infra/.env non-allowlisted key: $k  (move to Vault; allowed: $ENV_ALLOWED_KEYS)"; rc=1
+    fi
+  done < <(grep -oE '^[A-Za-z_][A-Za-z0-9_]*=' "$ROOT/infra/.env" 2>/dev/null | tr -d '=')
 fi
 
 # ---- Check 2: leaked credentials in tracked files ------------------------
