@@ -67,9 +67,9 @@ Populated by `approve_and_recognize` from the apparatus's active attestation; **
 
 ### 5.3 Function `ops.attest_apparatus_complete(p_apparatus_id uuid, p_attested_by uuid, p_reason text) returns uuid`
 1. Reason not blank; `p_attested_by` exists in `ops.persons` (else clean error → API 400).
-2. Load apparatus `FOR UPDATE` joined to scope/project; verify: found; `source='ops-intake'`; `is_active` and active non-cancelled scope/project chain; `status NOT IN ('Complete','Cancelled')`; `scope_quote.is_frozen` + `frozen_at NOT NULL` (the "active ops-intake + frozen basis" gate).
+2. Load apparatus `FOR UPDATE` joined to scope/project; verify: found; `source='ops-intake'`; `is_active` and active non-cancelled scope/project chain; `status NOT IN ('Complete','Cancelled')`; `scope_quote.is_frozen` + `frozen_at NOT NULL`; **`quoted_hours > 0` and `quoted_revenue > 0`** (positive-basis — the same gate `approve_and_recognize` enforces, so attest never marks Complete a row recognize would reject [finding M-pb]).
 3. Capture `prior_status := apparatus.status`.
-4. `perform set_config('ops.completion_ctx','1', true);` (txn-local — opens the guard).
+4. `perform set_config('ops.completion_ctx','1', true);` (txn-local — opens the §5.7 **misuse** guard; defense-in-depth, **not** the security boundary — see §5.11).
 5. `update ops.apparatus set status='Complete', updated_at=now() where id=p_apparatus_id;`
 6. Insert the attestation (provenance default, `prior_status`). The partial unique index makes a second concurrent/duplicate active attestation a unique violation → API maps to 409.
 7. Return attestation id.
@@ -100,7 +100,7 @@ Add `completion_attestation_id => v_att` to the `recognized`-event insert. All o
 ```sql
 create function ops.trg_apparatus_completion_guard() returns trigger language plpgsql as $$
 begin
-  if new.source = 'ops-intake'
+  if (old.source = 'ops-intake' or new.source = 'ops-intake')   -- old OR new: a same-statement flip to source='manual' cannot dodge the guard
      and ((new.status = 'Complete') is distinct from (old.status = 'Complete'))   -- transition INTO or OUT OF Complete
      and current_setting('ops.completion_ctx', true) is distinct from '1' then
     raise exception 'apparatus % completion state changes only via attest/revoke functions', new.id;
@@ -110,14 +110,14 @@ end; $$;
 create trigger apparatus_completion_guard before update on ops.apparatus
   for each row execute function ops.trg_apparatus_completion_guard();
 ```
-Composes with the two existing `BEFORE UPDATE` apparatus triggers (independent checks; any raise aborts). A non-completion update on a Complete apparatus (status unchanged) does not trigger it.
+Composes with the two existing `BEFORE UPDATE` apparatus triggers (independent checks; any raise aborts). A non-completion update on a Complete apparatus (status unchanged) does not trigger it. **The trigger + GUC are a defense-in-depth *misuse* guard, not a security boundary** — any session with direct `UPDATE` rights can set the same GUC; the real boundary is §5.11.
 
 ### 5.8 View `ops.v_completion_recognition_worklist` (finding #5)
 Per **eligible** apparatus (`is_active`, `source='ops-intake'`, active non-cancelled scope/project, `scope_quote.is_frozen`):
 - `apparatus_id, apparatus_designation, scope_id, project_id, project_number, status, quoted_hours, quoted_revenue`
 - active attestation (LEFT JOIN `completion_attestation` where `revoked_at is null`): `attestation_id, attested_by, attested_at, attest_reason`
 - recognition (from `v_apparatus_recognition`): `net_recognized, is_recognized, recognized_event_id`
-- computed flags: `can_attest` (status NOT IN Complete/Cancelled AND no active attestation), `can_recognize` (`status='Complete'` AND active attestation AND NOT `is_recognized`), `can_revoke` (active attestation AND NOT `is_recognized`), `can_reverse` (`is_recognized`).
+- computed flags: `can_attest` (status NOT IN Complete/Cancelled AND no active attestation **AND `quoted_hours>0` AND `quoted_revenue>0`**), `can_recognize` (`status='Complete'` AND active attestation AND **positive basis** AND NOT `is_recognized`), `can_revoke` (active attestation AND NOT `is_recognized`), `can_reverse` (`is_recognized`).
 
 ### 5.9 Down migration
 Reverse order, leaving `001`–`008` and all original `005` objects intact: drop the worklist view; drop `apparatus_completion_guard` trigger + fn; restore `trg_revrec_insert_integrity` to its `005` body; restore `approve_and_recognize` to its `005` body; drop the `completion_attestation_id` column; drop the revoke fn; drop the attest fn; drop `completion_attestation`.
@@ -125,23 +125,31 @@ Reverse order, leaving `001`–`008` and all original `005` objects intact: drop
 ### 5.10 pytest on throwaway `ops_test`
 - mig up + down; down restores the `005` functions verbatim (assert recognize works without an attestation column after down).
 - **attest:** success → `status='Complete'` + attestation row + `prior_status` captured; rejects non-`ops-intake` source, inactive/cancelled chain, already-Complete, unfrozen basis, unknown actor, blank reason; second active attest → conflict (unique).
-- **silent-completion guard:** direct `update ops.apparatus set status='Complete'` (no ctx) **fails** for `source='ops-intake'`; attest path (sets ctx) succeeds.
-- **recognize:** populates `completion_attestation_id`; integrity trigger rejects a hand-inserted `recognized` row with NULL or foreign `completion_attestation_id`.
+- **silent-completion guard:** direct `update ops.apparatus set status='Complete'` (no ctx) **fails** for `source='ops-intake'`; a **same-statement source flip** `update … set source='manual', status='Complete'` also **fails** (caught by `old.source`); a source change *after* attestation does not orphan the guard; the attest path (sets ctx) succeeds.
+- **recognize:** populates `completion_attestation_id`; integrity trigger rejects a hand-inserted `recognized` row with NULL or foreign `completion_attestation_id`, **and rejects a recognized row referencing a *revoked* attestation — including a revoked attestation on the same apparatus** (attest→reverse→revoke→re-attest must not let the stale revoked id authorize) [finding M-rev].
 - **revoke:** blocked iff net > 0 (recognize → revoke fails; reverse → revoke succeeds, restores `prior_status`, marks `revoked_*`); unknown actor / blank reason rejected.
 - **worklist view:** flags correct across states (eligible-not-complete → `can_attest`; complete+attested+unrecognized → `can_recognize`+`can_revoke`; recognized → `can_reverse` only).
+
+### 5.11 Security boundary vs misuse guards (finding: GUC ≠ security boundary)
+The §5.7 source/status trigger and the `ops.completion_ctx` GUC are **defense-in-depth misuse guards** — they stop accidental or in-band direct `UPDATE`s (app-code mistakes, ad-hoc SQL), but any session holding direct `UPDATE` rights can set the same GUC, so they are **not** the security boundary. The boundary is two-layered:
+- **Interim (this slice):** host-gating — the `ops_dev` router is reachable only on the mesh host via `OPS_DEV_DSN` (no internet exposure), exactly like `intake_router`; the misuse guards + trigger gates prevent in-band mistakes.
+- **Target (the real boundary):** a least-privilege role design — a dedicated app role (`ops_app`) the API/package/tests connect as, with **`REVOKE UPDATE (status, source) ON ops.apparatus`** + no direct DML on the recognition ledger; the mutation functions become **`SECURITY DEFINER`** owned by the object owner with a **pinned `search_path` (`set search_path = ops, public, pg_temp`)**; tests run **as `ops_app`** and prove a direct `UPDATE … status='Complete'` raises *permission denied* while the function path succeeds.
+
+**Scope decision (operator ratify):** the entire `ops.*` lane is currently uniform trigger+host-gated with **no** role boundary on *any* mutation path (Chips 3/4/5 functions are not `SECURITY DEFINER`; the API connects as `postgres` on `ops_dev`). Introducing the role boundary on this slice alone would be asymmetric and incomplete. **Lean: land this slice on the interim boundary (host-gating + misuse guards), and design the `ops_app` SECURITY-DEFINER role boundary as a dedicated *lane-wide* hardening packet** applied across all ops mutation functions at once. The IRP pass + operator settle this before `writing-plans`.
 
 ## 6. Package layer (`packages/ops-intake`)
 Reuse the existing `ops.*` sole-writer package. Thin wrappers calling the `009` functions: `attest_complete(apparatus_id, attested_by, reason)`, `recognize(apparatus_id, actor, datasheet_clearance, datasheet_ref, cx_clearance, cx_ref)`, `reverse(event_id, actor, reason)`, `revoke(attestation_id, actor, reason)`. Map DB exceptions to typed, **value-free** errors (Chip-5 lesson).
 **Cross-task (finding #3):** update `tests/test_approve_envelope.py:72` to reach `'Complete'` via `ops.attest_apparatus_complete` instead of forcing `status` directly (the `009` guard would otherwise break it).
 
 ## 7. API — `services/ops/recognition_router.py`
-Host-gated (`OPS_DEV_DSN`; router registers only when configured, mirroring intake); actor-gated `ops.persons`; **value-free** guard errors (generic 400/409, no internal text).
-- `POST /completion/attest` `{apparatus_id, attested_by, reason}` → 200 `{attestation_id}` / 400 (unknown actor, ineligible) / 409 (already Complete / active attestation exists)
-- `POST /completion/{attestation_id}/revoke` `{revoked_by, reason}` → 200 / 400 / 409 (open recognition → reverse first)
-- `POST /recognize` `{apparatus_id, recognized_by, datasheet_clearance, datasheet_ref, cx_clearance, cx_ref}` → 200 `{event_id}` / 400 / 409 (already recognized). `obligation_clearance` allowed values surfaced from the DB enum.
-- `POST /recognition/{event_id}/reverse` `{reversed_by, reason}` → 200 `{reversal_id}` / 400 / 409 (already reversed / not a recognized event)
-- `GET /recognition/worklist?project_number=` → rows from `v_completion_recognition_worklist`
-- `GET /recognition/rollup?project_number=` → recognized-$ per scope/project (recognized $ **shown** — operator-authoritative, consistent with §261 `/pm-review/finance`)
+**Router prefix (finding #5):** `APIRouter(prefix="/api/v1/ops/recognition")` — every route below is relative to it, keeping this host-gated `ops_dev` bridge **path-distinct** from the prod/public derive-on-read `GET /api/v1/ops/revenue-recognition` (`lib/revenue-recognition.ts`).
+Host-gated (`OPS_DEV_DSN`; router registers only when configured, mirroring intake); actor-gated `ops.persons`; **value-free** guard errors (generic 400/409, no internal text). Full paths shown for clarity:
+- `POST /api/v1/ops/recognition/completion/attest` `{apparatus_id, attested_by, reason}` → 200 `{attestation_id}` / 400 (unknown actor, ineligible) / 409 (already Complete / active attestation exists)
+- `POST /api/v1/ops/recognition/completion/{attestation_id}/revoke` `{revoked_by, reason}` → 200 / 400 / 409 (open recognition → reverse first)
+- `POST /api/v1/ops/recognition/events/recognize` `{apparatus_id, recognized_by, datasheet_clearance, datasheet_ref, cx_clearance, cx_ref}` → 200 `{event_id}` / 400 / 409 (already recognized). `obligation_clearance` allowed values surfaced from the DB enum.
+- `POST /api/v1/ops/recognition/events/{event_id}/reverse` `{reversed_by, reason}` → 200 `{reversal_id}` / 400 / 409 (already reversed / not a recognized event)
+- `GET /api/v1/ops/recognition/worklist?project_number=` → rows from `v_completion_recognition_worklist`
+- `GET /api/v1/ops/recognition/rollup?project_number=` → recognized-$ per scope/project (recognized $ **shown** — operator-authoritative, consistent with §261 `/pm-review/finance`)
 
 API tests: actor-400s, value-free errors, and a host-gating disabled-subprocess test (mirrors the learning/intake pattern).
 
@@ -168,3 +176,13 @@ TDD on throwaway `ops_test`; API self-contained; UI typecheck + smoke. **Merge t
 | Sub-decision (b) — guard included (load-bearing) | §5.7 |
 | Sub-decision (c) — naming + UI copy | §5.1, §8 |
 | No-billing boundary exact | §2, §10 |
+
+**Round 2 (operator audit, 2026-06-23):**
+
+| Finding | Resolved in |
+|---|---|
+| H — silent-guard source-flip bypass (`old OR new` + tests) | §5.7, §5.10 |
+| H/M — GUC = misuse guard, not security boundary; role design | §5.3/5.4, §5.7, §5.11 |
+| M — attest positive-basis gate (+ worklist flags) | §5.3, §5.8 |
+| M — revoked attestation cannot authorize recognition | §5.6, §5.10 |
+| L — explicit API router prefix | §7 |
