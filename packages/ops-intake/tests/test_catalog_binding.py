@@ -76,3 +76,29 @@ def test_falsey_apparatus_type_rejects_not_crashes(clean_ops):
     assert "<missing apparatus_type>" in out["uncatalogued"]
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0
+
+
+def test_backfill_binds_only_target_frozen_resolvable(clean_ops):
+    dsn = clean_ops; who = _person(dsn)
+    # target project (resolvable + a bogus type) and a DIFFERENT project that must NOT be touched
+    rid_t = _seed_run(dsn, _payload("TGT", "Capcitors - Per Unit"), who); approve_run(dsn, rid_t, approved_by=who)
+    rid_o = _seed_run(dsn, _payload("OTHER", "Capcitors - Per Unit"), who); approve_run(dsn, rid_o, approved_by=who)
+    with psycopg.connect(dsn) as c:
+        cur = c.cursor()
+        cur.execute("update ops.apparatus set equipment_model_ref = null")  # legacy null state (both projects)
+        assert cur.execute("select bool_and(is_frozen) from ops.scope_quote").fetchone()[0] is True
+        # the operative bind, SCOPED to project_number='TGT' (the real script's step 2):
+        cur.execute("""
+            update ops.apparatus a set equipment_model_ref = v.resolved_id, updated_at=now()
+            from core.v_equipment_models_resolved v, ops.scopes s, ops.projects p
+            where v.requested_model_key = a.apparatus_type and s.id=a.scope_id and p.id=s.project_id
+              and p.project_number='TGT' and a.equipment_model_ref is null
+        """); c.commit()
+        tgt = cur.execute("select count(*) from ops.apparatus a join ops.scopes s on s.id=a.scope_id"
+                          " join ops.projects p on p.id=s.project_id where p.project_number='TGT'"
+                          " and a.equipment_model_ref is not null").fetchone()[0]
+        oth = cur.execute("select count(*) from ops.apparatus a join ops.scopes s on s.id=a.scope_id"
+                          " join ops.projects p on p.id=s.project_id where p.project_number='OTHER'"
+                          " and a.equipment_model_ref is not null").fetchone()[0]
+    assert tgt >= 1   # frozen target rows bound (freeze guard permits equipment_model_ref)
+    assert oth == 0   # the other project was untouched (scoping holds)
