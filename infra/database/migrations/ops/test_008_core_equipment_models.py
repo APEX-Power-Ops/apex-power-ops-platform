@@ -159,3 +159,19 @@ def test_apparatus_fk_present_nullable_enforced(): # review must-fix #2
         except psycopg.errors.ForeignKeyViolation:
             pass
         cur.execute("rollback to savepoint s"); c.rollback()
+
+def test_up_down_up_clean_and_chips_survive():   # no `conn` fixture: this test drives DDL via _exec
+    with psycopg.connect(DSN) as c, c.cursor() as cur:
+        cur.execute("select count(*) from ops.apparatus"); before = cur.fetchone()[0]
+    _exec(HERE / "008_core_equipment_models_down.sql")        # DOWN (autocommit, lane idiom)
+    with psycopg.connect(DSN) as c, c.cursor() as cur:
+        cur.execute("select 1 from information_schema.schemata where schema_name='core'")
+        assert cur.fetchone() is None, "core schema not dropped"
+        cur.execute("select 1 from information_schema.columns where table_schema='ops' and table_name='apparatus' and column_name='equipment_model_ref'")
+        assert cur.fetchone(), "down wrongly dropped the mig-001 column"
+        cur.execute("select count(*) from ops.apparatus"); assert cur.fetchone()[0] == before
+        cur.execute("select 1 from information_schema.table_constraints where constraint_name='apparatus_equipment_model_ref_fkey'")
+        assert cur.fetchone() is None, "FK not dropped by down"
+    _exec(HERE / "008_core_equipment_models.sql")             # UP again, clean (restores the session post-state)
+    with psycopg.connect(DSN) as c, c.cursor() as cur:
+        cur.execute("select count(*) from core.equipment_models"); assert cur.fetchone()[0] == 120
