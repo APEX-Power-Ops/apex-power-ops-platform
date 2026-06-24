@@ -114,6 +114,8 @@ def _ops_intake_enabled() -> bool:
 if _ops_intake_enabled():
     from services.ops.intake_router import router as ops_intake_router  # import-gated
     app.include_router(ops_intake_router)
+    from services.ops.recognition_router import router as ops_recognition_router  # import-gated
+    app.include_router(ops_recognition_router)
 
 # ── PM idempotency seam: swap to durable DB-backed backend ──
 # Packet 2026-04-16-pm-schema-019f
