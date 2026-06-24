@@ -30,6 +30,10 @@ test('recognition page: renders worklist, gates buttons by flags, modal attest +
     recognizeBody = r.request().postDataJSON()
     await r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ event_id: 'ev1' }) })
   })
+  // the shared PM shell probes schedule/drivers on /pm-review/* routes — stub it so the page reaches
+  // networkidle with no live backend (CI has none); it is the only non-recognition call this page makes.
+  await page.route('**/api/v1/schedule/drivers*', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }))
 
   const resp = await page.goto('/pm-review/recognition', { waitUntil: 'networkidle' })
   expect(resp?.ok()).toBeTruthy()

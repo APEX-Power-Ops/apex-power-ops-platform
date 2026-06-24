@@ -73,6 +73,12 @@ async function mockApprovalReads(page: Parameters<typeof test>[1] extends never 
     page.route('**/api/v1/schedule/sync-log?*', async (route: any) => {
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
     }),
+    page.route('**/api/v1/schedule/drivers*', async (route: any) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+    }),
+    page.route('**/api/v1/schedule/variance*', async (route: any) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+    }),
   ])
 
   return { historyRequests }
