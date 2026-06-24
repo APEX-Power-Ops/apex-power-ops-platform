@@ -14,7 +14,7 @@ begin
 end $$;
 
 drop index if exists ops.uq_intake_runs_proj_quote_version_native;
-drop index if exists ops.uq_intake_runs_content_hash_native;
+-- uq_intake_runs_content_hash_native is NOT dropped here: it was never created (C6-RESOLVED).
 drop function if exists ops._intake_source_format_text(ops.intake_source_format) cascade;
 
 -- restore the 007 trigger body (drop the 010 identity-col checks)

@@ -135,13 +135,33 @@ def test_create_run_native_rejects_non_catalog_without_domain_writes(clean_ops):
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0   # no domain writes
 
-def test_create_run_native_idempotent_on_content_hash(clean_ops):
+def test_create_run_native_idempotent_on_project_quote_version(clean_ops):
+    # Idempotency is anchored on (project_number, quote_version) — C6-RESOLVED.
+    # Submitting the SAME envelope (same project_number + same quote_version=1) a second time
+    # must raise ActiveRunExists (via uq_intake_runs_proj_quote_version_native).
     dsn = clean_ops; who = _person(dsn)
     create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())
     import pytest
     from ops_intake.envelope import ActiveRunExists
     with pytest.raises(ActiveRunExists):
-        create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())  # same content_hash
+        create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())  # same (project_number, quote_version)
+
+
+def test_native_new_quote_version_same_economics_allowed(clean_ops):
+    # C6 fix proof: two legitimate quote-versions with IDENTICAL economics must NOT collide.
+    # v1 and v2 share the same economics (same content_hash) but have different quote_version
+    # and different envelope_id. The second call must succeed and return a new parsed run.
+    import pytest
+    from ops_intake.envelope import ActiveRunExists
+    dsn = clean_ops; who = _person(dsn)
+    env_v1 = _catalog_env()  # quote_version=1, envelope_id="env-1"
+    out1 = create_run_native(dsn, uploaded_by=who, envelope=env_v1)
+    assert out1["status"] == "parsed"
+    # v2: identical economics, different quote_version + envelope_id
+    env_v2 = _catalog_env(quote_version=2, envelope_id="env-2")
+    out2 = create_run_native(dsn, uploaded_by=who, envelope=env_v2)
+    assert out2["status"] == "parsed"
+    assert out2["run_id"] != out1["run_id"]  # a NEW run was created (not the same)
 
 from ops_intake.approve import approve_run
 

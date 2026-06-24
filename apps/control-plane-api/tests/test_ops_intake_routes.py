@@ -60,9 +60,19 @@ def _dsn() -> str:
     return os.environ["OPS_DEV_DSN"]  # set by the test runner command
 
 
+def _ops_schema_exists(conn) -> bool:
+    """Return True if the ops schema exists in the database (copied from package conftest)."""
+    row = conn.execute(
+        "select 1 from pg_catalog.pg_namespace where nspname='ops'"
+    ).fetchone()
+    return row is not None
+
+
 @pytest.fixture(scope="session", autouse=True)
 def apply_migrations():
-    """Apply migrations 001-008 to ops_test, yield, then teardown."""
+    """Apply full migration ladder 001→010 (incl. 009) to ops_test, yield, then teardown.
+    Reset blocks guard native+009 teardown with _ops_schema_exists so a fresh ops_test is safe.
+    Exercises 010_down and 009_down each session (matching the package conftest ladder)."""
     d = _dsn()
     _require_ops_test(d)
 
@@ -71,9 +81,13 @@ def apply_migrations():
         conn.execute(sql)
 
     mig_dir = _MIGRATIONS_DIR
-    # pre-up reset: drop 008 (core + FK) THEN 001 (ops) so a leaked `core` from a prior
-    # session cannot make the 008 up-migration fail (008 is not CREATE ... IF NOT EXISTS).
+    # pre-up reset: guarded native+009 teardown THEN 008+001 teardown.
+    # 009/010 down require the ops schema to exist; guard so a fresh ops_test is safe.
     with psycopg.connect(d, autocommit=True) as c:
+        if _ops_schema_exists(c):
+            c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010_down's data-loss guard passes
+            _run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")
+            _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
         _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
 
@@ -86,6 +100,7 @@ def apply_migrations():
         "006_progress_billing.sql",
         "007_intake_envelope.sql",
         "008_core_equipment_models.sql",
+        "009_recognition_bridge.sql",
         "010_native_envelope_intake.sql",
     ]
     with psycopg.connect(d, autocommit=True) as c:
@@ -95,6 +110,10 @@ def apply_migrations():
     yield
 
     with psycopg.connect(d, autocommit=True) as c:
+        if _ops_schema_exists(c):
+            c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010_down's data-loss guard passes
+            _run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")
+            _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
         _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
 

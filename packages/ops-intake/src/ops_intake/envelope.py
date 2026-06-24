@@ -587,8 +587,9 @@ def create_run_native(dsn, *, uploaded_by, envelope):
             _all_finding_rows(cur, run_id, 1)
             conn.commit()
     except psycopg.errors.UniqueViolation as exc:
+        # C6-RESOLVED: uq_intake_runs_content_hash_native no longer exists; idempotency is
+        # anchored on (project_number, quote_version) via uq_intake_runs_proj_quote_version_native.
         if ("uq_intake_one_active" in str(exc)
-                or "uq_intake_runs_content_hash_native" in str(exc)
                 or "uq_intake_runs_proj_quote_version_native" in str(exc)):
             raise ActiveRunExists("An active/duplicate native run already exists for " + repr(pn)) from exc
         raise

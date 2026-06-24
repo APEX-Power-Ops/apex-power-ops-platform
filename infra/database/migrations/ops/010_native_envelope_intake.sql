@@ -55,10 +55,10 @@ end $$;
 create or replace function ops._intake_source_format_text(v ops.intake_source_format)
   returns text language sql immutable strict as $$select v::text$$;
 
--- C4: idempotency — one native run per compiled-envelope content_hash.
-create unique index if not exists uq_intake_runs_content_hash_native
-  on ops.intake_runs (content_hash)
-  where ops._intake_source_format_text(source_format) = 'native' and content_hash is not null;
+-- C6-RESOLVED: content_hash is stored as PROVENANCE only (server-recomputed; not a uniqueness
+-- constraint). Two legitimate quote-versions may share identical economics (hence identical hashes).
+-- Idempotency / version-anchor = (project_number, quote_version) alone. The global content_hash
+-- unique index is intentionally NOT created here.
 
 -- C4: one native run per (project_number, quote_version); supersede = a new quote_version.
 create unique index if not exists uq_intake_runs_proj_quote_version_native

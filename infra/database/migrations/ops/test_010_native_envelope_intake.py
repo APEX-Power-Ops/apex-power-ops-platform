@@ -48,8 +48,10 @@ def test_010_identity_columns_are_immutable():
                 c.execute(f"update ops.intake_runs set {col}={val} where id=%s", (rid,))
 
 def test_010_partial_unique_native_only():
+    """C6-RESOLVED: content_hash global-uniqueness index must NOT exist; proj_quote_version index MUST exist.
+    Idempotency / version-anchor = (project_number, quote_version); content_hash is provenance only."""
     with psycopg.connect(_dsn(), autocommit=True) as c:
         idx = [r[0] for r in c.execute(
             "select indexname from pg_indexes where schemaname='ops' and tablename='intake_runs'").fetchall()]
-        assert "uq_intake_runs_content_hash_native" in idx
         assert "uq_intake_runs_proj_quote_version_native" in idx
+        assert "uq_intake_runs_content_hash_native" not in idx  # C6: dropped; content_hash is provenance only
