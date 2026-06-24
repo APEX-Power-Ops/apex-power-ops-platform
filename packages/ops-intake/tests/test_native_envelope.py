@@ -142,3 +142,39 @@ def test_create_run_native_idempotent_on_content_hash(clean_ops):
     from ops_intake.envelope import ActiveRunExists
     with pytest.raises(ActiveRunExists):
         create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())  # same content_hash
+
+from ops_intake.approve import approve_run
+
+def _seeded_env(model_key="Capcitors - Per Unit"):
+    env = _catalog_env()
+    env["scopes"][0]["lines"][0]["equipment_model_ref"] = model_key
+    return env
+
+def test_native_approve_materializes_and_reconciles(clean_ops):
+    dsn = clean_ops; who = _person(dsn)
+    env = _seeded_env()
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", out["findings"]
+    res = approve_run(dsn, out["run_id"], approved_by=who)
+    assert res["outcome"] == "approved", res
+    with psycopg.connect(dsn) as c:
+        # exact projection: 3 apparatus (base_qty=3, M4=1), one scope_quote_line, frozen quote
+        assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 3
+        assert c.execute("select count(*) from ops.scope_quote_line").fetchone()[0] == 1
+        assert c.execute("select bool_and(is_frozen) from ops.scope_quote").fetchone()[0] is True
+        assert c.execute("select status from ops.intake_runs where id=%s", (out["run_id"],)).fetchone()[0] == "approved"
+        # +/-1c reconciliation: envelope bid_cents vs sum(scope_quote.adjusted_total)
+        adj = c.execute("select coalesce(sum(adjusted_total),0) from ops.scope_quote").fetchone()[0]
+    bid = Decimal(env["totals"]["bid_cents"]) / Decimal(100)
+    assert abs(Decimal(str(adj)) - bid) <= Decimal("0.01"), (adj, bid)
+
+def test_native_patch_review_compatible(clean_ops):
+    """canonical==review flat shape -> patch_review's allowlist accepts an editable-field change."""
+    dsn = clean_ops; who = _person(dsn)
+    from ops_intake.envelope import get_run, patch_review
+    out = create_run_native(dsn, uploaded_by=who, envelope=_seeded_env())
+    run = get_run(dsn, out["run_id"])
+    review = run["review_payload"]
+    review["scopes"][0]["lines"][0]["hrs_per_unit"] = 2.5    # _LINE_MUTABLE field -> allowed
+    patched = patch_review(dsn, out["run_id"], review_payload=review)
+    assert patched["review_payload_version"] == 2
