@@ -40,6 +40,18 @@ def _is_integer_valued(d) -> bool:
 def validate_envelope(env: dict) -> list[Finding]:
     """Catalog-only fail-closed gate (C3/C5/C7). Blocking findings, never a crash."""
     out: list[Finding] = []
+
+    # Hardening D3: schema_version / source_kind contract (top-level, fail-closed at the boundary).
+    # Must match the pinned contract before any other structural checks.
+    if env.get("schema_version") != NATIVE_SCHEMA_VERSION:
+        out.append(_f("invalid_schema_version",
+                      "Envelope schema_version does not match the expected contract version",
+                      detail=f"expected={NATIVE_SCHEMA_VERSION!r}; got={env.get('schema_version')!r}"))
+    if env.get("source_kind") != "native":
+        out.append(_f("invalid_source_kind",
+                      "Envelope source_kind is not 'native'",
+                      detail=f"got={env.get('source_kind')!r}"))
+
     if not env.get("project_number"):
         out.append(_f("missing_project_number", "Envelope has no project number"))
 
@@ -83,6 +95,9 @@ def validate_envelope(env: dict) -> list[Finding]:
             out.append(_f("malformed_total", "Envelope totals contain a negative value",
                           detail="field=bid_cents"))
 
+    # Hardening D3 gap 4: collect all included catalog line_uids for global uniqueness check.
+    _all_line_uids: list[str] = []
+
     for i, sc in enumerate(env.get("scopes", []) or [], start=1):
         # Hardening A: scope identity / lineage fields required by the pivot
         if not sc.get("name"):
@@ -106,10 +121,16 @@ def validate_envelope(env: dict) -> list[Finding]:
                           detail=f"field=service_cents"))
         else:
             svc_cents = _svc_cents_dec if _svc_cents_dec is not None else Decimal(0)
-            svc_hours = _dec(st.get("service_hours", 0)) or Decimal(0)   # R1-5: scope-level service_hours too
-            if svc_cents != 0 or svc_hours != 0:
-                out.append(_f("nonzero_service", f"Scope #{i} carries service work (not supported in v1)",
-                              detail=f"scope={sc.get('scope_id')!r}"))
+            # Hardening D3 gap 2: service_hours present-null/non-numeric -> malformed_total (never silently zero).
+            # Mirror the D1 fix for service_cents: if present and _dec is None -> blocking malformed_total.
+            if "service_hours" in st and _dec(st["service_hours"]) is None:
+                out.append(_f("malformed_total", f"Scope #{i} has a non-numeric value in a totals field",
+                              detail=f"field=service_hours"))
+            else:
+                svc_hours = _dec(st.get("service_hours", 0)) or Decimal(0)
+                if svc_cents != 0 or svc_hours != 0:
+                    out.append(_f("nonzero_service", f"Scope #{i} carries service work (not supported in v1)",
+                                  detail=f"scope={sc.get('scope_id')!r}"))
 
         _cost_cents_raw = st["cost_cents"] if "cost_cents" in st else 0
         _cost_cents_dec = _dec(_cost_cents_raw)
@@ -155,31 +176,37 @@ def validate_envelope(env: dict) -> list[Finding]:
                     out.append(_f("malformed_total", f"Scope #{i} has a negative value in an integer-cents field",
                                   detail=f"field={_fld}"))
 
-        # Hardening D2: per-scope adjusted-cents reconciliation.
-        # Only run when all required numeric fields are present and valid (i.e. after the D1 typed
-        # guards would have rejected malformed inputs).  Guard with _dec(...) is not None so a
-        # malformed scope produces its existing typed finding, not a spurious mismatch.
-        # Formula (catalog-only v1; travel/outside are 0 / rejected above):
-        #   derived = (onsite_labor_cents + offsite_labor_cents) * replication_m4 * adjustment_multiplier_n4
-        # Compare to scope_totals.adjusted_cents with ±1-cent tolerance.
+        # Hardening D2/D3: per-scope adjusted-cents reconciliation.
+        # D3 gap 3: adjusted_cents is now REQUIRED (not optional-silent-skip).
+        # When all the other required numeric inputs are present/valid, adjusted_cents MUST
+        # also be present and numeric; absent/non-numeric -> blocking missing_adjusted_cents.
+        # (The ±1-cent mismatch check only runs when adjusted_cents is present and numeric.)
         _onsite_d  = _dec(st.get("onsite_labor_cents", 0))
         _offsite_d = _dec(st.get("offsite_labor_cents", 0))
         _m4_d      = _dec(sc.get("replication_m4"))
         _n4_d      = _dec(sc.get("adjustment_multiplier_n4"))
-        _adj_raw   = st.get("adjusted_cents")
-        _adj_d     = _dec(_adj_raw) if _adj_raw is not None else None
+        _adj_raw   = st.get("adjusted_cents")  # None if key absent
+        _adj_present = "adjusted_cents" in st
+        _adj_d     = _dec(_adj_raw)  # None if non-numeric OR if key absent
         if (
             _onsite_d is not None and _offsite_d is not None
             and _m4_d is not None and _n4_d is not None
-            and _adj_d is not None
         ):
-            _derived = (_onsite_d + _offsite_d) * _m4_d * _n4_d
-            if abs(_derived - _adj_d) > Decimal(1):
+            # D3: adjusted_cents must be present and numeric at this stage
+            if not _adj_present or _adj_d is None:
                 out.append(_f(
-                    "scope_adjusted_mismatch",
-                    f"Scope #{i} adjusted cents do not reconcile with derived component economics",
-                    detail=f"scope_id={sc.get('scope_id')!r}; derived={int(_derived)}; adjusted_cents={int(_adj_d)}",
+                    "missing_adjusted_cents",
+                    f"Scope #{i} adjusted_cents is absent or non-numeric (required for reconciliation)",
+                    detail=f"scope_id={sc.get('scope_id')!r}; adjusted_cents={_adj_raw!r}",
                 ))
+            else:
+                _derived = (_onsite_d + _offsite_d) * _m4_d * _n4_d
+                if abs(_derived - _adj_d) > Decimal(1):
+                    out.append(_f(
+                        "scope_adjusted_mismatch",
+                        f"Scope #{i} adjusted cents do not reconcile with derived component economics",
+                        detail=f"scope_id={sc.get('scope_id')!r}; derived={int(_derived)}; adjusted_cents={int(_adj_d)}",
+                    ))
 
         for ln in sc.get("lines", []) or []:
             if not ln.get("included", True):
@@ -198,6 +225,9 @@ def validate_envelope(env: dict) -> list[Finding]:
             if not ln.get("line_uid"):
                 out.append(_f("missing_line_uid", f"Scope #{i} catalog line has no line_uid",
                               detail=f"equipment_model_ref={ln.get('equipment_model_ref')!r}"))
+            else:
+                # D3 gap 4: collect for global duplicate check (only when line_uid is present)
+                _all_line_uids.append(ln["line_uid"])
 
             for fld in _REQUIRED_CATALOG_FIELDS:
                 if ln.get(fld) in (None, ""):
@@ -235,6 +265,15 @@ def validate_envelope(env: dict) -> list[Finding]:
                         _qty_ok[_num_fld] = False
                     else:
                         _qty_ok[_num_fld] = True
+                elif _num_fld == "resolved_ref_hours":
+                    # D3 gap 5: resolved_ref_hours must be non-negative (fractional OK; sign check only)
+                    if _d < 0:
+                        out.append(_f("malformed_catalog_field",
+                                      f"Scope #{i} catalog line has negative resolved_ref_hours",
+                                      detail=f"line_uid={ln.get('line_uid')!r}; field={_num_fld}"))
+                        _qty_ok[_num_fld] = False
+                    else:
+                        _qty_ok[_num_fld] = True
                 else:
                     _qty_ok[_num_fld] = True
 
@@ -247,6 +286,18 @@ def validate_envelope(env: dict) -> list[Finding]:
                     out.append(_f("qty_mismatch",
                                   f"Scope #{i} catalog line has mismatched base and intake quantities",
                                   detail=f"line_uid={ln.get('line_uid')!r}"))
+
+    # Hardening D3 gap 4: global duplicate line_uid check.
+    # Duplicate line_uids across all included catalog lines -> approve-time DB collision
+    # (uq_ops_apparatus_intake). Reject BEFORE storing as parsed.
+    _seen_uids: set[str] = set()
+    for _uid in _all_line_uids:
+        if _uid in _seen_uids:
+            out.append(_f("duplicate_line_uid",
+                          "Envelope contains duplicate catalog line identifiers (line_uid must be globally unique)",
+                          detail=f"duplicate line_uid={_uid!r}"))
+            break  # one finding is sufficient; PM-safe
+        _seen_uids.add(_uid)
 
     return out
 
@@ -283,12 +334,15 @@ def pivot_to_intake_payload(env: dict) -> dict:
         for ln in sc.get("lines", []) or []:
             if not ln.get("included", True) or ln.get("line_kind") != "catalog":
                 continue
+            # D3 gap 5: coerce resolved_ref_hours through _dec (like cents/qty) so string "10.0"
+            # becomes float 10.0 in the payload rather than crashing downstream arithmetic.
+            _rrh = float(_dec(ln["resolved_ref_hours"]))
             lines.append(QuoteLineIn(
                 apparatus_type=ln["equipment_model_ref"],          # model-key; resolve_models -> uuid at approve
                 test_standard=sc.get("neta_standard"),             # scope -> line fan-out
                 qty=int(_dec(ln["base_qty"])),                     # == project_intake_qty at M4==1; _dec handles "3.0"/"3"/3
-                hrs_per_unit=ln["resolved_ref_hours"],
-                catalog_default_hours=ln["resolved_ref_hours"],
+                hrs_per_unit=_rrh,
+                catalog_default_hours=_rrh,
                 line_uid=ln.get("line_uid"),
                 section=None,                                      # envelope has no section -> __ungrouped__ task
             ))

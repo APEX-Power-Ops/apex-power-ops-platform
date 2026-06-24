@@ -3,6 +3,7 @@ from ops_intake.native import validate_envelope, pivot_to_intake_payload, recomp
 
 def _catalog_env(**over):
     env = {
+        "schema_version": "estimate_envelope_v1", "source_kind": "native",
         "project_number": "JOB-1", "envelope_id": "env-1", "quote_version": 1,
         "content_hash": "abc", "source_draft_id": "d1", "source_revision_id": "r1",
         "totals": {"bid_cents": 100000, "service_hours": 0},
@@ -820,3 +821,267 @@ def test_d2_e2e_approve_still_passes(clean_ops):
     assert out["status"] == "parsed", out["findings"]
     res = approve_run(dsn, out["run_id"], approved_by=who)
     assert res["outcome"] == "approved", res
+
+
+# ---------------------------------------------------------------------------
+# Hardening D3 -- schema_version/source_kind contract, service_hours,
+#                  adjusted_cents required, duplicate line_uid,
+#                  resolved_ref_hours coerce+nonneg
+# ---------------------------------------------------------------------------
+
+
+def _d3_env(**over):
+    """Deep-copy the clean env (now with schema_version+source_kind) then apply overrides."""
+    import copy
+    return copy.deepcopy(_catalog_env(**over))
+
+
+# --- Gap 1: schema_version / source_kind contract ---
+
+def test_d3_schema_version_missing_rejects():
+    """schema_version absent -> invalid_schema_version blocking."""
+    env = _d3_env()
+    del env["schema_version"]
+    assert "invalid_schema_version" in _codes(validate_envelope(env))
+
+
+def test_d3_schema_version_wrong_rejects():
+    """schema_version='estimate_envelope_v2' -> invalid_schema_version blocking."""
+    env = _d3_env()
+    env["schema_version"] = "estimate_envelope_v2"
+    assert "invalid_schema_version" in _codes(validate_envelope(env))
+
+
+def test_d3_source_kind_missing_rejects():
+    """source_kind absent -> invalid_source_kind blocking."""
+    env = _d3_env()
+    del env["source_kind"]
+    assert "invalid_source_kind" in _codes(validate_envelope(env))
+
+
+def test_d3_source_kind_wrong_rejects():
+    """source_kind='workbook_intake' -> invalid_source_kind blocking."""
+    env = _d3_env()
+    env["source_kind"] = "workbook_intake"
+    assert "invalid_source_kind" in _codes(validate_envelope(env))
+
+
+def test_d3_schema_version_missing_create_run_rejected(clean_ops):
+    """schema_version absent -> create_run_native returns status='rejected', no domain writes."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d3_env()
+    del env["schema_version"]
+    env["project_number"] = "D3-SV-MISS"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "invalid_schema_version" for f in out["findings"])
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_d3_source_kind_wrong_create_run_rejected(clean_ops):
+    """source_kind='workbook_intake' -> create_run_native returns status='rejected', no domain writes."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d3_env()
+    env["source_kind"] = "workbook_intake"
+    env["project_number"] = "D3-SK-WRONG"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "invalid_source_kind" for f in out["findings"])
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+# --- Gap 2: malformed/null service_hours ---
+
+def test_d3_service_hours_null_rejects():
+    """service_hours=None (present-null) -> malformed_total (not silently zeroed)."""
+    env = _d3_env()
+    env["scopes"][0]["scope_totals"]["service_hours"] = None
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d3_service_hours_non_numeric_rejects():
+    """service_hours='abc' -> malformed_total (was silently zeroed, bypassed nonzero_service)."""
+    env = _d3_env()
+    env["scopes"][0]["scope_totals"]["service_hours"] = "abc"
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d3_service_hours_null_create_run_rejected(clean_ops):
+    """service_hours=None -> create_run_native returns status='rejected', no domain writes."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d3_env()
+    env["project_number"] = "D3-SH-NULL"
+    env["scopes"][0]["scope_totals"]["service_hours"] = None
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "malformed_total" for f in out["findings"])
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_d3_service_hours_non_numeric_create_run_rejected(clean_ops):
+    """service_hours='abc' -> create_run_native returns status='rejected', no domain writes."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d3_env()
+    env["project_number"] = "D3-SH-NAN"
+    env["scopes"][0]["scope_totals"]["service_hours"] = "abc"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "malformed_total" for f in out["findings"])
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+# --- Gap 3: adjusted_cents required (no silent skip) ---
+
+def test_d3_adjusted_cents_absent_rejects():
+    """adjusted_cents absent -> blocking (no silent skip of reconciliation)."""
+    env = _d3_env()
+    del env["scopes"][0]["scope_totals"]["adjusted_cents"]
+    codes = _codes(validate_envelope(env))
+    assert "missing_adjusted_cents" in codes or "malformed_total" in codes, (
+        f"Expected missing_adjusted_cents or malformed_total; got {codes}"
+    )
+
+
+def test_d3_adjusted_cents_non_numeric_rejects():
+    """adjusted_cents='abc' -> blocking finding (was silently skipped)."""
+    env = _d3_env()
+    env["scopes"][0]["scope_totals"]["adjusted_cents"] = "abc"
+    codes = _codes(validate_envelope(env))
+    assert "missing_adjusted_cents" in codes or "malformed_total" in codes, (
+        f"Expected missing_adjusted_cents or malformed_total; got {codes}"
+    )
+
+
+def test_d3_adjusted_cents_absent_create_run_rejected(clean_ops):
+    """adjusted_cents absent -> create_run_native returns status='rejected', no domain writes."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d3_env()
+    env["project_number"] = "D3-ADJ-MISS"
+    del env["scopes"][0]["scope_totals"]["adjusted_cents"]
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_d3_adjusted_cents_non_numeric_create_run_rejected(clean_ops):
+    """adjusted_cents='abc' -> create_run_native returns status='rejected', no domain writes."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d3_env()
+    env["project_number"] = "D3-ADJ-NAN"
+    env["scopes"][0]["scope_totals"]["adjusted_cents"] = "abc"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+# --- Gap 4: duplicate line_uid global uniqueness ---
+
+def test_d3_duplicate_line_uid_rejects():
+    """Two included catalog lines with the same line_uid -> duplicate_line_uid blocking."""
+    import copy
+    env = copy.deepcopy(_catalog_env())
+    # Add a second scope with a line that shares the same line_uid as scope 1
+    scope2 = copy.deepcopy(env["scopes"][0])
+    scope2["scope_id"] = "S2"
+    scope2["name"] = "A2"
+    # Same line_uid "S1:row1" as scope 1's line
+    env["scopes"].append(scope2)
+    codes = _codes(validate_envelope(env))
+    assert "duplicate_line_uid" in codes, f"Expected duplicate_line_uid; got {codes}"
+
+
+def test_d3_duplicate_line_uid_within_scope_rejects():
+    """Two included catalog lines in the SAME scope with the same line_uid -> duplicate_line_uid."""
+    import copy
+    env = copy.deepcopy(_catalog_env())
+    line2 = copy.deepcopy(env["scopes"][0]["lines"][0])
+    # Same line_uid "S1:row1"
+    env["scopes"][0]["lines"].append(line2)
+    codes = _codes(validate_envelope(env))
+    assert "duplicate_line_uid" in codes, f"Expected duplicate_line_uid; got {codes}"
+
+
+def test_d3_unique_line_uids_no_false_positive():
+    """Two included catalog lines with DIFFERENT line_uids -> no duplicate_line_uid."""
+    import copy
+    env = copy.deepcopy(_catalog_env())
+    line2 = copy.deepcopy(env["scopes"][0]["lines"][0])
+    line2["line_uid"] = "S1:row2"
+    env["scopes"][0]["lines"].append(line2)
+    codes = _codes(validate_envelope(env))
+    assert "duplicate_line_uid" not in codes, f"False positive duplicate_line_uid; got {codes}"
+
+
+def test_d3_duplicate_line_uid_create_run_rejected(clean_ops):
+    """Duplicate line_uid -> create_run_native returns status='rejected', no domain writes (not a DB 500)."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "D3-DUP-UID"
+    env["envelope_id"] = "env-d3-dup-uid"
+    # Add a second line with the same line_uid
+    line2 = copy.deepcopy(env["scopes"][0]["lines"][0])
+    env["scopes"][0]["lines"].append(line2)
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "duplicate_line_uid" for f in out["findings"]), out["findings"]
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+# --- Gap 5: resolved_ref_hours coerce + non-negative ---
+
+def test_d3_resolved_ref_hours_string_accepted():
+    """resolved_ref_hours='10.0' (string) -> ACCEPTED by validate_envelope (no malformed_catalog_field)."""
+    env = _d3_env()
+    env["scopes"][0]["lines"][0]["resolved_ref_hours"] = "10.0"
+    codes = _codes(validate_envelope(env))
+    assert "malformed_catalog_field" not in codes, (
+        f"String resolved_ref_hours should be accepted (coercible); got {codes}"
+    )
+
+
+def test_d3_resolved_ref_hours_negative_rejects():
+    """resolved_ref_hours=-1 -> malformed_catalog_field (negative hours)."""
+    env = _d3_env()
+    env["scopes"][0]["lines"][0]["resolved_ref_hours"] = -1
+    codes = _codes(validate_envelope(env))
+    assert "malformed_catalog_field" in codes, f"Expected malformed_catalog_field; got {codes}"
+
+
+def test_d3_resolved_ref_hours_string_create_run_accepted(clean_ops):
+    """resolved_ref_hours='10.0' (string) -> create_run_native returns status='parsed' (NOT rejected, NOT crash)."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_seeded_env())
+    env["project_number"] = "D3-RRH-STR"
+    env["envelope_id"] = "env-d3-rrh-str"
+    env["scopes"][0]["scope_totals"]["quoted_app_hours"] = 10
+    env["scopes"][0]["lines"][0]["resolved_ref_hours"] = "10.0"  # string form
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", f"Expected parsed; findings={out.get('findings')}"
+    # Pivot must coerce to float — check the review_payload
+    hrs = out["review_payload"]["scopes"][0]["lines"][0]["hrs_per_unit"]
+    from decimal import Decimal as _D
+    assert _D(str(hrs)) == _D("10.0"), f"Expected hrs_per_unit=10.0, got {hrs!r}"
+
+
+def test_d3_resolved_ref_hours_negative_create_run_rejected(clean_ops):
+    """resolved_ref_hours=-1 -> create_run_native returns status='rejected', no domain writes."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "D3-RRH-NEG"
+    env["envelope_id"] = "env-d3-rrh-neg"
+    env["scopes"][0]["lines"][0]["resolved_ref_hours"] = -1
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "malformed_catalog_field" for f in out["findings"])
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0

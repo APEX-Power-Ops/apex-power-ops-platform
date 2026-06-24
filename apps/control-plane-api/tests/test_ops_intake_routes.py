@@ -19,6 +19,10 @@ import pathlib
 import sys
 import uuid
 
+# Set DATABASE_URL before config.py is imported so it doesn't raise at collection time.
+# The TestClient overrides the actual DB via OPS_DEV_DSN; this placeholder satisfies config.py.
+os.environ.setdefault("DATABASE_URL", "postgresql://localhost/ops_test")
+
 import psycopg
 import pytest
 
@@ -573,6 +577,7 @@ class TestCodexAuditHardening:
 
 def _catalog_envelope():
     return {
+        "schema_version": "estimate_envelope_v1", "source_kind": "native",
         "project_number": "API-1", "envelope_id": "api-env-1", "quote_version": 1,
         "source_draft_id": "d", "source_revision_id": "r",
         "totals": {"bid_cents": 165000, "service_hours": 0},
@@ -709,5 +714,54 @@ class TestNativeIntakeD1:
         assert body["status"] == "parsed", (
             f"Expected status='parsed' for integer-valued string cents; got {body['status']}; findings={body.get('findings')}"
         )
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+
+# ---------------------------------------------------------------------------
+# Hardening D3 route tests
+# ---------------------------------------------------------------------------
+
+
+class TestNativeIntakeD3:
+    """D3 hardening: schema/source contract + duplicate line_uid route-level tests."""
+
+    def test_native_source_kind_workbook_intake_is_governed_reject(self, client, person_id):
+        """source_kind='workbook_intake' -> HTTP 200 status='rejected' (not 500, not 422)."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "D3-ROUTE-SK"
+        env["envelope_id"] = "d3-route-env-sk"
+        env["source_kind"] = "workbook_intake"
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "invalid_source_kind" in codes, f"Expected invalid_source_kind in {codes}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+    def test_native_duplicate_line_uid_is_governed_reject_not_500(self, client, person_id):
+        """Duplicate line_uid -> HTTP 200 status='rejected' (not a DB 500 from uq_ops_apparatus_intake)."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "D3-ROUTE-DUP-UID"
+        env["envelope_id"] = "d3-route-env-dup-uid"
+        # Add a second line with the same line_uid (duplicating "S1:r1")
+        line2 = copy.deepcopy(env["scopes"][0]["lines"][0])
+        env["scopes"][0]["lines"].append(line2)
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "duplicate_line_uid" in codes, f"Expected duplicate_line_uid in {codes}"
         assert not _contains_substring(body, "$")
         assert not _contains_substring(body, "diagnostic_detail")
