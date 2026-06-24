@@ -9,5 +9,9 @@
 -- trace column; drop revoke fn; drop attest fn; drop completion_attestation.
 -- ============================================================================
 
+-- ---- T1: drop attestation-immutability trigger + function ------------------
+drop trigger if exists completion_attestation_immutable on ops.completion_attestation;
+drop function if exists ops.trg_completion_attestation_immutable() cascade;
+
 -- ---- T0: drop the completion attestation table -----------------------------
 drop table if exists ops.completion_attestation cascade;

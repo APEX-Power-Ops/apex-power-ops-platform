@@ -124,3 +124,63 @@ def test_down_is_idempotent_double_down():
     with psycopg.connect(DSN) as c, c.cursor() as cur:
         cur.execute("select 1 from information_schema.tables where table_schema='ops' and table_name='completion_attestation'")
         assert cur.fetchone(), "009 re-up after double-down did not recreate the table"
+
+def _seed_attestation(cur, who, aid, reason="r"):
+    cur.execute("insert into ops.completion_attestation (apparatus_id, attested_by, reason, prior_status)"
+                " values (%s,%s,%s,'Not Started') returning id", (aid, who, reason))
+    return cur.fetchone()[0]
+
+def test_immutable_core_field_update_fails(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur); aid=_seed_eligible_apparatus(cur)
+        att=_seed_attestation(cur, who, aid)
+        try:
+            cur.execute("update ops.completion_attestation set reason='changed' where id=%s",(att,))
+            assert False, "core-field UPDATE accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_immutable_delete_fails(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur); aid=_seed_eligible_apparatus(cur)
+        att=_seed_attestation(cur, who, aid)
+        try:
+            cur.execute("delete from ops.completion_attestation where id=%s",(att,))
+            assert False, "DELETE accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_immutable_partial_revoke_fails_missing_revoked_at(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur); aid=_seed_eligible_apparatus(cur)
+        att=_seed_attestation(cur, who, aid)
+        try:
+            cur.execute("update ops.completion_attestation set revoked_by=%s where id=%s",(who,att))
+            assert False, "partial revoke (revoked_by w/o revoked_at) accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_immutable_blank_revoke_reason_fails(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur); aid=_seed_eligible_apparatus(cur)
+        att=_seed_attestation(cur, who, aid)
+        try:
+            cur.execute("update ops.completion_attestation set revoked_at=now(), revoked_by=%s, revoke_reason='  '"
+                        " where id=%s",(who,att))
+            assert False, "blank revoke_reason accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_immutable_wellformed_revoke_succeeds_then_double_revoke_fails(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur); aid=_seed_eligible_apparatus(cur)
+        att=_seed_attestation(cur, who, aid)
+        cur.execute("update ops.completion_attestation set revoked_at=now(), revoked_by=%s, revoke_reason='superseded'"
+                    " where id=%s",(who,att))
+        cur.execute("select revoked_at is not null from ops.completion_attestation where id=%s",(att,))
+        assert cur.fetchone()[0] is True
+        try:
+            cur.execute("update ops.completion_attestation set revoke_reason='again' where id=%s",(att,))
+            assert False, "double-revoke / post-revoke mutation accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")

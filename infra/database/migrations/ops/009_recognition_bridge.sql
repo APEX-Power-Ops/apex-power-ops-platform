@@ -24,3 +24,27 @@ create unique index uq_completion_attestation_active
   on ops.completion_attestation (apparatus_id) where revoked_at is null;
 comment on table ops.completion_attestation is
   'Governed PM attestation that an apparatus is testing-complete FOR RECOGNITION. NOT production truth, NOT customer-facing. Sole sanctioned writer of ops.apparatus.status=Complete for approved apparatus. A future production-tracking authority supersedes via provenance=production_tracking.';
+
+-- ---- T1: attestation immutability (append-only completion proof) -----------
+create function ops.trg_completion_attestation_immutable() returns trigger language plpgsql as $$
+begin
+  if tg_op = 'DELETE' then raise exception 'ops.completion_attestation is append-only (DELETE blocked)'; end if;
+  if new.id is distinct from old.id or new.apparatus_id is distinct from old.apparatus_id
+     or new.attested_by is distinct from old.attested_by or new.reason is distinct from old.reason
+     or new.provenance is distinct from old.provenance or new.prior_status is distinct from old.prior_status
+     or new.attested_at is distinct from old.attested_at then
+    raise exception 'ops.completion_attestation core fields are immutable (id %)', old.id;
+  end if;
+  -- the ONLY permitted UPDATE is a single, well-formed revoke transition:
+  -- all revoke fields NULL -> all populated together (revoked_at + revoked_by + non-blank revoke_reason).
+  if old.revoked_at is not null or old.revoked_by is not null or old.revoke_reason is not null then
+    raise exception 'ops.completion_attestation % already revoked (immutable)', old.id;
+  end if;
+  if not (new.revoked_at is not null and new.revoked_by is not null
+          and btrim(coalesce(new.revoke_reason,'')) <> '') then
+    raise exception 'ops.completion_attestation %: only a complete revoke is permitted (revoked_at + revoked_by + non-blank reason set together)', old.id;
+  end if;
+  return new;
+end; $$;
+create trigger completion_attestation_immutable before update or delete on ops.completion_attestation
+  for each row execute function ops.trg_completion_attestation_immutable();
