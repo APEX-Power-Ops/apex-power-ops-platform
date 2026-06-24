@@ -1085,3 +1085,38 @@ def test_d3_resolved_ref_hours_negative_create_run_rejected(clean_ops):
     assert any(f["code"] == "malformed_catalog_field" for f in out["findings"])
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+# ---------------------------------------------------------------------------
+# Hardening D3 FIX -- zero-quantity catalog line reject
+# ---------------------------------------------------------------------------
+
+
+def test_native_zero_base_qty_rejects():
+    """base_qty=0 / project_intake_qty=0 -> blocking malformed_catalog_field.
+    An included catalog line with zero quantity is malformed: included means 'test >=1 of these'."""
+    import copy
+    env = copy.deepcopy(_catalog_env())
+    env["scopes"][0]["lines"][0]["base_qty"] = 0
+    env["scopes"][0]["lines"][0]["project_intake_qty"] = 0
+    codes = _codes(validate_envelope(env))
+    assert "malformed_catalog_field" in codes, (
+        f"Expected malformed_catalog_field for zero base_qty; got {codes}"
+    )
+
+
+def test_native_zero_base_qty_create_run_rejected(clean_ops):
+    """base_qty=0 / project_intake_qty=0 -> create_run_native returns status='rejected',
+    ops.scopes count == 0 (zero-qty line never reaches materialize, no 1-apparatus mis-materialize)."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "D3-ZERO-QTY"
+    env["envelope_id"] = "env-d3-zero-qty"
+    env["scopes"][0]["lines"][0]["base_qty"] = 0
+    env["scopes"][0]["lines"][0]["project_intake_qty"] = 0
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "malformed_catalog_field" for f in out["findings"]), out["findings"]
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0

@@ -252,16 +252,19 @@ def validate_envelope(env: dict) -> list[Finding]:
                                   detail=f"line_uid={ln.get('line_uid')!r}; field={_num_fld}"))
                     _qty_ok[_num_fld] = False
                 elif _num_fld in ("base_qty", "project_intake_qty"):
-                    # D1: integer-qty: must be non-negative integer
+                    # D1/D3-fix: integer-qty: must be a POSITIVE integer (>= 1).
+                    # An included catalog line means "test >= 1 of these"; zero-qty is malformed
+                    # and would otherwise silently materialize 1 apparatus via the `0 or 1` fallback
+                    # in the shared materialize helper (wrong materialization at the financial boundary).
                     if not _is_integer_valued(_d):
                         out.append(_f("malformed_catalog_field",
                                       f"Scope #{i} catalog line has a fractional (non-integer) quantity",
                                       detail=f"line_uid={ln.get('line_uid')!r}; field={_num_fld}"))
                         _qty_ok[_num_fld] = False
-                    elif _d < 0:
+                    elif _d < 1:
                         out.append(_f("malformed_catalog_field",
-                                      f"Scope #{i} catalog line has a negative quantity",
-                                      detail=f"line_uid={ln.get('line_uid')!r}; field={_num_fld}"))
+                                      f"Scope #{i} catalog line quantity must be >= 1 (zero or negative not allowed for an included line)",
+                                      detail=f"line_uid={ln.get('line_uid')!r}; field={_num_fld}; value={int(_d)}"))
                         _qty_ok[_num_fld] = False
                     else:
                         _qty_ok[_num_fld] = True
