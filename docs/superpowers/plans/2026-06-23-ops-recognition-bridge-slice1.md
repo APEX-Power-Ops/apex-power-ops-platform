@@ -5,6 +5,8 @@
 **Spec:** `docs/superpowers/specs/2026-06-23-ops-recognition-bridge-design.md` (DESIGN round-4, operator-ratified D1–D4 + predicate-transition guard)
 **Migration:** ops `009` (ONE up file + ONE down file, built INCREMENTALLY across T0–T6).
 
+**Build-packet reviews absorbed:** writing-plans 4-lens panel + an external final review (2026-06-23). The external pass found three items, all patched here before build: (H) the T7 concurrency teardown used direct `DELETE`s that the T1 immutability trigger + the FK chain forbid → replaced with a full `001..009` schema rebuild (`_rebuild_schema`); (M) the "partial-unique race" test expected `UniqueViolation` but the function's `for update of a2` serializes the loser into a business `RaiseException` → split into a through-function serialization proof + a direct-insert index proof; (M) the API `_read_view` serializer missed `Decimal` / `uuid.UUID` → now routes rows through `jsonable_encoder`.
+
 ---
 
 ## Goal
@@ -1580,24 +1582,21 @@ apps/operations-web/
           aid=_seed_eligible_apparatus(cur, status="In Progress")
       return aid, who
 
-  def _cleanup(aid):
-      with psycopg.connect(DSN, autocommit=True) as c, c.cursor() as cur:
-          # tear the committed concurrency fixture rows down via the sanctioned ctx path
-          cur.execute("select scope_id from ops.apparatus where id=%s",(aid,))
-          row=cur.fetchone()
-          if row:
-              sid=row[0]
-              cur.execute("select project_id from ops.scopes where id=%s",(sid,)); pid=cur.fetchone()[0]
-              cur.execute("delete from ops.revenue_recognition_event where apparatus_id=%s",(aid,))
-              cur.execute("delete from ops.completion_attestation where apparatus_id=%s",(aid,))
-              cur.execute("set local ops.completion_ctx='1'")
-              cur.execute("delete from ops.apparatus where id=%s",(aid,))
-              cur.execute("delete from ops.scope_quote where scope_id=%s",(sid,))
-              cur.execute("delete from ops.scopes where id=%s",(sid,))
-              cur.execute("delete from ops.projects where id=%s",(pid,))
+  def _rebuild_schema():
+      """Teardown for the committed concurrency fixtures. These tests commit rows into APPEND-ONLY /
+      IMMUTABLE tables, so they CANNOT be torn down by direct DELETE: the T1 trigger blocks
+      `delete from ops.completion_attestation` outright, the 005 ledger is append-only, and
+      `ops.apparatus` cannot be deleted while those immutable rows FK-reference it. The only correct
+      reset is a full schema rebuild of the 001..009 chain on ops_test (the session-fixture path)."""
+      _clean_slate()
+      for f in CHAIN: _exec(HERE / f)
 
-  def test_concurrent_attest_partial_unique_race():
-      """Two concurrent attests on one apparatus -> exactly one commits, the other unique-violates."""
+  def test_concurrent_attest_through_fn_serializes_one_winner():
+      """Two concurrent attests on one apparatus THROUGH the function: the `for update of a2` on the
+      apparatus row serializes them. The winner commits status='Complete' + an active attestation; the
+      loser re-reads the now-committed status='Complete' and raises the BUSINESS RaiseException
+      ('cannot attest from status Complete') — NOT a partial-index UniqueViolation (the row lock fires
+      first) and NOT a deadlock. Exactly one active attestation must survive."""
       aid, who = _seed_for_concurrency()
       try:
           c1=_concurrent_conn(); c2=_concurrent_conn()   # bounded statement_timeout each
@@ -1609,6 +1608,40 @@ apps/operations-web/
                       barrier.wait(timeout=10)
                       cur.execute("select ops.attest_apparatus_complete(%s,%s,%s)",(aid,who,f"r-{tag}"))
                       cur.execute("commit"); results[tag]="ok"
+              except psycopg.errors.RaiseException:
+                  conn.rollback(); results[tag]="raise"      # the serialized loser's business guard
+              except psycopg.Error as e:
+                  conn.rollback(); results[tag]=type(e).__name__
+          b=threading.Barrier(2)
+          t1=threading.Thread(target=run,args=("A",c1,b)); t2=threading.Thread(target=run,args=("B",c2,b))
+          t1.start(); t2.start(); t1.join(15); t2.join(15)
+          c1.close(); c2.close()
+          assert sorted(results.values())==["ok","raise"], f"expected one ok + one business-raise, got {results}"
+          with psycopg.connect(DSN, autocommit=True) as c, c.cursor() as cur:
+              cur.execute("select count(*) from ops.completion_attestation where apparatus_id=%s and revoked_at is null",(aid,))
+              assert cur.fetchone()[0]==1, "exactly one active attestation must survive the race"
+      finally:
+          _rebuild_schema()
+
+  def test_concurrent_direct_insert_hits_partial_unique_index():
+      """The partial-unique-active index is the last-line guard BENEATH the function's row lock. Two
+      concurrent DIRECT inserts of an active (revoked_at NULL) attestation for one apparatus bypass the
+      function's `for update`+recheck, so they collide on `uq_completion_attestation_active`: exactly one
+      commits, the other raises UniqueViolation. (T0 `test_active_unique_one_per_apparatus` proves the
+      same index single-connection; this proves it under real 2-connection contention.)"""
+      aid, who = _seed_for_concurrency()
+      _ins = ("insert into ops.completion_attestation (apparatus_id, attested_by, reason, prior_status)"
+              " values (%s,%s,%s,'In Progress')")
+      try:
+          c1=_concurrent_conn(); c2=_concurrent_conn()   # bounded statement_timeout each
+          results={}
+          def run(tag, conn, barrier):
+              try:
+                  with conn.cursor() as cur:
+                      cur.execute("begin")
+                      barrier.wait(timeout=10)
+                      cur.execute(_ins,(aid,who,f"r-{tag}"))
+                      cur.execute("commit"); results[tag]="ok"
               except psycopg.errors.UniqueViolation:
                   conn.rollback(); results[tag]="unique"
               except psycopg.Error as e:
@@ -1619,7 +1652,7 @@ apps/operations-web/
           c1.close(); c2.close()
           assert sorted(results.values())==["ok","unique"], f"expected one ok + one unique, got {results}"
       finally:
-          _cleanup(aid)
+          _rebuild_schema()
 
   def test_concurrent_revoke_and_recognize_no_deadlock():
       """Interleave revoke + approve_and_recognize on the same apparatus -> NO deadlock; both
@@ -1661,7 +1694,7 @@ apps/operations-web/
           assert errs.get("recognize") not in _bad and errs.get("revoke") not in _bad, \
               f"deadlock or hung lock-wait under the apparatus-first order: {errs}"
       finally:
-          _cleanup(aid)
+          _rebuild_schema()
 
   def test_concurrent_double_revoke_one_loser():
       """Two concurrent revokes of the same active attestation -> exactly one wins; the loser
@@ -1688,7 +1721,7 @@ apps/operations-web/
           oks=[v for v in results.values() if v=="ok"]
           assert len(oks)==1, f"expected exactly one winning revoke, got {results}"
       finally:
-          _cleanup(aid)
+          _rebuild_schema()
   ```
 
 - [ ] Run to verify fail FIRST against a deliberately-broken hypothesis (sanity): run only T7 and confirm they PASS against the correctly-built `009` (the proof tests assert the invariant holds). If a proof fails, the migration is wrong — fix `009`, not the test:
@@ -1706,7 +1739,7 @@ apps/operations-web/
 - [ ] Commit:
   ```
   git add infra/database/migrations/ops/test_009_recognition_bridge.py
-  git commit -m "test(ops/009): T7 concurrency proofs — partial-unique race, revoke/recognize no-deadlock, double-revoke loser"
+  git commit -m "test(ops/009): T7 concurrency proofs — attest fn serialization + partial-unique direct-insert, revoke/recognize no-deadlock, double-revoke loser"
   ```
 
 ---
@@ -2126,6 +2159,7 @@ apps/operations-web/
 
   import psycopg
   from fastapi import APIRouter, HTTPException, Request, status
+  from fastapi.encoders import jsonable_encoder
   from fastapi.responses import JSONResponse
 
   from ops_intake import recognition as rec
@@ -2204,8 +2238,11 @@ apps/operations-web/
       with psycopg.connect(_dsn()) as c, c.cursor() as cur:
           cur.execute(sql, params)
           cols = [d.name for d in cur.description]
-          return [dict(zip(cols, [str(v) if hasattr(v, "isoformat") or isinstance(v, (bytes,)) else v for v in row]))
-                  for row in cur.fetchall()]
+          # jsonable_encoder normalizes EVERY psycopg-adapted type that JSONResponse(json.dumps)
+          # would choke on: uuid.UUID -> str, Decimal (numeric: quoted_revenue / net_recognized /
+          # recognized_total) -> number, datetime/timestamptz -> isoformat str. The prior
+          # `str(v) if hasattr(v,'isoformat')` cast MISSED both UUID and Decimal -> 500 on /worklist+/rollup.
+          return [jsonable_encoder(dict(zip(cols, row))) for row in cur.fetchall()]
 
   @router.get("/worklist", status_code=status.HTTP_200_OK)
   def worklist(project_number: str | None = None) -> JSONResponse:
@@ -2215,7 +2252,7 @@ apps/operations-web/
   def rollup(project_number: str | None = None) -> JSONResponse:
       return JSONResponse(_read_view("v_completion_recognition_rollup", project_number))
   ```
-  (UUID/numeric values from the views are JSON-serialized; cast `uuid`/`timestamptz` to `str` as above so `JSONResponse` does not choke. `recognized_total` is a numeric -> returned as a number/str the UI parses with `Number()`.)
+  (`jsonable_encoder` normalizes every view column before `JSONResponse` (`json.dumps`) sees it: `uuid.UUID -> str`, `Decimal -> number`, `timestamptz -> isoformat`. `recognized_total` arrives as a number the UI parses with `Number()`. The earlier hand-rolled `hasattr(v,'isoformat')` cast was insufficient — it missed UUID and Decimal and would 500 `/worklist` + `/rollup`; `test_worklist_and_rollup_read` is the regression guard.)
 
 - [ ] Implement the registration in `main.py` — extend the existing host gate block so the recognition router mounts alongside intake:
   ```python
