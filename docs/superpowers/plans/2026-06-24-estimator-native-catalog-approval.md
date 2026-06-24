@@ -19,6 +19,19 @@
 - **`ops_test` only** for TDD (the conftest `_require_ops_test` guard refuses any other DSN). **Merge to `main` and `ops_dev` apply are OPERATOR-GATED. Prod is BLOCKED behind the `ops_app` role-boundary gate — out of scope.**
 - All work on host lane `estimator/envelope-ops-mapping` over `ssh olares-mesh`; CC owns host commits.
 
+## Plan Review Corrections (R1, 2026-06-24)
+
+Operator plan-review patched 7 task-level mechanics (architecture unchanged — still native catalog-only through the existing `approve_run`):
+- **R1-1 (High):** migration `010` partial indexes use `source_format::text = 'native'`, so the new enum value is not *used* in the same transaction it is *added* (the conftest runs the whole file via one `conn.execute`).
+- **R1-2 (High):** the conftest reset blocks `delete from ops.intake_runs` before `010` down, so teardown after Task-6 native rows does not trip the down-migration's data-loss guard.
+- **R1-3 (High):** Task 3 imports/defines `validate_envelope` ONLY; the pivot + `recompute_content_hash` move to Task 4 (no forward reference → Task 3 passes alone).
+- **R1-4 (High):** `create_run_native` writes the governed rejected run WITHOUT the strict pivot/hash (they would `KeyError` on a malformed envelope); pivot/hash run only on the happy path.
+- **R1-5 (Med):** the validator uses `Decimal(str(...))` comparisons (accepts `1.0`, never truncates) and checks scope-level `service_hours`.
+- **R1-6 (Med):** the immutability test uses per-column typed drift values (`quote_version=2`, text cols `'zz'`), not a single `'zzz'` that fails on integer cast.
+- **R1-7 (Med):** the API route test extends the real `apps/control-plane-api/tests/test_ops_intake_routes.py` harness (its `apply_migrations`/`client`/`person_id` fixtures) through `010`.
+
+---
+
 ## File Structure
 
 | File | Responsibility |
@@ -111,9 +124,13 @@ def test_010_identity_columns_are_immutable():
             " values ('P10','native'::ops.intake_source_format,'parsed','none','estimate_envelope_v1',"
             " 'estimator-core/c051c02','{}'::jsonb,'{}'::jsonb,%s,'h1',1,'e1') returning id",
             (pid,)).fetchone()[0]
-        for col in ("content_hash","quote_version","envelope_id","source_revision_id"):
+        # R1-6: typed drift per column — quote_version is integer, so a 'zzz' there fails on CAST, not the
+        # trigger. Each value is valid for its type but DIFFERENT from the inserted row, so the trigger fires.
+        drift = {"content_hash": "'zz'", "envelope_id": "'zz'", "source_revision_id": "'zz'",
+                 "source_draft_id": "'zz'", "quote_version": "2"}
+        for col, val in drift.items():
             with pytest.raises(psycopg.errors.RaiseException):
-                c.execute(f"update ops.intake_runs set {col}='zzz' where id=%s", (rid,))
+                c.execute(f"update ops.intake_runs set {col}={val} where id=%s", (rid,))
 
 def test_010_partial_unique_native_only():
     with psycopg.connect(_dsn(), autocommit=True) as c:
@@ -180,14 +197,17 @@ begin
 end $$;
 
 -- C4: idempotency — one native run per compiled-envelope content_hash.
+-- R1-1: the predicate casts source_format::text = 'native' (NOT 'native'::ops.intake_source_format) so it
+-- does not USE the just-ADDed enum value in the same transaction (the conftest runs this whole file in one
+-- conn.execute; Postgres forbids using a newly-added enum value in the txn that added it).
 create unique index if not exists uq_intake_runs_content_hash_native
   on ops.intake_runs (content_hash)
-  where source_format = 'native' and content_hash is not null;
+  where source_format::text = 'native' and content_hash is not null;
 
 -- C4: one native run per (project_number, quote_version); supersede = a new quote_version.
 create unique index if not exists uq_intake_runs_proj_quote_version_native
   on ops.intake_runs (project_number, quote_version)
-  where source_format = 'native' and quote_version is not null;
+  where source_format::text = 'native' and quote_version is not null;
 ```
 
 - [ ] **Step 4: Write the down migration.** Create `infra/database/migrations/ops/010_native_envelope_intake_down.sql`:
@@ -255,6 +275,7 @@ drop type ops.intake_source_format_old;
 - [ ] **Step 5: Chain 010 in the conftest.** In `packages/ops-intake/tests/conftest.py`, add `"010_native_envelope_intake.sql"` to the end of the `up_migrations` list, and in BOTH pre-up and post-yield reset blocks add a guarded down BEFORE the `009` down:
 ```python
         if _ops_schema_exists(c):
+            c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010 down's data-loss guard passes in teardown
             _run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")
             _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
 ```
@@ -281,9 +302,9 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git add in
 
 **C6 note (decision flagged for the operator):** v1 computes a **server-side** `content_hash` = `sha256` of a deterministic canonical serialization of the *pivoted* payload, and uses THAT as the idempotency key — so a client-supplied hash is never trusted. Exact-match verification against the envelope's own `content_hash` (which would require porting estimator-core `content-hash.ts` to Python) is **Task 3b (optional)** below. `validate_envelope` still emits `content_hash_mismatch` IF the envelope carries a `content_hash` that disagrees with a *structurally* recomputed one once 3b lands; until then it is a no-op placeholder that never blocks.
 
-- [ ] **Step 1: Write failing tests for the reject matrix.** In `packages/ops-intake/tests/test_native_envelope.py`:
+- [ ] **Step 1: Write failing tests for the reject matrix.** In `packages/ops-intake/tests/test_native_envelope.py` (R1-3: import `validate_envelope` ONLY here — pivot/hash arrive in Task 4):
 ```python
-from ops_intake.native import validate_envelope, recompute_content_hash, pivot_to_intake_payload
+from ops_intake.native import validate_envelope
 
 def _catalog_env(**over):
     env = {
@@ -355,15 +376,12 @@ def test_findings_are_pm_dollar_safe():
 Run: `ssh olares-mesh '...OPS_DEV_DSN=... .venv/bin/python -m pytest packages/ops-intake/tests/test_native_envelope.py -x -q'` (use the same env-var preamble as Task 2 Step 6.)
 Expected: FAIL — `ModuleNotFoundError: No module named 'ops_intake.native'`.
 
-- [ ] **Step 3: Implement `native.py` validate + hash.** Create `packages/ops-intake/src/ops_intake/native.py`:
+- [ ] **Step 3: Implement `native.py` (validate only).** Create `packages/ops-intake/src/ops_intake/native.py` (R1-3: validate + helpers only — pivot + `recompute_content_hash` arrive in Task 4, no forward reference. R1-5: numeric guards use `Decimal`):
 ```python
 from __future__ import annotations
 
-import hashlib
-import json
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
-from .model import IntakePayload, ProjectIn, ScopeIn, ScopeQuoteIn, QuoteLineIn
 from .validate import Finding
 
 NATIVE_SCHEMA_VERSION = "estimate_envelope_v1"
@@ -380,6 +398,16 @@ def _f(code, message, *, ok=False, severity="blocking", detail=None) -> Finding:
     return Finding(code=code, severity=severity, ok=ok, message=_pm(message), diagnostic_detail=detail)
 
 
+def _dec(v):
+    """Decimal(str(v)), or None if not numeric (None/'' -> None). Lets 1 == 1.0 and never truncates."""
+    if v is None or v == "":
+        return None
+    try:
+        return Decimal(str(v))
+    except (InvalidOperation, TypeError, ValueError):
+        return None
+
+
 def validate_envelope(env: dict) -> list[Finding]:
     """Catalog-only fail-closed gate (C3/C5/C7). Blocking findings, never a crash."""
     out: list[Finding] = []
@@ -387,13 +415,16 @@ def validate_envelope(env: dict) -> list[Finding]:
         out.append(_f("missing_project_number", "Envelope has no project number"))
     for i, sc in enumerate(env.get("scopes", []) or [], start=1):
         st = sc.get("scope_totals", {}) or {}
-        if int(st.get("service_cents", 0) or 0) != 0 or int((env.get("totals", {}) or {}).get("service_hours", 0) or 0) != 0:
+        svc_cents = _dec(st.get("service_cents", 0)) or Decimal(0)
+        svc_hours = _dec(st.get("service_hours", 0)) or Decimal(0)   # R1-5: scope-level service_hours too
+        if svc_cents != 0 or svc_hours != 0:
             out.append(_f("nonzero_service", f"Scope #{i} carries service work (not supported in v1)",
                           detail=f"scope={sc.get('scope_id')!r}"))
-        if int(st.get("cost_cents", 0) or 0) != 0:
+        if (_dec(st.get("cost_cents", 0)) or Decimal(0)) != 0:
             out.append(_f("nonzero_cost", f"Scope #{i} carries cost lines (not supported in v1)",
                           detail=f"scope={sc.get('scope_id')!r}"))
-        if str(sc.get("replication_m4")) != "1":
+        m4 = _dec(sc.get("replication_m4"))
+        if m4 is None or m4 != Decimal(1):   # R1-5: Decimal so 1.0 passes; 1.5/2 reject
             out.append(_f("m4_unsupported", f"Scope #{i} replication is not 1 (deferred)",
                           detail=f"replication_m4={sc.get('replication_m4')!r}"))
         for ln in sc.get("lines", []) or []:
@@ -414,16 +445,7 @@ def validate_envelope(env: dict) -> list[Finding]:
                                   f"Scope #{i} catalog line is missing a required field",
                                   detail=f"line_uid={ln.get('line_uid')!r}; field={fld}"))
     return out
-
-
-def recompute_content_hash(env: dict) -> str:
-    """Server-side idempotency hash over the pivoted economic payload (C6: never trust the client hash).
-    Deterministic: sort_keys + Decimal-as-str via default."""
-    pivoted = pivot_to_intake_payload(env)
-    blob = json.dumps(pivoted, sort_keys=True, separators=(",", ":"), default=str)
-    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 ```
-*(`pivot_to_intake_payload` is implemented in Task 4; if running Task 3 alone, the pivot import resolves but the hash test waits for Task 4.)*
 
 - [ ] **Step 4: Run to verify the validate tests pass.**
 Run: `ssh olares-mesh '...OPS_DEV_DSN=... .venv/bin/python -m pytest packages/ops-intake/tests/test_native_envelope.py -k "not pivot and not approve and not reconcile and not idempot" -q'`
@@ -442,7 +464,7 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git add pa
 
 **Interfaces — Produces:** `pivot_to_intake_payload(env: dict) -> dict` — a plain dict shaped exactly like `dataclasses.asdict(IntakePayload)` (so `envelope._payload_from_dict` and `patch_review` consume it unchanged).
 
-- [ ] **Step 1: Write failing pivot tests.** Append to `test_native_envelope.py`:
+- [ ] **Step 1: Write failing pivot tests.** First extend the import at the top of `test_native_envelope.py` to `from ops_intake.native import validate_envelope, pivot_to_intake_payload, recompute_content_hash`, then append:
 ```python
 def test_pivot_maps_catalog_line_fields():
     p = pivot_to_intake_payload(_catalog_env())
@@ -478,15 +500,15 @@ def test_content_hash_is_deterministic_and_ignores_client_hash():
 
 - [ ] **Step 2: Run to verify failure.** Same pytest invocation, `-k "pivot or content_hash"`. Expected: FAIL (`pivot_to_intake_payload` not defined).
 
-- [ ] **Step 3: Implement the pivot.** Append to `native.py`:
+- [ ] **Step 3: Implement the pivot + the content hash.** First add to the TOP of `native.py` the imports the pivot/hash need (R1-3): `import hashlib`, `import json`, `import dataclasses`, and `from .model import IntakePayload, ProjectIn, ScopeIn, ScopeQuoteIn, QuoteLineIn`. Then append:
 ```python
 def _cents_to_dollars(cents) -> str:
     return str((Decimal(int(cents or 0)) / Decimal(100)).quantize(Decimal("0.01")))
 
 
 def pivot_to_intake_payload(env: dict) -> dict:
-    """Catalog-only pivot. Assumes validate_envelope() found no blocking issues (M4==1, catalog lines,
-    zero service/cost). Money: integer cents -> Decimal dollars (str-encoded, no float)."""
+    """Catalog-only pivot. Callers MUST validate_envelope() first (this is strict: it dereferences
+    required catalog fields). Money: integer cents -> Decimal dollars (str-encoded, no float)."""
     pn = env.get("project_number")
     project = ProjectIn(
         project_number=pn,
@@ -519,8 +541,14 @@ def pivot_to_intake_payload(env: dict) -> dict:
                 section=None,                                      # envelope has no section -> __ungrouped__ task
             ))
         scopes.append(ScopeIn(scope_name=sc["name"], scope_type="OTHER", sort_order=0, quote=quote, lines=lines))
-    import dataclasses
     return json.loads(json.dumps(dataclasses.asdict(IntakePayload(project=project, scopes=scopes)), default=str))
+
+
+def recompute_content_hash(env: dict) -> str:
+    """Server-side idempotency hash over the pivoted economic payload (C6: never trust the client hash).
+    Deterministic (sort_keys). Call only on a validated envelope (the pivot is strict)."""
+    blob = json.dumps(pivot_to_intake_payload(env), sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 ```
 *(The `json.loads(json.dumps(..., default=str))` round-trip encodes `Decimal` as strings and yields the same plain-dict shape `create_run` stores, so the `±1¢` test parses the stored strings back via `Decimal`.)*
 
@@ -591,13 +619,11 @@ def create_run_native(dsn, *, uploaded_by, envelope):
     finding -> a GOVERNED rejected run with NO domain writes (mirrors _create_rejected_parse_envelope)."""
     findings = validate_envelope(envelope)
     blocking = [f for f in findings if f.severity == "blocking" and not f.ok]
-    content_hash = recompute_content_hash(envelope)
-    pivoted = pivot_to_intake_payload(envelope)
-    pivoted_json = json.dumps(pivoted, default=str)
     raw_json = json.dumps(envelope, default=str)
     pn = envelope.get("project_number") or ("UNRESOLVED:" + str(envelope.get("envelope_id") or "native"))[:200]
-    ident = (envelope.get("envelope_id"), envelope.get("quote_version"), content_hash,
-             envelope.get("source_draft_id"), envelope.get("source_revision_id"), raw_json)
+    # identity provenance cols are TOP-LEVEL envelope fields -> safe even for a malformed (rejected) envelope
+    ev_id, qv = envelope.get("envelope_id"), envelope.get("quote_version")
+    sdid, srid = envelope.get("source_draft_id"), envelope.get("source_revision_id")
 
     def _finding_rows(cur, run_id, version):
         for f in findings:
@@ -608,24 +634,28 @@ def create_run_native(dsn, *, uploaded_by, envelope):
                 (run_id, version, f.severity, f.code, f.ok, f.message, f.diagnostic_detail))
 
     if blocking:
-        # governed rejected run: no advisory lock, no domain writes
+        # R1-4: governed rejected run — NO advisory lock, NO domain writes, and NO strict pivot/hash
+        # (they dereference required fields and would KeyError on a malformed envelope). canonical/review
+        # = '{}' (not approvable); content_hash NULL (a reject never takes the idempotency index).
         with psycopg.connect(dsn) as conn, conn.cursor() as cur:
             cur.execute(
                 "insert into ops.intake_runs (project_number, source_format, status, conflict_kind,"
                 " payload_schema_version, parser_version, canonical_payload_json, review_payload_json,"
                 " uploaded_by, envelope_id, quote_version, content_hash, source_draft_id,"
                 " source_revision_id, estimate_envelope_json) values"
-                " (%s,'native'::ops.intake_source_format,'rejected','none',%s,%s,%s::jsonb,%s::jsonb,"
-                " %s,%s,%s,%s,%s,%s,%s::jsonb) returning id",
-                (pn, NATIVE_SCHEMA_VERSION, NATIVE_PARSER_VERSION, pivoted_json, pivoted_json,
-                 str(uploaded_by), *ident[:5], raw_json))
+                " (%s,'native'::ops.intake_source_format,'rejected','none',%s,%s,'{}'::jsonb,'{}'::jsonb,"
+                " %s,%s,%s,NULL,%s,%s,%s::jsonb) returning id",
+                (pn, NATIVE_SCHEMA_VERSION, NATIVE_PARSER_VERSION, str(uploaded_by),
+                 ev_id, qv, sdid, srid, raw_json))
             run_id = str(cur.fetchone()[0])
             _finding_rows(cur, run_id, 1)
             conn.commit()
-        return {"run_id": run_id, "status": "rejected", "conflict_kind": "none",
-                "source_format": "native",
+        return {"run_id": run_id, "status": "rejected", "conflict_kind": "none", "source_format": "native",
                 "findings": [{"code": f.code, "severity": f.severity, "ok": f.ok, "message": f.message} for f in findings]}
 
+    # happy path: validate_envelope guaranteed catalog completeness, so the strict pivot/hash are safe now.
+    content_hash = recompute_content_hash(envelope)
+    pivoted_json = json.dumps(pivot_to_intake_payload(envelope), default=str)
     try:
         with psycopg.connect(dsn) as conn, conn.cursor() as cur:
             cur.execute("select pg_advisory_xact_lock(hashtext(%s))", (pn,))
@@ -644,7 +674,7 @@ def create_run_native(dsn, *, uploaded_by, envelope):
                 " (%s,%s,'native'::ops.intake_source_format,%s::ops.intake_run_status,%s::ops.intake_conflict_kind,"
                 " %s,%s,%s::jsonb,%s::jsonb,%s,%s,%s,%s,%s,%s,%s::jsonb) returning id",
                 (pn, project_id, status, conflict_kind, NATIVE_SCHEMA_VERSION, NATIVE_PARSER_VERSION,
-                 pivoted_json, pivoted_json, str(uploaded_by), *ident[:5], raw_json))
+                 pivoted_json, pivoted_json, str(uploaded_by), ev_id, qv, content_hash, sdid, srid, raw_json))
             run_id = str(cur.fetchone()[0])
             _finding_rows(cur, run_id, 1)
             conn.commit()
@@ -654,7 +684,7 @@ def create_run_native(dsn, *, uploaded_by, envelope):
         raise
     return {"run_id": run_id, "status": status, "conflict_kind": conflict_kind, "source_format": "native",
             "findings": [{"code": f.code, "severity": f.severity, "ok": f.ok, "message": f.message} for f in findings],
-            "review_payload": pivoted}
+            "review_payload": json.loads(pivoted_json)}
 ```
 
 - [ ] **Step 4: Run to verify pass.** pytest `-k create_run_native`. Expected: PASS.
@@ -731,28 +761,48 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git add pa
 
 **Interfaces — Consumes:** `create_run_native`, `_dsn`, `_pm_findings`.
 
-- [ ] **Step 1: Write the failing route test.** Create `apps/control-plane-api/tests/test_ops_intake_native_route.py` (mirror the existing intake route test harness; if none exists, use FastAPI `TestClient` with `OPS_DEV_DSN` set to `ops_test`):
+- [ ] **Step 1: Extend the real harness + write the failing route test.** R1-7: add this to the EXISTING `apps/control-plane-api/tests/test_ops_intake_routes.py`, reusing its `apply_migrations`/`client`/`person_id` fixtures + the `_contains_substring` helper. First extend that file's `apply_migrations`: append `"010_native_envelope_intake.sql"` to `up_migrations`; in the post-`yield` teardown add (before the `008` down) `c.execute("delete from ops.intake_runs")` then `_run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")`; and in the pre-up reset add the same delete + `010` down before the `008` down. Then append:
 ```python
-import os
-from fastapi.testclient import TestClient
+def _catalog_envelope():
+    return {
+        "project_number": "API-1", "envelope_id": "api-env-1", "quote_version": 1,
+        "source_draft_id": "d", "source_revision_id": "r",
+        "totals": {"bid_cents": 165000, "service_hours": 0},
+        "scopes": [{
+            "scope_id": "S1", "name": "A1", "neta_standard": "ATS",
+            "replication_m4": 1, "adjustment_multiplier_n4": 1,
+            "scope_totals": {"onsite_labor_cents": 165000, "offsite_labor_cents": 0,
+                             "cost_cents": 0, "service_cents": 0, "service_hours": 0,
+                             "quoted_app_hours": 10, "adjusted_cents": 165000},
+            "lines": [{"line_uid": "S1:r1", "line_kind": "catalog", "included": True,
+                       "equipment_model_ref": "Capcitors - Per Unit", "base_qty": 1,
+                       "project_intake_qty": 1, "resolved_ref_hours": 10.0}],
+        }],
+    }
 
-def _client():
-    os.environ.setdefault("APEX_OLARES_LIVE_DSN", os.environ["OPS_DEV_DSN"])
-    from main import app  # control-plane-api app, ops router mounted when OPS_DEV_DSN set
-    return TestClient(app)
 
-def test_native_route_returns_pm_safe_summary(clean_ops_via_fixture, a_person_uuid, a_catalog_envelope):
-    c = _client()
-    r = c.post("/api/v1/ops/intake/native",
-               json={"uploaded_by": a_person_uuid, "envelope": a_catalog_envelope})
-    assert r.status_code == 200
-    body = r.json()
-    assert body["source_format"] == "native"
-    for f in body["findings"]:
-        assert set(f) == {"code", "severity", "ok", "message"}   # no diagnostic_detail / no $
+class TestNativeIntake:
+    """POST /api/v1/ops/intake/native"""
+
+    def test_native_returns_200_pm_safe(self, client, person_id):
+        resp = client.post("/api/v1/ops/intake/native",
+                           json={"uploaded_by": person_id, "envelope": _catalog_envelope()})
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["source_format"] == "native" and body["status"] == "parsed"
+        assert not _contains_substring(body, "$")               # finance redaction
+        for f in body["findings"]:
+            assert set(f) == {"code", "severity", "ok", "message"}   # no diagnostic_detail
+
+    def test_native_non_catalog_rejected(self, client, person_id):
+        env = _catalog_envelope(); env["scopes"][0]["lines"][0]["line_kind"] = "service"
+        resp = client.post("/api/v1/ops/intake/native",
+                           json={"uploaded_by": person_id, "envelope": env})
+        assert resp.status_code == 200, resp.text          # a governed reject is 200 with status='rejected'
+        assert resp.json()["status"] == "rejected"
 ```
 
-- [ ] **Step 2: Run to verify failure.** `pytest apps/control-plane-api/tests/test_ops_intake_native_route.py -x -q`. Expected: FAIL (404 — route not mounted).
+- [ ] **Step 2: Run to verify failure.** Run (with the `ops_test` DSN preamble from Task 2 Step 6): `… .venv/bin/python -m pytest apps/control-plane-api/tests/test_ops_intake_routes.py -k Native -x -q`. Expected: FAIL (404 — route not mounted).
 
 - [ ] **Step 3: Implement the route.** In `intake_router.py`, import `create_run_native` from `ops_intake.envelope` and add:
 ```python
@@ -784,7 +834,7 @@ async def upload_native_envelope(request: Request) -> JSONResponse:
 
 - [ ] **Step 5: Commit.**
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git add apps/control-plane-api/services/ops/intake_router.py apps/control-plane-api/tests/test_ops_intake_native_route.py && git commit -m "feat(control-plane-api): POST /ops/intake/native (PM-safe native envelope intake)"'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git add apps/control-plane-api/services/ops/intake_router.py apps/control-plane-api/tests/test_ops_intake_routes.py && git commit -m "feat(control-plane-api): POST /ops/intake/native (PM-safe native envelope intake)"'
 ```
 
 ---
@@ -807,8 +857,8 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && git add ap
 
 ## Self-Review
 
-**Spec coverage (C1–C7):** C1 = Task 2 (enum `add value`, no `source_kind`, partial indexes on `source_format='native'`, real down rebuild). C2 = Task 4/5 (flat `IntakePayload` in canonical+review; raw in `estimate_envelope_json`) + Task 6 (`patch_review` compat test). C3 = Task 3 (`missing_project_number`). C4 = Task 2 (trigger extension + drift tests). C5 = Task 3 (`missing_required_catalog_field`, `invalid_line_state`). C6 = Task 3 (server recompute; exact-match flagged). C7 = Task 3 (`m4_unsupported`) + Task 4 (M4==1 mapping) + Task 6 (`±1¢`). Global constraints (Decimal money, PM-safe findings, ops_test, operator-gated) covered in Tasks 3/4/6/8. **No gap found.**
+**Spec coverage (C1–C7):** C1 = Task 2 (enum `add value`, no `source_kind`, partial indexes on `source_format='native'`, real down rebuild). C2 = Task 4/5 (flat `IntakePayload` in canonical+review; raw in `estimate_envelope_json`) + Task 6 (`patch_review` compat test). C3 = Task 3 (`missing_project_number`). C4 = Task 2 (trigger extension + drift tests). C5 = Task 3 (`missing_required_catalog_field`, `invalid_line_state`). C6 = Task 4 (server recompute; exact-match flagged). C7 = Task 3 (`m4_unsupported`, Decimal) + Task 4 (M4==1 mapping) + Task 6 (`±1¢`). Global constraints (Decimal money, PM-safe findings, ops_test, operator-gated) covered in Tasks 3/4/6/8. **No gap found.**
 
-**Placeholder scan:** every code step carries real code; commands use the `ops_test` DSN preamble; no "TBD"/"handle edge cases". One intentional cross-task forward-reference: `recompute_content_hash` calls `pivot_to_intake_payload` (Task 3 imports it; Task 4 implements it) — noted in Task 3 Step 3.
+**Placeholder scan:** every code step carries real code; commands use the `ops_test` DSN preamble; no "TBD"/"handle edge cases". (R1-3 removed the earlier Task-3→Task-4 forward reference — `recompute_content_hash` and the pivot now both live in Task 4, so Task 3 imports/defines only `validate_envelope`.)
 
 **Type consistency:** `Finding(code, severity, ok, message, diagnostic_detail)` used consistently; `create_run_native` returns the `create_run` dict shape; pivot output is `IntakePayload`-shaped (verified by `_payload_from_dict` in Task 4). `apparatus_type` carries the model-key string in both pivot and `load.insert_scope_quote_line`/`insert_apparatus`, matching `resolve_models`.
