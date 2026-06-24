@@ -48,3 +48,24 @@ begin
 end; $$;
 create trigger completion_attestation_immutable before update or delete on ops.completion_attestation
   for each row execute function ops.trg_completion_attestation_immutable();
+
+-- ---- T2: completion guard — predicate-transition aware (governed-complete) --
+create function ops.trg_apparatus_completion_guard() returns trigger language plpgsql as $$
+declare
+  new_g boolean := (new.status='Complete' and new.provenance_status='approved');
+  old_g boolean;
+begin
+  if tg_op = 'INSERT' then
+    if new_g and current_setting('ops.completion_ctx', true) is distinct from '1' then
+      raise exception 'apparatus %: governed-complete may be entered only via attest', new.id;
+    end if;
+  else  -- UPDATE
+    old_g := (old.status='Complete' and old.provenance_status='approved');
+    if (new_g is distinct from old_g) and current_setting('ops.completion_ctx', true) is distinct from '1' then
+      raise exception 'apparatus %: governed-complete may change only via attest/revoke', new.id;
+    end if;
+  end if;
+  return new;
+end; $$;
+create trigger apparatus_completion_guard before insert or update on ops.apparatus
+  for each row execute function ops.trg_apparatus_completion_guard();

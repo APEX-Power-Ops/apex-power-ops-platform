@@ -184,3 +184,66 @@ def test_immutable_wellformed_revoke_succeeds_then_double_revoke_fails(conn):
             assert False, "double-revoke / post-revoke mutation accepted"
         except psycopg.errors.RaiseException: pass
         cur.execute("rollback to savepoint s")
+
+def test_guard_insert_as_governed_complete_fails(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s")
+        # build chain manually so we can attempt the bypass INSERT directly on apparatus
+        cur.execute("insert into ops.projects (project_number, project_name, provenance_status)"
+                    " values (%s,'P','approved') returning id",(f"P-{uuid.uuid4().hex[:8]}",))
+        pid=cur.fetchone()[0]
+        cur.execute("insert into ops.scopes (project_id, scope_name, provenance_status) values (%s,'S','approved') returning id",(pid,))
+        sid=cur.fetchone()[0]
+        try:
+            cur.execute("insert into ops.apparatus (scope_id, apparatus_designation, status, provenance_status)"
+                        " values (%s,'X','Complete','approved')",(sid,))
+            assert False, "INSERT as governed-complete (no ctx) accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_guard_draft_complete_then_flip_provenance_fails(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s")
+        cur.execute("insert into ops.projects (project_number, project_name, provenance_status)"
+                    " values (%s,'P','approved') returning id",(f"P-{uuid.uuid4().hex[:8]}",))
+        pid=cur.fetchone()[0]
+        cur.execute("insert into ops.scopes (project_id, scope_name, provenance_status) values (%s,'S','approved') returning id",(pid,))
+        sid=cur.fetchone()[0]
+        # INSERT status=Complete, provenance=draft is NOT g -> allowed
+        cur.execute("insert into ops.apparatus (scope_id, apparatus_designation, status, provenance_status)"
+                    " values (%s,'X','Complete','draft') returning id",(sid,))
+        aid=cur.fetchone()[0]
+        # flipping provenance to 'approved' ENTERS g without ctx -> must fail on the 2nd stmt
+        try:
+            cur.execute("update ops.apparatus set provenance_status='approved' where id=%s",(aid,))
+            assert False, "draft-Complete -> flip-provenance bypass accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_guard_normal_intake_insert_succeeds(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s")
+        aid=_seed_eligible_apparatus(cur, status="Not Started", provenance="approved")  # not g -> allowed
+        cur.execute("select status, provenance_status from ops.apparatus where id=%s",(aid,))
+        assert cur.fetchone()==("Not Started","approved")
+        cur.execute("rollback to savepoint s")
+
+def test_guard_direct_update_status_complete_fails(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s")
+        aid=_seed_eligible_apparatus(cur, status="In Progress", provenance="approved")
+        try:
+            cur.execute("update ops.apparatus set status='Complete' where id=%s",(aid,))
+            assert False, "direct UPDATE status=Complete (no ctx) accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_guard_ctx_path_update_succeeds(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s")
+        aid=_seed_eligible_apparatus(cur, status="In Progress", provenance="approved")
+        cur.execute("select set_config('ops.completion_ctx','1', true)")  # txn-local, mimics attest fn
+        cur.execute("update ops.apparatus set status='Complete' where id=%s",(aid,))
+        cur.execute("select status from ops.apparatus where id=%s",(aid,))
+        assert cur.fetchone()[0]=="Complete"
+        cur.execute("rollback to savepoint s")
