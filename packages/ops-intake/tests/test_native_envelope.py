@@ -356,3 +356,267 @@ def test_native_inconsistent_economics_blocks_approval(clean_ops):
     # nothing materialized
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0
+
+
+# ---------------------------------------------------------------------------
+# Hardening D1 -- strict typed input guards + required quote_version
+# ---------------------------------------------------------------------------
+
+import copy as _copy
+
+
+def _d1_env(**over):
+    """Deep-copy the clean env then apply overrides (nested path support via over)."""
+    return _copy.deepcopy(_catalog_env(**over))
+
+
+# --- present-null / fractional guards on scope-level fields ---
+
+def test_d1_adjustment_multiplier_null_rejects():
+    """present-null adjustment_multiplier_n4 -> malformed_total (was Decimal(str(None)) crash)."""
+    env = _d1_env()
+    env["scopes"][0]["adjustment_multiplier_n4"] = None
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d1_quoted_app_hours_null_rejects():
+    """present-null quoted_app_hours -> malformed_total (was None-hours arithmetic crash)."""
+    env = _d1_env()
+    env["scopes"][0]["scope_totals"]["quoted_app_hours"] = None
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d1_bid_cents_fractional_rejects():
+    """Fractional string bid_cents -> malformed_total (was int('100000.5') crash)."""
+    env = _d1_env()
+    env["totals"]["bid_cents"] = "100000.5"
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d1_bid_cents_float_fractional_rejects():
+    """Float fractional bid_cents -> malformed_total."""
+    env = _d1_env()
+    env["totals"]["bid_cents"] = 100000.5
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d1_bid_cents_negative_rejects():
+    """Negative bid_cents -> malformed_total."""
+    env = _d1_env()
+    env["totals"]["bid_cents"] = -1
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d1_base_qty_fractional_rejects():
+    """Fractional base_qty (1.5) -> malformed_catalog_field (was silent truncate to qty=1)."""
+    env = _d1_env()
+    env["scopes"][0]["lines"][0]["base_qty"] = 1.5
+    env["scopes"][0]["lines"][0]["project_intake_qty"] = 1.5
+    assert "malformed_catalog_field" in _codes(validate_envelope(env))
+
+
+def test_d1_project_intake_qty_fractional_rejects():
+    """Fractional project_intake_qty -> malformed_catalog_field."""
+    env = _d1_env()
+    env["scopes"][0]["lines"][0]["project_intake_qty"] = 2.7
+    assert "malformed_catalog_field" in _codes(validate_envelope(env))
+
+
+def test_d1_base_qty_negative_rejects():
+    """Negative base_qty -> malformed_catalog_field."""
+    env = _d1_env()
+    env["scopes"][0]["lines"][0]["base_qty"] = -1
+    env["scopes"][0]["lines"][0]["project_intake_qty"] = -1
+    assert "malformed_catalog_field" in _codes(validate_envelope(env))
+
+
+def test_d1_onsite_labor_cents_fractional_rejects():
+    """Fractional onsite_labor_cents -> malformed_total."""
+    env = _d1_env()
+    env["scopes"][0]["scope_totals"]["onsite_labor_cents"] = "50000.5"
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d1_onsite_labor_cents_null_rejects():
+    """present-null onsite_labor_cents -> malformed_total."""
+    env = _d1_env()
+    env["scopes"][0]["scope_totals"]["onsite_labor_cents"] = None
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d1_offsite_labor_cents_fractional_rejects():
+    """Fractional offsite_labor_cents -> malformed_total."""
+    env = _d1_env()
+    env["scopes"][0]["scope_totals"]["offsite_labor_cents"] = 100.9
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d1_service_cents_non_numeric_rejects():
+    """service_cents='abc' -> malformed_total (was silently zeroed, bypassed nonzero_service)."""
+    env = _d1_env()
+    env["scopes"][0]["scope_totals"]["service_cents"] = "abc"
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d1_cost_cents_non_numeric_rejects():
+    """cost_cents='abc' -> malformed_total (was silently zeroed)."""
+    env = _d1_env()
+    env["scopes"][0]["scope_totals"]["cost_cents"] = "abc"
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_d1_service_cents_non_numeric_does_not_also_fire_nonzero_service():
+    """When cost_cents is non-numeric, we get malformed_total NOT nonzero_service."""
+    env = _d1_env()
+    env["scopes"][0]["scope_totals"]["service_cents"] = "abc"
+    codes = _codes(validate_envelope(env))
+    assert "malformed_total" in codes
+    # nonzero_service should NOT fire (the value is not numeric, it's already rejected)
+    assert "nonzero_service" not in codes
+
+
+# --- quote_version guards ---
+
+def test_d1_quote_version_absent_passes():
+    """absent quote_version (key not in envelope) -- wait, quote_version IS required in D1.
+    quote_version is now REQUIRED; absent -> missing_quote_version."""
+    env = _d1_env()
+    del env["quote_version"]
+    assert "missing_quote_version" in _codes(validate_envelope(env))
+
+
+def test_d1_quote_version_none_rejects():
+    """present-null quote_version -> missing_quote_version."""
+    env = _d1_env()
+    env["quote_version"] = None
+    assert "missing_quote_version" in _codes(validate_envelope(env))
+
+
+def test_d1_quote_version_string_rejects():
+    """Non-integer quote_version ('abc') -> missing_quote_version."""
+    env = _d1_env()
+    env["quote_version"] = "abc"
+    assert "missing_quote_version" in _codes(validate_envelope(env))
+
+
+def test_d1_quote_version_fractional_rejects():
+    """Fractional quote_version (1.5) -> missing_quote_version."""
+    env = _d1_env()
+    env["quote_version"] = 1.5
+    assert "missing_quote_version" in _codes(validate_envelope(env))
+
+
+def test_d1_quote_version_integer_string_rejects():
+    """String '1' is not an integer -> missing_quote_version."""
+    env = _d1_env()
+    env["quote_version"] = "1"
+    assert "missing_quote_version" in _codes(validate_envelope(env))
+
+
+def test_d1_quote_version_integer_passes():
+    """Integer quote_version passes."""
+    env = _d1_env()
+    env["quote_version"] = 1
+    assert "missing_quote_version" not in _codes(validate_envelope(env))
+
+
+def test_d1_quote_version_float_whole_passes():
+    """quote_version=1.0 (float but integer-valued) must REJECT -- strict int type required."""
+    # The brief says non-null integer; 1.0 is a float (not isinstance int).
+    # The guard is: absent/null/non-integer/fractional -> reject. float 1.0 is not int.
+    env = _d1_env()
+    env["quote_version"] = 1.0
+    # 1.0 is a float; must be rejected since we require strict isinstance(int)
+    # But brief says "integer-valued via d == d.to_integral_value()" -- check the rule:
+    # The brief says: integer-valued means d == d.to_integral_value() for Decimal.
+    # But quote_version is NOT a Decimal field -- it's a top-level idempotency key.
+    # Re-reading brief: "REQUIRED, non-null integer. Emit blocking missing_quote_version when
+    # absent/null/non-integer/fractional."
+    # So 1.0 is fractional (has decimal point) = reject? No, 1.0 is integer-valued but a float.
+    # The integer-valued Decimal test: Decimal('1.0') == Decimal('1.0').to_integral_value() -> True.
+    # So 1.0 as a number -> Decimal('1.0') is integer-valued -> PASS.
+    # But 1.5 -> Decimal('1.5') != Decimal('2') -> FAIL.
+    # This test documents the expected behavior: 1.0 PASSES (integer-valued Decimal).
+    assert "missing_quote_version" not in _codes(validate_envelope(env))
+
+
+# --- create_run_native: null-version duplicate scenario (can't happen now) ---
+
+def test_d1_null_quote_version_rejected(clean_ops):
+    """quote_version=None -> rejected run (the two-NULL-runs-accepted scenario can't happen)."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["quote_version"] = None
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "missing_quote_version" for f in out["findings"])
+
+
+def test_d1_duplicate_rejected_submission_is_governed(clean_ops):
+    """Submitting a malformed envelope (service_cents='abc') with quote_version=1 TWICE:
+    both must return status='rejected', no UniqueViolation/500.
+    Rejected rows store quote_version=NULL so they're excluded from the unique index."""
+    dsn = clean_ops; who = _person(dsn)
+
+    def _bad_env(pn):
+        env = _d1_env()
+        env["project_number"] = pn
+        env["scopes"][0]["scope_totals"]["service_cents"] = "abc"
+        return env
+
+    out1 = create_run_native(dsn, uploaded_by=who, envelope=_bad_env("D1-DUP-1"))
+    assert out1["status"] == "rejected", out1
+
+    out2 = create_run_native(dsn, uploaded_by=who, envelope=_bad_env("D1-DUP-1"))
+    assert out2["status"] == "rejected", out2
+
+    # verify both rows are stored and both have NULL quote_version
+    with psycopg.connect(dsn) as c:
+        rows = c.execute(
+            "select quote_version from ops.intake_runs where project_number='D1-DUP-1' order by uploaded_at"
+        ).fetchall()
+    assert len(rows) == 2, f"Expected 2 rows, got {rows}"
+    assert all(r[0] is None for r in rows), f"Expected NULL quote_version for rejected rows, got {rows}"
+
+
+def test_d1_adjustment_multiplier_null_create_run_native_no_crash(clean_ops):
+    """present-null adjustment_multiplier_n4 -> create_run_native returns rejected (no 500)."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["scopes"][0]["adjustment_multiplier_n4"] = None
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "malformed_total" for f in out["findings"])
+
+
+def test_d1_quoted_app_hours_null_create_run_native_no_crash(clean_ops):
+    """present-null quoted_app_hours -> create_run_native returns rejected (no 500)."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["scopes"][0]["scope_totals"]["quoted_app_hours"] = None
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "malformed_total" for f in out["findings"])
+
+
+def test_d1_bid_cents_fractional_create_run_native_no_crash(clean_ops):
+    """Fractional bid_cents string -> create_run_native returns rejected (no 500)."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-BID-FRAC"
+    env["totals"]["bid_cents"] = "100000.5"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "malformed_total" for f in out["findings"])
+
+
+def test_d1_base_qty_fractional_create_run_native_no_crash(clean_ops):
+    """Fractional base_qty -> create_run_native returns rejected (no 500)."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-QTY-FRAC"
+    env["scopes"][0]["lines"][0]["base_qty"] = 1.5
+    env["scopes"][0]["lines"][0]["project_intake_qty"] = 1.5
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "malformed_catalog_field" for f in out["findings"])

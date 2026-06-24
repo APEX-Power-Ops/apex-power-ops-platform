@@ -639,3 +639,51 @@ class TestNativeIntake:
         assert body["status"] == "rejected", body
         codes = {f["code"] for f in body.get("findings", [])}
         assert "missing_scope_name" in codes, f"Expected missing_scope_name in {codes}"
+
+
+# ---------------------------------------------------------------------------
+# Hardening D1 route tests
+# ---------------------------------------------------------------------------
+
+
+class TestNativeIntakeD1:
+    """D1 hardening: explicit-null and quote_version route-level tests."""
+
+    def test_native_explicit_null_total_is_governed_reject(self, client, person_id):
+        """adjustment_multiplier_n4=null (JSON null -> Python None) -> HTTP 200 status=rejected (NOT 500).
+        The present-null path was crashing the pivot before D1."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "D1-ROUTE-NULL-TOTAL"
+        env["envelope_id"] = "d1-route-env-1"
+        env["scopes"][0]["adjustment_multiplier_n4"] = None  # explicit null
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "malformed_total" in codes, f"Expected malformed_total in {codes}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+    def test_native_missing_quote_version_is_governed_reject(self, client, person_id):
+        """quote_version=null -> HTTP 200 status=rejected (not 500 or 4xx)."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "D1-ROUTE-NO-QV"
+        env["envelope_id"] = "d1-route-env-2"
+        env["quote_version"] = None  # explicit null -> missing_quote_version
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "missing_quote_version" in codes, f"Expected missing_quote_version in {codes}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")

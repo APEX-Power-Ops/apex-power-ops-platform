@@ -32,18 +32,56 @@ def _dec(v):
         return None
 
 
+def _is_integer_valued(d) -> bool:
+    """Return True if Decimal d is integer-valued (d == d.to_integral_value())."""
+    return d is not None and d == d.to_integral_value()
+
+
 def validate_envelope(env: dict) -> list[Finding]:
     """Catalog-only fail-closed gate (C3/C5/C7). Blocking findings, never a crash."""
     out: list[Finding] = []
     if not env.get("project_number"):
         out.append(_f("missing_project_number", "Envelope has no project number"))
 
-    # Top-level totals: bid_cents present-but-non-numeric -> malformed_total
+    # Hardening D1: quote_version REQUIRED non-null integer (idempotency anchor).
+    # Accepted: Python int (not bool), or float that is integer-valued (e.g. 1.0).
+    # Rejected: absent, null, bool, string (even "1"), non-numeric, fractional (1.5).
+    # Rationale: strings are JSON strings not integers; the client must send a JSON number.
+    _qv = env.get("quote_version")  # returns None for both absent and present-null
+    _qv_present = "quote_version" in env
+    if not _qv_present or _qv is None:
+        # absent or explicit null
+        out.append(_f("missing_quote_version", "Envelope has no valid quote_version (must be a non-null integer)"))
+    elif isinstance(_qv, bool):
+        # bool is a subtype of int in Python; reject it
+        out.append(_f("missing_quote_version", "Envelope has no valid quote_version (must be a non-null integer)"))
+    elif isinstance(_qv, str):
+        # strings rejected even if they look like integers (e.g. "1")
+        out.append(_f("missing_quote_version", "Envelope has no valid quote_version (must be a non-null integer)"))
+    elif isinstance(_qv, int):
+        # pure integer: OK
+        pass
+    else:
+        # float or other numeric: check integer-valued via Decimal
+        _qv_dec = _dec(_qv)
+        if _qv_dec is None or not _is_integer_valued(_qv_dec):
+            out.append(_f("missing_quote_version", "Envelope has no valid quote_version (must be a non-null integer)"))
+        # else: float with integer-valued (e.g. 1.0) -> OK
+
+    # Top-level totals: bid_cents present-but-non-numeric OR present-but-fractional OR negative -> malformed_total
     totals = env.get("totals", {}) or {}
-    _bid = totals.get("bid_cents")
-    if _bid is not None and _dec(_bid) is None:
-        out.append(_f("malformed_total", "Envelope totals contain a non-numeric value",
-                      detail="field=bid_cents"))
+    if "bid_cents" in totals:
+        _bid = totals["bid_cents"]
+        _bid_dec = _dec(_bid)
+        if _bid_dec is None:
+            out.append(_f("malformed_total", "Envelope totals contain a non-numeric value",
+                          detail="field=bid_cents"))
+        elif not _is_integer_valued(_bid_dec):
+            out.append(_f("malformed_total", "Envelope totals contain a fractional (non-integer) value",
+                          detail="field=bid_cents"))
+        elif _bid_dec < 0:
+            out.append(_f("malformed_total", "Envelope totals contain a negative value",
+                          detail="field=bid_cents"))
 
     for i, sc in enumerate(env.get("scopes", []) or [], start=1):
         # Hardening A: scope identity / lineage fields required by the pivot
@@ -58,30 +96,64 @@ def validate_envelope(env: dict) -> list[Finding]:
                           detail=f"scope_id={sc.get('scope_id')!r}"))
 
         st = sc.get("scope_totals", {}) or {}
-        svc_cents = _dec(st.get("service_cents", 0)) or Decimal(0)
-        svc_hours = _dec(st.get("service_hours", 0)) or Decimal(0)   # R1-5: scope-level service_hours too
-        if svc_cents != 0 or svc_hours != 0:
-            out.append(_f("nonzero_service", f"Scope #{i} carries service work (not supported in v1)",
-                          detail=f"scope={sc.get('scope_id')!r}"))
-        if (_dec(st.get("cost_cents", 0)) or Decimal(0)) != 0:
-            out.append(_f("nonzero_cost", f"Scope #{i} carries cost lines (not supported in v1)",
-                          detail=f"scope={sc.get('scope_id')!r}"))
+
+        # Hardening D1: service_cents/cost_cents — if present-and-non-numeric -> malformed_total
+        # (previously `_dec(...) or Decimal(0)` silently zeroed non-numeric, bypassing nonzero check)
+        _svc_cents_raw = st["service_cents"] if "service_cents" in st else 0
+        _svc_cents_dec = _dec(_svc_cents_raw)
+        if "service_cents" in st and _svc_cents_dec is None:
+            out.append(_f("malformed_total", f"Scope #{i} has a non-numeric value in a totals field",
+                          detail=f"field=service_cents"))
+        else:
+            svc_cents = _svc_cents_dec if _svc_cents_dec is not None else Decimal(0)
+            svc_hours = _dec(st.get("service_hours", 0)) or Decimal(0)   # R1-5: scope-level service_hours too
+            if svc_cents != 0 or svc_hours != 0:
+                out.append(_f("nonzero_service", f"Scope #{i} carries service work (not supported in v1)",
+                              detail=f"scope={sc.get('scope_id')!r}"))
+
+        _cost_cents_raw = st["cost_cents"] if "cost_cents" in st else 0
+        _cost_cents_dec = _dec(_cost_cents_raw)
+        if "cost_cents" in st and _cost_cents_dec is None:
+            out.append(_f("malformed_total", f"Scope #{i} has a non-numeric value in a totals field",
+                          detail=f"field=cost_cents"))
+        else:
+            if (_cost_cents_dec if _cost_cents_dec is not None else Decimal(0)) != 0:
+                out.append(_f("nonzero_cost", f"Scope #{i} carries cost lines (not supported in v1)",
+                              detail=f"scope={sc.get('scope_id')!r}"))
         m4 = _dec(sc.get("replication_m4"))
         if m4 is None or m4 != Decimal(1):   # R1-5: Decimal so 1.0 passes; 1.5/2 reject
             out.append(_f("m4_unsupported", f"Scope #{i} replication is not 1 (deferred)",
                           detail=f"replication_m4={sc.get('replication_m4')!r}"))
 
-        # Hardening A: scope_totals numeric fields strictly dereferenced by pivot
-        _sc_numeric_fields = (
-            ("adjustment_multiplier_n4", sc.get("adjustment_multiplier_n4")),
-            ("onsite_labor_cents", st.get("onsite_labor_cents")),
-            ("offsite_labor_cents", st.get("offsite_labor_cents")),
-            ("quoted_app_hours", st.get("quoted_app_hours")),
-        )
-        for _fld, _val in _sc_numeric_fields:
-            if _val is not None and _dec(_val) is None:
-                out.append(_f("malformed_total", f"Scope #{i} has a non-numeric value in a totals field",
-                              detail=f"field={_fld}"))
+        # Hardening D1: scope_totals/scope fields with present-null detection and type guards.
+        # Integer-cents fields (onsite_labor_cents, offsite_labor_cents): absent->default 0 OK;
+        #   present-null/non-numeric/fractional/negative -> malformed_total.
+        # Numeric (fractional-OK) fields (adjustment_multiplier_n4, quoted_app_hours): absent->default OK;
+        #   present-null/non-numeric -> malformed_total.
+        for _fld, _container, _key in (
+            ("adjustment_multiplier_n4", sc, "adjustment_multiplier_n4"),
+            ("quoted_app_hours", st, "quoted_app_hours"),
+        ):
+            if _key in _container:
+                _val = _container[_key]
+                _d = _dec(_val)
+                if _d is None:
+                    out.append(_f("malformed_total", f"Scope #{i} has a non-numeric value in a totals field",
+                                  detail=f"field={_fld}"))
+
+        for _fld, _key in (("onsite_labor_cents", "onsite_labor_cents"), ("offsite_labor_cents", "offsite_labor_cents")):
+            if _key in st:
+                _val = st[_key]
+                _d = _dec(_val)
+                if _d is None:
+                    out.append(_f("malformed_total", f"Scope #{i} has a non-numeric value in a totals field",
+                                  detail=f"field={_fld}"))
+                elif not _is_integer_valued(_d):
+                    out.append(_f("malformed_total", f"Scope #{i} has a fractional (non-integer) value in an integer-cents field",
+                                  detail=f"field={_fld}"))
+                elif _d < 0:
+                    out.append(_f("malformed_total", f"Scope #{i} has a negative value in an integer-cents field",
+                                  detail=f"field={_fld}"))
 
         for ln in sc.get("lines", []) or []:
             if not ln.get("included", True):
@@ -107,21 +179,48 @@ def validate_envelope(env: dict) -> list[Finding]:
                                   f"Scope #{i} catalog line is missing a required field",
                                   detail=f"line_uid={ln.get('line_uid')!r}; field={fld}"))
 
-            # Hardening A: numeric-type guards for fields pivot dereferences as int()/Decimal()
+            # Hardening D1: integer-qty fields (base_qty, project_intake_qty) — must be non-negative integers.
+            # resolved_ref_hours — REQUIRED numeric (fractional OK); present-null/non-numeric -> malformed_catalog_field.
+            # Keep Hardening A non-numeric check for all three first; then add integer/negative for qty.
+            _qty_ok = {}  # track per-field validity for qty_mismatch gate below
             for _num_fld in ("base_qty", "project_intake_qty", "resolved_ref_hours"):
                 _val = ln.get(_num_fld)
-                if _val not in (None, "") and _dec(_val) is None:
+                if _val in (None, ""):
+                    # missing/null — already caught by missing_required_catalog_field above; skip here
+                    _qty_ok[_num_fld] = False
+                    continue
+                _d = _dec(_val)
+                if _d is None:
                     out.append(_f("malformed_catalog_field",
                                   f"Scope #{i} catalog line has a non-numeric value in a required field",
                                   detail=f"line_uid={ln.get('line_uid')!r}; field={_num_fld}"))
+                    _qty_ok[_num_fld] = False
+                elif _num_fld in ("base_qty", "project_intake_qty"):
+                    # D1: integer-qty: must be non-negative integer
+                    if not _is_integer_valued(_d):
+                        out.append(_f("malformed_catalog_field",
+                                      f"Scope #{i} catalog line has a fractional (non-integer) quantity",
+                                      detail=f"line_uid={ln.get('line_uid')!r}; field={_num_fld}"))
+                        _qty_ok[_num_fld] = False
+                    elif _d < 0:
+                        out.append(_f("malformed_catalog_field",
+                                      f"Scope #{i} catalog line has a negative quantity",
+                                      detail=f"line_uid={ln.get('line_uid')!r}; field={_num_fld}"))
+                        _qty_ok[_num_fld] = False
+                    else:
+                        _qty_ok[_num_fld] = True
+                else:
+                    _qty_ok[_num_fld] = True
 
-            # Hardening A: qty_mismatch -- both present and numeric but not equal (M4==1 invariant)
-            _bq = _dec(ln.get("base_qty"))
-            _pq = _dec(ln.get("project_intake_qty"))
-            if _bq is not None and _pq is not None and _bq != _pq:
-                out.append(_f("qty_mismatch",
-                              f"Scope #{i} catalog line has mismatched base and intake quantities",
-                              detail=f"line_uid={ln.get('line_uid')!r}"))
+            # Hardening A: qty_mismatch -- both present and numeric integer but not equal (M4==1 invariant)
+            # Only fires when both are valid integers (D1: prevents firing on fractional values)
+            if _qty_ok.get("base_qty") and _qty_ok.get("project_intake_qty"):
+                _bq = _dec(ln.get("base_qty"))
+                _pq = _dec(ln.get("project_intake_qty"))
+                if _bq != _pq:
+                    out.append(_f("qty_mismatch",
+                                  f"Scope #{i} catalog line has mismatched base and intake quantities",
+                                  detail=f"line_uid={ln.get('line_uid')!r}"))
 
     return out
 

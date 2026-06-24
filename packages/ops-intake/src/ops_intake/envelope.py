@@ -528,6 +528,10 @@ def create_run_native(dsn, *, uploaded_by, envelope):
         # R1-4: governed rejected run — NO advisory lock, NO domain writes, and NO strict pivot/hash
         # (they dereference required fields and would KeyError on a malformed envelope). canonical/review
         # = '{}' (not approvable); content_hash NULL (a reject never takes the idempotency index).
+        # D1 Codex P2#2: quote_version=NULL for rejected rows — a rejected run is an audit record, not
+        # a version anchor. NULL is excluded from uq_intake_runs_proj_quote_version_native (partial index
+        # predicate: ... AND quote_version IS NOT NULL), so retrying the same malformed/rejected envelope
+        # always produces a governed reject instead of a UniqueViolation/500.
         with psycopg.connect(dsn) as conn, conn.cursor() as cur:
             cur.execute(
                 "insert into ops.intake_runs (project_number, source_format, status, conflict_kind,"
@@ -535,9 +539,9 @@ def create_run_native(dsn, *, uploaded_by, envelope):
                 " uploaded_by, envelope_id, quote_version, content_hash, source_draft_id,"
                 " source_revision_id, estimate_envelope_json) values"
                 " (%s,'native'::ops.intake_source_format,'rejected','none',%s,%s,'{}'::jsonb,'{}'::jsonb,"
-                " %s,%s,%s,NULL,%s,%s,%s::jsonb) returning id",
+                " %s,%s,NULL,NULL,%s,%s,%s::jsonb) returning id",
                 (pn, NATIVE_SCHEMA_VERSION, NATIVE_PARSER_VERSION, str(uploaded_by),
-                 ev_id, qv, sdid, srid, raw_json))
+                 ev_id, sdid, srid, raw_json))
             run_id = str(cur.fetchone()[0])
             _finding_rows(cur, run_id, 1)
             conn.commit()
