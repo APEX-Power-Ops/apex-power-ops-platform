@@ -6,6 +6,10 @@
 -e ../../packages/learning-projections
 sqlalchemy>=2.0.0
 psycopg2-binary>=2.9.0
+# psycopg3: used directly by config.py (postgresql+psycopg dialect) and the ops
+# recognition/intake routers (import psycopg). Pinned explicitly rather than relying on the
+# transitive pull via the editable learning-capture workspace package.
+psycopg[binary]>=3.1
 python-dotenv>=1.0.0
 fastapi>=0.100.0
 uvicorn>=0.23.0
