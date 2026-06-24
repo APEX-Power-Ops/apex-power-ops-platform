@@ -72,10 +72,10 @@ The hooks already exist on `ops.intake_runs` (no new payload plumbing needed):
 
 | existing column | native use |
 |---|---|
-| `source_format` (enum) | add value `'native'` (workbook path keeps its existing value) |
+| `source_format` (enum) | add value `'native'` (workbook path keeps its existing value) | **[SUPERSEDED BY C1/C2 — see Instance Review Corrections]** |
 | `payload_schema_version text NOT NULL` | `'estimate_envelope_v1'` — the version that selects the **envelope-shaped** validator |
 | `review_payload_json jsonb NOT NULL` | the canonical materialization input (envelope → payload, §5–§7) |
-| `canonical_payload_json jsonb NOT NULL` | the **un-pivoted** compiled `EstimateEnvelope` (audit/idempotency source) |
+| `canonical_payload_json jsonb NOT NULL` | the **un-pivoted** compiled `EstimateEnvelope` (audit/idempotency source) | **[SUPERSEDED BY C1/C2 — see Instance Review Corrections]** |
 | `review_payload_version integer NOT NULL` | per-run finding-version cursor (unchanged) |
 
 **Default-deny:** the `estimate_envelope_v1` validator rejects unknown top-level/line keys (a workbook-era field appearing in a native payload is a hard validation error, not a silent ignore). The existing flat-apparatus validator is **not** widened in place — it is selected by `payload_schema_version`, so the two contracts never blur.
@@ -103,11 +103,13 @@ Rejecting on `nonzero_service`/`nonzero_cost` at the **totals** level (not just 
 
 `ops.intake_runs` today has **none** of the envelope identity/version fields first-class. Additive-only migration (new nullable columns; backfill not required for existing workbook runs):
 
+**[SUPERSEDED BY C1/C4 — enum value + estimate_envelope_json + trigger extension are mandatory; no source_kind]**
+
 ```sql
 -- ops migration NNN (additive; ops_test → operator-gated ops_dev; prod parked)
 alter table ops.intake_runs
   add column envelope_id        text,
-  add column source_kind        text,        -- 'native' | 'workbook_intake' (mirrors envelope.source_kind)
+  add column source_kind        text,        -- 'native' | 'workbook_intake' (mirrors envelope.source_kind) **[SUPERSEDED BY C1/C4 — enum value + estimate_envelope_json + trigger extension are mandatory; no source_kind]**
   add column quote_version       integer,
   add column content_hash        text,
   add column source_draft_id     text,
@@ -242,6 +244,7 @@ Only `line_kind='catalog'`, `included=true` lines reach here (others rejected §
 **"Native catalog `EstimateEnvelope` approval into the existing ops-intake materializer."**
 
 Scope (TDD on `ops_test`, then operator-gated `ops_dev`):
+**Authoritative scope = Instance Review Corrections "Build-plan deltas".**
 1. **D4 additive migration** (§4) + its down-migration; partial-unique index tests.
 2. **`estimate_envelope_v1` validator** + default-deny + the §3 reject matrix (each code unit-tested with a PM-`$`-safe finding).
 3. **Pivot** `EstimateEnvelope` → canonical `review_payload_json` (§5–§7), `Decimal` money (§8).
