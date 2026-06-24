@@ -589,3 +589,34 @@ class TestNativeIntake:
                            json={"uploaded_by": person_id, "envelope": env})
         assert resp.status_code == 200, resp.text          # a governed reject is 200 with status='rejected'
         assert resp.json()["status"] == "rejected"
+
+    def test_native_malformed_numeric_is_governed_reject(self, client, person_id):
+        """Hardening A: base_qty="abc" -> HTTP 200 status=rejected (never 500), findings have malformed_catalog_field."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "HARDEN-A-1"
+        env["scopes"][0]["lines"][0]["base_qty"] = "abc"
+        resp = client.post("/api/v1/ops/intake/native",
+                           json={"uploaded_by": person_id, "envelope": env})
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "malformed_catalog_field" in codes, f"Expected malformed_catalog_field in {codes}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+    def test_native_missing_scope_name_is_governed_reject(self, client, person_id):
+        """Hardening A: scope missing name -> HTTP 200 status=rejected (never 500)."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "HARDEN-A-2"
+        env["envelope_id"] = "api-env-harden-a-2"
+        del env["scopes"][0]["name"]
+        resp = client.post("/api/v1/ops/intake/native",
+                           json={"uploaded_by": person_id, "envelope": env})
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "missing_scope_name" in codes, f"Expected missing_scope_name in {codes}"

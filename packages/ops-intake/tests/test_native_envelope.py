@@ -178,3 +178,89 @@ def test_native_patch_review_compatible(clean_ops):
     review["scopes"][0]["lines"][0]["hrs_per_unit"] = 2.5    # _LINE_MUTABLE field -> allowed
     patched = patch_review(dsn, out["run_id"], review_payload=review)
     assert patched["review_payload_version"] == 2
+
+
+# ---------------------------------------------------------------------------
+# Hardening A -- new BLOCKING guards (scope/line/total fields)
+# ---------------------------------------------------------------------------
+
+def _deep_copy_env():
+    """Return a fresh deep copy of the clean catalog env to avoid test cross-contamination."""
+    import copy
+    return copy.deepcopy(_catalog_env())
+
+
+def test_missing_scope_name_rejects():
+    env = _deep_copy_env()
+    del env["scopes"][0]["name"]
+    assert "missing_scope_name" in _codes(validate_envelope(env))
+
+
+def test_missing_scope_id_rejects():
+    env = _deep_copy_env()
+    del env["scopes"][0]["scope_id"]
+    assert "missing_scope_id" in _codes(validate_envelope(env))
+
+
+def test_missing_neta_standard_rejects():
+    env = _deep_copy_env()
+    del env["scopes"][0]["neta_standard"]
+    assert "missing_neta_standard" in _codes(validate_envelope(env))
+
+
+def test_missing_line_uid_rejects():
+    env = _deep_copy_env()
+    del env["scopes"][0]["lines"][0]["line_uid"]
+    assert "missing_line_uid" in _codes(validate_envelope(env))
+
+
+def test_non_numeric_base_qty_rejects():
+    env = _deep_copy_env()
+    env["scopes"][0]["lines"][0]["base_qty"] = "abc"
+    assert "malformed_catalog_field" in _codes(validate_envelope(env))
+
+
+def test_qty_mismatch_rejects():
+    env = _deep_copy_env()
+    env["scopes"][0]["lines"][0]["base_qty"] = 3
+    env["scopes"][0]["lines"][0]["project_intake_qty"] = 5
+    assert "qty_mismatch" in _codes(validate_envelope(env))
+
+
+def test_malformed_total_rejects():
+    env = _deep_copy_env()
+    env["totals"]["bid_cents"] = "abc"
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_malformed_scope_total_adj_multiplier_rejects():
+    env = _deep_copy_env()
+    env["scopes"][0]["adjustment_multiplier_n4"] = "bad"
+    assert "malformed_total" in _codes(validate_envelope(env))
+
+
+def test_create_run_native_rejects_malformed_without_crash(clean_ops):
+    """Pivot must NEVER be reached on a malformed envelope -- verify governed reject, no exception."""
+    dsn = clean_ops; who = _person(dsn)
+
+    # Case 1: base_qty="abc" (non-numeric numeric field -> malformed_catalog_field)
+    env1 = _deep_copy_env()
+    env1["scopes"][0]["lines"][0]["base_qty"] = "abc"
+    out1 = create_run_native(dsn, uploaded_by=who, envelope=env1)
+    assert out1["status"] == "rejected", out1
+    assert any(f["code"] == "malformed_catalog_field" for f in out1["findings"])
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+    # Case 2: scope missing name (missing_scope_name)
+    # Must use a different project_number AND envelope_id to avoid the
+    # uq_intake_runs_proj_quote_version_native constraint (project_number, quote_version) collision.
+    env2 = _deep_copy_env()
+    env2["project_number"] = "JOB-MALFORMED-2"
+    env2["envelope_id"] = "env-malformed-2"
+    del env2["scopes"][0]["name"]
+    out2 = create_run_native(dsn, uploaded_by=who, envelope=env2)
+    assert out2["status"] == "rejected", out2
+    assert any(f["code"] == "missing_scope_name" for f in out2["findings"])
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
