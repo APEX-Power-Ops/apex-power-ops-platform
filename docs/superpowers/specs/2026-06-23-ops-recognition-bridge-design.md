@@ -67,8 +67,16 @@ begin
      or new.attested_at is distinct from old.attested_at then
     raise exception 'ops.completion_attestation core fields are immutable (id %)', old.id;
   end if;
-  if old.revoked_at is not null then raise exception 'ops.completion_attestation % already revoked', old.id; end if;
-  return new;  -- only the single NULL->value revoke transition (revoked_at/by/reason) is permitted
+  -- the ONLY permitted UPDATE is a single, well-formed revoke transition:
+  -- all revoke fields NULL -> all populated together (revoked_at + revoked_by + non-blank revoke_reason).
+  if old.revoked_at is not null or old.revoked_by is not null or old.revoke_reason is not null then
+    raise exception 'ops.completion_attestation % already revoked (immutable)', old.id;
+  end if;
+  if not (new.revoked_at is not null and new.revoked_by is not null
+          and btrim(coalesce(new.revoke_reason,'')) <> '') then
+    raise exception 'ops.completion_attestation %: only a complete revoke is permitted (revoked_at + revoked_by + non-blank reason set together)', old.id;
+  end if;
+  return new;
 end; $$;
 create trigger completion_attestation_immutable before update or delete on ops.completion_attestation
   for each row execute function ops.trg_completion_attestation_immutable();
@@ -93,13 +101,14 @@ Populated by `approve_and_recognize` from the apparatus's active attestation; **
 
 ### 5.4 Function `ops.revoke_completion_attestation(p_attestation_id uuid, p_revoked_by uuid, p_reason text) returns uuid`
 1. Reason not blank; actor in `ops.persons`.
-2. Load the **active** attestation (`revoked_at is null`) by id `FOR UPDATE`; not found → error.
-3. **Lock the apparatus (IRP-M1):** `perform 1 from ops.apparatus where id = <attestation.apparatus_id> for update;` BEFORE the net-gate — makes the net read deterministic, closes the revoke/recognize TOCTOU + the `prior_status` clobber, and pins the lane lock order "apparatus before ledger rows" (D-OPS-12). Revoke must NOT row-lock `revenue_recognition_event` rows.
-4. **Net-recognition gate:** if `sum(recognized_amount) for apparatus > 0` → raise `'apparatus has open recognition; reverse first'`. (`apparatus_protect_recognition` is the hard backstop; intake re-approval stays stricter on any history — `approve.py:140` — unchanged.)
-5. `perform set_config('ops.completion_ctx','1', true);`
-6. `update ops.apparatus set status=(attestation.prior_status), updated_at=now() where id=attestation.apparatus_id;`
-7. `update ops.completion_attestation set revoked_at=now(), revoked_by=p_revoked_by, revoke_reason=p_reason where id=p_attestation_id;` (the §5.1 immutability trigger permits exactly this transition).
-8. Return attestation id.
+2. **Resolve WITHOUT locking:** `select apparatus_id into v_app from ops.completion_attestation where id=p_attestation_id and revoked_at is null;` not found → error. (No row lock yet — taking the attestation lock first inverts the global order.)
+3. **Lock the apparatus FIRST (IRP-M1 / deadlock fix):** `perform 1 from ops.apparatus where id=v_app for update;`. `approve_and_recognize` locks the apparatus first (005:81) then key-share-locks the attestation via the new FK insert; locking the attestation before the apparatus would **deadlock** (revoke holds attestation → waits apparatus; recognize holds apparatus → waits FK key-share on attestation). The lane order is **apparatus before ledger/attestation rows** (D-OPS-12); revoke must NOT row-lock `revenue_recognition_event` rows.
+4. **Re-select the active attestation `FOR UPDATE` and revalidate:** `select id, apparatus_id, prior_status into v_att from ops.completion_attestation where id=p_attestation_id and revoked_at is null for update;` not found → error (a concurrent revoke won between steps 2–3); assert `v_att.apparatus_id = v_app`.
+5. **Net-recognition gate (deterministic under the apparatus lock):** if `sum(recognized_amount) for v_app > 0` → raise `'apparatus has open recognition; reverse first'`. (`apparatus_protect_recognition` is the hard backstop; intake re-approval stays stricter on any history — `approve.py:140` — unchanged.)
+6. `perform set_config('ops.completion_ctx','1', true);`
+7. `update ops.apparatus set status=v_att.prior_status, updated_at=now() where id=v_app;`
+8. `update ops.completion_attestation set revoked_at=now(), revoked_by=p_revoked_by, revoke_reason=p_reason where id=p_attestation_id;` (the §5.1 immutability trigger permits exactly this well-formed transition).
+9. Return attestation id.
 
 ### 5.5 Modify `ops.approve_and_recognize` (the one Chip-3 touch)
 After the existing gates (all unchanged), resolve the active attestation:
@@ -158,10 +167,10 @@ Closes the direct-INSERT-as-Complete bypass AND the draft-Complete→flip-proven
 - **mig up/down:** down source-diffs the restored 005 functions (B4); idempotent.
 - **attest:** success → `status='Complete'` + attestation + `prior_status` captured; rejects non-`approved` `provenance_status`, inactive/cancelled chain, already-Complete, unfrozen basis, non-positive basis, unknown actor, blank reason; second active attest → conflict (unique).
 - **completion guard (B1 + predicate-transition):** direct `update … status='Complete'` (no ctx) **fails** on an approved apparatus; **`insert … status='Complete', provenance_status='approved'`** (no ctx) **fails**; **`insert … status='Complete', provenance_status='draft'` then `update … provenance_status='approved'`** (no ctx) **fails** on the second statement; normal intake-style `insert … status='Not Started', provenance_status='approved'` **succeeds**; attest path (ctx) succeeds.
-- **attestation immutability (B2):** UPDATE of any core field fails; DELETE fails; the single revoke transition succeeds; a second revoke (already-revoked) fails.
+- **attestation immutability (B2):** UPDATE of any core field fails; DELETE fails; the single well-formed revoke transition succeeds; a **malformed/partial revoke fails** (`revoked_by` set without `revoked_at`; blank `revoke_reason`); a second revoke (already-revoked) fails.
 - **recognize:** populates `completion_attestation_id`; integrity trigger rejects a hand-inserted `recognized` row with NULL / foreign / **revoked** / **cross-apparatus** `completion_attestation_id`; `approve_and_recognize` with no active attestation → rejected (§5.5 branch).
 - **firewall regression (B4/M4):** after 009, ALL original 005 `recognized`-integrity checks still raise — lineage, active/non-cancelled, `status='Complete'`, frozen basis, `recognized_amount = quoted_revenue`, basis-snapshot match, open-net idempotency.
-- **revoke:** blocked iff net>0 (recognize→revoke fails; reverse→revoke succeeds, restores `prior_status`, marks `revoked_*`); apparatus FOR UPDATE present (M1); unknown actor / blank reason rejected.
+- **revoke:** blocked iff net>0 (recognize→revoke fails; reverse→revoke succeeds, restores `prior_status`, marks `revoked_*`); **locks the apparatus FIRST, then re-selects the attestation `FOR UPDATE`** (deadlock-safe order vs `approve_and_recognize`, M1) — a concurrent revoke between resolve and re-select makes the loser error cleanly; unknown actor / blank reason rejected.
 - **post-reversal cycle (B5):** attest→recognize(E1→A)→reverse(E1)→revoke(A): assert `is_recognized=false`, `recognized_event_id=NULL`, E1 still carries `completion_attestation_id=A`, the reversal row carries NULL, A is revoked, status restored; worklist flags correct at each step.
 - **partial-unique race (M5):** two concurrent attests on one apparatus → exactly one wins (the unique index, not just the sequential status-gate).
 - **rollup view (M2):** recognized-$ sums per scope/project resolve `project_number`.
@@ -213,9 +222,15 @@ TDD on throwaway `ops_test`; API self-contained; UI typecheck + smoke. **Merge t
 | down cannot "restore" 005 bodies | high | §5.9 (verbatim embed + source-diff test) |
 | post-reversal lineage unanalyzed | high | §5.2 (active-at-write), §5.8, §5.10 |
 | security insufficient for revenue path | high | §5.11 RELEASE GATE (B6) + REVOKE INSERT |
-| revoke lock-order | med | §5.4 (apparatus FOR UPDATE; D-OPS-12) |
+| revoke lock-order (apparatus FOR UPDATE; D-OPS-12) — refined in round 4 | med | §5.4 |
 | `/rollup` view undefined | med | §5.8 `v_completion_recognition_rollup` |
 | clearance-enum unvalidated | med | §7 (`{provided, not_applicable}` → 400) |
 | firewall regression untested | med | §5.10 |
 | missing tests (cross-apparatus, no-attestation, race) | med | §5.10 |
 | reversal column-default coupling; INVOKER/DEFINER | minor | §5.6, §5.5 |
+
+**IRP round 4 (operator final-glance audit):**
+| Finding | Sev | Resolved in |
+|---|---|---|
+| revoke lock-order **deadlock** (attestation-first inverts `approve`'s apparatus-first → FK key-share cycle) | high | §5.4 (resolve unlocked → lock apparatus first → re-select attestation `FOR UPDATE` + revalidate) + §5.10 |
+| attestation immutability allowed malformed/partial revoke | med | §5.1 (only all-NULL → all-populated well-formed revoke permitted) + §5.10 |
