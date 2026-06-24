@@ -112,6 +112,7 @@ begin
   v_prior := a.status;
   perform set_config('ops.completion_ctx','1', true);
   update ops.apparatus set status='Complete', updated_at=now() where id=p_apparatus_id;
+  perform set_config('ops.completion_ctx','0', true);
   insert into ops.completion_attestation (apparatus_id, attested_by, reason, prior_status)
     values (p_apparatus_id, p_attested_by, p_reason, v_prior)
     returning id into v_id;
@@ -148,6 +149,7 @@ begin
   -- (6-8) ctx -> restore prior_status -> mark revoked (immutability trigger permits this exact shape).
   perform set_config('ops.completion_ctx','1', true);
   update ops.apparatus set status=v_att.prior_status, updated_at=now() where id=v_app;
+  perform set_config('ops.completion_ctx','0', true);
   update ops.completion_attestation
     set revoked_at=now(), revoked_by=p_revoked_by, revoke_reason=p_reason
     where id=p_attestation_id;

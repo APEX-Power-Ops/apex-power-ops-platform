@@ -828,3 +828,44 @@ def test_concurrent_double_revoke_one_loser():
         assert len(oks)==1, f"expected exactly one winning revoke, got {results}"
     finally:
         _rebuild_schema()
+
+def test_completion_ctx_does_not_leak_after_attest(conn):
+    """After attest_apparatus_complete, the completion_ctx GUC must NOT remain set.
+    A direct UPDATE on a SECOND approved apparatus in the SAME transaction must be blocked
+    by the T2 guard (RaiseException). If it succeeds the ctx leaked and we have a bypass."""
+    with conn.cursor() as cur:
+        cur.execute("savepoint s")
+        who = _seed_person(cur, "PM-leak-attest")
+        aid_a = _seed_eligible_apparatus(cur, status="In Progress")
+        aid_b = _seed_eligible_apparatus(cur, status="In Progress")
+        # sanctioned call on A — sets ctx='1' inside, should reset it before returning
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'leak-test')", (aid_a, who))
+        # now attempt a DIRECT governed-complete UPDATE on B (no ctx should be set)
+        try:
+            cur.execute("update ops.apparatus set status='Complete' where id=%s", (aid_b,))
+            assert False, "direct UPDATE on B succeeded — completion_ctx leaked after attest"
+        except psycopg.errors.RaiseException:
+            pass  # guard fired correctly: ctx did NOT leak
+        cur.execute("rollback to savepoint s")
+
+
+def test_completion_ctx_does_not_leak_after_revoke(conn):
+    """After revoke_completion_attestation, the completion_ctx GUC must NOT remain set.
+    A direct UPDATE on a SECOND approved apparatus in the SAME transaction must be blocked."""
+    with conn.cursor() as cur:
+        cur.execute("savepoint s")
+        who = _seed_person(cur, "PM-leak-revoke")
+        aid_a = _seed_eligible_apparatus(cur, status="In Progress")
+        aid_b = _seed_eligible_apparatus(cur, status="In Progress")
+        # sanctioned attest on A
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'initial')", (aid_a, who))
+        att = cur.fetchone()[0]
+        # sanctioned revoke on A — sets ctx='1' inside, should reset before returning
+        cur.execute("select ops.revoke_completion_attestation(%s,%s,'undo')", (att, who))
+        # now attempt a DIRECT governed-complete UPDATE on B
+        try:
+            cur.execute("update ops.apparatus set status='Complete' where id=%s", (aid_b,))
+            assert False, "direct UPDATE on B succeeded — completion_ctx leaked after revoke"
+        except psycopg.errors.RaiseException:
+            pass  # guard fired correctly: ctx did NOT leak
+        cur.execute("rollback to savepoint s")
