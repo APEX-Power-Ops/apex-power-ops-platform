@@ -662,3 +662,169 @@ def test_rollup_eligible_count_uses_full_worklist_predicate(conn):
                     " where scope_id=(select scope_id from ops.apparatus where id=%s)",(aid_cancelled,))
         assert cur.fetchone()[0]==0, "cancelled-scope apparatus counted as eligible"
         cur.execute("rollback to savepoint s")
+
+import threading, time
+
+# Bounded per-statement timeout for every concurrent connection. A real deadlock is
+# auto-detected by PG (DeadlockDetected); a NON-deadlock lock-order regression that would
+# otherwise hang forever instead trips this timeout -> QueryCanceled -> the assertion FAILS.
+# Larger than the 0.5s interleave sleep, far smaller than the 15-20s thread joins.
+_STMT_TIMEOUT_MS = 4000
+
+def _concurrent_conn():
+    """A fresh autocommit-OFF connection with a bounded statement_timeout (set on its own
+    txn-less statement before the test BEGIN), so a hung lock-wait fails instead of hanging."""
+    c = psycopg.connect(DSN)
+    c.autocommit = True
+    with c.cursor() as cur:
+        cur.execute(f"set session statement_timeout = {_STMT_TIMEOUT_MS}")
+    c.autocommit = False
+    return c
+
+def _seed_for_concurrency():
+    """Seed one eligible apparatus + a person OUTSIDE a savepoint (committed), return ids."""
+    with psycopg.connect(DSN, autocommit=True) as c, c.cursor() as cur:
+        who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+    return aid, who
+
+def _rebuild_schema():
+    """Teardown for the committed concurrency fixtures. These tests commit rows into APPEND-ONLY /
+    IMMUTABLE tables, so they CANNOT be torn down by direct DELETE: the T1 trigger blocks
+    `delete from ops.completion_attestation` outright, the 005 ledger is append-only, and
+    `ops.apparatus` cannot be deleted while those immutable rows FK-reference it. The only correct
+    reset is a full schema rebuild of the 001..009 chain on ops_test (the session-fixture path)."""
+    _clean_slate()
+    for f in CHAIN: _exec(HERE / f)
+
+def test_concurrent_attest_through_fn_serializes_one_winner():
+    """Two concurrent attests on one apparatus THROUGH the function: the `for update of a2` on the
+    apparatus row serializes them. The winner commits status='Complete' + an active attestation; the
+    loser re-reads the now-committed status='Complete' and raises the BUSINESS RaiseException
+    ('cannot attest from status Complete') — NOT a partial-index UniqueViolation (the row lock fires
+    first) and NOT a deadlock. Exactly one active attestation must survive."""
+    aid, who = _seed_for_concurrency()
+    try:
+        c1=_concurrent_conn(); c2=_concurrent_conn()   # bounded statement_timeout each
+        results={}
+        def run(tag, conn, barrier):
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("begin")
+                    barrier.wait(timeout=10)
+                    cur.execute("select ops.attest_apparatus_complete(%s,%s,%s)",(aid,who,f"r-{tag}"))
+                    cur.execute("commit"); results[tag]="ok"
+            except psycopg.errors.RaiseException:
+                conn.rollback(); results[tag]="raise"      # the serialized loser's business guard
+            except psycopg.Error as e:
+                conn.rollback(); results[tag]=type(e).__name__
+        b=threading.Barrier(2)
+        t1=threading.Thread(target=run,args=("A",c1,b)); t2=threading.Thread(target=run,args=("B",c2,b))
+        t1.start(); t2.start(); t1.join(15); t2.join(15)
+        c1.close(); c2.close()
+        assert sorted(results.values())==["ok","raise"], f"expected one ok + one business-raise, got {results}"
+        with psycopg.connect(DSN, autocommit=True) as c, c.cursor() as cur:
+            cur.execute("select count(*) from ops.completion_attestation where apparatus_id=%s and revoked_at is null",(aid,))
+            assert cur.fetchone()[0]==1, "exactly one active attestation must survive the race"
+    finally:
+        _rebuild_schema()
+
+def test_concurrent_direct_insert_hits_partial_unique_index():
+    """The partial-unique-active index is the last-line guard BENEATH the function's row lock. Two
+    concurrent DIRECT inserts of an active (revoked_at NULL) attestation for one apparatus bypass the
+    function's `for update`+recheck, so they collide on `uq_completion_attestation_active`: exactly one
+    commits, the other raises UniqueViolation. (T0 `test_active_unique_one_per_apparatus` proves the
+    same index single-connection; this proves it under real 2-connection contention.)"""
+    aid, who = _seed_for_concurrency()
+    _ins = ("insert into ops.completion_attestation (apparatus_id, attested_by, reason, prior_status)"
+            " values (%s,%s,%s,'In Progress')")
+    try:
+        c1=_concurrent_conn(); c2=_concurrent_conn()   # bounded statement_timeout each
+        results={}
+        def run(tag, conn, barrier):
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("begin")
+                    barrier.wait(timeout=10)
+                    cur.execute(_ins,(aid,who,f"r-{tag}"))
+                    cur.execute("commit"); results[tag]="ok"
+            except psycopg.errors.UniqueViolation:
+                conn.rollback(); results[tag]="unique"
+            except psycopg.Error as e:
+                conn.rollback(); results[tag]=type(e).__name__
+        b=threading.Barrier(2)
+        t1=threading.Thread(target=run,args=("A",c1,b)); t2=threading.Thread(target=run,args=("B",c2,b))
+        t1.start(); t2.start(); t1.join(15); t2.join(15)
+        c1.close(); c2.close()
+        assert sorted(results.values())==["ok","unique"], f"expected one ok + one unique, got {results}"
+    finally:
+        _rebuild_schema()
+
+def test_concurrent_revoke_and_recognize_no_deadlock():
+    """Interleave revoke + approve_and_recognize on the same apparatus -> NO deadlock; both
+    serialize on the apparatus FOR UPDATE (one waits, neither raises a DeadlockDetected)."""
+    aid, who = _seed_for_concurrency()
+    try:
+        # pre-state: attested but NOT recognized (so revoke is allowed, recognize is allowed)
+        with psycopg.connect(DSN, autocommit=True) as c, c.cursor() as cur:
+            cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who)); att=cur.fetchone()[0]
+        c1=_concurrent_conn(); c2=_concurrent_conn()   # bounded statement_timeout each
+        errs={}
+        def do_recognize():
+            try:
+                with c1.cursor() as cur:
+                    cur.execute("begin")
+                    cur.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(aid,who))
+                    time.sleep(0.5); cur.execute("commit")
+                errs["recognize"]=None
+            except psycopg.Error as e:
+                c1.rollback(); errs["recognize"]=type(e).__name__
+        def do_revoke():
+            try:
+                time.sleep(0.1)
+                with c2.cursor() as cur:
+                    cur.execute("begin")
+                    cur.execute("select ops.revoke_completion_attestation(%s,%s,'x')",(att,who))
+                    cur.execute("commit")
+                errs["revoke"]=None
+            except psycopg.Error as e:
+                c2.rollback(); errs["revoke"]=type(e).__name__
+        t1=threading.Thread(target=do_recognize); t2=threading.Thread(target=do_revoke)
+        t1.start(); t2.start(); t1.join(20); t2.join(20)
+        c1.close(); c2.close()
+        # the KEY assertion: neither side hit a deadlock NOR a hung lock-wait. One business
+        # outcome may fail (revoke blocked by the now-open recognition) but NOT via
+        # DeadlockDetected and NOT via QueryCanceled/LockNotAvailable (a lock-order regression
+        # that would otherwise hang trips the bounded statement_timeout -> QueryCanceled here).
+        _bad = {"DeadlockDetected", "QueryCanceled", "LockNotAvailable"}
+        assert errs.get("recognize") not in _bad and errs.get("revoke") not in _bad, \
+            f"deadlock or hung lock-wait under the apparatus-first order: {errs}"
+    finally:
+        _rebuild_schema()
+
+def test_concurrent_double_revoke_one_loser():
+    """Two concurrent revokes of the same active attestation -> exactly one wins; the loser
+    sees revoked_at IS NULL fail at the FOR UPDATE re-select (clean error, not a wrong success)."""
+    aid, who = _seed_for_concurrency()
+    try:
+        with psycopg.connect(DSN, autocommit=True) as c, c.cursor() as cur:
+            cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who)); att=cur.fetchone()[0]
+        c1=_concurrent_conn(); c2=_concurrent_conn()   # bounded statement_timeout each
+        results={}
+        def run(tag, conn, barrier):
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("begin")
+                    barrier.wait(timeout=10)
+                    cur.execute("select ops.revoke_completion_attestation(%s,%s,%s)",(att,who,f"r-{tag}"))
+                    cur.execute("commit"); results[tag]="ok"
+            except psycopg.Error as e:
+                conn.rollback(); results[tag]="err:"+type(e).__name__
+        b=threading.Barrier(2)
+        t1=threading.Thread(target=run,args=("A",c1,b)); t2=threading.Thread(target=run,args=("B",c2,b))
+        t1.start(); t2.start(); t1.join(15); t2.join(15)
+        c1.close(); c2.close()
+        oks=[v for v in results.values() if v=="ok"]
+        assert len(oks)==1, f"expected exactly one winning revoke, got {results}"
+    finally:
+        _rebuild_schema()
