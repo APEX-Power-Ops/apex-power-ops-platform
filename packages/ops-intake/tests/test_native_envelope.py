@@ -1,3 +1,4 @@
+from decimal import Decimal
 from ops_intake.native import validate_envelope, pivot_to_intake_payload, recompute_content_hash
 
 def _catalog_env(**over):
@@ -69,12 +70,12 @@ def test_pivot_maps_catalog_line_fields():
     p = pivot_to_intake_payload(_catalog_env())
     assert p["project"]["project_number"] == "JOB-1"
     assert p["project"]["project_name"] == "JOB-1"              # Q-2 fallback to project_number
-    assert p["project"]["contract_value"] == "1000.00"          # 100000 cents -> Decimal dollars
+    assert Decimal(str(p["project"]["contract_value"])) == Decimal("1000.00")  # 100000 cents -> numeric dollars
     s = p["scopes"][0]
     assert s["scope_name"] == "A1"
-    assert s["quote"]["onsite_labor"] == "1000.00"
-    assert s["quote"]["travel"] == "0" and s["quote"]["outside_services"] == "0"
-    assert s["quote"]["unit_multiplier"] == "1" and s["quote"]["pct_adjust"] == "1"
+    assert Decimal(str(s["quote"]["onsite_labor"])) == Decimal("1000.00")
+    assert Decimal(str(s["quote"]["travel"])) == Decimal("0") and Decimal(str(s["quote"]["outside_services"])) == Decimal("0")
+    assert Decimal(str(s["quote"]["unit_multiplier"])) == Decimal("1") and Decimal(str(s["quote"]["pct_adjust"])) == Decimal("1")
     assert s["quote"]["total_quoted_hours"] == 6
     ln = s["lines"][0]
     assert ln["apparatus_type"] == "MV-CB-01"                   # model-key string (re-resolved at approve)
@@ -95,3 +96,11 @@ def test_content_hash_is_deterministic_and_ignores_client_hash():
     a = recompute_content_hash(_catalog_env(content_hash="abc"))
     b = recompute_content_hash(_catalog_env(content_hash="DIFFERENT"))
     assert a == b and len(a) == 64
+
+def test_pivot_payload_reconstructs_with_numeric_money_arithmetic():
+    from decimal import Decimal
+    from ops_intake.envelope import _payload_from_dict
+    obj = _payload_from_dict(pivot_to_intake_payload(_catalog_env()))
+    # adjusted_total = (onsite+offsite+travel+outside) * unit_multiplier * pct_adjust
+    # must COMPUTE (numeric money), not raise TypeError on string money.
+    assert Decimal(str(obj.scopes[0].quote.adjusted_total)) == Decimal("1000.00")

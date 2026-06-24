@@ -71,13 +71,13 @@ def validate_envelope(env: dict) -> list[Finding]:
     return out
 
 
-def _cents_to_dollars(cents) -> str:
-    return str((Decimal(int(cents or 0)) / Decimal(100)).quantize(Decimal("0.01")))
+def _cents_to_dollars(cents) -> float:
+    return float((Decimal(int(cents or 0)) / Decimal(100)).quantize(Decimal("0.01")))
 
 
 def pivot_to_intake_payload(env: dict) -> dict:
     """Catalog-only pivot. Callers MUST validate_envelope() first (this is strict: it dereferences
-    required catalog fields). Money: integer cents -> Decimal dollars (str-encoded, no float)."""
+    required catalog fields). Money: integer cents -> float dollars (numeric, matches workbook contract)."""
     pn = env.get("project_number")
     project = ProjectIn(
         project_number=pn,
@@ -90,10 +90,10 @@ def pivot_to_intake_payload(env: dict) -> dict:
         quote = ScopeQuoteIn(
             onsite_labor=_cents_to_dollars(st.get("onsite_labor_cents", 0)),
             offsite_labor=_cents_to_dollars(st.get("offsite_labor_cents", 0)),
-            travel=Decimal(0),
-            outside_services=Decimal(0),
-            unit_multiplier=Decimal(str(sc.get("replication_m4", 1))),
-            pct_adjust=Decimal(str(sc.get("adjustment_multiplier_n4", 1))),
+            travel=0.0,
+            outside_services=0.0,
+            unit_multiplier=float(Decimal(str(sc.get("replication_m4", 1)))),
+            pct_adjust=float(Decimal(str(sc.get("adjustment_multiplier_n4", 1)))),
             total_quoted_hours=st.get("quoted_app_hours", 0),
         )
         lines = []
