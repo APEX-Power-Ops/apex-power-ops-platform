@@ -50,6 +50,13 @@ def clean_ops():
     return d
 
 
+def _ops_schema_exists(conn) -> bool:
+    row = conn.execute(
+        "select 1 from pg_catalog.pg_namespace where nspname='ops'"
+    ).fetchone()
+    return row is not None
+
+
 @pytest.fixture(scope="session", autouse=True)
 def apply_migrations(tmp_path_factory):
     import psycopg
@@ -61,9 +68,13 @@ def apply_migrations(tmp_path_factory):
         conn.execute(sql)
 
     mig_dir = _MIGRATIONS_DIR
-    # pre-up reset: drop 008 (core + FK) THEN 001 (ops) so a leaked `core` from a prior
-    # session cannot make the 008 up-migration fail (008 is not CREATE ... IF NOT EXISTS).
+    # pre-up reset: drop 009 THEN 008 (core + FK) THEN 001 (ops) so a leaked schema from a prior
+    # session cannot make the up-migrations fail.
+    # 009 down contains a CREATE OR REPLACE FUNCTION ops.* so it requires the ops schema to exist;
+    # guard with an existence check so a brand-new ops_test database is safe.
     with psycopg.connect(d, autocommit=True) as c:
+        if _ops_schema_exists(c):
+            _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
         _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
 
@@ -76,6 +87,7 @@ def apply_migrations(tmp_path_factory):
         "006_progress_billing.sql",
         "007_intake_envelope.sql",
         "008_core_equipment_models.sql",
+        "009_recognition_bridge.sql",
     ]
     with psycopg.connect(d, autocommit=True) as c:
         for name in up_migrations:
@@ -84,6 +96,8 @@ def apply_migrations(tmp_path_factory):
     yield
 
     with psycopg.connect(d, autocommit=True) as c:
+        if _ops_schema_exists(c):
+            _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
         _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
 

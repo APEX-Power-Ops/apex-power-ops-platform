@@ -68,8 +68,30 @@ def test_recognized_then_reversed_still_blocks(mini_workbook, clean_ops):
     r = create_run(dsn, uploaded_by=who, filename="m.xlsm", raw_bytes=mini_workbook.read_bytes(), content_type="xlsm")
     approve_run(dsn, r["run_id"], approved_by=who)
     with psycopg.connect(dsn, autocommit=True) as c:
-        aid = c.execute("select id from ops.apparatus limit 1").fetchone()[0]
-        c.execute("update ops.apparatus set status='Complete' where id=%s", (aid,))
+        # pick an apparatus that provably satisfies EVERY attest-eligibility gate, so the
+        # sanctioned attest fn (T2 guard path) cannot fail on a hidden ineligibility.
+        aid = c.execute(
+            "select a.id from ops.apparatus a"
+            " join ops.scopes s   on s.id = a.scope_id"
+            " join ops.projects p on p.id = s.project_id"
+            " join ops.scope_quote sq on sq.scope_id = a.scope_id"
+            " where a.provenance_status='approved' and a.is_active"
+            "   and a.status not in ('Complete','Cancelled')"
+            "   and a.quoted_hours > 0 and a.quoted_revenue > 0"
+            "   and s.is_active and s.status <> 'Cancelled'"
+            "   and p.is_active and p.status <> 'Cancelled'"
+            "   and sq.is_frozen and sq.frozen_at is not null"
+            " limit 1"
+        ).fetchone()[0]
+        # assert the eligibility preconditions explicitly (fail loudly here, not inside attest).
+        prov, st, qh, qr, frozen = c.execute(
+            "select a.provenance_status, a.status, a.quoted_hours, a.quoted_revenue, sq.is_frozen"
+            " from ops.apparatus a join ops.scope_quote sq on sq.scope_id=a.scope_id"
+            " where a.id=%s", (aid,)).fetchone()
+        assert prov == 'approved' and st not in ('Complete','Cancelled') and qh > 0 and qr > 0 and frozen
+        # `who` is the approve_run actor; ensure it is a known ops.persons row (attest gate 1).
+        assert c.execute("select 1 from ops.persons where person_id=%s", (who,)).fetchone() is not None
+        c.execute("select ops.attest_apparatus_complete(%s,%s,'tested')", (aid, who))  # sanctioned status=Complete (T2 guard)
         ev = c.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",
                        (aid, who)).fetchone()[0]
         c.execute("select ops.reverse_recognition(%s,%s,'correction')", (ev, who))  # confirm arg order vs 005
