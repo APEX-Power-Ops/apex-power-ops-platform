@@ -550,3 +550,115 @@ def test_down_restores_005_function_bodies_byte_for_byte():
     for f in CHAIN: _exec(HERE / f)
     assert restored_ar == baseline_ar, "approve_and_recognize down-restore != 005-up definition"
     assert restored_ii == baseline_ii, "trg_revrec_insert_integrity down-restore != 005-up definition"
+
+def test_worklist_flags_across_states(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        # (1) fresh eligible -> can_attest only
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select can_attest, can_recognize, can_revoke, can_reverse"
+                    " from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid,))
+        assert cur.fetchone()==(True, False, False, False)
+        # (2) attested -> can_recognize + can_revoke
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who)); att=cur.fetchone()[0]
+        cur.execute("select can_attest, can_recognize, can_revoke, can_reverse"
+                    " from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid,))
+        assert cur.fetchone()==(False, True, True, False)
+        # (3) recognized -> can_reverse only
+        cur.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(aid,who))
+        ev=cur.fetchone()[0]
+        cur.execute("select can_attest, can_recognize, can_revoke, can_reverse"
+                    " from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid,))
+        assert cur.fetchone()==(False, False, False, True)
+        # (4) reversed -> re-recognize + revoke again
+        cur.execute("select ops.reverse_recognition(%s,%s,'corr')",(ev,who))
+        cur.execute("select can_attest, can_recognize, can_revoke, can_reverse"
+                    " from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid,))
+        assert cur.fetchone()==(False, True, True, False)
+        cur.execute("rollback to savepoint s")
+
+def test_worklist_carries_project_number_and_basis(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); _seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress", quoted_revenue=1500, quoted_hours=10)
+        cur.execute("select project_number, status, quoted_hours, quoted_revenue, net_recognized, is_recognized"
+                    " from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid,))
+        pn, st, qh, qr, net, isr = cur.fetchone()
+        assert pn is not None and st=="In Progress" and float(qr)==1500 and isr is False
+        cur.execute("rollback to savepoint s")
+
+def test_worklist_exposes_attestation_and_recognition_columns(conn):
+    """The worklist must surface the attestation identity (attested_by/attested_at/
+    attest_reason) and the recognition trace (recognized_event_id) correctly:
+      - fresh eligible  -> all four NULL
+      - after attest    -> attested_by=actor, attested_at set, attest_reason=reason; event still NULL
+      - after recognize -> recognized_event_id non-null
+      - after reverse   -> recognized_event_id NULL again (v_apparatus_recognition nulls it)."""
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        # (1) fresh eligible: no active attestation, no recognition.
+        cur.execute("select attested_by, attested_at, attest_reason, recognized_event_id"
+                    " from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid,))
+        ab, at_, ar_, rev = cur.fetchone()
+        assert ab is None and at_ is None and ar_ is None and rev is None
+        # (2) after attest: attestation columns populated; recognition still empty.
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'tested ok')",(aid,who))
+        cur.execute("select attested_by, attested_at, attest_reason, recognized_event_id"
+                    " from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid,))
+        ab, at_, ar_, rev = cur.fetchone()
+        assert ab==who and at_ is not None and ar_=="tested ok" and rev is None
+        # (3) after recognize: recognized_event_id is non-null.
+        cur.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(aid,who))
+        ev=cur.fetchone()[0]
+        cur.execute("select recognized_event_id from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid,))
+        assert cur.fetchone()[0]==ev, "recognized_event_id not exposed after recognize"
+        # (4) after reverse: recognized_event_id goes NULL (per v_apparatus_recognition).
+        cur.execute("select ops.reverse_recognition(%s,%s,'corr')",(ev,who))
+        cur.execute("select recognized_event_id, attested_by from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid,))
+        rev2, ab2 = cur.fetchone()
+        assert rev2 is None and ab2==who, "recognized_event_id not cleared on reverse / attestation lost"
+        cur.execute("rollback to savepoint s")
+
+def test_rollup_sums_recognized_and_resolves_project_number(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress", quoted_revenue=1500)
+        cur.execute("select project_number from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid,))
+        pn=cur.fetchone()[0]
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who))
+        cur.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(aid,who))
+        cur.execute("select project_number, recognized_total, recognized_count"
+                    " from ops.v_completion_recognition_rollup where project_number=%s",(pn,))
+        rpn, rtot, rcnt = cur.fetchone()
+        assert rpn==pn and float(rtot)==1500 and rcnt==1
+        cur.execute("rollback to savepoint s")
+
+def test_rollup_eligible_count_uses_full_worklist_predicate(conn):
+    """eligible_count must use the SAME eligibility predicate as the worklist:
+    provenance_status='approved' AND a.is_active AND active non-cancelled scope/project
+    chain AND sq.is_frozen. An unfrozen-basis or cancelled-scope apparatus must NOT be
+    counted as eligible (and must not appear in the rollup row scope at all)."""
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); _seed_person(cur)
+        # (1) one fully-eligible apparatus -> eligible_count == 1, and it appears in the worklist.
+        aid_ok=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select project_number from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid_ok,))
+        pn=cur.fetchone()[0]
+        cur.execute("select eligible_count from ops.v_completion_recognition_rollup where project_number=%s",(pn,))
+        assert cur.fetchone()[0]==1, "fully-eligible apparatus not counted in eligible_count"
+        # (2) an UNFROZEN-basis apparatus is NOT eligible -> excluded from eligible_count.
+        aid_unfrozen=_seed_eligible_apparatus(cur, status="In Progress", frozen=False)
+        cur.execute("select project_number from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid_unfrozen,))
+        assert cur.fetchone() is None, "unfrozen-basis apparatus leaked into the worklist"
+        cur.execute("select coalesce(max(eligible_count),0) from ops.v_completion_recognition_rollup"
+                    " where scope_id=(select scope_id from ops.apparatus where id=%s)",(aid_unfrozen,))
+        assert cur.fetchone()[0]==0, "unfrozen-basis apparatus counted as eligible"
+        # (3) a CANCELLED-scope apparatus is NOT eligible -> excluded from eligible_count.
+        aid_cancelled=_seed_eligible_apparatus(cur, status="In Progress", scope_status="Cancelled")
+        cur.execute("select project_number from ops.v_completion_recognition_worklist where apparatus_id=%s",(aid_cancelled,))
+        assert cur.fetchone() is None, "cancelled-scope apparatus leaked into the worklist"
+        cur.execute("select coalesce(max(eligible_count),0) from ops.v_completion_recognition_rollup"
+                    " where scope_id=(select scope_id from ops.apparatus where id=%s)",(aid_cancelled,))
+        assert cur.fetchone()[0]==0, "cancelled-scope apparatus counted as eligible"
+        cur.execute("rollback to savepoint s")

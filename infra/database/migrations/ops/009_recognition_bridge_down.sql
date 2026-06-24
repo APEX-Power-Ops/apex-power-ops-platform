@@ -1,3 +1,7 @@
+-- ---- T6: drop the read views (first in down order) ------------------------
+drop view if exists ops.v_completion_recognition_rollup;
+drop view if exists ops.v_completion_recognition_worklist;
+
 -- ============================================================================
 -- DOWN — ops migration 009 recognition bridge. Undoes ONLY 009 (leaves 001-008
 -- intact). FULLY IDEMPOTENT: every block uses `if exists` / `create or replace`, so

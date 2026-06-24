@@ -279,3 +279,54 @@ begin
   return new;
 end;
 $$;
+
+-- ---- T6: read models — worklist + rollup ----------------------------------
+create view ops.v_completion_recognition_worklist as
+select a.id as apparatus_id, a.apparatus_designation, a.scope_id, s.project_id, p.project_number,
+       a.status, a.quoted_hours, a.quoted_revenue,
+       att.id as attestation_id, att.attested_by, att.attested_at, att.reason as attest_reason,
+       ar.net_recognized, ar.is_recognized, ar.recognized_event_id,
+       (a.status not in ('Complete','Cancelled') and att.id is null
+         and a.quoted_hours > 0 and a.quoted_revenue > 0)                 as can_attest,
+       (a.status = 'Complete' and att.id is not null
+         and a.quoted_hours > 0 and a.quoted_revenue > 0
+         and not ar.is_recognized)                                        as can_recognize,
+       (att.id is not null and not ar.is_recognized)                      as can_revoke,
+       ar.is_recognized                                                   as can_reverse
+from ops.apparatus a
+join ops.scopes s   on s.id = a.scope_id
+join ops.projects p on p.id = s.project_id
+join ops.scope_quote sq on sq.scope_id = a.scope_id
+left join ops.completion_attestation att
+  on att.apparatus_id = a.id and att.revoked_at is null
+join ops.v_apparatus_recognition ar on ar.apparatus_id = a.id
+where a.provenance_status = 'approved' and a.is_active
+  and s.is_active and s.status <> 'Cancelled'
+  and p.is_active and p.status <> 'Cancelled'
+  and sq.is_frozen;
+
+-- eligible_count + the row scope use the SAME eligibility predicate as
+-- v_completion_recognition_worklist (provenance_status='approved' AND a.is_active
+-- AND active non-cancelled scope/project chain AND sq.is_frozen). The outer WHERE
+-- restricts the row set to eligible apparatus so recognized_total/recognized_count
+-- and eligible_count all read the identical population the worklist exposes — an
+-- unfrozen-basis or cancelled-scope apparatus is excluded from eligible_count.
+create view ops.v_completion_recognition_rollup as
+select p.project_number, s.id as scope_id, p.id as project_id,
+       coalesce(sum(ar.net_recognized), 0)                          as recognized_total,
+       count(*) filter (where ar.is_recognized)                      as recognized_count,
+       count(*) filter (where a.provenance_status = 'approved'
+                          and a.is_active
+                          and s.is_active and s.status <> 'Cancelled'
+                          and p.is_active and p.status <> 'Cancelled'
+                          and sq.is_frozen)                          as eligible_count
+from ops.apparatus a
+join ops.scopes s   on s.id = a.scope_id
+join ops.projects p on p.id = s.project_id
+join ops.scope_quote sq on sq.scope_id = a.scope_id
+join ops.v_apparatus_recognition ar on ar.apparatus_id = a.id
+where a.provenance_status = 'approved' and a.is_active
+  and s.is_active and s.status <> 'Cancelled'
+  and p.is_active and p.status <> 'Cancelled'
+  and sq.is_frozen
+group by p.project_number, s.id, p.id;
