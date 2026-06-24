@@ -546,7 +546,24 @@ def create_run_native(dsn, *, uploaded_by, envelope):
 
     # happy path: validate_envelope guaranteed catalog completeness, so the strict pivot/hash are safe now.
     content_hash = recompute_content_hash(envelope)
-    pivoted_json = json.dumps(pivot_to_intake_payload(envelope), default=str)
+    # Compute pivot_dict ONCE — used for both the JSON payload and economic reconciliation.
+    pivot_dict = pivot_to_intake_payload(envelope)
+    pivoted_json = json.dumps(pivot_dict, default=str)
+    # Economic reconciliation: run the shared validate_payload on the pivoted payload.
+    # source_format='native' is now accepted (Change 1); numeric money from the pivot makes
+    # adjusted_total arithmetic clean. Findings: any blocking econ mismatch -> unapprovable
+    # (blocked_findings), mirroring workbook intake — NOT a hard reject.
+    econ_findings = validate_payload(_payload_from_dict(pivot_dict), source_format="native", n4_defaulted=False)
+    all_findings = findings + econ_findings
+
+    def _all_finding_rows(cur, run_id, version):
+        for f in all_findings:
+            cur.execute(
+                "insert into ops.intake_validation_findings"
+                " (run_id, payload_version, severity, code, ok, message, diagnostic_detail)"
+                " values (%s,%s,%s,%s,%s,%s,%s)",
+                (run_id, version, f.severity, f.code, f.ok, f.message, f.diagnostic_detail))
+
     try:
         with psycopg.connect(dsn) as conn, conn.cursor() as cur:
             cur.execute("select pg_advisory_xact_lock(hashtext(%s))", (pn,))
@@ -567,7 +584,7 @@ def create_run_native(dsn, *, uploaded_by, envelope):
                 (pn, project_id, status, conflict_kind, NATIVE_SCHEMA_VERSION, NATIVE_PARSER_VERSION,
                  pivoted_json, pivoted_json, str(uploaded_by), ev_id, qv, content_hash, sdid, srid, raw_json))
             run_id = str(cur.fetchone()[0])
-            _finding_rows(cur, run_id, 1)
+            _all_finding_rows(cur, run_id, 1)
             conn.commit()
     except psycopg.errors.UniqueViolation as exc:
         if ("uq_intake_one_active" in str(exc)
@@ -576,7 +593,7 @@ def create_run_native(dsn, *, uploaded_by, envelope):
             raise ActiveRunExists("An active/duplicate native run already exists for " + repr(pn)) from exc
         raise
     return {"run_id": run_id, "status": status, "conflict_kind": conflict_kind, "source_format": "native",
-            "findings": [{"code": f.code, "severity": f.severity, "ok": f.ok, "message": f.message} for f in findings],
+            "findings": [{"code": f.code, "severity": f.severity, "ok": f.ok, "message": f.message} for f in all_findings],
             "review_payload": json.loads(pivoted_json)}
 
 

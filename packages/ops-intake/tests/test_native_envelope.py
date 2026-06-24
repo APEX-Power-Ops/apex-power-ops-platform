@@ -264,3 +264,75 @@ def test_create_run_native_rejects_malformed_without_crash(clean_ops):
     assert any(f["code"] == "missing_scope_name" for f in out2["findings"])
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+# ---------------------------------------------------------------------------
+# Hardening B -- validate_payload accepts 'native' + economic reconciliation
+# ---------------------------------------------------------------------------
+
+
+def test_native_patch_then_approve_succeeds(clean_ops):
+    """P2a: a BENIGN edit (section) -> patch_review -> approve_run must yield 'approved',
+    not 'blocked_findings'. After patch, findings must NOT contain unsupported_format."""
+    dsn = clean_ops
+    who = _person(dsn)
+    from ops_intake.envelope import get_run, patch_review
+
+    # create a clean native run using the seeded model key
+    env = _seeded_env()
+    env["envelope_id"] = "env-p2a"
+    env["project_number"] = "JOB-P2A"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", out.get("findings")
+
+    # benign edit: set section on the line (a _LINE_MUTABLE field that preserves reconciliation)
+    run = get_run(dsn, out["run_id"])
+    review = run["review_payload"]
+    review["scopes"][0]["lines"][0]["section"] = "Panel A"
+    patched = patch_review(dsn, out["run_id"], review_payload=review)
+
+    # after patch, findings at the new version must NOT include unsupported_format
+    codes_after = {f["code"] for f in patched["findings"]}
+    assert "unsupported_format" not in codes_after, (
+        "patch_review produced unsupported_format for source_format='native': " + str(patched["findings"])
+    )
+
+    # approve must succeed (not blocked)
+    res = approve_run(dsn, out["run_id"], approved_by=who)
+    assert res["outcome"] == "approved", res
+
+
+def test_native_inconsistent_economics_blocks_approval(clean_ops):
+    """P1: bid_cents=200000 but onsite_labor_cents=100000 -> Sigma adjusted ($1000) != contract ($2000).
+    create_run_native -> status='parsed' with blocking contract_total finding.
+    approve_run -> outcome='blocked_findings'. ops.apparatus count == 0 (nothing materialized)."""
+    dsn = clean_ops
+    who = _person(dsn)
+
+    # Build structurally-valid envelope that passes validate_envelope,
+    # but has an economic mismatch: bid_cents=$2000, scope adjusted=$1000
+    env = _catalog_env()
+    env["project_number"] = "JOB-P1"
+    env["envelope_id"] = "env-p1"
+    env["quote_version"] = 99
+    env["totals"]["bid_cents"] = 200000            # contract = $2000
+    # scope_totals stay at 100000 (adjusted_cents=$1000) -> Sigma=$1000 != $2000
+
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+
+    # Must be parsed (not rejected) — the envelope structure is valid
+    assert out["status"] == "parsed", out.get("findings")
+
+    # Must have a blocking contract_total finding
+    blocking_codes = {f["code"] for f in out["findings"] if not f["ok"] and f["severity"] == "blocking"}
+    assert "contract_total" in blocking_codes, (
+        "Expected blocking contract_total finding; got: " + str(out["findings"])
+    )
+
+    # approve_run must return blocked_findings (not approved)
+    res = approve_run(dsn, out["run_id"], approved_by=who)
+    assert res["outcome"] == "blocked_findings", res
+
+    # nothing materialized
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0
