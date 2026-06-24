@@ -23,6 +23,24 @@
 
 ---
 
+## Instance Review Corrections (pre-plan — BLOCKING)
+
+Folds the Codex cross-engine pass + operator review + the one salvageable Claude-IRP finding. **These OVERRIDE the body sections below where they conflict; `writing-plans` consumes THIS section as the source of truth.** Review provenance: Codex `apex-jobs review-run` (on-target, C1–C3); operator review (C4–C6); Claude-side IRP **misfired** (audited `@apex/estimator-core`, not this packet) — only C7 salvaged. Claude-side packet audit not obtained (re-runnable). All claims grounded against live `ops_dev` 2026-06-24 + the ops-intake writer.
+
+- **C1 [High] — `source_format` enum lacks `'native'`.** Live `ops.intake_source_format` = `{decomposed_scope_sheet, flat_quote, unsupported}`; `'native'::ops.intake_source_format` would fail before any native run persists. D4 MUST `ALTER TYPE ops.intake_source_format ADD VALUE 'native'`. Key the partial-unique indexes on `source_format='native'` and **drop the redundant `source_kind` column** (resolves Q-1). Down-path: `ADD VALUE` is irreversible in place → the down migration must (a) `RAISE` if any `intake_runs.source_format='native'` rows exist, then (b) rebuild the type (new type without `'native'` → `ALTER COLUMN … TYPE … USING` → drop/recreate dependents). Test both directions.
+- **C2 [High] — canonical/review shape must match `patch_review`.** `patch_review` (`envelope.py:190`) compares `review_payload_json` vs `canonical_payload_json` as the **same flat `IntakePayload`** (`_payload_from_dict` + `_assert_review_within_allowlist` + `_assert_no_cross_scope_move`). So the native pivot target IS the existing flat `IntakePayload` dict (catalog-only), written to **both** `canonical_payload_json` and `review_payload_json`; the raw `EstimateEnvelope` goes in a **new `estimate_envelope_json jsonb` column** (audit sidecar). This keeps `approve_run`, the allowlist, and the cross-scope guard working unchanged. **Supersedes §2's "canonical = raw envelope."** `payload_schema_version='estimate_envelope_v1'` selects only the added §3 native field-guards.
+- **C3 [High] — null `project_number` must reject.** `EstimateEnvelope.project_number` is nullable but routes to `intake_runs.project_number`/`projects.project_number` (both `NOT NULL`) and the `pg_advisory_xact_lock(hashtext(project_number))` key. Add §3 reject **`missing_project_number`** (blocking finding) at the pivot/validator, before any DB write. (`JobNumberResolver` stays deferred; this is the governed fail-closed until it lands.)
+- **C4 [High] — new identity columns must be immutable.** `trg_intake_run_immutable` (verified) blocks UPDATE drift on `{canonical_payload_json, source_format, payload_schema_version, parser_version, uploaded_by, project_number}`. D4 MUST add `envelope_id, quote_version, content_hash, source_draft_id, source_revision_id, estimate_envelope_json` to that `IS DISTINCT FROM` block (write-once). Tests assert UPDATE-drift on each raises.
+- **C5 [Med] — native required-field guards.** §3 gains governed blocking findings (not downstream `KeyError`/`NOT NULL`) for catalog lines missing `equipment_model_ref` / `base_qty` / `project_intake_qty` / `resolved_ref_hours`, or with an invalid `included`/`line_kind` combination. Codes: `missing_required_catalog_field`, `invalid_line_state`.
+- **C6 [Med] — `content_hash` trust boundary.** The server MUST recompute `content_hash` from a deterministic canonical serialization and verify it equals the envelope's `content_hash` before using it as the idempotency key; reject on mismatch (`content_hash_mismatch`). Never trust a client-supplied hash for the uniqueness index.
+- **C7 [Med] — M4-baked block-cents basis (salvaged Claude-IRP F2).** estimator-core bakes M4 into block-level `*_cents` (`compile.ts:106`: `onsite_labor_cents` = M4 × pre-M4), but the workbook P14 is pre-M4 (`WORKBOOK_CHARACTERIZATION:35`). v1 is correct **only because M4==1** (post==pre). §6/§8 must state the cents→numeric mapping assumes M4==1; the **4b.2 (M4>1)** slice must reconcile the envelope's M4-baked block cents against ops' per-line-hours × apparatus-count × rate (which re-applies M4 via QTY expansion — double-M4 risk). Do not treat `onsite_labor_cents` as the workbook P14 in any finance reconciliation.
+
+**Build-plan deltas (for §11):** the migration slice now also = `ADD VALUE 'native'` (+ rebuild down) · drop `source_kind` · add `estimate_envelope_json` · extend `trg_intake_run_immutable` + drift tests; the validator slice adds reject codes `missing_project_number`, `missing_required_catalog_field`, `invalid_line_state`, `content_hash_mismatch`; the pivot writes the flat `IntakePayload` to canonical+review with the raw envelope in the sidecar; the server recomputes `content_hash`.
+
+**Logged separately (NOT this packet):** estimator-core hardening — F3 (`compile()` `RangeError` on non-integer M4), F4 (`allocateByLargestRemainder` wrong sum on negative weights), F1 (overstated "reproduces the workbook" corpus claim). Tracked on the `estimator-ui-staging` lane.
+
+---
+
 ## §1 — The seam is a 3-layer pivot
 
 ```
@@ -237,7 +255,7 @@ Out of slice (later, explicit): 4b.2 M4≠1 · 4b.3 service/cost grain + Chip-4 
 
 ## §12 — Open questions for operator ratification
 
-- **Q-1 `source_kind` vs `source_format`:** keep both (mechanism vs envelope-kind) or collapse the partial-index key onto the existing `source_format='native'` and skip the new `source_kind` column? *Lean: keep both — `source_format` is upload mechanism, `source_kind` mirrors the envelope and is the cleaner index predicate.*
+- **Q-1 `source_kind` vs `source_format`:** **RESOLVED (C1)** — add `'native'` to the `source_format` enum, key the partial indexes on `source_format='native'`, and drop the `source_kind` column (a `NOT NULL` enum already forces a value for native runs, so a second column is redundant).
 - **Q-2 `projects.project_name` source** (NOT NULL; envelope has none): derive from the draft (`opportunity_ref`/estimate name) at pivot, or require it on the native payload? *Lean: pivot derives from the draft; validator rejects if absent.*
 - **Q-3 `apparatus.drawing_reference`** (envelope `LineC` has no `drawing`): leave NULL for native v1, or add a drawing field to the line contract? *Lean: NULL for v1; revisit if estimators need it.*
 - **Q-4 task grouping:** the envelope dropped `section` → native lines fall to one `__ungrouped__` task per scope. Accept for v1, or derive grouping from `designation`? *Lean: `__ungrouped__` for v1.*
