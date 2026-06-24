@@ -1120,3 +1120,179 @@ def test_native_zero_base_qty_create_run_rejected(clean_ops):
     assert any(f["code"] == "malformed_catalog_field" for f in out["findings"]), out["findings"]
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+# ---------------------------------------------------------------------------
+# Hardening D3 FIX-2 — quoted_app_hours numeric-string coercion + container
+#                       shape guards (non-conforming JSON shapes → governed reject)
+# ---------------------------------------------------------------------------
+
+
+def test_native_quoted_app_hours_numeric_string_accepted(clean_ops):
+    """quoted_app_hours='18' (numeric string) must NOT cause a TypeError/500.
+    The pivot must coerce it via _dec so J3 arithmetic is safe.
+    Reconciling env: quoted_app_hours='18', resolved_ref_hours=6 * qty=3 = 18 hrs.
+    Expect status='parsed' (no TypeError, no crash)."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "FIX2-QAH-STR"
+    env["envelope_id"] = "env-fix2-qah-str"
+    env["quote_version"] = 42
+    env["scopes"][0]["scope_totals"]["quoted_app_hours"] = "18"  # numeric string
+    env["scopes"][0]["lines"][0]["resolved_ref_hours"] = 6.0
+    env["scopes"][0]["lines"][0]["base_qty"] = 3
+    env["scopes"][0]["lines"][0]["project_intake_qty"] = 3
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    # The key assertion: no TypeError/500; a 'parsed' result proves coercion worked
+    assert out["status"] == "parsed", (
+        f"Expected parsed (quoted_app_hours='18' must coerce via _dec); "
+        f"got {out['status']}; findings={out.get('findings')}"
+    )
+
+
+def test_native_nonobject_scope_is_governed_reject(clean_ops):
+    """'scopes':[None] (non-object scope element) must be a governed reject, not AttributeError/500.
+    Asserts: status='rejected', malformed_shape in findings, ops.scopes count == 0."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "FIX2-NULL-SCOPE"
+    env["envelope_id"] = "env-fix2-null-scope"
+    env["quote_version"] = 43
+    env["scopes"] = [None]  # non-object scope element
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", f"Expected rejected; got {out['status']}; findings={out.get('findings')}"
+    codes = {f["code"] for f in out["findings"]}
+    assert "malformed_shape" in codes, f"Expected malformed_shape in findings; got {codes}"
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_native_scope_totals_non_dict_is_governed_reject(clean_ops):
+    """scope_totals set to a string -> malformed_shape governed reject (not AttributeError/500)."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "FIX2-ST-STR"
+    env["envelope_id"] = "env-fix2-st-str"
+    env["quote_version"] = 44
+    env["scopes"][0]["scope_totals"] = "not_a_dict"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", f"Expected rejected; got {out['status']}"
+    codes = {f["code"] for f in out["findings"]}
+    assert "malformed_shape" in codes, f"Expected malformed_shape; got {codes}"
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_native_lines_non_list_is_governed_reject(clean_ops):
+    """lines set to a string -> malformed_shape governed reject (not AttributeError/500)."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "FIX2-LINES-STR"
+    env["envelope_id"] = "env-fix2-lines-str"
+    env["quote_version"] = 45
+    env["scopes"][0]["lines"] = "not_a_list"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", f"Expected rejected; got {out['status']}"
+    codes = {f["code"] for f in out["findings"]}
+    assert "malformed_shape" in codes, f"Expected malformed_shape; got {codes}"
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_native_line_element_none_is_governed_reject(clean_ops):
+    """A line element set to None -> malformed_shape governed reject (not AttributeError/500)."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "FIX2-LN-NONE"
+    env["envelope_id"] = "env-fix2-ln-none"
+    env["quote_version"] = 46
+    env["scopes"][0]["lines"] = [None]  # non-dict line element
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", f"Expected rejected; got {out['status']}"
+    codes = {f["code"] for f in out["findings"]}
+    assert "malformed_shape" in codes, f"Expected malformed_shape; got {codes}"
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_native_totals_non_dict_is_governed_reject(clean_ops):
+    """Top-level totals set to a string -> malformed_shape governed reject (not AttributeError/500)."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "FIX2-TOTALS-STR"
+    env["envelope_id"] = "env-fix2-totals-str"
+    env["quote_version"] = 47
+    env["totals"] = "not_a_dict"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", f"Expected rejected; got {out['status']}"
+    codes = {f["code"] for f in out["findings"]}
+    assert "malformed_shape" in codes, f"Expected malformed_shape; got {codes}"
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+# Validate-envelope unit tests (no DB) for shape checks
+def test_validate_nonobject_scope_returns_malformed_shape():
+    """validate_envelope([None] scope) returns malformed_shape, does not raise AttributeError."""
+    import copy
+    env = copy.deepcopy(_catalog_env())
+    env["scopes"] = [None]
+    findings = validate_envelope(env)
+    codes = {f.code for f in findings if not f.ok}
+    assert "malformed_shape" in codes, f"Expected malformed_shape; got {codes}"
+
+
+def test_validate_scope_totals_non_dict_returns_malformed_shape():
+    """validate_envelope(scope_totals=string) returns malformed_shape, does not raise."""
+    import copy
+    env = copy.deepcopy(_catalog_env())
+    env["scopes"][0]["scope_totals"] = "bad"
+    findings = validate_envelope(env)
+    codes = {f.code for f in findings if not f.ok}
+    assert "malformed_shape" in codes, f"Expected malformed_shape; got {codes}"
+
+
+def test_validate_lines_non_list_returns_malformed_shape():
+    """validate_envelope(lines=string) returns malformed_shape, does not raise."""
+    import copy
+    env = copy.deepcopy(_catalog_env())
+    env["scopes"][0]["lines"] = "bad"
+    findings = validate_envelope(env)
+    codes = {f.code for f in findings if not f.ok}
+    assert "malformed_shape" in codes, f"Expected malformed_shape; got {codes}"
+
+
+def test_validate_line_element_none_returns_malformed_shape():
+    """validate_envelope(lines=[None]) returns malformed_shape, does not raise."""
+    import copy
+    env = copy.deepcopy(_catalog_env())
+    env["scopes"][0]["lines"] = [None]
+    findings = validate_envelope(env)
+    codes = {f.code for f in findings if not f.ok}
+    assert "malformed_shape" in codes, f"Expected malformed_shape; got {codes}"
+
+
+def test_validate_totals_non_dict_returns_malformed_shape():
+    """validate_envelope(totals=string) returns malformed_shape, does not raise."""
+    import copy
+    env = copy.deepcopy(_catalog_env())
+    env["totals"] = "bad"
+    findings = validate_envelope(env)
+    codes = {f.code for f in findings if not f.ok}
+    assert "malformed_shape" in codes, f"Expected malformed_shape; got {codes}"
+
+
+def test_validate_scopes_non_list_returns_malformed_shape():
+    """validate_envelope(scopes=string) returns malformed_shape, does not raise."""
+    import copy
+    env = copy.deepcopy(_catalog_env())
+    env["scopes"] = "not_a_list"
+    findings = validate_envelope(env)
+    codes = {f.code for f in findings if not f.ok}
+    assert "malformed_shape" in codes, f"Expected malformed_shape; got {codes}"

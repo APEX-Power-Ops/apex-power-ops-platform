@@ -80,8 +80,22 @@ def validate_envelope(env: dict) -> list[Finding]:
             out.append(_f("missing_quote_version", "Envelope has no valid quote_version (must be a non-null integer)"))
         # else: float with integer-valued (e.g. 1.0) -> OK
 
+    # Hardening D3 FIX-2: top-level container shape checks (fail-closed before any dereference).
+    # totals: if present and NOT a dict -> malformed_shape (the pivot does .get("bid_cents") on it).
+    _raw_totals = env.get("totals")
+    if _raw_totals is not None and not isinstance(_raw_totals, dict):
+        out.append(_f("malformed_shape", "Envelope 'totals' is not an object",
+                      detail=f"type={type(_raw_totals).__name__!r}"))
+    # scopes: if present and NOT a list -> malformed_shape (can't iterate safely).
+    _raw_scopes = env.get("scopes")
+    if _raw_scopes is not None and not isinstance(_raw_scopes, list):
+        out.append(_f("malformed_shape", "Envelope 'scopes' is not an array",
+                      detail=f"type={type(_raw_scopes).__name__!r}"))
+
     # Top-level totals: bid_cents present-but-non-numeric OR present-but-fractional OR negative -> malformed_total
-    totals = env.get("totals", {}) or {}
+    # Safe: only inspect as dict when it IS a dict (non-dict already flagged above as malformed_shape).
+    _raw_totals_val = env.get("totals")
+    totals = (_raw_totals_val or {}) if isinstance(_raw_totals_val, dict) else {}
     if "bid_cents" in totals:
         _bid = totals["bid_cents"]
         _bid_dec = _dec(_bid)
@@ -98,7 +112,16 @@ def validate_envelope(env: dict) -> list[Finding]:
     # Hardening D3 gap 4: collect all included catalog line_uids for global uniqueness check.
     _all_line_uids: list[str] = []
 
-    for i, sc in enumerate(env.get("scopes", []) or [], start=1):
+    # Safe iteration: only iterate scopes when it is actually a list (non-list already flagged above).
+    _scopes_iter = env.get("scopes", []) if isinstance(env.get("scopes"), list) else []
+    for i, sc in enumerate(_scopes_iter or [], start=1):
+        # Hardening D3 FIX-2: per-scope shape check — MUST run BEFORE any sc.get() call.
+        # A non-dict scope element (e.g. None, a string) -> malformed_shape + skip this scope.
+        if not isinstance(sc, dict):
+            out.append(_f("malformed_shape", f"Scope #{i} is not an object (must be a JSON object)",
+                          detail=f"type={type(sc).__name__!r}"))
+            continue
+
         # Hardening A: scope identity / lineage fields required by the pivot
         if not sc.get("name"):
             out.append(_f("missing_scope_name", f"Scope #{i} has no name",
@@ -109,6 +132,14 @@ def validate_envelope(env: dict) -> list[Finding]:
         if not sc.get("neta_standard"):
             out.append(_f("missing_neta_standard", f"Scope #{i} has no neta_standard",
                           detail=f"scope_id={sc.get('scope_id')!r}"))
+
+        # Hardening D3 FIX-2: scope_totals shape check — if present and NOT a dict -> malformed_shape.
+        # The code below does st.get(...) on scope_totals; a non-dict would cause AttributeError.
+        _raw_st = sc.get("scope_totals")
+        if _raw_st is not None and not isinstance(_raw_st, dict):
+            out.append(_f("malformed_shape", f"Scope #{i} 'scope_totals' is not an object",
+                          detail=f"type={type(_raw_st).__name__!r}"))
+            continue
 
         st = sc.get("scope_totals", {}) or {}
 
@@ -208,7 +239,20 @@ def validate_envelope(env: dict) -> list[Finding]:
                         detail=f"scope_id={sc.get('scope_id')!r}; derived={int(_derived)}; adjusted_cents={int(_adj_d)}",
                     ))
 
-        for ln in sc.get("lines", []) or []:
+        # Hardening D3 FIX-2: lines shape check — if present and NOT a list -> malformed_shape.
+        _raw_lines = sc.get("lines")
+        if _raw_lines is not None and not isinstance(_raw_lines, list):
+            out.append(_f("malformed_shape", f"Scope #{i} 'lines' is not an array",
+                          detail=f"type={type(_raw_lines).__name__!r}"))
+            continue
+
+        for j, ln in enumerate(sc.get("lines", []) or [], start=1):
+            # Hardening D3 FIX-2: per-line shape check — MUST run BEFORE any ln.get() call.
+            if not isinstance(ln, dict):
+                out.append(_f("malformed_shape", f"Scope #{i} line #{j} is not an object (must be a JSON object)",
+                              detail=f"type={type(ln).__name__!r}"))
+                continue
+
             if not ln.get("included", True):
                 continue
             kind = ln.get("line_kind")
@@ -331,7 +375,9 @@ def pivot_to_intake_payload(env: dict) -> dict:
             outside_services=0.0,
             unit_multiplier=float(Decimal(str(sc.get("replication_m4", 1)))),
             pct_adjust=float(Decimal(str(sc.get("adjustment_multiplier_n4", 1)))),
-            total_quoted_hours=st.get("quoted_app_hours", 0),
+            # D3 FIX-2: coerce quoted_app_hours via _dec so numeric-string forms (e.g. "18")
+            # don't survive as a str into validate_payload's J3 float arithmetic (-> TypeError/500).
+            total_quoted_hours=float(_dec(st.get("quoted_app_hours", 0)) or 0),
         )
         lines = []
         for ln in sc.get("lines", []) or []:

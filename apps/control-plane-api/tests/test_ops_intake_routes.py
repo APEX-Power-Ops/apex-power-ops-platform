@@ -765,3 +765,32 @@ class TestNativeIntakeD3:
         assert "duplicate_line_uid" in codes, f"Expected duplicate_line_uid in {codes}"
         assert not _contains_substring(body, "$")
         assert not _contains_substring(body, "diagnostic_detail")
+
+
+# ---------------------------------------------------------------------------
+# Hardening D3 FIX-2 route tests
+# ---------------------------------------------------------------------------
+
+
+class TestNativeIntakeFix2:
+    """FIX-2: non-conforming JSON shapes -> governed reject, never 500."""
+
+    def test_native_nonobject_scope_is_governed_reject(self, client, person_id):
+        """POST /native with 'scopes':[null] -> HTTP 200 status='rejected' (NOT 500)."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "FIX2-ROUTE-NULL-SCOPE"
+        env["envelope_id"] = "fix2-route-env-null-scope"
+        env["quote_version"] = 99
+        env["scopes"] = [None]  # non-object scope element
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "malformed_shape" in codes, f"Expected malformed_shape in {codes}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
