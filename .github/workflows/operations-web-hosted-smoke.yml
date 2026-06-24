@@ -53,15 +53,15 @@ jobs:
       INITIAL_WAIT_SECONDS: ${{ inputs.initial_wait_seconds || github.event.client_payload.initial_wait_seconds || '0' }}
       ENVIRONMENT_LABEL: ${{ inputs.environment || github.event.client_payload.environment || 'production' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
         with:
           version: 10.0.0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20.11.1'
           cache: 'pnpm'
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.11'
       - name: Validate required base URL
@@ -90,7 +90,7 @@ jobs:
           pnpm --filter @apex/operations-web smoke:promoted-host -- --operations-web-base-url "$BASE_URL" --control-plane-base-url "$CONTROL_PLANE_BASE_URL" --skip-authenticated-checks | tee operations-web-promoted-host-smoke-output.txt
       - name: Upload smoke output artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: operations-web-promoted-host-smoke-output
           path: operations-web-promoted-host-smoke-output.txt

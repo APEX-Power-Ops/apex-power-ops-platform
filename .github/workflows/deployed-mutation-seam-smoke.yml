@@ -87,8 +87,8 @@ jobs:
       INCLUDE_TEMP_POWER_CUSTOMER_DELIVERY_PROOF_REVIEW: ${{ inputs.include_temp_power_customer_delivery_proof_review || github.event.client_payload.include_temp_power_customer_delivery_proof_review || false }}
       INCLUDE_TEMP_POWER_CUSTOMER_DELIVERY_EXECUTION: ${{ inputs.include_temp_power_customer_delivery_execution || github.event.client_payload.include_temp_power_customer_delivery_execution || false }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.11'
       - name: Wait for deployment propagation if requested
@@ -119,7 +119,7 @@ jobs:
           python "${args[@]}" | tee deployed-mutation-seam-smoke-output.txt
       - name: Upload smoke output artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: deployed-mutation-seam-smoke-output
           path: deployed-mutation-seam-smoke-output.txt
