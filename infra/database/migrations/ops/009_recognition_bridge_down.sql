@@ -9,6 +9,9 @@
 -- trace column; drop revoke fn; drop attest fn; drop completion_attestation.
 -- ============================================================================
 
+-- ---- T3: drop attest function ---------------------------------------------
+drop function if exists ops.attest_apparatus_complete(uuid,uuid,text) cascade;
+
 -- ---- T2: drop completion guard trigger + function -------------------------
 drop trigger if exists apparatus_completion_guard on ops.apparatus;
 drop function if exists ops.trg_apparatus_completion_guard() cascade;

@@ -247,3 +247,88 @@ def test_guard_ctx_path_update_succeeds(conn):
         cur.execute("select status from ops.apparatus where id=%s",(aid,))
         assert cur.fetchone()[0]=="Complete"
         cur.execute("rollback to savepoint s")
+
+def test_attest_success_sets_complete_and_captures_prior(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'tested ok')",(aid,who))
+        att=cur.fetchone()[0]
+        cur.execute("select status from ops.apparatus where id=%s",(aid,)); assert cur.fetchone()[0]=="Complete"
+        cur.execute("select prior_status, attested_by, reason from ops.completion_attestation where id=%s",(att,))
+        ps, ab, r = cur.fetchone(); assert ps=="In Progress" and ab==who and r=="tested ok"
+        cur.execute("rollback to savepoint s")
+
+def test_attest_rejects_unapproved_provenance(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, provenance="draft")
+        try:
+            cur.execute("select ops.attest_apparatus_complete(%s,%s,'x')",(aid,who)); assert False
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_attest_rejects_cancelled_chain(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, scope_status="Cancelled")
+        try:
+            cur.execute("select ops.attest_apparatus_complete(%s,%s,'x')",(aid,who)); assert False
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_attest_rejects_inactive(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, is_active=False)
+        try:
+            cur.execute("select ops.attest_apparatus_complete(%s,%s,'x')",(aid,who)); assert False
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_attest_rejects_already_complete(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'x')",(aid,who))   # now Complete + active attestation
+        # revoke nothing; a second attest must fail (status already Complete AND unique index)
+        try:
+            cur.execute("select ops.attest_apparatus_complete(%s,%s,'y')",(aid,who)); assert False
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_attest_rejects_unfrozen_basis(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, frozen=False)
+        try:
+            cur.execute("select ops.attest_apparatus_complete(%s,%s,'x')",(aid,who)); assert False
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_attest_rejects_nonpositive_basis(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, quoted_revenue=0)
+        try:
+            cur.execute("select ops.attest_apparatus_complete(%s,%s,'x')",(aid,who)); assert False
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_attest_rejects_unknown_actor(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s")
+        aid=_seed_eligible_apparatus(cur)
+        try:
+            cur.execute("select ops.attest_apparatus_complete(%s,%s,'x')",(aid,str(uuid.uuid4()))); assert False
+        except (psycopg.errors.RaiseException, psycopg.errors.ForeignKeyViolation): pass
+        cur.execute("rollback to savepoint s")
+
+def test_attest_rejects_blank_reason(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur)
+        try:
+            cur.execute("select ops.attest_apparatus_complete(%s,%s,'   ')",(aid,who)); assert False
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")

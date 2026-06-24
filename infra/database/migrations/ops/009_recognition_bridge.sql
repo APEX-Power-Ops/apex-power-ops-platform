@@ -69,3 +69,51 @@ begin
 end; $$;
 create trigger apparatus_completion_guard before insert or update on ops.apparatus
   for each row execute function ops.trg_apparatus_completion_guard();
+
+-- ---- T3: attest_apparatus_complete (sole sanctioned status=Complete writer) -
+create function ops.attest_apparatus_complete(
+  p_apparatus_id uuid, p_attested_by uuid, p_reason text
+) returns uuid language plpgsql as $$
+declare a record; sq record; v_prior ops.apparatus_status; v_id uuid;
+begin
+  if p_reason is null or btrim(p_reason) = '' then raise exception 'reason required'; end if;
+  if not exists (select 1 from ops.persons where person_id = p_attested_by) then
+    raise exception 'unknown actor %', p_attested_by;
+  end if;
+  select a2.scope_id, a2.status, a2.is_active, a2.provenance_status,
+         a2.quoted_hours, a2.quoted_revenue,
+         s.is_active as scope_active, s.status as scope_status,
+         p.is_active as project_active, p.status as project_status
+    into a
+    from ops.apparatus a2
+    join ops.scopes s   on s.id = a2.scope_id
+    join ops.projects p on p.id = s.project_id
+   where a2.id = p_apparatus_id
+   for update of a2;
+  if not found then raise exception 'apparatus % not found', p_apparatus_id; end if;
+  if a.provenance_status <> 'approved' then
+    raise exception 'apparatus % not approved (provenance_status=%)', p_apparatus_id, a.provenance_status;
+  end if;
+  if not (a.is_active and a.scope_active and a.project_active
+          and a.scope_status <> 'Cancelled' and a.project_status <> 'Cancelled') then
+    raise exception 'apparatus % inactive/cancelled chain cannot attest', p_apparatus_id;
+  end if;
+  if a.status in ('Complete','Cancelled') then
+    raise exception 'apparatus % cannot attest from status %', p_apparatus_id, a.status;
+  end if;
+  select sq2.is_frozen, sq2.frozen_at into sq from ops.scope_quote sq2 where sq2.scope_id = a.scope_id;
+  if not found or not sq.is_frozen or sq.frozen_at is null then
+    raise exception 'scope % quote basis not frozen', a.scope_id;
+  end if;
+  if a.quoted_hours is null or a.quoted_hours <= 0
+     or a.quoted_revenue is null or a.quoted_revenue <= 0 then
+    raise exception 'apparatus % invalid quote basis', p_apparatus_id;
+  end if;
+  v_prior := a.status;
+  perform set_config('ops.completion_ctx','1', true);
+  update ops.apparatus set status='Complete', updated_at=now() where id=p_apparatus_id;
+  insert into ops.completion_attestation (apparatus_id, attested_by, reason, prior_status)
+    values (p_apparatus_id, p_attested_by, p_reason, v_prior)
+    returning id into v_id;
+  return v_id;
+end; $$;
