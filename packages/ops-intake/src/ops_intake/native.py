@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import dataclasses
+import hashlib
+import json
 from decimal import Decimal, InvalidOperation
 
+from .model import IntakePayload, ProjectIn, ScopeIn, ScopeQuoteIn, QuoteLineIn
 from .validate import Finding
 
 NATIVE_SCHEMA_VERSION = "estimate_envelope_v1"
@@ -65,3 +69,52 @@ def validate_envelope(env: dict) -> list[Finding]:
                                   f"Scope #{i} catalog line is missing a required field",
                                   detail=f"line_uid={ln.get('line_uid')!r}; field={fld}"))
     return out
+
+
+def _cents_to_dollars(cents) -> str:
+    return str((Decimal(int(cents or 0)) / Decimal(100)).quantize(Decimal("0.01")))
+
+
+def pivot_to_intake_payload(env: dict) -> dict:
+    """Catalog-only pivot. Callers MUST validate_envelope() first (this is strict: it dereferences
+    required catalog fields). Money: integer cents -> Decimal dollars (str-encoded, no float)."""
+    pn = env.get("project_number")
+    project = ProjectIn(
+        project_number=pn,
+        project_name=pn or "",                     # Q-2: envelope has no name; fall back to project_number
+        contract_value=_cents_to_dollars((env.get("totals", {}) or {}).get("bid_cents", 0)),
+    )
+    scopes = []
+    for sc in env.get("scopes", []) or []:
+        st = sc.get("scope_totals", {}) or {}
+        quote = ScopeQuoteIn(
+            onsite_labor=_cents_to_dollars(st.get("onsite_labor_cents", 0)),
+            offsite_labor=_cents_to_dollars(st.get("offsite_labor_cents", 0)),
+            travel=Decimal(0),
+            outside_services=Decimal(0),
+            unit_multiplier=Decimal(str(sc.get("replication_m4", 1))),
+            pct_adjust=Decimal(str(sc.get("adjustment_multiplier_n4", 1))),
+            total_quoted_hours=st.get("quoted_app_hours", 0),
+        )
+        lines = []
+        for ln in sc.get("lines", []) or []:
+            if not ln.get("included", True) or ln.get("line_kind") != "catalog":
+                continue
+            lines.append(QuoteLineIn(
+                apparatus_type=ln["equipment_model_ref"],          # model-key; resolve_models -> uuid at approve
+                test_standard=sc.get("neta_standard"),             # scope -> line fan-out
+                qty=int(ln["base_qty"]),                           # == project_intake_qty at M4==1
+                hrs_per_unit=ln["resolved_ref_hours"],
+                catalog_default_hours=ln["resolved_ref_hours"],
+                line_uid=ln.get("line_uid"),
+                section=None,                                      # envelope has no section -> __ungrouped__ task
+            ))
+        scopes.append(ScopeIn(scope_name=sc["name"], scope_type="OTHER", sort_order=0, quote=quote, lines=lines))
+    return json.loads(json.dumps(dataclasses.asdict(IntakePayload(project=project, scopes=scopes)), default=str))
+
+
+def recompute_content_hash(env: dict) -> str:
+    """Server-side idempotency hash over the pivoted economic payload (C6: never trust the client hash).
+    Deterministic (sort_keys). Call only on a validated envelope (the pivot is strict)."""
+    blob = json.dumps(pivot_to_intake_payload(env), sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
