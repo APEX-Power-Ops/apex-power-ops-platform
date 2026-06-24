@@ -752,3 +752,71 @@ def test_d1_fractional_quote_version_still_rejected(clean_ops):
     out = create_run_native(dsn, uploaded_by=who, envelope=env)
     assert out["status"] == "rejected", out
     assert any(f["code"] == "missing_quote_version" for f in out["findings"])
+
+
+# ---------------------------------------------------------------------------
+# Hardening D2 -- native per-scope adjusted-cents reconciliation
+# ---------------------------------------------------------------------------
+
+
+def test_d2_scope_adjusted_mismatch_rejects():
+    """Per-scope adjusted_cents mismatch: onsite=100000, offsite=0, m4=1, n4=1
+    -> derived=100000 but adjusted_cents=150000 -> scope_adjusted_mismatch blocking finding."""
+    env = _copy.deepcopy(_catalog_env())
+    env["scopes"][0]["scope_totals"]["adjusted_cents"] = 150000  # stated != derived (100000)
+    codes = _codes(validate_envelope(env))
+    assert "scope_adjusted_mismatch" in codes, f"Expected scope_adjusted_mismatch; got {codes}"
+
+
+def test_d2_clean_env_no_mismatch():
+    """Clean env: onsite=100000, offsite=0, m4=1, n4=1, adjusted_cents=100000
+    -> derived=100000 -> NO scope_adjusted_mismatch (no over-block)."""
+    env = _catalog_env()
+    codes = _codes(validate_envelope(env))
+    assert "scope_adjusted_mismatch" not in codes, f"Over-block: got {codes}"
+
+
+def test_d2_within_tolerance_no_mismatch():
+    """adjusted_cents within ±1 cent of derived -> NO scope_adjusted_mismatch."""
+    env = _copy.deepcopy(_catalog_env())
+    # derived = 100000 * 1 * 1 = 100000; adjusted_cents = 100001 (1 cent over, within tolerance)
+    env["scopes"][0]["scope_totals"]["adjusted_cents"] = 100001
+    codes = _codes(validate_envelope(env))
+    assert "scope_adjusted_mismatch" not in codes, f"Unexpected mismatch within tolerance: {codes}"
+
+
+def test_d2_mismatch_create_run_native_rejects(clean_ops):
+    """scope_adjusted_mismatch is a blocking finding: create_run_native -> status='rejected';
+    ops.scopes count == 0 (no domain writes on reject)."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _copy.deepcopy(_catalog_env())
+    env["project_number"] = "D2-MISMATCH"
+    env["envelope_id"] = "env-d2-mismatch"
+    env["scopes"][0]["scope_totals"]["adjusted_cents"] = 150000  # mismatch
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "scope_adjusted_mismatch" for f in out["findings"]), out["findings"]
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_d2_malformed_adjusted_cents_does_not_double_fire(clean_ops):
+    """When adjusted_cents is absent/non-numeric (malformed), the mismatch guard
+    must NOT double-fire. The existing typed finding fires first; no scope_adjusted_mismatch."""
+    env = _copy.deepcopy(_catalog_env())
+    # Remove adjusted_cents entirely — absent field, guard should skip mismatch check
+    del env["scopes"][0]["scope_totals"]["adjusted_cents"]
+    codes = _codes(validate_envelope(env))
+    assert "scope_adjusted_mismatch" not in codes, f"Double-fire on absent adjusted_cents: {codes}"
+
+
+def test_d2_e2e_approve_still_passes(clean_ops):
+    """Regression: the clean env + approve flow must still work after D2 guard is added."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _seeded_env()
+    env["project_number"] = "D2-APPROVE"
+    env["envelope_id"] = "env-d2-approve"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", out["findings"]
+    res = approve_run(dsn, out["run_id"], approved_by=who)
+    assert res["outcome"] == "approved", res

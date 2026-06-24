@@ -155,6 +155,32 @@ def validate_envelope(env: dict) -> list[Finding]:
                     out.append(_f("malformed_total", f"Scope #{i} has a negative value in an integer-cents field",
                                   detail=f"field={_fld}"))
 
+        # Hardening D2: per-scope adjusted-cents reconciliation.
+        # Only run when all required numeric fields are present and valid (i.e. after the D1 typed
+        # guards would have rejected malformed inputs).  Guard with _dec(...) is not None so a
+        # malformed scope produces its existing typed finding, not a spurious mismatch.
+        # Formula (catalog-only v1; travel/outside are 0 / rejected above):
+        #   derived = (onsite_labor_cents + offsite_labor_cents) * replication_m4 * adjustment_multiplier_n4
+        # Compare to scope_totals.adjusted_cents with ±1-cent tolerance.
+        _onsite_d  = _dec(st.get("onsite_labor_cents", 0))
+        _offsite_d = _dec(st.get("offsite_labor_cents", 0))
+        _m4_d      = _dec(sc.get("replication_m4"))
+        _n4_d      = _dec(sc.get("adjustment_multiplier_n4"))
+        _adj_raw   = st.get("adjusted_cents")
+        _adj_d     = _dec(_adj_raw) if _adj_raw is not None else None
+        if (
+            _onsite_d is not None and _offsite_d is not None
+            and _m4_d is not None and _n4_d is not None
+            and _adj_d is not None
+        ):
+            _derived = (_onsite_d + _offsite_d) * _m4_d * _n4_d
+            if abs(_derived - _adj_d) > Decimal(1):
+                out.append(_f(
+                    "scope_adjusted_mismatch",
+                    f"Scope #{i} adjusted cents do not reconcile with derived component economics",
+                    detail=f"scope_id={sc.get('scope_id')!r}; derived={int(_derived)}; adjusted_cents={int(_adj_d)}",
+                ))
+
         for ln in sc.get("lines", []) or []:
             if not ln.get("included", True):
                 continue
