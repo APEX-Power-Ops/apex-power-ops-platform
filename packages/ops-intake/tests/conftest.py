@@ -74,6 +74,8 @@ def apply_migrations(tmp_path_factory):
     # guard with an existence check so a brand-new ops_test database is safe.
     with psycopg.connect(d, autocommit=True) as c:
         if _ops_schema_exists(c):
+            c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010 down's data-loss guard passes
+            _run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")
             _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
         _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
@@ -88,6 +90,7 @@ def apply_migrations(tmp_path_factory):
         "007_intake_envelope.sql",
         "008_core_equipment_models.sql",
         "009_recognition_bridge.sql",
+        "010_native_envelope_intake.sql",
     ]
     with psycopg.connect(d, autocommit=True) as c:
         for name in up_migrations:
@@ -97,6 +100,8 @@ def apply_migrations(tmp_path_factory):
 
     with psycopg.connect(d, autocommit=True) as c:
         if _ops_schema_exists(c):
+            c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010 down's data-loss guard passes
+            _run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")
             _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
         _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
