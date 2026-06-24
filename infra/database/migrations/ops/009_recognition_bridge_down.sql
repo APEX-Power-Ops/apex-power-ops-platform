@@ -9,6 +9,9 @@
 -- trace column; drop revoke fn; drop attest fn; drop completion_attestation.
 -- ============================================================================
 
+-- ---- T4: drop revoke function ---------------------------------------------
+drop function if exists ops.revoke_completion_attestation(uuid,uuid,text) cascade;
+
 -- ---- T3: drop attest function ---------------------------------------------
 drop function if exists ops.attest_apparatus_complete(uuid,uuid,text) cascade;
 

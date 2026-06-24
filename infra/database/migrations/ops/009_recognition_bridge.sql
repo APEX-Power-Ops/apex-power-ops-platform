@@ -117,3 +117,39 @@ begin
     returning id into v_id;
   return v_id;
 end; $$;
+
+-- ---- T4: revoke_completion_attestation (deadlock-safe: apparatus locked FIRST)
+create function ops.revoke_completion_attestation(
+  p_attestation_id uuid, p_revoked_by uuid, p_reason text
+) returns uuid language plpgsql as $$
+declare v_app uuid; v_att record; v_net numeric;
+begin
+  if p_reason is null or btrim(p_reason) = '' then raise exception 'reason required'; end if;
+  if not exists (select 1 from ops.persons where person_id = p_revoked_by) then
+    raise exception 'unknown actor %', p_revoked_by;
+  end if;
+  -- (2) resolve apparatus WITHOUT locking the attestation (taking the attestation
+  --     lock first would invert approve_and_recognize's apparatus-first order -> deadlock).
+  select apparatus_id into v_app from ops.completion_attestation
+    where id = p_attestation_id and revoked_at is null;
+  if not found then raise exception 'no active attestation %', p_attestation_id; end if;
+  -- (3) lock the apparatus FIRST (D-OPS-12; matches approve_and_recognize 005:81).
+  perform 1 from ops.apparatus where id = v_app for update;
+  -- (4) re-select the active attestation FOR UPDATE + revalidate (a concurrent revoke
+  --     may have won between steps 2-3).
+  select id, apparatus_id, prior_status into v_att from ops.completion_attestation
+    where id = p_attestation_id and revoked_at is null for update;
+  if not found then raise exception 'attestation % no longer active', p_attestation_id; end if;
+  if v_att.apparatus_id <> v_app then raise exception 'attestation apparatus mismatch'; end if;
+  -- (5) net-recognition gate (deterministic under the apparatus lock).
+  select coalesce(sum(recognized_amount),0) into v_net
+    from ops.revenue_recognition_event where apparatus_id = v_app;
+  if v_net > 0 then raise exception 'apparatus has open recognition; reverse first'; end if;
+  -- (6-8) ctx -> restore prior_status -> mark revoked (immutability trigger permits this exact shape).
+  perform set_config('ops.completion_ctx','1', true);
+  update ops.apparatus set status=v_att.prior_status, updated_at=now() where id=v_app;
+  update ops.completion_attestation
+    set revoked_at=now(), revoked_by=p_revoked_by, revoke_reason=p_reason
+    where id=p_attestation_id;
+  return p_attestation_id;
+end; $$;

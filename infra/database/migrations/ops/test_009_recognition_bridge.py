@@ -332,3 +332,49 @@ def test_attest_rejects_blank_reason(conn):
             cur.execute("select ops.attest_apparatus_complete(%s,%s,'   ')",(aid,who)); assert False
         except psycopg.errors.RaiseException: pass
         cur.execute("rollback to savepoint s")
+
+def test_revoke_blocked_when_net_positive(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who)); att=cur.fetchone()[0]
+        cur.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(aid,who))
+        try:
+            cur.execute("select ops.revoke_completion_attestation(%s,%s,'oops')",(att,who))
+            assert False, "revoke with open recognition accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_revoke_after_reverse_restores_prior_and_marks_revoked(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who)); att=cur.fetchone()[0]
+        cur.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(aid,who))
+        ev=cur.fetchone()[0]
+        cur.execute("select ops.reverse_recognition(%s,%s,'correction')",(ev,who))   # net back to 0
+        cur.execute("select ops.revoke_completion_attestation(%s,%s,'superseded')",(att,who))
+        cur.execute("select status from ops.apparatus where id=%s",(aid,)); assert cur.fetchone()[0]=="In Progress"
+        cur.execute("select revoked_at is not null, revoked_by, revoke_reason from ops.completion_attestation where id=%s",(att,))
+        ra, rb, rr = cur.fetchone(); assert ra is True and rb==who and rr=="superseded"
+        cur.execute("rollback to savepoint s")
+
+def test_revoke_unknown_actor_rejected(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who)); att=cur.fetchone()[0]
+        try:
+            cur.execute("select ops.revoke_completion_attestation(%s,%s,'x')",(att,str(uuid.uuid4()))); assert False
+        except (psycopg.errors.RaiseException, psycopg.errors.ForeignKeyViolation): pass
+        cur.execute("rollback to savepoint s")
+
+def test_revoke_blank_reason_rejected(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who)); att=cur.fetchone()[0]
+        try:
+            cur.execute("select ops.revoke_completion_attestation(%s,%s,'  ')",(att,who)); assert False
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
