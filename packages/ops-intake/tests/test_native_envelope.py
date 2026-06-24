@@ -104,3 +104,41 @@ def test_pivot_payload_reconstructs_with_numeric_money_arithmetic():
     # adjusted_total = (onsite+offsite+travel+outside) * unit_multiplier * pct_adjust
     # must COMPUTE (numeric money), not raise TypeError on string money.
     assert Decimal(str(obj.scopes[0].quote.adjusted_total)) == Decimal("1000.00")
+
+import psycopg
+from ops_intake.envelope import create_run_native
+
+def _person(dsn):
+    with psycopg.connect(dsn, autocommit=True) as c:
+        return c.execute("insert into ops.persons (display_name) values ('N') returning person_id").fetchone()[0]
+
+def test_create_run_native_persists_columns(clean_ops):
+    dsn = clean_ops; who = _person(dsn)
+    out = create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())
+    assert out["status"] == "parsed" and out["source_format"] == "native"
+    with psycopg.connect(dsn) as c:
+        row = c.execute(
+            "select source_format, payload_schema_version, parser_version, envelope_id, quote_version,"
+            " content_hash, source_draft_id, source_revision_id,"
+            " canonical_payload_json = review_payload_json as same, estimate_envelope_json is not null as has_sidecar"
+            " from ops.intake_runs where id=%s", (out["run_id"],)).fetchone()
+    assert row[0] == "native" and row[1] == "estimate_envelope_v1" and row[3] == "env-1" and row[4] == 1
+    assert row[8] is True            # canonical == review (C2: patch_review compatibility)
+    assert row[9] is True            # raw envelope only in the sidecar
+
+def test_create_run_native_rejects_non_catalog_without_domain_writes(clean_ops):
+    dsn = clean_ops; who = _person(dsn)
+    env = _catalog_env(); env["scopes"][0]["lines"][0]["line_kind"] = "service"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected"
+    assert any(f["code"] == "non_catalog_line" and not f["ok"] for f in out["findings"])
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0   # no domain writes
+
+def test_create_run_native_idempotent_on_content_hash(clean_ops):
+    dsn = clean_ops; who = _person(dsn)
+    create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())
+    import pytest
+    from ops_intake.envelope import ActiveRunExists
+    with pytest.raises((ActiveRunExists, psycopg.errors.UniqueViolation)):
+        create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())  # same content_hash

@@ -17,6 +17,7 @@ from .model import (
     PARSER_VERSION, PAYLOAD_SCHEMA_VERSION,
     IntakePayload, ProjectIn, ScopeIn, ScopeQuoteIn, QuoteLineIn, StandardHourIn,
 )
+from .native import validate_envelope, recompute_content_hash, pivot_to_intake_payload, NATIVE_SCHEMA_VERSION, NATIVE_PARSER_VERSION
 from .validate import validate_payload
 
 
@@ -500,6 +501,81 @@ def create_run(
         ],
         "review_payload": dataclasses.asdict(payload),
     }
+
+
+def create_run_native(dsn, *, uploaded_by, envelope):
+    """Native (estimator) catalog-only envelope intake. Pivots to a flat IntakePayload, persists an
+    intake_run (source_format='native') with canonical==review==pivoted and the raw envelope in the
+    estimate_envelope_json sidecar. approve_run materializes it unchanged. Fail-closed: any blocking
+    finding -> a GOVERNED rejected run with NO domain writes (mirrors _create_rejected_parse_envelope)."""
+    findings = validate_envelope(envelope)
+    blocking = [f for f in findings if f.severity == "blocking" and not f.ok]
+    raw_json = json.dumps(envelope, default=str)
+    pn = envelope.get("project_number") or ("UNRESOLVED:" + str(envelope.get("envelope_id") or "native"))[:200]
+    # identity provenance cols are TOP-LEVEL envelope fields -> safe even for a malformed (rejected) envelope
+    ev_id, qv = envelope.get("envelope_id"), envelope.get("quote_version")
+    sdid, srid = envelope.get("source_draft_id"), envelope.get("source_revision_id")
+
+    def _finding_rows(cur, run_id, version):
+        for f in findings:
+            cur.execute(
+                "insert into ops.intake_validation_findings"
+                " (run_id, payload_version, severity, code, ok, message, diagnostic_detail)"
+                " values (%s,%s,%s,%s,%s,%s,%s)",
+                (run_id, version, f.severity, f.code, f.ok, f.message, f.diagnostic_detail))
+
+    if blocking:
+        # R1-4: governed rejected run — NO advisory lock, NO domain writes, and NO strict pivot/hash
+        # (they dereference required fields and would KeyError on a malformed envelope). canonical/review
+        # = '{}' (not approvable); content_hash NULL (a reject never takes the idempotency index).
+        with psycopg.connect(dsn) as conn, conn.cursor() as cur:
+            cur.execute(
+                "insert into ops.intake_runs (project_number, source_format, status, conflict_kind,"
+                " payload_schema_version, parser_version, canonical_payload_json, review_payload_json,"
+                " uploaded_by, envelope_id, quote_version, content_hash, source_draft_id,"
+                " source_revision_id, estimate_envelope_json) values"
+                " (%s,'native'::ops.intake_source_format,'rejected','none',%s,%s,'{}'::jsonb,'{}'::jsonb,"
+                " %s,%s,%s,NULL,%s,%s,%s::jsonb) returning id",
+                (pn, NATIVE_SCHEMA_VERSION, NATIVE_PARSER_VERSION, str(uploaded_by),
+                 ev_id, qv, sdid, srid, raw_json))
+            run_id = str(cur.fetchone()[0])
+            _finding_rows(cur, run_id, 1)
+            conn.commit()
+        return {"run_id": run_id, "status": "rejected", "conflict_kind": "none", "source_format": "native",
+                "findings": [{"code": f.code, "severity": f.severity, "ok": f.ok, "message": f.message} for f in findings]}
+
+    # happy path: validate_envelope guaranteed catalog completeness, so the strict pivot/hash are safe now.
+    content_hash = recompute_content_hash(envelope)
+    pivoted_json = json.dumps(pivot_to_intake_payload(envelope), default=str)
+    try:
+        with psycopg.connect(dsn) as conn, conn.cursor() as cur:
+            cur.execute("select pg_advisory_xact_lock(hashtext(%s))", (pn,))
+            project_id, conflict_kind = _classify_conflict(cur, pn)
+            status = "revision_blocked" if conflict_kind != "none" else "parsed"
+            if status == "parsed":
+                cur.execute(
+                    "update ops.intake_runs set status='superseded'::ops.intake_run_status, updated_at=now()"
+                    " where project_number=%s and status in ('parsed'::ops.intake_run_status,'reviewing'::ops.intake_run_status)",
+                    (pn,))
+            cur.execute(
+                "insert into ops.intake_runs (project_number, project_id, source_format, status, conflict_kind,"
+                " payload_schema_version, parser_version, canonical_payload_json, review_payload_json,"
+                " uploaded_by, envelope_id, quote_version, content_hash, source_draft_id,"
+                " source_revision_id, estimate_envelope_json) values"
+                " (%s,%s,'native'::ops.intake_source_format,%s::ops.intake_run_status,%s::ops.intake_conflict_kind,"
+                " %s,%s,%s::jsonb,%s::jsonb,%s,%s,%s,%s,%s,%s,%s::jsonb) returning id",
+                (pn, project_id, status, conflict_kind, NATIVE_SCHEMA_VERSION, NATIVE_PARSER_VERSION,
+                 pivoted_json, pivoted_json, str(uploaded_by), ev_id, qv, content_hash, sdid, srid, raw_json))
+            run_id = str(cur.fetchone()[0])
+            _finding_rows(cur, run_id, 1)
+            conn.commit()
+    except psycopg.errors.UniqueViolation as exc:
+        if "uq_intake_one_active" in str(exc) or "uq_intake_runs_content_hash_native" in str(exc):
+            raise ActiveRunExists("An active/duplicate native run already exists for " + repr(pn)) from exc
+        raise
+    return {"run_id": run_id, "status": status, "conflict_kind": conflict_kind, "source_format": "native",
+            "findings": [{"code": f.code, "severity": f.severity, "ok": f.ok, "message": f.message} for f in findings],
+            "review_payload": json.loads(pivoted_json)}
 
 
 def get_run(dsn, run_id):
