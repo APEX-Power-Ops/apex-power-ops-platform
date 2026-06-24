@@ -794,3 +794,50 @@ class TestNativeIntakeFix2:
         assert "malformed_shape" in codes, f"Expected malformed_shape in {codes}"
         assert not _contains_substring(body, "$")
         assert not _contains_substring(body, "diagnostic_detail")
+
+
+# ---------------------------------------------------------------------------
+# Hardening D3 FIX-3 route tests
+# ---------------------------------------------------------------------------
+
+
+class TestNativeIntakeFix3:
+    """FIX-3: non-finite numerics + non-string line_uid -> HTTP 200 governed reject (never 500)."""
+
+    def test_native_nan_bid_is_governed_reject(self, client, person_id):
+        """bid_cents='NaN' -> HTTP 200 with status='rejected' (NOT 500).
+        Proves the non-finite _dec fix closes the crash end-to-end at the route layer."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "FIX3-ROUTE-NAN-BID"
+        env["envelope_id"] = "fix3-route-nan-bid"
+        env["quote_version"] = 501
+        env["totals"]["bid_cents"] = "NaN"
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", f"Expected rejected; got {body['status']}; body={body}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+    def test_native_array_line_uid_is_governed_reject(self, client, person_id):
+        """line_uid=['x'] (array) -> HTTP 200 with status='rejected' (NOT TypeError/500).
+        Proves the non-string line_uid guard closes the hashability crash end-to-end."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "FIX3-ROUTE-ARR-LUID"
+        env["envelope_id"] = "fix3-route-arr-luid"
+        env["quote_version"] = 502
+        env["scopes"][0]["lines"][0]["line_uid"] = ["x"]
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", f"Expected rejected; got {body['status']}; body={body}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")

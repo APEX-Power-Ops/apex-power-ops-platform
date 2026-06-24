@@ -23,13 +23,18 @@ def _f(code, message, *, ok=False, severity="blocking", detail=None) -> Finding:
 
 
 def _dec(v):
-    """Decimal(str(v)), or None if not numeric (None/'' -> None). Lets 1 == 1.0 and never truncates."""
+    """Decimal(str(v)), or None if not numeric/non-finite. None/'' -> None. Lets 1 == 1.0, never truncates.
+    Non-finite (NaN, Infinity, -Infinity) -> None so they are treated as malformed (fail-closed), never
+    reaching an ordered comparison that would raise decimal.InvalidOperation."""
     if v is None or v == "":
         return None
     try:
-        return Decimal(str(v))
+        d = Decimal(str(v))
     except (InvalidOperation, TypeError, ValueError):
         return None
+    if not d.is_finite():
+        return None
+    return d
 
 
 def _is_integer_valued(d) -> bool:
@@ -96,6 +101,8 @@ def validate_envelope(env: dict) -> list[Finding]:
     # Safe: only inspect as dict when it IS a dict (non-dict already flagged above as malformed_shape).
     _raw_totals_val = env.get("totals")
     totals = (_raw_totals_val or {}) if isinstance(_raw_totals_val, dict) else {}
+    _bid_dec = None
+    _bid_ok = False
     if "bid_cents" in totals:
         _bid = totals["bid_cents"]
         _bid_dec = _dec(_bid)
@@ -108,6 +115,8 @@ def validate_envelope(env: dict) -> list[Finding]:
         elif _bid_dec < 0:
             out.append(_f("malformed_total", "Envelope totals contain a negative value",
                           detail="field=bid_cents"))
+        else:
+            _bid_ok = True
 
     # Hardening D3 gap 4: collect all included catalog line_uids for global uniqueness check.
     _all_line_uids: list[str] = []
@@ -265,13 +274,15 @@ def validate_envelope(env: dict) -> list[Finding]:
                               detail=f"line_uid={ln.get('line_uid')!r}; line_kind={kind!r}"))
                 continue
 
-            # Hardening A: line identity field required by pivot idempotency
-            if not ln.get("line_uid"):
-                out.append(_f("missing_line_uid", f"Scope #{i} catalog line has no line_uid",
-                              detail=f"equipment_model_ref={ln.get('equipment_model_ref')!r}"))
+            # Hardening A + D3 fix-3: line identity must be a non-empty STRING (pivot idempotency +
+            # the duplicate-uid check below uses set membership, which a list/dict line_uid would crash).
+            _luid = ln.get("line_uid")
+            if not isinstance(_luid, str) or not _luid:
+                out.append(_f("missing_line_uid", f"Scope #{i} catalog line has a missing or non-string line_uid",
+                              detail=f"line_uid={_luid!r}; type={type(_luid).__name__}; "
+                                     f"equipment_model_ref={ln.get('equipment_model_ref')!r}"))
             else:
-                # D3 gap 4: collect for global duplicate check (only when line_uid is present)
-                _all_line_uids.append(ln["line_uid"])
+                _all_line_uids.append(_luid)
 
             for fld in _REQUIRED_CATALOG_FIELDS:
                 if ln.get(fld) in (None, ""):
@@ -345,6 +356,26 @@ def validate_envelope(env: dict) -> list[Finding]:
                           detail=f"duplicate line_uid={_uid!r}"))
             break  # one finding is sufficient; PM-safe
         _seen_uids.add(_uid)
+
+    # Hardening D3 fix-3 (c): native project-level bid reconciliation at the PACKET tolerance (±1 cent).
+    # The shared validate_payload.contract_total uses a ±$1.00 tolerance; the native packet requires
+    # bid_cents to reconcile with the sum of per-scope adjusted_cents within 1 cent. Native-side ONLY
+    # (do NOT change the shared validator). Only runs on an otherwise-clean envelope so the sum is over
+    # validated, present+numeric scope economics.
+    if _bid_ok and not out:
+        _scopes_iter = env.get("scopes") if isinstance(env.get("scopes"), list) else []
+        _sum_adj = Decimal(0)
+        for _sc in _scopes_iter:
+            _st = _sc.get("scope_totals", {}) or {}
+            _a = _dec(_st.get("adjusted_cents"))
+            if _a is not None:
+                _sum_adj += _a
+        if abs(_bid_dec - _sum_adj) > Decimal(1):
+            out.append(_f(
+                "native_bid_mismatch",
+                "Envelope bid total does not reconcile with the sum of scope adjusted economics (native +/- 1 cent)",
+                detail=f"bid_cents={int(_bid_dec)}; sum_adjusted_cents={int(_sum_adj)}",
+            ))
 
     return out
 

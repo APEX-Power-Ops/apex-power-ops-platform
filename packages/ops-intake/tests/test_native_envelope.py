@@ -324,37 +324,34 @@ def test_native_patch_then_approve_succeeds(clean_ops):
 
 
 def test_native_inconsistent_economics_blocks_approval(clean_ops):
-    """P1: bid_cents=200000 but onsite_labor_cents=100000 -> Sigma adjusted ($1000) != contract ($2000).
-    create_run_native -> status='parsed' with blocking contract_total finding.
-    approve_run -> outcome='blocked_findings'. ops.apparatus count == 0 (nothing materialized)."""
+    """P1: bid_cents=200000 but Sigma adjusted=100000 (off by $1000 >> native ±1¢ tolerance).
+    D3 fix-3: native_bid_mismatch is now caught at validate_envelope time -> status='rejected'
+    (previously was 'parsed' + blocked at approve; the native ±1¢ check fires earlier).
+    ops.apparatus count == 0 (nothing materialized, same safety outcome)."""
     dsn = clean_ops
     who = _person(dsn)
 
-    # Build structurally-valid envelope that passes validate_envelope,
-    # but has an economic mismatch: bid_cents=$2000, scope adjusted=$1000
+    # Build structurally-valid envelope with economic mismatch: bid_cents=$2000, scope adjusted=$1000
     env = _catalog_env()
     env["project_number"] = "JOB-P1"
     env["envelope_id"] = "env-p1"
     env["quote_version"] = 99
     env["totals"]["bid_cents"] = 200000            # contract = $2000
-    # scope_totals stay at 100000 (adjusted_cents=$1000) -> Sigma=$1000 != $2000
+    # scope_totals stay at 100000 (adjusted_cents=$1000) -> Sigma=$1000 != $2000 -> outside ±1¢
 
     out = create_run_native(dsn, uploaded_by=who, envelope=env)
 
-    # Must be parsed (not rejected) — the envelope structure is valid
-    assert out["status"] == "parsed", out.get("findings")
+    # D3 fix-3: native_bid_mismatch fires at validate_envelope -> status='rejected' (not 'parsed')
+    # The safety outcome is the same: no domain writes, apparatus=0. Detection is now EARLIER.
+    assert out["status"] == "rejected", out.get("findings")
 
-    # Must have a blocking contract_total finding
+    # Must have a blocking native_bid_mismatch finding
     blocking_codes = {f["code"] for f in out["findings"] if not f["ok"] and f["severity"] == "blocking"}
-    assert "contract_total" in blocking_codes, (
-        "Expected blocking contract_total finding; got: " + str(out["findings"])
+    assert "native_bid_mismatch" in blocking_codes, (
+        "Expected blocking native_bid_mismatch finding; got: " + str(out["findings"])
     )
 
-    # approve_run must return blocked_findings (not approved)
-    res = approve_run(dsn, out["run_id"], approved_by=who)
-    assert res["outcome"] == "blocked_findings", res
-
-    # nothing materialized
+    # nothing materialized (same safety outcome as before; detection is now earlier)
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0
 
@@ -1296,3 +1293,127 @@ def test_validate_scopes_non_list_returns_malformed_shape():
     findings = validate_envelope(env)
     codes = {f.code for f in findings if not f.ok}
     assert "malformed_shape" in codes, f"Expected malformed_shape; got {codes}"
+
+
+# ---------------------------------------------------------------------------
+# Hardening D3 FIX-3 — non-finite numerics, non-string line_uid, project bid ±1¢
+# ---------------------------------------------------------------------------
+
+
+def test_d3fix3_dec_rejects_non_finite():
+    """_dec pure-unit: NaN/Infinity/-Infinity/'inf' must all return None (not a non-finite Decimal
+    that would crash a later ordered comparison with decimal.InvalidOperation)."""
+    from ops_intake.native import _dec
+    # All non-finite inputs -> None
+    assert _dec("NaN") is None, "_dec('NaN') must return None"
+    assert _dec("Infinity") is None, "_dec('Infinity') must return None"
+    assert _dec("-Infinity") is None, "_dec('-Infinity') must return None"
+    assert _dec("inf") is None, "_dec('inf') must return None"
+    # Regression: finite numerics still work
+    assert _dec("100") == Decimal("100"), "_dec('100') regression"
+    assert _dec("1e5") == Decimal("1e5"), "_dec('1e5') regression"
+    assert _dec(100000.0) == Decimal("100000.0"), "_dec(100000.0) regression"
+
+
+def test_d3fix3_nan_bid_cents_no_crash(clean_ops):
+    """bid_cents='NaN' -> create_run_native returns status='rejected' (NOT a raise/500),
+    a malformed_total finding is present, and ops.scopes count == 0."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "D3FIX3-NAN-BID"
+    env["envelope_id"] = "env-d3fix3-nan-bid"
+    env["quote_version"] = 301
+    env["totals"]["bid_cents"] = "NaN"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", f"Expected rejected; got {out['status']}; findings={out.get('findings')}"
+    codes = {f["code"] for f in out["findings"]}
+    assert "malformed_total" in codes, f"Expected malformed_total; got {codes}"
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_d3fix3_line_uid_array_no_crash(clean_ops):
+    """line_uid=['x'] (array) -> create_run_native status='rejected' (NOT TypeError/500),
+    missing_line_uid finding present, ops.scopes count == 0."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "D3FIX3-LUID-ARR"
+    env["envelope_id"] = "env-d3fix3-luid-arr"
+    env["quote_version"] = 302
+    env["scopes"][0]["lines"][0]["line_uid"] = ["x"]
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", f"Expected rejected; got {out['status']}; findings={out.get('findings')}"
+    codes = {f["code"] for f in out["findings"]}
+    assert "missing_line_uid" in codes, f"Expected missing_line_uid; got {codes}"
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_d3fix3_line_uid_object_no_crash(clean_ops):
+    """line_uid={'a': 1} (object) -> create_run_native status='rejected' (NOT TypeError/500),
+    missing_line_uid finding present, ops.scopes count == 0."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "D3FIX3-LUID-OBJ"
+    env["envelope_id"] = "env-d3fix3-luid-obj"
+    env["quote_version"] = 303
+    env["scopes"][0]["lines"][0]["line_uid"] = {"a": 1}
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", f"Expected rejected; got {out['status']}; findings={out.get('findings')}"
+    codes = {f["code"] for f in out["findings"]}
+    assert "missing_line_uid" in codes, f"Expected missing_line_uid; got {codes}"
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_d3fix3_bid_off_50c_rejects(clean_ops):
+    """bid_cents=100050 with Sigma scope adjusted=100000 (off by 50¢ = inside shared ±$1 tolerance
+    but outside native ±1¢) -> create_run_native status='rejected', native_bid_mismatch finding,
+    ops.scopes count == 0. This is the exact gap the shared validator misses."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "D3FIX3-BID-50C"
+    env["envelope_id"] = "env-d3fix3-bid-50c"
+    env["quote_version"] = 304
+    env["totals"]["bid_cents"] = 100050  # Sigma scope adjusted stays 100000 -> off by 50c
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", f"Expected rejected; got {out['status']}; findings={out.get('findings')}"
+    codes = {f["code"] for f in out["findings"]}
+    assert "native_bid_mismatch" in codes, f"Expected native_bid_mismatch; got {codes}"
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
+
+
+def test_d3fix3_bid_within_1c_accepted(clean_ops):
+    """bid_cents=100001 (off by 1¢, at the tolerance boundary) -> create_run_native status='parsed'
+    (accepted), NO native_bid_mismatch finding."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "D3FIX3-BID-1C"
+    env["envelope_id"] = "env-d3fix3-bid-1c"
+    env["quote_version"] = 305
+    env["totals"]["bid_cents"] = 100001  # Sigma adjusted=100000 -> diff=1 cent, within tolerance
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", f"Expected parsed; got {out['status']}; findings={out.get('findings')}"
+    codes = {f["code"] for f in out["findings"]}
+    assert "native_bid_mismatch" not in codes, f"native_bid_mismatch should not fire within 1-cent tolerance"
+
+
+def test_d3fix3_bid_exact_still_accepted(clean_ops):
+    """Regression: clean _catalog_env (bid==Sigma adjusted==100000) must still be accepted,
+    no native_bid_mismatch introduced by the new check."""
+    import copy
+    dsn = clean_ops; who = _person(dsn)
+    env = copy.deepcopy(_catalog_env())
+    env["project_number"] = "D3FIX3-BID-EXACT"
+    env["envelope_id"] = "env-d3fix3-bid-exact"
+    env["quote_version"] = 306
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", f"Expected parsed; got {out['status']}; findings={out.get('findings')}"
+    codes = {f["code"] for f in out["findings"]}
+    assert "native_bid_mismatch" not in codes, f"native_bid_mismatch should not fire on exact reconciliation"
