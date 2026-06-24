@@ -140,5 +140,5 @@ def test_create_run_native_idempotent_on_content_hash(clean_ops):
     create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())
     import pytest
     from ops_intake.envelope import ActiveRunExists
-    with pytest.raises((ActiveRunExists, psycopg.errors.UniqueViolation)):
+    with pytest.raises(ActiveRunExists):
         create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())  # same content_hash
