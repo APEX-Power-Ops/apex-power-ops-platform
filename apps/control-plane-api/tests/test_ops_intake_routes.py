@@ -687,3 +687,27 @@ class TestNativeIntakeD1:
         assert "missing_quote_version" in codes, f"Expected missing_quote_version in {codes}"
         assert not _contains_substring(body, "$")
         assert not _contains_substring(body, "diagnostic_detail")
+
+    def test_native_integer_valued_string_cents_is_accepted_not_500(self, client, person_id):
+        """D1 FIX: bid_cents='100000.0' (integer-valued string) -> HTTP 200 status='parsed' (NOT 500, NOT rejected).
+        The pivot must coerce via Decimal so int('100000.0') path is avoided."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "D1-ROUTE-INT-STR"
+        env["envelope_id"] = "d1-route-env-int-str"
+        env["quote_version"] = 2  # distinct quote_version to avoid collision
+        env["totals"]["bid_cents"] = "100000.0"
+        # scope_totals consistent at integer form
+        env["scopes"][0]["scope_totals"]["onsite_labor_cents"] = "100000.0"
+        env["scopes"][0]["scope_totals"]["adjusted_cents"] = 100000
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "parsed", (
+            f"Expected status='parsed' for integer-valued string cents; got {body['status']}; findings={body.get('findings')}"
+        )
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")

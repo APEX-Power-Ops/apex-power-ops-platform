@@ -226,7 +226,10 @@ def validate_envelope(env: dict) -> list[Finding]:
 
 
 def _cents_to_dollars(cents) -> float:
-    return float((Decimal(int(cents or 0)) / Decimal(100)).quantize(Decimal("0.01")))
+    # Use _dec so integer-valued string/float forms (e.g. "100000.0", "1e5", 100000.0) coerce
+    # cleanly via Decimal — the guard guarantees integer-valued, so int(d) is exact.
+    d = _dec(cents)
+    return float((Decimal(int(d) if d is not None else 0) / Decimal(100)).quantize(Decimal("0.01")))
 
 
 def pivot_to_intake_payload(env: dict) -> dict:
@@ -257,7 +260,7 @@ def pivot_to_intake_payload(env: dict) -> dict:
             lines.append(QuoteLineIn(
                 apparatus_type=ln["equipment_model_ref"],          # model-key; resolve_models -> uuid at approve
                 test_standard=sc.get("neta_standard"),             # scope -> line fan-out
-                qty=int(ln["base_qty"]),                           # == project_intake_qty at M4==1
+                qty=int(_dec(ln["base_qty"])),                     # == project_intake_qty at M4==1; _dec handles "3.0"/"3"/3
                 hrs_per_unit=ln["resolved_ref_hours"],
                 catalog_default_hours=ln["resolved_ref_hours"],
                 line_uid=ln.get("line_uid"),

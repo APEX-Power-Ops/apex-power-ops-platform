@@ -521,22 +521,12 @@ def test_d1_quote_version_integer_passes():
 
 
 def test_d1_quote_version_float_whole_passes():
-    """quote_version=1.0 (float but integer-valued) must REJECT -- strict int type required."""
-    # The brief says non-null integer; 1.0 is a float (not isinstance int).
-    # The guard is: absent/null/non-integer/fractional -> reject. float 1.0 is not int.
+    """quote_version=1.0 (float, integer-valued) -> ACCEPTED (no missing_quote_version).
+    The guard uses Decimal-based integer-valued check: Decimal('1.0')==Decimal('1.0').to_integral_value()
+    -> True, so 1.0 is accepted. create_run_native must also ACCEPT it (no 500) by normalizing
+    to int(1) before binding to the integer column."""
     env = _d1_env()
     env["quote_version"] = 1.0
-    # 1.0 is a float; must be rejected since we require strict isinstance(int)
-    # But brief says "integer-valued via d == d.to_integral_value()" -- check the rule:
-    # The brief says: integer-valued means d == d.to_integral_value() for Decimal.
-    # But quote_version is NOT a Decimal field -- it's a top-level idempotency key.
-    # Re-reading brief: "REQUIRED, non-null integer. Emit blocking missing_quote_version when
-    # absent/null/non-integer/fractional."
-    # So 1.0 is fractional (has decimal point) = reject? No, 1.0 is integer-valued but a float.
-    # The integer-valued Decimal test: Decimal('1.0') == Decimal('1.0').to_integral_value() -> True.
-    # So 1.0 as a number -> Decimal('1.0') is integer-valued -> PASS.
-    # But 1.5 -> Decimal('1.5') != Decimal('2') -> FAIL.
-    # This test documents the expected behavior: 1.0 PASSES (integer-valued Decimal).
     assert "missing_quote_version" not in _codes(validate_envelope(env))
 
 
@@ -619,4 +609,146 @@ def test_d1_base_qty_fractional_create_run_native_no_crash(clean_ops):
     env["scopes"][0]["lines"][0]["project_intake_qty"] = 1.5
     out = create_run_native(dsn, uploaded_by=who, envelope=env)
     assert out["status"] == "rejected", out
+
+
+# ---------------------------------------------------------------------------
+# Hardening D1 FIX -- integer-valued string/float forms ACCEPTED (no 500)
+# ---------------------------------------------------------------------------
+
+
+def test_d1_bid_cents_integer_string_accepted(clean_ops):
+    """bid_cents='100000.0' (integer-valued string) -> create_run_native ACCEPTED (status='parsed'),
+    NOT a 500 crash. The pivot must coerce via Decimal so int('100000.0') path is avoided."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-INT-STR-BID"
+    env["envelope_id"] = "env-int-str-bid"
+    env["totals"]["bid_cents"] = "100000.0"
+    # scope_totals stays at 100000 int -> consistent economics ($1000.00 == $1000.00)
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", f"Expected parsed, got {out['status']}; findings={out.get('findings')}"
+    # Verify pivot produced correct dollar value
+    contract_value = out["review_payload"]["project"]["contract_value"]
+    from decimal import Decimal as _Decimal
+    assert _Decimal(str(contract_value)) == _Decimal("1000.00"), f"Expected 1000.00, got {contract_value}"
+
+
+def test_d1_bid_cents_scientific_notation_accepted(clean_ops):
+    """bid_cents='1e5' (100000 in scientific notation, integer-valued string) -> ACCEPTED, $1000.00."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-INT-SCI-BID"
+    env["envelope_id"] = "env-int-sci-bid"
+    env["totals"]["bid_cents"] = "1e5"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", f"Expected parsed; findings={out.get('findings')}"
+    from decimal import Decimal as _Decimal
+    contract_value = out["review_payload"]["project"]["contract_value"]
+    assert _Decimal(str(contract_value)) == _Decimal("1000.00"), f"Expected 1000.00, got {contract_value}"
+
+
+def test_d1_onsite_labor_cents_integer_string_accepted(clean_ops):
+    """onsite_labor_cents='100000.0' -> ACCEPTED, materializes $1000.00."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-INT-STR-LABOR"
+    env["envelope_id"] = "env-int-str-labor"
+    env["scopes"][0]["scope_totals"]["onsite_labor_cents"] = "100000.0"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", f"Expected parsed; findings={out.get('findings')}"
+    from decimal import Decimal as _Decimal
+    onsite = out["review_payload"]["scopes"][0]["quote"]["onsite_labor"]
+    assert _Decimal(str(onsite)) == _Decimal("1000.00"), f"Expected 1000.00, got {onsite}"
+
+
+def test_d1_onsite_labor_cents_sci_notation_accepted(clean_ops):
+    """onsite_labor_cents='1e5' (scientific notation) -> ACCEPTED, materializes $1000.00."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-SCI-LABOR"
+    env["envelope_id"] = "env-sci-labor"
+    env["scopes"][0]["scope_totals"]["onsite_labor_cents"] = "1e5"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", f"Expected parsed; findings={out.get('findings')}"
+    from decimal import Decimal as _Decimal
+    onsite = out["review_payload"]["scopes"][0]["quote"]["onsite_labor"]
+    assert _Decimal(str(onsite)) == _Decimal("1000.00"), f"Expected 1000.00, got {onsite}"
+
+
+def test_d1_base_qty_integer_string_accepted(clean_ops):
+    """base_qty='3.0' + project_intake_qty='3.0' -> ACCEPTED, materializes 3 apparatus (not a crash)."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-QTY-STR"
+    env["envelope_id"] = "env-qty-str"
+    env["scopes"][0]["lines"][0]["base_qty"] = "3.0"
+    env["scopes"][0]["lines"][0]["project_intake_qty"] = "3.0"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", f"Expected parsed; findings={out.get('findings')}"
+    qty = out["review_payload"]["scopes"][0]["lines"][0]["qty"]
+    assert qty == 3, f"Expected qty=3, got {qty}"
+
+
+def test_d1_quote_version_float_whole_create_run_native_accepted(clean_ops):
+    """quote_version=1.0 (float, integer-valued) -> create_run_native ACCEPTED (status='parsed'),
+    NOT a 500 crash. The stored quote_version column must be the integer 1."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-QV-FLOAT"
+    env["envelope_id"] = "env-qv-float"
+    env["quote_version"] = 1.0
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", f"Expected parsed; findings={out.get('findings')}"
+    with psycopg.connect(dsn) as c:
+        qv = c.execute(
+            "select quote_version from ops.intake_runs where id=%s", (out["run_id"],)
+        ).fetchone()[0]
+    assert qv == 1, f"Expected stored quote_version=1 (int), got {qv!r}"
+
+
+def test_d1_quote_version_integer_string_one_create_run_native_accepted(clean_ops):
+    """quote_version='1' -> wait: validate_envelope REJECTS string quote_version.
+    So this must remain a governed reject (missing_quote_version)."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-QV-STR-1"
+    env["envelope_id"] = "env-qv-str-1"
+    env["quote_version"] = "1"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    # "1" is a STRING -> REJECT (guard explicitly rejects string quote_version)
+    assert out["status"] == "rejected", f"Expected rejected for string qv; got {out['status']}"
+    assert any(f["code"] == "missing_quote_version" for f in out["findings"])
+
+
+def test_d1_fractional_bid_cents_still_rejected(clean_ops):
+    """Regression guard: bid_cents='100000.5' is still malformed_total (fractional not accepted)."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-FRAC-GUARD"
+    env["totals"]["bid_cents"] = "100000.5"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "malformed_total" for f in out["findings"])
+
+
+def test_d1_fractional_base_qty_still_rejected(clean_ops):
+    """Regression guard: base_qty=1.5 still malformed_catalog_field."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-FRAC-QTY-GUARD"
+    env["scopes"][0]["lines"][0]["base_qty"] = 1.5
+    env["scopes"][0]["lines"][0]["project_intake_qty"] = 1.5
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
     assert any(f["code"] == "malformed_catalog_field" for f in out["findings"])
+
+
+def test_d1_fractional_quote_version_still_rejected(clean_ops):
+    """Regression guard: quote_version=1.5 still missing_quote_version."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _d1_env()
+    env["project_number"] = "D1-FRAC-QV-GUARD"
+    env["quote_version"] = 1.5
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", out
+    assert any(f["code"] == "missing_quote_version" for f in out["findings"])

@@ -17,7 +17,7 @@ from .model import (
     PARSER_VERSION, PAYLOAD_SCHEMA_VERSION,
     IntakePayload, ProjectIn, ScopeIn, ScopeQuoteIn, QuoteLineIn, StandardHourIn,
 )
-from .native import validate_envelope, recompute_content_hash, pivot_to_intake_payload, NATIVE_SCHEMA_VERSION, NATIVE_PARSER_VERSION
+from .native import validate_envelope, recompute_content_hash, pivot_to_intake_payload, NATIVE_SCHEMA_VERSION, NATIVE_PARSER_VERSION, _dec
 from .validate import validate_payload
 
 
@@ -549,6 +549,10 @@ def create_run_native(dsn, *, uploaded_by, envelope):
                 "findings": [{"code": f.code, "severity": f.severity, "ok": f.ok, "message": f.message} for f in findings]}
 
     # happy path: validate_envelope guaranteed catalog completeness, so the strict pivot/hash are safe now.
+    # Normalize quote_version to a Python int before the DB insert — the column is INTEGER and the guard
+    # accepts integer-valued floats (e.g. 1.0) that Postgres would reject as a string binding.
+    # _dec is safe here: the guard guarantees qv is non-null and integer-valued (not bool, not fractional).
+    qv = int(_dec(qv))
     content_hash = recompute_content_hash(envelope)
     # Compute pivot_dict ONCE — used for both the JSON payload and economic reconciliation.
     pivot_dict = pivot_to_intake_payload(envelope)
