@@ -36,7 +36,9 @@ test('recognition page: renders worklist, gates buttons by flags, modal attest +
   await page.route('**/api/v1/reads/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }))
   await page.route('**/api/v1/schedule/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '[]' }))
 
-  const resp = await page.goto('/pm-review/recognition', { waitUntil: 'networkidle' })
+  // NOTE: 'domcontentloaded' not 'networkidle' — the PM shell holds the network active (polling),
+  // so 'networkidle' never settles in CI; the assertions below use explicit element waits anyway.
+  const resp = await page.goto('/pm-review/recognition', { waitUntil: 'domcontentloaded' })
   expect(resp?.ok()).toBeTruthy()
   await expect(page.getByText('for recognition')).toBeVisible()
   await expect(page.locator('body')).not.toContainText('production complete')
