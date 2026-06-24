@@ -70,10 +70,15 @@ test('recognition page: renders worklist, gates buttons by flags, modal attest +
   // the <select> offers EXACTLY provided | not_applicable
   await expect(dsSelect.locator('option')).toHaveText(['provided', 'not_applicable'])
   await dsSelect.selectOption('provided')
+  // 'provided' clearance requires a non-blank reference (Fix#2 / 005 ck_revrec_*_ref);
+  // Confirm stays disabled until the conditionally-required ref input is filled.
+  await recModal.getByLabel('datasheet reference').fill('DS-REF-1')
   await recModal.getByLabel('cx clearance').selectOption('not_applicable')
   await recModal.getByRole('button', { name: 'Confirm' }).click()
   await expect.poll(() => recognizeBody).not.toBeNull()
   expect((recognizeBody as { apparatus_id: string }).apparatus_id).toBe('a1')
   expect((recognizeBody as { datasheet_clearance: string }).datasheet_clearance).toBe('provided')
+  expect((recognizeBody as { datasheet_ref: string }).datasheet_ref).toBe('DS-REF-1')
   expect((recognizeBody as { cx_clearance: string }).cx_clearance).toBe('not_applicable')
+  expect((recognizeBody as { cx_ref: string | null }).cx_ref).toBeNull()
 })

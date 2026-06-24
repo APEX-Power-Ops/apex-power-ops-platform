@@ -4673,6 +4673,11 @@ test('pm import intake workbench renders consolidated read-only Project Miner ga
   ]))
   await expect(fieldPrepOutputStatus.getByText(/Customer reporting draft prepared from pm-import-candidate-miner-temp-power without a server write/i)).toBeVisible()
   await expect(page.getByRole('button', { name: 'Export Financial Handoff Draft' })).toBeEnabled()
+  // Chromium's per-page download limiter silently drops rapid downloads after ~20 in a single
+  // page session (root-caused 2026-06-24: positional, not export-specific). This consolidated
+  // workbench test triggers 28 export downloads back-to-back; let the download pipeline drain
+  // before the financial-handoff export so it and the remaining exports are not dropped.
+  await page.waitForTimeout(3000)
   const financialHandoffDraftDownloadPromise = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export Financial Handoff Draft' }).click()
   const financialHandoffDraftDownload = await financialHandoffDraftDownloadPromise
