@@ -86,6 +86,7 @@ def apply_migrations():
         "006_progress_billing.sql",
         "007_intake_envelope.sql",
         "008_core_equipment_models.sql",
+        "010_native_envelope_intake.sql",
     ]
     with psycopg.connect(d, autocommit=True) as c:
         for name in up_migrations:
@@ -544,3 +545,47 @@ class TestCodexAuditHardening:
         assert resp.status_code == 400, resp.text
         assert not _contains_substring(resp.json(), "999999")
         assert not _contains_substring(resp.json(), "$")
+
+
+# ---------------------------------------------------------------------------
+# Task 7 -- POST /api/v1/ops/intake/native
+# ---------------------------------------------------------------------------
+
+
+def _catalog_envelope():
+    return {
+        "project_number": "API-1", "envelope_id": "api-env-1", "quote_version": 1,
+        "source_draft_id": "d", "source_revision_id": "r",
+        "totals": {"bid_cents": 165000, "service_hours": 0},
+        "scopes": [{
+            "scope_id": "S1", "name": "A1", "neta_standard": "ATS",
+            "replication_m4": 1, "adjustment_multiplier_n4": 1,
+            "scope_totals": {"onsite_labor_cents": 165000, "offsite_labor_cents": 0,
+                             "cost_cents": 0, "service_cents": 0, "service_hours": 0,
+                             "quoted_app_hours": 10, "adjusted_cents": 165000},
+            "lines": [{"line_uid": "S1:r1", "line_kind": "catalog", "included": True,
+                       "equipment_model_ref": "Capcitors - Per Unit", "base_qty": 1,
+                       "project_intake_qty": 1, "resolved_ref_hours": 10.0}],
+        }],
+    }
+
+
+class TestNativeIntake:
+    """POST /api/v1/ops/intake/native"""
+
+    def test_native_returns_200_pm_safe(self, client, person_id):
+        resp = client.post("/api/v1/ops/intake/native",
+                           json={"uploaded_by": person_id, "envelope": _catalog_envelope()})
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["source_format"] == "native" and body["status"] == "parsed"
+        assert not _contains_substring(body, "$")               # finance redaction
+        for f in body["findings"]:
+            assert set(f) == {"code", "severity", "ok", "message"}   # no diagnostic_detail
+
+    def test_native_non_catalog_rejected(self, client, person_id):
+        env = _catalog_envelope(); env["scopes"][0]["lines"][0]["line_kind"] = "service"
+        resp = client.post("/api/v1/ops/intake/native",
+                           json={"uploaded_by": person_id, "envelope": env})
+        assert resp.status_code == 200, resp.text          # a governed reject is 200 with status='rejected'
+        assert resp.json()["status"] == "rejected"
