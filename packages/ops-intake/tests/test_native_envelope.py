@@ -1417,3 +1417,85 @@ def test_d3fix3_bid_exact_still_accepted(clean_ops):
     assert out["status"] == "parsed", f"Expected parsed; got {out['status']}; findings={out.get('findings')}"
     codes = {f["code"] for f in out["findings"]}
     assert "native_bid_mismatch" not in codes, f"native_bid_mismatch should not fire on exact reconciliation"
+
+
+# ---------------------------------------------------------------------------
+# Hardening D3 fix-3b -- derived-sum basis correction (multi-scope accumulation)
+# ---------------------------------------------------------------------------
+
+def _two_scope_env(*, onsite_cents, offsite_cents, m4, n4, adjusted_cents_each,
+                   bid_cents, quote_version):
+    """Build a two-scope envelope from _catalog_env: deep-copy scope 0, add a distinct scope 1."""
+    import copy
+    env = copy.deepcopy(_catalog_env())
+    env["quote_version"] = quote_version
+    env["totals"]["bid_cents"] = bid_cents
+
+    # Patch scope 0
+    env["scopes"][0]["scope_totals"]["onsite_labor_cents"] = onsite_cents
+    env["scopes"][0]["scope_totals"]["offsite_labor_cents"] = offsite_cents
+    env["scopes"][0]["replication_m4"] = m4
+    env["scopes"][0]["adjustment_multiplier_n4"] = n4
+    env["scopes"][0]["scope_totals"]["adjusted_cents"] = adjusted_cents_each
+
+    # Build scope 1 as a distinct deep copy of scope 0 with unique ids/line_uid
+    sc1 = copy.deepcopy(env["scopes"][0])
+    sc1["scope_id"] = "S2"
+    sc1["name"] = "B1"
+    sc1["lines"][0]["line_uid"] = "S2:row1"
+    env["scopes"].append(sc1)
+    return env
+
+
+def test_d3fix3b_multiscope_accumulated_tolerance_rejects(clean_ops):
+    """Failing-first (D3 fix-3b): 2 scopes, each derived=100000, each adjusted_cents=100001
+    (1¢ over derived — within per-scope ±1¢ tolerance individually), bid_cents=200002.
+
+    With the OLD stated-sum: Σ stated=200002 == bid_cents=200002 -> diff=0 -> no mismatch (BUG).
+    With the DERIVED-sum:   Σ derived=200000, bid=200002 -> diff=2¢ > 1¢ -> native_bid_mismatch.
+
+    create_run_native must return status='rejected' with a native_bid_mismatch finding and
+    ops.scopes count == 0."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _two_scope_env(
+        onsite_cents=100000, offsite_cents=0, m4=1, n4=1,
+        adjusted_cents_each=100001,   # each 1¢ over derived -> per-scope passes; project total off by 2¢
+        bid_cents=200002,
+        quote_version=307,
+    )
+    env["project_number"] = "D3FIX3B-ACCUM-REJECT"
+    env["envelope_id"] = "env-d3fix3b-accum-reject"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "rejected", (
+        f"Expected rejected (derived-sum mismatch); got {out['status']}; findings={out.get('findings')}"
+    )
+    codes = {f["code"] for f in out["findings"]}
+    assert "native_bid_mismatch" in codes, (
+        f"Expected native_bid_mismatch finding; got codes={codes}"
+    )
+    with psycopg.connect(dsn) as c:
+        assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0, (
+            "ops.scopes should be empty (rejected envelope must not materialize)"
+        )
+
+
+def test_d3fix3b_multiscope_reconciled_accepted(clean_ops):
+    """Regression (D3 fix-3b): 2 scopes, each adjusted_cents=100000 (== derived 100000),
+    bid_cents=200000 -> Σ derived=200000 == bid -> no native_bid_mismatch, status='parsed'."""
+    dsn = clean_ops; who = _person(dsn)
+    env = _two_scope_env(
+        onsite_cents=100000, offsite_cents=0, m4=1, n4=1,
+        adjusted_cents_each=100000,   # stated == derived; Σ derived=200000 == bid_cents
+        bid_cents=200000,
+        quote_version=308,
+    )
+    env["project_number"] = "D3FIX3B-ACCUM-ACCEPT"
+    env["envelope_id"] = "env-d3fix3b-accum-accept"
+    out = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert out["status"] == "parsed", (
+        f"Expected parsed; got {out['status']}; findings={out.get('findings')}"
+    )
+    codes = {f["code"] for f in out["findings"]}
+    assert "native_bid_mismatch" not in codes, (
+        f"native_bid_mismatch must not fire when derived sum matches bid; got codes={codes}"
+    )

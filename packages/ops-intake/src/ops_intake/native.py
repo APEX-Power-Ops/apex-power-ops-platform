@@ -364,17 +364,25 @@ def validate_envelope(env: dict) -> list[Finding]:
     # validated, present+numeric scope economics.
     if _bid_ok and not out:
         _scopes_iter = env.get("scopes") if isinstance(env.get("scopes"), list) else []
-        _sum_adj = Decimal(0)
+        _sum_derived = Decimal(0)
+        _derivable = True
         for _sc in _scopes_iter:
             _st = _sc.get("scope_totals", {}) or {}
-            _a = _dec(_st.get("adjusted_cents"))
-            if _a is not None:
-                _sum_adj += _a
-        if abs(_bid_dec - _sum_adj) > Decimal(1):
+            _on = _dec(_st.get("onsite_labor_cents", 0))
+            _off = _dec(_st.get("offsite_labor_cents", 0))
+            _m4 = _dec(_sc.get("replication_m4"))
+            _n4 = _dec(_sc.get("adjustment_multiplier_n4"))
+            if _on is None or _off is None or _m4 is None or _n4 is None:
+                # Any derivation input absent/non-numeric -> cannot derive the project total here.
+                # (Consistent with the per-scope D2 check, which also skips when these are None.)
+                _derivable = False
+                break
+            _sum_derived += (_on + _off) * _m4 * _n4
+        if _derivable and abs(_bid_dec - _sum_derived) > Decimal(1):
             out.append(_f(
                 "native_bid_mismatch",
-                "Envelope bid total does not reconcile with the sum of scope adjusted economics (native +/- 1 cent)",
-                detail=f"bid_cents={int(_bid_dec)}; sum_adjusted_cents={int(_sum_adj)}",
+                "Envelope bid total does not reconcile with the sum of derived scope economics (native +/- 1 cent)",
+                detail=f"bid_cents={int(_bid_dec)}; sum_derived_cents={int(_sum_derived)}",
             ))
 
     return out
