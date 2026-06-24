@@ -27,7 +27,7 @@ def _map(exc: rec.RecognitionError) -> HTTPException:
     if isinstance(exc, rec.RecognitionInputError):
         return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     # RecognitionConflict + RecognitionStateError -> 409
-    return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="recognition action rejected")
+    return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
 
 def _require(body: dict, *keys: str) -> None:
     for k in keys:
