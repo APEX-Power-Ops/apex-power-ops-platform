@@ -27,7 +27,7 @@ def _map(exc: rec.RecognitionError) -> HTTPException:
     if isinstance(exc, rec.RecognitionInputError):
         return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     # RecognitionConflict + RecognitionStateError -> 409
-    return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+    return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="recognition action rejected")
 
 def _require(body: dict, *keys: str) -> None:
     for k in keys:
@@ -63,6 +63,15 @@ async def recognize(request: Request) -> JSONResponse:
         if body[k] not in _CLEARANCE_ENUM:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="clearance must be one of: provided, not_applicable")
+    # 005 ck_revrec_*_ref: a 'provided' clearance requires a non-blank ref. Enforce value-free at the
+    # boundary so a missing ref is a 400 (missing input), not a 409 (opaque DB reject).
+    for clear_key, ref_key, label in (
+        ("datasheet_clearance", "datasheet_ref", "datasheet"),
+        ("cx_clearance", "cx_ref", "commissioning"),
+    ):
+        if body[clear_key] == "provided" and not str(body.get(ref_key) or "").strip():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"{label} reference is required")
     try:
         ev = rec.recognize(_dsn(), body["apparatus_id"], body["recognized_by"],
                            body["datasheet_clearance"], body.get("datasheet_ref"),

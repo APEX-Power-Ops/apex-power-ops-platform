@@ -2,7 +2,7 @@
 import * as React from 'react'
 import {
   actionFlags, fetchWorklist, fetchRollup, attestComplete, recognize,
-  reverseEvent, revokeAttestation, CLEARANCE_VALUES, ATTEST_COPY,
+  reverseEvent, revokeAttestation, recognizeRefError, CLEARANCE_VALUES, ATTEST_COPY,
   type WorklistRow, type RollupRow, type Clearance,
 } from '../../../lib/recognition'
 
@@ -40,11 +40,11 @@ export default function RecognitionPage() {
   // Submit handler invoked by the modal with the collected, validated inputs.
   const submitModal = useCallback(async (
     kind: ModalKind, row: WorklistRow,
-    reason: string, ds: Clearance, cx: Clearance,
+    reason: string, ds: Clearance, dsRef: string, cx: Clearance, cxRef: string,
   ) => {
     try {
       if (kind === 'attest') await attestComplete(row.apparatus_id, PM_ACTOR_ID, reason)
-      else if (kind === 'recognize') await recognize(row.apparatus_id, PM_ACTOR_ID, ds, null, cx, null)
+      else if (kind === 'recognize') await recognize(row.apparatus_id, PM_ACTOR_ID, ds, dsRef || null, cx, cxRef || null)
       else if (kind === 'revoke') { if (!row.attestation_id) return; await revokeAttestation(row.attestation_id, PM_ACTOR_ID, reason) }
       else if (kind === 'reverse') { if (!row.recognized_event_id) return; await reverseEvent(row.recognized_event_id, PM_ACTOR_ID, reason) }
       setModal(null)
@@ -144,16 +144,19 @@ function ActionModal(props: {
   kind: ModalKind
   row: WorklistRow
   onCancel: () => void
-  onSubmit: (kind: ModalKind, row: WorklistRow, reason: string, ds: Clearance, cx: Clearance) => void | Promise<void>
+  onSubmit: (kind: ModalKind, row: WorklistRow, reason: string, ds: Clearance, dsRef: string, cx: Clearance, cxRef: string) => void | Promise<void>
 }) {
   const { kind, row, onCancel, onSubmit } = props
   const [reason, setReason] = useState('')
   const [ds, setDs] = useState<Clearance>('not_applicable')
+  const [dsRef, setDsRef] = useState('')
   const [cx, setCx] = useState<Clearance>('not_applicable')
+  const [cxRef, setCxRef] = useState('')
   const isRecognize = kind === 'recognize'
-  // attest/revoke/reverse REQUIRE a non-blank reason; recognize requires two enum clearances.
+  // attest/revoke/reverse REQUIRE a non-blank reason; recognize requires two enum clearances
+  // and non-blank refs when clearance is 'provided' (005 ck_revrec_*_ref).
   const canSubmit = isRecognize
-    ? CLEARANCE_VALUES.includes(ds) && CLEARANCE_VALUES.includes(cx)
+    ? CLEARANCE_VALUES.includes(ds) && CLEARANCE_VALUES.includes(cx) && recognizeRefError(ds, dsRef, cx, cxRef) === null
     : reason.trim().length > 0
 
   return (
@@ -171,6 +174,12 @@ function ActionModal(props: {
                       className="mt-1 w-full rounded border px-2 py-1">
                 {CLEARANCE_VALUES.map((v) => <option key={v} value={v}>{v}</option>)}
               </select>
+              {ds === 'provided' && (
+                <input aria-label="datasheet reference" required value={dsRef}
+                       onChange={(e) => setDsRef(e.target.value)}
+                       placeholder="datasheet reference"
+                       className="mt-1 w-full rounded border px-2 py-1" />
+              )}
             </label>
             <label className="text-sm">Cx clearance
               <select aria-label="cx clearance" value={cx}
@@ -178,6 +187,12 @@ function ActionModal(props: {
                       className="mt-1 w-full rounded border px-2 py-1">
                 {CLEARANCE_VALUES.map((v) => <option key={v} value={v}>{v}</option>)}
               </select>
+              {cx === 'provided' && (
+                <input aria-label="cx reference" required value={cxRef}
+                       onChange={(e) => setCxRef(e.target.value)}
+                       placeholder="cx reference"
+                       className="mt-1 w-full rounded border px-2 py-1" />
+              )}
             </label>
           </div>
         ) : (
@@ -190,7 +205,7 @@ function ActionModal(props: {
         <div className="mt-4 flex justify-end gap-2">
           <button onClick={onCancel} className="rounded border px-3 py-1">Cancel</button>
           <button aria-label="confirm" disabled={!canSubmit}
-                  onClick={() => onSubmit(kind, row, reason.trim(), ds, cx)}
+                  onClick={() => onSubmit(kind, row, reason.trim(), ds, dsRef, cx, cxRef)}
                   className="rounded bg-gray-800 px-3 py-1 text-white disabled:opacity-40">Confirm</button>
         </div>
       </div>

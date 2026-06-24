@@ -64,6 +64,17 @@ export function actionFlags(row: WorklistRow): ActionFlags {
   }
 }
 
+/** Ref must be non-blank when a clearance is 'provided' (005 ck_revrec_*_ref). Returns the first
+ *  offending field label, or null when the clearance/ref combination is submittable. */
+export function recognizeRefError(
+  datasheetClearance: Clearance, datasheetRef: string,
+  cxClearance: Clearance, cxRef: string,
+): string | null {
+  if (datasheetClearance === 'provided' && !datasheetRef.trim()) return 'datasheet'
+  if (cxClearance === 'provided' && !cxRef.trim()) return 'commissioning'
+  return null
+}
+
 export class RecognitionApiError extends Error {
   status: number
   constructor(message: string, status: number) {

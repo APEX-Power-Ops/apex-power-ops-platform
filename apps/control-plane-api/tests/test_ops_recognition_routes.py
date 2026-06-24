@@ -125,3 +125,36 @@ def test_worklist_and_rollup_read(client, eligible, person_id):
     assert w.status_code==200 and any(row["apparatus_id"]==aid for row in w.json())
     ro=client.get(f"/api/v1/ops/recognition/rollup?project_number={pnum}")
     assert ro.status_code==200 and any(float(r["recognized_total"])>0 for r in ro.json())
+
+def test_recognize_provided_without_ref_returns_400_value_free(client, eligible, person_id):
+    """005 ck_revrec_datasheet_ref: provided clearance + null ref must be a value-free 400 at the
+    API boundary, NOT a 409 opaque DB reject."""
+    aid = eligible["apparatus_id"]
+    # attest first so the apparatus is eligible for recognition
+    r = client.post("/api/v1/ops/recognition/completion/attest",
+                    json={"apparatus_id": aid, "attested_by": person_id, "reason": "tested"})
+    assert r.status_code == 200, r.text
+    # now recognize with provided clearance but no ref
+    r = client.post("/api/v1/ops/recognition/events/recognize",
+                    json={"apparatus_id": aid, "recognized_by": person_id,
+                          "datasheet_clearance": "provided", "datasheet_ref": None,
+                          "cx_clearance": "not_applicable", "cx_ref": None})
+    assert r.status_code == 400, f"expected 400, got {r.status_code}: {r.text}"
+    body = r.json()
+    # value-free: no dollar signs, no apparatus/revenue values echoed back
+    assert not _contains(body, "$"), f"body must not echo dollar value: {body}"
+    assert not _contains(body, aid), f"body must not echo apparatus_id: {body}"
+
+
+def test_recognize_provided_with_ref_succeeds(client, eligible, person_id):
+    """005 ck_revrec_*_ref: provided clearance + a non-blank ref for both must succeed → 200 + event_id."""
+    aid = eligible["apparatus_id"]
+    client.post("/api/v1/ops/recognition/completion/attest",
+                json={"apparatus_id": aid, "attested_by": person_id, "reason": "tested"})
+    r = client.post("/api/v1/ops/recognition/events/recognize",
+                    json={"apparatus_id": aid, "recognized_by": person_id,
+                          "datasheet_clearance": "provided", "datasheet_ref": "DS-REF-001",
+                          "cx_clearance": "provided", "cx_ref": "CX-REF-001"})
+    assert r.status_code == 200, f"expected 200, got {r.status_code}: {r.text}"
+    body = r.json()
+    assert "event_id" in body, f"expected event_id in response: {body}"

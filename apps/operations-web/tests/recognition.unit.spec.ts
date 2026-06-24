@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import {
   actionFlags,
+  recognizeRefError,
   CLEARANCE_VALUES,
   ATTEST_COPY,
   type WorklistRow,
@@ -34,4 +35,29 @@ test('clearance enum is exactly provided|not_applicable', () => {
 test('attest copy is for-recognition, never production complete', () => {
   expect(ATTEST_COPY).toContain('for recognition')
   expect(ATTEST_COPY.toLowerCase()).not.toContain('production complete')
+})
+
+// recognizeRefError tests (005 ck_revrec_*_ref boundary rule)
+test('recognizeRefError: provided + blank datasheet ref → returns field label "datasheet"', () => {
+  expect(recognizeRefError('provided', '', 'not_applicable', '')).toBe('datasheet')
+})
+
+test('recognizeRefError: provided + whitespace-only datasheet ref → returns "datasheet"', () => {
+  expect(recognizeRefError('provided', '   ', 'not_applicable', '')).toBe('datasheet')
+})
+
+test('recognizeRefError: provided + non-blank datasheet ref, provided + blank cx ref → returns "commissioning"', () => {
+  expect(recognizeRefError('provided', 'DS-REF-001', 'provided', '')).toBe('commissioning')
+})
+
+test('recognizeRefError: provided + non-blank ref for both → returns null', () => {
+  expect(recognizeRefError('provided', 'DS-REF-001', 'provided', 'CX-REF-001')).toBeNull()
+})
+
+test('recognizeRefError: not_applicable + any ref state → returns null', () => {
+  expect(recognizeRefError('not_applicable', '', 'not_applicable', '')).toBeNull()
+})
+
+test('recognizeRefError: not_applicable ds + provided cx with ref → returns null', () => {
+  expect(recognizeRefError('not_applicable', '', 'provided', 'CX-REF-001')).toBeNull()
 })
