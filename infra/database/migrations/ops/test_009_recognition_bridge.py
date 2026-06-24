@@ -378,3 +378,175 @@ def test_revoke_blank_reason_rejected(conn):
             cur.execute("select ops.revoke_completion_attestation(%s,%s,'  ')",(att,who)); assert False
         except psycopg.errors.RaiseException: pass
         cur.execute("rollback to savepoint s")
+
+def _recognize(cur, who, *, status="In Progress"):
+    aid=_seed_eligible_apparatus(cur, status=status)
+    cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who)); att=cur.fetchone()[0]
+    cur.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(aid,who))
+    ev=cur.fetchone()[0]
+    return aid, att, ev
+
+def test_recognize_populates_completion_attestation_id(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid, att, ev=_recognize(cur, who)
+        cur.execute("select completion_attestation_id from ops.revenue_recognition_event where id=%s",(ev,))
+        assert cur.fetchone()[0]==att
+        cur.execute("rollback to savepoint s")
+
+def test_approve_and_recognize_rejects_when_no_active_attestation(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select set_config('ops.completion_ctx','1', true)")   # flip to Complete WITHOUT an attestation
+        cur.execute("update ops.apparatus set status='Complete' where id=%s",(aid,))
+        try:
+            cur.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(aid,who))
+            assert False, "recognize with no active attestation accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def _direct_recognized_insert(cur, aid, sid, pid, amount, qh, br, frozen_at, att_id):
+    cur.execute("insert into ops.revenue_recognition_event"
+                " (apparatus_id, scope_id, project_id, event_type, recognized_amount, quoted_hours,"
+                "  blended_rate, basis_frozen_at, actor_person_id, datasheet_clearance, cx_clearance,"
+                "  completion_attestation_id)"
+                " select %s,%s,%s,'recognized',%s,%s,%s,%s, (select person_id from ops.persons limit 1),"
+                " 'not_applicable','not_applicable',%s",
+                (aid, sid, pid, amount, qh, br, frozen_at, att_id))
+
+def _chain_ids(cur, aid):
+    cur.execute("select a.scope_id, s.project_id, a.quoted_revenue, a.quoted_hours, sq.blended_rate, sq.frozen_at"
+                " from ops.apparatus a join ops.scopes s on s.id=a.scope_id"
+                " join ops.scope_quote sq on sq.scope_id=a.scope_id where a.id=%s",(aid,))
+    return cur.fetchone()
+
+def test_integrity_rejects_recognized_with_null_attestation(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who))   # Complete + active att
+        sid,pid,rev,qh,br,fa=_chain_ids(cur,aid)
+        try:
+            _direct_recognized_insert(cur, aid, sid, pid, rev, qh, br, fa, None); assert False
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_integrity_rejects_recognized_with_foreign_attestation(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who))
+        sid,pid,rev,qh,br,fa=_chain_ids(cur,aid)
+        try:
+            _direct_recognized_insert(cur, aid, sid, pid, rev, qh, br, fa, str(uuid.uuid4())); assert False
+        except (psycopg.errors.RaiseException, psycopg.errors.ForeignKeyViolation): pass
+        cur.execute("rollback to savepoint s")
+
+def test_integrity_rejects_recognized_with_revoked_attestation(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who)); att=cur.fetchone()[0]
+        # revoke it (net 0, no recognition yet) -> now revoked; status restored to prior
+        cur.execute("select ops.revoke_completion_attestation(%s,%s,'r')",(att,who))
+        # re-flip to Complete via ctx so the integrity trigger's status check is not the blocker
+        cur.execute("select set_config('ops.completion_ctx','1', true)")
+        cur.execute("update ops.apparatus set status='Complete' where id=%s",(aid,))
+        sid,pid,rev,qh,br,fa=_chain_ids(cur,aid)
+        try:
+            _direct_recognized_insert(cur, aid, sid, pid, rev, qh, br, fa, att); assert False, "revoked attestation accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+def test_integrity_rejects_recognized_with_cross_apparatus_attestation(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid1=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'a1')",(aid1,who)); att1=cur.fetchone()[0]
+        aid2=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'a2')",(aid2,who))   # aid2 Complete + own att
+        sid,pid,rev,qh,br,fa=_chain_ids(cur,aid2)
+        try:
+            _direct_recognized_insert(cur, aid2, sid, pid, rev, qh, br, fa, att1)   # att1 belongs to aid1
+            assert False, "cross-apparatus attestation accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint s")
+
+# ---- FIREWALL REGRESSION: every original 005 recognized-integrity check still raises ----
+def test_firewall_regression_005_checks_still_raise(conn):
+    with conn.cursor() as cur:
+        cur.execute("savepoint s"); who=_seed_person(cur)
+        aid=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'done')",(aid,who)); att=cur.fetchone()[0]
+        sid,pid,rev,qh,br,fa=_chain_ids(cur,aid)
+        # (a) lineage: wrong scope_id
+        cur.execute("savepoint c")
+        try:
+            _direct_recognized_insert(cur, aid, str(uuid.uuid4()), pid, rev, qh, br, fa, att); assert False
+        except (psycopg.errors.RaiseException, psycopg.errors.ForeignKeyViolation): pass
+        cur.execute("rollback to savepoint c")
+        # (b) recognized_amount distinct-from quoted_revenue
+        cur.execute("savepoint c")
+        try:
+            _direct_recognized_insert(cur, aid, sid, pid, rev+1, qh, br, fa, att); assert False
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint c")
+        # (c) basis-snapshot mismatch (wrong quoted_hours)
+        cur.execute("savepoint c")
+        try:
+            _direct_recognized_insert(cur, aid, sid, pid, rev, qh+1, br, fa, att); assert False
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint c")
+        # (d) status not Complete (revoke restores prior, leaving an active... so test on a non-complete app)
+        aid2=_seed_eligible_apparatus(cur, status="In Progress")
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'x')",(aid2,who)); att2=cur.fetchone()[0]
+        cur.execute("select ops.revoke_completion_attestation(%s,%s,'r')",(att2,who))  # status back to In Progress, att2 revoked
+        cur.execute("select ops.attest_apparatus_complete(%s,%s,'y')",(aid2,who)); att2b=cur.fetchone()[0]  # Complete again
+        cur.execute("select set_config('ops.completion_ctx','1', true)")
+        cur.execute("update ops.apparatus set status='Pending Review' where id=%s",(aid2,))  # leave g via ctx
+        s2,p2,r2,h2,b2,f2=_chain_ids(cur,aid2)
+        cur.execute("savepoint c")
+        try:
+            _direct_recognized_insert(cur, aid2, s2, p2, r2, h2, b2, f2, att2b); assert False, "non-complete accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint c")
+        # (e) open-net idempotency: a real recognize, then a second direct recognized insert
+        cur.execute("savepoint c")
+        cur.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",(aid,who))
+        try:
+            _direct_recognized_insert(cur, aid, sid, pid, rev, qh, br, fa, att); assert False, "double-recognize accepted"
+        except psycopg.errors.RaiseException: pass
+        cur.execute("rollback to savepoint c")
+        cur.execute("rollback to savepoint s")
+
+# ---- DOWN SOURCE-DIFF: after 009-down, both 005 fns equal the 005-up defs (normalized) ----
+def _functiondef(dsn, signature):
+    with psycopg.connect(dsn) as c, c.cursor() as cur:
+        cur.execute("select pg_get_functiondef(%s::regprocedure)", (signature,))
+        return cur.fetchone()[0]
+
+def _normalize(sql):
+    import re
+    return re.sub(r"\s+", " ", sql).strip()
+
+def test_down_restores_005_function_bodies_byte_for_byte():
+    AR = "ops.approve_and_recognize(uuid,uuid,ops.obligation_clearance,text,ops.obligation_clearance,text)"
+    II = "ops.trg_revrec_insert_integrity()"
+    # capture the 009-up (modified) defs, then run 009-down, then capture the restored defs
+    _exec(DOWN)
+    restored_ar = _normalize(_functiondef(DSN, AR))
+    restored_ii = _normalize(_functiondef(DSN, II))
+    # rebuild a pristine 005-only baseline in a savepoint-free way: drop ops, apply 001..005,
+    # read those defs, then restore the full 001..009 session state.
+    _clean_slate()
+    for f in ["001_identity_skeleton.sql","002_quote_model.sql","003_intake_unique_keys.sql",
+              "004_person_anchor.sql","005_recognition_ledger.sql"]:
+        _exec(HERE / f)
+    baseline_ar = _normalize(_functiondef(DSN, AR))
+    baseline_ii = _normalize(_functiondef(DSN, II))
+    # restore the session post-state (001..009) for the remaining tests
+    _clean_slate()
+    for f in CHAIN: _exec(HERE / f)
+    assert restored_ar == baseline_ar, "approve_and_recognize down-restore != 005-up definition"
+    assert restored_ii == baseline_ii, "trg_revrec_insert_integrity down-restore != 005-up definition"
