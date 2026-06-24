@@ -47,17 +47,20 @@ These apply to EVERY task; each task implicitly includes them.
 - **Migration + package tests (uv):**
   ```
   export PATH=$HOME/.local/bin:$PATH
-  set -a; . infra/.env; set +a           # sources the governed 0600 .env for DEV_PG_PASSWORD; NEVER echo it
+  set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a           # sources the governed 0600 .env for DEV_PG_PASSWORD; NEVER echo it
   export OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable"
   uv run --with "psycopg[binary]" --with pytest pytest <path>
   ```
-  (The migration test files also embed a default `ops_test` DSN, so the assert holds even if `OPS_DEV_DSN` is unset; sourcing `infra/.env` supplies the password.)
-- **API tests (pip):**
+  (The lane worktree has NO `infra/.env` — git worktrees don't carry ignored files — so source the MAIN checkout's `infra/.env` at the absolute path above, NOT a worktree-relative `infra/.env`. The migration test files also embed a default `ops_test` DSN, so the assert holds even if `OPS_DEV_DSN` is unset; sourcing that `.env` supplies the password.)
+- **API tests (pip/venv):**
   ```
   cd apps/control-plane-api
-  python -m pip install -r requirements.txt -r requirements-dev.txt   # sibling pkgs wired -e
-  export OPS_DEV_DSN="...dbname=ops_test..."
-  python -m pytest tests/test_ops_recognition_routes.py
+  python -m venv .venv                                                  # no system pip on the host; use a venv
+  .venv/bin/python -m pip install -r requirements.txt -r requirements-dev.txt   # sibling pkgs wired -e
+  set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a   # DEV_PG_PASSWORD (worktree has no .env)
+  set -a; . $HOME/apex-secrets/olares/ai-live-dsn.env; set +a           # config.py import needs a generic DB DSN (APEX_OLARES_LIVE_DSN / DATABASE_URL); OPS_DEV_DSN alone is NOT enough
+  export OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable"
+  .venv/bin/python -m pytest tests/test_ops_recognition_routes.py
   ```
 - **UI:**
   ```
@@ -244,7 +247,7 @@ apps/operations-web/
 
 - [ ] Run to verify fail (the CHAIN references a missing `009_recognition_bridge.sql`):
   ```
-  export PATH=$HOME/.local/bin:$PATH; set -a; . infra/.env; set +a
+  export PATH=$HOME/.local/bin:$PATH; set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a
   export OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable"
   uv run --with "psycopg[binary]" --with pytest pytest infra/database/migrations/ops/test_009_recognition_bridge.py -q
   ```
@@ -1852,7 +1855,7 @@ apps/operations-web/
 
 - [ ] Run to verify fail:
   ```
-  export PATH=$HOME/.local/bin:$PATH; set -a; . infra/.env; set +a
+  export PATH=$HOME/.local/bin:$PATH; set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a
   export OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable"
   cd packages/ops-intake
   uv run --with "psycopg[binary]" --with pytest pytest tests/test_recognition_wrappers.py -q
