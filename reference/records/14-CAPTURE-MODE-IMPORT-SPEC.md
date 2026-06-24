@@ -1,11 +1,13 @@
 # Chip 10 — Capture-Mode Import (instrument file → records datasheet)
 
-> **Status: DESIGN (blueprint, NOT built) — 2026-06-17.** Supersedes the PUNCHLIST "Chip 10 —
-> Instrument / format import (DEFERRED)" stub with a scoped design. This is the build-out of **Path 2**
-> of the capture-mode contract ratified in STATE §235–§236 (the `instrument_import` half). No code until
-> this spec is reviewed + approved. Cite `00-MASTER-INDEX.md`, `01-OFFLINE-SYNC-ARCHITECTURE.md`, the
-> `field_schema` contract (`04-LV-CB-DATASHEET-SPEC.md` §2 + the capture-mode block in
-> `09-IT-DATASHEET-SPEC.md` §4), and the banked converters (`packages/power-test-converters/`).
+> **Status: IMPLEMENTED PARTIAL / NOT AUDIT-GRADE — snapshot 2026-06-24.** This began as the Chip 10
+> design blueprint. Since then, 10a PTM proposal/write scaffolding and partial 10c DTAX-read/propose
+> plumbing have landed in the platform history, but the lane still lacks review-gate UI, import sessions,
+> source-file hashes, reviewer decision history, source-file reimport semantics, full DTAX mapping, and
+> an audit-grade commit model. Cite `CURRENT-STATE.md`, `00-MASTER-INDEX.md`,
+> `01-OFFLINE-SYNC-ARCHITECTURE.md`, the `field_schema` contract (`04-LV-CB-DATASHEET-SPEC.md` §2 +
+> the capture-mode block in `09-IT-DATASHEET-SPEC.md` §4), and the banked converters
+> (`packages/power-test-converters/`).
 
 ---
 
@@ -159,6 +161,8 @@ zero-parser-risk path:
    **BUILT 2026-06-17, TDD-green (14/14) on `records_dev`** — see §12. *The vertical slice.*
 2. **10b — review-gate UI** on the office surface (proposal → confirm/adjust → commit).
 3. **10c — DTAX-read adapter** (invert the writer's schema map) → Doble files in.
+   **PARTIAL 2026-06-24:** parser/propose plumbing exists and focused tests pass, but only overall PF
+   mapping is proven through the records importer; TTR/WR/excitation remain incomplete.
 4. **10d — CTA-read port** → CT Analyzer → the IT/CT datasheets.
 5. **10e — batch identity-match** (§6.2).
 6. **(later) live test-set source adapter** — reuses the mapping core unchanged.
@@ -209,6 +213,21 @@ Built TDD (14/14 green on `records_dev`): a prerequisite migration + a new isola
 - **Real-`.ptm` integration test** — `read_ptm` is validated by the converter's own suite, so 10a tested
   the new pipeline with a realistic `PtmModel` literal; add a committed sample `.ptm` to exercise the
   `propose(file)` seam.
-- **Multi-tap row expansion**, **DTAX-read (10c)**, **CTA port (10d)**, **batch identity-match (10e)**,
-  **review-gate UI (10b)**, and the **ingest HTTP surface** (10a is a library; `propose`/`commit` are the
-  seam the office app wires).
+- **Multi-tap row expansion**, **full DTAX transformer mapping beyond overall PF (10c)**, **CTA port
+  (10d)**, **batch identity-match (10e)**, **review-gate UI (10b)**, and the **ingest HTTP surface** (10a
+  is a library; `propose`/`commit` are the seam the office app wires).
+
+---
+
+## 13. As-built delta — 10c partial (snapshot 2026-06-24)
+
+Observed in the consolidated platform checkout:
+
+- `packages/power-test-converters` includes an additive DTAX reader path.
+- `packages/records-import` exposes `propose_dtax`.
+- Focused converter/import tests pass for the parser/proposal surface.
+- The DTAX end-to-end test documents the remaining limit: only overall PF rows map through the current
+  records importer; TTR/WR rows and excitation rows are parsed but not yet mapped into the transformer
+  datasheet proposal because row identity and phase normalization still need a mapping layer.
+
+This is useful progress, but it is not the review-gated import product described by the original spec.
