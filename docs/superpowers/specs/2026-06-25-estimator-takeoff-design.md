@@ -1,7 +1,7 @@
 # estimator-takeoff Skill — Design
 
 Date: 2026-06-25
-Status: Design v2.2 (three audit passes incorporated; awaiting final green-light before plan)
+Status: Design v2.3 (planned; grounding corrections from canonical estimator-core)
 Topic: A Claude skill that parses electrical drawing packages into an **evidence-preserving
 quantity takeoff** mapped to the live `estimator-core` catalog — emitted as a reviewable
 `EstimateDraft` (status `draft`) for the estimator, plus an evidence sidecar and open questions.
@@ -15,6 +15,15 @@ quantity takeoff** mapped to the live `estimator-core` catalog — emitted as a 
 > **v2.2 (3rd / Codex on canonical):** `ScopeDraft` emission must include the REQUIRED
 > `labor_allocation` (neutral default, estimator-feathered); human-supplied `custom_equipment`
 > must carry `base_qty > 0` (validator requires `base_qty > 0` AND `provisional_ref_hours > 0`).
+> **v2.3 (grounding on canonical, during planning):** (1) HOME RESOLVED — `packages/estimator-takeoff`
+> as a **TS** package importing `@apex/estimator-core` directly (not Python in `tools/`); drawing-nav
+> (Python, Windows) feeds a JSON extraction artifact. (2) EMIT RESOLVED — emit through the canonical
+> **`buildNativeEnvelope(NativeEnvelopeInput)`** authoring API (catalog `{ref, qty}` lines only),
+> which sets M4/N4, `labor_allocation`, `expansion_policy`, compile + validate BY CONSTRUCTION. This
+> SUPERSEDES §6.4's hand-built `LineDraft` mapping and MOOTS the v2.1/v2.2 `labor_allocation` /
+> `custom_equipment` line notes for V1 (the API is catalog-only ⇒ uncataloged is fail-closed for
+> free). Breaker catalog: 34 canonical refs (`ref == apparatus`, `ref_hours` per ATS/MTS).
+> Build plan: `docs/superpowers/plans/2026-06-25-estimator-takeoff-breaker-engine.md`.
 
 > **Contract authority:** the live `estimator-core` in `apex-power-ops-platform` (Olares
 > dev-residency) — NOT the `C:\dev\estimator-ui-staging` POC, which is divergent. All schema/field
