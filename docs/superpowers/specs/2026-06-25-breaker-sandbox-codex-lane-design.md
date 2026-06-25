@@ -201,5 +201,7 @@ prod-write packet. Codex output is advisory + clone-local.
 - Behavioral-authority boundary (Access `TCC_NEW.accdb`) — calc rulings out of scope for this lane.
 - Orchestration cadence — first run as a one-shot `codex exec`; graduate to an apex-jobs durable
   background job if it recurs.
-- RLS is intentionally inert in the sandbox (stub + BYPASSRLS); prod RLS posture is owned by the
-  separate prod-RLS-exposure lane.
+- RLS is intentionally inert in the sandbox via **auth-fn stubs + clone-local ownership/RLS-disable
+  — NO cluster-wide BYPASSRLS** (viewer = clone-local `DISABLE ROW LEVEL SECURITY`; codex clone =
+  ownership transfer, owner-RLS-exempt). Prod RLS posture is owned by the separate
+  prod-RLS-exposure lane.

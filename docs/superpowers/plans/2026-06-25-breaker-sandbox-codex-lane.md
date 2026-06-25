@@ -751,10 +751,13 @@ Then the GENERIC checks (same files as the fixture — now table-name-agnostic):
     -c "drop table tcc._codex_write_probe;"'
   ```
   Expected: all three succeed — codex owns schema `tcc` on the real clone and writes freely.
+- Residual-ownership visibility (`sql/checks/check_residual_owner.sql`) on the real clone:
+  `ssh olares-mesh 'docker exec -i apex-dev-pg psql -U postgres -d tcc_breaker_codex_79audit_20260625 -f - < '"$ROOT"'/sql/checks/check_residual_owner.sql'`
+  → record the returned `residual_functions_postgres` / `residual_types_postgres` as a `Residual postgres-owned tcc functions/types: F / T` line in the manifest.
 
 - [ ] **Step 4: Run the full privilege matrix + sibling isolation, capture results**
 
-Run `check_role_zero_reach.sql` (postgres db) and `check_sibling_no_table_priv.sql` against `ops_dev`, `records_dev`, `learning_dev`, `orchestration_dev` — all `leaked=0`. Save the outputs for the manifest.
+Run `check_role_zero_reach.sql` (postgres db) and, against each of `ops_dev`, `records_dev`, `learning_dev`, `orchestration_dev`: BOTH `check_sibling_no_table_priv.sql` (`leaked=0`) AND `check_schema_create.sql` (codex has no CREATE on `public`). All must pass. Save the outputs for the manifest's privilege-matrix line.
 
 - [ ] **Step 5: Write the real manifest, delete the dump, record deletion proof**
 
@@ -775,18 +778,13 @@ Then: `ssh olares-mesh 'cd /home/olares/code/apex/apex-breaker-sandbox && git ad
 
 ---
 
-## Task 7 acceptance addenda (from the final whole-branch review — fold into T7; none touch merged T0–6 scripts)
+## Task 7 acceptance addenda — now COMMITTED as reusable scripts (pre-merge hardening; verified on the fixture)
 
-- **A1 — residual-ownership visibility (New Finding 1):** the `make_codex_clone.sh` ownership loop covers only `r/S/v`, so on real `tcc` any postgres-owned FUNCTION/TYPE stays postgres-owned (harmless for a read+write-table-data+create-scratch audit — codex can still EXECUTE them — but make it visible). After the real clone is built, record the residual in `SNAPSHOT_MANIFEST.md`:
-  ```sql
-  select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-   where n.nspname='tcc' and pg_get_userbyid(p.proowner)='postgres';   -- functions
-  select count(*) from pg_type t join pg_namespace n on n.oid=t.typnamespace
-   where n.nspname='tcc' and pg_get_userbyid(t.typowner)='postgres';    -- types
-  ```
-  → add a `Residual postgres-owned tcc functions/types: F / T` line to the manifest.
-- **A2 — schema-CREATE hardening (New Finding 2):** extend the privilege matrix (T7 Step 4) to also assert, per sibling DB, `has_schema_privilege('tcc_breaker_codex_79audit','public','CREATE') = false` (already true on PG17.10; cheap insurance against a base-image/grant drift).
-- **A3 — restore tidiness (T1 minor, optional):** add `trap 'docker exec apex-dev-pg rm -f /tmp/restore.dump' EXIT` to `restore_baseline.sh` so a failed `pg_restore` doesn't orphan the in-container dump.
+The final-review safety addenda are committed scripts, NOT prose — T7 runs files, never hand-transcribed SQL:
+- **`sql/checks/check_baseline_exact.sql`** (A-exact) — exact-count gate (91/2/30/190 + 60/120), fail-closed; run in T7 Step 2 against the real baseline. (Fixture-verified: RAISEs `tables 2, want 91` on the fixture, i.e. correctly fail-closed.)
+- **`sql/checks/check_schema_create.sql`** (A2) — asserts the codex role has no CREATE on `public`; run per-sibling in T7 Step 4 alongside `check_sibling_no_table_priv.sql`. (Fixture-verified green on ops_dev.)
+- **`sql/checks/check_residual_owner.sql`** (A1) — reports postgres-owned tcc functions/types (visibility, not fail-closed); run on the real codex clone in T7 Step 3 and record the result as a `Residual postgres-owned tcc functions/types: F / T` line in `SNAPSHOT_MANIFEST.md`. (Fixture-verified: 0/0.)
+- **A3 (done in merged code):** `restore_baseline.sh` has an EXIT trap removing `/tmp/restore.dump` on success OR failure — no proprietary catalog data left in container `/tmp` after a failed restore. (Fixture-verified: `TRAP_CLEANED`.)
 
 ## Self-Review
 
