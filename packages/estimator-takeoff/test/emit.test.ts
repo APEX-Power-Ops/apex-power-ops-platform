@@ -6,15 +6,15 @@ import type { ExtractionArtifact } from '../src/extraction/types'
 describe('runTakeoff + emitEnvelope (golden)', () => {
   const result = runTakeoff(fixture as ExtractionArtifact)
 
-  it('matches the two draw-out breakers; de-dups ACC across one-line + power-plan keeping BOTH sources', () => {
+  it('matches two draw-out breakers; de-dups ACC across one-line + power-plan keeping BOTH sources, no spurious question', () => {
     expect(result.matchedLines).toHaveLength(2)
     const refs = result.matchedLines.map((m) => m.ref)
     expect(refs.every((r) => r === 'Circuit Breaker LV - Draw-Out (LSIG)')).toBe(true)
     const acc = result.matchedLines.find((m) => m.line.signature.tag === 'ACC-1-09-FB')!
     expect(acc.qty).toBe(1)
     expect(acc.mountingBasis).toBe('hint')
-    const sheets = acc.line.sources.map((s) => s.sheet).sort()
-    expect(sheets).toEqual(['E01-11', 'E02-03D'])     // one-line + power-plan location both retained
+    expect(acc.line.sources.map((s) => s.sheet).sort()).toEqual(['E01-11', 'E02-03D'])
+    expect(result.operatorQuestions).toEqual([])     // the breaker-shaped power-plan row attached by tag, not questioned
   })
 
   it('groups scopes by electrical BLOCK (P1-110), not by sheet', () => {
@@ -37,5 +37,25 @@ describe('runTakeoff + emitEnvelope (golden)', () => {
   it('emitEnvelope fails closed (throws) when there are zero matched lines', () => {
     expect(() => emitEnvelope({ matchedLines: [], unmatchedCandidates: [], operatorQuestions: [] }, { projectNumber: 'X' }))
       .toThrow(/zero matched lines/)
+  })
+
+  it('does not fabricate a breaker line from a non-breaker carrying a frame/trip (MTS)', () => {
+    const art: ExtractionArtifact = { pdf: 'x', apparatus: [
+      { raw: 'MTS-2 800AF/800AT LSIG', tag: 'MTS-2', sheet: 'E01-11', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', busVoltageV: 480, block: 'P1-110' },
+    ] }
+    const r = runTakeoff(art)
+    expect(r.matchedLines).toHaveLength(0)
+    expect(r.operatorQuestions.length).toBeGreaterThan(0)
+  })
+
+  it('creates one scope per electrical block for same-spec devices in different blocks', () => {
+    const art: ExtractionArtifact = { pdf: 'x', apparatus: [
+      { raw: 'M1-GB 4000AF/4000AT LSIG', tag: 'M1-GB', sheet: 'E01-11', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', busVoltageV: 480, block: 'P1-110', mountingHint: 'draw_out' },
+      { raw: 'M2-GB 4000AF/4000AT LSIG', tag: 'M2-GB', sheet: 'E01-11', page: 1, bbox: [2, 2, 3, 3], evidence: 'one-line', busVoltageV: 480, block: 'P2-110', mountingHint: 'draw_out' },
+    ] }
+    const r = runTakeoff(art)
+    expect(r.matchedLines).toHaveLength(2)
+    const { envelope } = emitEnvelope(r, { projectNumber: 'X' })
+    expect(envelope.scopes.map((s) => s.name).sort()).toEqual(['Block P1-110', 'Block P2-110'])
   })
 })

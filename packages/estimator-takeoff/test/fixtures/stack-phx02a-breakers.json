@@ -7,7 +7,7 @@
       "page": 11, "bbox": [300, 60, 360, 75], "evidence": "one-line", "busVoltageV": 480, "block": "P1-110" },
     { "raw": "ACC-1-09-FB 800AF/800AT LSIGE", "tag": "ACC-1-09-FB", "sheet": "E01-11",
       "page": 11, "bbox": [886, 491, 944, 501], "evidence": "one-line", "busVoltageV": 480, "block": "P1-110", "mountingHint": "draw_out" },
-    { "raw": "ACC-1-09 (location)", "tag": "ACC-1-09-FB", "sheet": "E02-03D",
+    { "raw": "ACC-1-09-FB", "tag": "ACC-1-09-FB", "sheet": "E02-03D",
       "page": 38, "bbox": [644, 1668, 686, 1678], "evidence": "power-plan", "block": "P1-110" }
   ]
 }

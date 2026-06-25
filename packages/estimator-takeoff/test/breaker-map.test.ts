@@ -19,6 +19,9 @@ describe('matchBreaker', () => {
   it('maps LV draw-out LS/LSI (no G) to the LS/LSI ref', () => {
     expect(matchBreaker({ ...base, functions: ['L', 'S', 'I'] })).toBe('Circuit Breaker LV - Draw-Out (LS/LSI)')
   })
+  it('maps LV molded_case to the molded-case ref', () => {
+    expect(matchBreaker({ ...base, mounting: 'molded_case', functions: [] })).toBe('Circuit Breaker LV - Molded Case Thermal/Mag')
+  })
   it('maps an MV vacuum breaker', () => {
     expect(matchBreaker({ ...base, voltageClass: 'MV', mounting: 'unknown', mvType: 'vacuum' }))
       .toBe('Circuit Breaker MV - Vacuum Bkr')
@@ -27,11 +30,15 @@ describe('matchBreaker', () => {
     expect(matchBreaker({ ...base, mounting: 'unknown' })).toBeNull()
     expect(matchBreaker({ ...base, voltageClass: 'MV', mounting: 'unknown', mvType: 'unknown' })).toBeNull()
   })
+  it('does NOT price a power-breaker construction when trip functions are unknown (fail-closed)', () => {
+    expect(matchBreaker({ ...base, mounting: 'draw_out', functions: [] })).toBeNull()
+    expect(matchBreaker({ ...base, mounting: 'insulated_case', functions: [] })).toBeNull()
+  })
   it('returns null for an unmappable signature (HV, no type)', () => {
     expect(matchBreaker({ ...base, voltageClass: 'HV', mounting: 'unknown' })).toBeNull()
   })
   it('has all 12 breaker rules and every ref resolves in the canonical catalog', () => {
-    expect(BREAKER_MAP).toHaveLength(12)                                 // guards against an emptied table
+    expect(BREAKER_MAP).toHaveLength(12)
     for (const rule of BREAKER_MAP) expect(resolver.tryResolve(rule.ref)).not.toBeNull()
   })
 })
