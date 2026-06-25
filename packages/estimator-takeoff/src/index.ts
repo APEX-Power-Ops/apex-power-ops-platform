@@ -1,4 +1,6 @@
 export { runTakeoff, emitEnvelope } from './emit/emit'
+export { assessApparatus, normalizeApparatus } from './signature/normalize'
+export type { ApparatusAssessment } from './signature/normalize'
 export type { ExtractedApparatus, ExtractionArtifact } from './extraction/types'
-export type { ApparatusSignature, VoltageClass } from './signature/types'
+export type { ApparatusSignature, VoltageClass, MountingBasis } from './signature/types'
 export type { TakeoffResult, MatchedLine, UnmatchedCandidate, OperatorQuestion } from './buckets/types'

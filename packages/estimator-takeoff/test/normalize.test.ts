@@ -1,47 +1,98 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeApparatus } from '../src/signature/normalize'
+import { normalizeApparatus, assessApparatus } from '../src/signature/normalize'
 import type { ExtractedApparatus } from '../src/extraction/types'
 
 const mk = (raw: string, v?: number): ExtractedApparatus => ({
   raw, tag: 'X', sheet: 'E01-11', page: 11, bbox: [0, 0, 1, 1], evidence: 'one-line', busVoltageV: v,
 })
 
-describe('normalizeApparatus', () => {
-  it('parses frame/trip and LSIG functions on a 480V draw-out breaker', () => {
+describe('normalizeApparatus — parse', () => {
+  it('parses frame/trip and LSIG functions on a 480V breaker', () => {
     const s = normalizeApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480))!
     expect(s.voltageClass).toBe('LV')
     expect(s.frameA).toBe(4000)
     expect(s.tripA).toBe(4000)
     expect(s.functions).toEqual(['L', 'S', 'I', 'G'])
   })
-  it('parses LS/LSI subset and trailing E (ground-fault sensing) as G', () => {
-    const s = normalizeApparatus(mk('ACC-1-09-FB 800AF/800AT LSIGE', 480))!
-    expect(s.functions).toEqual(['L', 'S', 'I', 'G'])
+  it('parses LSIGE (trailing E ground-fault sensing → G)', () => {
+    expect(normalizeApparatus(mk('ACC-1-09-FB 800AF/800AT LSIGE', 480))!.functions).toEqual(['L', 'S', 'I', 'G'])
   })
-  it('classifies molded-case from the MCB/molded keyword', () => {
-    expect(normalizeApparatus(mk('LP-1 MCB 100AF/20AT', 480))!.mounting).toBe('panelboard')
+  it('parses a 5-digit frame without truncation', () => {
+    const s = normalizeApparatus(mk('TIE-FB 10000AF/8000AT LSIG', 480))!
+    expect(s.frameA).toBe(10000)
+    expect(s.tripA).toBe(8000)
   })
-  it('classifies an MV vacuum breaker', () => {
-    const s = normalizeApparatus(mk('MV-SWGR-1 VACUUM 1200A', 13800)!)!
-    expect(s.voltageClass).toBe('MV')
-    expect(s.mvType).toBe('vacuum')
+  it('treats a frame-only label (no GB/FB tag) as a breaker', () => {
+    expect(normalizeApparatus(mk('MAIN 4000AF/4000AT LSIG', 480))).not.toBeNull()
   })
   it('returns null for a non-breaker label', () => {
     expect(normalizeApparatus(mk('TX-P1-110 535KVA', 480))).toBeNull()
   })
+  it('classifies an MV vacuum breaker', () => {
+    const s = normalizeApparatus(mk('MV-SWGR-1 VACUUM 1200A', 13800))!
+    expect(s.voltageClass).toBe('MV')
+    expect(s.mvType).toBe('vacuum')
+  })
+})
 
-  // construction (mounting) resolution — operator-ratified precedence
-  it('uses an explicit mountingHint before any text parsing or fallback', () => {
+describe('normalizeApparatus — trip functions are text-only (no fabrication)', () => {
+  it('does not fabricate G from manufacturer/label noise like "GE"', () => {
+    const s = normalizeApparatus(mk('ACME-FB GE 800AF/800AT', 480))!
+    expect(s.functions).toEqual([])
+    expect(s.mounting).toBe('unknown')          // no real G ⇒ the 800AF baseline must NOT fire
+    expect(s.mountingBasis).toBe('none')
+  })
+  it('does not fabricate functions from "SE"', () => {
+    expect(normalizeApparatus(mk('PNL-SE 600AF/600AT', 480))!.functions).toEqual([])
+  })
+})
+
+describe('normalizeApparatus — construction (mounting) + provenance', () => {
+  it('uses an explicit mountingHint first (basis = hint)', () => {
     const s = normalizeApparatus({ ...mk('HF-P1-110-01-FB 400AF/300AT LSI', 480), mountingHint: 'insulated_case' })!
     expect(s.mounting).toBe('insulated_case')
+    expect(s.mountingBasis).toBe('hint')
   })
-  it('falls back to draw_out for a large-frame (>=800AF) LSIG breaker with no construction evidence', () => {
-    expect(normalizeApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480))!.mounting).toBe('draw_out')
+  it('reads molded_case from MCCB (basis = text)', () => {
+    const s = normalizeApparatus(mk('PNL-1 MCCB 250AF/250AT', 480))!
+    expect(s.mounting).toBe('molded_case')
+    expect(s.mountingBasis).toBe('text')
   })
-  it('stays unknown (fail-closed) for a 400AF LSI breaker with no construction evidence', () => {
-    expect(normalizeApparatus(mk('HF-P1-110-01-FB 400AF/300AT LSI', 480))!.mounting).toBe('unknown')
+  it('reads panelboard from MCB (basis = text)', () => {
+    expect(normalizeApparatus(mk('LP-1 MCB 100AF/20AT', 480))!.mounting).toBe('panelboard')
   })
-  it('does NOT fall back to draw_out for a large frame WITHOUT ground-fault (LS/LSI only)', () => {
+  it('applies the >=800AF+G estimating baseline (basis = estimating_baseline)', () => {
+    const s = normalizeApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480))!
+    expect(s.mounting).toBe('draw_out')
+    expect(s.mountingBasis).toBe('estimating_baseline')
+  })
+  it('stays unknown (fail-closed) for a 400AF LSI breaker with no evidence', () => {
+    const s = normalizeApparatus(mk('HF-P1-110-01-FB 400AF/300AT LSI', 480))!
+    expect(s.mounting).toBe('unknown')
+    expect(s.mountingBasis).toBe('none')
+  })
+  it('does NOT apply the baseline for a large frame without ground-fault (LS/LSI)', () => {
     expect(normalizeApparatus(mk('BIG-FB 1600AF/1600AT LSI', 480))!.mounting).toBe('unknown')
+  })
+  it('does not treat an incidental "DO"/"EO" token as real construction', () => {
+    expect(normalizeApparatus(mk('PANEL-DO-3 200AF/200AT LSI', 480))!.mounting).toBe('unknown')
+  })
+})
+
+describe('assessApparatus — first-class parser-failure questions', () => {
+  it('surfaces a breaker-shaped row with no voltage as a question (not a silent drop)', () => {
+    const a = assessApparatus(mk('MSB-GB 4000AF/4000AT LSIG'))   // no busVoltageV
+    expect(a.signature).toBeNull()
+    expect(a.isBreakerShaped).toBe(true)
+    expect(a.questions).toHaveLength(1)
+  })
+  it('flags a mountingHint that conflicts with the label text (hint still wins)', () => {
+    const a = assessApparatus({ ...mk('PNL-1 MCCB 250AF/250AT', 480), mountingHint: 'draw_out' })
+    expect(a.signature!.mounting).toBe('draw_out')
+    expect(a.signature!.mountingBasis).toBe('hint')
+    expect(a.questions.some((qq) => /conflict/i.test(qq.question))).toBe(true)
+  })
+  it('does not question a clean device', () => {
+    expect(assessApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480)).questions).toEqual([])
   })
 })
