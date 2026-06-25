@@ -567,7 +567,12 @@ set -euo pipefail
 SANDBOX_HOME=/home/olares/.breaker-codex-home
 CODEX_PATH=/home/olares/.nvm/versions/node/v20.20.2/bin:/usr/bin:/bin
 install -d -m 700 "$SANDBOX_HOME"
-# 1. codex resolves under the sanitized PATH
+# Bridge codex's OWN auth (real ~/.codex / $CODEX_HOME) into the sandbox HOME so codex can
+# authenticate under env -i. This is codex's credential, NOT a DB/prod cred — nothing else from the
+# real HOME (.pgpass, shell rc, infra/.env) is exposed.
+REAL_CODEX="${CODEX_HOME:-$HOME/.codex}"
+if [ -e "$REAL_CODEX" ]; then ln -sfn "$REAL_CODEX" "$SANDBOX_HOME/.codex"; fi
+# 1. codex resolves + authenticates under the sanitized PATH+HOME
 env -i PATH="$CODEX_PATH" HOME="$SANDBOX_HOME" codex --version >/tmp/codex_ver 2>&1 \
   || { echo "FAIL: codex --version"; cat /tmp/codex_ver; exit 1; }
 # 2. no-op exec under full sanitization (read-only sandbox, trivial prompt)
