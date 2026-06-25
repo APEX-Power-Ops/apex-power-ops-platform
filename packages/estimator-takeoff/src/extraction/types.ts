@@ -18,5 +18,6 @@ export interface ExtractedApparatus {
 export interface ExtractionArtifact {
   pdf: string
   extractedAt?: string                          // ISO string stamped by drawing-nav (string, not Date)
+  profileWarnings?: string[]                    // legend-fallback / unknown-title notices from the extractor (see Plan 2a)
   apparatus: ExtractedApparatus[]
 }
