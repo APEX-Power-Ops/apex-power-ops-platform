@@ -90,4 +90,17 @@ describe('assessApparatus — first-class questions / non-breaker handling', () 
   it('does not question a clean device', () => {
     expect(assessApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480)).questions).toEqual([])
   })
+  it('surfaces an exotic-suffix breaker candidate (no GB/FB hint, no AF/AT, no voltage) via candidateKind', () => {
+    const a = assessApparatus({
+      raw: 'DH110-UB', tag: 'DH110-UB', sheet: 'E01-30', page: 18, bbox: [1200, 800, 1280, 812],
+      evidence: 'one-line', candidateKind: 'breaker',
+    })
+    expect(a.isBreakerShaped).toBe(true)
+    expect(a.signature).toBeNull()                 // no voltage → not classifiable
+    expect(a.questions.length).toBeGreaterThan(0)  // surfaced, not dropped
+  })
+  it('without candidateKind, the same exotic-suffix row is not breaker-shaped (drops, pre-fix behavior)', () => {
+    const a = assessApparatus({ raw: 'DH110-UB', tag: 'DH110-UB', sheet: 'E01-30', page: 18, bbox: [0, 0, 1, 1], evidence: 'one-line' })
+    expect(a.isBreakerShaped).toBe(false)
+  })
 })

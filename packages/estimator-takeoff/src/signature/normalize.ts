@@ -77,7 +77,7 @@ export function assessApparatus(x: ExtractedApparatus): ApparatusAssessment {
     }
     return { signature: null, questions: [], isBreakerShaped: false }
   }
-  if (!looksLikeBreaker(x.raw)) return { signature: null, questions: [], isBreakerShaped: false }
+  if (x.candidateKind !== 'breaker' && !looksLikeBreaker(x.raw)) return { signature: null, questions: [], isBreakerShaped: false }
 
   const questions: OperatorQuestion[] = []
   const voltageClass = classifyVoltage(x.busVoltageV)
