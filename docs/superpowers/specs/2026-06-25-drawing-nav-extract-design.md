@@ -1,181 +1,200 @@
 # drawing-nav `extract` — design (estimator-takeoff Plan 2, V1)
 
-**Status:** design / brainstorm output, 2026-06-25 (rev 2 — folds 4 operator spec-review findings). Feeds the
-hardened breaker engine `packages/estimator-takeoff` (Plan 1, merged to main `3a14e3cc`). This is the PRODUCER
-half of the seam Plan 1 left open.
+**Status:** design / brainstorm output, 2026-06-25 (rev3 — folds the cross-engine IRP findings, incl. the
+structural producer→consumer seam fix). Feeds the hardened breaker engine `packages/estimator-takeoff`
+(Plan 1, merged to main `3a14e3cc`). V1 spans the PRODUCER (`drawing-nav extract`) **and a minimal CONSUMER
+contract change** the producer requires.
 
 ## 1. Goal
 
 A `drawing-nav extract <pdf>` command that turns a real electrical drawing package (e.g. STACK PHX02A
 Addendum 4 ELEC) into the breaker engine's `ExtractionArtifact` JSON — so Plan 1 runs end-to-end on real
-drawings instead of a hand-built fixture. It is a deterministic, **legend-aware** extractor; vision is used
-only to resolve disputes at Gate 1, never as the primary reader.
+drawings instead of a hand-built fixture. Deterministic, **legend-aware**; vision only at Gate-1 disputes.
 
 ## 2. Scope (V1 — deliberately tight)
 
-**In:** LV power breakers on the **one-line block sheets** — primarily the `E01-1x` primary/distribution
-blocks (P1-110…P7-210), plus the same-shaped Reserve (`E01-10`), Mech-gallery (`E01-30/31`), and House
-(`E01-50/51`) one-lines. Block is taken from the sheet title.
+**In:** LV power breakers on the **one-line block sheets** — primarily `E01-1x` primary/distribution blocks
+(P1-110…P7-210), plus the same-shaped Reserve (`E01-10`), Mech-gallery (`E01-30/31`), House (`E01-50/51`).
+Plus the **minimal engine-side change** in §3.2 (the producer is useless without it).
 
-**Deferred (later slices):** MV mains (`E01-01/02`), panel-schedule MCBs (`E05-*`), and
-construction-from-symbol vision. These are not in V1.
+**Deferred (later slices):** MV mains (`E01-01/02`), panel-schedule MCBs (`E05-*`), construction-from-symbol
+vision, per-sub-block split of the Reserve sheet.
 
-**Non-goals (permanent for the extractor):** it never prices, feathers, approves, or counts — it produces a
-candidate inventory. The engine de-dups, matches, fails closed, and surfaces questions.
+**Non-goals (permanent):** the extractor never prices, feathers, approves, or counts — it produces a candidate
+inventory. The engine de-dups, matches, fails closed, surfaces questions.
 
-## 3. The seam / output contract
+## 3. The seam / contract
 
-The extractor emits a single JSON `ExtractionArtifact` matching the engine's TypeScript contract
-(`packages/estimator-takeoff/src/extraction/types.ts`) — the only cross-language artifact.
-
-**V1 contract addition (finding 1):** add `profileWarnings?: string[]` to `ExtractionArtifact` in the TS
-contract (and to `extraction.test.ts`), so the legend-fallback warning lives *inside* the contract rather
-than as an undeclared top-level field. The implementation plan includes this one-field TS edit + test.
+### 3.1 The artifact (producer output)
+A single JSON `ExtractionArtifact` matching the engine's TS contract
+(`packages/estimator-takeoff/src/extraction/types.ts`). Two **V1 additive contract fields**:
 
 ```jsonc
 {
   "pdf": "<filename>",
   "extractedAt": "<ISO string>",
-  "profileWarnings": [],                          // V1 addition; e.g. ["legend E00-01 unparsed — default profile assumed"]
+  "profileWarnings": [],                          // V1 addition: legend-fallback notices, e.g. ["legend E00-01 unparsed — default profile assumed"]
   "apparatus": [
-    {
-      "raw": "ACC-1-09-FB 800AF/800AT LSIGE",     // joined label column text
-      "tag": "ACC-1-09-FB",                        // device identity (legend-classified breaker)
-      "sheet": "E01-11",
-      "page": 11,
-      "bbox": [886, 491, 944, 534],                // the device label column bbox (PDF points)
-      "evidence": "one-line",                      // 'one-line' | 'panel-schedule' | 'switchgear-schedule' | 'power-plan'
-      "busVoltageV": 480,                          // ONLY when unambiguous (see 4.3); else OMITTED (key absent)
-      "block": "P1-110"                            // normalized from sheet title (see 4.3)
-      // mountingHint is OMITTED in V1 (no explicit construction evidence is produced — see 4.3, finding 4).
-      // It appears ONLY when explicit evidence exists; the extractor never sets it from a role suffix.
+    {                                             // Pass-A row: clean, fully-rated (no candidateKind needed)
+      "raw": "ACC-1-09-FB 800AF/800AT LSIGE",
+      "tag": "ACC-1-09-FB",
+      "sheet": "E01-11", "page": 11, "bbox": [886, 491, 944, 534],
+      "evidence": "one-line",
+      "busVoltageV": 480,                          // only when unambiguous (§4.3); else key OMITTED
+      "block": "P1-110"
+      // mountingHint OMITTED in V1 (set only on explicit construction evidence; never from a role suffix)
+    },
+    {                                             // Pass-B row: breaker-suffix token with no AF/AT (safety net)
+      "raw": "DH110-UB",
+      "tag": "DH110-UB",
+      "sheet": "E01-30", "page": 18, "bbox": [1200, 800, 1280, 812],
+      "evidence": "one-line",
+      "block": "DH110",
+      "candidateKind": "breaker"                   // V1 addition: SURFACING-ONLY marker (see 3.2)
+      // no busVoltageV, no frame/trip → the engine must QUESTION it, not drop it
     }
   ]
 }
 ```
+`page` (required), `sheet`, `raw`, `bbox` (4-tuple, PDF points), `evidence` (∈ `EvidenceKind`) are always
+present; `tag/busVoltageV/block/mountingHint/candidateKind` are optional.
 
-**Fidelity rule:** the extractor's output must satisfy the engine's `extraction.test.ts` shape. A TS-side
-contract test validates a checked-in real extractor sample against `ExtractionArtifact` (incl. `profileWarnings`).
+### 3.2 Consumer-side change (V1) — `candidateKind` is the seam fix
+**Why required:** the engine's `looksLikeBreaker`/`BREAKER_HINT` only recognizes `GB|FB` (+ MCB/MCCB/ACB/VCB/
+keywords). A Pass-B candidate with any *other* profile suffix (`UB`, `GMB`, `MBB`, `MIB`, `MB`, `LB`, …) and no
+AF/AT would fail `looksLikeBreaker` → `assessApparatus` returns `{signature:null, questions:[], isBreakerShaped:false}`
+→ `runTakeoff` surfaces nothing → **the breaker silently vanishes** (the exact false-green class Plan 1 hardened
+against). A perfect extractor still loses the row. So V1 adds a marker the engine honors.
+
+**`candidateKind?: 'breaker'` — semantics (load-bearing, surfacing-only):**
+- Add `candidateKind?: 'breaker'` to `ExtractedApparatus`.
+- `assessApparatus` treats `x.candidateKind === 'breaker'` as a breaker-shaped signal: the gate becomes
+  "is it NON_BREAKER? else `candidateKind==='breaker' || looksLikeBreaker(raw)`" → so an exotic-suffix Pass-B
+  candidate is breaker-shaped and its missing voltage/frame/functions become **operatorQuestions**.
+- It is **surfacing-only.** It must NEVER imply mounting, functions, frame, voltage, or catalog eligibility.
+  `matchBreaker` is unchanged and still requires the real normalized fields → a `candidateKind:'breaker'`
+  row with incomplete data resolves to `mounting:'unknown'`/no functions → `matchBreaker` returns null →
+  it lands in `unmatchedCandidates` / as a question, **never a matched or priced line.**
+- It does **not** override `NON_BREAKER`: a row matching a non-breaker token (SPD/PQM/ATS/…) is still excluded/
+  questioned by the engine's existing rule even if mis-marked — `candidateKind` only rescues rows that are
+  otherwise unrecognized, never launders an exclusion.
+
+**Producer side:** the extractor sets `candidateKind:'breaker'` on Pass-B candidates only (profile-suffix
+tokens with no AF/AT). Pass-A rows (with AF/AT) don't need it; do not set it on non-breaker tokens.
+
+**Fidelity rule:** the TS-side contract test validates a checked-in real extractor sample against
+`ExtractionArtifact` incl. `profileWarnings` and `candidateKind`.
 
 ## 4. Architecture — components (each independently testable)
 
 ```
 drawing-nav extract <pdf>
   1. legend-profile      E00-01 → PackageProfile (suffix dict, exclusions, trip grammar, title hints)
-  2. sheet-selector      index → the in-scope LV one-line block sheets (+ normalized block + voltage from title/context)
-  3. device-discovery    per sheet: PyMuPDF words → (a) AF/AT-anchored columns + (b) legend-suffix candidates
-  4. field-assembly      cluster → {raw, tag, frameA?, tripA?, functions, bbox, evidence, block, busVoltageV?}
+  2. sheet-selector      index → in-scope LV one-line block sheets (+ normalized block + voltage from title/context)
+  3. device-discovery    per sheet: PyMuPDF words → (A) AF/AT-anchored columns + (B) legend-suffix candidates
+  4. field-assembly      → {raw, tag, frameA?, tripA?, functions, bbox, evidence, block, busVoltageV?, candidateKind?}
   5. location-pass       power-plan sheets → tag-only location rows (evidence='power-plan')
-  6. emit                ExtractionArtifact JSON (+ profileWarnings) (stdout or --out file)
+  6. emit                ExtractionArtifact JSON (+ profileWarnings)
 ```
 
 ### 4.1 Legend-profile (guardrail 1)
-Parse `E00-01` (LEGEND AND ABBREVIATIONS) into a **PackageProfile** so the extractor adapts to each firm's
-drawing standard rather than hard-coding STACK's:
-- **breaker role suffixes** (the BREAKER IDENTIFIER block): `FB, GB, GMB, UB, MBB, MIB, MCB, MB, LB, …`
-- **non-breaker / device exclusions** (abbreviations): `SPD, PQM, ATS, STS, TX, PDU, UPS, METER, …`
-- **trip grammar** (the BREAKER KEY): `AF`=frame, `AT`=trip; trip-unit letters `L/S/I/G` (E→G handled by engine)
-- **sheet-title conventions** for block + voltage hints
-If `E00-01` can't be confidently parsed, fall back to a built-in default profile AND append a message to
-`profileWarnings` (the §3 contract field) so Gate 1 knows the dictionary was assumed.
+Parse `E00-01` into a **PackageProfile** (adapts to each firm's standard):
+- **breaker role suffixes** (BREAKER IDENTIFIER): `FB, GB, GMB, UB, MBB, MIB, MCB, MB, LB, …`
+- **non-breaker exclusions** (abbreviations): `SPD, PQM, ATS, STS, TX, PDU, UPS, METER, …`
+- **trip grammar** (BREAKER KEY): `AF`=frame, `AT`=trip; `L/S/I/G` (E→G handled by engine)
+- **sheet-title block/voltage hints**
+If `E00-01` can't be parsed confidently → built-in default profile + a `profileWarnings` entry.
 
-### 4.2 Device discovery — two passes (finding 2: no silent drops)
-On a one-line sheet the breaker label is a **vertical text column at ~constant x**, anchored by an AF/AT pair:
-```
-(886,491) ACC-1-09-FB      tag (above)
-(886,502) 800AF            frame  ← anchor
-(886,513) 800AT            trip   ← anchor
-(886,524) LSIGE            functions (below)
-```
-- **Pass A — AF/AT-anchored (primary):** find `\d{2,6}AF`/`\d{2,6}AT` token pairs (same x, adjacent y); each
-  pair is a breaker anchor → gather tokens within an x-tolerance band, ordered by y, into the device column →
-  join into `raw`; tag = the column token whose suffix is in the profile's breaker-suffix set; `bbox` = the
-  column's union bbox; parse `frameA/tripA/functions`. Conductors (`1200-3-CU`) and meters lack an AF/AT pair
-  → self-excluded here.
-- **Pass B — legend-suffix candidates (safety net):** scan for tokens whose suffix is in the profile's
-  **breaker-suffix set** but that were NOT captured by any Pass-A column. Emit each as a breaker-shaped
-  candidate: `raw` + `tag` + `bbox`, **no `frameA/tripA`** (and functions only if present nearby). This gives
-  a tagged-but-no-rating breaker a discovery path — the engine then raises a frame/trip-parse question rather
-  than the device vanishing. **No token matching a breaker suffix is ever silently dropped.**
-Split tags (`ACC-1-10` + `-FB`) are re-joined within a column/candidate.
+### 4.2 Device discovery — two passes (no silent drops)
+A breaker label is a **vertical column at ~constant x**, anchored by an AF/AT pair.
+- **Pass A — AF/AT-anchored (primary):** find `\d{2,6}AF`/`\d{2,6}AT` pairs (same x, adjacent y); gather the
+  same-x column → `raw`; tag = column token whose suffix ∈ profile breaker-suffix set; parse
+  `frameA/tripA/functions`; `bbox` = column union. Conductors (`1200-3-CU`)/meters lack AF/AT → excluded.
+- **Pass B — legend-suffix candidates (safety net):** tokens whose suffix ∈ profile breaker-suffix set but NOT
+  captured by Pass A → emit `raw` + `tag` + `bbox` + **`candidateKind:'breaker'`**, no frame/trip. This gives a
+  tagged-but-unrated breaker a discovery path; the engine (via §3.2) questions it. **No breaker-suffix token
+  is silently dropped — by producer (Pass B) AND consumer (`candidateKind`).**
+Split tags (`ACC-1-10` + `-FB`) re-joined within a column/candidate.
 
 ### 4.3 Field assembly + guardrails
-- **tag / raw / frameA / tripA / functions** — from the column tokens (deterministic); frame/trip absent for
-  Pass-B candidates (→ engine question).
-- **block** (guardrail 4, finding 3) — normalized from the sheet title to a **stable key** (no punctuation/case
-  drift). Canonical V1 map:
+- **tag / raw / frameA / tripA / functions** — Pass-A from column tokens; Pass-B has no frame/trip.
+- **block** (guardrail 4) — normalized from the sheet title to a **stable key**, deterministically:
+  1. join the title's tokens (vector text may split it), 2. collapse whitespace, 3. case-fold,
+  4. replace any run of non-alphanumeric with a single `-` for codes / `_` for descriptors, 5. exact-match the
+  canonical map:
 
-  | Sheet | Title | `block` |
-  |-------|-------|---------|
+  | Sheet(s) | Title | `block` |
+  |----------|-------|---------|
   | E01-11…E01-17 | PRIMARY BLOCK P*n*-1*x*0 | `P1-110` … `P7-210` |
-  | E01-10 | RESERVE BLOCK R1-110/210 | `R1-110-210` (sheet covers both reserve blocks; per-sub-block split deferred) |
+  | E01-10 | RESERVE BLOCK R1-110/210 | `R1-110-210` (covers both; per-sub-block split deferred) |
   | E01-30 / E01-31 | MECH. GALLERY DISTRIBUTION — DH110 / DH210 | `DH110` / `DH210` |
   | E01-50 | HOUSE DISTRIBUTION — NON-CRITICAL | `HOUSE_NON_CRITICAL` |
   | E01-51 | HOUSE DISTRIBUTION — CRITICAL | `HOUSE_CRITICAL` |
 
-  Rule: prefer a `BLOCK <code>` token from the title (uppercased, spaces→`-`); else map the named distribution
-  to its canonical UPPER_SNAKE key as above. Unknown titles → `UNKNOWN_<sheetId>` + a `profileWarnings` note.
-- **busVoltageV** (guardrail 4) — set ONLY when unambiguous, by a deterministic sheet-level rule: if the sheet
-  carries **exactly one** LV bus-voltage label (<1000 V, e.g. `480/277V` → 480), assign that to every breaker
-  on the sheet; if the sheet carries **more than one** distinct voltage label, **omit** for all → the engine
-  raises a "missing voltage" question per device. (Per-device spatial bus association is deferred — omit beats guess.)
-- **mountingHint** (guardrails 2 & 3, finding 4) — **OMITTED in V1.** Never set from a role suffix. It is
-  populated only by explicit construction evidence (schedule text molded/ICCB/draw-out, a confident symbol
-  classification [deferred], or a Gate-1 human correction) — none of which V1 produces. So the engine's
-  `mountingBasis` baseline/question path stays honest (≥800AF+G→draw_out labelled `estimating_baseline`;
-  everything else unmatched + a question).
-- **evidence** = `one-line` for these sheets.
+  A `BLOCK <code>` token in the title is preferred (→ uppercased code); else the canonical UPPER_SNAKE key.
+  Unknown title → `UNKNOWN_<sheetId>` + a `profileWarnings` note. (Determinism is unit-tested with title variants.)
+- **busVoltageV** (guardrail 4) — deterministic sheet-level rule over **all** voltage labels on the sheet (LV
+  *and* MV): if the sheet carries **exactly one** voltage label and it is LV (<1000 V, e.g. `480/277V`→480),
+  assign it to every breaker on the sheet; if the sheet carries **more than one** distinct voltage label
+  (e.g. an MV incoming + the LV bus, the normal Primary-Block case once MV is present), or **zero** voltage
+  labels, **omit** `busVoltageV` for all → the engine raises a missing-voltage question per device. This
+  prevents broadcasting 480 V onto an MV device. (Per-device spatial bus association is deferred — omit > guess.)
+- **mountingHint** (guardrails 2 & 3) — **OMITTED in V1.** Never from a role suffix. Populated only by explicit
+  construction evidence (schedule text molded/ICCB/draw-out · confident symbol classification [deferred] ·
+  Gate-1 human correction) — none produced in V1. The engine's `mountingBasis` baseline/question path stays honest.
+- **evidence** = `one-line`.
 
 ### 4.4 Location pass (guardrail 5)
-Power-plan sheets (`E02-*`) carry device tags at physical locations, no ratings. Emit them as
-`evidence: 'power-plan'`, tag-only, **no busVoltageV**. The engine associates them BY TAG to an authoritative
-one-line row (preserving the location source) and NEVER counts a device seen only on a power plan.
+Power-plan sheets (`E02-*`): tag-only rows, `evidence:'power-plan'`, no `busVoltageV`. The engine associates
+them BY TAG to an authoritative one-line row (preserving the location source) and NEVER counts a power-plan-only
+device.
 
 ## 5. Data flow
-
-`drawing-nav extract Addendum4.pdf --out takeoff.json` → scp `takeoff.json` to the host →
-`runTakeoff(artifact)` → `{ matchedLines, unmatchedCandidates, operatorQuestions }` → `emitEnvelope` →
-priced `EstimateEnvelope`. The first real end-to-end run: the P1-110 one-line → matched breakers + the
-honest unmatched/question set.
+`drawing-nav extract Addendum4.pdf --out takeoff.json` → scp to host → `runTakeoff` → 3 buckets → `emitEnvelope`
+→ priced envelope. First real run: P1-110 one-line → matched breakers + honest unmatched/questions.
 
 ## 6. Error handling (fail-open-to-question, never fabricate)
-
-The extractor's bias mirrors the engine's: when a field can't be determined honestly, **omit it and let the
-engine surface a question** — never guess. Specifically: ambiguous voltage → omit; a breaker-shaped token with
-no AF/AT → Pass-B candidate (raw+bbox, no rating) so the engine questions it (§4.2, finding 2); legend unparsed
-→ default profile + `profileWarnings` note; a tagged row that matches no breaker suffix and no exclusion → emit
-it anyway (the engine fail-closes non-breakers). The extractor must not drop a breaker-suffix token silently.
+Omit-and-question over guess: ambiguous/zero/multi voltage → omit; breaker-suffix token with no AF/AT → Pass-B
+`candidateKind:'breaker'` candidate (engine questions it via §3.2); legend unparsed → default profile +
+`profileWarnings`; a token matching neither a breaker suffix nor an exclusion → emit anyway (engine fail-closes).
+No breaker-suffix token is dropped on either side of the seam.
 
 ## 7. Testing
 
-- **Legend-profile unit tests** — `E00-01` text → expected suffix/exclusion/trip-grammar profile; an unparseable
-  legend → default profile + a `profileWarnings` entry.
-- **Discovery unit tests** — synthetic word lists: the stacked-column convention, split tags, a conductor
-  decoy (no row), two close columns (two devices), AND a tagged breaker-suffix token with **no AF/AT** → a
-  Pass-B candidate with raw+bbox and no frame/trip.
-- **Block-normalization tests** — the real `E01-1x`/Reserve/Mech/House titles → the canonical keys in the §4.3
-  table; an unknown title → `UNKNOWN_<sheetId>` + warning.
-- **Voltage tests** — single-LV-bus sheet → 480; multi-voltage sheet → omitted.
-- **Contract test (TS side)** — a checked-in real extractor sample conforms to `ExtractionArtifact` (incl.
-  `profileWarnings`).
-- **Golden end-to-end** — `extract` the real `E01-11` (P1-110) → JSON → engine `runTakeoff` → assert the known
-  breakers (MSB-P1-110-GB 4000AF main, the ACC/MDP/MERDP feeders) land matched, the small/ambiguous ones land
-  in unmatched/questions, a no-rating Pass-B candidate (if any) lands as a question, and the envelope emits
-  with no error findings. This is the real-data proof.
+**Engine (TS, consumer change):**
+- `candidateKind` surfacing — `assessApparatus({raw:'DH110-UB', candidateKind:'breaker', no busVoltageV})` →
+  `isBreakerShaped:true`, a missing-voltage question, `signature:null`.
+- **Orphan-suffix golden (req 3 / finding 3)** — `runTakeoff` on an artifact whose only `DH110-UB`
+  (`candidateKind:'breaker'`, no AF/AT, no voltage) has a tag matching NOTHING counted → it produces an
+  **operatorQuestion** (proves it neither vanishes nor folds into a location).
+- **Surfacing-only invariant (req 4)** — a `candidateKind:'breaker'` row with incomplete data never appears in
+  `matchedLines` and never reaches the envelope (assert `matchedLines` excludes it; it's an unmatched/question).
+- `candidateKind` does not override `NON_BREAKER` — a `candidateKind:'breaker'` row whose raw is an SPD/ATS
+  still excludes/questions, never matches.
+- Contract test (`packages/estimator-takeoff/test/extraction.test.ts` — the real sibling-`test/` file) asserts
+  `profileWarnings` is `string[]` when present and `candidateKind` ∈ {`'breaker'`, undefined}; new fixture
+  `test/fixtures/stack-phx02a-extract.json`.
+
+**Extractor (Python):**
+- Legend-profile: `E00-01` → expected profile; unparseable → default + `profileWarnings`.
+- Discovery: stacked column, split tags, conductor decoy (no row), two close columns (two devices), AND a
+  breaker-suffix token with no AF/AT → a Pass-B `candidateKind:'breaker'` candidate.
+- **Block normalization determinism (req 5 / finding 5)** — 2–3 punctuation/spacing/em-dash/line-wrapped
+  variants of each real title → identical key.
+- **Voltage (req 6 / finding 4)** — an explicit **single-voltage Primary-Block** sheet → 480 broadcast (cannot
+  pass by accident); a sheet with LV+MV labels → omitted; zero voltage labels → omitted.
+
+**Golden end-to-end:** `extract` the real `E01-11` → JSON → engine → known mains/feeders matched, ambiguous ones
+in unmatched/questions, the envelope emits with no error findings. Real-data proof.
 
 ## 8. Code home
-
-The extractor extends the existing **`drawing-nav`** tool (`C:\Users\jjswe\Tools\drawing-nav\drawing_nav.py`,
-Windows/Python/PyMuPDF) with an `extract` subcommand — already built, proven on this set, owns the PDF
-vector-text layer. The spec/plan governance docs live in the canonical monorepo
-(`apex-power-ops-platform/docs/superpowers/`), consistent with Plan 1. The one TS change V1 requires
-(`profileWarnings?: string[]` on `ExtractionArtifact` + contract test) is in the monorepo. **Open decision
-(deferred):** whether to relocate drawing-nav into the monorepo (`tools/`) for SSoT vs. leave it standalone —
-not required for V1.
+Producer: extend `drawing-nav` (`C:\Users\jjswe\Tools\drawing-nav\drawing_nav.py`, Windows/Python/PyMuPDF) with
+an `extract` subcommand. Consumer change (`candidateKind?: 'breaker'` + `profileWarnings?: string[]` on
+`ExtractedApparatus`/`ExtractionArtifact`, the `assessApparatus` gate, + tests) lands in the monorepo. Both on
+branch `estimator-takeoff/extract` (off main). **Open decision (deferred):** relocate drawing-nav into the
+monorepo (`tools/`) vs. standalone — not required for V1.
 
 ## 9. Out of scope → later slices (tracked)
-
-MV mains extraction; panel-schedule (`E05-*`) MCB extraction; construction-from-symbol vision; per-sub-block
-split of the Reserve sheet; the spec-parser + Gate-2 scope profile; the full Gate-1/Gate-2 UI (V1 emits JSON
-for the existing two-gate review, with `find --render` crops as the dispute tool); SKILL.md orchestration
-tying drawing-nav (Windows) ↔ engine (Olares).
+MV mains; panel-schedule (`E05-*`) MCBs; construction-from-symbol vision; per-sub-block Reserve split; the
+spec-parser + Gate-2 scope profile; full Gate-1/2 UI (V1 emits JSON for the existing two-gate review, `find
+--render` crops as dispute tool); SKILL.md orchestration (drawing-nav ↔ engine).
