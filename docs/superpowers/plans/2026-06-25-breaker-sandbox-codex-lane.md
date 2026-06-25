@@ -470,11 +470,28 @@ SU -d postgres -c "create database \"$CLONE_DB\" template \"$BASELINE_DB\";"
 SU -d "$CLONE_DB" -c "revoke connect on database \"$CLONE_DB\" from public;"
 SU -d "$CLONE_DB" -c "grant connect on database \"$CLONE_DB\" to \"$CODEX_ROLE\";"
 SU -d "$CLONE_DB" -c "grant usage on schema tcc to \"$CODEX_ROLE\";"
-# clone-local ownership transfer: codex owns every object originally owned by postgres in this DB
-# (owners are RLS-exempt on their own tables -> full read/write/DDL without any cluster bypass)
-SU -d "$CLONE_DB" -c "reassign owned by postgres to \"$CODEX_ROLE\";"
+# clone-local ownership transfer: codex owns every tcc object (owners are RLS-exempt on their own
+# tables -> full read/write/DDL without any cluster bypass). NOTE: `reassign owned by postgres`
+# is REJECTED on PG17 (the bootstrap postgres role also owns system-catalog objects), so transfer
+# ownership of just the tcc schema + its r/S/v objects via per-object ALTER OWNER (identical
+# semantic, scoped to tcc). Role name is guarded as a plain identifier (top of script).
+SU -d "$CLONE_DB" -c "alter schema tcc owner to \"$CODEX_ROLE\";"
+SU -d "$CLONE_DB" -c "
+do \$body\$
+declare r record;
+begin
+  for r in select n.nspname as ns, c.relname, c.relkind
+             from pg_class c join pg_namespace n on n.oid=c.relnamespace
+            where n.nspname='tcc' and c.relkind in ('r','S','v')
+              and pg_get_userbyid(c.relowner)='postgres' loop
+    execute format('alter %s %I.%I owner to ${CODEX_ROLE}',
+      case r.relkind when 'r' then 'table' when 'S' then 'sequence' when 'v' then 'view' end,
+      r.ns, r.relname);
+  end loop;
+end \$body\$;"
 echo "make_codex_clone OK: $CLONE_DB owned by $CODEX_ROLE"
 ```
+(Guard at the top of the script — `[[ "$CODEX_ROLE" =~ ^[a-z_][a-z0-9_]*$ ]] || exit 1` — makes the unquoted identifier interpolation fail-closed.)
 
 - [ ] **Step 4: Build the codex clone, run the ownership check, and prove write freedom + RLS-exempt reads as the codex role**
 
