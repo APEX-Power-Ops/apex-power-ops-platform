@@ -433,6 +433,9 @@ def pivot_to_intake_payload(env: dict) -> dict:
                 catalog_default_hours=_rrh,
                 line_uid=ln.get("line_uid"),
                 section=None,                                      # envelope has no section -> __ungrouped__ task
+                designation=ln.get("designation"),
+                notes=ln.get("notes"),
+                description=ln.get("description"),
             ))
         scopes.append(ScopeIn(scope_name=sc["name"], scope_type="OTHER", sort_order=0, quote=quote, lines=lines))
     return json.loads(json.dumps(dataclasses.asdict(IntakePayload(project=project, scopes=scopes)), default=str))
