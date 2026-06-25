@@ -1,7 +1,7 @@
 # @apex/estimator-core
 
 The contract-first core of the Apex-hosted estimator. Pure, dependency-light TypeScript
-(`node:crypto` only). Spec: `docs/spec/ESTIMATOR_SPEC_2026-06-22.md` (§9 steps 1–3).
+(isomorphic `@noble/hashes` sha256 — browser + Node safe). Spec: `docs/spec/ESTIMATOR_SPEC_2026-06-22.md` (§9 steps 1–3).
 
 ## What this package is
 

@@ -305,6 +305,93 @@ async function main() {
     },
   );
 
+  // Step 4: DB persistence — assert metadata actually landed in ops.scope_quote_line
+  // Skipped (with a warning) when OPS_DEV_DSN is unset so the smoke can run API-only.
+  await runStep(
+    `DB ops.scope_quote_line metadata persisted for line_uid='SC1:cap-1'`,
+    failures,
+    async () => {
+      const dsn = process.env.OPS_DEV_DSN;
+      if (!dsn) {
+        console.warn(
+          '  ESTIMATOR_NATIVE_SMOKE_WARN OPS_DEV_DSN unset — skipping DB persistence check',
+        );
+        return;
+      }
+      if (!runId) {
+        throw new Error('skipped — no run_id (step 1 failed)');
+      }
+
+      // Import child_process without a top-level import so the file parses even in
+      // environments that do not use this code path.
+      const { execFileSync } = await import('child_process');
+
+      // Query: join through scopes→projects to scope to our disposable project.
+      // Use $1 placeholder to pass PROJECT; pass literal string for line_uid
+      // (controlled constant — not user input).
+      const sql =
+        `select ql.designation, ql.notes, ql.description` +
+        ` from ops.scope_quote_line ql` +
+        ` join ops.scopes s   on s.id = ql.scope_id` +
+        ` join ops.projects p on p.id = s.project_id` +
+        ` where p.project_number = '${PROJECT.replace(/'/g, "''")}'` +
+        `   and ql.legacy_source_id = 'SC1:cap-1'`;
+
+      // Run psql; DSN passed as env var so it never appears in the args array.
+      let stdout;
+      try {
+        stdout = execFileSync(
+          'psql',
+          [dsn, '-t', '-A', '-F|', '-c', sql],
+          { encoding: 'utf8', timeout: 10000, env: { ...process.env } },
+        ).trim();
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        throw new Error(`psql query failed: ${msg}`);
+      }
+
+      if (!stdout) {
+        throw new Error(
+          `DB persistence check: no row found in ops.scope_quote_line for ` +
+          `project_number='${PROJECT}' and legacy_source_id='SC1:cap-1'`,
+        );
+      }
+
+      // Expected values — must exactly match the envelope submitted in Step 1.
+      const EXPECTED_DESIGNATION  = 'CAP-ATS-1';
+      const EXPECTED_NOTES        = 'Smoke test capacitor unit';
+      const EXPECTED_DESCRIPTION  = 'Capcitors per unit — estimator native smoke';
+
+      const parts = stdout.split('|');
+      if (parts.length !== 3) {
+        throw new Error(
+          `DB persistence check: unexpected row format (expected 3 pipe-separated fields): ${stdout.slice(0, 200)}`,
+        );
+      }
+      const [actualDesignation, actualNotes, actualDescription] = parts;
+
+      const mismatches = [];
+      if (actualDesignation !== EXPECTED_DESIGNATION) {
+        mismatches.push(`designation: expected="${EXPECTED_DESIGNATION}" actual="${actualDesignation}"`);
+      }
+      if (actualNotes !== EXPECTED_NOTES) {
+        mismatches.push(`notes: expected="${EXPECTED_NOTES}" actual="${actualNotes}"`);
+      }
+      if (actualDescription !== EXPECTED_DESCRIPTION) {
+        mismatches.push(`description: expected="${EXPECTED_DESCRIPTION}" actual="${actualDescription}"`);
+      }
+      if (mismatches.length > 0) {
+        throw new Error(
+          `DB persistence mismatch — ${mismatches.join('; ')}`,
+        );
+      }
+
+      console.log(
+        `  DB row confirmed: designation="${actualDesignation}" notes="${actualNotes}" description="${actualDescription}"`,
+      );
+    },
+  );
+
   // Summary
   if (failures.length > 0) {
     console.error(
