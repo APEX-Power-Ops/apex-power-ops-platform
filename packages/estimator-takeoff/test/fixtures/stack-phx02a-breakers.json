@@ -2,11 +2,11 @@
   "pdf": "20260616 - PHX02A - ADDENDUM 4 - ELEC.pdf",
   "apparatus": [
     { "raw": "MSB-P1-110-GB 4000AF/4000AT LSIG", "tag": "MSB-P1-110-GB", "sheet": "E01-11",
-      "page": 11, "bbox": [60, 30, 180, 45], "evidence": "one-line", "busVoltageV": 480, "block": "P1-110" },
+      "page": 11, "bbox": [60, 30, 180, 45], "evidence": "one-line", "busVoltageV": 480, "block": "P1-110", "mountingHint": "draw_out" },
     { "raw": "HF-P1-110-01-FB 400AF/300AT LSI", "tag": "HF-P1-110-01-FB", "sheet": "E01-11",
       "page": 11, "bbox": [300, 60, 360, 75], "evidence": "one-line", "busVoltageV": 480, "block": "P1-110" },
     { "raw": "ACC-1-09-FB 800AF/800AT LSIGE", "tag": "ACC-1-09-FB", "sheet": "E01-11",
-      "page": 11, "bbox": [886, 491, 944, 501], "evidence": "one-line", "busVoltageV": 480, "block": "P1-110" },
+      "page": 11, "bbox": [886, 491, 944, 501], "evidence": "one-line", "busVoltageV": 480, "block": "P1-110", "mountingHint": "draw_out" },
     { "raw": "ACC-1-09 (location)", "tag": "ACC-1-09-FB", "sheet": "E02-03D",
       "page": 38, "bbox": [644, 1668, 686, 1678], "evidence": "power-plan", "block": "P1-110" }
   ]

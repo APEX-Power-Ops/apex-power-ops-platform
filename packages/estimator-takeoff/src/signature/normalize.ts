@@ -35,21 +35,38 @@ function parseMvType(raw: string): MvType {
   return 'unknown'
 }
 
+// LV construction (mounting) precedence — operator-ratified, evidence-first, fail-closed:
+//   1) explicit drawing/schedule evidence (mountingHint) — never overridden by a guess
+//   2) construction keywords in the label text
+//   3) conservative estimating baseline: large frame (>=800AF) WITH ground-fault (LSIG/LSIGE) → draw_out
+//   4) fail-closed → 'unknown' (maps to no catalog ref; we never silently call something draw-out)
+function resolveMounting(x: ExtractedApparatus, frameA: number | undefined, functions: TripFunction[]): Mounting {
+  if (x.mountingHint) return x.mountingHint
+  const parsed = parseMounting(x.raw)
+  if (parsed !== 'unknown') return parsed
+  const hasG = functions.includes('G')
+  if (frameA !== undefined && frameA >= 800 && hasG) return 'draw_out'
+  return 'unknown'
+}
+
 export function normalizeApparatus(x: ExtractedApparatus): ApparatusSignature | null {
   if (NON_BREAKER.test(x.raw) && !/AF\s*\//i.test(x.raw)) return null
   if (!BREAKER_HINT.test(x.raw)) return null
   const voltageClass = classifyVoltage(x.busVoltageV)
   if (!voltageClass) return null
   const ft = x.raw.match(FRAME_TRIP)
-  const mounting = voltageClass === 'LV' ? parseMounting(x.raw) : 'unknown'
+  const frameA = ft ? Number(ft[1]) : undefined
+  const tripA = ft ? Number(ft[2]) : undefined
+  const functions = parseFunctions(x.raw)
+  const mounting = voltageClass === 'LV' ? resolveMounting(x, frameA, functions) : 'unknown'
   const mvType = voltageClass !== 'LV' ? parseMvType(x.raw) : undefined
   return {
     kind: 'breaker',
     voltageClass,
     voltageV: x.busVoltageV,
-    frameA: ft ? Number(ft[1]) : undefined,
-    tripA: ft ? Number(ft[2]) : undefined,
-    functions: parseFunctions(x.raw),
+    frameA,
+    tripA,
+    functions,
     mounting,
     mvType,
     tag: x.tag,

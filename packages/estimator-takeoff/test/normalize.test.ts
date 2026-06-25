@@ -29,4 +29,19 @@ describe('normalizeApparatus', () => {
   it('returns null for a non-breaker label', () => {
     expect(normalizeApparatus(mk('TX-P1-110 535KVA', 480))).toBeNull()
   })
+
+  // construction (mounting) resolution — operator-ratified precedence
+  it('uses an explicit mountingHint before any text parsing or fallback', () => {
+    const s = normalizeApparatus({ ...mk('HF-P1-110-01-FB 400AF/300AT LSI', 480), mountingHint: 'insulated_case' })!
+    expect(s.mounting).toBe('insulated_case')
+  })
+  it('falls back to draw_out for a large-frame (>=800AF) LSIG breaker with no construction evidence', () => {
+    expect(normalizeApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480))!.mounting).toBe('draw_out')
+  })
+  it('stays unknown (fail-closed) for a 400AF LSI breaker with no construction evidence', () => {
+    expect(normalizeApparatus(mk('HF-P1-110-01-FB 400AF/300AT LSI', 480))!.mounting).toBe('unknown')
+  })
+  it('does NOT fall back to draw_out for a large frame WITHOUT ground-fault (LS/LSI only)', () => {
+    expect(normalizeApparatus(mk('BIG-FB 1600AF/1600AT LSI', 480))!.mounting).toBe('unknown')
+  })
 })
