@@ -49,7 +49,8 @@ describe('content hash (economic content only)', () => {
 
   function customLine(fingerprint: string, requestRef: string, token: string): LineC {
     return {
-      line_uid: 'L1', line_kind: 'custom_equipment', included: true, excluded_hours: null,
+      line_uid: 'L1', line_kind: 'custom_equipment', designation: null, notes: null, description: null,
+      included: true, excluded_hours: null,
       exclusion_reason: null, expansion_policy: 'one_unit_per_qty', equipment_model_ref: null,
       provisional_token: token, catalog_request_ref: requestRef, provisional_attrs: null,
       equipment_fingerprint: fingerprint, provisional_ref_hours: 4, base_qty: 1, project_intake_qty: 1,
@@ -94,7 +95,8 @@ describe('content hash (economic content only)', () => {
 
   it('distinguishes cost lines whose only economic difference is markup (carried via extended_cents)', () => {
     const costLine = (extended: number, markupRef: string | null): LineC => ({
-      line_uid: 'C1', line_kind: 'cost', included: true, excluded_hours: null, exclusion_reason: null,
+      line_uid: 'C1', line_kind: 'cost', designation: null, notes: null, description: null,
+      included: true, excluded_hours: null, exclusion_reason: null,
       expansion_policy: null, equipment_model_ref: null, provisional_token: null, catalog_request_ref: null,
       provisional_attrs: null, equipment_fingerprint: null, provisional_ref_hours: null, base_qty: null,
       project_intake_qty: null, resolved_ref_hours: null, resolved_hours: null, service_kind: null,

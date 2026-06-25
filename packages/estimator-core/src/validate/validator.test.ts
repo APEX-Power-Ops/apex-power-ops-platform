@@ -6,6 +6,7 @@ import { validateEnvelope } from './validator'
 
 function emptyLine(p: Partial<LineC> & { line_uid: string; line_kind: LineC['line_kind'] }): LineC {
   return {
+    designation: null, notes: null, description: null,
     included: true, excluded_hours: null, exclusion_reason: null, expansion_policy: null,
     equipment_model_ref: null, provisional_token: null, catalog_request_ref: null,
     provisional_attrs: null, equipment_fingerprint: null, provisional_ref_hours: null,

@@ -12,6 +12,7 @@ export interface LineDraft {
   line_kind: LineKind
   designation?: string
   notes?: string
+  description?: string
   included: boolean
   excluded_hours?: number
   exclusion_reason?: string

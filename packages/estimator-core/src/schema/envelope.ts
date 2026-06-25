@@ -15,6 +15,9 @@ export interface LaborChargeLine {
 export interface LineC {
   line_uid: string
   line_kind: LineKind
+  designation: string | null
+  notes: string | null
+  description: string | null
   included: boolean
   excluded_hours: number | null
   exclusion_reason: string | null

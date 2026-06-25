@@ -33,6 +33,9 @@ function emptyLineC(d: LineDraft): LineC {
   return {
     line_uid: d.line_uid,
     line_kind: d.line_kind,
+    designation: d.designation ?? null,
+    notes: d.notes ?? null,
+    description: d.description ?? null,
     included: d.included,
     excluded_hours: d.included ? null : d.excluded_hours ?? 0,
     exclusion_reason: d.included ? null : d.exclusion_reason ?? null,
