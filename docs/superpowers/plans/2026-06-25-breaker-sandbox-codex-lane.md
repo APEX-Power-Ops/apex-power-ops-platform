@@ -103,6 +103,7 @@ set -euo pipefail
 # Usage: build_fixture_dump.sh <BUILD_DB> <DUMP_OUT>
 BUILD_DB="${1:?build db name}"; DUMP_OUT="${2:?dump out path}"
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
+install -d -m 700 "$(dirname "$DUMP_OUT")"   # _local/ is gitignored and not auto-created
 SU() { docker exec -i apex-dev-pg psql -v ON_ERROR_STOP=1 -U postgres "$@"; }
 
 SU -d postgres -c "drop database if exists \"$BUILD_DB\";"
@@ -231,15 +232,18 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-breaker-sandbox && git add -A &&
 **Interfaces:**
 - Produces: roles `tcc_breaker_ro` (LOGIN, no attrs) and `tcc_breaker_codex_79audit` (LOGIN, no attrs), created with passwords from env vars; NO database/schema grants yet (grants are per-clone, Tasks 3–4). `check_role_zero_reach.sql` proves the codex role has no CREATE-on-DB and no sibling table privileges.
 
-- [ ] **Step 1: Add role passwords to the gitignored env (host)**
+- [ ] **Step 1: Generate RANDOM role passwords into the gitignored env (host)**
 
-Run (values are sandbox-only; not committed; per the Vault-rooted 0600 convention):
+Random sandbox passwords — never fixed literals, never echoed to stdout; written only to the
+gitignored 0600 `infra/.env` (Vault-rooted convention):
 ```
 ssh olares-mesh 'umask 077; cd /home/olares/code/apex/apex-power-ops-platform; \
-  grep -q TCC_BREAKER_RO_PW infra/.env || printf "TCC_BREAKER_RO_PW=%s\nTCC_BREAKER_CODEX_PW=%s\n" \
-  "TccBreakerRo!2026" "TccBreakerCodex!2026" >> infra/.env'
+  grep -q TCC_BREAKER_RO_PW infra/.env || { \
+    printf "TCC_BREAKER_RO_PW=%s\n"    "$(openssl rand -base64 24)" >> infra/.env; \
+    printf "TCC_BREAKER_CODEX_PW=%s\n" "$(openssl rand -base64 24)" >> infra/.env; }'
 ```
-(Do not print the file back. These reach the lane worktree because `infra/.env` is shared via the common git dir? No — `.env` is gitignored and per-worktree. The harness sources the MAIN worktree's `infra/.env`; provisioning reads it explicitly by absolute path below.)
+(`infra/.env` is gitignored and per-worktree; provisioning + the harness read the MAIN worktree's
+copy by absolute path. The password values never appear in argv or logs.)
 
 - [ ] **Step 2: Write the roles SQL (no cluster attributes)**
 
@@ -247,7 +251,9 @@ ssh olares-mesh 'umask 077; cd /home/olares/code/apex/apex-power-ops-platform; \
 ```sql
 -- Scoped sandbox roles. NO BYPASSRLS/SUPERUSER/CREATEDB/CREATEROLE. No DB/schema grants here;
 -- grants are clone-local (made by make_viewer.sh / make_codex_clone.sh).
--- Passwords injected via psql -v (never argv): :'ro_pw' / :'codex_pw'.
+-- Passwords read from ENV via \getenv (psql 16+; container psql is 17.10) — NEVER argv.
+\getenv ro_pw    TCC_BREAKER_RO_PW
+\getenv codex_pw TCC_BREAKER_CODEX_PW
 do $$ begin
   if not exists (select 1 from pg_roles where rolname='tcc_breaker_ro') then
     create role tcc_breaker_ro login;
@@ -287,14 +293,15 @@ end $$;
 Run: `ssh olares-mesh 'docker exec -i apex-dev-pg psql -v ON_ERROR_STOP=1 -U postgres -d postgres -f - < '"$ROOT"'/sql/checks/check_role_zero_reach.sql > /tmp/c.log 2>&1; echo EXIT=$?; tail -3 /tmp/c.log'`
 Expected: FAIL (`role "tcc_breaker_codex_79audit" does not exist`).
 
-- [ ] **Step 5: Create the roles (passwords from env, never echoed)**
+- [ ] **Step 5: Create the roles (passwords via ENV → `\getenv`, never argv)**
 
-Run:
+Run (shell guards non-empty; passwords forwarded as ENV to the container; psql reads them via
+`\getenv` inside `20_roles.sql`, so they never appear in argv):
 ```
 ssh olares-mesh 'set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a; \
-  docker exec -i -e PGPASSWORD apex-dev-pg psql -v ON_ERROR_STOP=1 -U postgres -d postgres \
-  -v ro_pw="$TCC_BREAKER_RO_PW" -v codex_pw="$TCC_BREAKER_CODEX_PW" \
-  -f - < '"$ROOT"'/sql/20_roles.sql'
+  [ -n "$TCC_BREAKER_RO_PW" ] && [ -n "$TCC_BREAKER_CODEX_PW" ] || { echo "FAIL: role pw unset"; exit 1; }; \
+  docker exec -i -e TCC_BREAKER_RO_PW -e TCC_BREAKER_CODEX_PW apex-dev-pg \
+    psql -v ON_ERROR_STOP=1 -U postgres -d postgres -f - < '"$ROOT"'/sql/20_roles.sql'
 ```
 
 - [ ] **Step 6: Re-run the zero-reach check (now passes)**
@@ -321,21 +328,27 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-breaker-sandbox && git add -A &&
 
 - [ ] **Step 1: Write the failing check**
 
-`sql/checks/check_viewer.sql` (run against the viewer DB as superuser; row-visibility for ro proven via a separate role-connect in Step 4):
+`sql/checks/check_viewer.sql` — GENERIC (no fixture table names; works on fixture AND real). Run against the viewer DB as superuser; row-visibility for ro proven via a separate role-connect in Step 4:
 ```sql
 do $$
-declare n_rls_on int;
+declare bad int;
 begin
-  select count(*) into n_rls_on from pg_class c join pg_namespace s on s.oid=c.relnamespace
+  -- (1) NO tcc table remains RLS-enabled (clone-local DISABLE worked on every one)
+  select count(*) into bad from pg_class c join pg_namespace s on s.oid=c.relnamespace
     where s.nspname='tcc' and c.relkind='r' and c.relrowsecurity;
-  if n_rls_on <> 0 then raise exception 'viewer: expected 0 RLS-enabled tcc tables, got %', n_rls_on; end if;
+  if bad <> 0 then raise exception 'viewer: % tcc tables still RLS-enabled', bad; end if;
+  -- (2) ro can CONNECT
   if not has_database_privilege('tcc_breaker_ro', current_database(), 'CONNECT')
      then raise exception 'viewer: tcc_breaker_ro cannot CONNECT'; end if;
-  if not has_table_privilege('tcc_breaker_ro','tcc.fx_settings','SELECT')
-     then raise exception 'viewer: tcc_breaker_ro lacks SELECT'; end if;
-  if has_table_privilege('tcc_breaker_ro','tcc.fx_settings','INSERT')
-     then raise exception 'viewer: tcc_breaker_ro must NOT have INSERT'; end if;
-  raise notice 'check_viewer OK (RLS disabled, ro read-only)';
+  -- (3) ro has SELECT on EVERY tcc table
+  select count(*) into bad from pg_class c join pg_namespace s on s.oid=c.relnamespace
+    where s.nspname='tcc' and c.relkind='r' and not has_table_privilege('tcc_breaker_ro', c.oid, 'SELECT');
+  if bad <> 0 then raise exception 'viewer: ro lacks SELECT on % tcc tables', bad; end if;
+  -- (4) ro has NO write on ANY tcc table
+  select count(*) into bad from pg_class c join pg_namespace s on s.oid=c.relnamespace
+    where s.nspname='tcc' and c.relkind='r' and has_table_privilege('tcc_breaker_ro', c.oid, 'INSERT, UPDATE, DELETE');
+  if bad <> 0 then raise exception 'viewer: ro has write on % tcc tables', bad; end if;
+  raise notice 'check_viewer OK (RLS disabled on all tcc tables; ro read-only on all)';
 end $$;
 ```
 
@@ -469,15 +482,16 @@ Run:
 ```
 ssh olares-mesh 'cd '"$ROOT"' && bash provision/make_codex_clone.sh tcc_breaker_baseline_fixture tcc_breaker_codex_fixture tcc_breaker_codex_79audit > /tmp/cc.log 2>&1; echo EXIT=$?; tail -3 /tmp/cc.log'
 ssh olares-mesh 'docker exec -i apex-dev-pg psql -v ON_ERROR_STOP=1 -U postgres -d tcc_breaker_codex_fixture -f - < '"$ROOT"'/sql/checks/check_codex_clone.sql; echo EXIT=$?'
-# write freedom + RLS-exempt read as the codex role over TCP
+# write freedom + DDL as the codex role over TCP — GENERIC probe (no fixture tables; reused in Task 7)
 ssh olares-mesh 'set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a; \
   docker exec -i -e PGPASSWORD="$TCC_BREAKER_CODEX_PW" apex-dev-pg psql -v ON_ERROR_STOP=1 \
   -U tcc_breaker_codex_79audit -h 127.0.0.1 -d tcc_breaker_codex_fixture \
-  -c "insert into tcc.fx_breakers(name) values (''CODEX-WROTE'');" \
-  -c "alter table tcc.fx_settings add column codex_note text;" \
-  -c "select count(*) from tcc.fx_settings;"'
+  -c "create table tcc._codex_write_probe(id int);" \
+  -c "insert into tcc._codex_write_probe values (1);" \
+  -c "select count(*) from tcc._codex_write_probe;" \
+  -c "drop table tcc._codex_write_probe;"'
 ```
-Expected: clone build `EXIT=0`; ownership check `EXIT=0`; the codex INSERT + ALTER succeed and the SELECT returns `2` (RLS-exempt as owner).
+Expected: clone build `EXIT=0`; ownership check `EXIT=0`; all four probe statements succeed (create / insert / select=`1` / drop) — codex owns schema `tcc` (via `REASSIGN OWNED`) and writes + DDLs freely without any cluster bypass. The identical generic probe is reused on the real clone in Task 7.
 
 - [ ] **Step 5: Prove sibling isolation holds after granting clone access**
 
@@ -661,18 +675,60 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-breaker-sandbox && git add -A &&
 Run: `ssh olares-mesh 'ls -l /home/olares/dev-pg-backups/tcc/tcc_baseline_20260625.dump && chmod 600 /home/olares/dev-pg-backups/tcc/tcc_baseline_20260625.dump'`
 Expected: file present; mode becomes `-rw-------`.
 
-- [ ] **Step 2: Restore the real baseline (same script as the fixture, fail-closed)**
+- [ ] **Step 2: Restore the real baseline (same script as the fixture, fail-closed) + EXACT-count gate**
 
 Run: `ssh olares-mesh 'cd '"$ROOT"' && bash provision/restore_baseline.sh tcc_breaker_baseline_20260625 /home/olares/dev-pg-backups/tcc/tcc_baseline_20260625.dump > /tmp/rr.log 2>&1; echo EXIT=$?; tail -5 /tmp/rr.log'`
-Expected: `EXIT=0`. Then run `check_baseline.sql` against `tcc_breaker_baseline_20260625` — expect `91 tables, 60 rls, 120 policies, 2 views` (the real prod facts; the check's `>=` thresholds pass).
+Expected: `EXIT=0`. `check_baseline.sql` also runs and passes its `>=` thresholds.
 
-- [ ] **Step 3: Spawn the real viewer + codex clones**
+Create the real-mode EXACT-count gate `sql/checks/check_baseline_exact.sql` (fail-closed on any deviation from the probed prod facts — catches a partial/duplicated restore the loose check would miss):
+```sql
+do $$
+declare t int; v int; s int; i int; rls int; pol int;
+begin
+  select count(*) into t   from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='tcc' and c.relkind='r';
+  select count(*) into v   from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='tcc' and c.relkind='v';
+  select count(*) into s   from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='tcc' and c.relkind='S';
+  select count(*) into i   from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='tcc' and c.relkind='i';
+  select count(*) into rls from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='tcc' and c.relkind='r' and c.relrowsecurity;
+  select count(*) into pol from pg_policies where schemaname='tcc';
+  if t<>91    then raise exception 'exact: tables %, want 91', t; end if;
+  if v<>2     then raise exception 'exact: views %, want 2', v; end if;
+  if s<>30    then raise exception 'exact: sequences %, want 30', s; end if;
+  if i<>190   then raise exception 'exact: indexes %, want 190', i; end if;
+  if rls<>60  then raise exception 'exact: rls tables %, want 60', rls; end if;
+  if pol<>120 then raise exception 'exact: policies %, want 120', pol; end if;
+  raise notice 'check_baseline_exact OK (91/2/30/190, rls 60, pol 120)';
+end $$;
+```
+Run it fail-closed (MUST pass before manifest acceptance):
+`ssh olares-mesh 'docker exec -i apex-dev-pg psql -v ON_ERROR_STOP=1 -U postgres -d tcc_breaker_baseline_20260625 -f - < '"$ROOT"'/sql/checks/check_baseline_exact.sql; echo EXIT=$?'`
+Expected: `EXIT=0`, `check_baseline_exact OK (91/2/30/190, rls 60, pol 120)`.
+
+- [ ] **Step 3: Spawn the real viewer + codex clones + generic read/write proofs**
 
 Run:
 ```
 ssh olares-mesh 'cd '"$ROOT"' && bash provision/make_viewer.sh tcc_breaker_baseline_20260625 tcc_breaker_viewer_20260625 && bash provision/make_codex_clone.sh tcc_breaker_baseline_20260625 tcc_breaker_codex_79audit_20260625 tcc_breaker_codex_79audit'
 ```
-Then run `check_viewer.sql` (viewer) and `check_codex_clone.sql` (codex clone) — both `EXIT=0`.
+Then the GENERIC checks (same files as the fixture — now table-name-agnostic):
+- `check_viewer.sql` against `tcc_breaker_viewer_20260625` → `EXIT=0`.
+- `check_codex_clone.sql` against `tcc_breaker_codex_79audit_20260625` → `EXIT=0`.
+- Real viewer read-proof on a real key table as `tcc_breaker_ro`:
+  ```
+  ssh olares-mesh 'set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a; \
+    docker exec -i -e PGPASSWORD="$TCC_BREAKER_RO_PW" apex-dev-pg psql -tA -U tcc_breaker_ro -h 127.0.0.1 \
+    -d tcc_breaker_viewer_20260625 -c "select count(*) from tcc.etu_sensors;"'
+  ```
+  Expected: `17831` (RLS disabled → all rows visible to the read role).
+- Generic codex write/DDL probe as `tcc_breaker_codex_79audit` on the real clone (identical to Task 4):
+  ```
+  ssh olares-mesh 'set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a; \
+    docker exec -i -e PGPASSWORD="$TCC_BREAKER_CODEX_PW" apex-dev-pg psql -v ON_ERROR_STOP=1 \
+    -U tcc_breaker_codex_79audit -h 127.0.0.1 -d tcc_breaker_codex_79audit_20260625 \
+    -c "create table tcc._codex_write_probe(id int);" -c "insert into tcc._codex_write_probe values (1);" \
+    -c "drop table tcc._codex_write_probe;"'
+  ```
+  Expected: all three succeed — codex owns schema `tcc` on the real clone and writes freely.
 
 - [ ] **Step 4: Run the full privilege matrix + sibling isolation, capture results**
 
@@ -682,9 +738,9 @@ Run `check_role_zero_reach.sql` (postgres db) and `check_sibling_no_table_priv.s
 
 Run:
 ```
-ssh olares-mesh 'cd '"$ROOT"' && bash provision/write_manifest.sh tcc_breaker_baseline_20260625 /home/olares/dev-pg-backups/tcc/tcc_baseline_20260625.dump "'"$(date -u +%FT%TZ)"'" "prod fxoyniqnrlkxfligbxmg tcc @ 2026-06-25" && rm -f /home/olares/dev-pg-backups/tcc/tcc_baseline_20260625.dump && ls /home/olares/dev-pg-backups/tcc/ | grep -c tcc_baseline_20260625.dump'
+ssh olares-mesh 'cd '"$ROOT"' && bash provision/write_manifest.sh tcc_breaker_baseline_20260625 /home/olares/dev-pg-backups/tcc/tcc_baseline_20260625.dump "'"$(date -u +%FT%TZ)"'" "prod fxoyniqnrlkxfligbxmg tcc @ 2026-06-25" && rm -f /home/olares/dev-pg-backups/tcc/tcc_baseline_20260625.dump && find /home/olares/dev-pg-backups/tcc/ -name tcc_baseline_20260625.dump | wc -l'
 ```
-Expected: manifest written; final count `0` (dump deleted). Hand-edit the manifest's privilege-matrix + deletion-proof lines with the Step 4 results + "dump deleted `$(date)`".
+Expected: manifest written; final count `0` (`find … | wc -l` prints `0` and exits 0 even with no matches — unlike `grep -c`, which exits 1 on success here). Hand-edit the manifest's privilege-matrix + deletion-proof lines with the Step 4 results + "dump deleted `$(date)`".
 
 - [ ] **Step 6: Add the read-only MCP `breaker-viewer` entry**
 
@@ -705,4 +761,6 @@ Then: `ssh olares-mesh 'cd /home/olares/code/apex/apex-breaker-sandbox && git ad
 
 **Type/name consistency:** DB names (`tcc_breaker_baseline_20260625` / `_viewer_` / `_codex_79audit_`), role names (`tcc_breaker_ro`, `tcc_breaker_codex_79audit`), env vars (`TCC_BREAKER_RO_PW`, `TCC_BREAKER_CODEX_PW`, `BREAKER_SANDBOX_DSN`), and script signatures are used identically across tasks. Fixture analogues use the `_fixture` suffix and are dropped in T7.
 
-**One flagged assumption to verify at T1 Step 4:** that `apex-dev-pg` exposes 5432 on host `127.0.0.1` and the scoped roles authenticate over `-h 127.0.0.1` (password auth). If the container is socket-only, the role-as-TCP proofs run via `docker exec … -h 127.0.0.1` (still inside the container's network) — already how the steps are written.
+**Round-4 cross-engine patches (all applied):** (1) `check_viewer.sql` is now table-name-agnostic (all-tcc-tables RLS-off + ro SELECT-on-all/write-on-none) so Task 7 reuses it unchanged; (2) role passwords are random (`openssl rand`) and reach psql via ENV→`\getenv`, never argv, never fixed literals; (3) Task 7 adds `check_baseline_exact.sql` (exact 91/2/30/190 + 60/120, fail-closed) before manifest acceptance; (4) the codex write proof is a generic `tcc._codex_write_probe` create/insert/drop reused on the real clone; (5) `build_fixture_dump.sh` creates `_local/`; (6) deletion proof uses `find … | wc -l` (no false-fail). Host verified by review: `apex-dev-pg` up, in-container PG 17.10, 5432 bound, Codex 0.141.0.
+
+**One flagged assumption to verify at T1 Step 4:** that `apex-dev-pg` exposes 5432 on host `127.0.0.1` and the scoped roles authenticate over `-h 127.0.0.1` (password auth). The reviewer confirmed 5432 is bound; the role-as-TCP proofs run via `docker exec … -h 127.0.0.1` (the container's own loopback) — already how the steps are written.
