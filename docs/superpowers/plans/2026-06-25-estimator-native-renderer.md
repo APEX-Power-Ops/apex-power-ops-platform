@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Patch log (2026-06-25, cross-engine review):** 5 findings fixed before SDD — (High) tail-mask false-green in Tasks 1/4/6 → redirect+capture+tail; (Med) Task 7 smoke not re-runnable → timestamped disposable project; (Med) Task 3 `create_run_native` import was wrong module → `ops_intake.envelope`; (Med) Task 2 `test_011` must be self-contained like `test_010` (no shared infra-local conftest); (Low) `PM_ACTOR_ID` all-zeroes fallback → known dev actor + loud comment.
+
 **Goal:** Build a thin `/estimator` authoring screen that compiles an ephemeral estimate draft via `@apex/estimator-core`, submits it to the native intake API (`POST /native` → `POST /{run_id}/approve`), and surfaces the resulting project in the recognition lifecycle — and promote line `description` (alongside the already-present `designation`/`notes`) end-to-end from the draft grid through to `ops.scope_quote_line`.
 
 **Architecture:** Two coupled slices on lane `estimator/native-renderer` (host worktree `/home/olares/code/apex/apex-estimator-renderer`, HEAD `a1ae8a82` on `main 767e37ef`).
@@ -12,12 +14,13 @@
 
 ## Global Constraints
 
+- **No false-green.** Verify EVERY command by its real exit code — `pytest`, `pnpm test`, `next build` alike. **Never pipe the real command through `tail`** (the pipeline status becomes `tail`'s and a failure reads as success). Canonical pattern: `cmd > /tmp/x.log 2>&1; echo EXIT=$?; tail -N /tmp/x.log` — then read the printed `EXIT=`. (`set -o pipefail` also works but the remote `ssh '...'` shell isn't guaranteed bash; the redirect pattern is portable.)
 - **TDD where a runner exists.** estimator-core → `vitest run`; ops-intake + migrations → `pytest` on throwaway **`ops_test`**. **operations-web has NO unit-test runner** (scripts: dev/build/start/typecheck/smoke:*) — Slice B UI tasks (`lib/estimator.ts`, `page.tsx`) are verified by `pnpm --filter operations-web typecheck` + `build`; behavioral proof is the Task 7 hosted smoke. All economic/metadata logic lives in estimator-core (vitest) — NOT in operations-web.
 - **NEVER run the migration + package + API suites in one combined or parallel pytest invocation against `ops_test`** — their session-scoped fixtures collide on `pg_namespace`. Run each suite sequentially.
-- **Demo data discipline (load-bearing):** `approve_run` is FULL-REPLACEMENT, scoped to `delete from ops.scopes where project_id=%s and source='ops-intake'` (cascade). The UI MUST hard-pin `project_number` to **`DEMO-NATIVE-001`** (the reserved live-demo project). The **Task 7 hosted smoke MUST use a DISPOSABLE project (`DEMO-RENDERER-SMOKE-001`), NOT `DEMO-NATIVE-001` and NEVER `MINER-PHX-AB-MV`** — a `/native→/approve` freezes a project, so burning `DEMO-NATIVE-001` in CI would block the operator's live demo (a 2nd native run vs a frozen/approved project returns `revision_blocked`/409).
+- **Demo data discipline (load-bearing):** `approve_run` is FULL-REPLACEMENT, scoped to `delete from ops.scopes where project_id=%s and source='ops-intake'` (cascade). The UI MUST hard-pin `project_number` to **`DEMO-NATIVE-001`** (the reserved live-demo project). The **Task 7 hosted smoke MUST use a UNIQUE per-run disposable project (`DEMO-RENDERER-SMOKE-<timestamp>`), NOT `DEMO-NATIVE-001` and NEVER `MINER-PHX-AB-MV`** — a `/native→/approve` freezes a project (clearing native intake rows does NOT un-freeze the project/scopes/apparatus; a 2nd run classifies it `revision_blocked`/409), so a fixed smoke name isn't re-runnable and burning `DEMO-NATIVE-001` would block the operator's live demo.
 - **Metadata fields are economic-NEUTRAL.** They MUST NOT enter `content_hash` (preview must equal approved). `content-hash.ts::lineToken` is a FIXED explicit array — adding fields to `LineC` does NOT auto-include them. Keep it that way; Task 1 adds a regression test proving hash-stability.
-- **Migration 011 is additive + reversible** (`description text` add; down drops it). Conftest chain extends to 011. Mirror the existing `test_010_native_envelope_intake.py` harness structure.
-- **Merge to main + ops_dev apply are OPERATOR-GATED; prod BLOCKED behind the `ops_app` role boundary.** All host work over `ssh olares-mesh`. `DEV_PG_PASSWORD` sourced from governed `infra/.env` via `set -a; . infra/.env; set +a` — NEVER echo/print/log/interpolate it or an expanded DSN. Verify pytest by exit code, not `| tail` masking.
+- **Migration 011 is additive + reversible** (`description text` add; down drops it). The package conftest chain extends to 011 (for the package suite); the infra-local `test_011` is **self-contained** (its own session fixture applying 001..011), mirroring `test_010_native_envelope_intake.py`.
+- **Merge to main + ops_dev apply are OPERATOR-GATED; prod BLOCKED behind the `ops_app` role boundary.** All host work over `ssh olares-mesh`. `DEV_PG_PASSWORD` sourced from governed `infra/.env` via `set -a; . infra/.env; set +a` — NEVER echo/print/log/interpolate it or an expanded DSN.
 - **No float money in UI logic** — money is integer cents via estimator-core primitives; a compiled envelope reconciles by construction.
 
 **Host command preamble (every host task):** read/run via `ssh olares-mesh '...'`. Node toolchain: `export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH` (node v20.20.2, pnpm 10.0.0). Worktree: `/home/olares/code/apex/apex-estimator-renderer`. For ops_test pytest: `export OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable"` after sourcing `infra/.env` (the conftest `_require_ops_test` guard rejects any non-`ops_test` dbname).
@@ -30,10 +33,10 @@
 - Modify `packages/estimator-core/src/schema/draft.ts` — `LineDraft += description?: string`.
 - Modify `packages/estimator-core/src/schema/envelope.ts` — `LineC += designation/notes/description: string | null`.
 - Modify `packages/estimator-core/src/compile/compile.ts` — `emptyLineC` passes the three through.
-- Create/extend `packages/estimator-core/src/compile/metadata.test.ts` — compile carry + hash-stability.
+- Create `packages/estimator-core/src/compile/metadata.test.ts` — compile carry + hash-stability.
 - Create `infra/database/migrations/ops/011_scope_quote_line_description.sql` + `_down.sql`.
-- Create `infra/database/migrations/ops/test_011_scope_quote_line_description.py`.
-- Modify `packages/ops-intake/tests/conftest.py` — chain to 011 (up list + both down sequences).
+- Create `infra/database/migrations/ops/test_011_scope_quote_line_description.py` (self-contained, mirrors test_010).
+- Modify `packages/ops-intake/tests/conftest.py` — package-suite chain to 011 (up list + both down sequences).
 - Modify `infra/database/migrations/ops/MANIFEST.md` — 011 row.
 - Modify `packages/ops-intake/src/ops_intake/model.py` — `QuoteLineIn += description`.
 - Modify `packages/ops-intake/src/ops_intake/native.py` — pivot sets designation/notes/description.
@@ -46,7 +49,7 @@
 - Create `apps/operations-web/lib/estimator.ts` — native client + force-project wiring.
 - Create `apps/operations-web/app/estimator/page.tsx` — thin authoring screen.
 - Modify the `/pm-review` nav component — add an `/estimator` link (mirror the #80 recognition link).
-- Create `apps/operations-web/scripts/smoke-estimator-native.mjs` — hosted smoke against ops_dev (disposable project).
+- Create `apps/operations-web/scripts/smoke-estimator-native.mjs` — hosted smoke against ops_dev (unique disposable project).
 
 ---
 
@@ -57,7 +60,7 @@
 - `QuoteLineIn` gains `description: str | None = None` (already has `designation`, `notes`).
 - `ops.scope_quote_line` gains `description text` (already has `designation varchar`, `notes text`).
 - estimator-core exports: `buildNativeEnvelope(input: NativeEnvelopeInput): { envelope: EstimateEnvelope; findings: Finding[] }`, `EQUIPMENT_MODELS_SEED: EquipmentModel[]`, `createDefaultCatalogResolver(): CatalogResolver`.
-- `lib/estimator.ts` exports: `submitNative(envelope, uploadedBy): Promise<NativeRunResult>`, `approveRun(runId, approvedBy): Promise<{status,run_id}>`, `DEMO_PROJECT_NUMBER = 'DEMO-NATIVE-001'`.
+- `lib/estimator.ts` exports: `submitNative(envelope, uploadedBy): Promise<NativeRunResult>`, `approveRun(runId, approvedBy): Promise<{status,run_id}>`, `buildDemoEnvelope(scopes)`, `DEMO_PROJECT_NUMBER = 'DEMO-NATIVE-001'`.
 
 ---
 
@@ -72,7 +75,7 @@
 **Interfaces:**
 - Produces: `LineDraft.description?`, `LineC.{designation,notes,description}: string|null`, and the guarantee that these are **excluded from `content_hash`** (Task 4 + Slice B rely on this).
 
-- [ ] **Step 1: Write the failing test** — `packages/estimator-core/src/compile/metadata.test.ts`. Model the draft + resolver setup on `src/compile/compile.test.ts` (which does `import seed from '../catalog/equipment-models.seed.json'` and `createCatalogResolver(seed)`). Pick a real catalog `ref` from the seed that is valid for `ATS` (e.g. one used in `compile.test.ts`).
+- [ ] **Step 1: Write the failing test** — `packages/estimator-core/src/compile/metadata.test.ts`. Model the draft + resolver setup on `src/compile/compile.test.ts` (which does `import seed from '../catalog/equipment-models.seed.json'` and `createCatalogResolver(seed)`). Pick a real catalog `ref` from the seed that is valid for `ATS`.
 
 ```typescript
 import { describe, expect, it } from 'vitest'
@@ -122,8 +125,8 @@ describe('line metadata promotion', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter @apex/estimator-core test -- metadata 2>&1 | tail -30'`
-Expected: FAIL — `line.description` is `undefined` (and likely a TS error: `description` not on `LineDraft`/`LineC`).
+Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter @apex/estimator-core test -- metadata > /tmp/t1_red.log 2>&1; echo EXIT=$?; tail -30 /tmp/t1_red.log'`
+Expected: `EXIT` non-zero — `line.description` is `undefined` (and likely a TS error: `description` not on `LineDraft`/`LineC`).
 
 - [ ] **Step 3: Add `description` to `LineDraft`** in `src/schema/draft.ts`, immediately after `notes?: string`:
 
@@ -158,15 +161,15 @@ export interface LineC {
     // ... rest unchanged
 ```
 
-- [ ] **Step 6: Run the test to verify it passes**
+- [ ] **Step 6: Run the test to verify it passes** (full suite — proves nothing regressed)
 
-Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter @apex/estimator-core test 2>&1 | tail -20'`
-Expected: PASS — all suites (the existing 64 + the new 2) green. **Do NOT touch `content-hash.ts`** — the existing `lineToken` array already excludes the new fields; the hash-stability test proves it.
+Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter @apex/estimator-core test > /tmp/t1_green.log 2>&1; echo EXIT=$?; tail -20 /tmp/t1_green.log'`
+Expected: `EXIT=0` — all suites (the existing 64 + the new 2) green. **Do NOT touch `content-hash.ts`** — the existing `lineToken` array already excludes the new fields; the hash-stability test proves it.
 
 - [ ] **Step 7: Typecheck**
 
-Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter @apex/estimator-core typecheck'`
-Expected: exit 0.
+Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter @apex/estimator-core typecheck; echo EXIT=$?'`
+Expected: `EXIT=0`.
 
 - [ ] **Step 8: Commit**
 
@@ -181,47 +184,42 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add pa
 **Files:**
 - Create: `infra/database/migrations/ops/011_scope_quote_line_description.sql`
 - Create: `infra/database/migrations/ops/011_scope_quote_line_description_down.sql`
-- Create: `infra/database/migrations/ops/test_011_scope_quote_line_description.py`
-- Modify: `packages/ops-intake/tests/conftest.py`
+- Create: `infra/database/migrations/ops/test_011_scope_quote_line_description.py` (SELF-CONTAINED)
+- Modify: `packages/ops-intake/tests/conftest.py` (the package-suite chain)
 - Modify: `infra/database/migrations/ops/MANIFEST.md`
 
 **Interfaces:**
 - Produces: `ops.scope_quote_line.description text` (nullable). Task 3's INSERT depends on this column existing on `ops_test`.
 
-- [ ] **Step 1: Write the migration test** — `test_011_scope_quote_line_description.py`. Mirror the harness style of the existing `test_010_native_envelope_intake.py` (read it first for the exact `_apply`/`_revert` helper + connection pattern). The behavioral assertions:
+- [ ] **Step 1: Write the SELF-CONTAINED migration test** — `test_011_scope_quote_line_description.py`. **There is no shared infra-local conftest; `test_010` carries its own session fixture and chain.** Copy `test_010_native_envelope_intake.py`'s harness verbatim (module-level `DSN`, the `ops_test` assertion, `CHAIN`, `_exec`, `_ops_schema_exists`, `_clean_slate`, the autouse session `apply_migrations` fixture) and make two changes: append `"011_scope_quote_line_description.sql"` to `CHAIN`, and add a `DOWN011` constant. Then the test bodies:
 
 ```python
-import os, pathlib, psycopg
+# (harness copied from test_010 — DSN, CHAIN incl. "011_scope_quote_line_description.sql",
+#  _exec, _clean_slate, apply_migrations session fixture; assert dbname == 'ops_test')
+DOWN011 = HERE / "011_scope_quote_line_description_down.sql"
+UP011 = HERE / "011_scope_quote_line_description.sql"
 
-MIG = pathlib.Path(__file__).resolve().parent
-def _dsn():
-    return os.environ["OPS_DEV_DSN"]  # conftest guard ensures ops_test
+def _desc_col():
+    with psycopg.connect(DSN, autocommit=True) as c:
+        return c.execute(
+            "select data_type from information_schema.columns "
+            "where table_schema='ops' and table_name='scope_quote_line' and column_name='description'"
+        ).fetchone()
 
-def _col(conn):
-    return conn.execute(
-        "select data_type from information_schema.columns "
-        "where table_schema='ops' and table_name='scope_quote_line' and column_name='description'"
-    ).fetchone()
-
-def test_description_present_after_chain():
-    # conftest applied the full 001..011 chain at session scope
-    with psycopg.connect(_dsn()) as c:
-        row = _col(c)
+def test_011_adds_description_column():
+    row = _desc_col()
     assert row is not None and row[0] == 'text'
 
 def test_011_reversible():
-    # down drops it, up re-adds it; leave the column present (matches session chain state)
-    with psycopg.connect(_dsn(), autocommit=True) as c:
-        c.execute((MIG / '011_scope_quote_line_description_down.sql').read_text(encoding='utf-8'))
-        assert _col(c) is None
-        c.execute((MIG / '011_scope_quote_line_description.sql').read_text(encoding='utf-8'))
-        assert _col(c) is not None
+    # down drops it; up re-adds it; leave it PRESENT (chain/teardown expects it via _clean_slate -> 001 down)
+    _exec(DOWN011); assert _desc_col() is None
+    _exec(UP011);   assert _desc_col() is not None
 ```
 
 - [ ] **Step 2: Run it to verify it fails**
 
-Run (source env first): `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && set -a; . infra/.env; set +a; export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH; export OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable"; cd infra/database/migrations/ops && uv run --with "psycopg[binary]" --with pytest pytest test_011_scope_quote_line_description.py -q; echo EXIT=$?'`
-Expected: FAIL / collection error — the `.sql` files don't exist yet (and the column is absent).
+Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && set -a; . infra/.env; set +a; export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH; export OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable"; cd infra/database/migrations/ops && uv run --with "psycopg[binary]" --with pytest pytest test_011_scope_quote_line_description.py -q; echo EXIT=$?'`
+Expected: FAIL / collection error — the `.sql` files don't exist yet (the fixture's `CHAIN` references a missing file).
 
 - [ ] **Step 3: Write the up migration** — `011_scope_quote_line_description.sql`:
 
@@ -243,9 +241,9 @@ alter table ops.scope_quote_line
   drop column if exists description;
 ```
 
-- [ ] **Step 5: Extend the conftest migration chain** (`packages/ops-intake/tests/conftest.py`). Three edits:
+- [ ] **Step 5: Extend the PACKAGE-suite conftest chain** (`packages/ops-intake/tests/conftest.py`). This is separate from the self-contained `test_011` — the package suite (Task 3's test) needs the `description` column in its session chain. Three edits:
 
-(a) In `up_migrations` list, append after `"010_native_envelope_intake.sql"`:
+(a) In `up_migrations`, append after `"010_native_envelope_intake.sql"`:
 ```python
         "010_native_envelope_intake.sql",
         "011_scope_quote_line_description.sql",
@@ -261,20 +259,20 @@ alter table ops.scope_quote_line
 ```
 (c) In the **teardown** block (after `yield`), make the identical change (add the 011 down line before the 010 down line).
 
-- [ ] **Step 6: Run the migration test to verify it passes**
+- [ ] **Step 6: Run the self-contained migration test to verify it passes**
 
-Run the same command as Step 2. Expected: 2 passed, EXIT=0. (The conftest in `infra/database/migrations/ops/` for these `test_0NN` files governs the chain — if these migration tests use the package conftest, the chain edit in Step 5 covers them; if they use a local conftest, mirror the chain there too. Read how `test_010` bootstraps the schema and match it.)
+Run the same command as Step 2. Expected: `2 passed`, `EXIT=0`.
 
 - [ ] **Step 7: Add the MANIFEST row** — in `infra/database/migrations/ops/MANIFEST.md`, after the 010 row:
 
 ```
-| 011 | `011_scope_quote_line_description.sql` | `011_scope_quote_line_description_down.sql` | additive `description text` column on `ops.scope_quote_line` (line-level free-text; `designation`+`notes` already exist from 002 — completes the 3 distinct grid columns). Reversible — Chips 1–10 survive DOWN. | Estimator native renderer / metadata promotion | validated on `ops_test`; dev-only (prod blocked behind `ops_app` gate). |
+| 011 | `011_scope_quote_line_description.sql` | `011_scope_quote_line_description_down.sql` | additive `description text` column on `ops.scope_quote_line` (line-level free-text; `designation`+`notes` already exist from 002 — completes the 3 distinct grid columns). Self-contained `test_011` mirrors `test_010`. Reversible — Chips 1–10 survive DOWN. | Estimator native renderer / metadata promotion | validated on `ops_test`; dev-only (prod blocked behind `ops_app` gate). |
 ```
 
 - [ ] **Step 8: Commit**
 
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add infra/database/migrations/ops packages/ops-intake/tests/conftest.py && git commit -m "feat(ops/mig-011): additive ops.scope_quote_line.description + conftest chain to 011"'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add infra/database/migrations/ops packages/ops-intake/tests/conftest.py && git commit -m "feat(ops/mig-011): additive ops.scope_quote_line.description + self-contained test_011 + package conftest chain to 011"'
 ```
 
 ---
@@ -291,26 +289,32 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add in
 - Consumes: `ops.scope_quote_line.description` (Task 2).
 - Produces: native envelope line `designation`/`notes`/`description` land in the materialized `ops.scope_quote_line` row after `approve_run`.
 
-- [ ] **Step 1: Write the failing survival test** — `packages/ops-intake/tests/test_native_metadata.py`. Reuse the valid reconciling envelope template `_catalog_env` from `tests/test_native_envelope.py` (import or copy it), add the three metadata keys to its line, run the real create→approve path, assert the row.
+- [ ] **Step 1: Write the failing survival test** — `packages/ops-intake/tests/test_native_metadata.py`. Drive the FULL native path (`create_run_native` → `approve_run`) so it exercises both the pivot (`native.py`) and the loader (`load.py`). Use the reconciling envelope factory `_catalog_env` from the sibling `test_native_envelope` module, but override the line's `equipment_model_ref` to a key that **resolves on `ops_test`'s mig-008 seed** — `"Capcitors - Per Unit"` (the exact key the existing approve-path tests use; note the in-data spelling). The validation-only `"MV-CB-01"` in `_catalog_env` does NOT resolve at approve.
 
 ```python
-import copy, psycopg
-from ops_intake.native import create_run_native
+import psycopg
+from ops_intake.envelope import create_run_native   # NOTE: create_run_native is in envelope.py, NOT native.py
 from ops_intake.approve import approve_run
-from ops_intake.tests.test_native_envelope import _catalog_env  # or copy the literal if not importable
+from test_native_envelope import _catalog_env        # sibling tests module; if import fails, copy the small factory in
 
-PM = "0a000000-0000-4000-8000-000000000001"  # ops.persons PK on ops_test seed; if absent, insert one in the test
+_MODEL_KEY = "Capcitors - Per Unit"  # resolvable mig-008 seed key on ops_test (matches test_approve_envelope.py)
+
+def _person(dsn):
+    with psycopg.connect(dsn, autocommit=True) as c:
+        return c.execute("insert into ops.persons (display_name) values ('Lead') returning person_id").fetchone()[0]
 
 def test_native_metadata_lands_in_scope_quote_line(clean_ops):
     dsn = clean_ops
-    env = copy.deepcopy(_catalog_env())  # _catalog_env may be a dict literal or factory — adapt
+    who = _person(dsn)
+    env = _catalog_env()
     line = env["scopes"][0]["lines"][0]
+    line["equipment_model_ref"] = _MODEL_KEY
     line["designation"] = "CB-12"
     line["notes"] = "torque verified"
     line["description"] = "Medium-voltage breaker, primary injection"
-    run = create_run_native(dsn, uploaded_by=PM, envelope=env)
-    assert run["status"] == "parsed", run["findings"]
-    res = approve_run(dsn, run["run_id"], approved_by=PM)
+    r = create_run_native(dsn, uploaded_by=who, envelope=env)
+    assert r["status"] == "parsed", r["findings"]
+    res = approve_run(dsn, r["run_id"], approved_by=who)
     assert res["outcome"] == "approved", res
     with psycopg.connect(dsn) as c:
         row = c.execute(
@@ -321,12 +325,12 @@ def test_native_metadata_lands_in_scope_quote_line(clean_ops):
     assert row == ("CB-12", "torque verified", "Medium-voltage breaker, primary injection")
 ```
 
-(Confirm `_catalog_env`'s real shape/exports by reading `tests/test_native_envelope.py`; ensure the chosen `equipment_model_ref` resolves on `ops_test` and a valid `ops.persons` row exists — insert one in the test if the fixture doesn't seed `PM`.)
+(`clean_ops` is the package conftest fixture — truncates ops tables, returns the dsn. Confirm `_catalog_env`'s reconciling economics survive the model-key swap; `base_qty == project_intake_qty` and M4==1 must still hold.)
 
 - [ ] **Step 2: Run it to verify it fails**
 
 Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && set -a; . infra/.env; set +a; export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH; export OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable"; cd packages/ops-intake && uv run pytest tests/test_native_metadata.py -q; echo EXIT=$?'`
-Expected: FAIL — `notes`/`description` come back `None` (the pivot doesn't set them and the INSERT omits them).
+Expected: FAIL (assertion) — `notes`/`description` come back `None` (the pivot doesn't set them and the INSERT omits them). It must FAIL on the assertion, not an ImportError.
 
 - [ ] **Step 3: Add `description` to `QuoteLineIn`** (`model.py`), after `notes`:
 
@@ -385,12 +389,12 @@ Expected: FAIL — `notes`/`description` come back `None` (the pivot doesn't set
 
 - [ ] **Step 6: Run the survival test — passes**
 
-Run the Step 2 command. Expected: 1 passed, EXIT=0.
+Run the Step 2 command. Expected: `1 passed`, `EXIT=0`.
 
 - [ ] **Step 7: Regression — run the full ops-intake package suite** (proves nothing else broke; SEQUENTIAL, not combined with the migration tests)
 
 Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && set -a; . infra/.env; set +a; export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH; export OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=$DEV_PG_PASSWORD sslmode=disable"; cd packages/ops-intake && uv run pytest -q; echo EXIT=$?'`
-Expected: all pass, EXIT=0.
+Expected: all pass, `EXIT=0`.
 
 - [ ] **Step 8: Commit**
 
@@ -452,8 +456,8 @@ describe('buildNativeEnvelope', () => {
 
 - [ ] **Step 2: Run to verify it fails**
 
-Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter @apex/estimator-core test -- build-native 2>&1 | tail -30'`
-Expected: FAIL — module/exports not found.
+Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter @apex/estimator-core test -- build-native > /tmp/t4_red.log 2>&1; echo EXIT=$?; tail -30 /tmp/t4_red.log'`
+Expected: `EXIT` non-zero — module/exports not found.
 
 - [ ] **Step 3: Implement `build-native-envelope.ts`.** Build a valid `EstimateDraft` and compile it. **Read `src/corpus/cases/case-b-labor-split-cost.json` + `src/corpus/harness.ts` + `src/compile/compile.ts` (the labor section + `CompileOptions`) first** to mirror the exact draft shape that yields populated `scope_totals.onsite_labor_cents` and a reconciling `bid_cents`. Construction outline (adapt field names to the real `makeDraft`/`ScopeDraft`/`labor_allocation` shapes):
 
@@ -462,7 +466,7 @@ import seed from '../catalog/equipment-models.seed.json'
 import { createCatalogResolver, type CatalogResolver } from '../catalog/resolver'
 import type { EquipmentModel, NetaStandard } from '../catalog/types'
 import { makeDraft } from '../schema/draft'
-import { compile } from './compile' /* or '../compile/compile' */
+import { compile } from '../compile/compile'
 import { validateEnvelope } from '../validate/validator'
 import type { EstimateEnvelope } from '../schema/envelope'
 import type { Finding } from '../validate/findings'
@@ -513,8 +517,8 @@ export type { NativeEnvelopeInput, NativeScopeInput, NativeLineInput } from './a
 
 - [ ] **Step 5: Run the test — passes; then full suite + typecheck**
 
-Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter @apex/estimator-core test 2>&1 | tail -15 && pnpm --filter @apex/estimator-core typecheck'`
-Expected: all green, typecheck exit 0. (If JSON import fails typecheck, ensure `packages/estimator-core/tsconfig.json` has `"resolveJsonModule": true` — it already imports the seed in tests, so this should already be set; add it if missing.)
+Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter @apex/estimator-core test > /tmp/t4_green.log 2>&1; echo TEST_EXIT=$?; tail -15 /tmp/t4_green.log; pnpm --filter @apex/estimator-core typecheck; echo TYPECHECK_EXIT=$?'`
+Expected: `TEST_EXIT=0`, `TYPECHECK_EXIT=0`. (If JSON import fails typecheck, ensure `packages/estimator-core/tsconfig.json` has `"resolveJsonModule": true` — it already imports the seed in tests, so this should already be set; add it if missing.)
 
 - [ ] **Step 6: Commit**
 
@@ -530,10 +534,10 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add pa
 - Create: `apps/operations-web/lib/estimator.ts`
 
 **Interfaces:**
-- Consumes: `buildNativeEnvelope`, `EQUIPMENT_MODELS_SEED`, `createDefaultCatalogResolver` (Task 4); `browserEnv.controlPlaneBaseUrl` (`lib/browser-env.ts`, fallback `http://127.0.0.1:8010`).
+- Consumes: `buildNativeEnvelope`, `EQUIPMENT_MODELS_SEED` (Task 4); `browserEnv.controlPlaneBaseUrl` (`lib/browser-env.ts`, fallback `http://127.0.0.1:8010`).
 - Produces: `submitNative`, `approveRun`, `buildDemoEnvelope`, `DEMO_PROJECT_NUMBER`, `catalogRefs()` for the page.
 
-- [ ] **Step 1: Implement `lib/estimator.ts`.** Mirror the `lib/estimator-intake.ts` pattern exactly: an `intakeBase()` URL helper, an inline `parseResponse<T>()`, direct `fetch()` calls (no shared helper). Hard-pin the demo project number here so the page can't override it.
+- [ ] **Step 1: Implement `lib/estimator.ts`.** Mirror the `lib/estimator-intake.ts` pattern exactly: an `intakeBase()` URL helper, an inline `parseResponse<T>()`, direct `fetch()` calls (no shared helper). Hard-pin the demo project number here so the page can't override it. **`PM_ACTOR_ID` falls back to the known real dev actor (NOT all-zeroes, which 400s as an unknown person).**
 
 ```typescript
 import { browserEnv } from './browser-env'
@@ -542,7 +546,9 @@ import {
 } from '@apex/estimator-core'
 
 export const DEMO_PROJECT_NUMBER = 'DEMO-NATIVE-001'
-export const PM_ACTOR_ID = process.env.NEXT_PUBLIC_OPS_DEV_PM_ID || '00000000-0000-0000-0000-000000000001'
+// Dev-only default: the real ops.persons PK (Jason Swenson) seeded on ops_dev. Production wiring MUST set
+// NEXT_PUBLIC_OPS_DEV_PM_ID. Do NOT fall back to all-zeroes — that is not a known person and the API 400s.
+export const PM_ACTOR_ID = process.env.NEXT_PUBLIC_OPS_DEV_PM_ID || '0a000000-0000-4000-8000-000000000001'
 
 export class EstimatorError extends Error {
   constructor(message: string, public status: number) { super(message) }
@@ -590,13 +596,13 @@ export async function approveRun(runId: string, approvedBy = PM_ACTOR_ID): Promi
 
 - [ ] **Step 2: Typecheck**
 
-Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter operations-web typecheck'`
-Expected: exit 0 (proves the estimator-core API usage compiles through `transpilePackages`).
+Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter operations-web typecheck; echo EXIT=$?'`
+Expected: `EXIT=0` (proves the estimator-core API usage compiles through `transpilePackages`).
 
 - [ ] **Step 3: Commit**
 
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add apps/operations-web/lib/estimator.ts && git commit -m "feat(operations-web): lib/estimator native client (pins DEMO-NATIVE-001)"'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add apps/operations-web/lib/estimator.ts && git commit -m "feat(operations-web): lib/estimator native client (pins DEMO-NATIVE-001; real dev actor fallback)"'
 ```
 
 ---
@@ -616,8 +622,8 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add ap
 
 - [ ] **Step 3: Typecheck + build**
 
-Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter operations-web typecheck && pnpm --filter operations-web build 2>&1 | tail -25'`
-Expected: typecheck exit 0; build succeeds and lists `/estimator` among the routes.
+Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH && pnpm --filter operations-web typecheck; echo TC_EXIT=$?; pnpm --filter operations-web build > /tmp/t6_build.log 2>&1; echo BUILD_EXIT=$?; tail -25 /tmp/t6_build.log'`
+Expected: `TC_EXIT=0`; `BUILD_EXIT=0` and the build lists `/estimator` among the routes.
 
 - [ ] **Step 4: Commit**
 
@@ -627,31 +633,35 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add ap
 
 ---
 
-### Task 7: hosted smoke — full client path against ops_dev (DISPOSABLE project)
+### Task 7: hosted smoke — full client path against ops_dev (UNIQUE disposable project)
 
 **Files:**
 - Create: `apps/operations-web/scripts/smoke-estimator-native.mjs`
 
 **Interfaces:**
-- Consumes: the live control-plane API on `:8010` (host, `OPS_DEV_DSN` set) + `lib/estimator.ts` building logic. This is the Slice-B integration proof and the demo rehearsal.
+- Consumes: the live control-plane API on `:8010` (host, `OPS_DEV_DSN` set) + `buildNativeEnvelope` from `@apex/estimator-core`. This is the Slice-B integration proof and the demo rehearsal.
 
 - [ ] **Step 1: Implement `scripts/smoke-estimator-native.mjs`.** Mirror an existing `scripts/smoke-*.mjs` (e.g. `smoke-pm-intake-hosted.mjs`) for the node-fetch + assert style. It MUST:
-  - Use `const PROJECT = 'DEMO-RENDERER-SMOKE-001'` — a **disposable** name. **NEVER `DEMO-NATIVE-001` (reserved) and NEVER `MINER-PHX-AB-MV`.** Import `buildNativeEnvelope` directly from `@apex/estimator-core` and override `projectNumber: PROJECT` (do NOT use `buildDemoEnvelope`, which pins DEMO-NATIVE-001).
-  - Pre-clean only its own disposable project's native rows so it is re-runnable: before submit, if a prior `DEMO-RENDERER-SMOKE-001` run is frozen, clear its native intake rows (documented in a comment) — or accept a 409 and exit non-zero with a clear "reset the disposable smoke project" message.
-  - Pipeline: build envelope (1 ATS scope, ≥1 catalog line carrying `designation`/`notes`/`description`) → `POST /native` (assert `status==='parsed'`) → `POST /{run_id}/approve` (assert `approved`) → `GET /api/v1/ops/recognition/worklist?project_number=DEMO-RENDERER-SMOKE-001` (assert rows) → assert the materialized `ops.scope_quote_line` carries the three metadata values (via a small read; if the smoke can't reach the DB, assert via an API/worklist field instead).
-  - Print PASS/FAIL with a one-line summary; exit non-zero on any failed assertion.
+  - Generate a **UNIQUE per-run disposable** project number so the smoke is always re-runnable (each `/native→/approve` freezes a project; a fixed name would be `revision_blocked` on the second run). Node may use `Date.now()`:
+    ```js
+    const PROJECT = process.env.SMOKE_PROJECT || `DEMO-RENDERER-SMOKE-${new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14)}`
+    if (PROJECT === 'DEMO-NATIVE-001' || PROJECT.startsWith('MINER')) { throw new Error('refusing reserved/Miner project') }
+    ```
+    **NEVER `DEMO-NATIVE-001` (reserved) and NEVER `MINER-PHX-AB-MV`.** Import `buildNativeEnvelope` directly from `@apex/estimator-core` and pass `projectNumber: PROJECT` (do NOT use `buildDemoEnvelope`, which pins DEMO-NATIVE-001).
+  - Pipeline: build envelope (1 ATS scope, ≥1 catalog line carrying `designation`/`notes`/`description`) → `POST /native` (assert `status==='parsed'`, else print `findings` and exit non-zero) → `POST /{run_id}/approve` (assert `approved`) → `GET /api/v1/ops/recognition/worklist?project_number=<PROJECT>` (assert rows) → assert the materialized `ops.scope_quote_line` carries the three metadata values (read via a small psycopg query in a sibling host step, or assert via a worklist/api field if reachable).
+  - Print PASS/FAIL with a one-line summary; **exit non-zero on any failed assertion.** Each run leaves a unique disposable project on ops_dev (tiny; acceptable, like DEMO-SMOKE-001).
 
 - [ ] **Step 2: Run the smoke against a live host stack.** Start the API on `:8010` (one ssh session so uvicorn inherits `OPS_DEV_DSN` against **ops_dev**), then run the smoke:
 
 ```bash
 ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer/apps/control-plane-api && set -a; . ../../infra/.env; set +a; export OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_dev user=postgres password=$DEV_PG_PASSWORD sslmode=disable"; pkill -f "uvicorn main:app" 2>/dev/null; sleep 1; nohup ../../.venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8010 > /tmp/cpapi_estsmoke.log 2>&1 & sleep 6; export PATH=$HOME/.local/bin:/home/olares/.nvm/versions/node/v20.20.2/bin:$PATH; cd .. && node operations-web/scripts/smoke-estimator-native.mjs; echo SMOKE_EXIT=$?; pkill -f "uvicorn main:app"'
 ```
-Expected: smoke prints PASS, `SMOKE_EXIT=0`. **Verify Miner + DEMO-NATIVE-001 untouched** afterward (read-only count of `MINER-PHX-AB-MV` apparatus = 5344; `DEMO-NATIVE-001` still absent).
+Expected: smoke prints PASS, `SMOKE_EXIT=0`. **Verify Miner + DEMO-NATIVE-001 untouched** afterward (read-only: `MINER-PHX-AB-MV` apparatus = 5344; `DEMO-NATIVE-001` still absent).
 
 - [ ] **Step 3: Commit**
 
 ```bash
-ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add apps/operations-web/scripts/smoke-estimator-native.mjs && git commit -m "test(operations-web): hosted estimator native smoke (disposable project; Miner + DEMO-NATIVE-001 untouched)"'
+ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add apps/operations-web/scripts/smoke-estimator-native.mjs && git commit -m "test(operations-web): hosted estimator native smoke (unique disposable project; Miner + DEMO-NATIVE-001 untouched)"'
 ```
 
 ---
@@ -663,7 +673,7 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-estimator-renderer && git add ap
 - The operator-driven **live demo** uses the `/estimator` page against the reserved fresh `DEMO-NATIVE-001` (the page's pinned default) — once, intentionally, then surfaced in `/pm-review/recognition`.
 
 ## Self-Review notes
-- **Spec coverage:** thin path (project pinned, ephemeral draft, compile via packaged core, native→approve, surface-after-approve) → Tasks 5-7; metadata promotion (LineDraft→LineC→pivot→load→column, excluded from hash) → Tasks 1-4. Demo-data discipline (force DEMO-NATIVE-001, disposable smoke, never Miner) → Global Constraints + Tasks 5/7.
+- **Spec coverage:** thin path (project pinned, ephemeral draft, compile via packaged core, native→approve, surface-after-approve) → Tasks 5-7; metadata promotion (LineDraft→LineC→pivot→load→column, excluded from hash) → Tasks 1-4. Demo-data discipline (force DEMO-NATIVE-001, unique disposable smoke, never Miner) → Global Constraints + Tasks 5/7.
 - **Hash-neutrality** is the load-bearing invariant — proven by Task 1 Step 1's second test and re-asserted in Task 4.
 - **Reconciliation is by construction** (compiled envelope satisfies `validate_envelope`'s arithmetic) — Task 4 owns producing non-zero, reconciling labor; the corpus cases are the working reference.
 - **Known soft spot:** the labor-allocation construction inside `buildNativeEnvelope` (Task 4 Step 3) is specified by reference to corpus case-b rather than verbatim, because the exact `labor_allocation` shape lives in files the implementer must read; the test assertions (non-zero bid, no error findings, hash match) are the hard contract.
