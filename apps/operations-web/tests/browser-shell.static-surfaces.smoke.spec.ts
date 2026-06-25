@@ -12,6 +12,7 @@ test('re-homed browser surfaces render their expected headings in a real browser
   const promotedPmDriversResponse = await page.goto('/pm-review')
   expect(promotedPmDriversResponse?.ok()).toBeTruthy()
   await expect(page.getByRole('heading', { name: /PM drivers now have a real app route/i })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Recognition/i })).toHaveAttribute('href', '/pm-review/recognition')
 
   const promotedPmApprovalResponse = await page.goto('/pm-review/approval')
   expect(promotedPmApprovalResponse?.ok()).toBeTruthy()
