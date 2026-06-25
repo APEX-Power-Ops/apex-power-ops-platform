@@ -59,3 +59,22 @@ describe('runTakeoff + emitEnvelope (golden)', () => {
     expect(envelope.scopes.map((s) => s.name).sort()).toEqual(['Block P1-110', 'Block P2-110'])
   })
 })
+
+describe('LV frameA eligibility (the MCB pricing leak)', () => {
+  it('an unrated MCB candidate (candidateKind, 480V, no AF/AT) is never priced — surfaced instead', () => {
+    const art: ExtractionArtifact = { pdf: 'x', apparatus: [
+      { raw: 'LP-1-MCB', tag: 'LP-1-MCB', sheet: 'E01-50', page: 20, bbox: [0, 0, 1, 1], evidence: 'one-line', busVoltageV: 480, block: 'HOUSE_NON_CRITICAL', candidateKind: 'breaker' },
+    ] }
+    const r = runTakeoff(art)
+    expect(r.matchedLines).toHaveLength(0)                  // never priced
+    expect(r.unmatchedCandidates.length + r.operatorQuestions.length).toBeGreaterThan(0)  // surfaced
+  })
+  it('a real rated MCB (400AF/400AT, 480V) is matched', () => {
+    const art: ExtractionArtifact = { pdf: 'x', apparatus: [
+      { raw: 'LP-2-MCB 400AF/400AT', tag: 'LP-2-MCB', sheet: 'E01-50', page: 20, bbox: [0, 0, 1, 1], evidence: 'one-line', busVoltageV: 480, block: 'HOUSE_NON_CRITICAL' },
+    ] }
+    const r = runTakeoff(art)
+    expect(r.matchedLines).toHaveLength(1)
+    expect(r.matchedLines[0]!.ref).toBe('Circuit Breaker LV - Panelboard MCB')
+  })
+})
