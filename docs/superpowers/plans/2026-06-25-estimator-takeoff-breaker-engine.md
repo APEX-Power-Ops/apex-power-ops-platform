@@ -8,6 +8,12 @@
 
 **Tech Stack:** TypeScript 5.5, vitest, `@apex/estimator-core` (workspace), Node 20. No new runtime deps.
 
+> **Pre-execution corrections (v1.1, folded in 2026-06-25 from a cross-engine review — all reflected in the tasks below):**
+> 1. **Golden assert** (Task 6): assert *no error-severity findings*, not *zero findings* — matches estimator-core's own native test.
+> 2. **Quantify key consistency** (Task 4): a single `deviceId()` helper for BOTH grouping and source-retrieval (the sketch keyed grouping by `…@sheet:bbox` but retrieval by `…@sheet` — a real collision bug) + an untagged-duplicate test.
+> 3. **ESM hygiene** (Task 5): top-level `import { BREAKER_MAP }`, never `require()` in this ESM package.
+> 4. **Real config, not the sketch** (Task 0a): copy estimator-core's ACTUAL `tsconfig`/`package.json` — expect `module: ES2022`, `noUncheckedIndexedAccess: true`, `types: ["node"]`, Vitest `^2.1.0`. `noUncheckedIndexedAccess` types every index access as `T | undefined`, so keep the `!`/guards the code below already uses.
+
 ## Global Constraints
 
 - **Repo / home:** `apex-power-ops-platform/packages/estimator-takeoff` on the Olares host (`/home/olares/code/apex/apex-power-ops-platform`). Canonical only; the Windows `C:\dev\estimator-ui-staging` copy is scratch.
@@ -113,7 +119,7 @@ Expected: FAIL — package does not exist / cannot resolve `@apex/estimator-take
 export {}
 ```
 
-> Step 0a (do first): `cat packages/estimator-core/tsconfig.json packages/estimator-core/package.json` and the root `pnpm-workspace.yaml`; copy the exact `compilerOptions`, vitest version, and workspace glob so this package matches the monorepo. Adjust the two files above to match what you find.
+> **Step 0a (do FIRST — load-bearing, not optional):** `cat packages/estimator-core/tsconfig.json packages/estimator-core/package.json` and the root `pnpm-workspace.yaml`. **Copy estimator-core's ACTUAL config — the JSON above is a sketch and is known to differ.** Expect at least: `module: "ES2022"`, `moduleResolution` per the repo, **`noUncheckedIndexedAccess: true`**, `types: ["node"]`, and **Vitest `^2.1.0`** (match the repo's exact version + the workspace glob). Replace the two files above with what you find before running anything. With `noUncheckedIndexedAccess`, every array/index access is `T | undefined` — the code in later tasks already uses `!`/guards at those points; keep them.
 
 - [ ] **Step 4: Install + run test to verify it passes**
 
@@ -486,6 +492,16 @@ describe('quantify', () => {
     expect(locationOnly).toHaveLength(1)
     expect(locationOnly[0]!.tag).toBe('GHOST-FB')
   })
+  it('keeps two UNTAGGED same-spec devices distinct by bbox (no source collision)', () => {
+    const untagged = (bbox: [number, number, number, number]): ApparatusSignature => ({
+      kind: 'breaker', voltageClass: 'LV', functions: ['L', 'S', 'I'], mounting: 'molded_case',
+      source: { sheet: 'E05-20', page: 1, bbox, evidence: 'panel-schedule' },
+    })
+    const { lines } = quantify([untagged([0, 0, 1, 1]), untagged([2, 2, 3, 3])])
+    expect(lines).toHaveLength(1)               // same spec → one line
+    expect(lines[0]!.qty).toBe(2)               // two distinct devices (distinct bbox)
+    expect(lines[0]!.sources).toHaveLength(2)   // both sources retained — the deviceId() fix prevents collision
+  })
 })
 ```
 
@@ -518,29 +534,36 @@ function specKey(s: ApparatusSignature): string {
   return [s.voltageClass, s.mounting, s.mvType ?? '-', s.functions.join(''), s.frameA ?? '-', s.tripA ?? '-'].join('|')
 }
 
+// Stable device identity used for BOTH grouping AND source-retrieval. These MUST be identical in
+// both places — keying grouping by `…@sheet:bbox` but retrieval by `…@sheet` collides untagged
+// devices and drops their sources. Tagged → the tag; untagged → spec + sheet + bbox.
+function deviceId(s: ApparatusSignature): string {
+  return s.tag ?? `${specKey(s)}@${s.source.sheet}:${s.source.bbox.join(',')}`
+}
+
 export function quantify(sigs: ApparatusSignature[]): {
   lines: QuantifiedLine[]
   locationOnly: ApparatusSignature[]
 } {
-  // 1) group every occurrence by device identity (tag); fall back to spec+sheet+bbox when tag missing
+  // 1) group every occurrence by device identity
   const byDevice = new Map<string, ApparatusSignature[]>()
   for (const s of sigs) {
-    const id = s.tag ?? `${specKey(s)}@${s.source.sheet}:${s.source.bbox.join(',')}`
+    const id = deviceId(s)
     ;(byDevice.get(id) ?? byDevice.set(id, []).get(id)!).push(s)
   }
 
-  // 2) a device counts only if it has >=1 authoritative occurrence
+  // 2) a device counts only if it has >=1 authoritative occurrence; store sources under the SAME id
   const counted: ApparatusSignature[] = []
   const locationOnly: ApparatusSignature[] = []
   const sourcesByDevice = new Map<string, ApparatusSignature['source'][]>()
-  for (const [, occ] of byDevice) {
+  for (const [id, occ] of byDevice) {
     const auth = occ.find((o) => AUTHORITATIVE(o.source.evidence))
     if (!auth) { locationOnly.push(occ[0]!); continue }
     counted.push(auth)
-    sourcesByDevice.set(auth.tag ?? `${specKey(auth)}@${auth.source.sheet}`, occ.map((o) => o.source))
+    sourcesByDevice.set(id, occ.map((o) => o.source))
   }
 
-  // 3) aggregate counted devices by spec into quantified lines
+  // 3) aggregate counted devices by spec into quantified lines; retrieve sources by the SAME deviceId
   const bySpec = new Map<string, ApparatusSignature[]>()
   for (const s of counted) {
     const k = specKey(s)
@@ -549,7 +572,7 @@ export function quantify(sigs: ApparatusSignature[]): {
   const lines: QuantifiedLine[] = [...bySpec.values()].map((group) => ({
     signature: group[0]!,
     qty: group.length,
-    sources: group.flatMap((s) => sourcesByDevice.get(s.tag ?? `${specKey(s)}@${s.source.sheet}`) ?? [s.source]),
+    sources: group.flatMap((s) => sourcesByDevice.get(deviceId(s)) ?? [s.source]),
     countedFromAuthoritative: true as const,
   }))
   return { lines, locationOnly }
@@ -588,6 +611,7 @@ git commit -m "feat(estimator-takeoff): quantify with device de-dup + authoritat
 // test/breaker-map.test.ts
 import { describe, it, expect } from 'vitest'
 import { matchBreaker } from '../src/catalog/breaker-map'
+import { BREAKER_MAP } from '../src/catalog/breaker-map.data'
 import { createDefaultCatalogResolver } from '@apex/estimator-core'
 import type { ApparatusSignature } from '../src/signature/types'
 
@@ -614,7 +638,6 @@ describe('matchBreaker', () => {
     expect(matchBreaker({ ...base, voltageClass: 'HV', mounting: 'unknown' })).toBeNull()
   })
   it('every ref in the map resolves in the canonical catalog', () => {
-    const { BREAKER_MAP } = require('../src/catalog/breaker-map.data')
     for (const rule of BREAKER_MAP) expect(resolver.tryResolve(rule.ref)).not.toBeNull()
   })
 })
@@ -724,9 +747,9 @@ describe('runTakeoff + emitEnvelope (golden)', () => {
     expect(result.matchedLines.map((m) => m.ref)).toContain('Circuit Breaker LV - Draw-Out (LSIG)')
   })
 
-  it('emits a valid envelope with zero validation findings', () => {
+  it('emits a valid envelope with no error-severity findings', () => {
     const { envelope, findings } = emitEnvelope(result, { projectNumber: 'STACK-PHX02A' })
-    expect(findings).toHaveLength(0)               // reconciles by construction via buildNativeEnvelope
+    expect(findings.filter((f) => f.severity === 'error')).toEqual([])  // estimator-core's own native test asserts no ERROR findings (not zero findings)
     expect(envelope.scopes.length).toBeGreaterThan(0)
   })
 })
