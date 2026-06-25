@@ -1,0 +1,36 @@
+{
+  "name": "Case F — penny allocation (0.3333/0.6667 split, J3=10)",
+  "provenance": "ATS25 hrs: ATS-(IR/DLRO)=3 x3=9h + Arrestor(SPD)-LV=0.5 x2=1h = 10h. Labor: 33.33% onsite-10hr: 3.333h x 16500=54994.5c; 66.67% onsite-12hr: 6.667h x 18750=125006.25c. block micro=180000.75 -> round=180001. penny-alloc largest-remainder: [54995, 125006]. bid=180001.",
+  "draft": {
+    "draft_id": "case-f", "estimator_ref": "corpus", "status": "draft", "selected_revision_id": "case-f-r1",
+    "revisions": [{
+      "revision_id": "case-f-r1", "rev_number": 1, "copied_from_revision_id": null, "pricing_card_version": "2026-01-23",
+      "scopes": [{
+        "scope_id": "S1", "name": "Scope F", "neta_standard": "ATS", "replication_m4": 1, "adjustment_multiplier_n4": 1,
+        "labor_allocation": [
+          { "labor_type": "onsite_blended_10hr", "pct_of_app": 0.3333 },
+          { "labor_type": "onsite_blended_12hr", "pct_of_app": 0.6667 }
+        ],
+        "lines": [
+          { "line_uid": "L1", "line_kind": "catalog", "included": true, "equipment_model_ref": "Automatic Transfer Switch - (IR/DLRO)", "base_qty": 3, "expansion_policy": "one_unit_per_qty" },
+          { "line_uid": "L2", "line_kind": "catalog", "included": true, "equipment_model_ref": "Arrestor (SPD) - Low Voltage", "base_qty": 2, "expansion_policy": "one_unit_per_qty" }
+        ]
+      }]
+    }]
+  },
+  "expected": {
+    "bid_cents": 180001,
+    "scope_totals": {
+      "S1": {
+        "base_app_hours": 10, "quoted_app_hours": 10, "service_hours": 0,
+        "onsite_labor_cents": 180001, "offsite_labor_cents": 0, "cost_cents": 0, "service_cents": 0,
+        "pre_adjust_cents": 180001, "adjusted_cents": 180001,
+        "lines": {
+          "L1": { "project_intake_qty": 3, "extended_cents": 162001 },
+          "L2": { "project_intake_qty": 2, "extended_cents": 18000 }
+        },
+        "labor_charge_cents": { "onsite_blended_10hr": 54995, "onsite_blended_12hr": 125006 }
+      }
+    }
+  }
+}

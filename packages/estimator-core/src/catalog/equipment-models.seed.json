@@ -1,0 +1,1802 @@
+[
+  {
+    "ref": "Arrester - SS, High Voltage (Set)",
+    "apparatus": "Arrester - SS, High Voltage (Set)",
+    "neta_section": {
+      "ATS": "7.19",
+      "MTS": "7.19"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "set",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Arrester - SS, Medium Volatge (Set)",
+    "apparatus": "Arrester - SS, Medium Volatge (Set)",
+    "neta_section": {
+      "ATS": "7.19",
+      "MTS": "7.19"
+    },
+    "ref_hours": {
+      "ATS": 3.5,
+      "MTS": 3.5
+    },
+    "unit_of_issue": "set",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Arrestor - Medium Voltage (Set)",
+    "apparatus": "Arrestor - Medium Voltage (Set)",
+    "neta_section": {
+      "ATS": "7.19",
+      "MTS": "7.19"
+    },
+    "ref_hours": {
+      "ATS": 1.5,
+      "MTS": 1.5
+    },
+    "unit_of_issue": "set",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Arrestor (SPD) - Low Voltage",
+    "apparatus": "Arrestor (SPD) - Low Voltage",
+    "neta_section": {
+      "ATS": "7.19",
+      "MTS": "7.19"
+    },
+    "ref_hours": {
+      "ATS": 0.5,
+      "MTS": 1.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Automatic Transfer Switch - (IR/DLRO)",
+    "apparatus": "Automatic Transfer Switch - (IR/DLRO)",
+    "neta_section": {
+      "ATS": "7.22",
+      "MTS": "7.22"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Automatic Transfer Switch - Iso Bypass (IR/DLRO)",
+    "apparatus": "Automatic Transfer Switch - Iso Bypass (IR/DLRO)",
+    "neta_section": {
+      "ATS": "7.22",
+      "MTS": "7.22"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Automatic Transfer Switch (Functional Testing)",
+    "apparatus": "Automatic Transfer Switch (Functional Testing)",
+    "neta_section": {
+      "ATS": "7.18",
+      "MTS": "7.18"
+    },
+    "ref_hours": {
+      "ATS": null,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Bus Duct - Low Voltage (IR/DLRO)",
+    "apparatus": "Bus Duct - Low Voltage (IR/DLRO)",
+    "neta_section": {
+      "ATS": "7.4",
+      "MTS": "7.4"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Bus Duct - Medium Voltage (IR/CR)",
+    "apparatus": "Bus Duct - Medium Voltage (IR/CR)",
+    "neta_section": {
+      "ATS": "7.21",
+      "MTS": "7.21"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Bus Structure - Outdoor (IR/DLRO)",
+    "apparatus": "Bus Structure - Outdoor (IR/DLRO)",
+    "neta_section": {
+      "ATS": "7.2",
+      "MTS": "7.2"
+    },
+    "ref_hours": {
+      "ATS": 16.0,
+      "MTS": 16.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Capacitor - Power Factor Correction (per Unit)",
+    "apparatus": "Capacitor - Power Factor Correction (per Unit)",
+    "neta_section": {
+      "ATS": "7.2",
+      "MTS": "7.2"
+    },
+    "ref_hours": {
+      "ATS": 1.0,
+      "MTS": 1.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Capcitors - Per Unit",
+    "apparatus": "Capcitors - Per Unit",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 1.0,
+      "MTS": 1.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "CCVT Voltage Transformer - Individual",
+    "apparatus": "CCVT Voltage Transformer - Individual",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 5.0,
+      "MTS": 5.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "CCVT Voltage Transformer - Set of 3",
+    "apparatus": "CCVT Voltage Transformer - Set of 3",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 12.0,
+      "MTS": 12.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Draw-Out (LS/LSI)",
+    "apparatus": "Circuit Breaker LV - Draw-Out (LS/LSI)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 3.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Draw-Out (LSIG)",
+    "apparatus": "Circuit Breaker LV - Draw-Out (LSIG)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 4.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Electrically Operated (LS/LSI)",
+    "apparatus": "Circuit Breaker LV - Electrically Operated (LS/LSI)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 4.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Electrically Operated (LSIG)",
+    "apparatus": "Circuit Breaker LV - Electrically Operated (LSIG)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 5.0,
+      "MTS": 5.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Generator Main",
+    "apparatus": "Circuit Breaker LV - Generator Main",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Insulated Case (LS/LSI)",
+    "apparatus": "Circuit Breaker LV - Insulated Case (LS/LSI)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 3.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Insulated Case (LSIG)",
+    "apparatus": "Circuit Breaker LV - Insulated Case (LSIG)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Molded Case Thermal/Mag",
+    "apparatus": "Circuit Breaker LV - Molded Case Thermal/Mag",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 2.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Panelboard MCB",
+    "apparatus": "Circuit Breaker LV - Panelboard MCB",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 2.5,
+      "MTS": 2.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Primary Injection (Large)",
+    "apparatus": "Circuit Breaker LV - Primary Injection (Large)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 4.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Primary Injection (Medium)",
+    "apparatus": "Circuit Breaker LV - Primary Injection (Medium)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 3.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Primary Injection (Small)",
+    "apparatus": "Circuit Breaker LV - Primary Injection (Small)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 2.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker LV - Secondary Injection",
+    "apparatus": "Circuit Breaker LV - Secondary Injection",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 1.5,
+      "MTS": 2.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker MV - Air Frame",
+    "apparatus": "Circuit Breaker MV - Air Frame",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker MV - Oil Insluated",
+    "apparatus": "Circuit Breaker MV - Oil Insluated",
+    "neta_section": {
+      "ATS": "7.3",
+      "MTS": "7.3"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker MV - SF6 (230kV & Under)",
+    "apparatus": "Circuit Breaker MV - SF6 (230kV & Under)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 20.0,
+      "MTS": 24.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker MV - SF6 (Gassing Only)",
+    "apparatus": "Circuit Breaker MV - SF6 (Gassing Only)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker MV - SF6 (Over 230kV)",
+    "apparatus": "Circuit Breaker MV - SF6 (Over 230kV)",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 32.0,
+      "MTS": 32.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Breaker MV - Vacuum Bkr",
+    "apparatus": "Circuit Breaker MV - Vacuum Bkr",
+    "neta_section": {
+      "ATS": "7.7",
+      "MTS": "7.7"
+    },
+    "ref_hours": {
+      "ATS": 5.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Circuit Switcher MV/HV",
+    "apparatus": "Circuit Switcher MV/HV",
+    "neta_section": {
+      "ATS": "7.3",
+      "MTS": "7.3"
+    },
+    "ref_hours": {
+      "ATS": 16.0,
+      "MTS": 16.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Conductors LV - 3 Phase Feeder",
+    "apparatus": "Conductors LV - 3 Phase Feeder",
+    "neta_section": {
+      "ATS": "7.3",
+      "MTS": "7.3"
+    },
+    "ref_hours": {
+      "ATS": 0.5,
+      "MTS": 0.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Conductors MV - Set of 3 (DC Hipotential)",
+    "apparatus": "Conductors MV - Set of 3 (DC Hipotential)",
+    "neta_section": {
+      "ATS": "7.3",
+      "MTS": "7.3"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Conductors MV - Set of 3 (Offline PD)",
+    "apparatus": "Conductors MV - Set of 3 (Offline PD)",
+    "neta_section": {
+      "ATS": "7.3",
+      "MTS": "7.3"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 5.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Conductors MV - Set of 3 (Tan Delta)",
+    "apparatus": "Conductors MV - Set of 3 (Tan Delta)",
+    "neta_section": {
+      "ATS": "7.3",
+      "MTS": "7.3"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 5.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Conductors MV - Set of 3 (VLF Hipotential)",
+    "apparatus": "Conductors MV - Set of 3 (VLF Hipotential)",
+    "neta_section": {
+      "ATS": "7.3",
+      "MTS": "7.3"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 5.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Conductors MV - Set of 3 (VLF/Tan Delta)",
+    "apparatus": "Conductors MV - Set of 3 (VLF/Tan Delta)",
+    "neta_section": {
+      "ATS": "7.3",
+      "MTS": "7.3"
+    },
+    "ref_hours": {
+      "ATS": 4.5,
+      "MTS": 5.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Conductors MV - Set of 3 (VLF/Tan Delta/PD)",
+    "apparatus": "Conductors MV - Set of 3 (VLF/Tan Delta/PD)",
+    "neta_section": {
+      "ATS": "7.3",
+      "MTS": "7.3"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Control Power Transformer - LV Swbd",
+    "apparatus": "Control Power Transformer - LV Swbd",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 1.5,
+      "MTS": 2.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Control Power Transformer - MV Swgr",
+    "apparatus": "Control Power Transformer - MV Swgr",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 2.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Current Transformer - Bushing HV/MV",
+    "apparatus": "Current Transformer - Bushing HV/MV",
+    "neta_section": {
+      "ATS": "7.14",
+      "MTS": "7.14"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 2.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Current Transformer - Bushing, HV/MV (Set)",
+    "apparatus": "Current Transformer - Bushing, HV/MV (Set)",
+    "neta_section": {
+      "ATS": "7.14",
+      "MTS": "7.14"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "set",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Current Transformer LV - Set of 3",
+    "apparatus": "Current Transformer LV - Set of 3",
+    "neta_section": {
+      "ATS": "7.15",
+      "MTS": "7.15"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 2.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Current Transformer MV - Set of 3",
+    "apparatus": "Current Transformer MV - Set of 3",
+    "neta_section": {
+      "ATS": "7.14",
+      "MTS": "7.14"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 2.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Direct-Current Systems - Batteries",
+    "apparatus": "Direct-Current Systems - Batteries",
+    "neta_section": {
+      "ATS": "7.18",
+      "MTS": "7.18"
+    },
+    "ref_hours": {
+      "ATS": 8.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Direct-Current Systems - Chargers",
+    "apparatus": "Direct-Current Systems - Chargers",
+    "neta_section": {
+      "ATS": "7.18",
+      "MTS": "7.18"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 2.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Distribution Board - Low Voltage",
+    "apparatus": "Distribution Board - Low Voltage",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 3.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Generator - Rotating Machinary (IR/PI)",
+    "apparatus": "Generator - Rotating Machinary (IR/PI)",
+    "neta_section": {
+      "ATS": "7.13",
+      "MTS": "7.13"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Ground Fault Protection Device LV",
+    "apparatus": "Ground Fault Protection Device LV",
+    "neta_section": {
+      "ATS": "7.14",
+      "MTS": "7.14"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Ground Resistance Test -  Two-Point (Individual)",
+    "apparatus": "Ground Resistance Test -  Two-Point (Individual)",
+    "neta_section": {
+      "ATS": "7.13",
+      "MTS": "7.13"
+    },
+    "ref_hours": {
+      "ATS": 0.25,
+      "MTS": 0.25
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Ground Resistance Test -  Two-Point (Lot)",
+    "apparatus": "Ground Resistance Test -  Two-Point (Lot)",
+    "neta_section": {
+      "ATS": "7.13",
+      "MTS": "7.13"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 16.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Ground Resistance Test - Clamp Method",
+    "apparatus": "Ground Resistance Test - Clamp Method",
+    "neta_section": {
+      "ATS": "7.13",
+      "MTS": "7.13"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Ground Resistance Test - FOP (Large Scale)",
+    "apparatus": "Ground Resistance Test - FOP (Large Scale)",
+    "neta_section": {
+      "ATS": "7.13",
+      "MTS": "7.13"
+    },
+    "ref_hours": {
+      "ATS": 12.0,
+      "MTS": 12.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Ground Resistance Test - FOP (Substation)",
+    "apparatus": "Ground Resistance Test - FOP (Substation)",
+    "neta_section": {
+      "ATS": "7.13",
+      "MTS": "7.13"
+    },
+    "ref_hours": {
+      "ATS": 12.0,
+      "MTS": 12.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Ground Resistance Test - FOP or Clamp Method",
+    "apparatus": "Ground Resistance Test - FOP or Clamp Method",
+    "neta_section": {
+      "ATS": "7.13",
+      "MTS": "7.13"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Infrared Scan - ATS",
+    "apparatus": "Infrared Scan - ATS",
+    "neta_section": {
+      "ATS": "IR",
+      "MTS": "IR"
+    },
+    "ref_hours": {
+      "ATS": 0.5,
+      "MTS": 0.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Infrared Scan - Distribution Board",
+    "apparatus": "Infrared Scan - Distribution Board",
+    "neta_section": {
+      "ATS": "IR",
+      "MTS": "IR"
+    },
+    "ref_hours": {
+      "ATS": 1.0,
+      "MTS": 1.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Infrared Scan - Panelboard",
+    "apparatus": "Infrared Scan - Panelboard",
+    "neta_section": {
+      "ATS": "IR",
+      "MTS": "IR"
+    },
+    "ref_hours": {
+      "ATS": 0.5,
+      "MTS": 0.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Infrared Scan - Switchboard",
+    "apparatus": "Infrared Scan - Switchboard",
+    "neta_section": {
+      "ATS": "IR",
+      "MTS": "IR"
+    },
+    "ref_hours": {
+      "ATS": 1.0,
+      "MTS": 1.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Infrared Scan - Transformer",
+    "apparatus": "Infrared Scan - Transformer",
+    "neta_section": {
+      "ATS": "IR",
+      "MTS": "IR"
+    },
+    "ref_hours": {
+      "ATS": 0.5,
+      "MTS": 0.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "LOT, Circuit Checks (Bays)",
+    "apparatus": "LOT, Circuit Checks (Bays)",
+    "neta_section": {
+      "ATS": "CKT",
+      "MTS": "CKT"
+    },
+    "ref_hours": {
+      "ATS": 25.0,
+      "MTS": 25.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "LOT, Circuit Checks (SS-MV)",
+    "apparatus": "LOT, Circuit Checks (SS-MV)",
+    "neta_section": {
+      "ATS": "CKT",
+      "MTS": "CKT"
+    },
+    "ref_hours": {
+      "ATS": 12.0,
+      "MTS": 12.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "LOT, Functional Testing (Bays)",
+    "apparatus": "LOT, Functional Testing (Bays)",
+    "neta_section": {
+      "ATS": "FUNCT",
+      "MTS": "FUNCT"
+    },
+    "ref_hours": {
+      "ATS": 15.0,
+      "MTS": 15.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "LOT, Functional Testing (SS-MV)",
+    "apparatus": "LOT, Functional Testing (SS-MV)",
+    "neta_section": {
+      "ATS": "FUNCT",
+      "MTS": "FUNCT"
+    },
+    "ref_hours": {
+      "ATS": 8.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Manual Transfer Switch - (IR/DLRO)",
+    "apparatus": "Manual Transfer Switch - (IR/DLRO)",
+    "neta_section": {
+      "ATS": "7.22",
+      "MTS": "7.22"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 3.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Meter - Electromechanical (Single Element)",
+    "apparatus": "Meter - Electromechanical (Single Element)",
+    "neta_section": {
+      "ATS": "7.11",
+      "MTS": "7.11"
+    },
+    "ref_hours": {
+      "ATS": 1.0,
+      "MTS": 1.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Meter - PQM/Microprocessor Based",
+    "apparatus": "Meter - PQM/Microprocessor Based",
+    "neta_section": {
+      "ATS": "7.11",
+      "MTS": "7.11"
+    },
+    "ref_hours": {
+      "ATS": 2.5,
+      "MTS": 3.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Misc Labor - One Tech Day",
+    "apparatus": "Misc Labor - One Tech Day",
+    "neta_section": {
+      "ATS": "NA",
+      "MTS": "NA"
+    },
+    "ref_hours": {
+      "ATS": 8.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Misc Service - One Tech Day",
+    "apparatus": "Misc Service - One Tech Day",
+    "neta_section": {
+      "ATS": "NA",
+      "MTS": "NA"
+    },
+    "ref_hours": {
+      "ATS": 8.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Misc Testing - One Tech Day",
+    "apparatus": "Misc Testing - One Tech Day",
+    "neta_section": {
+      "ATS": "NA",
+      "MTS": "NA"
+    },
+    "ref_hours": {
+      "ATS": 8.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Motor - Low Voltage",
+    "apparatus": "Motor - Low Voltage",
+    "neta_section": {
+      "ATS": "7.15",
+      "MTS": "7.15"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 3.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Motor - Medium Voltage",
+    "apparatus": "Motor - Medium Voltage",
+    "neta_section": {
+      "ATS": "7.15",
+      "MTS": "7.15"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Motor Control Center LV",
+    "apparatus": "Motor Control Center LV",
+    "neta_section": {
+      "ATS": "7.16",
+      "MTS": "7.16"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Motor Control Center MV",
+    "apparatus": "Motor Control Center MV",
+    "neta_section": {
+      "ATS": "7.16",
+      "MTS": "7.16"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Motor Starter (Contactor) MV",
+    "apparatus": "Motor Starter (Contactor) MV",
+    "neta_section": {
+      "ATS": "7.16",
+      "MTS": "7.16"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Motor Starter LV",
+    "apparatus": "Motor Starter LV",
+    "neta_section": {
+      "ATS": "7.16",
+      "MTS": "7.16"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 3.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Neutral Grounding Resistor",
+    "apparatus": "Neutral Grounding Resistor",
+    "neta_section": {
+      "ATS": "7.2",
+      "MTS": "7.2"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Panelboard - Low Voltage",
+    "apparatus": "Panelboard - Low Voltage",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 0.75,
+      "MTS": 1.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "PDU (Power Distribution Unit)",
+    "apparatus": "PDU (Power Distribution Unit)",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 2.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Potential Transformer - MV",
+    "apparatus": "Potential Transformer - MV",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 3.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Potential Transformer - MV Set",
+    "apparatus": "Potential Transformer - MV Set",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 3.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Potential Transformer (set)",
+    "apparatus": "Potential Transformer (set)",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 2.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Protective Relay - (Bus Differential)",
+    "apparatus": "Protective Relay - (Bus Differential)",
+    "neta_section": {
+      "ATS": "7.9",
+      "MTS": "7.9"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Protective Relay - (Line Protection)",
+    "apparatus": "Protective Relay - (Line Protection)",
+    "neta_section": {
+      "ATS": "7.9",
+      "MTS": "7.9"
+    },
+    "ref_hours": {
+      "ATS": 8.0,
+      "MTS": 10.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Protective Relay (Differential Protection)",
+    "apparatus": "Protective Relay (Differential Protection)",
+    "neta_section": {
+      "ATS": "7.9",
+      "MTS": "7.9"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Protective Relay (Electromechanical)",
+    "apparatus": "Protective Relay (Electromechanical)",
+    "neta_section": {
+      "ATS": "7.9",
+      "MTS": "7.9"
+    },
+    "ref_hours": {
+      "ATS": 1.0,
+      "MTS": 1.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Protective Relay (Feeder Protection)",
+    "apparatus": "Protective Relay (Feeder Protection)",
+    "neta_section": {
+      "ATS": "7.9",
+      "MTS": "7.9"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 5.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Protective Relay (Generator Protection)",
+    "apparatus": "Protective Relay (Generator Protection)",
+    "neta_section": {
+      "ATS": "7.9",
+      "MTS": "7.9"
+    },
+    "ref_hours": {
+      "ATS": 8.0,
+      "MTS": 10.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Protective Relay (Motor Control)",
+    "apparatus": "Protective Relay (Motor Control)",
+    "neta_section": {
+      "ATS": "7.9",
+      "MTS": "7.9"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Protective Relay (Multi-function w Meter)",
+    "apparatus": "Protective Relay (Multi-function w Meter)",
+    "neta_section": {
+      "ATS": "7.9",
+      "MTS": "7.9"
+    },
+    "ref_hours": {
+      "ATS": 8.0,
+      "MTS": 10.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Protective Relay (Overcurrent Protection)",
+    "apparatus": "Protective Relay (Overcurrent Protection)",
+    "neta_section": {
+      "ATS": "7.9",
+      "MTS": "7.9"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 5.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Resistor (IR/DLRO)",
+    "apparatus": "Resistor (IR/DLRO)",
+    "neta_section": {
+      "ATS": "7.2",
+      "MTS": "7.2"
+    },
+    "ref_hours": {
+      "ATS": 1.5,
+      "MTS": 2.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "RPP (Remote Power Panel)",
+    "apparatus": "RPP (Remote Power Panel)",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 2.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switch (Pad Mount Vista) - Medium Voltage",
+    "apparatus": "Switch (Pad Mount Vista) - Medium Voltage",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switch (SF6) - Medium Voltage",
+    "apparatus": "Switch (SF6) - Medium Voltage",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switch HV - Motor Operated",
+    "apparatus": "Switch HV - Motor Operated",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switch HV - Open",
+    "apparatus": "Switch HV - Open",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switch LV - Fused Disconnect",
+    "apparatus": "Switch LV - Fused Disconnect",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 1.0,
+      "MTS": 1.5
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switch LV - Fused Disconnect (Open)",
+    "apparatus": "Switch LV - Fused Disconnect (Open)",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 3.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switch MV - Cutout",
+    "apparatus": "Switch MV - Cutout",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 2.0,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switch MV - Fused Disconnect",
+    "apparatus": "Switch MV - Fused Disconnect",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 2.5,
+      "MTS": 3.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switch MV - Motor Operated",
+    "apparatus": "Switch MV - Motor Operated",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switch MV - Oil Insulated",
+    "apparatus": "Switch MV - Oil Insulated",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switch MV - Open",
+    "apparatus": "Switch MV - Open",
+    "neta_section": {
+      "ATS": "7.5",
+      "MTS": "7.5"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switchboard - Distribution LV",
+    "apparatus": "Switchboard - Distribution LV",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switchboard - Low Voltage",
+    "apparatus": "Switchboard - Low Voltage",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 6.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Switchgear - Medium Voltage",
+    "apparatus": "Switchgear - Medium Voltage",
+    "neta_section": {
+      "ATS": "7.1",
+      "MTS": "7.1"
+    },
+    "ref_hours": {
+      "ATS": 6.0,
+      "MTS": 10.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Transformer - Dry Type (TTR/IR)",
+    "apparatus": "Transformer - Dry Type (TTR/IR)",
+    "neta_section": {
+      "ATS": "7.2",
+      "MTS": "7.2"
+    },
+    "ref_hours": {
+      "ATS": 1.25,
+      "MTS": 2.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Transformer - Dry Type (TTR/IR/WR/PF)",
+    "apparatus": "Transformer - Dry Type (TTR/IR/WR/PF)",
+    "neta_section": {
+      "ATS": "7.2",
+      "MTS": "7.2"
+    },
+    "ref_hours": {
+      "ATS": 8.0,
+      "MTS": 10.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Transformer - Dry Type (TTR/WR/IR)",
+    "apparatus": "Transformer - Dry Type (TTR/WR/IR)",
+    "neta_section": {
+      "ATS": "7.2",
+      "MTS": "7.2"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Transformer - Oil Sample Draw",
+    "apparatus": "Transformer - Oil Sample Draw",
+    "neta_section": {
+      "ATS": "7.2",
+      "MTS": "7.2"
+    },
+    "ref_hours": {
+      "ATS": 1.0,
+      "MTS": 2.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil)",
+    "apparatus": "Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil)",
+    "neta_section": {
+      "ATS": "7.2",
+      "MTS": "7.2"
+    },
+    "ref_hours": {
+      "ATS": 12.0,
+      "MTS": 14.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Transformer - Pad Mount Oil (TTR/WR/IR)",
+    "apparatus": "Transformer - Pad Mount Oil (TTR/WR/IR)",
+    "neta_section": {
+      "ATS": "7.2",
+      "MTS": "7.2"
+    },
+    "ref_hours": {
+      "ATS": 4.0,
+      "MTS": 5.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Transformer - Power HV/MV w/ LTC",
+    "apparatus": "Transformer - Power HV/MV w/ LTC",
+    "neta_section": {
+      "ATS": "7.2",
+      "MTS": "7.2"
+    },
+    "ref_hours": {
+      "ATS": 80.0,
+      "MTS": 80.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Transformer Tap Changer",
+    "apparatus": "Transformer Tap Changer",
+    "neta_section": {
+      "ATS": "7.12",
+      "MTS": "7.12"
+    },
+    "ref_hours": {
+      "ATS": 8.0,
+      "MTS": 10.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "Vaccum Frequency Interrupter",
+    "apparatus": "Vaccum Frequency Interrupter",
+    "neta_section": {
+      "ATS": "7.6",
+      "MTS": "7.6"
+    },
+    "ref_hours": {
+      "ATS": 3.0,
+      "MTS": 4.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  },
+  {
+    "ref": "VFD - Adustable Speed Drives",
+    "apparatus": "VFD - Adustable Speed Drives",
+    "neta_section": {
+      "ATS": "7.17",
+      "MTS": "7.17"
+    },
+    "ref_hours": {
+      "ATS": 8.0,
+      "MTS": 8.0
+    },
+    "unit_of_issue": "each",
+    "lifecycle_status": "active",
+    "merged_into_ref": null
+  }
+]

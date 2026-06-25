@@ -1,0 +1,33 @@
+{
+  "name": "Case D — service line + N4=1.1 uplift",
+  "provenance": "ATS25 hrs: ATS-(IR/DLRO)=3 x1=3h apparatus base. Service: repair, fixed_bid, 8h, 200000c. onsite-10hr: 3h x 16500=49500. pre_adjust=49500+200000=249500. N4=1.1: adjusted=round(249500 x 1.1)=274450. Service adjusted basis=round(200000 x 1.1)=220000.",
+  "draft": {
+    "draft_id": "case-d", "estimator_ref": "corpus", "status": "draft", "selected_revision_id": "case-d-r1",
+    "revisions": [{
+      "revision_id": "case-d-r1", "rev_number": 1, "copied_from_revision_id": null, "pricing_card_version": "2026-01-23",
+      "scopes": [{
+        "scope_id": "S1", "name": "Scope D", "neta_standard": "ATS", "replication_m4": 1, "adjustment_multiplier_n4": 1.1,
+        "labor_allocation": [{ "labor_type": "onsite_blended_10hr", "pct_of_app": 1 }],
+        "lines": [
+          { "line_uid": "L1", "line_kind": "catalog", "included": true, "equipment_model_ref": "Automatic Transfer Switch - (IR/DLRO)", "base_qty": 1, "expansion_policy": "one_unit_per_qty" },
+          { "line_uid": "SV1", "line_kind": "service", "included": true, "service_kind": "repair", "billing_type": "fixed_bid", "quoted_service_hours": 8, "quoted_amount_cents": 200000 }
+        ]
+      }]
+    }]
+  },
+  "expected": {
+    "bid_cents": 274450,
+    "scope_totals": {
+      "S1": {
+        "base_app_hours": 3, "quoted_app_hours": 3, "service_hours": 8,
+        "onsite_labor_cents": 49500, "offsite_labor_cents": 0, "cost_cents": 0, "service_cents": 200000,
+        "pre_adjust_cents": 249500, "adjusted_cents": 274450,
+        "lines": {
+          "L1": { "project_intake_qty": 1, "extended_cents": 54450 },
+          "SV1": { "adjusted_quoted_amount_cents": 220000, "extended_cents": 220000 }
+        },
+        "labor_charge_cents": { "onsite_blended_10hr": 49500 }
+      }
+    }
+  }
+}

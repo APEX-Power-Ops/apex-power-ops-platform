@@ -1,0 +1,42 @@
+{
+  "name": "Case B — MTS labor split + travel + outside services, M4=1 N4=1",
+  "provenance": "MTS hrs: ATS(FuncTest)=4 x3=12h + ATS Iso Bypass=6 x1=6h = 18h total. 80% onsite-10hr: 14.4h x 16500=237600. 20% offsite-report: 3.6h x 15000=54000. Costs: 4x27500x1.5=165000 + 2x65000x1.5=195000 + 1x75000x1.5=112500 = 472500. pre_adjust=764100. N4=1 so adjusted=764100.",
+  "draft": {
+    "draft_id": "case-b", "estimator_ref": "corpus", "status": "draft", "selected_revision_id": "case-b-r1",
+    "revisions": [{
+      "revision_id": "case-b-r1", "rev_number": 1, "copied_from_revision_id": null, "pricing_card_version": "2026-01-23",
+      "scopes": [{
+        "scope_id": "S1", "name": "Scope B", "neta_standard": "MTS", "replication_m4": 1, "adjustment_multiplier_n4": 1,
+        "labor_allocation": [
+          { "labor_type": "onsite_blended_10hr", "pct_of_app": 0.8 },
+          { "labor_type": "offsite_report", "pct_of_app": 0.2 }
+        ],
+        "lines": [
+          { "line_uid": "L1", "line_kind": "catalog", "included": true, "equipment_model_ref": "Automatic Transfer Switch (Functional Testing)", "base_qty": 3, "expansion_policy": "one_unit_per_qty" },
+          { "line_uid": "L2", "line_kind": "catalog", "included": true, "equipment_model_ref": "Automatic Transfer Switch - Iso Bypass (IR/DLRO)", "base_qty": 1, "expansion_policy": "one_unit_per_qty" },
+          { "line_uid": "C1", "line_kind": "cost", "included": true, "cost_category": "travel", "units": 4, "unit_cost_cents": 27500, "markup_applies": true },
+          { "line_uid": "C2", "line_kind": "cost", "included": true, "cost_category": "travel", "units": 2, "unit_cost_cents": 65000, "markup_applies": true },
+          { "line_uid": "C3", "line_kind": "cost", "included": true, "cost_category": "outside_services", "units": 1, "unit_cost_cents": 75000, "markup_applies": true }
+        ]
+      }]
+    }]
+  },
+  "expected": {
+    "bid_cents": 764100,
+    "scope_totals": {
+      "S1": {
+        "base_app_hours": 18, "quoted_app_hours": 18, "service_hours": 0,
+        "onsite_labor_cents": 237600, "offsite_labor_cents": 54000, "cost_cents": 472500, "service_cents": 0,
+        "pre_adjust_cents": 764100, "adjusted_cents": 764100,
+        "lines": {
+          "L1": { "project_intake_qty": 3, "extended_cents": 194400 },
+          "L2": { "project_intake_qty": 1, "extended_cents": 97200 },
+          "C1": { "extended_cents": 165000 },
+          "C2": { "extended_cents": 195000 },
+          "C3": { "extended_cents": 112500 }
+        },
+        "labor_charge_cents": { "onsite_blended_10hr": 237600, "offsite_report": 54000 }
+      }
+    }
+  }
+}

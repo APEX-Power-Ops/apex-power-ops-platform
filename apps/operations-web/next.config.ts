@@ -11,6 +11,7 @@ const mutationSeamBaseUrl =
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  transpilePackages: ['@apex/estimator-core'],
   allowedDevOrigins: ['127.0.0.1', '::1'],
   outputFileTracingRoot: workspaceRoot,
   turbopack: {
