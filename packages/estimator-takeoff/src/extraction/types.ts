@@ -12,6 +12,7 @@ export interface ExtractedApparatus {
   busVoltageV?: number                          // nominal bus voltage if drawing-nav associated one
   block?: string                                // electrical block, e.g. "P1-110"
   mountingHint?: Mounting                        // construction evidence (schedule/symbol/operator); engine prefers this over text parsing
+  candidateKind?: 'breaker'                       // surfacing-only marker for a breaker-suffix token with no AF/AT (see Plan 2a)
 }
 
 export interface ExtractionArtifact {
