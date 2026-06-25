@@ -1,4 +1,5 @@
-import { createHash } from 'node:crypto'
+import { sha256 } from '@noble/hashes/sha2'
+import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils'
 import type { EstimateEnvelope, LaborChargeLine, LineC, ScopeC } from '../schema/envelope'
 
 const SCALE4 = 10_000
@@ -93,5 +94,5 @@ export function canonicalPreimage(env: EstimateEnvelope): string {
 }
 
 export function computeContentHash(env: EstimateEnvelope): string {
-  return createHash('sha256').update(canonicalPreimage(env), 'utf8').digest('hex')
+  return bytesToHex(sha256(utf8ToBytes(canonicalPreimage(env))))
 }

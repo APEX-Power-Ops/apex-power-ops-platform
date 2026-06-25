@@ -42,6 +42,10 @@ importers:
         version: 5.9.3
 
   packages/estimator-core:
+    dependencies:
+      '@noble/hashes':
+        specifier: ^1.5.0
+        version: 1.8.0
     devDependencies:
       '@types/node':
         specifier: ^20.14.0
@@ -473,6 +477,10 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
+
+  '@noble/hashes@1.8.0':
+    resolution: {integrity: sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==}
+    engines: {node: ^14.21.3 || >=16}
 
   '@playwright/test@1.59.1':
     resolution: {integrity: sha512-PG6q63nQg5c9rIi4/Z5lR5IVF7yU5MqmKaPOe0HSc0O2cX1fPi96sUQu5j7eo4gKCkB2AnNGoWt7y4/Xx3Kcqg==}
@@ -1568,6 +1576,8 @@ snapshots:
 
   '@next/swc-win32-x64-msvc@16.2.5':
     optional: true
+
+  '@noble/hashes@1.8.0': {}
 
   '@playwright/test@1.59.1':
     dependencies:
