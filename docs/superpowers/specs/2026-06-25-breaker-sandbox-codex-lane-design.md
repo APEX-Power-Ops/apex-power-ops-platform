@@ -2,12 +2,13 @@
 
 **Date:** 2026-06-25
 **Lane:** `lvbreaker/breaker-sandbox` (apex-power-ops-platform)
-**Status:** DESIGN (patched round 2 — 11 cross-engine findings folded in) — awaiting operator
-sign-off before substrate build
+**Status:** DESIGN — green-lit for `writing-plans` (3 cross-engine review rounds, 16 findings, all
+folded in). Substrate build gated on the operator's dump action.
 **Origin:** Operator asked for a path to let the breaker (lvbreakertcc) lane progress in the
 background via Codex, working against breaker data in an Olares DB, with **zero risk to the online
-(prod Supabase) data**. Two Codex cross-engine review rounds (5 + 6 findings, all accepted) hardened
-the run mechanics so the safety is **structural**, not just intent.
+(prod Supabase) data**. Three Codex cross-engine review rounds (5 + 6 + 5 findings, all accepted)
+hardened the run mechanics so the safety is **structural**, not just intent — notably: no
+cluster-wide `BYPASSRLS` (clone-local ownership / RLS-disable instead).
 
 ---
 
@@ -70,21 +71,33 @@ construction and by run mechanics.
 Clones are created only while the baseline has **zero sessions** (guaranteed by keeping baseline
 non-interactive).
 
-### Roles (each with `BYPASSRLS` — see RLS note)
+### Roles (NO cluster-wide attributes — clone-local handling only)
 
 - **`tcc_breaker_ro`** — `CONNECT` + `SELECT` on the **viewer** clone only. Used by the MCP entry
   and operator/CC. No baseline access.
-- **`tcc_breaker_codex_79audit`** — login role, full privileges on the **codex clone only**. **No
-  baseline, no viewer.** This is the only credential in Codex's environment.
+- **`tcc_breaker_codex_79audit`** — login role that **owns the codex clone's objects** (see RLS
+  handling), giving full write freedom inside that clone. **No baseline, no viewer.** The only
+  credential in Codex's environment.
 - Baseline: reachable only by the provisioning superuser, and only when spawning clones.
-- `REVOKE CONNECT FROM PUBLIC` on baseline + all clones.
+- `REVOKE CONNECT FROM PUBLIC` on baseline + all clones. **No `BYPASSRLS` on any role.**
 
-**RLS note:** the sandbox is single-tenant and isolated; prod RLS posture is a separate concern
-(see the prod-RLS-exposure lane). To keep the restore exact under `--exit-on-error` while not
-letting RLS obstruct analysis: (a) create 3 stub functions `auth.uid()→null`, `auth.role()→''`,
-`auth.jwt()→'{}'::jsonb` in the baseline so the 60 auth-referencing policies restore; (b) grant
-`BYPASSRLS` to the sandbox roles so policies never execute against them. Policies are preserved
-verbatim (fidelity) but inert for sandbox roles.
+**RLS handling (clone-local, no cluster-wide attribute):** the sandbox is single-tenant and
+isolated; prod RLS posture is a separate concern (see the prod-RLS-exposure lane).
+- **Baseline** keeps RLS + policies verbatim (exact restore / provenance). So the 60
+  auth-referencing policies restore under `--exit-on-error`, create 3 deterministic stub functions
+  in the baseline before restore (exact signatures):
+  ```sql
+  create schema if not exists auth;
+  create or replace function auth.uid()  returns uuid  language sql stable as $$ select null::uuid $$;
+  create or replace function auth.role() returns text  language sql stable as $$ select null::text $$;
+  create or replace function auth.jwt()  returns jsonb language sql stable as $$ select '{}'::jsonb $$;
+  ```
+- **Viewer clone** — `ALTER TABLE tcc.<t> DISABLE ROW LEVEL SECURITY` on the 60 RLS tables
+  (clone-local) so `tcc_breaker_ro` (SELECT-only) reads every row. Read-only stays enforced by
+  GRANTs, not RLS.
+- **Codex clone** — `REASSIGN OWNED BY <provisioning superuser> TO tcc_breaker_codex_79audit`
+  (clone-local) so Codex owns every object and writes freely; owners are exempt from RLS on their
+  own tables — **no cluster-wide bypass needed.**
 
 ### Proven role scoping (run + record in manifest)
 
@@ -98,22 +111,30 @@ from pg_database where datistemplate=false order by datname;
 select has_schema_privilege('tcc_breaker_codex_79audit','public','USAGE') as pub_usage,
        has_schema_privilege('tcc_breaker_codex_79audit','public','CREATE') as pub_create,
        has_schema_privilege('tcc_breaker_codex_79audit','tcc','USAGE')     as tcc_usage;
+-- sibling-DB TABLE privileges — run while connected to EACH sibling (ops_dev, records_dev, …);
+-- expect leaked_table_privs = 0 everywhere
+select count(*) as leaked_table_privs
+from information_schema.tables t
+where t.table_schema not in ('pg_catalog','information_schema')
+  and has_table_privilege('tcc_breaker_codex_79audit',
+        format('%I.%I', t.table_schema, t.table_name), 'SELECT, INSERT, UPDATE, DELETE');
 ```
 
-Accept the PUBLIC-CONNECT residual **only if** object-level checks on sibling DBs are clean
-(no CREATE-on-DB, no schema CREATE, no table privileges). The operative guards: object-level
+**Acceptance:** accept the PUBLIC-CONNECT residual **only if**, on every sibling DB, `can_create =
+false`, schema `CREATE = false`, and `leaked_table_privs = 0`. The operative guards: object-level
 privileges + clone-only DSN + sanitized Codex env.
 
 ### Seed procedure
 
+- **CC preflight (host-side, BEFORE the operator scp):** create the controlled landing dir —
+  `ssh olares-mesh 'umask 077; install -d -m 700 /home/olares/dev-pg-backups/tcc'`.
 - **Operator (their machine, cred from Vault):**
   ```bash
   pg_dump --no-owner --no-privileges --schema=tcc -Fc "$PROD_RO_DSN" -f tcc_baseline_20260625.dump
-  umask 077; install -d -m 700 ~/dev-pg-backups/tcc   # if not present
   scp tcc_baseline_20260625.dump olares-mesh:/home/olares/dev-pg-backups/tcc/
   ```
-  Dump is **proprietary catalog data** — controlled path `~/dev-pg-backups/tcc/` (mode 700),
-  file `chmod 600`. Never world-readable `/tmp`.
+  Dump is **proprietary catalog data** — lands in `/home/olares/dev-pg-backups/tcc/` (mode 700);
+  CC `chmod 600` immediately on receipt. Never world-readable `/tmp`.
 - **CC (host) restore preflight + restore:**
   1. Ensure host has the (none-required) extensions; create stub `auth` schema + `auth.uid/role/jwt`
      in the new baseline DB.
@@ -137,7 +158,14 @@ result; sha256 of the dump; dump-file **deletion proof**; the 60→91 doc-drift 
 
 - **Dedicated worktree** `apex-breaker-codex` (a fresh worktree → naturally contains **no**
   `infra/.env`; we never symlink one in). Codex's `-C` points here.
-- **Sanitized launch:**
+- **Harness preflight (dry-run proof, BEFORE the real run):**
+  1. `install -d -m 700 /home/olares/.breaker-codex-home` (the sanitized HOME must exist).
+  2. Verify the binary resolves under the sanitized PATH: `env -i PATH=/home/olares/.nvm/versions/node/v20.20.2/bin:/usr/bin:/bin codex --version`.
+  3. No-op exec under full sanitization: `env -i PATH=… HOME=/home/olares/.breaker-codex-home codex exec -s read-only 'reply OK'` returns cleanly.
+  4. Env proof (use portable `grep -E`, since `rg` may not be on the sanitized PATH):
+     `env -i PATH=… HOME=… BREAKER_SANDBOX_DSN=… bash -c 'printenv | grep -E "PG|DSN|DATABASE|SUPABASE"'`
+     must show **only** `BREAKER_SANDBOX_DSN` — no `DEV_PG_PASSWORD`, no prod/supabase vars.
+- **Sanitized launch (after preflight passes):**
   ```bash
   env -i \
     PATH=/home/olares/.nvm/versions/node/v20.20.2/bin:/usr/bin:/bin \
@@ -145,8 +173,6 @@ result; sha256 of the dump; dump-file **deletion proof**; the 60→91 doc-drift 
     BREAKER_SANDBOX_DSN="postgresql://tcc_breaker_codex_79audit:***@127.0.0.1:5432/tcc_breaker_codex_79audit_20260625?sslmode=disable" \
     codex exec -s workspace-write -C /home/olares/code/apex/apex-breaker-codex - < direction.md
   ```
-- **Env proof (capture before the real run):** `env -i … bash -c 'printenv | rg "PG|DSN|DATABASE|SUPABASE"'`
-  must show **only** `BREAKER_SANDBOX_DSN`. No `DEV_PG_PASSWORD`, no prod/supabase vars.
 - **First direction — #79 lvbreakertcc contract audit (projection scope):** verify the lvbreakertcc
   serving contract row-by-row against the TCC Master Reference + the live clone columns; characterize
   the parked **TMT F-010/011** safety hazard; emit a findings report + candidate patch SQL applied to
