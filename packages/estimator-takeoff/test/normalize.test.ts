@@ -103,4 +103,9 @@ describe('assessApparatus — first-class questions / non-breaker handling', () 
     const a = assessApparatus({ raw: 'DH110-UB', tag: 'DH110-UB', sheet: 'E01-30', page: 18, bbox: [0, 0, 1, 1], evidence: 'one-line' })
     expect(a.isBreakerShaped).toBe(false)
   })
+  it('excludes a static transfer switch (STS) carrying a frame/trip as a non-breaker (aligns the producer profile)', () => {
+    const a = assessApparatus(mk('STS-1 800AF/800AT LSIG', 480))
+    expect(a.signature).toBeNull(); expect(a.isBreakerShaped).toBe(false)
+    expect(a.questions.length).toBeGreaterThan(0)   // surfaced for device-type confirmation, never priced
+  })
 })

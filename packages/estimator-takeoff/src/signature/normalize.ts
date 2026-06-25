@@ -5,7 +5,7 @@ import { classifyVoltage } from './voltage'
 
 const FRAME_TRIP = /(?<!\d)(\d{2,6})\s*AF\s*\/\s*(\d{2,6})\s*A(?:T|F)?/i
 const BREAKER_HINT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|vacuum|SF6|air\s*frame|GB|FB)\b/i
-const NON_BREAKER = /\b(TX|XFMR|KVA|PDU|UPS|ATS|MTS|SPD|PQM|METER|BUS\s*DUCT)\b/i
+const NON_BREAKER = /\b(TX|XFMR|KVA|PDU|UPS|STS|ATS|MTS|SPD|PQM|METER|BUS\s*DUCT)\b/i
 
 function looksLikeBreaker(raw: string): boolean {
   return BREAKER_HINT.test(raw) || FRAME_TRIP.test(raw)
