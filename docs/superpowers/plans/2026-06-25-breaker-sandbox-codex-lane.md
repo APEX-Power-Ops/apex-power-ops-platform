@@ -775,6 +775,19 @@ Then: `ssh olares-mesh 'cd /home/olares/code/apex/apex-breaker-sandbox && git ad
 
 ---
 
+## Task 7 acceptance addenda (from the final whole-branch review — fold into T7; none touch merged T0–6 scripts)
+
+- **A1 — residual-ownership visibility (New Finding 1):** the `make_codex_clone.sh` ownership loop covers only `r/S/v`, so on real `tcc` any postgres-owned FUNCTION/TYPE stays postgres-owned (harmless for a read+write-table-data+create-scratch audit — codex can still EXECUTE them — but make it visible). After the real clone is built, record the residual in `SNAPSHOT_MANIFEST.md`:
+  ```sql
+  select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+   where n.nspname='tcc' and pg_get_userbyid(p.proowner)='postgres';   -- functions
+  select count(*) from pg_type t join pg_namespace n on n.oid=t.typnamespace
+   where n.nspname='tcc' and pg_get_userbyid(t.typowner)='postgres';    -- types
+  ```
+  → add a `Residual postgres-owned tcc functions/types: F / T` line to the manifest.
+- **A2 — schema-CREATE hardening (New Finding 2):** extend the privilege matrix (T7 Step 4) to also assert, per sibling DB, `has_schema_privilege('tcc_breaker_codex_79audit','public','CREATE') = false` (already true on PG17.10; cheap insurance against a base-image/grant drift).
+- **A3 — restore tidiness (T1 minor, optional):** add `trap 'docker exec apex-dev-pg rm -f /tmp/restore.dump' EXIT` to `restore_baseline.sh` so a failed `pg_restore` doesn't orphan the in-container dump.
+
 ## Self-Review
 
 **Spec coverage:** baseline/viewer/codex DBs (T1/T3/T4/T7) ✓; frozen baseline connection-free (T1 revoke + TEMPLATE in T3/T4) ✓; auth stubs exact sigs (T0/T1) ✓; no login-role stubs / core-only ext (manifest T6) ✓; clone-local RLS — viewer DISABLE (T3), codex REASSIGN OWNED (T4) ✓; NO BYPASSRLS (T2 `nobypassrls`) ✓; scoped roles + privilege matrix incl. sibling table-priv probe (T2/T4) ✓; sanitized harness env -i + dry-run + grep -E proof (T5) ✓; dump path/mode + sha256 + deletion proof (T6/T7) ✓; operator-gated real restore (T7) ✓; MCP viewer entry (T7) ✓; manifest with drift note (T6) ✓; promotion gate (README T6, direction T5) ✓.
