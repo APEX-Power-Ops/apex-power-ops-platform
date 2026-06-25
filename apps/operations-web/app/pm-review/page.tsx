@@ -175,6 +175,7 @@ export default function PmDriversPage() {
             <Link href="/pm-review/customer-reporting-placeholder">Customer reporting placeholder</Link>
             <Link href="/pm-review/financial-handoff-placeholder">Financial handoff placeholder</Link>
             <Link href="/pm-review/customer-delivery-execution">Customer delivery execution</Link>
+            <Link href="/pm-review/recognition">Recognition</Link>
             <Link href="/pm-review/finance-placeholder">Finance placeholder</Link>
             <Link href="/pm-review/customer-billing-placeholder">Customer billing placeholder</Link>
             <Link href="/pm-review/source-writeback-placeholder">Source writeback placeholder</Link>
