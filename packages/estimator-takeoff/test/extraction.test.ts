@@ -12,4 +12,11 @@ describe('extraction contract', () => {
     expect(first.bbox).toHaveLength(4)
     expect(['one-line', 'panel-schedule', 'switchgear-schedule', 'power-plan']).toContain(first.evidence)
   })
+  it('the contract carries optional profileWarnings (string[]) and candidateKind (breaker)', () => {
+    const a: ExtractionArtifact = { pdf: 'x', profileWarnings: ['w'], apparatus: [
+      { raw: 'X-UB', tag: 'X-UB', sheet: 'E01-30', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', candidateKind: 'breaker' },
+    ] }
+    expect(Array.isArray(a.profileWarnings)).toBe(true)
+    expect(a.apparatus[0]!.candidateKind).toBe('breaker')
+  })
 })

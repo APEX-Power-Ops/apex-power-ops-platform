@@ -34,6 +34,10 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
     questions.push({ question: `Device ${s.tag ?? '(untagged)'} appears only on a non-authoritative sheet — include it?`, context: `${s.source.sheet} (${s.source.evidence})` })
   }
 
+  for (const w of artifact.profileWarnings ?? []) {
+    questions.push({ question: w, context: 'legend/profile' })
+  }
+
   const matchedLines: MatchedLine[] = []
   const unmatchedCandidates: UnmatchedCandidate[] = []
   for (const line of lines) {

@@ -78,3 +78,11 @@ describe('LV frameA eligibility (the MCB pricing leak)', () => {
     expect(r.matchedLines[0]!.ref).toBe('Circuit Breaker LV - Panelboard MCB')
   })
 })
+
+describe('profileWarnings propagation', () => {
+  it('surfaces artifact.profileWarnings as operator questions', () => {
+    const art: ExtractionArtifact = { pdf: 'x', profileWarnings: ['legend E00-01 unparsed — default profile assumed'], apparatus: [] }
+    const r = runTakeoff(art)
+    expect(r.operatorQuestions.some((q) => /default profile assumed/.test(q.question) && q.context === 'legend/profile')).toBe(true)
+  })
+})
