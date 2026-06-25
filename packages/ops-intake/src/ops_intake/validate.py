@@ -77,7 +77,7 @@ def validate_payload(
     findings: list[Finding] = []
 
     # 1. Unsupported source format (blocking)
-    if source_format != "decomposed_scope_sheet":
+    if source_format not in ("decomposed_scope_sheet", "native"):
         findings.append(Finding(
             code="unsupported_format",
             severity="blocking",

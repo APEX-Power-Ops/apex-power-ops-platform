@@ -34,6 +34,7 @@ from ops_intake.envelope import (
     ActiveRunExists,
     RunNotActive,
     create_run,
+    create_run_native,
     get_run,
     patch_review,
     reject_run,
@@ -312,3 +313,32 @@ async def post_reject(run_id: str, request: Request) -> JSONResponse:
     updated = dict(updated)
     updated["findings"] = _pm_findings(updated.get("findings") or [])
     return JSONResponse(updated)
+
+
+# ---------------------------------------------------------------------------
+# POST /native -- create native intake run from compiled EstimateEnvelope
+# ---------------------------------------------------------------------------
+
+
+@router.post("/native", status_code=status.HTTP_200_OK)
+async def upload_native_envelope(request: Request) -> JSONResponse:
+    """Create a native (estimator) intake run from a compiled EstimateEnvelope (catalog-only v1).
+    Body: {uploaded_by: uuid, envelope: <EstimateEnvelope JSON>}. Returns the PM-safe run summary."""
+    body: dict[str, Any] = await request.json()
+    uploaded_by = body.get("uploaded_by")
+    envelope = body.get("envelope")
+    if not uploaded_by or not isinstance(envelope, dict):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                            detail="uploaded_by and envelope (object) are required")
+    try:
+        result = create_run_native(_dsn(), uploaded_by=uploaded_by, envelope=envelope)
+    except ActiveRunExists as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
+    except psycopg.errors.ForeignKeyViolation:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="uploaded_by is not a known person")
+    return JSONResponse({
+        "run_id": result["run_id"], "status": result["status"],
+        "conflict_kind": result["conflict_kind"], "source_format": result["source_format"],
+        "findings": _pm_findings(result["findings"]),
+    })

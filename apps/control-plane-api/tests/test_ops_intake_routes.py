@@ -19,6 +19,10 @@ import pathlib
 import sys
 import uuid
 
+# Set DATABASE_URL before config.py is imported so it doesn't raise at collection time.
+# The TestClient overrides the actual DB via OPS_DEV_DSN; this placeholder satisfies config.py.
+os.environ.setdefault("DATABASE_URL", "postgresql://localhost/ops_test")
+
 import psycopg
 import pytest
 
@@ -60,9 +64,19 @@ def _dsn() -> str:
     return os.environ["OPS_DEV_DSN"]  # set by the test runner command
 
 
+def _ops_schema_exists(conn) -> bool:
+    """Return True if the ops schema exists in the database (copied from package conftest)."""
+    row = conn.execute(
+        "select 1 from pg_catalog.pg_namespace where nspname='ops'"
+    ).fetchone()
+    return row is not None
+
+
 @pytest.fixture(scope="session", autouse=True)
 def apply_migrations():
-    """Apply migrations 001-008 to ops_test, yield, then teardown."""
+    """Apply full migration ladder 001→010 (incl. 009) to ops_test, yield, then teardown.
+    Reset blocks guard native+009 teardown with _ops_schema_exists so a fresh ops_test is safe.
+    Exercises 010_down and 009_down each session (matching the package conftest ladder)."""
     d = _dsn()
     _require_ops_test(d)
 
@@ -71,9 +85,13 @@ def apply_migrations():
         conn.execute(sql)
 
     mig_dir = _MIGRATIONS_DIR
-    # pre-up reset: drop 008 (core + FK) THEN 001 (ops) so a leaked `core` from a prior
-    # session cannot make the 008 up-migration fail (008 is not CREATE ... IF NOT EXISTS).
+    # pre-up reset: guarded native+009 teardown THEN 008+001 teardown.
+    # 009/010 down require the ops schema to exist; guard so a fresh ops_test is safe.
     with psycopg.connect(d, autocommit=True) as c:
+        if _ops_schema_exists(c):
+            c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010_down's data-loss guard passes
+            _run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")
+            _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
         _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
 
@@ -86,6 +104,8 @@ def apply_migrations():
         "006_progress_billing.sql",
         "007_intake_envelope.sql",
         "008_core_equipment_models.sql",
+        "009_recognition_bridge.sql",
+        "010_native_envelope_intake.sql",
     ]
     with psycopg.connect(d, autocommit=True) as c:
         for name in up_migrations:
@@ -94,6 +114,10 @@ def apply_migrations():
     yield
 
     with psycopg.connect(d, autocommit=True) as c:
+        if _ops_schema_exists(c):
+            c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010_down's data-loss guard passes
+            _run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")
+            _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
         _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
 
@@ -544,3 +568,276 @@ class TestCodexAuditHardening:
         assert resp.status_code == 400, resp.text
         assert not _contains_substring(resp.json(), "999999")
         assert not _contains_substring(resp.json(), "$")
+
+
+# ---------------------------------------------------------------------------
+# Task 7 -- POST /api/v1/ops/intake/native
+# ---------------------------------------------------------------------------
+
+
+def _catalog_envelope():
+    return {
+        "schema_version": "estimate_envelope_v1", "source_kind": "native",
+        "project_number": "API-1", "envelope_id": "api-env-1", "quote_version": 1,
+        "source_draft_id": "d", "source_revision_id": "r",
+        "totals": {"bid_cents": 165000, "service_hours": 0},
+        "scopes": [{
+            "scope_id": "S1", "name": "A1", "neta_standard": "ATS",
+            "replication_m4": 1, "adjustment_multiplier_n4": 1,
+            "scope_totals": {"onsite_labor_cents": 165000, "offsite_labor_cents": 0,
+                             "cost_cents": 0, "service_cents": 0, "service_hours": 0,
+                             "quoted_app_hours": 10, "adjusted_cents": 165000},
+            "lines": [{"line_uid": "S1:r1", "line_kind": "catalog", "included": True,
+                       "equipment_model_ref": "Capcitors - Per Unit", "base_qty": 1,
+                       "project_intake_qty": 1, "resolved_ref_hours": 10.0}],
+        }],
+    }
+
+
+class TestNativeIntake:
+    """POST /api/v1/ops/intake/native"""
+
+    def test_native_returns_200_pm_safe(self, client, person_id):
+        resp = client.post("/api/v1/ops/intake/native",
+                           json={"uploaded_by": person_id, "envelope": _catalog_envelope()})
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["source_format"] == "native" and body["status"] == "parsed"
+        assert not _contains_substring(body, "$")               # finance redaction
+        for f in body["findings"]:
+            assert set(f) == {"code", "severity", "ok", "message"}   # no diagnostic_detail
+
+    def test_native_non_catalog_rejected(self, client, person_id):
+        env = _catalog_envelope(); env["scopes"][0]["lines"][0]["line_kind"] = "service"
+        resp = client.post("/api/v1/ops/intake/native",
+                           json={"uploaded_by": person_id, "envelope": env})
+        assert resp.status_code == 200, resp.text          # a governed reject is 200 with status='rejected'
+        assert resp.json()["status"] == "rejected"
+
+    def test_native_malformed_numeric_is_governed_reject(self, client, person_id):
+        """Hardening A: base_qty="abc" -> HTTP 200 status=rejected (never 500), findings have malformed_catalog_field."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "HARDEN-A-1"
+        env["scopes"][0]["lines"][0]["base_qty"] = "abc"
+        resp = client.post("/api/v1/ops/intake/native",
+                           json={"uploaded_by": person_id, "envelope": env})
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "malformed_catalog_field" in codes, f"Expected malformed_catalog_field in {codes}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+    def test_native_missing_scope_name_is_governed_reject(self, client, person_id):
+        """Hardening A: scope missing name -> HTTP 200 status=rejected (never 500)."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "HARDEN-A-2"
+        env["envelope_id"] = "api-env-harden-a-2"
+        del env["scopes"][0]["name"]
+        resp = client.post("/api/v1/ops/intake/native",
+                           json={"uploaded_by": person_id, "envelope": env})
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "missing_scope_name" in codes, f"Expected missing_scope_name in {codes}"
+
+
+# ---------------------------------------------------------------------------
+# Hardening D1 route tests
+# ---------------------------------------------------------------------------
+
+
+class TestNativeIntakeD1:
+    """D1 hardening: explicit-null and quote_version route-level tests."""
+
+    def test_native_explicit_null_total_is_governed_reject(self, client, person_id):
+        """adjustment_multiplier_n4=null (JSON null -> Python None) -> HTTP 200 status=rejected (NOT 500).
+        The present-null path was crashing the pivot before D1."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "D1-ROUTE-NULL-TOTAL"
+        env["envelope_id"] = "d1-route-env-1"
+        env["scopes"][0]["adjustment_multiplier_n4"] = None  # explicit null
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "malformed_total" in codes, f"Expected malformed_total in {codes}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+    def test_native_missing_quote_version_is_governed_reject(self, client, person_id):
+        """quote_version=null -> HTTP 200 status=rejected (not 500 or 4xx)."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "D1-ROUTE-NO-QV"
+        env["envelope_id"] = "d1-route-env-2"
+        env["quote_version"] = None  # explicit null -> missing_quote_version
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "missing_quote_version" in codes, f"Expected missing_quote_version in {codes}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+    def test_native_integer_valued_string_cents_is_accepted_not_500(self, client, person_id):
+        """D1 FIX: bid_cents='100000.0' (integer-valued string) -> HTTP 200 status='parsed' (NOT 500, NOT rejected).
+        The pivot must coerce via Decimal so int('100000.0') path is avoided."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "D1-ROUTE-INT-STR"
+        env["envelope_id"] = "d1-route-env-int-str"
+        env["quote_version"] = 2  # distinct quote_version to avoid collision
+        env["totals"]["bid_cents"] = "100000.0"
+        # scope_totals consistent at integer form
+        env["scopes"][0]["scope_totals"]["onsite_labor_cents"] = "100000.0"
+        env["scopes"][0]["scope_totals"]["adjusted_cents"] = 100000
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "parsed", (
+            f"Expected status='parsed' for integer-valued string cents; got {body['status']}; findings={body.get('findings')}"
+        )
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+
+# ---------------------------------------------------------------------------
+# Hardening D3 route tests
+# ---------------------------------------------------------------------------
+
+
+class TestNativeIntakeD3:
+    """D3 hardening: schema/source contract + duplicate line_uid route-level tests."""
+
+    def test_native_source_kind_workbook_intake_is_governed_reject(self, client, person_id):
+        """source_kind='workbook_intake' -> HTTP 200 status='rejected' (not 500, not 422)."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "D3-ROUTE-SK"
+        env["envelope_id"] = "d3-route-env-sk"
+        env["source_kind"] = "workbook_intake"
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "invalid_source_kind" in codes, f"Expected invalid_source_kind in {codes}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+    def test_native_duplicate_line_uid_is_governed_reject_not_500(self, client, person_id):
+        """Duplicate line_uid -> HTTP 200 status='rejected' (not a DB 500 from uq_ops_apparatus_intake)."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "D3-ROUTE-DUP-UID"
+        env["envelope_id"] = "d3-route-env-dup-uid"
+        # Add a second line with the same line_uid (duplicating "S1:r1")
+        line2 = copy.deepcopy(env["scopes"][0]["lines"][0])
+        env["scopes"][0]["lines"].append(line2)
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "duplicate_line_uid" in codes, f"Expected duplicate_line_uid in {codes}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+
+# ---------------------------------------------------------------------------
+# Hardening D3 FIX-2 route tests
+# ---------------------------------------------------------------------------
+
+
+class TestNativeIntakeFix2:
+    """FIX-2: non-conforming JSON shapes -> governed reject, never 500."""
+
+    def test_native_nonobject_scope_is_governed_reject(self, client, person_id):
+        """POST /native with 'scopes':[null] -> HTTP 200 status='rejected' (NOT 500)."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "FIX2-ROUTE-NULL-SCOPE"
+        env["envelope_id"] = "fix2-route-env-null-scope"
+        env["quote_version"] = 99
+        env["scopes"] = [None]  # non-object scope element
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", body
+        codes = {f["code"] for f in body.get("findings", [])}
+        assert "malformed_shape" in codes, f"Expected malformed_shape in {codes}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+
+# ---------------------------------------------------------------------------
+# Hardening D3 FIX-3 route tests
+# ---------------------------------------------------------------------------
+
+
+class TestNativeIntakeFix3:
+    """FIX-3: non-finite numerics + non-string line_uid -> HTTP 200 governed reject (never 500)."""
+
+    def test_native_nan_bid_is_governed_reject(self, client, person_id):
+        """bid_cents='NaN' -> HTTP 200 with status='rejected' (NOT 500).
+        Proves the non-finite _dec fix closes the crash end-to-end at the route layer."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "FIX3-ROUTE-NAN-BID"
+        env["envelope_id"] = "fix3-route-nan-bid"
+        env["quote_version"] = 501
+        env["totals"]["bid_cents"] = "NaN"
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", f"Expected rejected; got {body['status']}; body={body}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
+
+    def test_native_array_line_uid_is_governed_reject(self, client, person_id):
+        """line_uid=['x'] (array) -> HTTP 200 with status='rejected' (NOT TypeError/500).
+        Proves the non-string line_uid guard closes the hashability crash end-to-end."""
+        import copy
+        env = copy.deepcopy(_catalog_envelope())
+        env["project_number"] = "FIX3-ROUTE-ARR-LUID"
+        env["envelope_id"] = "fix3-route-arr-luid"
+        env["quote_version"] = 502
+        env["scopes"][0]["lines"][0]["line_uid"] = ["x"]
+        resp = client.post(
+            "/api/v1/ops/intake/native",
+            json={"uploaded_by": person_id, "envelope": env},
+        )
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+        assert body["status"] == "rejected", f"Expected rejected; got {body['status']}; body={body}"
+        assert not _contains_substring(body, "$")
+        assert not _contains_substring(body, "diagnostic_detail")
