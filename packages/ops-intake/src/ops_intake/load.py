@@ -136,9 +136,9 @@ def insert_scope_quote_line(cur, scope_id, line: dict) -> str:
     return cur.execute(
         """
         insert into ops.scope_quote_line (scope_id, apparatus_type, test_standard, qty,
-            hrs_per_unit, catalog_default_hours, designation, line_number,
+            hrs_per_unit, catalog_default_hours, designation, notes, description, line_number,
             source, legacy_source_id, provenance_status)
-        values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'draft')
+        values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'draft')
         returning id
         """,
         (
@@ -149,6 +149,8 @@ def insert_scope_quote_line(cur, scope_id, line: dict) -> str:
             line["hrs_per_unit"],
             line.get("catalog_default_hours"),
             line.get("designation"),
+            line.get("notes"),
+            line.get("description"),
             line.get("line_number"),
             _SOURCE,
             line.get("line_uid"),

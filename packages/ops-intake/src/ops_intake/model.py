@@ -16,6 +16,7 @@ class QuoteLineIn:
     drawing: str | None = None
     designation: str | None = None
     notes: str | None = None
+    description: str | None = None
     line_number: int | None = None
     catalog_default_hours: float | None = None
     section: str | None = None

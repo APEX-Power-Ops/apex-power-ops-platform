@@ -1,0 +1,33 @@
+{
+  "name": "Case A — ATS apparatus, default labor, M4=1 N4=1",
+  "provenance": "ATS25 hrs: ATS-(IR/DLRO)=3 x2 + ATS Iso Bypass (IR/DLRO)=4 x1 = 10h. 100% onsite-10hr x 16500 = 165000. P3=P4=165000. (No (Set)/complex-expansion rows — deferred per spec 7.)",
+  "draft": {
+    "draft_id": "case-a", "estimator_ref": "corpus", "status": "draft", "selected_revision_id": "case-a-r1",
+    "revisions": [{
+      "revision_id": "case-a-r1", "rev_number": 1, "copied_from_revision_id": null, "pricing_card_version": "2026-01-23",
+      "scopes": [{
+        "scope_id": "S1", "name": "Scope A", "neta_standard": "ATS", "replication_m4": 1, "adjustment_multiplier_n4": 1,
+        "labor_allocation": [{ "labor_type": "onsite_blended_10hr", "pct_of_app": 1 }],
+        "lines": [
+          { "line_uid": "L1", "line_kind": "catalog", "included": true, "equipment_model_ref": "Automatic Transfer Switch - (IR/DLRO)", "base_qty": 2, "expansion_policy": "one_unit_per_qty" },
+          { "line_uid": "L2", "line_kind": "catalog", "included": true, "equipment_model_ref": "Automatic Transfer Switch - Iso Bypass (IR/DLRO)", "base_qty": 1, "expansion_policy": "one_unit_per_qty" }
+        ]
+      }]
+    }]
+  },
+  "expected": {
+    "bid_cents": 165000,
+    "scope_totals": {
+      "S1": {
+        "base_app_hours": 10, "quoted_app_hours": 10, "service_hours": 0,
+        "onsite_labor_cents": 165000, "offsite_labor_cents": 0, "cost_cents": 0, "service_cents": 0,
+        "pre_adjust_cents": 165000, "adjusted_cents": 165000,
+        "lines": {
+          "L1": { "project_intake_qty": 2, "extended_cents": 99000 },
+          "L2": { "project_intake_qty": 1, "extended_cents": 66000 }
+        },
+        "labor_charge_cents": { "onsite_blended_10hr": 165000 }
+      }
+    }
+  }
+}
