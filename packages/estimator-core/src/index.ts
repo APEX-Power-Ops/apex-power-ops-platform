@@ -55,6 +55,10 @@ export type { Finding, Severity } from './validate/findings'
 export { loadCorpusCases, runCorpusCase } from './corpus/harness'
 export type { CorpusCase, ScopeExpectation } from './corpus/harness'
 
+// Authoring (renderer)
+export { buildNativeEnvelope, EQUIPMENT_MODELS_SEED, createDefaultCatalogResolver } from './authoring/build-native-envelope'
+export type { NativeEnvelopeInput, NativeScopeInput, NativeLineInput } from './authoring/build-native-envelope'
+
 // Money primitives
 export {
   allocateByLargestRemainder,
