@@ -841,3 +841,46 @@ These ride on this engine and get their own plan once it lands:
 - **Spec coverage:** normalize/voltage (Tasks 2-3) ✓ · quantify de-dup rule (Task 4) ✓ · catalog match + 3 buckets + fail-closed (Tasks 5-6) ✓ · emit via `buildNativeEnvelope` (Task 6) ✓ · scope-per-block (Task 6) ✓. Gates, spec-parser, patterns, voltage-from-drawing extraction → Plan 2 (explicitly deferred).
 - **Placeholders:** none — every step has runnable code/commands. (Step 0a is a real verification action, not a placeholder.)
 - **Type consistency:** `ApparatusSignature`, `QuantifiedLine`, `MatchedLine`, `TakeoffResult`, `runTakeoff`, `emitEnvelope`, `matchBreaker`, `classifyVoltage`, `normalizeApparatus`, `quantify` are defined once and referenced with the same signatures across Tasks 1-6. `NativeEnvelopeInput`/`buildNativeEnvelope`/`NetaStandard` are imported from `@apex/estimator-core` verbatim.
+
+---
+
+## Execution addendum — Tasks 7–8 (post-review integrity hardening)
+
+Tasks 0–6 shipped the deterministic breaker engine as planned. Two cross-engine review rounds (Codex +
+opus 4-lens, per IRP) then drove an operator-ratified integrity/fidelity hardening that EXTENDED the
+contract beyond the original plan. The shipped engine (commit `cb1aafae`, branch `estimator-takeoff/spec`)
+reflects:
+
+**Construction-evidence resolution (operator-ratified).** Breaker construction (mounting) is part of the
+catalog model. The extraction contract carries an optional `mountingHint: Mounting`; `resolveMounting`
+prefers it, then label-text keywords, then a single guarded estimating baseline (LV `frameA>=800` WITH a
+ground-fault function → `draw_out`), else fail-closed `unknown`. Provenance is explicit and surfaced:
+`ApparatusSignature.mountingBasis` ∈ {hint, text, estimating_baseline, none} flows to `MatchedLine` and the
+emitted line notes — an assumed baseline is never byte-identical to read evidence. (functionBasis deferred:
+trip functions are parsed text-only.)
+
+**Parse integrity.** Trip functions are TEXT-ONLY: an L-anchored descriptor (`\bL(?=[SIGE])…`) searched
+AFTER the frame/trip spec — manufacturer/label noise (GE, SE, lone L) cannot fabricate a ground-fault.
+`FRAME_TRIP` is `\d{2,6}` with a non-digit lookbehind (no 5-digit truncation) and doubles as a breaker
+hint (frame-only mains normalize). A strong NON_BREAKER device-type token (ATS/MTS/SPD/XFMR/…) is
+authoritative exclusion even with a frame/trip — it raises an operator question, never a priced line.
+Bare DO/EO tokens require unambiguous context.
+
+**First-class parser-failure surfacing.** `assessApparatus` returns `{signature|null, questions, isBreakerShaped}`
+and `runTakeoff` emits operatorQuestions BEFORE quantification for: missing voltage, frame/trip parse
+failure, missing power-breaker function descriptor, hint↔text construction conflict, and power-plan-only.
+Nothing breaker-shaped is silently dropped.
+
+**Quantify / emit fidelity.** `specKey` includes the electrical block → one quantified line (and one scope)
+per block. `quantify` prefers the RICHEST authoritative occurrence (known mounting) as the representative
+and exposes `memberTags`. `runTakeoff` associates power-plan/location rows to their counted device BY TAG
+(any member tag), preserving location evidence with no false question and no double-count. A power-breaker
+with unknown functions is unmatched (not assumed LS/LSI). `emitEnvelope` FAILS CLOSED (throws) on zero
+matched lines — no empty "valid" envelope.
+
+**Verification.** 55 unit tests + typecheck green; a fresh independent acceptance probe (G1–G6) green; two
+cross-engine review rounds with all findings closed; convergence hard-stop per operator directive.
+
+**Deferred → Plan 2 (tracked):** evidence sidecar (§6.5); aggregating unmatched into operator questions
+(Gate 1); descriptor-before-frame recall; snake_case on-disk serialization; threading the NETA standard
+(Gate 2); S4 transitive-coverage completeness.
