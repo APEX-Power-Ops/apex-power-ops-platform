@@ -2,6 +2,9 @@
 set -euo pipefail
 # Usage: make_codex_clone.sh <BASELINE_DB> <CLONE_DB> <CODEX_ROLE>
 BASELINE_DB="${1:?baseline}"; CLONE_DB="${2:?clone}"; CODEX_ROLE="${3:?role}"
+# Harden the unquoted identifier interpolation below: the role name is embedded directly into
+# dynamic SQL, so reject anything that is not a plain lower_snake identifier (fail-closed).
+[[ "$CODEX_ROLE" =~ ^[a-z_][a-z0-9_]*$ ]] || { echo "make_codex_clone: invalid role name '$CODEX_ROLE'" >&2; exit 1; }
 SU() { docker exec -i apex-dev-pg psql -v ON_ERROR_STOP=1 -U postgres "$@"; }
 SU -d postgres -c "drop database if exists \"$CLONE_DB\";"
 SU -d postgres -c "create database \"$CLONE_DB\" template \"$BASELINE_DB\";"
@@ -13,7 +16,7 @@ SU -d "$CLONE_DB" -c "grant usage on schema tcc to \"$CODEX_ROLE\";"
 # REASSIGN OWNED BY postgres is blocked on PG17 (postgres owns system catalog objects);
 # generate and execute per-object ALTER OWNER statements scoped to tcc schema — identical semantic.
 SU -d "$CLONE_DB" -c "alter schema tcc owner to \"$CODEX_ROLE\";"
-# $CODEX_ROLE is alphanumeric+underscores (verified by caller); safe to embed as identifier literal
+# $CODEX_ROLE is validated above as a plain lower_snake identifier; safe to embed in the format template
 SU -d "$CLONE_DB" -c "
 do \$body\$
 declare r record;
