@@ -15,7 +15,7 @@ describe('golden: real E01-11 (STACK PHX02A Addendum 4)', () => {
     expect(fixture.apparatus.every((a) => a.busVoltageV === undefined)).toBe(true)
     const r = runTakeoff(fixture)
     expect(r.matchedLines).toHaveLength(0)                       // nothing priced without voltage
-    expect(r.operatorQuestions.length).toBeGreaterThan(0)       // every breaker surfaced as a question (no silent drop)
+    expect(r.operatorQuestions.length).toBeGreaterThanOrEqual(20)  // dozens of breaker-shaped rows each surfaced (no silent drop), not merely non-empty
     expect(() => emitEnvelope(r, { projectNumber: 'GOLDEN' })).toThrow(/zero matched lines/)  // fail-closed
   })
 
@@ -29,7 +29,11 @@ describe('golden: real E01-11 (STACK PHX02A Addendum 4)', () => {
     }
     const r = runTakeoff(asserted)
     expect(r.matchedLines.length).toBeGreaterThan(0)
-    expect(r.matchedLines.some((m) => m.ref === 'Circuit Breaker LV - Draw-Out (LSIG)')).toBe(true)
+    const lsig = r.matchedLines.find((m) => m.ref === 'Circuit Breaker LV - Draw-Out (LSIG)')
+    expect(lsig).toBeDefined()
+    // HONESTY: the construction is an ESTIMATING ASSUMPTION (≥800AF+G → draw-out), provenance-surfaced as
+    // 'estimating_baseline' — NOT read from the drawing. The estimator sees this basis and can override.
+    expect(lsig!.mountingBasis).toBe('estimating_baseline')
     const { envelope, findings } = emitEnvelope(r, { projectNumber: 'GOLDEN' })
     expect(findings.filter((f) => f.severity === 'error')).toEqual([])   // emits with no error findings
     expect(envelope.scopes.length).toBeGreaterThan(0)
