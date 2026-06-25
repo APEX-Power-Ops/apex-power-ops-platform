@@ -443,6 +443,14 @@ def pivot_to_intake_payload(env: dict) -> dict:
 
 def recompute_content_hash(env: dict) -> str:
     """Server-side idempotency hash over the pivoted economic payload (C6: never trust the client hash).
-    Deterministic (sort_keys). Call only on a validated envelope (the pivot is strict)."""
-    blob = json.dumps(pivot_to_intake_payload(env), sort_keys=True, separators=(",", ":"), default=str)
+    Deterministic (sort_keys). Free-text metadata fields (designation/notes/description) are excluded
+    so that two envelopes identical in economics hash identically regardless of field-label differences
+    (economic-neutral invariant). The stored payload and scope_quote_line rows retain all metadata."""
+    payload = pivot_to_intake_payload(env)
+    for sc in payload.get("scopes") or []:
+        for ln in sc.get("lines") or []:
+            ln.pop("designation", None)
+            ln.pop("notes", None)
+            ln.pop("description", None)
+    blob = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
