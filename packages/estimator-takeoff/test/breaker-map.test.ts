@@ -6,6 +6,7 @@ import type { ApparatusSignature } from '../src/signature/types'
 
 const base: ApparatusSignature = {
   kind: 'breaker', voltageClass: 'LV', functions: ['L', 'S', 'I', 'G'], mounting: 'draw_out', mountingBasis: 'text',
+  frameA: 800, tripA: 800,
   source: { sheet: 'E01-11', page: 11, bbox: [0, 0, 1, 1], evidence: 'one-line' },
 }
 const resolver = createDefaultCatalogResolver()
@@ -36,6 +37,14 @@ describe('matchBreaker', () => {
   })
   it('returns null for an unmappable signature (HV, no type)', () => {
     expect(matchBreaker({ ...base, voltageClass: 'HV', mounting: 'unknown' })).toBeNull()
+  })
+  it('does NOT price an LV breaker with no parsed frame rating (frameA undefined)', () => {
+    expect(matchBreaker({ ...base, mounting: 'panelboard', functions: [], frameA: undefined })).toBeNull()
+    expect(matchBreaker({ ...base, mounting: 'molded_case', functions: [], frameA: undefined })).toBeNull()
+    expect(matchBreaker({ ...base, mounting: 'draw_out', functions: ['L', 'S', 'I', 'G'], frameA: undefined })).toBeNull()
+  })
+  it('prices a rated LV panelboard MCB (frameA present, no functions needed)', () => {
+    expect(matchBreaker({ ...base, mounting: 'panelboard', functions: [], frameA: 400 })).toBe('Circuit Breaker LV - Panelboard MCB')
   })
   it('has all 12 breaker rules and every ref resolves in the canonical catalog', () => {
     expect(BREAKER_MAP).toHaveLength(12)
