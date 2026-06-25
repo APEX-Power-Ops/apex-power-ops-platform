@@ -14,7 +14,11 @@ infra/
 node_modules/
 ops/
 output/
-packages/
+# Exclude packages/* EXCEPT @apex/estimator-core — operations-web depends on it (workspace source,
+# transpilePackages). Excluding its source breaks the Turbopack build (Module not found).
+packages/*
+!packages/estimator-core/
+!packages/estimator-core/**
 plan/
 pytest-cache-files-*/
 services/
