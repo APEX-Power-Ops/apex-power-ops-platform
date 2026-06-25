@@ -11,12 +11,12 @@ SU -d postgres -c "create database \"$CLONE_DB\" template \"$BASELINE_DB\";"
 SU -d "$CLONE_DB" -c "revoke connect on database \"$CLONE_DB\" from public;"
 SU -d "$CLONE_DB" -c "grant connect on database \"$CLONE_DB\" to \"$CODEX_ROLE\";"
 SU -d "$CLONE_DB" -c "grant usage on schema tcc to \"$CODEX_ROLE\";"
-# clone-local ownership transfer: codex owns every object originally owned by postgres in this DB
-# (owners are RLS-exempt on their own tables -> full read/write/DDL without any cluster bypass)
-# REASSIGN OWNED BY postgres is blocked on PG17 (postgres owns system catalog objects);
-# generate and execute per-object ALTER OWNER statements scoped to tcc schema — identical semantic.
+# clone-local ownership transfer: codex owns every tcc object (owners are RLS-exempt on their own
+# tables -> full read/write/DDL without any cluster bypass). NOTE: `reassign owned by postgres` is
+# REJECTED on PG17 (postgres owns system catalogs); transfer tcc schema + its r/S/v via per-object
+# ALTER OWNER. SKIP sequences LINKED to a table column (identity/serial) — Postgres rejects changing
+# their owner directly; altering the owning table cascades ownership to them automatically.
 SU -d "$CLONE_DB" -c "alter schema tcc owner to \"$CODEX_ROLE\";"
-# $CODEX_ROLE is validated above as a plain lower_snake identifier; safe to embed in the format template
 SU -d "$CLONE_DB" -c "
 do \$body\$
 declare r record;
@@ -26,6 +26,10 @@ begin
       from pg_class c join pg_namespace n on n.oid=c.relnamespace
      where n.nspname='tcc' and c.relkind in ('r','S','v')
        and pg_get_userbyid(c.relowner)='postgres'
+       and not (c.relkind='S' and exists (
+         select 1 from pg_depend d
+          where d.objid=c.oid and d.classid='pg_class'::regclass
+            and d.refclassid='pg_class'::regclass and d.deptype in ('a','i')))
   loop
     execute format('alter %s %I.%I owner to ${CODEX_ROLE}',
       case r.relkind when 'r' then 'table' when 'S' then 'sequence' when 'v' then 'view' end,
