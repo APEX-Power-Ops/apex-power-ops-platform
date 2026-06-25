@@ -306,17 +306,23 @@ async function main() {
   );
 
   // Step 4: DB persistence — assert metadata actually landed in ops.scope_quote_line
-  // Skipped (with a warning) when OPS_DEV_DSN is unset so the smoke can run API-only.
+  // Fails closed when OPS_DEV_DSN is unset, unless ALLOW_DB_CHECK_SKIP=1 (API-only runs).
   await runStep(
     `DB ops.scope_quote_line metadata persisted for line_uid='SC1:cap-1'`,
     failures,
     async () => {
       const dsn = process.env.OPS_DEV_DSN;
       if (!dsn) {
-        console.warn(
-          '  ESTIMATOR_NATIVE_SMOKE_WARN OPS_DEV_DSN unset — skipping DB persistence check',
+        if (process.env.ALLOW_DB_CHECK_SKIP === '1') {
+          console.warn(
+            '  ESTIMATOR_NATIVE_SMOKE_WARN OPS_DEV_DSN unset — DB persistence check skipped (ALLOW_DB_CHECK_SKIP=1)',
+          );
+          return;
+        }
+        throw new Error(
+          'OPS_DEV_DSN is unset — DB persistence check cannot run. ' +
+          'Set ALLOW_DB_CHECK_SKIP=1 to intentionally skip (API-only run).',
         );
-        return;
       }
       if (!runId) {
         throw new Error('skipped — no run_id (step 1 failed)');
@@ -325,6 +331,20 @@ async function main() {
       // Import child_process without a top-level import so the file parses even in
       // environments that do not use this code path.
       const { execFileSync } = await import('child_process');
+
+      // Parse the libpq DSN ("key=value ..." whitespace-separated) into PG* env vars
+      // so the password never appears in psql argv (visible in ps output).
+      const dsnKeyMap = { host: 'PGHOST', port: 'PGPORT', dbname: 'PGDATABASE', user: 'PGUSER', password: 'PGPASSWORD', sslmode: 'PGSSLMODE' };
+      const pgEnv = { ...process.env };
+      for (const token of dsn.trim().split(/\s+/)) {
+        const eqIdx = token.indexOf('=');
+        if (eqIdx < 1) continue;
+        const key = token.slice(0, eqIdx);
+        const val = token.slice(eqIdx + 1);
+        if (Object.prototype.hasOwnProperty.call(dsnKeyMap, key)) {
+          pgEnv[dsnKeyMap[key]] = val;
+        }
+      }
 
       // Query: join through scopes→projects to scope to our disposable project.
       // Use $1 placeholder to pass PROJECT; pass literal string for line_uid
@@ -337,13 +357,13 @@ async function main() {
         ` where p.project_number = '${PROJECT.replace(/'/g, "''")}'` +
         `   and ql.legacy_source_id = 'SC1:cap-1'`;
 
-      // Run psql; DSN passed as env var so it never appears in the args array.
+      // Run psql with PG* env vars — no connection string in argv.
       let stdout;
       try {
         stdout = execFileSync(
           'psql',
-          [dsn, '-t', '-A', '-F|', '-c', sql],
-          { encoding: 'utf8', timeout: 10000, env: { ...process.env } },
+          ['-t', '-A', '-F|', '-c', sql],
+          { encoding: 'utf8', timeout: 10000, env: pgEnv },
         ).trim();
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
