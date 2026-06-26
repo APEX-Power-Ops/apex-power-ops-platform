@@ -1,6 +1,8 @@
 # Estimator-Takeoff Gate-1 Voltage UI — Design
 
 > Status: DRAFT for operator review. Lane `estimator-takeoff/gate1-voltage-ui` off main `3dff664c`. Dev-only; merge OPERATOR-GATED. This is the FIRST human gate of the estimator-takeoff pipeline.
+>
+> **Rev 2 (operator review, 2026-06-26) — four contract corrections, all verified against source:** (1) the interactive surface is built from `runTakeoff` + `reconcile` so `TakeoffResult.findings` is available — NOT `runFromArtifact`, whose `RunResult.findings` carries only estimator-core envelope findings and **drops the voltage-assertion findings** (every non-emit return path sets `findings: []`); (2) **untagged rows are read-only, not assertable** — the engine's `VoltageAssertion` is tag-keyed only, no `inputIndex` path; (3) **assertions merge by tag (replace, never blind-append)** — duplicate tags are a hard engine error; (4) **the UI surfaces ALL open items, not just missing voltage** — `isClean` blocks on error findings, any unresolved disposition, and any operator question.
 
 ## Goal
 
@@ -38,27 +40,28 @@ drawing-nav stays an offline Windows tool; the operator uploads its JSON output.
 - `parseArtifact(json): ExtractionArtifact` validates the contract; `ArtifactContractError` (`.path`, `.expected`, `.got`) surfaces as a loud `role="alert"` red message naming the offending path.
 - Optional: a second file input accepts the producer manifest sidecar (`*.manifest.json`); if provided, pre-fill the project-context form (`pdf`, `sheet`, `producerCommit`).
 
-### 2. Run + reconcile (first pass, strict)
-- `runFromArtifact(artifact, { projectNumber, allowOpenItems: false })` runs client-side → `RunResult { report?, envelope?, findings, exitCode, stderr }`.
-- Strict first pass (`allowOpenItems: false`) is intentional: every open row becomes part of the worklist rather than being papered over. The reconciliation summary (counts + `status`) renders immediately.
+### 2. Evaluate (run + reconcile) — thin helper, NOT runFromArtifact
+- A thin browser helper composes exported primitives and returns **both** results:
+  `const result = runTakeoff(artifact); const report = reconcile(artifact, result); // { result, report }`.
+- **Why not `runFromArtifact`:** its `RunResult.findings` is estimator-core envelope findings only, and every non-emit return path sets `findings: []`. The voltage-assertion findings (unknown / duplicate / invalid tag, detected-vs-asserted conflict) live in `TakeoffResult.findings` and are summarized into `report.counts` (numbers only) — their codes/messages are otherwise lost by the runner wrapper. The interactive surface MUST read `result.findings` directly. `runFromArtifact` is reserved for CLI parity.
+- `report.status` / `report.counts` / `result.dispositions` / `result.findings` / `result.operatorQuestions` / `result.unmatchedCandidates` render immediately. No envelope is emitted during review (only at export, when clean).
 
 ### 3. Missing-voltage worklist (grouped sheet -> block -> tag)
 - Filter `report.dispositions` where `reasonCode === 'missing_voltage'`.
 - `block` is NOT on `ApparatusDisposition` (known API gap) — recover it per row from `artifact.apparatus[disposition.inputIndex].block`. `sheet` and `tag` are on the disposition directly.
-- Group by `sheet` -> `block` -> `tag`. Untagged rows (no `tag`) are grouped under a `(untagged)` bucket keyed by `inputIndex` and are individually assertable but never tag-batched.
-- Display each group with its `raw`, `evidence`, and the engine's question text (`disposition.reason`).
+- Group by `sheet` -> `block` -> `tag`. **Untagged missing-voltage rows (no `tag`) are NOT assertable in V1** — `VoltageAssertion` is tag-keyed only (`{ voltageV, tags[] }`; `applyVoltageAssertions` validates asserted tags against extracted device tags; there is no `inputIndex`-based assertion path). They appear **read-only** in the "other open items" panel (Stage 4 / UI), flagged blocking-but-not-resolvable-here. An `inputIndex` assertion path would be an engine contract change — deferred.
+- Display each resolvable (tagged) group with its `raw`, `evidence`, and the engine's question text (`disposition.reason`).
 
-### 4. Assign voltage (per tag / per selected group)
-- Per tag (or a multi-select of tags sharing a voltage) the operator enters an integer voltage.
+### 4. Assign voltage (per TAG / per selected group — tagged rows only)
+- For TAGGED missing-voltage rows: per tag (or a multi-select of tags sharing a voltage) the operator enters an integer voltage. Untagged rows are not assertable here (Stage 3).
 - Build `VoltageAssertion[]`: `{ voltageV: number, tags: string[], source: 'gate1', actor: <operator initials/name>, note?: string }`. `source: 'gate1'` is already allocated in the contract (`src/extraction/types.ts`) — **zero engine change**. `actor` is evidence metadata only; the engine never branches on it.
 - Client-side pre-validation mirrors the engine (positive integer, non-empty tags) for fast feedback, but the engine remains the fail-closed authority.
 
-### 5. Apply & re-run
-- Embed the assertions: `artifact.voltageAssertions = [...(artifact.voltageAssertions ?? []), ...gate1Assertions]` on a **cloned** artifact (Stage 1 keeps a pristine copy so iterative resolution never compounds state).
-- Re-run `runFromArtifact(clone, { projectNumber, allowOpenItems: false })`.
-- Surface assertion findings from `result.findings` inline: errors (`voltage_assertion_unknown_tag`, `voltage_assertion_duplicate_tag`, `voltage_assertion_invalid_voltage`, `voltage_assertion_invalid_shape`) block; `voltage_assertion_conflict` is a warning (asserted overrides detected — show both values).
-- Show `report.status`: **`clean`** (no unresolved rows, no error findings, envelope emitted) vs **`partial_preview`** (open items remain) with a loud "NOT a complete bid" banner and the `unresolved_rows` count.
-- An optional "preview anyway" toggle re-runs with `allowOpenItems: true` to render a `partial_preview` envelope while the operator is mid-resolution.
+### 5. Apply & re-evaluate
+- **Merge by tag — replace, never blind-append.** Duplicate tags are a hard engine error (`voltage_assertion_duplicate_tag`, strict even for the same voltage). So the embed/export builder normalizes the assertion set by tag: a Gate-1 entry **replaces** any existing same-tag assertion — whether from a prior Gate-1 edit or from CLI `voltageAssertions` already present in the loaded artifact (last-write-wins from the Gate-1 UI). Result: a single assertion per tag; blind concatenation that could self-fail the page is forbidden. Computed on a **cloned** artifact (Stage 1 keeps a pristine copy so iterative resolution never compounds state).
+- Re-evaluate via the same thin helper (`runTakeoff` + `reconcile`) on the clone.
+- Surface assertion findings from **`result.findings`** (TakeoffResult) inline: errors (`voltage_assertion_unknown_tag`, `voltage_assertion_duplicate_tag`, `voltage_assertion_invalid_voltage`, `voltage_assertion_invalid_shape`) block; `voltage_assertion_conflict` is a warning (asserted overrides detected — show both values from `finding.detail`).
+- Show `report.status`: **`clean`** vs **`partial_preview`** with a loud "NOT a complete bid" banner and `counts.unresolved_rows`. The "other open items" panel (UI) explains WHY a run is still `partial_preview` after all voltage is resolved.
 
 ### 6. Export / hand off
 Two downloads, no server write:
@@ -88,23 +91,25 @@ Two downloads, no server write:
    ```
 2. **Runner-ready artifact** `<sheet>.artifact.json` — the bare modified `ExtractionArtifact` (assertions embedded), pretty-printed (2-space, LF) so the existing CLI runner (`pnpm run-artifact run <artifact.json> ...`) consumes it unchanged.
 
-When `status !== 'clean'`, `envelope` is omitted and every export surface is labeled `partial_preview` / "NOT a complete bid".
+The `envelope` is produced by `emitEnvelope(result, { projectNumber })` and included ONLY when `isClean(result) && result.matchedLines.length > 0`. When `status !== 'clean'`, `envelope` is omitted and every export surface is labeled `partial_preview` / "NOT a complete bid".
 
 ## Engine import surface (all from `@apex/estimator-takeoff`)
 
 ```ts
 import {
   parseArtifact, ArtifactContractError,
-  runFromArtifact, isClean,
+  runTakeoff, reconcile, isClean, emitEnvelope,   // interactive review path (composed in the browser)
+  // runFromArtifact is exported too, but reserved for CLI parity — NOT the interactive surface
 } from '@apex/estimator-takeoff'
 import type {
   ExtractionArtifact, ExtractedApparatus, VoltageAssertion,
   TakeoffResult, ApparatusDisposition, DispositionReasonCode,
-  TakeoffFinding, VoltageAssertionCode, RunResult, ReconciliationReport,
+  OperatorQuestion, UnmatchedCandidate, MatchedLine,
+  TakeoffFinding, VoltageAssertionCode, ReconciliationReport,
 } from '@apex/estimator-takeoff'
 ```
 
-No new engine exports are required for the first slice. Two known API gaps are handled consumer-side and noted as future engine ergonomics (NOT blockers): `block` is recovered via `artifact.apparatus[inputIndex].block`; `OperatorQuestion.inputIndex` is optional (profile-warning questions carry none) and must be null-guarded before indexing.
+All of the above are already exported from `src/index.ts` (verified) — **no new engine exports are required for V1.** The interactive surface is `runTakeoff` + `reconcile` (so `TakeoffResult.findings` is reachable); `emitEnvelope(result, { projectNumber })` builds the export envelope and is called ONLY when `isClean(result) && result.matchedLines.length > 0` (mirroring `runFromArtifact`'s emit discipline — zero-matched and error findings never emit). Two known API gaps handled consumer-side (NOT blockers): `block` recovered via `artifact.apparatus[inputIndex].block`; `OperatorQuestion.inputIndex` is optional (profile-warning questions carry none) — null-guard before indexing.
 
 ## Determinism & hashing
 
@@ -116,13 +121,18 @@ No new engine exports are required for the first slice. Two known API gaps are h
 ## UI design
 
 - **Route:** top-level `app/takeoff/page.tsx` (a takeoff tool, not a PM-review surface) + `app/takeoff/loading.tsx` skeleton. Add `{ path: '/takeoff', marker: '<unique h1 text>' }` to `scripts/smoke-hosted-routes.mjs`. Add a nav link where the other top-level tools are linked.
-- **Lib (`lib/gate1.ts` + `lib/gate1-canonical.ts`):** typed view-model + a `Gate1Error extends Error` (`.path`) class + pure helpers — `groupMissingVoltage(report, artifact): SheetGroup[]`, `buildAssertions(entries): VoltageAssertion[]`, `buildExport(...)`, `canonicalJson`, `sha256Hex`. No `fetch` (ephemeral has no API), so the lib is fully unit-testable without DOM or network.
-- **Page (`app/takeoff/page.tsx`):** `'use client'`. State: `artifact` (pristine), `result`, `assertions` (operator entries), `projectCtx` (projectNumber/package/operatorName), `busy`, `err`. `useCallback` handlers for load / assert / applyAndRerun / export. Grouped table mirrors `pm-review/recognition` grouping; inline per-tag voltage entry mirrors `pm-review/estimator-intake` inline edits. Status-gated buttons; `role="alert"` (red) errors and `aria-live="polite"` (green) success, matching estimator-intake verbatim. Export buttons disabled until `projectNumber` is set.
+- **Lib (`lib/gate1.ts` + `lib/gate1-canonical.ts`):** typed view-model + a `Gate1Error extends Error` (`.path`) class + pure helpers (no `fetch` — ephemeral has no API, so fully unit-testable without DOM/network):
+  - `evaluate(artifact): { result: TakeoffResult; report: ReconciliationReport }` — the thin helper (`runTakeoff` + `reconcile`).
+  - `resolvableVoltageGroups(result, artifact): SheetGroup[]` — TAGGED `missing_voltage` dispositions grouped sheet→block→tag (`block` via `artifact.apparatus[inputIndex].block`).
+  - `otherOpenItems(result, artifact): OpenItem[]` — everything else that blocks clean: untagged `missing_voltage` rows, `unmatchedCandidates`, profile-warning + other `question` dispositions (read-only).
+  - `mergeAssertionsByTag(existing, gate1Entries): VoltageAssertion[]` — replace-by-tag dedup (last-write-wins from Gate-1); guarantees ≤1 assertion per tag.
+  - `buildExport(...)`, `canonicalJson`, `sha256Hex`.
+- **Page (`app/takeoff/page.tsx`):** `'use client'`. State: `artifact` (pristine), `result` + `report`, `assertions` (operator entries keyed by tag), `projectCtx` (projectNumber/package/operatorName), `busy`, `err`. `useCallback` handlers for load / assert / applyAndReevaluate / export. **Two panels** (load-bearing — `isClean` blocks on more than voltage, so a single-panel UI would leave the operator at `partial_preview` with no visible reason): **(1) "Voltage questions I can resolve"** — the tagged `missing_voltage` worklist (grouped sheet→block→tag), inline per-tag voltage entry + Apply, mirroring `pm-review/estimator-intake` inline edits; **(2) "Other open items blocking clean output"** — read-only list from `otherOpenItems(...)`. Status-gated buttons; `role="alert"` (red) errors / `aria-live="polite"` (green) success, matching estimator-intake. Export disabled until `projectNumber` is set.
 - **Styling:** existing CSS-variable tokens + `hero-card` / `status-pill` / table conventions from `app/globals.css`; the same Tailwind-syntax class strings the recognition/estimator-intake pages already use.
 
 ## Testing
 
-- **Unit (`tests/gate1.unit.spec.ts`, `tests/gate1-canonical.unit.spec.ts`):** `groupMissingVoltage` grouping/`block` join/untagged bucket; `buildAssertions` shape + `source:'gate1'`; `buildExport` omits `envelope` unless clean and labels `partial_preview`; `canonicalJson` key-order independence; `sha256Hex` reproducibility.
+- **Unit (`tests/gate1.unit.spec.ts`, `tests/gate1-canonical.unit.spec.ts`):** `evaluate` returns both result+report; `resolvableVoltageGroups` grouping + `block` join + EXCLUDES untagged rows; `otherOpenItems` includes untagged missing-voltage + unmatched candidates + profile warnings; `mergeAssertionsByTag` REPLACES a same-tag existing/CLI assertion with no duplicate-tag error (the adversarial test: load an artifact that already carries a CLI assertion for a tag the operator re-asserts); `buildExport` omits `envelope` unless `clean` and labels `partial_preview`; `canonicalJson` key-order independence; `sha256Hex` reproducibility.
 - **Browser smoke (`tests/browser-shell.takeoff.smoke.spec.ts`):** ephemeral has no API to mock; the smoke drives the real page using the committed E01-11 fixture artifact (`packages/estimator-takeoff/test/fixtures/stack-phx02a-e01-11.artifact.json`, copied or imported into the test). It loads the artifact, asserts the missing-voltage worklist renders grouped, asserts a voltage for the 3 demo tags, applies + re-runs, and asserts the `clean`/`partial_preview` banner + that the export buttons enable and produce a JSON whose `manifest.status` matches. Add the route to `smoke-hosted-routes.mjs`.
 - The estimator-takeoff package's own suite is unchanged (the engine is imported, not modified).
 
@@ -141,4 +151,4 @@ The persisted, project-linked model (`ops.takeoff_runs` JSONB columns + control-
 
 ## Open questions
 
-None blocking. Minor items decided with leans (override at review): top-level `/takeoff` route name; single combined export JSON + a bare runner artifact (no zip / no new dependency); strict first pass with an optional preview toggle.
+None blocking. Minor items decided with leans (override at review): top-level `/takeoff` route name; single combined export JSON + a bare runner artifact (no zip / no new dependency); the interactive surface always shows the full reconciliation (no `allowOpenItems` toggle — the export simply omits `envelope` when not clean).
