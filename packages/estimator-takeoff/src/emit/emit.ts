@@ -2,20 +2,22 @@ import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from
 import type { ExtractionArtifact, ExtractedApparatus } from '../extraction/types'
 import type { ApparatusSignature } from '../signature/types'
 import { assessApparatus } from '../signature/normalize'
+import { applyVoltageAssertions } from '../signature/voltage-assertions'
 import { quantify } from '../quantify/quantify'
 import type { QuantifiedLine } from '../quantify/types'
 import { matchBreaker } from '../catalog/breaker-map'
-import type { MatchedLine, OperatorQuestion, TakeoffResult, UnmatchedCandidate } from '../buckets/types'
+import type { MatchedLine, OperatorQuestion, TakeoffResult, UnmatchedCandidate, TakeoffFinding } from '../buckets/types'
 
 export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
+  const { resolved, findings } = applyVoltageAssertions(artifact)
   const sigs: ApparatusSignature[] = []
-  const questions: OperatorQuestion[] = []                                  // from rows that produced a signature
+  const questions: OperatorQuestion[] = []
   const unresolved: { x: ExtractedApparatus; questions: OperatorQuestion[] }[] = []
 
-  for (const x of artifact.apparatus) {
-    const a = assessApparatus(x)
+  for (const { apparatus, voltageBasis } of resolved) {
+    const a = assessApparatus(apparatus, voltageBasis)
     if (a.signature) { sigs.push(a.signature); questions.push(...a.questions); continue }
-    unresolved.push({ x, questions: a.questions })
+    unresolved.push({ x: apparatus, questions: a.questions })
   }
 
   const { lines, locationOnly } = quantify(sigs)
@@ -42,10 +44,10 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
   const unmatchedCandidates: UnmatchedCandidate[] = []
   for (const line of lines) {
     const ref = matchBreaker(line.signature)
-    if (ref) matchedLines.push({ ref, qty: line.qty, block: line.signature.source.block ?? line.signature.source.sheet, mountingBasis: line.signature.mountingBasis, line })
+    if (ref) matchedLines.push({ ref, qty: line.qty, block: line.signature.source.block ?? line.signature.source.sheet, mountingBasis: line.signature.mountingBasis, voltageBasis: line.signature.voltageBasis, line })
     else unmatchedCandidates.push({ reason: `no catalog rule for ${line.signature.mounting}/${line.signature.functions.join('') || '—'}`, line })
   }
-  return { matchedLines, unmatchedCandidates, operatorQuestions: questions }
+  return { matchedLines, unmatchedCandidates, operatorQuestions: questions, findings }
 }
 
 export function emitEnvelope(result: TakeoffResult, opts: { projectNumber: string }) {

@@ -35,7 +35,7 @@ describe('runTakeoff + emitEnvelope (golden)', () => {
   })
 
   it('emitEnvelope fails closed (throws) when there are zero matched lines', () => {
-    expect(() => emitEnvelope({ matchedLines: [], unmatchedCandidates: [], operatorQuestions: [] }, { projectNumber: 'X' }))
+    expect(() => emitEnvelope({ matchedLines: [], unmatchedCandidates: [], operatorQuestions: [], findings: [] }, { projectNumber: 'X' }))
       .toThrow(/zero matched lines/)
   })
 

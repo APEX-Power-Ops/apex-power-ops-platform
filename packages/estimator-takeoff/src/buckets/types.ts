@@ -1,13 +1,14 @@
-import type { MountingBasis } from '../signature/types'
+import type { MountingBasis, VoltageBasis } from '../signature/types'
 import type { QuantifiedLine } from '../quantify/types'
 
-export interface MatchedLine { ref: string; qty: number; block: string; mountingBasis: MountingBasis; line: QuantifiedLine }
+export interface MatchedLine { ref: string; qty: number; block: string; mountingBasis: MountingBasis; voltageBasis: VoltageBasis; line: QuantifiedLine }
 export interface UnmatchedCandidate { reason: string; line: QuantifiedLine }
 export interface OperatorQuestion { question: string; context: string }
 export interface TakeoffResult {
   matchedLines: MatchedLine[]
   unmatchedCandidates: UnmatchedCandidate[]
   operatorQuestions: OperatorQuestion[]
+  findings: TakeoffFinding[]   // NEW — coded, severity-tagged assertion findings
 }
 
 export type FindingSeverity = 'error' | 'warning'

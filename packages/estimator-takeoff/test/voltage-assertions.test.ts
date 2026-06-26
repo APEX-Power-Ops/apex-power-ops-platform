@@ -106,3 +106,34 @@ describe('applyVoltageAssertions', () => {
     expect(findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
   })
 })
+
+import { runTakeoff } from '../src/emit/emit'
+
+describe('runTakeoff threads voltage assertions + findings', () => {
+  const breaker = (tag: string, busVoltageV?: number): ExtractedApparatus => ({
+    raw: `${tag} 4000AF/4000AT LSIG`, tag, sheet: 'E01-11', page: 1, bbox: [0, 0, 1, 1],
+    evidence: 'one-line', block: 'P1-110', busVoltageV,
+  })
+
+  it('asserted voltage produces a matched line with voltageBasis asserted', () => {
+    const r = runTakeoff({ pdf: 'x', apparatus: [breaker('M1-GB')], voltageAssertions: [{ voltageV: 480, tags: ['M1-GB'], source: 'cli' }] })
+    expect(r.findings).toEqual([])
+    expect(r.matchedLines).toHaveLength(1)
+    expect(r.matchedLines[0]!.voltageBasis).toBe('asserted')
+  })
+
+  it('an unknown-tag assertion surfaces an error finding even when another line matches', () => {
+    const r = runTakeoff({
+      pdf: 'x', apparatus: [breaker('M1-GB')],
+      voltageAssertions: [{ voltageV: 480, tags: ['M1-GB'] }, { voltageV: 480, tags: ['GHOST'] }],
+    })
+    expect(r.matchedLines.length).toBeGreaterThan(0)
+    expect(r.findings.some((f) => f.code === 'voltage_assertion_unknown_tag' && f.severity === 'error')).toBe(true)
+  })
+
+  it('non-forgeable end to end: stray voltageBasis on JSON does not yield asserted', () => {
+    const sneaky = { ...breaker('M1-GB', 480), voltageBasis: 'asserted' } as unknown as ExtractedApparatus
+    const r = runTakeoff({ pdf: 'x', apparatus: [sneaky] })   // no assertion
+    expect(r.matchedLines[0]!.voltageBasis).toBe('detected')
+  })
+})
