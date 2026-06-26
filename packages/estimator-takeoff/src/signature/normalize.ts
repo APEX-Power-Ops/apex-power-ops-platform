@@ -82,7 +82,7 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
   // frame/trip rating, surface a question (do NOT fabricate a breaker line or fire the baseline).
   if (NON_BREAKER.test(x.raw)) {
     if (FRAME_TRIP.test(x.raw)) {
-      return { signature: null, isBreakerShaped: false, questions: [q(x, 'Label names a non-breaker device (ATS/MTS/SPD/XFMR/…) but carries a breaker frame/trip rating — confirm device type before counting.', 'non_breaker_carries_rating')], assessmentCode: 'non_breaker_carries_rating' }
+      return { signature: null, isBreakerShaped: false, questions: [q(x, 'Label names a non-breaker device (ATS/MTS/SPD/XFMR/etc.) but carries a breaker frame/trip rating - confirm device type before counting.', 'non_breaker_carries_rating')], assessmentCode: 'non_breaker_carries_rating' }
     }
     return { signature: null, questions: [], isBreakerShaped: false, assessmentCode: 'non_breaker_excluded' }
   }
@@ -91,7 +91,7 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
   const questions: OperatorQuestion[] = []
   const voltageClass = classifyVoltage(x.busVoltageV)
   if (!voltageClass) {
-    questions.push(q(x, 'Looks like a breaker but has no associated bus voltage — supply voltage to classify (LV/MV/HV).', 'missing_voltage'))
+    questions.push(q(x, 'Looks like a breaker but has no associated bus voltage - supply voltage to classify (LV/MV/HV).', 'missing_voltage'))
     return { signature: null, questions, isBreakerShaped: true, assessmentCode: 'missing_voltage' }
   }
 
@@ -101,7 +101,7 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
   const functions = parseFunctions(x.raw)
 
   if (voltageClass === 'LV' && !ft) {
-    questions.push(q(x, 'LV breaker frame/trip rating (AF/AT) could not be parsed — verify rating.', 'lv_frame_trip_unparsed'))
+    questions.push(q(x, 'LV breaker frame/trip rating (AF/AT) could not be parsed - verify rating.', 'lv_frame_trip_unparsed'))
   }
 
   let mounting: Mounting = 'unknown'
@@ -111,10 +111,10 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
     mounting = r.mounting
     mountingBasis = r.basis
     if (r.conflict) {
-      questions.push(q(x, `Construction hint "${x.mountingHint}" conflicts with the label text — verify breaker construction.`, 'mounting_hint_conflict'))
+      questions.push(q(x, `Construction hint "${x.mountingHint}" conflicts with the label text - verify breaker construction.`, 'mounting_hint_conflict'))
     }
     if (functions.length === 0 && (mounting === 'draw_out' || mounting === 'electrically_operated' || mounting === 'insulated_case')) {
-      questions.push(q(x, 'Power-breaker trip-function descriptor (e.g. LSIG) missing — confirm functions (affects LSIG vs LS/LSI vs unmatched).', 'missing_power_functions'))
+      questions.push(q(x, 'Power-breaker trip-function descriptor (e.g. LSIG) missing - confirm functions (affects LSIG vs LS/LSI vs unmatched).', 'missing_power_functions'))
     }
   }
   const mvType = voltageClass !== 'LV' ? parseMvType(x.raw) : undefined

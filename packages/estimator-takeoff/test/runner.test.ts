@@ -35,4 +35,19 @@ describe('runFromArtifact', () => {
     expect(out.exitCode).toBe(2)
     expect(out.envelope).toBeUndefined()
   })
+  it('SPARE row (unrecognized_apparatus_row) blocks without flag and warns with positive unresolved count with flag', () => {
+    // SPARE row: no breaker hint, no FRAME_TRIP -> assessmentCode=unrecognized_apparatus_row -> disposition=question but no operatorQuestion
+    // This means isClean=false but operatorQuestions is empty, so naive count would show "0 open questions"
+    const spare = row({ raw: 'SPARE', tag: 'S' })
+    // Without --allow-open-items: should block (exitCode != 0) and stderr should mention unresolved row count > 0
+    const blocked = runFromArtifact(art([matched(), spare]), { projectNumber: 'P', allowOpenItems: false })
+    expect(blocked.exitCode).not.toBe(0)
+    expect(blocked.stderr.join(' ')).toMatch(/[1-9]\d* unresolved row/)
+
+    // With --allow-open-items: partial_preview, exit 0, stderr warns with positive unresolved count
+    const allowed = runFromArtifact(art([matched(), spare]), { projectNumber: 'P', allowOpenItems: true })
+    expect(allowed.exitCode).toBe(0)
+    expect(allowed.report!.status).toBe('partial_preview')
+    expect(allowed.stderr.join(' ')).toMatch(/[1-9]\d* unresolved row/)
+  })
 })
