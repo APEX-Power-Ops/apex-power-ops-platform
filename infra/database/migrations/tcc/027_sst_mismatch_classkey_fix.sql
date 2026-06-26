@@ -1,5 +1,10 @@
 -- 027_sst_mismatch_classkey_fix.sql
 -- =============================================================================
+-- APPLIED to prod (governed Supabase fxoyniqnrlkxfligbxmg) via MCP apply_migration
+-- on 2026-06-26 (migration name f79_01_sst_mismatch_classkey_fix): before(bare-key)=8,
+-- after(class-key)=53, delta=+45; monotonic guard passed; live partition confirmed
+-- (breaker_class, breaker_style_id). Matches sandbox exactly (no data-delta). Down available.
+-- =============================================================================
 -- F-79-01 (HIGH) — #79 lvbreakertcc contract audit promotion.
 -- PROD-BOUND, OPERATOR-GATED. Apply against governed Supabase tcc via the MCP
 -- apply_migration, then this file is the version-controlled record (matches the
