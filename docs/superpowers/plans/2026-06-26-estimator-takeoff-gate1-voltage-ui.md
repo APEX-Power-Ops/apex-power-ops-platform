@@ -12,7 +12,7 @@
 
 - **Spec is the contract:** `docs/superpowers/specs/2026-06-26-estimator-takeoff-gate1-voltage-ui-design.md` (Rev 2). The four Rev-2 corrections are binding.
 - **Ephemeral, browser-only:** NO `app/api` route, NO control-plane route, NO DB, NO migration, NO object storage. Artifact lives in React state; output is downloaded.
-- **Interactive surface uses `runTakeoff` + `reconcile`, NOT `runFromArtifact`** (its `RunResult.findings` drops voltage findings). `emitEnvelope(result, {projectNumber})` only when `isClean(result) && result.matchedLines.length > 0`.
+- **THE SEAM (operator-mandated, load-bearing):** the interactive surface uses the thin helper `evaluate` = `runTakeoff` + `reconcile`, built and unit-tested BEFORE any UI. The page MUST NOT import `runFromArtifact` (its `RunResult.findings` drops the voltage-assertion findings — every non-emit return path sets `findings: []`). `runFromArtifact` is reserved for CLI parity only. `emitEnvelope(result, {projectNumber})` is called only when `isClean(result) && result.matchedLines.length > 0`.
 - **Untagged rows are read-only**, never assertable (engine `VoltageAssertion` is tag-keyed; no `inputIndex` path).
 - **Assertions merge by tag (replace, last-write-wins)** — never blind-append; duplicate tags are a hard engine error.
 - **UI shows ALL open items** (two panels) — `isClean` blocks on error findings, any unresolved disposition, and any operator question.
@@ -25,17 +25,19 @@
 
 - `apps/operations-web/package.json` — add `@apex/estimator-takeoff` dep (modify).
 - `apps/operations-web/next.config.ts` — add the package to `transpilePackages` (modify).
-- `apps/operations-web/lib/gate1-canonical.ts` — `canonicalJson`, `sha256Hex` (create).
 - `apps/operations-web/lib/gate1.ts` — `evaluate`, `resolvableVoltageGroups`, `otherOpenItems`, `buildAssertions`, `mergeAssertionsByTag`, `buildExport`, types, `Gate1Error` (create).
+- `apps/operations-web/lib/gate1-canonical.ts` — `canonicalJson`, `sha256Hex` (create).
 - `apps/operations-web/app/takeoff/page.tsx` — the page (create).
 - `apps/operations-web/app/takeoff/loading.tsx` — skeleton (create).
-- `apps/operations-web/tests/gate1-canonical.unit.spec.ts` — canonical/hash tests (create).
 - `apps/operations-web/tests/gate1.unit.spec.ts` — helper tests (create).
+- `apps/operations-web/tests/gate1-canonical.unit.spec.ts` — canonical/hash tests (create).
 - `apps/operations-web/tests/browser-shell.takeoff.smoke.spec.ts` — Playwright smoke (create).
 - `apps/operations-web/scripts/smoke-hosted-routes.mjs` — add `/takeoff` route entry (modify).
 - `apps/operations-web/app/pm-review/page.tsx` (or the existing top-level nav) — add a `/takeoff` link (modify).
 
-Each task ends with an independently testable deliverable.
+## Pre-Flight Plan Review (run before Task 1)
+
+Scan for these before dispatching: (a) **the seam guard** — confirm `evaluate` (Task 2) is built and tested before the page (Task 6), and that no task imports `runFromArtifact` into the page; (b) no task asserts a hardcoded `bid_cents` beyond `> 0`; (c) untagged rows never appear in the resolvable panel. If clean, proceed.
 
 ---
 
@@ -100,108 +102,22 @@ git commit -m "feat(takeoff-ui): wire @apex/estimator-takeoff into operations-we
 
 ---
 
-### Task 2: Canonical serialization + SHA-256 (`lib/gate1-canonical.ts`)
+### Task 2: The thin helper — evaluate (runTakeoff + reconcile) + open-item helpers (`lib/gate1.ts` part 1)
 
-**Files:**
-- Create: `apps/operations-web/lib/gate1-canonical.ts`
-- Create: `apps/operations-web/tests/gate1-canonical.unit.spec.ts`
-
-**Interfaces:**
-- Produces: `canonicalJson(value: unknown): string`, `sha256Hex(text: string): Promise<string>`.
-
-- [ ] **Step 1: Write the failing tests**
-
-```ts
-import { describe, it, expect } from 'vitest'
-import { canonicalJson, sha256Hex } from '../lib/gate1-canonical'
-
-describe('canonicalJson', () => {
-  it('is key-order independent', () => {
-    expect(canonicalJson({ b: 1, a: 2 })).toBe(canonicalJson({ a: 2, b: 1 }))
-  })
-  it('sorts nested object keys and preserves array order', () => {
-    expect(canonicalJson({ z: [3, { y: 1, x: 2 }], a: 1 })).toBe('{"a":1,"z":[3,{"x":2,"y":1}]}')
-  })
-  it('preserves number and string fidelity', () => {
-    expect(canonicalJson({ n: 480, s: 'MSB-1' })).toBe('{"n":480,"s":"MSB-1"}')
-  })
-})
-
-describe('sha256Hex', () => {
-  it('is reproducible and 64 hex chars', async () => {
-    const a = await sha256Hex('{"a":1}')
-    const b = await sha256Hex('{"a":1}')
-    expect(a).toBe(b)
-    expect(a).toMatch(/^[0-9a-f]{64}$/)
-  })
-  it('matches a known vector', async () => {
-    expect(await sha256Hex('abc')).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad')
-  })
-})
-```
-
-- [ ] **Step 2: Run; expect FAIL** (module missing)
-
-Run: `pnpm --filter operations-web exec vitest run tests/gate1-canonical.unit.spec.ts`
-
-- [ ] **Step 3: Implement**
-
-```ts
-// apps/operations-web/lib/gate1-canonical.ts
-// Deterministic, reproducible-from-object JSON + SHA-256. The hash basis is a canonical
-// serialization (sorted keys, compact) so it survives a future JSONB round-trip — distinct
-// from drawing-nav's raw-byte drift hash. See the Gate-1 spec, "Determinism & hashing".
-
-export function canonicalJson(value: unknown): string {
-  return JSON.stringify(sortDeep(value))
-}
-
-function sortDeep(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(sortDeep)
-  if (value && typeof value === 'object') {
-    const out: Record<string, unknown> = {}
-    for (const k of Object.keys(value as Record<string, unknown>).sort()) {
-      out[k] = sortDeep((value as Record<string, unknown>)[k])
-    }
-    return out
-  }
-  return value
-}
-
-export async function sha256Hex(text: string): Promise<string> {
-  const bytes = new TextEncoder().encode(text)
-  const digest = await crypto.subtle.digest('SHA-256', bytes)
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-```
-
-- [ ] **Step 4: Run; expect PASS**
-
-Run: `pnpm --filter operations-web exec vitest run tests/gate1-canonical.unit.spec.ts`
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add apps/operations-web/lib/gate1-canonical.ts apps/operations-web/tests/gate1-canonical.unit.spec.ts
-git commit -m "feat(takeoff-ui): canonical JSON + SHA-256 (deterministic, JSONB-stable)"
-```
-
----
-
-### Task 3: Evaluate + open-item helpers (`lib/gate1.ts` part 1)
+> **This is THE SEAM. It is built and tested BEFORE any UI so the page cannot drift back to `runFromArtifact` and lose `TakeoffResult.findings`.**
 
 **Files:**
 - Create: `apps/operations-web/lib/gate1.ts`
 - Create: `apps/operations-web/tests/gate1.unit.spec.ts`
 
 **Interfaces:**
-- Consumes: `runTakeoff`, `reconcile` and types `TakeoffResult`, `ReconciliationReport`, `ApparatusDisposition`, `ExtractionArtifact`, `ExtractedApparatus` from `@apex/estimator-takeoff`.
+- Consumes: `runTakeoff`, `reconcile` and types `TakeoffResult`, `ReconciliationReport`, `ExtractionArtifact` from `@apex/estimator-takeoff`.
 - Produces:
   - `evaluate(artifact: ExtractionArtifact): { result: TakeoffResult; report: ReconciliationReport }`
   - `resolvableVoltageGroups(result, artifact): SheetGroup[]` where `SheetGroup = { sheet: string; blocks: { block: string; tags: TagRow[] }[] }` and `TagRow = { tag: string; inputIndexes: number[]; raw: string; evidence: string; reason: string }`
   - `otherOpenItems(result, artifact): OpenItem[]` where `OpenItem = { kind: 'untagged_missing_voltage' | 'unmatched_candidate' | 'question'; label: string; sheet?: string; reasonCode?: string }`
 
-- [ ] **Step 1: Write the failing tests** (use an inline synthetic artifact: one tagged missing-voltage, one untagged missing-voltage, one matchable main)
+- [ ] **Step 1: Write the failing tests** (inline synthetic artifact: one tagged missing-voltage, one untagged missing-voltage)
 
 ```ts
 import { describe, it, expect } from 'vitest'
@@ -217,7 +133,7 @@ const ARTIFACT = parseArtifact({
   voltageAssertions: [],
 })
 
-describe('evaluate', () => {
+describe('evaluate (the thin helper = runTakeoff + reconcile)', () => {
   it('returns both result and report', () => {
     const { result, report } = evaluate(ARTIFACT)
     expect(result.dispositions.length).toBe(2)
@@ -228,14 +144,12 @@ describe('evaluate', () => {
 describe('resolvableVoltageGroups', () => {
   it('includes the TAGGED missing-voltage row grouped by sheet/block/tag', () => {
     const { result } = evaluate(ARTIFACT)
-    const groups = resolvableVoltageGroups(result, ARTIFACT)
-    const tags = groups.flatMap((g) => g.blocks.flatMap((b) => b.tags.map((t) => t.tag)))
+    const tags = resolvableVoltageGroups(result, ARTIFACT).flatMap((g) => g.blocks.flatMap((b) => b.tags.map((t) => t.tag)))
     expect(tags).toContain('FB-1')
   })
   it('EXCLUDES untagged rows (engine is tag-keyed)', () => {
     const { result } = evaluate(ARTIFACT)
-    const groups = resolvableVoltageGroups(result, ARTIFACT)
-    const raws = groups.flatMap((g) => g.blocks.flatMap((b) => b.tags.map((t) => t.raw)))
+    const raws = resolvableVoltageGroups(result, ARTIFACT).flatMap((g) => g.blocks.flatMap((b) => b.tags.map((t) => t.raw)))
     expect(raws).not.toContain('UNLABELED 225AF')
   })
 })
@@ -243,15 +157,16 @@ describe('resolvableVoltageGroups', () => {
 describe('otherOpenItems', () => {
   it('includes the untagged missing-voltage row as read-only', () => {
     const { result } = evaluate(ARTIFACT)
-    const items = otherOpenItems(result, ARTIFACT)
-    expect(items.some((i) => i.kind === 'untagged_missing_voltage')).toBe(true)
+    expect(otherOpenItems(result, ARTIFACT).some((i) => i.kind === 'untagged_missing_voltage')).toBe(true)
   })
 })
 ```
 
-> Implementer note: confirm against the engine that a tagged sub-800AF feeder with no voltage yields a `missing_voltage` disposition with `status: 'question'`; if the synthetic rows produce a different `reasonCode`, adjust the fixture (e.g. give FB-1 a clearly LV-eligible frame) so the test exercises a real `missing_voltage` row — do NOT weaken the assertion.
+> Implementer note: confirm against the engine that a tagged sub-800AF feeder with no voltage yields a `missing_voltage` disposition with `status: 'question'`. If the synthetic rows produce a different `reasonCode`, adjust the fixture (e.g. give FB-1 a clearly LV-eligible frame) so the test exercises a real `missing_voltage` row — do NOT weaken the assertion.
 
 - [ ] **Step 2: Run; expect FAIL** (module missing)
+
+Run: `pnpm --filter operations-web exec vitest run tests/gate1.unit.spec.ts`
 
 - [ ] **Step 3: Implement** `lib/gate1.ts` part 1
 
@@ -271,6 +186,8 @@ export interface SheetGroup { sheet: string; blocks: { block: string; tags: TagR
 export type OpenItemKind = 'untagged_missing_voltage' | 'unmatched_candidate' | 'question'
 export interface OpenItem { kind: OpenItemKind; label: string; sheet?: string; reasonCode?: string }
 
+// THE SEAM: runTakeoff + reconcile, returning BOTH so the UI can read TakeoffResult.findings.
+// Never use runFromArtifact for the interactive surface — it drops voltage findings.
 export function evaluate(artifact: ExtractionArtifact): { result: TakeoffResult; report: ReconciliationReport } {
   const result = runTakeoff(artifact)
   const report = reconcile(artifact, result)
@@ -322,7 +239,92 @@ export function otherOpenItems(result: TakeoffResult, artifact: ExtractionArtifa
 
 ```bash
 git add apps/operations-web/lib/gate1.ts apps/operations-web/tests/gate1.unit.spec.ts
-git commit -m "feat(takeoff-ui): evaluate + resolvable/other open-item helpers (two-panel split)"
+git commit -m "feat(takeoff-ui): thin evaluate helper (runTakeoff+reconcile) + two-panel open-item helpers"
+```
+
+---
+
+### Task 3: Canonical serialization + SHA-256 (`lib/gate1-canonical.ts`)
+
+**Files:**
+- Create: `apps/operations-web/lib/gate1-canonical.ts`
+- Create: `apps/operations-web/tests/gate1-canonical.unit.spec.ts`
+
+**Interfaces:**
+- Produces: `canonicalJson(value: unknown): string`, `sha256Hex(text: string): Promise<string>`.
+
+- [ ] **Step 1: Write the failing tests**
+
+```ts
+import { describe, it, expect } from 'vitest'
+import { canonicalJson, sha256Hex } from '../lib/gate1-canonical'
+
+describe('canonicalJson', () => {
+  it('is key-order independent', () => {
+    expect(canonicalJson({ b: 1, a: 2 })).toBe(canonicalJson({ a: 2, b: 1 }))
+  })
+  it('sorts nested object keys and preserves array order', () => {
+    expect(canonicalJson({ z: [3, { y: 1, x: 2 }], a: 1 })).toBe('{"a":1,"z":[3,{"x":2,"y":1}]}')
+  })
+  it('preserves number and string fidelity', () => {
+    expect(canonicalJson({ n: 480, s: 'MSB-1' })).toBe('{"n":480,"s":"MSB-1"}')
+  })
+})
+
+describe('sha256Hex', () => {
+  it('is reproducible and 64 hex chars', async () => {
+    const a = await sha256Hex('{"a":1}')
+    expect(a).toBe(await sha256Hex('{"a":1}'))
+    expect(a).toMatch(/^[0-9a-f]{64}$/)
+  })
+  it('matches a known vector', async () => {
+    expect(await sha256Hex('abc')).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad')
+  })
+})
+```
+
+- [ ] **Step 2: Run; expect FAIL** (module missing)
+
+Run: `pnpm --filter operations-web exec vitest run tests/gate1-canonical.unit.spec.ts`
+
+- [ ] **Step 3: Implement**
+
+```ts
+// apps/operations-web/lib/gate1-canonical.ts
+// Deterministic, reproducible-from-object JSON + SHA-256. The hash basis is a canonical
+// serialization (sorted keys, compact) so it survives a future JSONB round-trip — distinct
+// from drawing-nav's raw-byte drift hash. See the Gate-1 spec, "Determinism & hashing".
+
+export function canonicalJson(value: unknown): string {
+  return JSON.stringify(sortDeep(value))
+}
+
+function sortDeep(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortDeep)
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const k of Object.keys(value as Record<string, unknown>).sort()) {
+      out[k] = sortDeep((value as Record<string, unknown>)[k])
+    }
+    return out
+  }
+  return value
+}
+
+export async function sha256Hex(text: string): Promise<string> {
+  const bytes = new TextEncoder().encode(text)
+  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+```
+
+- [ ] **Step 4: Run; expect PASS**
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add apps/operations-web/lib/gate1-canonical.ts apps/operations-web/tests/gate1-canonical.unit.spec.ts
+git commit -m "feat(takeoff-ui): canonical JSON + SHA-256 (deterministic, JSONB-stable)"
 ```
 
 ---
@@ -346,24 +348,23 @@ import { buildAssertions, mergeAssertionsByTag } from '../lib/gate1'
 
 describe('buildAssertions', () => {
   it('stamps source gate1 + actor, one tag per entry', () => {
-    const a = buildAssertions([{ tag: 'FB-1', voltageV: 480 }], 'JLS')
-    expect(a).toEqual([{ voltageV: 480, tags: ['FB-1'], source: 'gate1', actor: 'JLS' }])
+    expect(buildAssertions([{ tag: 'FB-1', voltageV: 480 }], 'JLS'))
+      .toEqual([{ voltageV: 480, tags: ['FB-1'], source: 'gate1', actor: 'JLS' }])
   })
 })
 
 describe('mergeAssertionsByTag', () => {
   it('REPLACES a same-tag existing/CLI assertion (no duplicate-tag)', () => {
     const existing = [{ voltageV: 208, tags: ['FB-1'], source: 'cli' as const }]
-    const gate1 = buildAssertions([{ tag: 'FB-1', voltageV: 480 }], 'JLS')
-    const merged = mergeAssertionsByTag(existing, gate1)
+    const merged = mergeAssertionsByTag(existing, buildAssertions([{ tag: 'FB-1', voltageV: 480 }], 'JLS'))
     const fb1 = merged.filter((m) => m.tags.includes('FB-1'))
     expect(fb1).toHaveLength(1)
     expect(fb1[0].voltageV).toBe(480)
     expect(fb1[0].source).toBe('gate1')
   })
   it('keeps unrelated existing tags', () => {
-    const existing = [{ voltageV: 208, tags: ['OTHER'], source: 'cli' as const }]
-    const merged = mergeAssertionsByTag(existing, buildAssertions([{ tag: 'FB-1', voltageV: 480 }], 'JLS'))
+    const merged = mergeAssertionsByTag([{ voltageV: 208, tags: ['OTHER'], source: 'cli' as const }],
+      buildAssertions([{ tag: 'FB-1', voltageV: 480 }], 'JLS'))
     expect(merged.some((m) => m.tags.includes('OTHER') && m.voltageV === 208)).toBe(true)
     expect(merged.some((m) => m.tags.includes('FB-1') && m.voltageV === 480)).toBe(true)
   })
@@ -372,10 +373,10 @@ describe('mergeAssertionsByTag', () => {
 
 - [ ] **Step 2: Run; expect FAIL**
 
-- [ ] **Step 3: Implement** (append to `lib/gate1.ts`; import `VoltageAssertion`)
+- [ ] **Step 3: Implement** (append to `lib/gate1.ts`; extend the import to add `VoltageAssertion`)
 
 ```ts
-import { /* existing imports + */ type VoltageAssertion } from '@apex/estimator-takeoff'
+import { /* existing + */ type VoltageAssertion } from '@apex/estimator-takeoff'
 
 export function buildAssertions(entries: { tag: string; voltageV: number }[], actor: string): VoltageAssertion[] {
   return entries.map((e) => ({ voltageV: e.voltageV, tags: [e.tag], source: 'gate1' as const, actor }))
@@ -410,22 +411,23 @@ git commit -m "feat(takeoff-ui): build + merge-by-tag assertions (replace, no du
 - Modify: `apps/operations-web/tests/gate1.unit.spec.ts`
 
 **Interfaces:**
-- Consumes: `isClean`, `emitEnvelope` from `@apex/estimator-takeoff`; `canonicalJson`, `sha256Hex` from `./gate1-canonical`.
+- Consumes: `isClean`, `emitEnvelope` from `@apex/estimator-takeoff`; `canonicalJson`, `sha256Hex` from `./gate1-canonical` (Task 3).
 - Produces: `buildExport(input): Promise<Gate1Export>` where
   `input = { artifact: ExtractionArtifact; result: TakeoffResult; report: ReconciliationReport; projectCtx: { projectNumber: string; packageName?: string; operatorName: string }; nowIso: string }`
-  and `Gate1Export = { combined: object; runnerArtifact: ExtractionArtifact }`.
+  and `Gate1Export = { combined: Record<string, unknown>; runnerArtifact: ExtractionArtifact }`.
 
 - [ ] **Step 1: Write the failing tests**
 
 ```ts
-import { evaluate, buildExport, mergeAssertionsByTag, buildAssertions } from '../lib/gate1'
+import { evaluate, buildExport } from '../lib/gate1'
 import { parseArtifact } from '@apex/estimator-takeoff'
 
 it('omits envelope and labels partial_preview when not clean', async () => {
   const art = parseArtifact({ pdf: 't.pdf', apparatus: [
     { raw: 'FB-1 400AF/400AT', tag: 'FB-1', sheet: 'E1', page: 0, bbox: [0,0,1,1], evidence: 'one-line' }], voltageAssertions: [] })
   const { result, report } = evaluate(art)
-  const { combined } = await buildExport({ artifact: art, result, report, projectCtx: { projectNumber: 'P1', operatorName: 'JLS' }, nowIso: '2026-06-26T00:00:00Z' })
+  const { combined } = await buildExport({ artifact: art, result, report,
+    projectCtx: { projectNumber: 'P1', operatorName: 'JLS' }, nowIso: '2026-06-26T00:00:00Z' })
   expect((combined as any).manifest.status).toBe('partial_preview')
   expect((combined as any).envelope).toBeUndefined()
   expect((combined as any).manifest.operatorEvidence.authoritative).toBe(false)
@@ -433,7 +435,7 @@ it('omits envelope and labels partial_preview when not clean', async () => {
 })
 ```
 
-> Implementer note: also add a CLEAN-path test using a real matchable main with `voltageAssertions` injected so `isClean` holds and `emitEnvelope` succeeds (assert `manifest.status === 'clean'` and `envelope.totals.bid_cents > 0`). Build the matchable artifact from the package's E01-11 fixture or a minimal ≥800AF draw-out main + a 480 assertion; do not assert a hardcoded bid value beyond `> 0`.
+> Implementer note: also add a CLEAN-path test using a real matchable main with `voltageAssertions` injected so `isClean` holds and `emitEnvelope` succeeds (assert `manifest.status === 'clean'` and `envelope.totals.bid_cents > 0`). Build it from the package's E01-11 fixture or a minimal ≥800AF draw-out main + a 480 assertion; do not assert a hardcoded bid value beyond `> 0`.
 
 - [ ] **Step 2: Run; expect FAIL**
 
@@ -490,7 +492,7 @@ git commit -m "feat(takeoff-ui): export builder (combined JSON + hashes; envelop
 - Create: `apps/operations-web/app/takeoff/loading.tsx`
 
 **Interfaces:**
-- Consumes: all of `lib/gate1.ts` + `parseArtifact`/`ArtifactContractError`; `mergeAssertionsByTag` applied to a **cloned** artifact before `evaluate`.
+- Consumes: all of `lib/gate1.ts` + `parseArtifact`/`ArtifactContractError`. **MUST NOT import `runFromArtifact`** (seam guard — verify in review). `mergeAssertionsByTag` is applied to a **cloned** artifact before `evaluate`.
 - Produces: the `/takeoff` route. (Behavior verified by the Task 7 smoke.)
 
 - [ ] **Step 1: Implement `loading.tsx`** (mirror `app/pm-review/loading.tsx`)
@@ -501,22 +503,23 @@ export default function Loading() {
 }
 ```
 
-- [ ] **Step 2: Implement `page.tsx`** — `'use client'`. Structure (full code authored here):
-  - State: `artifact` (pristine `ExtractionArtifact | null`), `evald` (`{result, report} | null`), `entries` (Map<tag, voltageV>), `projectCtx`, `err: string | null`, `busy`.
-  - **Load:** `<input type="file" accept="application/json">` → `FileReader.readAsText` → `JSON.parse` → `parseArtifact`; on `ArtifactContractError` set a red `role="alert"` message `artifact contract error at <path>`; else set `artifact`, `setEvald(evaluate(artifact))`, clear entries.
+- [ ] **Step 2: Implement `page.tsx`** — `'use client'`. Structure (authored here; verified by the smoke, not transcribed line-for-line):
+  - **Imports from `lib/gate1` only** for engine work (`evaluate`, `resolvableVoltageGroups`, `otherOpenItems`, `buildAssertions`, `mergeAssertionsByTag`, `buildExport`, `Gate1Error`) + `parseArtifact`/`ArtifactContractError` for load. NEVER `runFromArtifact`.
+  - State: `artifact` (pristine `ExtractionArtifact | null`), `evald` (`{result, report} | null`), `entries` (`Map<tag, voltageV>`), `projectCtx`, `err: string | null`, `busy`.
+  - **Load:** `<input type="file" accept="application/json">` → `FileReader.readAsText` → `JSON.parse` → `parseArtifact`; on `ArtifactContractError` set a red `role="alert"` message `artifact contract error at <path>`; else `setArtifact(artifact); setEvald(evaluate(artifact))`, clear entries.
   - **Project-context form:** required `projectNumber`, optional `packageName`, `operatorName` (initials). Export buttons disabled until `projectNumber` non-empty.
-  - **Panel 1 "Voltage questions I can resolve":** `resolvableVoltageGroups(evald.result, artifact)` → grouped table; per tag a numeric `<input>` bound into `entries`. An **Apply** button: clone artifact (`structuredClone`), set `clone.voltageAssertions = mergeAssertionsByTag(clone.voltageAssertions, buildAssertions([...entries], operatorName))`, `setEvald(evaluate(clone)); setArtifact(clone)`.
+  - **Panel 1 "Voltage questions I can resolve":** `resolvableVoltageGroups(evald.result, artifact)` grouped table; per tag a numeric `<input>` bound into `entries`. **Apply** button: `clone = structuredClone(artifact); clone.voltageAssertions = mergeAssertionsByTag(clone.voltageAssertions, buildAssertions([...entries].map(([tag, voltageV]) => ({ tag, voltageV })), projectCtx.operatorName)); setEvald(evaluate(clone)); setArtifact(clone)`.
   - **Panel 2 "Other open items blocking clean output":** `otherOpenItems(evald.result, artifact)` rendered read-only.
-  - **Findings strip:** `evald.result.findings` — errors (red) / `voltage_assertion_conflict` (amber, show `detail.detectedV` vs `detail.assertedV`).
+  - **Findings strip:** `evald.result.findings` — errors red; `voltage_assertion_conflict` amber, showing `detail.detectedV` vs `detail.assertedV`.
   - **Status banner:** `evald.report.status` — green "clean" or amber "partial_preview - N unresolved row(s); NOT a complete bid" (`counts.unresolved_rows`).
-  - **Export:** two buttons — "Download export JSON" (`buildExport(...)` → `combined`) and "Download runner artifact" (`runnerArtifact`); each serializes with `JSON.stringify(x, null, 2)` and triggers a Blob download. `nowIso = new Date().toISOString()`.
-  - Styling: `shell-page` / `hero-card` / `status-pill` + the estimator-intake utility class strings. ASCII-only copy. `ACTOR` default: `process.env.NEXT_PUBLIC_OPS_DEV_PM_ID || '00000000-0000-0000-0000-000000000001'` (operatorName is a separate evidence field, not the actor UUID).
-  - The page `<h1>` text MUST be a unique marker string for the smoke + route registry (e.g. `Gate-1 Voltage Takeoff Review`).
+  - **Export:** two buttons — "Download export JSON" (`(await buildExport({ artifact, ...evald, projectCtx, nowIso: new Date().toISOString() })).combined`) and "Download runner artifact" (the bare `artifact`); each `JSON.stringify(x, null, 2)` → Blob download.
+  - Styling: `shell-page` / `hero-card` / `status-pill` + the estimator-intake utility class strings. ASCII-only copy.
+  - The page `<h1>` MUST read exactly `Gate-1 Voltage Takeoff Review` (the smoke + route marker).
 
-- [ ] **Step 3: Typecheck + build**
+- [ ] **Step 3: Typecheck**
 
 Run: `pnpm --filter operations-web exec tsc --noEmit`
-Expected: clean.
+Expected: clean. (Also grep the page for `runFromArtifact` — must be absent.)
 
 - [ ] **Step 4: Commit**
 
@@ -537,7 +540,7 @@ git commit -m "feat(takeoff-ui): /takeoff page - load, two panels, assert+reeval
 **Interfaces:**
 - Consumes: the committed E01-11 fixture `packages/estimator-takeoff/test/fixtures/stack-phx02a-e01-11.artifact.json` (read into the test, uploaded via the file input).
 
-- [ ] **Step 1: Write the smoke** (mirror `tests/browser-shell.pm-recognition.smoke.spec.ts` structure; NO API mocks — ephemeral has none)
+- [ ] **Step 1: Write the smoke** (mirror `tests/browser-shell.pm-recognition.smoke.spec.ts`; NO API mocks — ephemeral has none)
 
 ```ts
 import { test, expect } from '@playwright/test'
@@ -557,7 +560,7 @@ test('takeoff gate-1 loads, surfaces voltage worklist, reaches partial_preview',
 })
 ```
 
-- [ ] **Step 2: Run; expect FAIL** until the page renders the markers (it should already from Task 6 — if green immediately, verify it is testing the real page, not a false pass).
+- [ ] **Step 2: Run; expect PASS once the page renders the markers** (if it passes immediately, confirm it is exercising the real page — the fixture upload must drive the worklist, not a static string).
 
 Run: `pnpm --filter operations-web exec playwright test tests/browser-shell.takeoff.smoke.spec.ts`
 
@@ -567,7 +570,7 @@ In `apps/operations-web/scripts/smoke-hosted-routes.mjs` `routeChecks`, add:
 ```js
 { path: '/takeoff', marker: 'Gate-1 Voltage Takeoff Review' },
 ```
-Add a `<Link href="/takeoff">Gate-1 Voltage Takeoff</Link>` in the existing nav link list (match the surrounding pattern).
+Add `<Link href="/takeoff">Gate-1 Voltage Takeoff</Link>` in the existing nav link list (match the surrounding pattern).
 
 - [ ] **Step 4: Run the full operations-web check; expect PASS**
 
@@ -584,10 +587,11 @@ git commit -m "test(takeoff-ui): browser smoke + route registry + nav link"
 
 ## Self-Review (author checklist run against the spec)
 
-1. **Spec coverage:** load+parse (T6), evaluate via runTakeoff+reconcile (T3), tagged worklist grouped sheet→block→tag (T3), untagged read-only (T3/T6), per-tag assert + merge-by-tag replace (T4/T6), re-evaluate on clone (T6), findings from result.findings (T6), clean vs partial_preview (T6), two panels (T3/T6), export combined+runner with hashes + envelope-clean-only + non-authoritative evidence (T5), determinism (T2), scaffold (T1), smoke+registry (T7). All spec sections map to a task.
-2. **Placeholders:** none — lib code is complete; the page (T6) is specified field-by-field with the load-bearing logic inline (it is verified by the smoke rather than transcribed line-for-line, which is appropriate for a `'use client'` view).
-3. **Type consistency:** `evaluate` returns `{result, report}` used by `resolvableVoltageGroups`/`otherOpenItems`/`buildExport`; `buildAssertions`→`mergeAssertionsByTag`→clone.voltageAssertions→`evaluate`; `VoltageAssertion`/`TakeoffResult`/`ReconciliationReport`/`ExtractionArtifact` names match `src/index.ts`.
-4. **Scope:** ephemeral/browser-only; no backend/DB/migration; Model-2 persistence deferred.
+1. **The seam (operator guard):** the thin helper `evaluate` (`runTakeoff`+`reconcile`) is **Task 2 — the first implementation task after scaffold, before ALL UI (Task 6)**. The page (Task 6) imports only `lib/gate1` + `parseArtifact`; it MUST NOT import `runFromArtifact` (Global Constraint + Task 6 Interfaces + a grep check in Task 6 Step 3 + the Pre-Flight guard). This prevents drift back to `RunResult.findings`.
+2. **Spec coverage:** load+parse (T6), evaluate seam (T2), tagged worklist grouped sheet→block→tag (T2), untagged read-only (T2/T6), per-tag assert + merge-by-tag replace (T4/T6), re-evaluate on clone (T6), findings from result.findings (T6), clean vs partial_preview (T6), two panels (T2/T6), export combined+runner with hashes + envelope-clean-only + non-authoritative evidence (T5), determinism (T3), scaffold (T1), smoke+registry (T7).
+3. **Placeholders:** none — lib code is complete; the page (T6) is specified field-by-field with the load-bearing logic inline, verified by the smoke.
+4. **Type consistency:** `evaluate` returns `{result, report}` consumed by `resolvableVoltageGroups`/`otherOpenItems`/`buildExport`; `buildAssertions`→`mergeAssertionsByTag`→`clone.voltageAssertions`→`evaluate`; `VoltageAssertion`/`TakeoffResult`/`ReconciliationReport`/`ExtractionArtifact` names match `src/index.ts`.
+5. **Scope:** ephemeral/browser-only; no backend/DB/migration; Model-2 persistence deferred.
 
 ## Out of scope (deferred)
 
