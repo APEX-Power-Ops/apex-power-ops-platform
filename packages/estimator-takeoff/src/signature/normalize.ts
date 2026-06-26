@@ -1,4 +1,4 @@
-﻿import type { ExtractedApparatus } from '../extraction/types'
+import type { ExtractedApparatus } from '../extraction/types'
 import type { ApparatusSignature, Mounting, MountingBasis, MvType, TripFunction, VoltageBasis } from './types'
 import type { OperatorQuestion } from '../buckets/types'
 import { classifyVoltage } from './voltage'

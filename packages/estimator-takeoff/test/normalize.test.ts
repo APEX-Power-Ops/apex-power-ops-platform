@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { normalizeApparatus, assessApparatus, assessResolvedApparatus } from '../src/signature/normalize'
 import type { ExtractedApparatus } from '../src/extraction/types'
 

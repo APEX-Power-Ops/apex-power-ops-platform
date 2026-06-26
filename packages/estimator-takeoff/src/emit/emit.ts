@@ -1,4 +1,4 @@
-﻿import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from '@apex/estimator-core'
+import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from '@apex/estimator-core'
 import type { ExtractionArtifact, ExtractedApparatus } from '../extraction/types'
 import type { ApparatusSignature } from '../signature/types'
 import { assessResolvedApparatus } from '../signature/normalize'

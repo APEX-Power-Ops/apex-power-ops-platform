@@ -1,4 +1,4 @@
-﻿import type { VoltageClass } from './types'
+import type { VoltageClass } from './types'
 
 // Takeoff routing convention (NOT a universal taxonomy):
 // LV < 1000 V ; MV >= 1000 V and <= 69000 V ; HV > 69000 V

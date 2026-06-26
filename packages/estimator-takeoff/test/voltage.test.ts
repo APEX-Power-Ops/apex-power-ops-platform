@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { classifyVoltage } from '../src/signature/voltage'
 
 describe('classifyVoltage (takeoff routing convention)', () => {

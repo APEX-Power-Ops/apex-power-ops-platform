@@ -453,6 +453,14 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-takeoff-voltage && git add packa
 
 ### Task A3: `assessApparatus` voltage-basis parameter + `ApparatusSignature.voltageBasis`
 
+> **⚠ SUPERSEDED SHAPE — see spec Rev 3 (2026-06-25).** The single public
+> `assessApparatus(x, voltageBasis?)` shown in this task was forgeable and was
+> NOT shipped. The implemented form splits it: private `assessCore(x, basis?)`,
+> public **one-arg** `assessApparatus(x)`, and engine-internal
+> `assessResolvedApparatus(x, basis)` (used by `runTakeoff`/`emit`, NOT
+> re-exported from `src/index.ts`). The 2-arg signature below is retained for
+> task-history only — build to the Rev-3 shape.
+
 **Files:**
 - Modify: `packages/estimator-takeoff/src/signature/types.ts`
 - Modify: `packages/estimator-takeoff/src/signature/normalize.ts`
@@ -462,7 +470,7 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-takeoff-voltage && git add packa
 
 **Interfaces:**
 - Consumes: `VoltageBasis` (A2).
-- Produces: `assessApparatus(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment` — the signature it builds now carries `voltageBasis: VoltageBasis`, defaulting to `x.busVoltageV !== undefined ? 'detected' : 'none'` when the arg is omitted (so `'asserted'` can arrive only via the controlled parameter).
+- Produces (Rev-3 shipped shape): private `assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment` + public **one-arg** `assessApparatus(x): ApparatusAssessment` + engine-internal `assessResolvedApparatus(x, voltageBasis): ApparatusAssessment` (not re-exported from index.ts). The signature it builds carries `voltageBasis: VoltageBasis`, defaulting to `x.busVoltageV !== undefined ? 'detected' : 'none'`; `'asserted'` can arrive only via the controlled parameter on the internal entry. *(The 2-arg public form below is superseded — see the banner.)*
 
 - [ ] **Step 1: Add the required field** to `ApparatusSignature` in `src/signature/types.ts`:
 
@@ -512,8 +520,11 @@ import type { ApparatusSignature, Mounting, MountingBasis, MvType, TripFunction,
 ```
 
 ```ts
-export function assessApparatus(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
+// SHIPPED (Rev 3): the body below is the PRIVATE core; do not export it 2-arg.
+function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
   // ...unchanged NON_BREAKER / candidateKind / voltageClass guard logic...
+// public wrapper: export function assessApparatus(x) { return assessCore(x) }
+// engine entry:   export function assessResolvedApparatus(x, b) { return assessCore(x, b) }
 ```
 
 Within the function, where the signature is constructed, add the basis:

@@ -1,4 +1,4 @@
-﻿import type { ExtractedApparatus, ExtractionArtifact } from '../extraction/types'
+import type { ExtractedApparatus, ExtractionArtifact } from '../extraction/types'
 import type { VoltageBasis } from './types'
 import type { TakeoffFinding } from '../buckets/types'
 

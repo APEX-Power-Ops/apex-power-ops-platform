@@ -105,7 +105,8 @@ runTakeoff(artifact)
   ├─ applyVoltageAssertions(artifact) → { resolved, findings }      // NEW pure pass
   │     resolved : ResolvedApparatus[]  (engine wrapper carrying voltageBasis)
   │     findings : TakeoffFinding[]     (coded, severity-tagged)
-  └─ for { apparatus, voltageBasis } of resolved → assessApparatus(apparatus, voltageBasis)
+  └─ for { apparatus, voltageBasis } of resolved → assessResolvedApparatus(apparatus, voltageBasis)
+     (engine-internal entry; the PUBLIC assessApparatus(x) is one-arg — see Rev 3 addendum)
 
 emitEnvelope(result)
   ├─ if any finding.severity === 'error' → THROW (fail closed)      // NEW
@@ -115,6 +116,18 @@ emitEnvelope(result)
 `applyVoltageAssertions` is **pure and clock-free** (preserves determinism /
 golden tests). It branches only on `voltageV` and `tags`; `actor`/`note`/
 `source`/`at` are carried through as evidence and never affect engine logic.
+
+**Evidence of record (decided 2026-06-25 — Rev 3).** The durable assertion
+evidence is the **input `ExtractionArtifact.voltageAssertions[]` itself**: it
+retains `voltageV`/`tags`/`actor`/`note`/`source`/`at` verbatim and is the
+authoritative record. The engine is a pure function over it and does NOT
+re-materialize full evidence into `TakeoffResult`: `actor`/`source` survive on
+conflict-finding `detail`, and the per-line emit note is a concise human
+summary (`voltage <V>V (<basis>)`) — `note` is intentionally not echoed there.
+Gate-1, when built, surfaces full per-assertion evidence by joining its line
+back to the originating assertion in the artifact (keyed by tag). Structured
+per-line evidence on `TakeoffResult` is deliberately deferred (YAGNI) until a
+consumer needs it; this is a documented choice, not an omission.
 
 ---
 
@@ -175,6 +188,15 @@ export interface ResolvedApparatus {
 `voltageBasis` for **every** element from scratch; it never reads a basis off its
 input. Any stray `voltageBasis` key smuggled into the artifact JSON is therefore
 ignored (it isn't in the public type and is never read at runtime).
+
+**Scope of the guarantee (precise, Rev 3).** `'asserted'` is non-forgeable
+**through the artifact JSON and through the public package root** (`src/index.ts`
+exports only the one-arg `assessApparatus`; `assessResolvedApparatus(x, basis)`
+is NOT re-exported there). It is *not* a hard boundary against a deep import of
+`signature/normalize.ts` from inside this package — `assessResolvedApparatus` is
+module-exported for `emit.ts`. For a private, single-package consumer that is
+acceptable: forging it requires already being inside the package source, not a
+JSON producer or an external importer.
 
 ### 3.4 `ApparatusSignature` += `voltageBasis` (mirrors `mountingBasis`)
 
@@ -312,18 +334,35 @@ authoritative, the device prices, and the override is recorded for audit.
 
 ### 4.1 `assessApparatus` change — basis via controlled parameter
 
+> **⚠ SUPERSEDED BY REV 3 (see addendum at end).** The single public
+> `assessApparatus(x, voltageBasis?)` shape below was the design intent but is
+> **dangerous** (an in-process caller could pass `'asserted'` and forge
+> provenance). The implemented + correct shape is a **private basis-taking core**
+> split into a one-arg public function and an engine-internal resolved entry.
+> The block below is retained for design rationale only — do **not** build to it.
+
 `src/signature/normalize.ts`. The basis arrives as an **explicit parameter** from
-the resolved wrapper — it is never read off the (forgeable) apparatus object:
+the resolved wrapper — it is never read off the (forgeable) apparatus object.
+**Implemented form (Rev 3):**
 
 ```ts
-export function assessApparatus(
-  x: ExtractedApparatus, voltageBasis?: VoltageBasis,
-): ApparatusAssessment {
-  // ...unchanged until the signature is built...
+// PRIVATE core — NOT exported.
+function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
   // voltageBasis defaults to a recomputed detected/none; 'asserted' ONLY ever
   // arrives via the controlled parameter from applyVoltageAssertions.
   const basis: VoltageBasis = voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none')
   // ...included in the constructed ApparatusSignature (only when voltageClass resolved)...
+}
+
+// PUBLIC — one-arg only; a caller cannot supply 'asserted'.
+export function assessApparatus(x: ExtractedApparatus): ApparatusAssessment {
+  return assessCore(x)
+}
+
+// ENGINE-INTERNAL — runTakeoff/emit pass the validated/controlled basis.
+// Module-exported for emit.ts; DELIBERATELY NOT re-exported from src/index.ts.
+export function assessResolvedApparatus(x: ExtractedApparatus, voltageBasis: VoltageBasis): ApparatusAssessment {
+  return assessCore(x, voltageBasis)
 }
 ```
 
@@ -563,7 +602,7 @@ non-Gate-1 ingestion channel.
 - Modify `packages/estimator-takeoff/src/extraction/types.ts` — `VoltageAssertion`, `ExtractionArtifact.voltageAssertions`. (**No** `voltageBasis` on `ExtractedApparatus`.)
 - Modify `packages/estimator-takeoff/src/signature/types.ts` — `VoltageBasis`, `ApparatusSignature.voltageBasis`.
 - Create `packages/estimator-takeoff/src/signature/voltage-assertions.ts` — `ResolvedApparatus`, `applyVoltageAssertions` (validation + taint + coded findings).
-- Modify `packages/estimator-takeoff/src/signature/normalize.ts` — `assessApparatus(x, voltageBasis?)`; set `signature.voltageBasis`.
+- Modify `packages/estimator-takeoff/src/signature/normalize.ts` — private `assessCore(x, voltageBasis?)` + public one-arg `assessApparatus(x)` + engine-internal `assessResolvedApparatus(x, basis)` (NOT re-exported from index.ts); set `signature.voltageBasis`. (Rev 3 — replaces the superseded single 2-arg public function.)
 - Modify `packages/estimator-takeoff/src/buckets/types.ts` — `MatchedLine.voltageBasis`, `FindingSeverity`, `VoltageAssertionCode`, `TakeoffFinding`, `TakeoffResult.findings`.
 - Modify `packages/estimator-takeoff/src/emit/emit.ts` — call `applyVoltageAssertions`; iterate resolved wrappers; `MatchedLine.voltageBasis`; notes; **`emitEnvelope` blocking-finding refusal**.
 - Modify `packages/estimator-takeoff/src/index.ts` — export `applyVoltageAssertions`, `VoltageAssertion`, `VoltageBasis`, `TakeoffFinding`, `VoltageAssertionCode`, `FindingSeverity`.
@@ -574,3 +613,50 @@ non-Gate-1 ingestion channel.
 **`drawing-nav` (separate repo, `C:\Users\jjswe\Tools\drawing-nav`, Phase B):**
 - Modify `drawing_nav.py` — `extract` subparser flags + `cmd_extract` assertion parse.
 - Create `tests/test_assert_voltage.py`.
+
+---
+
+## Rev 3 — post-merge doc reconciliation (2026-06-25)
+
+Folds the grounded audit of the merged slice. No engine *behavior* changed; this
+reconciles the document with the implemented + verified code and records two
+decisions. Implemented engine = apex `main` `3d17a8f3`; producer = drawing-nav
+`master` `e7a3fb4`.
+
+1. **`assessApparatus` API split (corrects §4.1 and the §3-flow).** The committed
+   text described a single public `assessApparatus(x, voltageBasis?)` — a
+   forgeable shape (any in-process caller could pass `'asserted'`). The
+   **implemented + correct** shape is: a **private** `assessCore(x, basis?)`; a
+   **public one-arg** `assessApparatus(x)`; and an **engine-internal**
+   `assessResolvedApparatus(x, basis)` that `runTakeoff`/`emit` use and that is
+   **not re-exported** from `src/index.ts`. §4.1 is marked superseded inline.
+
+2. **Non-forgeable scope (precise).** `'asserted'` is non-forgeable **through the
+   artifact JSON and the public package root**. It is not a hard wall against a
+   deep import of `signature/normalize.ts` inside this package
+   (`assessResolvedApparatus` is module-exported for `emit.ts`) — acceptable for
+   a private single-package consumer (§3.3).
+
+3. **Assertion evidence of record (decision).** The durable evidence IS the input
+   `ExtractionArtifact.voltageAssertions[]` (retains `actor`/`note`/`source`/`at`
+   verbatim). The engine surfaces a concise per-line summary in emit notes
+   (`voltage <V>V (<basis>)`); `actor`/`source` also survive on conflict-finding
+   `detail`; `note` is intentionally not echoed. Structured per-line evidence on
+   `TakeoffResult` is deferred (YAGNI) until Gate-1 needs it — Gate-1 joins its
+   line back to the artifact assertion by tag (§3-flow note).
+
+4. **Hygiene.** Seven src/test files carried a UTF-8 BOM from the Phase-A
+   Write→cat-pipe transport; stripped in a hygiene commit on this branch (tsc
+   accepted them; no behavior change).
+
+5. **Auditability.** drawing-nav `e7a3fb4` banked as a git bundle on Olares
+   (`/home/olares/archive/drawing-nav-e7a3fb4.bundle`) so the Phase-B Python +
+   41-test claim is independently verifiable from the host (the host previously
+   held only the pre-B1 `42addd2` bundle).
+
+Producer cross-engine note (Phase B, not in the original plan): Codex flagged a
+real fail-closed gap — empty tag slots (`480:A,,B`) were silently dropped — now
+rejected with `SystemExit` (+3 tests). A second Codex item (`int(" 480 ")`
+tolerates surrounding whitespace) was adjudicated a non-defect: it never yields a
+silently-wrong value and is symmetric with the spec's lenient tag-whitespace
+trim; left as-is pending any operator preference for strictness.
