@@ -2,8 +2,18 @@
 
 **Date:** 2026-06-25
 **Branch:** `estimator-takeoff/voltage-assertions` (off `main` @ `99e3d74f`)
-**Status:** ratified design → spec (engine-side application ratified by operator 2026-06-25)
+**Status:** ratified design → spec, **rev 2** (operator spec-review hardening folded in 2026-06-25)
 **Author:** CC (technical authority), operator-ratified
+
+> **Rev 2 changelog (operator spec review, 5 findings):** provenance is now
+> non-forgeable (engine-only resolved wrapper; public JSON cannot set
+> `voltageBasis`); assertion issues are **coded findings with severity**;
+> `emitEnvelope` refuses on any *error*-severity finding (so "blocking" actually
+> blocks); invalid voltages (non-integer / ≤ 0 / non-finite) are rejected
+> engine-side; error-tagged devices are **tainted** so they can't price via a
+> detected fallback; **conflict is a non-blocking warning** (operator wins,
+> device prices, recorded as audit evidence) — it is no longer mislabeled
+> "blocking."
 
 ---
 
@@ -21,7 +31,8 @@ the wrong-bus error: a 208 V house panel sitting next to a 480 V board).
 ergonomics), have the **engine** treat that assertion as the authoritative
 voltage for those devices, price each device at *its own* asserted voltage, and
 record the provenance so a 'detected' value is never silently trusted over an
-operator's statement.
+operator's statement — and so a malformed or ambiguous assertion **fails closed**
+rather than mis-pricing.
 
 This is the slice that replaces the current golden's broadcast-480-to-all hack
 (`test/golden-e01-11.test.ts`, case 2) with a real per-tag assertion path.
@@ -47,13 +58,15 @@ Gate-1 UI later produces the *same* artifact block, visually.
 > artifacts, tests, and future review surfaces.
 
 - **TS engine (`@apex/estimator-takeoff`) = sole validator + applier.** It owns
-  every rule below (unknown-tag rejection, duplicate-tag rejection,
-  conflict-recording, provenance). One honesty path for CLI, Gate-1, and tests.
+  every rule below (voltage validation, unknown-tag rejection, duplicate-tag
+  rejection, conflict-recording, provenance). It **recomputes provenance from
+  scratch** — artifact JSON can never assert provenance (§3.3). One honesty path
+  for CLI, Gate-1, and tests.
 - **Python `drawing-nav` CLI = thin assertion collector.** Parses
   `--assert-voltage`, emits the raw assertion block into the artifact, stamps
   `source: 'cli'` and optional `actor`/`note`. It performs **no** semantic
-  validation (tag existence, conflicts, authority). Format-parsing of its own
-  flag (colon split, integer voltage) is the only check it does.
+  validation (tag existence, conflicts, voltage sanity, authority). Format-parsing
+  of its own flag (colon split, integer voltage) is the only check it does.
 - **Gate-1 UI (future) = same artifact block**, visual, with the engine still
   the validator.
 
@@ -84,14 +97,19 @@ runTakeoff(artifact)
   └─ quantify → matchBreaker → MatchedLine[]
 ```
 
-New: a pure pass runs **before** the apparatus loop and resolves effective
-voltage from assertions, returning the resolved apparatus + any blocking
-findings:
+New — a pure pass runs **before** the apparatus loop, resolves effective voltage
+from assertions, and returns engine-owned **resolved wrappers** + coded findings:
 
 ```
 runTakeoff(artifact)
-  ├─ applyVoltageAssertions(artifact) → { apparatus, questions }   // NEW pure pass
-  └─ for x of apparatus → assessApparatus(x)   // classifyVoltage now sees asserted voltage
+  ├─ applyVoltageAssertions(artifact) → { resolved, findings }      // NEW pure pass
+  │     resolved : ResolvedApparatus[]  (engine wrapper carrying voltageBasis)
+  │     findings : TakeoffFinding[]     (coded, severity-tagged)
+  └─ for { apparatus, voltageBasis } of resolved → assessApparatus(apparatus, voltageBasis)
+
+emitEnvelope(result)
+  ├─ if any finding.severity === 'error' → THROW (fail closed)      // NEW
+  └─ if matchedLines.length === 0 → THROW (existing)
 ```
 
 `applyVoltageAssertions` is **pure and clock-free** (preserves determinism /
@@ -106,13 +124,14 @@ golden tests). It branches only on `voltageV` and `tags`; `actor`/`note`/
 
 ```ts
 export interface VoltageAssertion {
-  voltageV: number          // asserted nominal voltage (V), applied to every listed tag
+  voltageV: number          // asserted nominal voltage (V), applied to every listed tag.
+                            // Engine REQUIRES Number.isInteger(voltageV) && voltageV > 0 (§4 step 2).
   tags: string[]            // device tags this assertion covers (>= 1)
   actor?: string            // who asserted — carried to evidence; engine NEVER branches on it
   note?: string             // free-text rationale — carried to evidence
   source?: 'cli' | 'gate1'  // channel that produced the assertion — carried to evidence
   at?: string               // OPTIONAL ISO author-time; UNTRUSTED metadata.
-                            // The engine never trusts `at` for ordering or authority.
+                            // Engine never trusts `at` for ordering or authority.
                             // V1 CLI omits it (no Python authority-stamping);
                             // reserved for Gate-1 acceptance-time stamping.
 }
@@ -130,20 +149,36 @@ export interface ExtractionArtifact {
 }
 ```
 
-### 3.3 `ExtractedApparatus` += transient `voltageBasis`
+### 3.3 Provenance is non-forgeable — internal `ResolvedApparatus`
+
+**`ExtractedApparatus` does NOT gain a `voltageBasis` field.** (Fixes the
+laundering vector: a JSON producer must not be able to set
+`busVoltageV: 480, voltageBasis: 'asserted'` and have the engine honor a
+provenance it never earned.)
+
+`busVoltageV` on `ExtractedApparatus` is still permitted (a schedule extraction
+may legitimately carry one) — but the engine always labels it `'detected'`,
+never `'asserted'`. Only `applyVoltageAssertions` can grant `'asserted'`.
+
+The basis travels in an **engine-constructed wrapper**, internal to the package,
+that JSON cannot forge:
 
 ```ts
-export interface ExtractedApparatus {
-  // ...existing fields...
-  voltageBasis?: 'detected' | 'asserted'   // NEW — engine-internal, set by applyVoltageAssertions.
-                                           // The Python producer NEVER sets this.
-                                           // Absent → assessApparatus derives 'detected'/'none'.
+// src/signature/voltage-assertions.ts (NOT exported to artifact producers)
+export interface ResolvedApparatus {
+  apparatus: ExtractedApparatus     // effective busVoltageV already applied/cleared
+  voltageBasis: VoltageBasis        // authoritative — computed by applyVoltageAssertions, recomputed from scratch
 }
 ```
 
+`applyVoltageAssertions` is the **sole producer** of `ResolvedApparatus` and sets
+`voltageBasis` for **every** element from scratch; it never reads a basis off its
+input. Any stray `voltageBasis` key smuggled into the artifact JSON is therefore
+ignored (it isn't in the public type and is never read at runtime).
+
 ### 3.4 `ApparatusSignature` += `voltageBasis` (mirrors `mountingBasis`)
 
-`src/signature/types.ts`:
+`src/signature/types.ts` — this is an **engine output**, not artifact input:
 
 ```ts
 export type VoltageBasis = 'detected' | 'asserted' | 'none'
@@ -157,14 +192,14 @@ export interface ApparatusSignature {
 }
 ```
 
-- `asserted` — effective voltage came from an operator assertion (authoritative).
+- `asserted` — effective voltage came from a *valid* operator assertion (authoritative).
 - `detected` — effective voltage came from the extractor's `busVoltageV`
-  (back-compat; used only as a fallback, provenance-surfaced so the estimator
-  sees it was **not** operator-confirmed).
-- `none` — no voltage at all (no signature is produced in this case; the value
-  exists in the union only for type-parallelism with `MountingBasis`).
+  (back-compat fallback; provenance-surfaced so the estimator sees it was **not**
+  operator-confirmed).
+- `none` — no usable voltage (no signature is produced; value exists in the union
+  for type-parallelism with `MountingBasis`).
 
-### 3.5 `MatchedLine` += `voltageBasis`
+### 3.5 `MatchedLine` += `voltageBasis`; `TakeoffResult` += `findings`
 
 `src/buckets/types.ts`:
 
@@ -175,7 +210,48 @@ export interface MatchedLine {
   voltageBasis: VoltageBasis   // NEW
   line: QuantifiedLine
 }
+
+export type FindingSeverity = 'error' | 'warning'
+
+export type VoltageAssertionCode =
+  | 'voltage_assertion_unknown_tag'
+  | 'voltage_assertion_duplicate_tag'
+  | 'voltage_assertion_conflict'
+  | 'voltage_assertion_invalid_voltage'
+
+export interface TakeoffFinding {
+  code: VoltageAssertionCode    // (union grows as more finding-producers are added)
+  severity: FindingSeverity
+  message: string               // human-readable
+  context: string               // tag/sheet locator, like OperatorQuestion.context
+  detail?: { tag?: string; detectedV?: number; assertedV?: number; actor?: string; source?: string }
+}
+
+export interface TakeoffResult {
+  matchedLines: MatchedLine[]
+  unmatchedCandidates: UnmatchedCandidate[]
+  operatorQuestions: OperatorQuestion[]   // existing soft questions (missing voltage, location-only, etc.)
+  findings: TakeoffFinding[]              // NEW — coded, severity-tagged assertion findings
+}
 ```
+
+> **Naming note.** `TakeoffResult.findings` (takeoff-level, pre-envelope) is
+> distinct from the `findings` returned *by* `emitEnvelope` /
+> `buildNativeEnvelope` (estimator-core envelope-level findings). Both exist; they
+> live on different types and are not merged.
+
+### 3.6 Severity policy (the heart of "fail closed")
+
+| Code | Severity | Device outcome |
+|------|----------|----------------|
+| `voltage_assertion_unknown_tag` | **error** | no matching device (operator typo / wrong sheet) |
+| `voltage_assertion_duplicate_tag` | **error** | device **tainted** → effective voltage cleared → never prices |
+| `voltage_assertion_invalid_voltage` | **error** | device(s) **tainted** → never price |
+| `voltage_assertion_conflict` | **warning** | **operator wins** → device prices at asserted V, basis `'asserted'`; recorded as audit evidence (non-blocking) |
+
+Any **error** finding makes `emitEnvelope` refuse (§4.4). A **warning**
+(`conflict`) never blocks — the operator's assertion is authoritative, so there is
+nothing to block; the record exists purely for the audit trail.
 
 ---
 
@@ -184,70 +260,78 @@ export interface MatchedLine {
 New file `src/signature/voltage-assertions.ts`.
 
 ```ts
-export interface AppliedAssertions {
-  apparatus: ExtractedApparatus[]   // resolved copies (effective busVoltageV + voltageBasis)
-  questions: OperatorQuestion[]     // blocking findings (unknown tag / duplicate tag / conflict)
-}
-
-export function applyVoltageAssertions(artifact: ExtractionArtifact): AppliedAssertions
+export function applyVoltageAssertions(
+  artifact: ExtractionArtifact,
+): { resolved: ResolvedApparatus[]; findings: TakeoffFinding[] }
 ```
 
 **Algorithm:**
 
-1. **No assertions** → return `{ apparatus: artifact.apparatus, questions: [] }`
-   unchanged (full back-compat).
-2. **Build (tag → voltageV) index** by flattening every `(entry, tag)` pair
-   across all assertion entries.
-3. **Duplicate-tag = fail closed (Pin: duplicate/conflicting same tag).** Any
-   tag appearing in **more than one** `(entry, tag)` pair — *regardless of
-   whether the voltages agree* — produces a blocking finding
-   `voltage_assertion_duplicate_tag` and is **excluded** from application (its
-   intent is ambiguous; no voltage is applied). Exact-duplicate idempotent
-   collapse was **rejected** (see §7 D3): ambiguity must surface, not be
-   silently resolved.
-4. **Unknown-tag = fail closed (Pin 1).** Any asserted tag not present in the
-   artifact's apparatus tag set → blocking finding
-   `voltage_assertion_unknown_tag` (operator typo / wrong sheet). Never silently
-   ignored.
-5. **Apply** — for each apparatus whose tag has exactly **one** valid assertion:
-   - set effective `busVoltageV = asserted voltageV`, `voltageBasis = 'asserted'`.
-   - **Conflict (Pin 2):** if the apparatus already carried an extractor
-     `busVoltageV` *different* from the asserted value → assertion **wins**
-     (effective = asserted, basis = `'asserted'`) **and** record a blocking
-     finding carrying the full detail (`tag`, `detected=<V>`, `asserted=<V>`,
-     `actor`, `source`). If they agree, no conflict (operator confirmed the
-     detected value).
-   - emit a resolved **copy** (never mutate the input apparatus).
-6. **Uncovered apparatus** → passed through unchanged; `assessApparatus` derives
-   `voltageBasis = busVoltageV !== undefined ? 'detected' : 'none'`.
+1. **No assertions** → wrap each apparatus with basis
+   `busVoltageV !== undefined ? 'detected' : 'none'`; `findings: []`. (Full
+   back-compat — detected voltages still flow, labeled honestly.)
+2. **Validate each assertion's `voltageV`** — require
+   `Number.isInteger(voltageV) && voltageV > 0`. Reject non-finite, non-integer,
+   fractional, zero, and negative. Each rejected assertion → `error`
+   `voltage_assertion_invalid_voltage`, and **every tag it named is tainted**
+   (step 6). (Fixes `0:TAG` / `-1:TAG` pricing as LV.)
+3. **Build a (tag → voltageV) index** from the *valid* assertions by flattening
+   every `(entry, tag)` pair.
+4. **Duplicate-tag = error.** Any tag appearing in **more than one** valid
+   `(entry, tag)` pair — *regardless of whether the voltages agree* — produces an
+   `error` `voltage_assertion_duplicate_tag` and the tag is **tainted** (step 6).
+   Idempotent collapse of exact duplicates was **rejected** (§7 D3): ambiguity
+   must surface.
+5. **Unknown-tag = error.** Any asserted tag not present in the artifact's
+   apparatus tag set → `error` `voltage_assertion_unknown_tag`. (No device to
+   taint; it is pure operator feedback.)
+6. **Taint set.** Collect every tag with an `error`-severity issue
+   (invalid-voltage, duplicate). For each apparatus whose tag is tainted: emit a
+   `ResolvedApparatus` with `busVoltageV` **cleared to `undefined`** and basis
+   `'none'`. A tainted device therefore **cannot** price via a detected fallback
+   (fixes Medium-1) and surfaces as the standard "no voltage" question.
+7. **Apply** — for each apparatus whose tag has exactly **one valid, non-tainted**
+   assertion:
+   - effective `busVoltageV = asserted voltageV`, basis `'asserted'`.
+   - **Conflict (warning):** if the apparatus already carried a *detected*
+     `busVoltageV` **different** from the asserted value → emit `warning`
+     `voltage_assertion_conflict` with `detail { tag, detectedV, assertedV, actor,
+     source }`. **Operator wins**: effective = asserted, basis = `'asserted'`, the
+     device prices. Non-blocking. If they agree, no finding (operator confirmed
+     the detected value).
+   - emit a `ResolvedApparatus` (never mutate the input apparatus).
+8. **Uncovered apparatus** → wrap unchanged with basis
+   `busVoltageV !== undefined ? 'detected' : 'none'`.
 
-**Fail-closed semantics:** an unknown/duplicate/typo'd assertion never fabricates
-or mis-prices a device. The affected device gets **no** effective voltage from
-the bad assertion and surfaces as a question; the rest of the takeoff proceeds.
-`emitEnvelope` already throws on zero matched lines, so a wholesale-bad assertion
-set fails closed end-to-end.
+**Fail-closed semantics:** a malformed (invalid-voltage), ambiguous
+(duplicate), or non-existent (unknown) assertion never fabricates or mis-prices a
+device. Error-tagged devices are tainted (no detected fallback) **and** any
+error finding makes `emitEnvelope` refuse globally (§4.4) — two independent
+guards. Conflict is the one *non*-error case: the operator's stated voltage is
+authoritative, the device prices, and the override is recorded for audit.
 
-> **Question interaction (resolve in the plan).** A *duplicate-tagged* device is
-> excluded from application, so it then also hits the standard "no associated bus
-> voltage" question in `assessApparatus` — both questions are legitimate (the
-> assertion was ambiguous *and* the device still has no usable voltage); the plan
-> may choose to suppress the redundant one or keep both. An *unknown-tag*
-> assertion has no matching device at all, so it produces only the one
-> unknown-tag question.
+### 4.1 `assessApparatus` change — basis via controlled parameter
 
-### 4.1 `assessApparatus` change
-
-`src/signature/normalize.ts` — set the signature's `voltageBasis`:
+`src/signature/normalize.ts`. The basis arrives as an **explicit parameter** from
+the resolved wrapper — it is never read off the (forgeable) apparatus object:
 
 ```ts
-const voltageBasis: VoltageBasis =
-  x.voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none')
-// ...included in the constructed ApparatusSignature (only when voltageClass resolved)
+export function assessApparatus(
+  x: ExtractedApparatus, voltageBasis?: VoltageBasis,
+): ApparatusAssessment {
+  // ...unchanged until the signature is built...
+  // voltageBasis defaults to a recomputed detected/none; 'asserted' ONLY ever
+  // arrives via the controlled parameter from applyVoltageAssertions.
+  const basis: VoltageBasis = voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none')
+  // ...included in the constructed ApparatusSignature (only when voltageClass resolved)...
+}
 ```
 
-No other normalize logic changes. The "no associated bus voltage" question is
-unchanged — it now fires only when neither an assertion nor a detected value
-supplied voltage.
+A direct public call `assessApparatus(rawApparatus)` (no second arg) can yield
+only `'detected'` or `'none'`, never `'asserted'`. `normalizeApparatus` is
+unchanged in signature (delegates with no basis). The "no associated bus voltage"
+question is unchanged — it now fires when neither a valid assertion nor a detected
+value supplied voltage (including tainted devices).
 
 ### 4.2 `runTakeoff` wiring
 
@@ -255,21 +339,49 @@ supplied voltage.
 
 ```ts
 export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
-  const { apparatus, questions: assertionQuestions } = applyVoltageAssertions(artifact)
-  const questions: OperatorQuestion[] = [...assertionQuestions]
-  // ...loop over `apparatus` (not artifact.apparatus); rest unchanged...
+  const { resolved, findings } = applyVoltageAssertions(artifact)
+  const questions: OperatorQuestion[] = []
+  const sigs: ApparatusSignature[] = []
+  for (const { apparatus, voltageBasis } of resolved) {
+    const a = assessApparatus(apparatus, voltageBasis)
+    if (a.signature) { sigs.push(a.signature); questions.push(...a.questions); continue }
+    // ...existing unresolved/location handling, now over `resolved` apparatus...
+  }
+  // ...quantify / match unchanged...
+  return { matchedLines, unmatchedCandidates, operatorQuestions: questions, findings }
 }
 ```
 
 ### 4.3 Provenance surfacing in the envelope
 
-`emit.ts` — `MatchedLine.voltageBasis` set from `line.signature.voltageBasis`;
-the per-line `notes` string gains voltage + basis, parallel to construction
-basis:
+`MatchedLine.voltageBasis` set from `line.signature.voltageBasis`; the per-line
+`notes` string gains voltage + basis, parallel to construction basis:
 
 ```ts
 notes: `from ${src?.sheet}; construction basis: ${m.mountingBasis}; voltage ${m.line.signature.voltageV}V (${m.voltageBasis})`
 ```
+
+### 4.4 `emitEnvelope` refuses on blocking findings (makes "blocking" real)
+
+```ts
+export function emitEnvelope(result: TakeoffResult, opts: { projectNumber: string }) {
+  const blocking = result.findings.filter((f) => f.severity === 'error')
+  if (blocking.length > 0) {
+    const codes = [...new Set(blocking.map((f) => f.code))].join(', ')
+    throw new Error(
+      `estimator-takeoff: refusing to emit — ${blocking.length} blocking voltage-assertion finding(s) [${codes}]. ` +
+      `Resolve the operator voltage assertions before emitting.`,
+    )
+  }
+  if (result.matchedLines.length === 0) {
+    throw new Error('estimator-takeoff: refusing to emit an envelope with zero matched lines — ...')
+  }
+  // ...existing scope build...
+}
+```
+
+This closes High-1: a single bad assertion now blocks emission **even when other
+lines match**. (Defense-in-depth with the per-device tainting of §4 step 6.)
 
 ---
 
@@ -293,7 +405,11 @@ for spec in a.assert_voltage:            # ["480:TAG1,TAG2", "208:TAG3"]
     v, _, tags = spec.partition(":")
     if not _ or not tags.strip():
         raise SystemExit(f"--assert-voltage: expected V:TAG[,TAG...], got {spec!r}")
-    entry = {"voltageV": int(v), "tags": [t.strip() for t in tags.split(",") if t.strip()],
+    try:
+        voltage = int(v)
+    except ValueError:
+        raise SystemExit(f"--assert-voltage: voltage must be an integer, got {v!r}")
+    entry = {"voltageV": voltage, "tags": [t.strip() for t in tags.split(",") if t.strip()],
              "source": "cli"}
     if a.assert_actor: entry["actor"] = a.assert_actor
     if a.assert_note:  entry["note"]  = a.assert_note
@@ -302,13 +418,14 @@ if assertions:
     art["voltageAssertions"] = assertions
 ```
 
-- **No semantic validation** — tag existence, conflicts, and authority are the
-  engine's job. The only checks are format (`int(v)` and the colon split), which
-  fail the CLI with a nonzero exit (a thin collector validating *its own flag
-  syntax*, not electrical truth).
+- **No semantic validation** — tag existence, conflicts, voltage sanity (≤ 0 etc.),
+  and authority are the **engine's** job. The CLI only checks its own flag syntax
+  (colon split, `int()` parse), failing with a nonzero exit. A negative or zero
+  integer *passes* the CLI (it is syntactically an int) and is rejected
+  authoritatively by the engine (`voltage_assertion_invalid_voltage`) — the CLI
+  deliberately does not duplicate that judgment.
 - **No `at` stamp** in V1 (honors "do not let Python stamp the authoritative
-  timestamp"). The artifact's existing `extractedAt` already records when the
-  file was produced.
+  timestamp"). The artifact's existing `extractedAt` records file-production time.
 
 Usage:
 
@@ -326,27 +443,41 @@ drawing-nav extract E01-11.pdf --out e01-11.json \
 
 `test/voltage-assertions.test.ts` (new):
 - **applies asserted voltage** → resolved apparatus classifies; signature
-  `voltageBasis === 'asserted'`, `voltageV` = asserted.
-- **unknown tag** → one blocking question; no throw; other devices unaffected.
-- **duplicate tag** (same tag in two entries, even same voltage) → blocking
-  question; tag not applied.
+  `voltageBasis === 'asserted'`, `voltageV` = asserted; `findings` empty.
+- **unknown tag** → one `error` `voltage_assertion_unknown_tag`; no throw in
+  `runTakeoff`; other devices unaffected.
+- **duplicate tag** (same tag in two entries, even same voltage) → `error`
+  `voltage_assertion_duplicate_tag`; tag tainted.
+- **duplicate tag WITH a detected `busVoltageV`** → tainted device does **not**
+  price via the detected fallback (Medium-1 regression guard): its tag produces
+  no matched line and basis is not `'detected'`.
+- **invalid voltage** (`0`, `-1`, `12.5`, `NaN`) → `error`
+  `voltage_assertion_invalid_voltage`; tag tainted; no priced line. (High-3.)
 - **conflict** (apparatus has detected `busVoltageV: 480`, assertion `208`) →
-  effective `208`, basis `'asserted'`, conflict question records `480`→`208`.
-- **multi-voltage per-tag** (synthetic fixture: tag A asserted 480, tag B
-  asserted 208) → each device classifies at *its own* voltage → distinct
-  quantify lines. Proves per-tag, not block-scoped.
-- **no assertions** → passthrough identical (back-compat).
+  `warning` `voltage_assertion_conflict` with `detail.detectedV===480`,
+  `detail.assertedV===208`; device **prices** at 208, basis `'asserted'`;
+  `emitEnvelope` **succeeds** (non-blocking).
+- **emit refusal** — a result with ≥ 1 matched line **and** an `error` finding →
+  `emitEnvelope` **throws** `/blocking voltage-assertion/`. (High-1.)
+- **provenance non-forgeable** — an artifact whose apparatus JSON carries a stray
+  `voltageBasis: 'asserted'` but **no** matching assertion entry → the resulting
+  signature basis is `'detected'` (or `'none'`), never `'asserted'`. (High-2.)
+- **multi-voltage per-tag** (synthetic fixture: tag A asserted 480, tag B asserted
+  208) → each device classifies at *its own* voltage → distinct quantify lines.
+- **no assertions** → passthrough identical (back-compat), `findings` empty.
 
 `test/golden-e01-11.test.ts` (rewrite case 2):
 - Replace `apparatus.map(a => ({...a, busVoltageV: 480}))` with
   `voltageAssertions: [{ voltageV: 480, tags: [<real main-bus tags>], source: 'cli' }]`.
 - Assert matched lines > 0; matched lines carry `voltageBasis === 'asserted'`;
-  the draw-out LSIG line still present with `mountingBasis === 'estimating_baseline'`.
+  draw-out LSIG line still present with `mountingBasis === 'estimating_baseline'`;
+  `findings` has no `error`.
 - Case 1 (pure-auto negative — no assertion, all `busVoltageV` undefined,
-  ≥20 questions, zero matches, `emitEnvelope` throws) **unchanged**.
+  ≥ 20 questions, zero matches, `emitEnvelope` throws on zero lines) **unchanged**.
 
-`test/emit.test.ts`, `test/normalize.test.ts`: extend assertions for the new
-`MatchedLine.voltageBasis` / `ApparatusSignature.voltageBasis` fields.
+`test/emit.test.ts`, `test/normalize.test.ts`: extend for the new
+`MatchedLine.voltageBasis` / `ApparatusSignature.voltageBasis` fields and the
+`findings` channel.
 
 New fixture `test/fixtures/synthetic-mixed-voltage.json`: 2–3 hand-built breaker
 apparatus (distinct tags, `busVoltageV` undefined) for the per-tag proof — kept
@@ -358,6 +489,7 @@ synthetic so no false electrical claim is made about a real sheet.
 - `--assert-voltage 480:A,B --assert-voltage 208:C` →
   `art["voltageAssertions"] == [{voltageV:480,tags:[A,B],source:cli}, {voltageV:208,tags:[C],source:cli}]`.
 - malformed `--assert-voltage foo` (no colon) → nonzero exit.
+- non-integer `--assert-voltage 4.8:A` → nonzero exit.
 - `--assert-actor`/`--assert-note` carried through.
 
 ---
@@ -366,59 +498,75 @@ synthetic so no false electrical claim is made about a real sheet.
 
 - **D1 — Engine is sole validator/applier** (operator ratified). Python thin.
 - **D2 — Provenance enum `voltageBasis: detected|asserted|none`** mirrors the
-  existing `mountingBasis` exactly; surfaced on `ApparatusSignature`,
-  `MatchedLine`, and the envelope notes.
-- **D3 — Duplicate-tag = blocking, strict.** Any tag asserted more than once
-  (even at the same voltage) fails closed. Idempotent collapse rejected:
-  ambiguity must surface.
+  existing `mountingBasis`; surfaced on `ApparatusSignature`, `MatchedLine`, and
+  the envelope notes.
+- **D3 — Duplicate-tag = error + taint, strict.** Any tag asserted more than once
+  (even at the same voltage) fails closed *and* is tainted so it cannot price via
+  a detected fallback. Idempotent collapse rejected: ambiguity must surface.
 - **D4 — `actor`/`note`/`source`/`at` are evidence-only**; the engine never
   branches on them. V1 CLI omits `at` (no Python authority-stamping); `at` is
-  reserved for Gate-1 acceptance-time stamping and, if ever supplied by an
-  offline artifact, is treated as untrusted metadata.
+  reserved for Gate-1 acceptance-time stamping and, if ever supplied by an offline
+  artifact, is treated as untrusted metadata.
 - **D5 — 'detected' retained for back-compat, no new geometry inference.** The
-  engine consumes only the `busVoltageV` the extractor *already* associated; it
-  adds no nearest-label inference. The anti-wrong-bus guarantee lives at the
-  extractor (refuses to broadcast) plus the assertion override.
-- **D6 — Findings via the existing `OperatorQuestion` channel**, with full
-  structured detail encoded in the strings (consistency + YAGNI). A queryable
-  structured audit store is deferred to Gate-1.
-- **D7 — Mixed-voltage per-tag proof via a synthetic fixture**; the real
-  `E01-11` golden asserts 480 V to actual main-bus tags only (no fabricated
-  208 V claim about that sheet).
+  engine consumes only the `busVoltageV` the extractor *already* associated and
+  always labels it `'detected'`; it adds no nearest-label inference. The
+  anti-wrong-bus guarantee lives at the extractor (refuses to broadcast) plus the
+  assertion override.
+- **D6 — Coded, severity-tagged findings in V1** (`TakeoffFinding`, four stable
+  codes). Only a *persistent / queryable* audit store is deferred to Gate-1; the
+  in-memory structured findings (code + severity + detail) ship now. (Replaces the
+  rev-1 "string-encoded" plan per operator Medium-2.)
+- **D7 — Mixed-voltage per-tag proof via a synthetic fixture**; the real `E01-11`
+  golden asserts 480 V to actual main-bus tags only (no fabricated 208 V claim).
+- **D8 — Invalid voltages rejected engine-side** before application
+  (`Number.isInteger(v) && v > 0`); the CLI does not duplicate this judgment.
+  (operator High-3.) Optional belt-and-suspenders: a lower-bound guard in
+  `classifyVoltage` (`<= 0 → undefined`) is compatible with existing tests and
+  may be added in the plan as defense-in-depth.
+- **D9 — Provenance is non-forgeable.** Public `ExtractedApparatus` carries no
+  `voltageBasis`; basis lives in the engine-only `ResolvedApparatus` wrapper and
+  is recomputed from scratch every run. (operator High-2.)
+- **D10 — Conflict is a non-blocking warning** (operator wins, device prices,
+  audit-recorded). Only `unknown_tag` / `duplicate_tag` / `invalid_voltage` block.
+  Resolves the rev-1 inconsistency of labeling conflict "blocking" while still
+  emitting. (operator's closing point.)
 
 ## 8. Open questions (for operator at spec review)
 
 - **O1 — Real mixed-bus golden?** D7 proves per-tag on a synthetic fixture and
   asserts 480 V on real `E01-11`. If you want a *real* `E01-11` mixed 480/208
-  golden, I need the authoritative 480-vs-208 **tag map** (electrical input I
-  will not fabricate). Default without it: synthetic-only per-tag proof.
-- **O2 — Structured evidence now or deferred?** D6 encodes conflict detail in
-  question strings for V1. Confirm that's acceptable, or pull the structured
-  `VoltageAssertionRecord[]` audit forward into this slice.
-- **O3 — Positive-golden 480 tag set.** The `MSB-*/STS-*/UPS-*/ACC-*/MDP-*` rows
+  golden, I need the authoritative 480-vs-208 **tag map** (electrical input I will
+  not fabricate). Default without it: synthetic-only per-tag proof.
+- **O2 — Positive-golden 480 tag set.** The `MSB-*/STS-*/UPS-*/ACC-*/MDP-*` rows
   on `E01-11` are all on the 480 V board. Confirm the assertion targets that full
   tagged set, or a named subset.
 
+> **Note:** rev-1 open question "structured evidence now or deferred?" is now
+> **resolved** as D6 (structured coded findings ship in V1) per the operator's
+> Medium-2 finding — no longer open.
+
 ## 9. Scope / out-of-scope (YAGNI)
 
-**In:** the artifact contract; `applyVoltageAssertions` (engine validator);
-provenance enum + surfacing; the `--assert-voltage` thin CLI; the tests above.
+**In:** the artifact contract; `applyVoltageAssertions` (engine validator with
+voltage validation, taint, coded findings); provenance enum + non-forgeable
+wrapper + surfacing; `emitEnvelope` blocking-finding refusal; the
+`--assert-voltage` thin CLI; the tests above.
 
-**Out (deferred):** Gate-1 UI and its grouped-tag selection widget; a persistent
-/ queryable assertion audit store; multi-sheet or multi-block voltage maps;
+**Out (deferred):** Gate-1 UI and its grouped-tag selection widget; a *persistent
+/ queryable* assertion-audit store; multi-sheet or multi-block voltage maps;
 voltage *ranges*; auto-detection of voltage from schedule tables; any non-CLI /
 non-Gate-1 ingestion channel.
 
 ## 10. Files touched
 
 **`apex-power-ops-platform` (branch `estimator-takeoff/voltage-assertions`):**
-- Modify `packages/estimator-takeoff/src/extraction/types.ts` — `VoltageAssertion`, `ExtractionArtifact.voltageAssertions`, `ExtractedApparatus.voltageBasis`.
+- Modify `packages/estimator-takeoff/src/extraction/types.ts` — `VoltageAssertion`, `ExtractionArtifact.voltageAssertions`. (**No** `voltageBasis` on `ExtractedApparatus`.)
 - Modify `packages/estimator-takeoff/src/signature/types.ts` — `VoltageBasis`, `ApparatusSignature.voltageBasis`.
-- Create `packages/estimator-takeoff/src/signature/voltage-assertions.ts` — `applyVoltageAssertions`.
-- Modify `packages/estimator-takeoff/src/signature/normalize.ts` — set `signature.voltageBasis`.
-- Modify `packages/estimator-takeoff/src/emit/emit.ts` — call `applyVoltageAssertions`; `MatchedLine.voltageBasis`; notes.
-- Modify `packages/estimator-takeoff/src/buckets/types.ts` — `MatchedLine.voltageBasis`.
-- Modify `packages/estimator-takeoff/src/index.ts` — export `applyVoltageAssertions`, `VoltageAssertion`, `VoltageBasis`.
+- Create `packages/estimator-takeoff/src/signature/voltage-assertions.ts` — `ResolvedApparatus`, `applyVoltageAssertions` (validation + taint + coded findings).
+- Modify `packages/estimator-takeoff/src/signature/normalize.ts` — `assessApparatus(x, voltageBasis?)`; set `signature.voltageBasis`.
+- Modify `packages/estimator-takeoff/src/buckets/types.ts` — `MatchedLine.voltageBasis`, `FindingSeverity`, `VoltageAssertionCode`, `TakeoffFinding`, `TakeoffResult.findings`.
+- Modify `packages/estimator-takeoff/src/emit/emit.ts` — call `applyVoltageAssertions`; iterate resolved wrappers; `MatchedLine.voltageBasis`; notes; **`emitEnvelope` blocking-finding refusal**.
+- Modify `packages/estimator-takeoff/src/index.ts` — export `applyVoltageAssertions`, `VoltageAssertion`, `VoltageBasis`, `TakeoffFinding`, `VoltageAssertionCode`, `FindingSeverity`.
 - Create `packages/estimator-takeoff/test/voltage-assertions.test.ts`.
 - Create `packages/estimator-takeoff/test/fixtures/synthetic-mixed-voltage.json`.
 - Modify `packages/estimator-takeoff/test/golden-e01-11.test.ts`, `test/emit.test.ts`, `test/normalize.test.ts`.
