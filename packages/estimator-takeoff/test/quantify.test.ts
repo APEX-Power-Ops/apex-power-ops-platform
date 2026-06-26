@@ -69,3 +69,24 @@ describe('quantify', () => {
     expect(lines[0]!.signature.mounting).toBe('molded_case')
   })
 })
+
+describe('quantify — per-tag voltage + provenance never collapse (the slice invariant)', () => {
+  it('keeps two same-spec breakers in one block on separate lines when voltage differs', () => {
+    const a = sig('A-480', 'one-line'); a.voltageV = 480
+    const b = sig('B-208', 'one-line'); b.voltageV = 208
+    const { lines } = quantify([a, b])
+    expect(lines).toHaveLength(2)
+    expect(lines.map((l) => l.signature.voltageV).sort((x, y) => (x ?? 0) - (y ?? 0))).toEqual([208, 480])
+  })
+  it('keeps same-spec same-voltage breakers separate when provenance differs (detected vs asserted)', () => {
+    const det = sig('A', 'one-line'); det.voltageV = 480                       // basis detected (helper default)
+    const asr = sig('B', 'one-line'); asr.voltageV = 480; asr.voltageBasis = 'asserted'
+    expect(quantify([det, asr]).lines).toHaveLength(2)
+  })
+  it('still aggregates two identical-spec identical-voltage devices into one line (qty 2)', () => {
+    const a = sig('A', 'one-line'); a.voltageV = 480
+    const b = sig('B', 'one-line'); b.voltageV = 480
+    const { lines } = quantify([a, b])
+    expect(lines).toHaveLength(1); expect(lines[0]!.qty).toBe(2)
+  })
+})

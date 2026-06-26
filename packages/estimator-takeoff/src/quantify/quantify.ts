@@ -5,8 +5,8 @@ const AUTHORITATIVE = (e: string) => e === 'one-line' || e.endsWith('-schedule')
 
 function specKey(s: ApparatusSignature): string {
   return [
-    s.voltageClass, s.mounting, s.mvType ?? '-', s.functions.join(''),
-    s.frameA ?? '-', s.tripA ?? '-', s.source.block ?? '-',   // block included → one line (and scope) per electrical block
+    s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.mounting, s.mvType ?? '-', s.functions.join(''),
+    s.frameA ?? '-', s.tripA ?? '-', s.source.block ?? '-',   // voltageV + voltageBasis → per-tag voltage/provenance preserved
   ].join('|')
 }
 
