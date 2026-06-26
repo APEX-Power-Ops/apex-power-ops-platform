@@ -9,3 +9,20 @@ export interface TakeoffResult {
   unmatchedCandidates: UnmatchedCandidate[]
   operatorQuestions: OperatorQuestion[]
 }
+
+export type FindingSeverity = 'error' | 'warning'
+
+export type VoltageAssertionCode =
+  | 'voltage_assertion_unknown_tag'
+  | 'voltage_assertion_duplicate_tag'
+  | 'voltage_assertion_conflict'
+  | 'voltage_assertion_invalid_voltage'
+  | 'voltage_assertion_invalid_shape'
+
+export interface TakeoffFinding {
+  code: VoltageAssertionCode
+  severity: FindingSeverity
+  message: string
+  context: string
+  detail?: { tag?: string; detectedV?: number; assertedV?: number; actor?: string; source?: string }
+}

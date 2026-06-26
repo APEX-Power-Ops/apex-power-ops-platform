@@ -15,9 +15,19 @@ export interface ExtractedApparatus {
   candidateKind?: 'breaker'                       // surfacing-only marker for a breaker-suffix token with no AF/AT (see Plan 2a)
 }
 
+export interface VoltageAssertion {
+  voltageV: number          // engine requires Number.isInteger(voltageV) && voltageV > 0
+  tags: string[]            // device tags this assertion covers (>= 1)
+  actor?: string            // evidence-only; engine never branches on it
+  note?: string             // evidence-only
+  source?: 'cli' | 'gate1'  // evidence-only
+  at?: string               // untrusted metadata; engine never trusts it for ordering/authority
+}
+
 export interface ExtractionArtifact {
   pdf: string
   extractedAt?: string                          // ISO string stamped by drawing-nav (string, not Date)
   profileWarnings?: string[]                    // legend-fallback / unknown-title notices from the extractor (see Plan 2a)
   apparatus: ExtractedApparatus[]
+  voltageAssertions?: VoltageAssertion[]
 }

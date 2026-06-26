@@ -11,6 +11,8 @@ export type TripFunction = 'L' | 'S' | 'I' | 'G'
 // path is ever introduced.
 export type MountingBasis = 'hint' | 'text' | 'estimating_baseline' | 'none'
 
+export type VoltageBasis = 'detected' | 'asserted' | 'none'
+
 export interface ApparatusSignature {
   kind: 'breaker'
   voltageClass: VoltageClass
