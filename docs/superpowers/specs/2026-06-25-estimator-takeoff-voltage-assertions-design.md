@@ -448,8 +448,10 @@ for spec in a.assert_voltage:            # ["480:TAG1,TAG2", "208:TAG3"]
         voltage = int(v)
     except ValueError:
         raise SystemExit(f"--assert-voltage: voltage must be an integer, got {v!r}")
-    entry = {"voltageV": voltage, "tags": [t.strip() for t in tags.split(",") if t.strip()],
-             "source": "cli"}
+    tag_list = [t.strip() for t in tags.split(",")]
+    if any(not t for t in tag_list):                       # fail closed on an empty tag slot (e.g. "480:A,,B")
+        raise SystemExit(f"--assert-voltage: empty tag in {spec!r}")
+    entry = {"voltageV": voltage, "tags": tag_list, "source": "cli"}
     if a.assert_actor: entry["actor"] = a.assert_actor
     if a.assert_note:  entry["note"]  = a.assert_note
     assertions.append(entry)

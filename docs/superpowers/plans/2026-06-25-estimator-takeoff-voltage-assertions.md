@@ -1032,7 +1032,10 @@ def parse_voltage_assertions(specs, actor=None, note=None):
             voltage = int(v)
         except ValueError:
             raise SystemExit(f"--assert-voltage: voltage must be an integer, got {v!r}")
-        entry = {"voltageV": voltage, "tags": [t.strip() for t in tags.split(",") if t.strip()], "source": "cli"}
+        tag_list = [t.strip() for t in tags.split(",")]
+        if any(not t for t in tag_list):                       # fail closed on an empty tag slot (e.g. "480:A,,B")
+            raise SystemExit(f"--assert-voltage: empty tag in {spec!r}")
+        entry = {"voltageV": voltage, "tags": tag_list, "source": "cli"}
         if actor:
             entry["actor"] = actor
         if note:
