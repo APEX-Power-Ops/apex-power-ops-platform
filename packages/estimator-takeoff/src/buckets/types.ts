@@ -3,7 +3,13 @@ import type { QuantifiedLine } from '../quantify/types'
 
 export interface MatchedLine { ref: string; qty: number; block: string; mountingBasis: MountingBasis; voltageBasis: VoltageBasis; line: QuantifiedLine }
 export interface UnmatchedCandidate { reason: string; line: QuantifiedLine }
-export interface OperatorQuestion { question: string; context: string }
+
+export type OperatorQuestionCode =
+  | 'missing_voltage' | 'lv_frame_trip_unparsed' | 'missing_power_functions'
+  | 'mounting_hint_conflict' | 'non_breaker_carries_rating' | 'location_only'
+  | 'unrecognized_apparatus_row' | 'profile_warning'
+
+export interface OperatorQuestion { question: string; context: string; code: OperatorQuestionCode; inputIndex?: number }
 export interface TakeoffResult {
   matchedLines: MatchedLine[]
   unmatchedCandidates: UnmatchedCandidate[]

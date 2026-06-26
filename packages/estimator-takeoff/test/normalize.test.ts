@@ -127,3 +127,18 @@ describe('assessApparatus — voltage provenance (voltageBasis)', () => {
     expect(true).toBe(true)
   })
 })
+
+it('every operator question carries a structured code', () => {
+  const a = assessApparatus({ raw: 'breaker', sheet: 'E', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line' })
+  expect(a.questions.length).toBeGreaterThan(0)
+  expect(a.questions[0]!.code).toBe('missing_voltage')
+})
+
+it('sets a structured assessmentCode distinguishing the null-signature shapes', () => {
+  const at = (raw: string, extra: any = {}) => assessApparatus({ raw, sheet: 'E', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', ...extra })
+  expect(at('MSB 4000AF/4000AT LSIG', { busVoltageV: 480, mountingHint: 'draw_out' }).assessmentCode).toBe('classified')
+  expect(at('XFMR 1000KVA').assessmentCode).toBe('non_breaker_excluded')
+  expect(at('SPARE').assessmentCode).toBe('unrecognized_apparatus_row')
+  expect(at('MCB 100AF/100AT').assessmentCode).toBe('missing_voltage')
+  expect(at('ATS 800AF/800AT').assessmentCode).toBe('non_breaker_carries_rating')
+})
