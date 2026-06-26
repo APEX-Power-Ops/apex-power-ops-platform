@@ -1,0 +1,7 @@
+{
+  "pdf": "synthetic-mixed-voltage",
+  "apparatus": [
+    { "raw": "MAIN-480-GB 1600AF/1600AT LSIG", "tag": "MAIN-480-GB", "sheet": "SYN-01", "page": 1, "bbox": [0, 0, 1, 1], "evidence": "one-line", "block": "SYN" },
+    { "raw": "HOUSE-208-GB 1600AF/1600AT LSIG", "tag": "HOUSE-208-GB", "sheet": "SYN-01", "page": 1, "bbox": [2, 2, 3, 3], "evidence": "one-line", "block": "SYN" }
+  ]
+}

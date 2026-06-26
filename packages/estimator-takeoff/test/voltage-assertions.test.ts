@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { applyVoltageAssertions } from '../src/signature/voltage-assertions'
 import type { ExtractionArtifact, ExtractedApparatus } from '../src/extraction/types'
 
@@ -10,7 +12,7 @@ const art = (apparatus: ExtractedApparatus[], voltageAssertions?: ExtractionArti
   ({ pdf: 'x', apparatus, voltageAssertions })
 
 describe('applyVoltageAssertions', () => {
-  it('no assertions → passthrough with recomputed basis (back-compat)', () => {
+  it('no assertions -> passthrough with recomputed basis (back-compat)', () => {
     const { resolved, findings } = applyVoltageAssertions(art([dev('A', 480), dev('B')]))
     expect(findings).toEqual([])
     expect(resolved.map((r) => r.voltageBasis)).toEqual(['detected', 'none'])
@@ -24,14 +26,14 @@ describe('applyVoltageAssertions', () => {
     expect(resolved[0]!.apparatus.busVoltageV).toBe(480)
   })
 
-  it('unknown tag → error finding, no device touched', () => {
+  it('unknown tag -> error finding, no device touched', () => {
     const { findings } = applyVoltageAssertions(art([dev('A')], [{ voltageV: 480, tags: ['NOPE'], source: 'cli' }]))
     expect(findings).toHaveLength(1)
     expect(findings[0]!.code).toBe('voltage_assertion_unknown_tag')
     expect(findings[0]!.severity).toBe('error')
   })
 
-  it('duplicate tag → error finding and the device is tainted (basis none, voltage cleared)', () => {
+  it('duplicate tag -> error finding and the device is tainted (basis none, voltage cleared)', () => {
     const { resolved, findings } = applyVoltageAssertions(
       art([dev('A')], [{ voltageV: 480, tags: ['A'] }, { voltageV: 208, tags: ['A'] }]),
     )
@@ -48,7 +50,7 @@ describe('applyVoltageAssertions', () => {
     expect(resolved[0]!.apparatus.busVoltageV).toBeUndefined()  // detected 480 cleared
   })
 
-  it('invalid voltages (0, -1, 12.5, NaN) → error finding + taint', () => {
+  it('invalid voltages (0, -1, 12.5, NaN) -> error finding + taint', () => {
     for (const bad of [0, -1, 12.5, NaN]) {
       const { resolved, findings } = applyVoltageAssertions(art([dev('A')], [{ voltageV: bad, tags: ['A'] }]))
       expect(findings.some((f) => f.code === 'voltage_assertion_invalid_voltage' && f.severity === 'error')).toBe(true)
@@ -56,7 +58,7 @@ describe('applyVoltageAssertions', () => {
     }
   })
 
-  it('conflict (detected != asserted) → warning, operator wins, device keeps asserted voltage', () => {
+  it('conflict (detected != asserted) -> warning, operator wins, device keeps asserted voltage', () => {
     const { resolved, findings } = applyVoltageAssertions(art([dev('A', 240)], [{ voltageV: 480, tags: ['A'], actor: 'jls' }]))
     const conflict = findings.find((f) => f.code === 'voltage_assertion_conflict')!
     expect(conflict.severity).toBe('warning')
@@ -65,7 +67,7 @@ describe('applyVoltageAssertions', () => {
     expect(resolved[0]!.apparatus.busVoltageV).toBe(480)
   })
 
-  it('agreeing detected + asserted → no conflict finding', () => {
+  it('agreeing detected + asserted -> no conflict finding', () => {
     const { findings } = applyVoltageAssertions(art([dev('A', 480)], [{ voltageV: 480, tags: ['A'] }]))
     expect(findings).toEqual([])
   })
@@ -84,24 +86,24 @@ describe('applyVoltageAssertions', () => {
     expect(resolved[0]!.voltageBasis).toBe('detected')             // recomputed, never 'asserted'
   })
 
-  it('non-array voltageAssertions → invalid_shape error, nothing applied (no throw)', () => {
+  it('non-array voltageAssertions -> invalid_shape error, nothing applied (no throw)', () => {
     const bad = { pdf: 'x', apparatus: [dev('A', 480)], voltageAssertions: {} } as unknown as ExtractionArtifact
     const { resolved, findings } = applyVoltageAssertions(bad)
     expect(findings.some((f) => f.code === 'voltage_assertion_invalid_shape' && f.severity === 'error')).toBe(true)
     expect(resolved[0]!.voltageBasis).toBe('detected')            // device untouched
   })
 
-  it('assertion missing tags → invalid_shape error', () => {
+  it('assertion missing tags -> invalid_shape error', () => {
     const bad = { pdf: 'x', apparatus: [dev('A')], voltageAssertions: [{ voltageV: 480 }] } as unknown as ExtractionArtifact
     expect(applyVoltageAssertions(bad).findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
   })
 
-  it('assertion with non-array tags → invalid_shape error', () => {
+  it('assertion with non-array tags -> invalid_shape error', () => {
     const bad = { pdf: 'x', apparatus: [dev('A')], voltageAssertions: [{ voltageV: 480, tags: 'A' }] } as unknown as ExtractionArtifact
     expect(applyVoltageAssertions(bad).findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
   })
 
-  it('assertion with empty tags → invalid_shape error', () => {
+  it('assertion with empty tags -> invalid_shape error', () => {
     const { findings } = applyVoltageAssertions(art([dev('A')], [{ voltageV: 480, tags: [] }]))
     expect(findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
   })
@@ -135,5 +137,26 @@ describe('runTakeoff threads voltage assertions + findings', () => {
     const sneaky = { ...breaker('M1-GB', 480), voltageBasis: 'asserted' } as unknown as ExtractedApparatus
     const r = runTakeoff({ pdf: 'x', apparatus: [sneaky] })   // no assertion
     expect(r.matchedLines[0]!.voltageBasis).toBe('detected')
+  })
+})
+
+describe('synthetic mixed-voltage: per-tag, not block-scoped', () => {
+  const syn = JSON.parse(
+    readFileSync(fileURLToPath(new URL('./fixtures/synthetic-mixed-voltage.json', import.meta.url)), 'utf8'),
+  ) as ExtractionArtifact
+
+  it('synthetic_mixed_voltage_prices_each_tag_at_its_own_asserted_voltage', () => {
+    const r = runTakeoff({
+      ...syn,
+      voltageAssertions: [{ voltageV: 480, tags: ['MAIN-480-GB'] }, { voltageV: 208, tags: ['HOUSE-208-GB'] }],
+    })
+    expect(r.findings.filter((f) => f.severity === 'error')).toEqual([])
+    expect(r.matchedLines).toHaveLength(2)                          // NOT collapsed -- the A3b invariant
+    const main = r.matchedLines.find((m) => m.line.signature.tag === 'MAIN-480-GB')!
+    const house = r.matchedLines.find((m) => m.line.signature.tag === 'HOUSE-208-GB')!
+    expect(main.line.signature.voltageV).toBe(480)
+    expect(house.line.signature.voltageV).toBe(208)
+    expect(main.voltageBasis).toBe('asserted')
+    expect(house.voltageBasis).toBe('asserted')
   })
 })

@@ -19,23 +19,22 @@ describe('golden: real E01-11 (STACK PHX02A Addendum 4)', () => {
     expect(() => emitEnvelope(r, { projectNumber: 'GOLDEN' })).toThrow(/zero matched lines/)  // fail-closed
   })
 
-  it('e01_11_with_operator_voltage_assertion_emits_drawout_lsig', () => {
-    // Operator Gate-1 voltage assertion — the one fact the extractor refused to guess. Clearly labeled as
-    // operator-supplied, NOT auto-extracted. V1 demonstration asserts the dominant 480V main bus; per-device
-    // voltage association is a later slice. The CLI override (--assert-voltage) is the next slice.
+  it('e01_11_named_480_subset_emits_drawout_lsig (per-tag operator assertion; 208V house bus intentionally NOT asserted)', () => {
+    // Operator asserts 480V for a NAMED SUBSET of confirmed-480 tags (MSB-P1-110-GB is the draw-out LSIG main).
+    // The mixed-bus 208/120 house tags are deliberately left unasserted (their voltage is an unresolved operator input).
+    const NAMED_480 = ['MSB-P1-110-GB', 'ACC-1-09-FB', 'ACC-1-10-FB']
     const asserted: ExtractionArtifact = {
       ...fixture,
-      apparatus: fixture.apparatus.map((a) => ({ ...a, busVoltageV: 480 })),
+      voltageAssertions: [{ voltageV: 480, tags: NAMED_480, source: 'cli' }],
     }
     const r = runTakeoff(asserted)
-    expect(r.matchedLines.length).toBeGreaterThan(0)
+    expect(r.findings.filter((f) => f.severity === 'error')).toEqual([])      // no blocking findings
     const lsig = r.matchedLines.find((m) => m.ref === 'Circuit Breaker LV - Draw-Out (LSIG)')
     expect(lsig).toBeDefined()
-    // HONESTY: the construction is an ESTIMATING ASSUMPTION (≥800AF+G → draw-out), provenance-surfaced as
-    // 'estimating_baseline' — NOT read from the drawing. The estimator sees this basis and can override.
-    expect(lsig!.mountingBasis).toBe('estimating_baseline')
+    expect(lsig!.mountingBasis).toBe('estimating_baseline')                   // construction is an estimating assumption
+    expect(lsig!.voltageBasis).toBe('asserted')                              // voltage is operator-supplied
     const { envelope, findings } = emitEnvelope(r, { projectNumber: 'GOLDEN' })
-    expect(findings.filter((f) => f.severity === 'error')).toEqual([])   // emits with no error findings
+    expect(findings.filter((f) => f.severity === 'error')).toEqual([])
     expect(envelope.scopes.length).toBeGreaterThan(0)
   })
 })
