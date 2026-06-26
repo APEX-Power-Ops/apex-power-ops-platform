@@ -1,0 +1,2 @@
+# Pin the sha-checked canonical artifact(s) to LF so the drift-check stays stable across platforms/checkouts.
+*.artifact.json text eol=lf
