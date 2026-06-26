@@ -33,3 +33,26 @@ test('otherOpenItems includes the untagged missing-voltage row as read-only', ()
   const { result } = evaluate(ARTIFACT)
   expect(otherOpenItems(result, ARTIFACT).some((i) => i.kind === 'untagged_missing_voltage')).toBe(true)
 })
+
+import { buildAssertions, mergeAssertionsByTag } from '../lib/gate1'
+
+test('buildAssertions stamps source gate1 + actor, one tag per entry', () => {
+  expect(buildAssertions([{ tag: 'FB-1', voltageV: 480 }], 'JLS'))
+    .toEqual([{ voltageV: 480, tags: ['FB-1'], source: 'gate1', actor: 'JLS' }])
+})
+
+test('mergeAssertionsByTag REPLACES a same-tag existing/CLI assertion (no duplicate-tag)', () => {
+  const existing = [{ voltageV: 208, tags: ['FB-1'], source: 'cli' as const }]
+  const merged = mergeAssertionsByTag(existing, buildAssertions([{ tag: 'FB-1', voltageV: 480 }], 'JLS'))
+  const fb1 = merged.filter((m) => m.tags.includes('FB-1'))
+  expect(fb1).toHaveLength(1)
+  expect(fb1[0].voltageV).toBe(480)
+  expect(fb1[0].source).toBe('gate1')
+})
+
+test('mergeAssertionsByTag keeps unrelated existing tags', () => {
+  const merged = mergeAssertionsByTag([{ voltageV: 208, tags: ['OTHER'], source: 'cli' as const }],
+    buildAssertions([{ tag: 'FB-1', voltageV: 480 }], 'JLS'))
+  expect(merged.some((m) => m.tags.includes('OTHER') && m.voltageV === 208)).toBe(true)
+  expect(merged.some((m) => m.tags.includes('FB-1') && m.voltageV === 480)).toBe(true)
+})
