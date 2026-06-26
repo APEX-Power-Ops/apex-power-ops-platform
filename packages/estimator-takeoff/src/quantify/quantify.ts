@@ -6,7 +6,7 @@ const AUTHORITATIVE = (e: string) => e === 'one-line' || e.endsWith('-schedule')
 function specKey(s: ApparatusSignature): string {
   return [
     s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.mounting, s.mvType ?? '-', s.functions.join(''),
-    s.frameA ?? '-', s.tripA ?? '-', s.source.block ?? '-',   // voltageV + voltageBasis → per-tag voltage/provenance preserved
+    s.frameA ?? '-', s.tripA ?? '-', s.source.block ?? '-',   // voltageV + voltageBasis -> per-tag voltage/provenance preserved
   ].join('|')
 }
 
@@ -24,7 +24,8 @@ function pickAuthoritative(occ: ApparatusSignature[]): ApparatusSignature | unde
 
 export function quantify(sigs: ApparatusSignature[]): {
   lines: QuantifiedLine[]
-  locationOnly: ApparatusSignature[]
+  associated: { inputIndex: number; lineKey: string }[]
+  locationOnly: { inputIndex: number; sig: ApparatusSignature }[]
 } {
   const byDevice = new Map<string, ApparatusSignature[]>()
   for (const s of sigs) {
@@ -33,12 +34,14 @@ export function quantify(sigs: ApparatusSignature[]): {
   }
 
   const counted: ApparatusSignature[] = []
-  const locationOnly: ApparatusSignature[] = []
+  const locationOnly: { inputIndex: number; sig: ApparatusSignature }[] = []
+  const nonRep: ApparatusSignature[] = []            // signature-built occurrences that are NOT the representative
   const sourcesByDevice = new Map<string, ApparatusSignature['source'][]>()
   for (const [id, occ] of byDevice) {
     const auth = pickAuthoritative(occ)
-    if (!auth) { locationOnly.push(occ[0]!); continue }
+    if (!auth) { for (const o of occ) locationOnly.push({ inputIndex: o.inputIndex ?? -1, sig: o }); continue }
     counted.push(auth)
+    for (const o of occ) if (o !== auth) nonRep.push(o)
     sourcesByDevice.set(id, occ.map((o) => o.source))
   }
 
@@ -47,12 +50,20 @@ export function quantify(sigs: ApparatusSignature[]): {
     const k = specKey(s)
     ;(bySpec.get(k) ?? bySpec.set(k, []).get(k)!).push(s)
   }
-  const lines: QuantifiedLine[] = [...bySpec.values()].map((group) => ({
+  const lines: QuantifiedLine[] = [...bySpec.entries()].map(([k, group]) => ({
     signature: group[0]!,
     qty: group.length,
     sources: group.flatMap((s) => sourcesByDevice.get(deviceId(s)) ?? [s.source]),
     memberTags: group.map((s) => s.tag).filter((t): t is string => !!t),
+    memberIndices: group.map((s) => s.inputIndex ?? -1),
+    lineKey: k,
     countedFromAuthoritative: true as const,
   }))
-  return { lines, locationOnly }
+  // Map each device to its line's key = the REPRESENTATIVE's specKey. A sparser sibling occurrence can have a
+  // different mounting (hence different specKey) than the chosen representative; that asymmetry is exactly why
+  // pickAuthoritative exists, so reading specKey(sibling) would point at a wrong/absent line.
+  const lineKeyByDevice = new Map<string, string>()
+  for (const s of counted) lineKeyByDevice.set(deviceId(s), specKey(s))
+  const associated = nonRep.map((o) => ({ inputIndex: o.inputIndex ?? -1, lineKey: lineKeyByDevice.get(deviceId(o))! }))
+  return { lines, associated, locationOnly }
 }

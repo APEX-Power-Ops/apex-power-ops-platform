@@ -7,6 +7,12 @@ const sig = (tag: string, evidence: string, sheet = 'E01-11'): ApparatusSignatur
   tag, source: { sheet, page: 1, bbox: [0, 0, 1, 1], evidence },
 })
 
+const mk = (o: { tag?: string; evidence: string; inputIndex: number; mounting?: ApparatusSignature['mounting']; sheet?: string }): ApparatusSignature => ({
+  kind: 'breaker', voltageClass: 'LV', voltageBasis: 'detected', functions: ['L', 'S', 'I', 'G'],
+  mounting: o.mounting ?? 'draw_out', mountingBasis: 'text', tag: o.tag, inputIndex: o.inputIndex,
+  source: { sheet: o.sheet ?? 'E01-11', page: 1, bbox: [0, 0, 1, 1], evidence: o.evidence },
+})
+
 describe('quantify', () => {
   it('counts the same device once across one-line + power-plan, keeping both sources', () => {
     const { lines } = quantify([sig('ACC-1-09-FB', 'one-line'), sig('ACC-1-09-FB', 'power-plan', 'E02-03D')])
@@ -24,7 +30,7 @@ describe('quantify', () => {
     const { lines, locationOnly } = quantify([sig('GHOST-FB', 'power-plan', 'E02-03D')])
     expect(lines).toHaveLength(0)
     expect(locationOnly).toHaveLength(1)
-    expect(locationOnly[0]!.tag).toBe('GHOST-FB')
+    expect(locationOnly[0]!.sig.tag).toBe('GHOST-FB')
   })
   it('keeps two UNTAGGED same-spec devices distinct by bbox (no source collision)', () => {
     const untagged = (bbox: [number, number, number, number]): ApparatusSignature => ({
@@ -67,6 +73,26 @@ describe('quantify', () => {
     const { lines } = quantify([sparse, rich])
     expect(lines).toHaveLength(1)
     expect(lines[0]!.signature.mounting).toBe('molded_case')
+  })
+
+  it('exposes lineKey, memberIndices, and associated non-representative occurrences', () => {
+    const oneLine = mk({ tag: 'B1', evidence: 'one-line', inputIndex: 0 })
+    const powerPlan = mk({ tag: 'B1', evidence: 'power-plan', inputIndex: 1 })
+    const r = quantify([oneLine, powerPlan])
+    expect(r.lines).toHaveLength(1)
+    expect(r.lines[0]!.memberIndices).toEqual([0])           // the authoritative representative
+    expect(r.lines[0]!.lineKey).toBeTruthy()                 // present + stable
+    expect(r.associated).toContainEqual({ inputIndex: 1, lineKey: r.lines[0]!.lineKey })
+  })
+
+  it('associated row points at the REPRESENTATIVE line key even when the sibling is sparser (mixed richness)', () => {
+    const sparse = mk({ tag: 'B2', evidence: 'one-line', mounting: 'unknown', inputIndex: 0 })
+    const rich = mk({ tag: 'B2', evidence: 'panel-schedule', mounting: 'draw_out', inputIndex: 1 })
+    const r = quantify([sparse, rich])
+    expect(r.lines).toHaveLength(1)
+    expect(r.lines[0]!.memberIndices).toContain(1)           // pickAuthoritative chose the known-mounting (rich) row
+    const assoc = r.associated.find((a) => a.inputIndex === 0)!
+    expect(assoc.lineKey).toBe(r.lines[0]!.lineKey)          // NOT specKey(sparse)
   })
 })
 
