@@ -1,0 +1,584 @@
+{
+  "pdf": "20260616 – PHX02A – ADDENDUM 4 – ELEC.pdf",
+  "apparatus": [
+    {
+      "raw": "4000AF/4000AT",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        293.5,
+        441.3,
+        326.8,
+        461.8
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "MSB-P1-110-GB 4000AF/4000AT LSIG",
+      "tag": "MSB-P1-110-GB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        524.3,
+        430.8,
+        595.9,
+        473.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "P1-110-01-FB 400AF/300AT LSI",
+      "tag": "P1-110-01-FB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        765.5,
+        502.3,
+        796.1,
+        554.6
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "P1-110-02-FB 400AF/300AT LSI",
+      "tag": "P1-110-02-FB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        830.4,
+        502.3,
+        861.0,
+        554.6
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "ACC-1-09-FB 800AF/800AT LSIGE",
+      "tag": "ACC-1-09-FB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        886.4,
+        491.4,
+        944.2,
+        533.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "ACC-1-10-FB 800AF/800AT LSIGE",
+      "tag": "ACC-1-10-FB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        968.8,
+        491.4,
+        1011.3,
+        542.6
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "MDP-P1-110-1-FB 800AF/600AT LSIGE",
+      "tag": "MDP-P1-110-1-FB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1035.1,
+        491.4,
+        1114.0,
+        533.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "HDP-GEN-P1-110 100AF/90AT",
+      "tag": "HDP-GEN-P1-110",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1117.8,
+        793.9,
+        1165.3,
+        836.1
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "SPARE 100AF/30AT",
+      "tag": "SPARE",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1205.6,
+        793.9,
+        1238.0,
+        825.3
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "SPARE 100AF/30AT",
+      "tag": "SPARE",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1271.8,
+        793.9,
+        1304.2,
+        825.3
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "1200AF/1200AT",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1302.6,
+        1942.1,
+        1335.8,
+        1962.4
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "CRAH-1234-01-1234-FB 100AF/30AT",
+      "tag": "CRAH-1234-01-1234-FB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1333.2,
+        793.9,
+        1386.5,
+        836.1
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "MERDP-P1-110-FB 400AF/200AT LSI",
+      "tag": "MERDP-P1-110-FB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1340.0,
+        491.4,
+        1423.8,
+        533.6
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "1200AF/1200AT LSI",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1352.6,
+        1855.2,
+        1385.8,
+        1886.5
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "CRAH-1234-02-1234-FB 100AF/30AT",
+      "tag": "CRAH-1234-02-1234-FB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1399.0,
+        793.9,
+        1452.2,
+        836.1
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "STS-P1-110-01(A) 1200AF/1200AT LSI",
+      "tag": "STS-P1-110-01(A)",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1423.9,
+        1320.7,
+        1479.4,
+        1372.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "STSDP-P1-110-MCB 3000AF/3000AT LSIG",
+      "tag": "STSDP-P1-110-MCB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1493.6,
+        1258.3,
+        1583.9,
+        1300.5
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "3000AF/3000AT LSIG",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1493.6,
+        1269.2,
+        1526.8,
+        1300.5
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "STS-P1-110-02(A) 1200AF/1200AT LSI",
+      "tag": "STS-P1-110-02(A)",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1493.6,
+        1320.7,
+        1549.1,
+        1372.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "STS-P1-110-03(A) 1200AF/1200AT LSI",
+      "tag": "STS-P1-110-03(A)",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1563.1,
+        1320.7,
+        1618.6,
+        1372.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "1200AF/1200AT",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1605.6,
+        1942.1,
+        1638.8,
+        1962.4
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "STS-P1-110-04(A) 1200AF/1200AT LSI",
+      "tag": "STS-P1-110-04(A)",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1634.3,
+        1320.7,
+        1689.8,
+        1372.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "1200AF/1200AT LSI",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1655.8,
+        1855.2,
+        1688.9,
+        1886.5
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "UPS-P1-110-01-MIB 1600AF/1600AT LSIG",
+      "tag": "UPS-P1-110-01-MIB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1690.3,
+        491.8,
+        1746.9,
+        544.9
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "1200AF/1200AT",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1908.8,
+        1942.1,
+        1942.0,
+        1962.4
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "1200AF/1200AT LSI",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1959.0,
+        1855.2,
+        1992.2,
+        1886.5
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "UPS-P1-110-02-MIB 1600AF/1600AT LSIG",
+      "tag": "UPS-P1-110-02-MIB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        1975.2,
+        491.7,
+        2031.8,
+        544.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "UPS-P1-110-LBB 3000AF/3000AT LSIG",
+      "tag": "UPS-P1-110-LBB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2090.5,
+        563.9,
+        2128.1,
+        617.0
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "MSB-P1-110-MBB 3000AF/3000AT LSIG",
+      "tag": "MSB-P1-110-MBB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2099.3,
+        421.1,
+        2177.8,
+        463.1
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "UPS-P1-110-MOB-2 1600AF/1600AT LSIG",
+      "tag": "UPS-P1-110-MOB-2",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2162.5,
+        563.9,
+        2211.9,
+        617.0
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "MSB-P1-110-UIB 3000AF/3000AT LSIG",
+      "tag": "MSB-P1-110-UIB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2165.4,
+        491.7,
+        2204.2,
+        545.2
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "STS-P1-110-01(P) 1200AF/1200AT LSI",
+      "tag": "STS-P1-110-01(P)",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2171.8,
+        1320.7,
+        2227.3,
+        1372.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "1200AF/1200AT",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2212.0,
+        1942.1,
+        2245.1,
+        1962.4
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "STS-P1-110-02(P) 1200AF/1200AT LSI",
+      "tag": "STS-P1-110-02(P)",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2241.5,
+        1320.7,
+        2297.0,
+        1372.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "UPS-P1-110-MOB-1 1600AF/1600AT LSIG",
+      "tag": "UPS-P1-110-MOB-1",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2252.6,
+        563.9,
+        2302.0,
+        617.0
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "1200AF/1200AT LSI",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2262.1,
+        1855.2,
+        2295.3,
+        1886.5
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "STS-P1-110-03(P) 1200AF/1200AT LSI",
+      "tag": "STS-P1-110-03(P)",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2311.0,
+        1320.7,
+        2366.5,
+        1372.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "3000AF/3000AT LSIG",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2315.5,
+        1267.2,
+        2348.7,
+        1298.5
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "STS-P1-110-04(P) 1200AF/1200AT LSI",
+      "tag": "STS-P1-110-04(P)",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2382.0,
+        1320.7,
+        2437.5,
+        1372.7
+      ],
+      "evidence": "one-line",
+      "block": "P1-110"
+    },
+    {
+      "raw": "MSB-P1-110-UB",
+      "tag": "MSB-P1-110-UB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        255.7,
+        430.8,
+        326.9,
+        440.4
+      ],
+      "evidence": "one-line",
+      "block": "P1-110",
+      "candidateKind": "breaker"
+    },
+    {
+      "raw": "UODP-P1-110-MCB",
+      "tag": "UODP-P1-110-MCB",
+      "sheet": "E01-11",
+      "page": 11,
+      "bbox": [
+        2262.8,
+        1256.3,
+        2348.9,
+        1265.8
+      ],
+      "evidence": "one-line",
+      "block": "P1-110",
+      "candidateKind": "breaker"
+    }
+  ],
+  "profileWarnings": [
+    "voltage: MV label(s) [30000, 34500] present (with LV [208, 250, 480]) — omitting bus voltage; operator must assert"
+  ],
+  "voltageAssertions": [
+    {
+      "voltageV": 480,
+      "tags": [
+        "MSB-P1-110-GB",
+        "ACC-1-09-FB",
+        "ACC-1-10-FB"
+      ],
+      "source": "cli"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "artifact": "stack-phx02a-e01-11.artifact.json",
+  "producerRepo": "drawing-nav",
+  "producerCommit": "e7a3fb4",
+  "pdf": "20260616 – PHX02A – ADDENDUM 4 – ELEC.pdf",
+  "page": 11,
+  "sheet": "E01-11",
+  "command": "drawing-nav extract \"<PHX02A ADDENDUM 4 ELEC.pdf>\" --page 11 --no-timestamp --assert-voltage 480:MSB-P1-110-GB,ACC-1-09-FB,ACC-1-10-FB --out stack-phx02a-e01-11.artifact.json",
+  "sha256": "c0901fb15a14fea5f1af880294e1674e020fe46bce1a3610a3653b08493967d3",
+  "apparatusCount": 41,
+  "voltageAssertionTags": [
+    "MSB-P1-110-GB",
+    "ACC-1-09-FB",
+    "ACC-1-10-FB"
+  ],
+  "note": "Sheet E01-11 (page 11, 0-based): ONE LINE DIAGRAM - PRIMARY BLOCK P1-110. The 3 asserted-480V tags resolve to LV draw-out LSIG mains (priced); remaining rows surface as operator questions (missing voltage / non-breaker-carries-rating) per the MV/LV ambiguity the producer profile-warns. apparatusCount 41 is the e7a3fb4 reproducible truth; the readiness-audit 44 was a stale scratch e01-11.out.json from an earlier producer (4 noise rows the current producer no longer emits)."
+}
