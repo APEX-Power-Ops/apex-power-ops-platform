@@ -4,6 +4,7 @@ import type { VoltageClass } from './types'
 // LV < 1000 V ; MV >= 1000 V and <= 69000 V ; HV > 69000 V
 export function classifyVoltage(voltageV: number | undefined): VoltageClass | undefined {
   if (voltageV === undefined) return undefined
+  if (voltageV <= 0) return undefined          // impossible voltage — never classify (D8)
   if (voltageV < 1000) return 'LV'
   if (voltageV <= 69000) return 'MV'
   return 'HV'

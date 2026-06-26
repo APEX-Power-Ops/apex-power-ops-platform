@@ -12,4 +12,9 @@ describe('classifyVoltage (takeoff routing convention)', () => {
   it('returns undefined when voltage is unknown', () => {
     expect(classifyVoltage(undefined)).toBeUndefined()
   })
+  it('returns undefined for impossible (non-positive) voltages', () => {
+    expect(classifyVoltage(0)).toBeUndefined()
+    expect(classifyVoltage(-1)).toBeUndefined()
+    expect(classifyVoltage(-480)).toBeUndefined()
+  })
 })
