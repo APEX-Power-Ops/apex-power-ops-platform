@@ -20,6 +20,8 @@
 - **Taint:** any tag with an `error`-severity assertion issue (invalid/duplicate) has its effective `busVoltageV` cleared to `undefined` (basis `none`) so it cannot price via a detected fallback.
 - **`actor`/`note`/`source`/`at` are evidence-only** — the engine never branches on them. V1 CLI omits `at`.
 - **New fields are required (always present):** `ApparatusSignature.voltageBasis`, `MatchedLine.voltageBasis`, `TakeoffResult.findings`.
+- **Quantify grouping (load-bearing per-tag invariant):** `specKey` includes nominal `voltageV` **and** `voltageBasis`, so two devices that differ only in asserted voltage (480 vs 208, both LV) — or only in provenance (detected vs asserted) — never collapse into one priced line.
+- **Malformed-shape fail-closed:** the engine is the authoritative JSON seam — a non-array `voltageAssertions`, or an assertion with missing / empty / non-array `tags`, produces a `voltage_assertion_invalid_shape` **error** finding, never a thrown exception.
 - **VoltageBasis** = `'detected' | 'asserted' | 'none'`. `classifyVoltage` routing: LV `< 1000`, MV `1000–69000`, HV `> 69000`.
 - **O1:** NO fabricated real `E01-11` 480/208 golden — mixed-voltage proof uses a **synthetic** fixture only.
 - **O2:** the real `E01-11` golden asserts 480 V to a **named subset** `['MSB-P1-110-GB', 'ACC-1-09-FB', 'ACC-1-10-FB']` (MSB-P1-110-GB is the confirmed draw-out LSIG main); the test name makes the scope explicit; 208 V house tags are intentionally **not** asserted.
@@ -33,6 +35,7 @@
 **Phase A — `packages/estimator-takeoff/` (TS engine):**
 
 - `src/signature/voltage.ts` — *(modify)* add the `<= 0 → undefined` lower-bound guard (D8).
+- `src/quantify/quantify.ts` — *(modify)* add `voltageV` + `voltageBasis` to `specKey` so per-tag voltage/provenance never collapse (Task A3b).
 - `src/extraction/types.ts` — *(modify)* add `VoltageAssertion` + `ExtractionArtifact.voltageAssertions`. **No** `voltageBasis` on `ExtractedApparatus`.
 - `src/signature/types.ts` — *(modify)* add `VoltageBasis` + `ApparatusSignature.voltageBasis`.
 - `src/buckets/types.ts` — *(modify)* add `FindingSeverity`, `VoltageAssertionCode`, `TakeoffFinding`, `MatchedLine.voltageBasis`, `TakeoffResult.findings`.
@@ -119,7 +122,7 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-takeoff-voltage && git add packa
   - `ExtractionArtifact.voltageAssertions?: VoltageAssertion[]`
   - `VoltageBasis = 'detected' | 'asserted' | 'none'`
   - `FindingSeverity = 'error' | 'warning'`
-  - `VoltageAssertionCode = 'voltage_assertion_unknown_tag' | 'voltage_assertion_duplicate_tag' | 'voltage_assertion_conflict' | 'voltage_assertion_invalid_voltage'`
+  - `VoltageAssertionCode = 'voltage_assertion_unknown_tag' | 'voltage_assertion_duplicate_tag' | 'voltage_assertion_conflict' | 'voltage_assertion_invalid_voltage' | 'voltage_assertion_invalid_shape'`
   - `TakeoffFinding { code: VoltageAssertionCode; severity: FindingSeverity; message: string; context: string; detail?: { tag?: string; detectedV?: number; assertedV?: number; actor?: string; source?: string } }`
   - `ResolvedApparatus { apparatus: ExtractedApparatus; voltageBasis: VoltageBasis }`
   - `applyVoltageAssertions(artifact: ExtractionArtifact): { resolved: ResolvedApparatus[]; findings: TakeoffFinding[] }`
@@ -165,6 +168,7 @@ export type VoltageAssertionCode =
   | 'voltage_assertion_duplicate_tag'
   | 'voltage_assertion_conflict'
   | 'voltage_assertion_invalid_voltage'
+  | 'voltage_assertion_invalid_shape'
 
 export interface TakeoffFinding {
   code: VoltageAssertionCode
@@ -263,6 +267,28 @@ describe('applyVoltageAssertions', () => {
     const { resolved } = applyVoltageAssertions(art([sneaky]))     // NO real assertion
     expect(resolved[0]!.voltageBasis).toBe('detected')             // recomputed, never 'asserted'
   })
+
+  it('non-array voltageAssertions → invalid_shape error, nothing applied (no throw)', () => {
+    const bad = { pdf: 'x', apparatus: [dev('A', 480)], voltageAssertions: {} } as unknown as ExtractionArtifact
+    const { resolved, findings } = applyVoltageAssertions(bad)
+    expect(findings.some((f) => f.code === 'voltage_assertion_invalid_shape' && f.severity === 'error')).toBe(true)
+    expect(resolved[0]!.voltageBasis).toBe('detected')            // device untouched
+  })
+
+  it('assertion missing tags → invalid_shape error', () => {
+    const bad = { pdf: 'x', apparatus: [dev('A')], voltageAssertions: [{ voltageV: 480 }] } as unknown as ExtractionArtifact
+    expect(applyVoltageAssertions(bad).findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
+  })
+
+  it('assertion with non-array tags → invalid_shape error', () => {
+    const bad = { pdf: 'x', apparatus: [dev('A')], voltageAssertions: [{ voltageV: 480, tags: 'A' }] } as unknown as ExtractionArtifact
+    expect(applyVoltageAssertions(bad).findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
+  })
+
+  it('assertion with empty tags → invalid_shape error', () => {
+    const { findings } = applyVoltageAssertions(art([dev('A')], [{ voltageV: 480, tags: [] }]))
+    expect(findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
+  })
 })
 ```
 
@@ -292,34 +318,52 @@ interface ValidPair { tag: string; voltageV: number; actor?: string; source?: st
 export function applyVoltageAssertions(
   artifact: ExtractionArtifact,
 ): { resolved: ResolvedApparatus[]; findings: TakeoffFinding[] } {
-  const assertions = artifact.voltageAssertions ?? []
+  const rawAssertions: unknown = artifact.voltageAssertions
   const findings: TakeoffFinding[] = []
+  const passthrough = (): ResolvedApparatus[] =>
+    artifact.apparatus.map((apparatus) => ({ apparatus, voltageBasis: detectedOrNone(apparatus.busVoltageV) }))
 
-  if (assertions.length === 0) {
-    return {
-      resolved: artifact.apparatus.map((apparatus) => ({ apparatus, voltageBasis: detectedOrNone(apparatus.busVoltageV) })),
-      findings,
-    }
+  // Container shape guard — the engine is the authoritative JSON seam; never throw on malformed input.
+  if (rawAssertions === undefined) return { resolved: passthrough(), findings }
+  if (!Array.isArray(rawAssertions)) {
+    findings.push({
+      code: 'voltage_assertion_invalid_shape', severity: 'error',
+      message: 'voltageAssertions must be an array — all assertions ignored.',
+      context: 'voltageAssertions (not an array)',
+    })
+    return { resolved: passthrough(), findings }
   }
+  if (rawAssertions.length === 0) return { resolved: passthrough(), findings }
 
   const tainted = new Set<string>()
   const validPairs: ValidPair[] = []
 
-  // Validate each assertion's voltage; taint tags of invalid entries (Global: invalid → error + taint).
-  for (const a of assertions) {
-    if (!(Number.isInteger(a.voltageV) && a.voltageV > 0)) {
-      for (const tag of a.tags) {
+  // Per-assertion shape guard FIRST (missing/empty/non-array tags → coded error, never a throw),
+  // then voltage validation; taint tags of invalid entries (Global: invalid → error + taint).
+  for (const item of rawAssertions as unknown[]) {
+    const a = item as { voltageV?: unknown; tags?: unknown; actor?: string; source?: string }
+    if (a == null || typeof a !== 'object' || !Array.isArray(a.tags) || a.tags.length === 0) {
+      findings.push({
+        code: 'voltage_assertion_invalid_shape', severity: 'error',
+        message: 'Malformed voltage assertion (missing, empty, or non-array tags) — rejected.',
+        context: `assertion ${(JSON.stringify(a) ?? String(a)).slice(0, 80)}`,
+      })
+      continue
+    }
+    const tags = a.tags as string[]
+    if (!(typeof a.voltageV === 'number' && Number.isInteger(a.voltageV) && a.voltageV > 0)) {
+      for (const tag of tags) {
         tainted.add(tag)
         findings.push({
           code: 'voltage_assertion_invalid_voltage', severity: 'error',
           message: `Voltage assertion ${String(a.voltageV)} for ${tag} is not a positive integer — rejected.`,
           context: `${tag} (assert ${String(a.voltageV)}V)`,
-          detail: { tag, assertedV: a.voltageV, actor: a.actor, source: a.source },
+          detail: { tag, assertedV: typeof a.voltageV === 'number' ? a.voltageV : undefined, actor: a.actor, source: a.source },
         })
       }
       continue
     }
-    for (const tag of a.tags) validPairs.push({ tag, voltageV: a.voltageV, actor: a.actor, source: a.source })
+    for (const tag of tags) validPairs.push({ tag, voltageV: a.voltageV, actor: a.actor, source: a.source })
   }
 
   // Group valid pairs by tag; duplicate tag → error + taint (Global: duplicate strict, even same voltage).
@@ -508,6 +552,70 @@ Expected: PASS and typecheck clean.
 
 ```bash
 ssh olares-mesh 'cd /home/olares/code/apex/apex-takeoff-voltage && git add packages/estimator-takeoff/src/signature/types.ts packages/estimator-takeoff/src/signature/normalize.ts packages/estimator-takeoff/test/normalize.test.ts packages/estimator-takeoff/test/quantify.test.ts packages/estimator-takeoff/test/breaker-map.test.ts && git -c user.name="jasonlswenson-sys" -c user.email="jasonlswenson@gmail.com" commit -m "feat(estimator-takeoff): ApparatusSignature.voltageBasis + assessApparatus controlled basis param"'
+```
+
+---
+
+### Task A3b: per-tag invariant — include `voltageV` + `voltageBasis` in the quantify spec key
+
+**Files:**
+- Modify: `packages/estimator-takeoff/src/quantify/quantify.ts`
+- Test: `packages/estimator-takeoff/test/quantify.test.ts`
+
+**Interfaces:**
+- Consumes: `ApparatusSignature.voltageV`, `ApparatusSignature.voltageBasis` (A3).
+- Produces: `specKey` now distinguishes devices by nominal `voltageV` and `voltageBasis`. **Why this task exists:** the current `specKey` keys on `voltageClass` only, so two same-frame/same-function breakers in one block asserted at 480 V and 208 V (both LV) collapse into one `QuantifiedLine` and the second device silently inherits the representative's voltage — breaking the slice's core "price each device at its own asserted voltage" promise.
+
+- [ ] **Step 1: Write the failing tests** — append to `test/quantify.test.ts` (the existing `sig` helper builds an `ApparatusSignature`; mutate `voltageV`/`voltageBasis` per case):
+
+```ts
+describe('quantify — per-tag voltage + provenance never collapse (the slice invariant)', () => {
+  it('keeps two same-spec breakers in one block on separate lines when voltage differs', () => {
+    const a = sig('A-480', 'one-line'); a.voltageV = 480
+    const b = sig('B-208', 'one-line'); b.voltageV = 208
+    const { lines } = quantify([a, b])
+    expect(lines).toHaveLength(2)
+    expect(lines.map((l) => l.signature.voltageV).sort((x, y) => (x ?? 0) - (y ?? 0))).toEqual([208, 480])
+  })
+  it('keeps same-spec same-voltage breakers separate when provenance differs (detected vs asserted)', () => {
+    const det = sig('A', 'one-line'); det.voltageV = 480                       // basis detected (helper default)
+    const asr = sig('B', 'one-line'); asr.voltageV = 480; asr.voltageBasis = 'asserted'
+    expect(quantify([det, asr]).lines).toHaveLength(2)
+  })
+  it('still aggregates two identical-spec identical-voltage devices into one line (qty 2)', () => {
+    const a = sig('A', 'one-line'); a.voltageV = 480
+    const b = sig('B', 'one-line'); b.voltageV = 480
+    const { lines } = quantify([a, b])
+    expect(lines).toHaveLength(1); expect(lines[0]!.qty).toBe(2)
+  })
+})
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-takeoff-voltage/packages/estimator-takeoff && pnpm vitest run test/quantify.test.ts'`
+Expected: FAIL — the first two cases collapse to 1 line under the current `specKey` (voltageClass only).
+
+- [ ] **Step 3: Implement** the spec-key change in `src/quantify/quantify.ts`:
+
+```ts
+function specKey(s: ApparatusSignature): string {
+  return [
+    s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.mounting, s.mvType ?? '-', s.functions.join(''),
+    s.frameA ?? '-', s.tripA ?? '-', s.source.block ?? '-',   // voltageV + voltageBasis → per-tag voltage/provenance preserved
+  ].join('|')
+}
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-takeoff-voltage/packages/estimator-takeoff && pnpm vitest run test/quantify.test.ts test/emit.test.ts && pnpm tsc --noEmit'`
+Expected: PASS — the new cases green; existing quantify/emit tests unaffected (each of their tests uses a single uniform voltage + basis, and `deviceId` for untagged devices derives the same key as before).
+
+- [ ] **Step 5: Commit**
+
+```bash
+ssh olares-mesh 'cd /home/olares/code/apex/apex-takeoff-voltage && git add packages/estimator-takeoff/src/quantify/quantify.ts packages/estimator-takeoff/test/quantify.test.ts && git -c user.name="jasonlswenson-sys" -c user.email="jasonlswenson@gmail.com" commit -m "fix(estimator-takeoff): specKey includes voltageV + voltageBasis (per-tag voltage never collapses)"'
 ```
 
 ---
@@ -752,13 +860,13 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-takeoff-voltage && git add packa
 **Interfaces:**
 - Consumes: `runTakeoff`, `emitEnvelope` (final form), the real `stack-phx02a-e01-11-extract.json` fixture (all `busVoltageV` undefined).
 
-- [ ] **Step 1: Create the synthetic fixture** `test/fixtures/synthetic-mixed-voltage.json` (explicitly synthetic — no real-sheet claim):
+- [ ] **Step 1: Create the synthetic fixture** `test/fixtures/synthetic-mixed-voltage.json` (explicitly synthetic — no real-sheet claim). **Both devices share frame/trip/functions/mounting/block** and differ ONLY in asserted voltage, so the per-tag test genuinely exercises the quantify-collapse path that Task A3b fixes:
 
 ```json
 {
   "pdf": "synthetic-mixed-voltage",
   "apparatus": [
-    { "raw": "MAIN-480-GB 4000AF/4000AT LSIG", "tag": "MAIN-480-GB", "sheet": "SYN-01", "page": 1, "bbox": [0, 0, 1, 1], "evidence": "one-line", "block": "SYN" },
+    { "raw": "MAIN-480-GB 1600AF/1600AT LSIG", "tag": "MAIN-480-GB", "sheet": "SYN-01", "page": 1, "bbox": [0, 0, 1, 1], "evidence": "one-line", "block": "SYN" },
     { "raw": "HOUSE-208-GB 1600AF/1600AT LSIG", "tag": "HOUSE-208-GB", "sheet": "SYN-01", "page": 1, "bbox": [2, 2, 3, 3], "evidence": "one-line", "block": "SYN" }
   ]
 }
@@ -781,6 +889,7 @@ describe('synthetic mixed-voltage: per-tag, not block-scoped', () => {
       voltageAssertions: [{ voltageV: 480, tags: ['MAIN-480-GB'] }, { voltageV: 208, tags: ['HOUSE-208-GB'] }],
     })
     expect(r.findings.filter((f) => f.severity === 'error')).toEqual([])
+    expect(r.matchedLines).toHaveLength(2)                          // NOT collapsed — the A3b invariant
     const main = r.matchedLines.find((m) => m.line.signature.tag === 'MAIN-480-GB')!
     const house = r.matchedLines.find((m) => m.line.signature.tag === 'HOUSE-208-GB')!
     expect(main.line.signature.voltageV).toBe(480)
@@ -972,7 +1081,8 @@ cd "/c/Users/jjswe/Tools/drawing-nav" && git add drawing_nav.py tests/test_asser
 - §3.4 `ApparatusSignature.voltageBasis` → A3. ✓
 - §3.5 `MatchedLine.voltageBasis` + `TakeoffFinding` + `TakeoffResult.findings` → A4 (field) + A2 (TakeoffFinding type). ✓
 - §3.6 severity policy → A2 (codes/severity) + A5 (emit refusal) + tests. ✓
-- §4 algorithm (validate/taint/apply/conflict) → A2. ✓
+- §4 algorithm (validate/taint/apply/conflict) → A2; plus malformed-shape fail-closed guard (`voltage_assertion_invalid_shape`) → A2. ✓
+- **Per-tag quantify invariant** (`specKey` += `voltageV` + `voltageBasis` so distinct-voltage/provenance devices never collapse) → A3b. ✓
 - §4.1 `assessApparatus(x, basis?)` → A3. ✓
 - §4.2 runTakeoff wiring → A4. ✓
 - §4.3 notes surfacing → A5. ✓
@@ -985,6 +1095,6 @@ cd "/c/Users/jjswe/Tools/drawing-nav" && git add drawing_nav.py tests/test_asser
 
 **2. Placeholder scan:** No TBD/TODO; every code step shows complete code; test names concrete; the only bracketed token is the deliberate `NAMED_480` constant (a real value). ✓
 
-**3. Type consistency:** `VoltageBasis`, `VoltageAssertion`, `TakeoffFinding`, `VoltageAssertionCode`, `FindingSeverity`, `ResolvedApparatus`, `applyVoltageAssertions`, `assessApparatus(x, voltageBasis?)`, `MatchedLine.voltageBasis`, `TakeoffResult.findings` are spelled identically across A2→A6. The four codes match §3.6 verbatim. `MatchedLine.voltageBasis` is introduced in A4 (so A4's test compiles) and consumed in A5 — noted explicitly in A4 Step 2/4. ✓
+**3. Type consistency:** `VoltageBasis`, `VoltageAssertion`, `TakeoffFinding`, `VoltageAssertionCode`, `FindingSeverity`, `ResolvedApparatus`, `applyVoltageAssertions`, `assessApparatus(x, voltageBasis?)`, `MatchedLine.voltageBasis`, `TakeoffResult.findings` are spelled identically across A2→A6. The five codes (the four §3.6 codes + `voltage_assertion_invalid_shape`) are spelled identically in the union (A2 Step 1) and every `findings.push`. `MatchedLine.voltageBasis` is introduced in A4 (so A4's test compiles) and consumed in A5 — noted explicitly in A4 Step 2/4. ✓
 
-**Note on task ordering:** A1→A2→A3→A4→A5→A6 then B1. Each Phase-A task ends green and typechecks. `MatchedLine.voltageBasis` lands in A4 (not A5) deliberately so A4's integration test compiles; A5 only adds the emit-time *behavior* (refusal + notes).
+**Note on task ordering:** A1→A2→A3→A3b→A4→A5→A6 then B1. Each Phase-A task ends green and typechecks. A3b (specKey) lands after A3 — which adds the `signature.voltageBasis`/`voltageV` it reads — and before A6, whose synthetic per-tag test (`toHaveLength(2)`) depends on it. `MatchedLine.voltageBasis` lands in A4 (not A5) deliberately so A4's integration test compiles; A5 only adds the emit-time *behavior* (refusal + notes).
