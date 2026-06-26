@@ -1,6 +1,6 @@
 import {
   runTakeoff, reconcile,
-  type ExtractionArtifact, type TakeoffResult, type ReconciliationReport,
+  type ExtractionArtifact, type TakeoffResult, type ReconciliationReport, type VoltageAssertion,
 } from '@apex/estimator-takeoff'
 
 export class Gate1Error extends Error {
@@ -56,4 +56,18 @@ export function otherOpenItems(result: TakeoffResult, artifact: ExtractionArtifa
     if (q.inputIndex === undefined) items.push({ kind: 'question', label: q.question })
   }
   return items
+}
+
+export function buildAssertions(entries: { tag: string; voltageV: number }[], actor: string): VoltageAssertion[] {
+  return entries.map((e) => ({ voltageV: e.voltageV, tags: [e.tag], source: 'gate1' as const, actor }))
+}
+
+// Replace-by-tag (last-write-wins). Gate-1 entries override any existing same-tag assertion
+// (CLI or prior edit). Guarantees <= 1 assertion per tag -> never trips the engine's hard
+// duplicate-tag error. Each output assertion carries exactly one tag.
+export function mergeAssertionsByTag(existing: VoltageAssertion[] | undefined, gate1: VoltageAssertion[]): VoltageAssertion[] {
+  const byTag = new Map<string, VoltageAssertion>()
+  for (const a of existing ?? []) for (const tag of a.tags) byTag.set(tag, { ...a, tags: [tag] })
+  for (const a of gate1) for (const tag of a.tags) byTag.set(tag, { ...a, tags: [tag] })
+  return [...byTag.values()]
 }
