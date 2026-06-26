@@ -10,9 +10,10 @@ function main(argv: string[]): void {
   if (file === undefined || file.startsWith('--')) { process.stderr.write('error: missing <artifact.json>\n'); process.exit(2) }
   const pIdx = args.indexOf('--project')
   const projectNumber = pIdx >= 0 ? args[pIdx + 1] : undefined
-  if (projectNumber === undefined) { process.stderr.write('error: --project <N> is required\n'); process.exit(2) }
+  if (projectNumber === undefined || projectNumber.startsWith('--')) { process.stderr.write('error: --project requires a value\n'); process.exit(2) }
   const oIdx = args.indexOf('--out')
   const out = oIdx >= 0 ? args[oIdx + 1] : undefined
+  if (out !== undefined && out.startsWith('--')) { process.stderr.write('error: --out requires a value\n'); process.exit(2) }
   const allowOpenItems = args.includes('--allow-open-items')
 
   let json: unknown

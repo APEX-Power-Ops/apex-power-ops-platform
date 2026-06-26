@@ -13,6 +13,7 @@ export interface ReconciliationReport {
     error_findings: number
     warning_findings: number
     ignored: number
+    unresolved_rows: number       // dispositions with status 'unmatched' or 'question' (blocks clean)
   }
   accounted: boolean              // every input row has a disposition AND index-aligned
   dispositions: ApparatusDisposition[]
@@ -46,6 +47,7 @@ export function reconcile(
     error_findings: result.findings.filter((f) => f.severity === 'error').length,
     warning_findings: result.findings.filter((f) => f.severity === 'warning').length,
     ignored: d.filter((x) => x.status === 'ignored').length,
+    unresolved_rows: d.filter((x) => x.status === 'unmatched' || x.status === 'question').length,
   }
   const accounted = d.length === apparatus_in && d.every((x, i) => x.inputIndex === i)
   const report: ReconciliationReport = {
@@ -68,6 +70,7 @@ export function renderReportText(report: ReconciliationReport): string {
   out.push(`  associated_sources   ${c.associated_sources}`)
   out.push(`  unmatched_candidates ${c.unmatched_candidates}`)
   out.push(`  operator_questions   ${c.operator_questions}`)
+  out.push(`  unresolved_rows      ${c.unresolved_rows}`)
   out.push(`  ignored              ${c.ignored}`)
   out.push(`  findings             ${c.error_findings} error, ${c.warning_findings} warning`)
   out.push(`  accounted            ${report.accounted}`)
