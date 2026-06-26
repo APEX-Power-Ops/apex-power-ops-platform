@@ -109,3 +109,16 @@ describe('assessApparatus — first-class questions / non-breaker handling', () 
     expect(a.questions.length).toBeGreaterThan(0)   // surfaced for device-type confirmation, never priced
   })
 })
+
+describe('assessApparatus — voltage provenance (voltageBasis)', () => {
+  it('labels asserted when the controlled basis arg says so', () => {
+    const a = assessApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480), 'asserted')
+    expect(a.signature!.voltageBasis).toBe('asserted')
+  })
+  it('derives detected from busVoltageV when no basis arg is given', () => {
+    expect(assessApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480)).signature!.voltageBasis).toBe('detected')
+  })
+  it('never yields asserted from a raw apparatus call (no basis arg)', () => {
+    expect(assessApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480)).signature!.voltageBasis).not.toBe('asserted')
+  })
+})

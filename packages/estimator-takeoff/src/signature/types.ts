@@ -17,6 +17,7 @@ export interface ApparatusSignature {
   kind: 'breaker'
   voltageClass: VoltageClass
   voltageV?: number
+  voltageBasis: VoltageBasis   // always present, parallel to mountingBasis
   frameA?: number
   tripA?: number
   functions: TripFunction[]

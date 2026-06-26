@@ -5,7 +5,7 @@ import { createDefaultCatalogResolver } from '@apex/estimator-core'
 import type { ApparatusSignature } from '../src/signature/types'
 
 const base: ApparatusSignature = {
-  kind: 'breaker', voltageClass: 'LV', functions: ['L', 'S', 'I', 'G'], mounting: 'draw_out', mountingBasis: 'text',
+  kind: 'breaker', voltageClass: 'LV', voltageBasis: 'detected', functions: ['L', 'S', 'I', 'G'], mounting: 'draw_out', mountingBasis: 'text',
   frameA: 800, tripA: 800,
   source: { sheet: 'E01-11', page: 11, bbox: [0, 0, 1, 1], evidence: 'one-line' },
 }

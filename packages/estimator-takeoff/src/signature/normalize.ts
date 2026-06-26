@@ -1,5 +1,5 @@
 import type { ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, Mounting, MountingBasis, MvType, TripFunction } from './types'
+import type { ApparatusSignature, Mounting, MountingBasis, MvType, TripFunction, VoltageBasis } from './types'
 import type { OperatorQuestion } from '../buckets/types'
 import { classifyVoltage } from './voltage'
 
@@ -68,7 +68,7 @@ function q(x: ExtractedApparatus, question: string): OperatorQuestion {
   return { question, context: `${x.tag ?? x.raw} @ ${x.sheet} (${x.evidence})` }
 }
 
-export function assessApparatus(x: ExtractedApparatus): ApparatusAssessment {
+export function assessApparatus(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
   // A strong non-breaker device-type token is authoritative exclusion. If it also carries a breaker
   // frame/trip rating, surface a question (do NOT fabricate a breaker line or fire the baseline).
   if (NON_BREAKER.test(x.raw)) {
@@ -110,8 +110,10 @@ export function assessApparatus(x: ExtractedApparatus): ApparatusAssessment {
   }
   const mvType = voltageClass !== 'LV' ? parseMvType(x.raw) : undefined
 
+  const basis: VoltageBasis = voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none')
+
   const signature: ApparatusSignature = {
-    kind: 'breaker', voltageClass, voltageV: x.busVoltageV, frameA, tripA, functions,
+    kind: 'breaker', voltageClass, voltageV: x.busVoltageV, voltageBasis: basis, frameA, tripA, functions,
     mounting, mountingBasis, mvType, tag: x.tag,
     source: { sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block },
   }

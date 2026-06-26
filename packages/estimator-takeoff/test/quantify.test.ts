@@ -3,7 +3,7 @@ import { quantify } from '../src/quantify/quantify'
 import type { ApparatusSignature } from '../src/signature/types'
 
 const sig = (tag: string, evidence: string, sheet = 'E01-11'): ApparatusSignature => ({
-  kind: 'breaker', voltageClass: 'LV', functions: ['L', 'S', 'I', 'G'], mounting: 'draw_out', mountingBasis: 'text',
+  kind: 'breaker', voltageClass: 'LV', voltageBasis: 'detected', functions: ['L', 'S', 'I', 'G'], mounting: 'draw_out', mountingBasis: 'text',
   tag, source: { sheet, page: 1, bbox: [0, 0, 1, 1], evidence },
 })
 
@@ -28,7 +28,7 @@ describe('quantify', () => {
   })
   it('keeps two UNTAGGED same-spec devices distinct by bbox (no source collision)', () => {
     const untagged = (bbox: [number, number, number, number]): ApparatusSignature => ({
-      kind: 'breaker', voltageClass: 'LV', functions: ['L', 'S', 'I'], mounting: 'molded_case', mountingBasis: 'text',
+      kind: 'breaker', voltageClass: 'LV', voltageBasis: 'detected', functions: ['L', 'S', 'I'], mounting: 'molded_case', mountingBasis: 'text',
       source: { sheet: 'E05-20', page: 1, bbox, evidence: 'panel-schedule' },
     })
     const { lines } = quantify([untagged([0, 0, 1, 1]), untagged([2, 2, 3, 3])])
@@ -48,7 +48,7 @@ describe('quantify', () => {
   })
   it('separates same-spec devices in DIFFERENT electrical blocks into distinct lines', () => {
     const inBlock = (tag: string, block: string): ApparatusSignature => ({
-      kind: 'breaker', voltageClass: 'LV', functions: ['L', 'S', 'I', 'G'], mounting: 'draw_out', mountingBasis: 'hint',
+      kind: 'breaker', voltageClass: 'LV', voltageBasis: 'detected', functions: ['L', 'S', 'I', 'G'], mounting: 'draw_out', mountingBasis: 'hint',
       tag, source: { sheet: 'E01-11', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', block },
     })
     const { lines } = quantify([inBlock('M1', 'P1-110'), inBlock('M2', 'P2-110')])
@@ -57,7 +57,7 @@ describe('quantify', () => {
   })
   it('prefers the richest authoritative occurrence (known mounting) as the representative', () => {
     const sparse: ApparatusSignature = {
-      kind: 'breaker', voltageClass: 'LV', functions: ['L', 'S', 'I', 'G'], mounting: 'unknown', mountingBasis: 'none',
+      kind: 'breaker', voltageClass: 'LV', voltageBasis: 'detected', functions: ['L', 'S', 'I', 'G'], mounting: 'unknown', mountingBasis: 'none',
       tag: 'X-FB', source: { sheet: 'E01-11', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line' },
     }
     const rich: ApparatusSignature = {
