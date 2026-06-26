@@ -38,13 +38,23 @@ export type DispositionReasonCode =
   | 'no_catalog_rule'              // unmatched
   | 'missing_voltage'              // question
   | 'location_only_non_authoritative' // question
-  | 'non_breaker_excluded'         // ignored
-  | 'non_breaker_carries_rating'   // ignored (+ surfaced as a question)
-  | 'not_breaker_shaped'           // ignored
+  | 'non_breaker_carries_rating'   // question — non-breaker token + breaker rating (mislabel risk; confirm device)
+  | 'unrecognized_apparatus_row'   // question — a producer candidate row the engine cannot classify either way
+  | 'non_breaker_excluded'         // ignored — the ONLY safe-to-ignore case (positively a non-breaker device)
+// INVARIANT (anti-silent-loss): `ignored` is, by construction, EXCLUSIVELY
+// `non_breaker_excluded` — a positively-identified non-breaker device token.
+// Every ambiguous or unclassifiable producer row (carries-rating, or not
+// breaker-shaped at all) is a `question`, NOT ignored, so it blocks clean
+// output (§5.2). A producer contract drift that drops `candidateKind` or emits
+// an unfamiliar breaker suffix therefore surfaces as a question, never silently.
+// A unit test asserts no disposition has status 'ignored' with any reasonCode
+// other than 'non_breaker_excluded'.
+//
 // NOTE: advisory questions on an otherwise-counted row (LV frame/trip unparsed,
-// missing power functions, mounting-hint conflict) do NOT get a disposition
-// reasonCode — the row stays matched/unmatched and the advisory rides
-// operatorQuestions (see 3.5). They still block clean output via the §5.2 gate.
+// missing power functions, mounting-hint conflict) do NOT change the row's
+// disposition status (it stays matched/unmatched) — they ride the now-structured
+// operatorQuestions (§3.6), linked back to the row by inputIndex, and still
+// block clean output via the §5.2 gate.
 
 export interface ApparatusDisposition {
   inputIndex: number                              // index into ExtractionArtifact.apparatus — the stable key
@@ -105,8 +115,8 @@ Today only the representative of each `deviceId` reaches `counted`; sibling occu
 | When (from the real code) | status | reasonCode |
 |---|---|---|
 | `NON_BREAKER` token, no frame/trip (`assessCore` L79) | `ignored` | `non_breaker_excluded` |
-| `NON_BREAKER` + frame/trip (L77, also pushes a question) | `ignored` | `non_breaker_carries_rating` |
-| not breaker-shaped (L81) | `ignored` | `not_breaker_shaped` |
+| `NON_BREAKER` + frame/trip (L77, also pushes a question) | `question` | `non_breaker_carries_rating` |
+| not breaker-shaped (L81) — a producer candidate the engine can't classify | `question` | `unrecognized_apparatus_row` |
 | breaker-shaped, no classifiable voltage (L87) | `question` | `missing_voltage` |
 | signature built → representative counted → `matchBreaker` ref | `matched` | `catalog_rule` (set `ref`,`lineKey`) |
 | signature built → representative counted → no ref | `unmatched` | `no_catalog_rule` (set `lineKey`) |
@@ -114,16 +124,41 @@ Today only the representative of each `deviceId` reaches `counted`; sibling occu
 | signature built → device only on non-authoritative evidence (`locationOnly`) | `question` | `location_only_non_authoritative` |
 | no signature, but `tag` matches a counted line's `memberTags` (today emit.ts L29-33) | `associated_source` | `unresolved_tag_attached` (set `lineKey`) |
 
-**Advisory questions on an otherwise-counted row** (LV frame/trip unparsed L96, missing power functions L109, mounting-hint conflict L106) do **not** change the row's primary status (it is still `matched`/`unmatched`) — but they are pushed to `operatorQuestions` as today. Because clean output requires zero `operatorQuestions` (§5.2), a counted-but-uncertain row still blocks a clean envelope. The disposition `reason` for such a row notes "see operator questions"; the per-row table is not the place to duplicate the advisory.
+**Advisory questions on an otherwise-counted row** (LV frame/trip unparsed L96, missing power functions L109, mounting-hint conflict L106) do **not** change the row's primary status (it is still `matched`/`unmatched`) — they are pushed to the now-**structured** `operatorQuestions` (§3.6) carrying their `inputIndex` + `code`, so the reconciliation links every question back to its row without scraping prose. Because clean output requires zero `operatorQuestions` (§5.2), a counted-but-uncertain row still blocks a clean envelope.
 
 The `unresolved → attach-to-line` logic that currently lives in `emitEnvelope`'s caller (`runTakeoff`, emit.ts L29-41) moves earlier so the disposition can be stamped; behavior is preserved.
+
+### 3.6 Structured operator questions
+
+So reconciliation is fully structured (not part-prose), `OperatorQuestion` gains a stable `code` and an optional `inputIndex` linking it to its row:
+
+```ts
+export type OperatorQuestionCode =
+  | 'missing_voltage'
+  | 'lv_frame_trip_unparsed'
+  | 'missing_power_functions'
+  | 'mounting_hint_conflict'
+  | 'non_breaker_carries_rating'
+  | 'location_only'
+  | 'unrecognized_apparatus_row'
+  | 'profile_warning'             // legend/profile-level; no single row → inputIndex omitted
+
+export interface OperatorQuestion {
+  question: string                // human-readable, ASCII (unchanged)
+  context: string                 // unchanged
+  code: OperatorQuestionCode      // NEW — stable, machine-checkable
+  inputIndex?: number             // NEW — the apparatus row it pertains to (omitted for profile-level)
+}
+```
+
+The `q(x, …)` helper in `normalize.ts` is extended to take a `code` and (when called per-row) the `inputIndex`; `runTakeoff` supplies the index it already holds. `profileWarnings` map to `code: 'profile_warning'` with no `inputIndex`. The reconciliation report joins questions to rows by `inputIndex`, so a counted-but-uncertain row shows its advisory question codes inline — no free-text scraping.
 
 ## 4. Runtime contract validator (`src/extraction/parse.ts`)
 
 A hand-rolled validator (no new dependency — matches estimator-core's `validator.ts` style; the schema is small and enumerable). `parseArtifact(json: unknown): ExtractionArtifact` runs **before** `runTakeoff` and fails closed with a precise, ASCII message naming the offending path:
 
 - top: `pdf` is a non-empty string; `apparatus` is an **array** (reject non-array — today's `as ExtractionArtifact` cast silently accepts garbage); `profileWarnings?` array of string; `voltageAssertions?` array.
-- each `apparatus[i]`: `raw` non-empty string; `sheet` non-empty string; `page` an integer ≥ 0; `bbox` a 4-tuple of finite numbers; `evidence` ∈ `EvidenceKind`; optional `tag`/`block` strings; `busVoltageV?` a positive number; `mountingHint?` a valid `Mounting`; `candidateKind?` === `'breaker'`.
+- each `apparatus[i]`: `raw` non-empty string; `sheet` non-empty string; `page` an integer ≥ 0; `bbox` a 4-tuple of finite numbers; `evidence` ∈ `EvidenceKind`; optional `tag`/`block` strings; `busVoltageV?` a **positive integer** (`Number.isInteger && > 0` — mirrors the voltage-assertion rule; rejects `480.5`/`0.5`, which `classifyVoltage` would otherwise route to a class); `mountingHint?` a valid `Mounting`; `candidateKind?` === `'breaker'`.
 - each `voltageAssertions[i]`: shape-only (`voltageV` number, `tags` non-empty string array) — **semantic** validation (integer/positive/tag-existence/conflict) stays in the engine's `applyVoltageAssertions`; the parser only rejects structural garbage so a malformed cross-host artifact cannot reach the engine.
 - bounded: reject an artifact whose `apparatus.length` exceeds a sane cap (e.g. 5000) to refuse a hostile oversized payload.
 
@@ -146,9 +181,11 @@ Pipeline: read file → `parseArtifact` → `runTakeoff` → assert the exhausti
 ### 5.2 Emit discipline (loud)
 
 - **Clean** requires **all three**: zero `unmatchedCandidates`, zero `operatorQuestions`, zero error-severity findings. Only then is the priced envelope emitted as clean and the report stamped `status: "clean"`.
-- If any of the three is non-empty: **refuse by default** (non-zero exit, no envelope presented as clean). With `--allow-open-items`: still produce the envelope from matched lines, but stamp the report `status: "partial_preview"` **and** print a `WARNING: partial preview — N unmatched, M questions, K error findings; envelope is NOT a complete bid` to **stderr**.
-- This is the direct fix for "unmatched vanish at emit seam": they can no longer be silently absent — they are either blocking or explicitly marked partial.
-- `emitEnvelope`'s existing throws (error findings, zero matched) are preserved as a backstop; the runner surfaces them as clean exits-with-reason rather than uncaught throws.
+- **Error findings are an UNCONDITIONAL hard failure** — non-zero exit, **no envelope**, and **`--allow-open-items` does NOT relax this**. This preserves the voltage-assertion fail-closed contract (`emitEnvelope` already throws on any error-severity finding); the flag must never be able to launder a blocking finding into a "partial preview". Error findings are a producer/assertion defect to fix, not an "open item" to acknowledge.
+- **`--allow-open-items` tolerates ONLY non-empty `unmatchedCandidates` and/or `operatorQuestions`** (genuine open work an operator can knowingly defer): it produces the envelope from matched lines, stamps the report `status: "partial_preview"`, and prints `WARNING: partial preview — N unmatched, M open questions; envelope is NOT a complete bid` to **stderr**. (Error-finding count is never part of this path — if any exist, the run already hard-failed above.)
+- Without `--allow-open-items`, any non-empty `unmatchedCandidates` or `operatorQuestions` → **refuse** (non-zero exit, no envelope presented as clean).
+- This is the direct fix for "unmatched vanish at emit seam": unmatched/questions can no longer be silently absent — they are either blocking or explicitly marked `partial_preview`; error findings remain hard-blocking regardless.
+- `emitEnvelope`'s existing throws (error findings, zero matched) are preserved as the backstop; the runner surfaces them as precise non-zero exits rather than uncaught throws.
 
 ## 6. Reconciliation report (`src/runner/report.ts`)
 
@@ -206,20 +243,22 @@ interface ReconciliationReport {
 
 ## 9. Pricing assertion (closes "never value-validated")
 
-The E2E asserts a real matched line prices through `buildNativeEnvelope` to **`envelope.totals.bid_cents > 0`** — not merely that a catalog ref resolved. This is the first test that pins a positive dollar value across the emit→estimator-core seam.
+The E2E asserts a real matched line prices through `buildNativeEnvelope` to **`envelope.totals.bid_cents > 0`** — not merely that a catalog ref resolved — **and** that the envelope is **validator-clean** (`envelope.findings` empty / no error-severity validation findings). Asserting both makes the priced seam *positive and clean*: a non-zero bid that smuggled a validation finding would otherwise look like a pass. First test to pin a positive dollar value across the emit→estimator-core seam.
 
 ## 10. Tests
 
-- `parse.test.ts`: rejects non-array apparatus, missing `pdf`, bad `bbox` arity, non-finite bbox, bad `evidence` enum, `page` non-integer, oversized payload, malformed `voltageAssertions` shape; accepts a valid artifact. Each asserts the error `path`.
-- `dispositions.test.ts`: the exhaustiveness invariant (length + index alignment); each status/reasonCode row from §3.5 with a crafted fixture (matched, associated_source via sibling occurrence, unmatched, missing_voltage question, location_only question, non_breaker ignored, not_breaker_shaped ignored).
+- `parse.test.ts`: rejects non-array apparatus, missing `pdf`, bad `bbox` arity, non-finite bbox, bad `evidence` enum, `page` non-integer, **non-integer `busVoltageV` (`480.5`, `0.5`)**, oversized payload, malformed `voltageAssertions` shape; accepts a valid artifact. Each asserts the error `path`.
+- `dispositions.test.ts`: the exhaustiveness invariant (length + index alignment); each status/reasonCode row from §3.5 with a crafted fixture (matched, `associated_source` via sibling occurrence, `associated_source` via unresolved-tag-attach, unmatched, `missing_voltage` question, `location_only` question, **`non_breaker_carries_rating` question**, **`unrecognized_apparatus_row` question**, `non_breaker_excluded` ignored); **plus the ignored-invariant: no disposition has status `ignored` with any reasonCode other than `non_breaker_excluded`**.
+- `questions.test.ts`: every `operatorQuestion` carries a `code`; row-scoped questions carry the correct `inputIndex` (advisory on a counted row links back to its row); `profileWarnings` map to `code:'profile_warning'` with no `inputIndex`.
 - `quantify.test.ts` (extend): `memberIndices`/`lineKey` populated; `associated` lists non-representative occurrences.
-- `runner.test.ts`: clean vs partial_preview gating; `--allow-open-items` stamps `partial_preview` + stderr warning; exit codes for invalid JSON / contract error / zero-matched / open-items-without-flag.
+- `runner.test.ts`: clean vs partial_preview gating; `--allow-open-items` stamps `partial_preview` + stderr warning for unmatched/questions; **error findings hard-fail even WITH `--allow-open-items` (no envelope) — the fail-closed contract is not bypassable**; exit codes for invalid JSON / contract error / zero-matched / open-items-without-flag.
 - `drift-check.test.ts`: committed artifact sha256 + count === manifest.
-- `golden-e01-11.test.ts` (re-baseline): §8 + §9 on the real canonical artifact.
+- `golden-e01-11.test.ts` (re-baseline): §8 + §9 on the real canonical artifact — including `bid_cents > 0` **and** `envelope.findings` empty.
 
 ## 11. Files touched
 
-- Modify `src/buckets/types.ts` — `ApparatusDisposition*`, `DispositionReasonCode`, `TakeoffResult.dispositions`; re-export `EvidenceKind`.
+- Modify `src/buckets/types.ts` — `ApparatusDisposition*`, `DispositionReasonCode`, `TakeoffResult.dispositions`; `OperatorQuestion.code` + `inputIndex` + `OperatorQuestionCode`; re-export `EvidenceKind`.
+- Modify `src/signature/normalize.ts` — extend `q()` to carry `code` (+ `inputIndex` when row-scoped); set codes at each question site.
 - Modify `src/signature/types.ts` — `ApparatusSignature.inputIndex`.
 - Modify `src/quantify/quantify.ts`, `quantify/types.ts` — `lineKey`, `memberIndices`, `associated`, index-carrying `locationOnly`.
 - Modify `src/emit/emit.ts` — `runTakeoff` builds `dispositions` (move the attach-to-line logic earlier, thread inputIndex); `emitEnvelope` unchanged behavior.
@@ -236,3 +275,10 @@ The E2E asserts a real matched line prices through `buildNativeEnvelope` to **`e
 - **D3 — hand-rolled validator**, no Zod. Boring, precise, hostile to malformed input.
 - **Loud partial preview** — clean output requires zero unmatched + zero questions + zero error findings; `--allow-open-items` stamps `partial_preview` and warns on stderr.
 - **Sequence** — this slice precedes SKILL.md.
+
+### Rev 2 — spec-review fixes (2026-06-26)
+- **Error findings are an unconditional hard block** (§5.2): `--allow-open-items` tolerates ONLY `unmatchedCandidates`/`operatorQuestions`; `error_findings > 0` always fails with no envelope, preserving the voltage-assertion fail-closed contract (it must not be launderable into a partial preview).
+- **`ignored` ⟺ `non_breaker_excluded` only** (§3.1/3.5): the unsafe `not_breaker_shaped` and `non_breaker_carries_rating` cases are reclassified to `question` (`unrecognized_apparatus_row` / `non_breaker_carries_rating`), so a producer drift (dropped `candidateKind`, unfamiliar suffix) surfaces as a blocking question instead of a silently-ignored row. Guarded by an invariant test.
+- **Structured operator questions** (§3.6): `OperatorQuestion` gains `code` + optional `inputIndex` so advisory questions on counted rows link back to the row — reconciliation is fully structured, no prose-scraping.
+- **Detected voltage must be a positive integer** (§4): `busVoltageV` validated `Number.isInteger && > 0`, mirroring the assertion rule (rejects `480.5`/`0.5`).
+- **Pricing assertion is positive AND clean** (§9): assert `bid_cents > 0` and `envelope.findings` empty.
