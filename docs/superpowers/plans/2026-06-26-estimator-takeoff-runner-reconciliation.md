@@ -158,7 +158,8 @@ function validateAssertionShape(va: unknown, p: string): void {
 - Modify: `packages/estimator-takeoff/test/normalize.test.ts`
 
 **Interfaces:**
-- Produces: `OperatorQuestion { question, context, code: OperatorQuestionCode, inputIndex? }`; `q(x, question, code, inputIndex?)` in normalize.ts. Every question site supplies a `code`.
+- Produces: `OperatorQuestion { question, context, code: OperatorQuestionCode, inputIndex? }`; `q(x, question, code)` in normalize.ts. Every question site supplies a `code`.
+- Produces: `ApparatusAssessment.assessmentCode: AssessmentCode` — the **structured source of truth** the disposition reads (Task 4), NOT inferred from `questions.length`. Critical: `assessCore` returns the IDENTICAL `{signature:null, questions:[], isBreakerShaped:false}` shape for BOTH a safe non-breaker (L79) and a not-breaker-shaped row (L81), so the two are indistinguishable without this field.
 
 - [ ] **Step 1: Failing test** — append to `test/normalize.test.ts`:
 
@@ -168,8 +169,17 @@ it('every operator question carries a structured code', () => {
   expect(a.questions.length).toBeGreaterThan(0)
   expect(a.questions[0]!.code).toBe('missing_voltage')
 })
+
+it('sets a structured assessmentCode distinguishing the null-signature shapes', () => {
+  const at = (raw: string, extra: any = {}) => assessApparatus({ raw, sheet: 'E', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', ...extra })
+  expect(at('MSB 4000AF/4000AT LSIG', { busVoltageV: 480, mountingHint: 'draw_out' }).assessmentCode).toBe('classified')
+  expect(at('XFMR 1000KVA').assessmentCode).toBe('non_breaker_excluded')   // L79: questions:[] safe non-breaker
+  expect(at('SPARE').assessmentCode).toBe('unrecognized_apparatus_row')    // L81: questions:[] but NOT a non-breaker token
+  expect(at('MCB 100AF/100AT').assessmentCode).toBe('missing_voltage')     // breaker-shaped, no voltage
+  expect(at('ATS 800AF/800AT').assessmentCode).toBe('non_breaker_carries_rating')
+})
 ```
-(A breaker-hint row with no voltage yields the `missing_voltage` question.)
+(The `XFMR` vs `SPARE` pair is the exact ambiguity High-1 flagged — both have `questions:[]`, so only `assessmentCode` separates ignored from question.)
 
 - [ ] **Step 2: Run red** — `pnpm exec vitest run test/normalize.test.ts` → FAIL (`code` undefined).
 
@@ -191,6 +201,25 @@ function q(x: ExtractedApparatus, question: string, code: OperatorQuestionCode):
 }
 ```
 Code map at each site (verbatim): NON_BREAKER+rating L77 -> `'non_breaker_carries_rating'`; missing-voltage L86 -> `'missing_voltage'`; LV frame/trip unparsed L96 -> `'lv_frame_trip_unparsed'`; mounting-hint conflict L106 -> `'mounting_hint_conflict'`; missing power functions L109 -> `'missing_power_functions'`. Import `OperatorQuestionCode`.
+
+Also add the **assessment code** (the disposition's structured source of truth). In `src/signature/normalize.ts`:
+
+```ts
+export type AssessmentCode =
+  | 'classified'                  // a signature was built
+  | 'non_breaker_excluded'        // NON_BREAKER token, no rating (L79) -> disposition 'ignored'
+  | 'non_breaker_carries_rating'  // NON_BREAKER token + rating (L77)  -> disposition 'question'
+  | 'missing_voltage'             // breaker-shaped, no voltage (L87)  -> disposition 'question'
+  | 'unrecognized_apparatus_row'  // not breaker-shaped (L81)          -> disposition 'question'
+
+export interface ApparatusAssessment {
+  signature: ApparatusSignature | null
+  questions: OperatorQuestion[]
+  isBreakerShaped: boolean
+  assessmentCode: AssessmentCode   // NEW
+}
+```
+Set it at every `assessCore` return: L77 `'non_breaker_carries_rating'`; L79 `'non_breaker_excluded'`; L81 `'unrecognized_apparatus_row'`; the missing-voltage return (L87) `'missing_voltage'`; the final signature return (L121) `'classified'`. Export `AssessmentCode` from `src/index.ts` if Task 4's test imports it (it reads `assessmentCode` off the assessment, so no separate import is needed).
 
 - [ ] **Step 4: Run green** — `pnpm exec vitest run test/normalize.test.ts && pnpm exec tsc --noEmit` (tsc will flag any question site missing a code — fix until clean).
 - [ ] **Step 5: Commit** — `feat(estimator-takeoff): structured operator-question codes`.
@@ -219,8 +248,19 @@ it('exposes lineKey, memberIndices, and associated non-representative occurrence
   const r = quantify([oneLine, powerPlan])
   expect(r.lines).toHaveLength(1)
   expect(r.lines[0]!.memberIndices).toEqual([0])           // the authoritative representative
-  expect(r.lines[0]!.lineKey).toBe(r.lines[0]!.signature ? specKeyOf(r.lines[0]!) : '')  // present + stable
+  expect(r.lines[0]!.lineKey).toBeTruthy()                 // present + stable
   expect(r.associated).toContainEqual({ inputIndex: 1, lineKey: r.lines[0]!.lineKey })
+})
+
+it('associated row points at the REPRESENTATIVE line key even when the sibling is sparser (mixed richness)', () => {
+  // same tag, both authoritative, but different mounting -> different specKey. Representative = the richer row.
+  const sparse = mk({ tag: 'B2', evidence: 'one-line', mounting: 'unknown', inputIndex: 0 })
+  const rich = mk({ tag: 'B2', evidence: 'panel-schedule', mounting: 'draw_out', inputIndex: 1 })
+  const r = quantify([sparse, rich])
+  expect(r.lines).toHaveLength(1)
+  expect(r.lines[0]!.memberIndices).toContain(1)           // pickAuthoritative chose the known-mounting (rich) row
+  const assoc = r.associated.find((a) => a.inputIndex === 0)!
+  expect(assoc.lineKey).toBe(r.lines[0]!.lineKey)          // NOT specKey(sparse) — the bug Medium/High-2 flagged
 })
 ```
 (`mk`/`specKeyOf` are local helpers in the test; if absent, add a minimal `mk` that builds an `ApparatusSignature` with the given fields and a default LV/draw_out/LSIG spec so it matches a catalog rule, and read `lineKey` straight off the line for the comparison.)
@@ -260,8 +300,12 @@ export function quantify(sigs: ApparatusSignature[]): {
     lineKey: k,
     countedFromAuthoritative: true as const,
   }))
-  const lineKeyOfDevice = (id: string): string => specKey(byDevice.get(id)!.find((o) => counted.includes(o))!)
-  const associated = nonRep.map((o) => ({ inputIndex: o.inputIndex, lineKey: specKey(o) }))
+  // Map each device to its line's key = the REPRESENTATIVE's specKey. NOT specKey(o): a sparser sibling
+  // occurrence can have a different mounting (hence different specKey) than the chosen representative —
+  // that asymmetry is exactly why pickAuthoritative exists, so specKey(o) would point at a wrong/absent line.
+  const lineKeyByDevice = new Map<string, string>()
+  for (const s of counted) lineKeyByDevice.set(deviceId(s), specKey(s))
+  const associated = nonRep.map((o) => ({ inputIndex: o.inputIndex, lineKey: lineKeyByDevice.get(deviceId(o))! }))
   return { lines, associated, locationOnly }
 }
 ```
@@ -352,12 +396,15 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
       for (const qq of a.questions) questions.push({ ...qq, inputIndex: i })
       return
     }
-    if (a.questions.length === 0) { stamp(dispositions, i, 'ignored', 'non_breaker_excluded', 'non-breaker device token'); return }  // FINAL — not attach-eligible
-    const rc = a.questions.some((qq) => qq.code === 'non_breaker_carries_rating') ? 'non_breaker_carries_rating'
-             : a.questions.some((qq) => qq.code === 'missing_voltage') ? 'missing_voltage'
-             : 'unrecognized_apparatus_row'
-    stamp(dispositions, i, 'question', rc, a.questions[0]!.question)
-    unresolved.push({ i, x, questions: a.questions })   // question rows only; DEFER pushing their questions until attach is decided
+    // No signature: drive the disposition from the STRUCTURED assessmentCode — NOT questions.length.
+    // (non_breaker_excluded and unrecognized_apparatus_row BOTH return questions:[], so length cannot
+    // tell them apart — this is exactly High-1.) `ignored` is reserved for non_breaker_excluded only.
+    if (a.assessmentCode === 'non_breaker_excluded') { stamp(dispositions, i, 'ignored', 'non_breaker_excluded', 'non-breaker device token'); return }  // FINAL, not attach-eligible
+    // every other null shape is a question (blocks clean output via the disposition gate); attach-eligible.
+    // assessmentCode here is one of non_breaker_carries_rating | missing_voltage | unrecognized_apparatus_row,
+    // each of which is also a valid DispositionReasonCode.
+    stamp(dispositions, i, 'question', a.assessmentCode, a.questions[0]?.question ?? 'producer candidate could not be classified as a breaker')
+    unresolved.push({ i, x, questions: a.questions })   // DEFER pushing questions until tag-attach is decided
   })
 
   const { lines, associated, locationOnly } = quantify(sigs)
@@ -409,7 +456,22 @@ Helpers (`baseDisp` copies the row's `inputIndex/tag/raw/sheet/page/bbox/evidenc
 
 - [ ] **Step 2: Run red.**
 
-- [ ] **Step 3: Implement** `reconcile()`: `apparatus_in = artifact.apparatus.length`; tally from `result.dispositions` (status counts) and `result.matchedLines` (`matched_qty = Σ qty`), `findings` by severity. `accounted = dispositions.length === apparatus_in && dispositions.every((d,i)=>d.inputIndex===i)`. `status` = `'clean'` iff zero unmatched + zero questions + zero error findings, else `'partial_preview'`. `renderReportText` prints the counts block + a per-row table (`inputIndex  status  reasonCode  tag  ref`). ASCII only.
+- [ ] **Step 3: Implement** `reconcile()`: `apparatus_in = artifact.apparatus.length`; tally from `result.dispositions` (status counts) and `result.matchedLines` (`matched_qty = Σ qty`), `findings` by severity. `accounted = dispositions.length === apparatus_in && dispositions.every((d,i)=>d.inputIndex===i)`. Status comes from a shared, exported predicate (the single source of truth the runner gate also uses):
+
+```ts
+// clean = NOTHING unresolved is hiding. Computed over the EXHAUSTIVE dispositions, NOT the buckets:
+// an 'unrecognized_apparatus_row' is a question DISPOSITION but emits no operatorQuestion, so a
+// bucket-only gate (zero operatorQuestions) would let it pass. The disposition check catches it.
+export function isClean(result: TakeoffResult): boolean {
+  const noErrorFindings = result.findings.every((f) => f.severity !== 'error')
+  const allRowsResolved = result.dispositions.every(
+    (d) => d.status === 'matched' || d.status === 'associated_source' || d.status === 'ignored',
+  )                                                   // any 'unmatched' or 'question' row blocks
+  const noOpenQuestions = result.operatorQuestions.length === 0   // catches advisory-on-matched + profile_warning
+  return noErrorFindings && allRowsResolved && noOpenQuestions
+}
+```
+`status` = `isClean(result) ? 'clean' : 'partial_preview'`. `renderReportText` prints the counts block + a per-row table (`inputIndex  status  reasonCode  tag  ref`). ASCII only.
 
 - [ ] **Step 4: Run green** + tsc.
 - [ ] **Step 5: Commit** — `feat(estimator-takeoff): reconciliation report`.
@@ -424,7 +486,13 @@ Helpers (`baseDisp` copies the row's `inputIndex/tag/raw/sheet/page/bbox/evidenc
 - Create: `packages/estimator-takeoff/test/runner.test.ts`
 
 **Interfaces:**
-- Produces: `runFromArtifact(json: unknown, opts: { projectNumber: string; allowOpenItems: boolean }): { report: ReconciliationReport; envelope?: EstimateEnvelope; exitCode: number; stderr: string[] }` — pure/testable core; `cli.ts` is the thin argv+process wrapper. `package.json` `bin: { "estimator-takeoff": "dist/runner/cli.js" }` (or a ts entry per the package's run convention).
+- Produces: `runFromArtifact(json: unknown, opts: { projectNumber: string; allowOpenItems: boolean }): { report: ReconciliationReport; envelope?: EstimateEnvelope; findings: Finding[]; exitCode: number; stderr: string[] }` — pure/testable core (returns, never calls `process.exit`); surfaces the emit `findings` (Task 8's clean-pricing assertion reads them). `cli.ts` is the thin argv+stdout+`process.exit` wrapper.
+
+**Execution strategy (CONCRETE — Medium-3).** The package has `noEmit: true`, no build, no `dist`, and the monorepo has **no tsx/ts-node**. A `bin -> dist/cli.js` would be false-green. So:
+- Add `tsx` as a **devDependency of this package** (`pnpm add -D tsx --filter @apex/estimator-takeoff`), commit the updated root `pnpm-lock.yaml`.
+- Add a package script: `"run-artifact": "tsx src/runner/cli.ts"`. This is the documented invocation: `pnpm --filter @apex/estimator-takeoff run-artifact -- run <artifact.json> --project <N> [--out f] [--allow-open-items]`.
+- No `bin` field (it can't run without a transpile step; the script is the honest contract).
+- A **child_process smoke test** (below) spawns the real script so the CLI path is proven, not just the core.
 
 - [ ] **Step 1: Failing test** — `test/runner.test.ts`:
 
@@ -437,9 +505,43 @@ Helpers (`baseDisp` copies the row's `inputIndex/tag/raw/sheet/page/bbox/evidenc
 ```
 Concretely include: `runFromArtifact(<artifact with voltageAssertions:[{voltageV:480,tags:['NOPE']}]>, { projectNumber:'P', allowOpenItems:true })` -> `exitCode !== 0 && envelope === undefined` (the unknown-tag error finding is NOT launderable).
 
+Plus a **child_process smoke test** (`test/runner-cli.smoke.test.ts`) that runs the ACTUAL tsx CLI path end-to-end (proves the script entry works, not just the core):
+
+```ts
+import { describe, it, expect } from 'vitest'
+import { execFileSync } from 'node:child_process'
+import { writeFileSync, mkdtempSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
+describe('runner CLI (real tsx path)', () => {
+  it('runs the canonical artifact and exits non-zero on partial without the flag, zero with it', () => {
+    const f = join(mkdtempSync(join(tmpdir(), 'rrt-')), 'a.json')
+    writeFileSync(f, JSON.stringify(require('./fixtures/stack-phx02a-e01-11.artifact.json')))
+    const run = (args: string[]) => {
+      try { const out = execFileSync('node', ['node_modules/.bin/tsx', 'src/runner/cli.ts', 'run', f, '--project', 'P', ...args], { encoding: 'utf8' }); return { code: 0, out } }
+      catch (e: any) { return { code: e.status as number, out: String(e.stdout) + String(e.stderr) } }
+    }
+    expect(run([]).code).not.toBe(0)                       // open items, no flag -> blocked
+    const ok = run(['--allow-open-items'])
+    expect(ok.code).toBe(0)
+    expect(ok.out).toMatch(/partial preview/i)             // loud stderr/stdout warning
+  })
+})
+```
+(Run from the package dir so `node_modules/.bin/tsx` resolves. If the harness blocks spawning, mark this test `it.skip` with a NOTE and rely on the core tests — but the default is to run it.)
+
 - [ ] **Step 2: Run red.**
 
-- [ ] **Step 3: Implement** `runFromArtifact`: `parseArtifact` (catch -> exit 2, contract error) -> `runTakeoff` -> assert exhaustiveness -> compute `errorFindings = findings.filter(f=>f.severity==='error')`. **If `errorFindings.length > 0`: exit non-zero, NO envelope, regardless of `allowOpenItems`** (build the report with `status` reflecting the block; stderr the codes). Else if `unmatched>0 || questions>0`: if `!allowOpenItems` -> exit non-zero, no envelope; else -> call `emitEnvelope` (matched lines), `status='partial_preview'`, push the `WARNING: partial preview ...` to stderr, exit 0. Else (all clean): `emitEnvelope`, `status='clean'`, exit 0. `cli.ts` parses argv (`run <file> --project <N> [--out f] [--allow-open-items]`), reads the file, calls the core, writes `--out` JSON / prints `renderReportText`, prints stderr lines, `process.exit(exitCode)`. `package.json` gains `bin`.
+- [ ] **Step 3: Implement** `runFromArtifact` (pure; returns, never `process.exit`). Order matters:
+  1. `parseArtifact(json)` in a try/catch — on `ArtifactContractError`: `exitCode: 2`, no envelope, stderr the contract path; return.
+  2. `runTakeoff(artifact)`; assert exhaustiveness (throws if violated — a real bug, not a user error).
+  3. **Error findings are the FIRST gate and UNCONDITIONAL:** if `findings.some((f) => f.severity === 'error')` -> `exitCode: 1`, **no envelope, even when `allowOpenItems`** (these are a producer/assertion defect, never an "open item"); stderr the error finding codes; return.
+  4. **Zero matched guard:** if `matchedLines.length === 0` -> `exitCode: 1`, no envelope (nothing to price; mirrors `emitEnvelope`'s throw); stderr "no matched lines"; return.
+  5. `isClean(result)` (shared predicate from Task 5) -> `emitEnvelope`, `status: 'clean'`, `exitCode: 0`.
+  6. Else (open items present): if `!allowOpenItems` -> `exitCode: 1`, no envelope, stderr the counts; else -> `emitEnvelope`, `status: 'partial_preview'`, push `WARNING: partial preview - N unmatched, M open questions; envelope is NOT a complete bid` to stderr, `exitCode: 0`.
+  In all envelope cases, surface `{ envelope, findings }` from `emitEnvelope` on the return.
+  `cli.ts`: parse argv (`run <file> --project <N> [--out f] [--allow-open-items]`), read the file (catch read/JSON errors -> exitCode 2 + stderr), call `runFromArtifact`, write `--out` JSON or print `renderReportText(report)` to stdout, print each stderr line, `process.exit(result.exitCode)`. No `bin`; invocation is the `run-artifact` tsx script.
 
 - [ ] **Step 4: Run green** + tsc + (if a build step is needed for the bin) the package build.
 - [ ] **Step 5: Commit** — `feat(estimator-takeoff): runner CLI with fail-closed emit discipline (error findings never bypassable)`.
