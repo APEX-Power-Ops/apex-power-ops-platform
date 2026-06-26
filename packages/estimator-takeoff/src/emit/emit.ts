@@ -32,7 +32,7 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
     questions.push(...qs)                                                   // genuinely unresolved → surface
   }
 
-  for (const s of locationOnly) {
+  for (const { sig: s } of locationOnly) {
     questions.push({ question: `Device ${s.tag ?? '(untagged)'} appears only on a non-authoritative sheet — include it?`, context: `${s.source.sheet} (${s.source.evidence})`, code: 'location_only' })
   }
 

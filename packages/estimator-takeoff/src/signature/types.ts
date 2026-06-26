@@ -25,5 +25,6 @@ export interface ApparatusSignature {
   mountingBasis: MountingBasis
   mvType?: MvType
   tag?: string
+  inputIndex?: number   // artifact-row position; stamped by runTakeoff. Optional: assessCore builds unstamped.
   source: { sheet: string; page: number; bbox: [number, number, number, number]; evidence: string; block?: string }
 }
