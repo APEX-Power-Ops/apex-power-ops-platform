@@ -1,5 +1,7 @@
 import type { MountingBasis, VoltageBasis } from '../signature/types'
 import type { QuantifiedLine } from '../quantify/types'
+import type { EvidenceKind } from '../extraction/types'
+export type { EvidenceKind }
 
 export interface MatchedLine { ref: string; qty: number; block: string; mountingBasis: MountingBasis; voltageBasis: VoltageBasis; line: QuantifiedLine }
 export interface UnmatchedCandidate { reason: string; line: QuantifiedLine }
@@ -14,7 +16,41 @@ export interface TakeoffResult {
   matchedLines: MatchedLine[]
   unmatchedCandidates: UnmatchedCandidate[]
   operatorQuestions: OperatorQuestion[]
-  findings: TakeoffFinding[]   // NEW — coded, severity-tagged assertion findings
+  findings: TakeoffFinding[]
+  dispositions: ApparatusDisposition[]   // NEW -- EXACTLY one per artifact.apparatus row
+}
+
+export type ApparatusDispositionStatus =
+  | 'matched'             // counted into a line that matched a catalog ref
+  | 'associated_source'   // folded as a source/occurrence of a counted device (not its own line)
+  | 'unmatched'           // counted into a line with no catalog rule
+  | 'question'            // breaker-shaped but unresolved - needs an operator answer
+  | 'ignored'             // explicit exclusion (non-breaker / not breaker-shaped)
+
+export type DispositionReasonCode =
+  | 'catalog_rule'                  // matched
+  | 'occurrence_of_counted_device' // associated_source (sibling occurrence, had a signature)
+  | 'unresolved_tag_attached'      // associated_source (no signature, tag matched a counted line)
+  | 'no_catalog_rule'              // unmatched
+  | 'missing_voltage'              // question
+  | 'location_only_non_authoritative' // question
+  | 'non_breaker_carries_rating'   // question - non-breaker token + breaker rating
+  | 'unrecognized_apparatus_row'   // question - a producer candidate row the engine cannot classify
+  | 'non_breaker_excluded'         // ignored - the ONLY safe-to-ignore case
+
+export interface ApparatusDisposition {
+  inputIndex: number
+  tag?: string
+  raw: string
+  sheet: string
+  page: number
+  bbox: [number, number, number, number]
+  evidence: EvidenceKind
+  status: ApparatusDispositionStatus
+  reasonCode: DispositionReasonCode
+  reason: string
+  ref?: string
+  lineKey?: string
 }
 
 export type FindingSeverity = 'error' | 'warning'

@@ -6,51 +6,115 @@ import { applyVoltageAssertions } from '../signature/voltage-assertions'
 import { quantify } from '../quantify/quantify'
 import type { QuantifiedLine } from '../quantify/types'
 import { matchBreaker } from '../catalog/breaker-map'
-import type { MatchedLine, OperatorQuestion, TakeoffResult, UnmatchedCandidate, TakeoffFinding } from '../buckets/types'
+import type {
+  MatchedLine, OperatorQuestion, TakeoffResult, UnmatchedCandidate, TakeoffFinding,
+  ApparatusDisposition, ApparatusDispositionStatus, DispositionReasonCode,
+} from '../buckets/types'
+
+const UNSTAMPED = '__unstamped__'
+
+// baseDisp creates a LOUD sentinel disposition: its `reason` is UNSTAMPED so assertExhaustive can detect any
+// row that was never stamped (status+reasonCode alone cannot -- a real unrecognized_apparatus_row shares them).
+function baseDisp(x: ExtractedApparatus, i: number): ApparatusDisposition {
+  return {
+    inputIndex: i, tag: x.tag, raw: x.raw, sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence,
+    status: 'question', reasonCode: 'unrecognized_apparatus_row', reason: UNSTAMPED,
+  }
+}
+
+function stamp(
+  d: ApparatusDisposition[], i: number, status: ApparatusDispositionStatus,
+  reasonCode: DispositionReasonCode, reason: string, ref?: string, lineKey?: string,
+): void {
+  const cur = d[i]!
+  cur.status = status
+  cur.reasonCode = reasonCode
+  cur.reason = reason
+  if (ref !== undefined) cur.ref = ref
+  if (lineKey !== undefined) cur.lineKey = lineKey
+}
+
+function assertExhaustive(d: ApparatusDisposition[], n: number): void {
+  if (d.length !== n) throw new Error(`estimator-takeoff: disposition count ${d.length} does not equal apparatus count ${n}`)
+  d.forEach((x, i) => {
+    if (x.inputIndex !== i) throw new Error(`estimator-takeoff: disposition at ${i} has misaligned inputIndex ${x.inputIndex}`)
+    if (x.reason === UNSTAMPED) throw new Error(`estimator-takeoff: apparatus row ${i} (${x.tag ?? x.raw}) was never assigned a disposition`)
+  })
+}
 
 export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
+  const apparatus = artifact.apparatus
+  const dispositions: ApparatusDisposition[] = apparatus.map((x, i) => baseDisp(x, i))
   const { resolved, findings } = applyVoltageAssertions(artifact)
-  const sigs: ApparatusSignature[] = []
   const questions: OperatorQuestion[] = []
-  const unresolved: { x: ExtractedApparatus; questions: OperatorQuestion[] }[] = []
+  const sigs: ApparatusSignature[] = []
+  const unresolved: { i: number; x: ExtractedApparatus; questions: OperatorQuestion[] }[] = []
 
-  for (const { apparatus, voltageBasis } of resolved) {
-    const a = assessResolvedApparatus(apparatus, voltageBasis)
-    if (a.signature) { sigs.push(a.signature); questions.push(...a.questions); continue }
-    unresolved.push({ x: apparatus, questions: a.questions })
-  }
+  resolved.forEach(({ apparatus: x, voltageBasis }, i) => {
+    const a = assessResolvedApparatus(x, voltageBasis)
+    if (a.signature) {                                  // counted candidate; stamped later as matched/unmatched/associated/location
+      sigs.push({ ...a.signature, inputIndex: i })
+      for (const qq of a.questions) questions.push({ ...qq, inputIndex: i })
+      return
+    }
+    // No signature: drive the disposition from the STRUCTURED assessmentCode, NOT questions.length.
+    if (a.assessmentCode === 'non_breaker_excluded') {
+      stamp(dispositions, i, 'ignored', 'non_breaker_excluded', 'non-breaker device token')   // FINAL, not attach-eligible
+      return
+    }
+    // every other null shape is a question; assessmentCode is one of non_breaker_carries_rating |
+    // missing_voltage | unrecognized_apparatus_row, each also a valid DispositionReasonCode.
+    // ('classified' is excluded by the a.signature guard above; 'non_breaker_excluded' handled above)
+    stamp(dispositions, i, 'question', a.assessmentCode as DispositionReasonCode, a.questions[0]?.question ?? 'producer candidate could not be classified as a breaker')
+    unresolved.push({ i, x, questions: a.questions })
+  })
 
-  const { lines, locationOnly } = quantify(sigs)
-
-  // index EVERY counted device tag (not just the representative) → its line, for location association
+  const { lines, associated, locationOnly } = quantify(sigs)
   const byTag = new Map<string, QuantifiedLine>()
   for (const l of lines) for (const t of l.memberTags) byTag.set(t, l)
 
-  for (const { x, questions: qs } of unresolved) {
+  // unresolved rows whose tag matches a counted line become associated_source (their spurious questions are
+  // suppressed); genuinely-unresolved rows surface their questions and KEEP their 'question' disposition.
+  for (const { i, x, questions: qs } of unresolved) {
     const l = x.tag ? byTag.get(x.tag) : undefined
-    if (l) { l.sources.push({ sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block }); continue }
-    questions.push(...qs)                                                   // genuinely unresolved → surface
+    if (l) {
+      l.sources.push({ sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block })
+      stamp(dispositions, i, 'associated_source', 'unresolved_tag_attached', `source for ${l.lineKey}`, undefined, l.lineKey)
+    } else {
+      for (const qq of qs) questions.push({ ...qq, inputIndex: i })
+    }
   }
 
-  for (const { sig: s } of locationOnly) {
-    questions.push({ question: `Device ${s.tag ?? '(untagged)'} appears only on a non-authoritative sheet — include it?`, context: `${s.source.sheet} (${s.source.evidence})`, code: 'location_only' })
+  for (const { inputIndex, lineKey } of associated) {
+    stamp(dispositions, inputIndex, 'associated_source', 'occurrence_of_counted_device', `occurrence of ${lineKey}`, undefined, lineKey)
   }
 
-  for (const w of artifact.profileWarnings ?? []) {
-    questions.push({ question: w, context: 'legend/profile', code: 'profile_warning' })
+  for (const { inputIndex } of locationOnly) {
+    stamp(dispositions, inputIndex, 'question', 'location_only_non_authoritative', 'device only on a non-authoritative sheet')
+    questions.push({ question: 'Device appears only on a non-authoritative sheet - include it?', context: `${apparatus[inputIndex]!.sheet}`, code: 'location_only', inputIndex })
   }
 
   const matchedLines: MatchedLine[] = []
   const unmatchedCandidates: UnmatchedCandidate[] = []
   for (const line of lines) {
     const ref = matchBreaker(line.signature)
-    if (ref) matchedLines.push({ ref, qty: line.qty, block: line.signature.source.block ?? line.signature.source.sheet, mountingBasis: line.signature.mountingBasis, voltageBasis: line.signature.voltageBasis, line })
-    else unmatchedCandidates.push({ reason: `no catalog rule for ${line.signature.mounting}/${line.signature.functions.join('') || '—'}`, line })
+    if (ref) {
+      matchedLines.push({ ref, qty: line.qty, block: line.signature.source.block ?? line.signature.source.sheet, mountingBasis: line.signature.mountingBasis, voltageBasis: line.signature.voltageBasis, line })
+      for (const i of line.memberIndices) stamp(dispositions, i, 'matched', 'catalog_rule', `matched ${ref}`, ref, line.lineKey)
+    } else {
+      const reason = `no catalog rule for ${line.signature.mounting}/${line.signature.functions.join('') || '-'}`
+      unmatchedCandidates.push({ reason, line })
+      for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'no_catalog_rule', reason, undefined, line.lineKey)
+    }
   }
-  return { matchedLines, unmatchedCandidates, operatorQuestions: questions, findings }
+
+  for (const w of artifact.profileWarnings ?? []) questions.push({ question: w, context: 'legend/profile', code: 'profile_warning' })
+
+  assertExhaustive(dispositions, apparatus.length)
+  return { matchedLines, unmatchedCandidates, operatorQuestions: questions, findings, dispositions }
 }
 
-export function emitEnvelope(result: TakeoffResult, opts: { projectNumber: string }) {
+export function emitEnvelope(result: Pick<TakeoffResult, 'matchedLines' | 'unmatchedCandidates' | 'operatorQuestions' | 'findings'>, opts: { projectNumber: string }) {
   const blocking = result.findings.filter((f) => f.severity === 'error')
   if (blocking.length > 0) {
     const codes = [...new Set(blocking.map((f) => f.code))].join(', ')
