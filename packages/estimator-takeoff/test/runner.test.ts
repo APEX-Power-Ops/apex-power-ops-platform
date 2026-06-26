@@ -36,18 +36,26 @@ describe('runFromArtifact', () => {
     expect(out.envelope).toBeUndefined()
   })
   it('SPARE row (unrecognized_apparatus_row) blocks without flag and warns with positive unresolved count with flag', () => {
-    // SPARE row: no breaker hint, no FRAME_TRIP -> assessmentCode=unrecognized_apparatus_row -> disposition=question but no operatorQuestion
-    // This means isClean=false but operatorQuestions is empty, so naive count would show "0 open questions"
     const spare = row({ raw: 'SPARE', tag: 'S' })
-    // Without --allow-open-items: should block (exitCode != 0) and stderr should mention unresolved row count > 0
     const blocked = runFromArtifact(art([matched(), spare]), { projectNumber: 'P', allowOpenItems: false })
     expect(blocked.exitCode).not.toBe(0)
     expect(blocked.stderr.join(' ')).toMatch(/[1-9]\d* unresolved row/)
 
-    // With --allow-open-items: partial_preview, exit 0, stderr warns with positive unresolved count
     const allowed = runFromArtifact(art([matched(), spare]), { projectNumber: 'P', allowOpenItems: true })
     expect(allowed.exitCode).toBe(0)
     expect(allowed.report!.status).toBe('partial_preview')
     expect(allowed.stderr.join(' ')).toMatch(/[1-9]\d* unresolved row/)
+  })
+  it('does not emit a clean envelope when same-tag ambiguous rows are present (no silent laundering)', () => {
+    const out = runFromArtifact(art([
+      matched(),
+      row({ raw: 'SPARE', tag: 'A' }),
+      row({ raw: 'ATS 800AF/800AT LSIG', tag: 'A' }),
+      row({ raw: 'MCB 100AF/100AT', tag: 'A' }),
+    ]), { projectNumber: 'P', allowOpenItems: false })
+    expect(out.exitCode).not.toBe(0)
+    expect(out.report!.status).not.toBe('clean')
+    expect(out.envelope).toBeUndefined()
+    expect(out.report!.counts.operator_questions).toBeGreaterThanOrEqual(2)  // SPARE has question disposition but no operatorQuestion (by design); ATS+MCB each push one
   })
 })

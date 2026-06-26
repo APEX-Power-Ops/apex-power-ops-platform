@@ -32,6 +32,28 @@ export function isClean(result: TakeoffResult): boolean {
   return noErrorFindings && allRowsResolved && noOpenQuestions
 }
 
+// Internal consistency: matched/unmatched dispositions must exactly mirror the produced line memberships,
+// matched rows must carry a ref + lineKey, and every referenced lineKey must exist. A false here means the
+// reconciliation itself is broken (an engine bug) - the runner treats it as a hard failure.
+function reconcilesInternally(result: TakeoffResult): boolean {
+  const d = result.dispositions
+  const matchedIdx = new Set(d.filter((x) => x.status === 'matched').map((x) => x.inputIndex))
+  const matchedMembers = new Set(result.matchedLines.flatMap((m) => m.line.memberIndices))
+  if (matchedIdx.size !== matchedMembers.size) return false
+  for (const i of matchedIdx) if (!matchedMembers.has(i)) return false
+  if (d.some((x) => x.status === 'matched' && (x.ref === undefined || x.lineKey === undefined))) return false
+  const unmatchedIdx = new Set(d.filter((x) => x.status === 'unmatched').map((x) => x.inputIndex))
+  const unmatchedMembers = new Set(result.unmatchedCandidates.flatMap((u) => u.line.memberIndices))
+  if (unmatchedIdx.size !== unmatchedMembers.size) return false
+  for (const i of unmatchedIdx) if (!unmatchedMembers.has(i)) return false
+  const lineKeys = new Set<string>([
+    ...result.matchedLines.map((m) => m.line.lineKey),
+    ...result.unmatchedCandidates.map((u) => u.line.lineKey),
+  ])
+  if (d.some((x) => x.lineKey !== undefined && !lineKeys.has(x.lineKey))) return false
+  return true
+}
+
 export function reconcile(
   artifact: ExtractionArtifact, result: TakeoffResult, envelopeTotals?: { bid_cents: number },
 ): ReconciliationReport {
@@ -49,7 +71,7 @@ export function reconcile(
     ignored: d.filter((x) => x.status === 'ignored').length,
     unresolved_rows: d.filter((x) => x.status === 'unmatched' || x.status === 'question').length,
   }
-  const accounted = d.length === apparatus_in && d.every((x, i) => x.inputIndex === i)
+  const accounted = d.length === apparatus_in && d.every((x, i) => x.inputIndex === i) && reconcilesInternally(result)
   const report: ReconciliationReport = {
     status: isClean(result) ? 'clean' : 'partial_preview',
     counts, accounted, dispositions: d,
