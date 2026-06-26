@@ -1,7 +1,8 @@
 import type { ApparatusSignature } from '../signature/types'
 import type { QuantifiedLine } from './types'
 
-const AUTHORITATIVE = (e: string) => e === 'one-line' || e.endsWith('-schedule')
+export const isAuthoritativeEvidence = (e: string): boolean => e === 'one-line' || e.endsWith('-schedule')
+const AUTHORITATIVE = isAuthoritativeEvidence
 
 function specKey(s: ApparatusSignature): string {
   return [

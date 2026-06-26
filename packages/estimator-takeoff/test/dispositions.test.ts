@@ -40,4 +40,26 @@ describe('dispositions', () => {
     const a = art([row({ raw: 'XFMR' }), row({ raw: 'SPARE' }), row({ raw: 'ATS', tag: 'x' }), row({ raw: 'STS 800AF/800AT' })])
     for (const x of runTakeoff(a).dispositions) if (x.status === 'ignored') expect(x.reasonCode).toBe('non_breaker_excluded')
   })
+  it('does NOT launder same-tag ambiguous rows into associated_source (the silent-loss class)', () => {
+    const a = art([
+      row({ raw: 'MSB 4000AF/4000AT LSIG', tag: 'A', busVoltageV: 480, mountingHint: 'draw_out' }), // matched
+      row({ raw: 'SPARE', tag: 'A' }),                                                                // unrecognized_apparatus_row
+      row({ raw: 'ATS 800AF/800AT LSIG', tag: 'A' }),                                                 // non_breaker_carries_rating
+      row({ raw: 'MCB 100AF/100AT', tag: 'A' }),                                                      // AUTHORITATIVE missing_voltage (distinct device)
+    ])
+    const d = runTakeoff(a).dispositions
+    expect(d[0]!.status).toBe('matched')
+    expect(d[1]!).toMatchObject({ status: 'question', reasonCode: 'unrecognized_apparatus_row' })
+    expect(d[2]!).toMatchObject({ status: 'question', reasonCode: 'non_breaker_carries_rating' })
+    expect(d[3]!).toMatchObject({ status: 'question', reasonCode: 'missing_voltage' })
+  })
+  it('DOES attach a benign non-authoritative missing-voltage re-occurrence of a counted device', () => {
+    const a = art([
+      row({ raw: 'MSB 4000AF/4000AT LSIG', tag: 'A', busVoltageV: 480, mountingHint: 'draw_out', evidence: 'one-line' }), // matched
+      row({ raw: 'MSB 4000AF/4000AT LSIG', tag: 'A', evidence: 'power-plan' }),                                           // same device, power-plan, no voltage
+    ])
+    const d = runTakeoff(a).dispositions
+    expect(d[0]!.status).toBe('matched')
+    expect(d[1]!).toMatchObject({ status: 'associated_source', reasonCode: 'unresolved_tag_attached' })
+  })
 })

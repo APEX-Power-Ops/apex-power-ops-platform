@@ -2,8 +2,9 @@ import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from
 import type { ExtractionArtifact, ExtractedApparatus } from '../extraction/types'
 import type { ApparatusSignature } from '../signature/types'
 import { assessResolvedApparatus } from '../signature/normalize'
+import type { AssessmentCode } from '../signature/normalize'
 import { applyVoltageAssertions } from '../signature/voltage-assertions'
-import { quantify } from '../quantify/quantify'
+import { quantify, isAuthoritativeEvidence } from '../quantify/quantify'
 import type { QuantifiedLine } from '../quantify/types'
 import { matchBreaker } from '../catalog/breaker-map'
 import type {
@@ -48,7 +49,7 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
   const { resolved, findings } = applyVoltageAssertions(artifact)
   const questions: OperatorQuestion[] = []
   const sigs: ApparatusSignature[] = []
-  const unresolved: { i: number; x: ExtractedApparatus; questions: OperatorQuestion[] }[] = []
+  const unresolved: { i: number; x: ExtractedApparatus; questions: OperatorQuestion[]; assessmentCode: AssessmentCode }[] = []
 
   resolved.forEach(({ apparatus: x, voltageBasis }, i) => {
     const a = assessResolvedApparatus(x, voltageBasis)
@@ -66,17 +67,21 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
     // missing_voltage | unrecognized_apparatus_row, each also a valid DispositionReasonCode.
     // ('classified' is excluded by the a.signature guard above; 'non_breaker_excluded' handled above)
     stamp(dispositions, i, 'question', a.assessmentCode as DispositionReasonCode, a.questions[0]?.question ?? 'producer candidate could not be classified as a breaker')
-    unresolved.push({ i, x, questions: a.questions })
+    unresolved.push({ i, x, questions: a.questions, assessmentCode: a.assessmentCode })
   })
 
   const { lines, associated, locationOnly } = quantify(sigs)
   const byTag = new Map<string, QuantifiedLine>()
   for (const l of lines) for (const t of l.memberTags) byTag.set(t, l)
 
-  // unresolved rows whose tag matches a counted line become associated_source (their spurious questions are
-  // suppressed); genuinely-unresolved rows surface their questions and KEEP their 'question' disposition.
-  for (const { i, x, questions: qs } of unresolved) {
-    const l = x.tag ? byTag.get(x.tag) : undefined
+  // Attach + suppress ONLY a benign same-device occurrence: a breaker-shaped row missing only its voltage on a
+  // NON-authoritative sheet (a plausible power-plan re-occurrence of a counted device). NEVER launder a genuine
+  // ambiguity (non_breaker_carries_rating, unrecognized_apparatus_row) or an AUTHORITATIVE missing-voltage row
+  // (a distinct breaker) into associated_source just because its tag collides with a counted line - that is the
+  // silent-loss class this slice exists to kill. Ineligible rows KEEP their 'question' disposition + surface.
+  for (const { i, x, questions: qs, assessmentCode } of unresolved) {
+    const attachEligible = assessmentCode === 'missing_voltage' && !isAuthoritativeEvidence(x.evidence)
+    const l = attachEligible && x.tag ? byTag.get(x.tag) : undefined
     if (l) {
       l.sources.push({ sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block })
       stamp(dispositions, i, 'associated_source', 'unresolved_tag_attached', `source for ${l.lineKey}`, undefined, l.lineKey)
@@ -119,12 +124,12 @@ export function emitEnvelope(result: Pick<TakeoffResult, 'matchedLines' | 'unmat
   if (blocking.length > 0) {
     const codes = [...new Set(blocking.map((f) => f.code))].join(', ')
     throw new Error(
-      `estimator-takeoff: refusing to emit — ${blocking.length} blocking voltage-assertion finding(s) [${codes}]. ` +
+      `estimator-takeoff: refusing to emit - ${blocking.length} blocking voltage-assertion finding(s) [${codes}]. ` +
       `Resolve the operator voltage assertions before emitting.`,
     )
   }
   if (result.matchedLines.length === 0) {
-    throw new Error('estimator-takeoff: refusing to emit an envelope with zero matched lines — all candidates are unmatched/uncertain; resolve construction/catalog evidence or review the takeoff.')
+    throw new Error('estimator-takeoff: refusing to emit an envelope with zero matched lines - all candidates are unmatched/uncertain; resolve construction/catalog evidence or review the takeoff.')
   }
   const byScope = new Map<string, NativeEnvelopeInput['scopes'][number]>()
   for (const m of result.matchedLines) {

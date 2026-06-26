@@ -26,4 +26,7 @@ describe('parseArtifact', () => {
   it('rejects a non-positive busVoltageV', () => { expect(err((a) => (a.apparatus[0].busVoltageV = 0)).path).toBe('apparatus[0].busVoltageV') })
   it('rejects an oversized payload', () => { expect(err((a) => (a.apparatus = Array.from({ length: 5001 }, () => ok().apparatus[0]))).path).toBe('apparatus') })
   it('rejects a malformed voltageAssertions shape', () => { expect(err((a) => (a.voltageAssertions = [{ voltageV: 480 }])).path).toBe('voltageAssertions[0].tags') })
+  it('does not throw a raw TypeError on a non-serializable value (BigInt)', () => {
+    expect(err((a) => (a.apparatus = [10n])).path).toBe('apparatus[0]')
+  })
 })

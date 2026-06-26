@@ -229,7 +229,7 @@ interface ReconciliationReport {
   "pdf": "20260616 – PHX02A – ADDENDUM 4 – ELEC.pdf",
   "command": "drawing-nav extract \"<abs path to PDF>\" --no-timestamp --assert-voltage 480:MSB-P1-110-GB,ACC-1-09-FB,ACC-1-10-FB",
   "sha256": "<hex of the committed artifact bytes>",
-  "apparatusCount": 44,
+  "apparatusCount": 41, // (e7a3fb4 reproducible truth; the earlier 44 was a stale scratch artifact)
   "voltageAssertionTags": ["MSB-P1-110-GB", "ACC-1-09-FB", "ACC-1-10-FB"]
 }
 ```

@@ -12,8 +12,12 @@ export class ArtifactContractError extends Error {
   }
 }
 
+function preview(v: unknown): string {
+  if (v === undefined) return 'undefined'
+  try { return JSON.stringify(v)?.slice(0, 60) ?? String(v) } catch { return String(v) }
+}
 function fail(path: string, expected: string, v: unknown): never {
-  throw new ArtifactContractError(path, expected, v === undefined ? 'undefined' : JSON.stringify(v)?.slice(0, 60) ?? String(v))
+  throw new ArtifactContractError(path, expected, preview(v))
 }
 const isStr = (v: unknown) => typeof v === 'string'
 const nonEmptyStr = (v: unknown) => isStr(v) && (v as string).length > 0
