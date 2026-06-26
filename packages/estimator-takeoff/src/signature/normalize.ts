@@ -1,6 +1,6 @@
 import type { ExtractedApparatus } from '../extraction/types'
 import type { ApparatusSignature, Mounting, MountingBasis, MvType, TripFunction, VoltageBasis } from './types'
-import type { OperatorQuestion } from '../buckets/types'
+import type { OperatorQuestion, OperatorQuestionCode } from '../buckets/types'
 import { classifyVoltage } from './voltage'
 
 const FRAME_TRIP = /(?<!\d)(\d{2,6})\s*AF\s*\/\s*(\d{2,6})\s*A(?:T|F)?/i
@@ -58,14 +58,22 @@ function resolveMounting(
   return { mounting: 'unknown', basis: 'none', conflict: false }
 }
 
+export type AssessmentCode =
+  | 'classified'                  // a signature was built
+  | 'non_breaker_excluded'        // NON_BREAKER token, no rating -> disposition 'ignored'
+  | 'non_breaker_carries_rating'  // NON_BREAKER token + rating   -> disposition 'question'
+  | 'missing_voltage'             // breaker-shaped, no voltage    -> disposition 'question'
+  | 'unrecognized_apparatus_row'  // not breaker-shaped            -> disposition 'question'
+
 export interface ApparatusAssessment {
   signature: ApparatusSignature | null
   questions: OperatorQuestion[]
   isBreakerShaped: boolean
+  assessmentCode: AssessmentCode
 }
 
-function q(x: ExtractedApparatus, question: string): OperatorQuestion {
-  return { question, context: `${x.tag ?? x.raw} @ ${x.sheet} (${x.evidence})` }
+function q(x: ExtractedApparatus, question: string, code: OperatorQuestionCode): OperatorQuestion {
+  return { question, context: `${x.tag ?? x.raw} @ ${x.sheet} (${x.evidence})`, code }
 }
 
 // PRIVATE — the basis-taking core. NOT exported.
@@ -74,17 +82,17 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
   // frame/trip rating, surface a question (do NOT fabricate a breaker line or fire the baseline).
   if (NON_BREAKER.test(x.raw)) {
     if (FRAME_TRIP.test(x.raw)) {
-      return { signature: null, isBreakerShaped: false, questions: [q(x, 'Label names a non-breaker device (ATS/MTS/SPD/XFMR/…) but carries a breaker frame/trip rating — confirm device type before counting.')] }
+      return { signature: null, isBreakerShaped: false, questions: [q(x, 'Label names a non-breaker device (ATS/MTS/SPD/XFMR/…) but carries a breaker frame/trip rating — confirm device type before counting.', 'non_breaker_carries_rating')], assessmentCode: 'non_breaker_carries_rating' }
     }
-    return { signature: null, questions: [], isBreakerShaped: false }
+    return { signature: null, questions: [], isBreakerShaped: false, assessmentCode: 'non_breaker_excluded' }
   }
-  if (x.candidateKind !== 'breaker' && !looksLikeBreaker(x.raw)) return { signature: null, questions: [], isBreakerShaped: false }
+  if (x.candidateKind !== 'breaker' && !looksLikeBreaker(x.raw)) return { signature: null, questions: [], isBreakerShaped: false, assessmentCode: 'unrecognized_apparatus_row' }
 
   const questions: OperatorQuestion[] = []
   const voltageClass = classifyVoltage(x.busVoltageV)
   if (!voltageClass) {
-    questions.push(q(x, 'Looks like a breaker but has no associated bus voltage — supply voltage to classify (LV/MV/HV).'))
-    return { signature: null, questions, isBreakerShaped: true }
+    questions.push(q(x, 'Looks like a breaker but has no associated bus voltage — supply voltage to classify (LV/MV/HV).', 'missing_voltage'))
+    return { signature: null, questions, isBreakerShaped: true, assessmentCode: 'missing_voltage' }
   }
 
   const ft = x.raw.match(FRAME_TRIP)
@@ -93,7 +101,7 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
   const functions = parseFunctions(x.raw)
 
   if (voltageClass === 'LV' && !ft) {
-    questions.push(q(x, 'LV breaker frame/trip rating (AF/AT) could not be parsed — verify rating.'))
+    questions.push(q(x, 'LV breaker frame/trip rating (AF/AT) could not be parsed — verify rating.', 'lv_frame_trip_unparsed'))
   }
 
   let mounting: Mounting = 'unknown'
@@ -103,10 +111,10 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
     mounting = r.mounting
     mountingBasis = r.basis
     if (r.conflict) {
-      questions.push(q(x, `Construction hint "${x.mountingHint}" conflicts with the label text — verify breaker construction.`))
+      questions.push(q(x, `Construction hint "${x.mountingHint}" conflicts with the label text — verify breaker construction.`, 'mounting_hint_conflict'))
     }
     if (functions.length === 0 && (mounting === 'draw_out' || mounting === 'electrically_operated' || mounting === 'insulated_case')) {
-      questions.push(q(x, 'Power-breaker trip-function descriptor (e.g. LSIG) missing — confirm functions (affects LSIG vs LS/LSI vs unmatched).'))
+      questions.push(q(x, 'Power-breaker trip-function descriptor (e.g. LSIG) missing — confirm functions (affects LSIG vs LS/LSI vs unmatched).', 'missing_power_functions'))
     }
   }
   const mvType = voltageClass !== 'LV' ? parseMvType(x.raw) : undefined
@@ -118,7 +126,7 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
     mounting, mountingBasis, mvType, tag: x.tag,
     source: { sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block },
   }
-  return { signature, questions, isBreakerShaped: true }
+  return { signature, questions, isBreakerShaped: true, assessmentCode: 'classified' }
 }
 
 // PUBLIC — one-arg only. A caller cannot supply 'asserted'; basis is derived detected/none.
