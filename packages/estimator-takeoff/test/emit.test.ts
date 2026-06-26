@@ -86,3 +86,28 @@ describe('profileWarnings propagation', () => {
     expect(r.operatorQuestions.some((q) => /default profile assumed/.test(q.question) && q.context === 'legend/profile')).toBe(true)
   })
 })
+
+import type { ExtractedApparatus } from '../src/extraction/types'
+
+describe('emitEnvelope — blocking voltage-assertion findings', () => {
+  const brk = (tag: string, busVoltageV?: number): ExtractedApparatus => ({
+    raw: `${tag} 4000AF/4000AT LSIG`, tag, sheet: 'E01-11', page: 1, bbox: [0, 0, 1, 1],
+    evidence: 'one-line', block: 'P1-110', busVoltageV,
+  })
+
+  it('refuses to emit when an error finding is present even though a line matched', () => {
+    const r = runTakeoff({
+      pdf: 'x', apparatus: [brk('M1-GB')],
+      voltageAssertions: [{ voltageV: 480, tags: ['M1-GB'] }, { voltageV: 480, tags: ['GHOST'] }],
+    })
+    expect(r.matchedLines.length).toBeGreaterThan(0)
+    expect(() => emitEnvelope(r, { projectNumber: 'X' })).toThrow(/blocking voltage-assertion/)
+  })
+
+  it('a conflict (warning) does NOT block emission — operator wins, device prices', () => {
+    const r = runTakeoff({ pdf: 'x', apparatus: [brk('M1-GB', 240)], voltageAssertions: [{ voltageV: 480, tags: ['M1-GB'] }] })
+    expect(r.findings.some((f) => f.code === 'voltage_assertion_conflict' && f.severity === 'warning')).toBe(true)
+    expect(r.matchedLines[0]!.voltageBasis).toBe('asserted')
+    expect(() => emitEnvelope(r, { projectNumber: 'X' })).not.toThrow()
+  })
+})

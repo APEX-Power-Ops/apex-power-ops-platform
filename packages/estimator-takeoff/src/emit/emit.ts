@@ -51,6 +51,14 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
 }
 
 export function emitEnvelope(result: TakeoffResult, opts: { projectNumber: string }) {
+  const blocking = result.findings.filter((f) => f.severity === 'error')
+  if (blocking.length > 0) {
+    const codes = [...new Set(blocking.map((f) => f.code))].join(', ')
+    throw new Error(
+      `estimator-takeoff: refusing to emit — ${blocking.length} blocking voltage-assertion finding(s) [${codes}]. ` +
+      `Resolve the operator voltage assertions before emitting.`,
+    )
+  }
   if (result.matchedLines.length === 0) {
     throw new Error('estimator-takeoff: refusing to emit an envelope with zero matched lines — all candidates are unmatched/uncertain; resolve construction/catalog evidence or review the takeoff.')
   }
@@ -59,7 +67,7 @@ export function emitEnvelope(result: TakeoffResult, opts: { projectNumber: strin
     const name = `Block ${m.block}`
     const scope = byScope.get(name) ?? { name, netaStandard: 'ATS' as NetaStandard, lines: [] }
     const src = m.line.sources[0]
-    scope.lines.push({ ref: m.ref, qty: m.qty, designation: m.line.signature.tag, notes: `from ${src?.sheet ?? '?'}; construction basis: ${m.mountingBasis}` })
+    scope.lines.push({ ref: m.ref, qty: m.qty, designation: m.line.signature.tag, notes: `from ${src?.sheet ?? '?'}; construction basis: ${m.mountingBasis}; voltage ${m.line.signature.voltageV}V (${m.voltageBasis})` })
     byScope.set(name, scope)
   }
   const input: NativeEnvelopeInput = { projectNumber: opts.projectNumber, scopes: [...byScope.values()] }
