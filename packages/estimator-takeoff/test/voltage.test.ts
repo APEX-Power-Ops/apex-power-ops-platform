@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+﻿import { describe, it, expect } from 'vitest'
 import { classifyVoltage } from '../src/signature/voltage'
 
 describe('classifyVoltage (takeoff routing convention)', () => {
@@ -16,5 +16,13 @@ describe('classifyVoltage (takeoff routing convention)', () => {
     expect(classifyVoltage(0)).toBeUndefined()
     expect(classifyVoltage(-1)).toBeUndefined()
     expect(classifyVoltage(-480)).toBeUndefined()
+  })
+  it('rejects non-number / non-finite runtime values (no JS coercion to a class)', () => {
+    const cv = classifyVoltage as unknown as (v: unknown) => string | undefined
+    expect(cv('480')).toBeUndefined()
+    expect(cv('abc')).toBeUndefined()
+    expect(cv(NaN)).toBeUndefined()
+    expect(cv(Infinity)).toBeUndefined()
+    expect(cv(null)).toBeUndefined()
   })
 })

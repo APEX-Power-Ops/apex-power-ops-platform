@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { normalizeApparatus, assessApparatus } from '../src/signature/normalize'
+﻿import { describe, it, expect } from 'vitest'
+import { normalizeApparatus, assessApparatus, assessResolvedApparatus } from '../src/signature/normalize'
 import type { ExtractedApparatus } from '../src/extraction/types'
 
 const mk = (raw: string, v?: number): ExtractedApparatus => ({
@@ -112,7 +112,7 @@ describe('assessApparatus — first-class questions / non-breaker handling', () 
 
 describe('assessApparatus — voltage provenance (voltageBasis)', () => {
   it('labels asserted when the controlled basis arg says so', () => {
-    const a = assessApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480), 'asserted')
+    const a = assessResolvedApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480), 'asserted')
     expect(a.signature!.voltageBasis).toBe('asserted')
   })
   it('derives detected from busVoltageV when no basis arg is given', () => {
@@ -120,5 +120,10 @@ describe('assessApparatus — voltage provenance (voltageBasis)', () => {
   })
   it('never yields asserted from a raw apparatus call (no basis arg)', () => {
     expect(assessApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480)).signature!.voltageBasis).not.toBe('asserted')
+  })
+  it('public assessApparatus does not accept a basis arg (forgery prevented at the type level)', () => {
+    // @ts-expect-error - assessApparatus is one-arg; 'asserted' can only come via assessResolvedApparatus (engine path)
+    assessApparatus(mk('GUARD 4000AF/4000AT LSIG', 480), 'asserted')
+    expect(true).toBe(true)
   })
 })

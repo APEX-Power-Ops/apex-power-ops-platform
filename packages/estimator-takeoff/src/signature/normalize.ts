@@ -1,4 +1,4 @@
-import type { ExtractedApparatus } from '../extraction/types'
+﻿import type { ExtractedApparatus } from '../extraction/types'
 import type { ApparatusSignature, Mounting, MountingBasis, MvType, TripFunction, VoltageBasis } from './types'
 import type { OperatorQuestion } from '../buckets/types'
 import { classifyVoltage } from './voltage'
@@ -68,7 +68,8 @@ function q(x: ExtractedApparatus, question: string): OperatorQuestion {
   return { question, context: `${x.tag ?? x.raw} @ ${x.sheet} (${x.evidence})` }
 }
 
-export function assessApparatus(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
+// PRIVATE — the basis-taking core. NOT exported.
+function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
   // A strong non-breaker device-type token is authoritative exclusion. If it also carries a breaker
   // frame/trip rating, surface a question (do NOT fabricate a breaker line or fire the baseline).
   if (NON_BREAKER.test(x.raw)) {
@@ -118,6 +119,17 @@ export function assessApparatus(x: ExtractedApparatus, voltageBasis?: VoltageBas
     source: { sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block },
   }
   return { signature, questions, isBreakerShaped: true }
+}
+
+// PUBLIC — one-arg only. A caller cannot supply 'asserted'; basis is derived detected/none.
+export function assessApparatus(x: ExtractedApparatus): ApparatusAssessment {
+  return assessCore(x)
+}
+
+// ENGINE-INTERNAL — used by runTakeoff to pass the validated/controlled basis.
+// Exported from this module for emit.ts, but DELIBERATELY NOT re-exported from src/index.ts.
+export function assessResolvedApparatus(x: ExtractedApparatus, voltageBasis: VoltageBasis): ApparatusAssessment {
+  return assessCore(x, voltageBasis)
 }
 
 export function normalizeApparatus(x: ExtractedApparatus): ApparatusSignature | null {

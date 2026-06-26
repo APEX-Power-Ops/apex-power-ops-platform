@@ -1,4 +1,4 @@
-import type { ExtractedApparatus, ExtractionArtifact } from '../extraction/types'
+﻿import type { ExtractedApparatus, ExtractionArtifact } from '../extraction/types'
 import type { VoltageBasis } from './types'
 import type { TakeoffFinding } from '../buckets/types'
 
@@ -9,6 +9,14 @@ export interface ResolvedApparatus {
 
 function detectedOrNone(busVoltageV: number | undefined): VoltageBasis {
   return busVoltageV !== undefined ? 'detected' : 'none'
+}
+
+function safePreview(value: unknown): string {
+  try {
+    return (JSON.stringify(value) ?? String(value)).slice(0, 80)
+  } catch {
+    return String(value).slice(0, 80)
+  }
 }
 
 interface ValidPair { tag: string; voltageV: number; actor?: string; source?: string }
@@ -44,7 +52,7 @@ export function applyVoltageAssertions(
       findings.push({
         code: 'voltage_assertion_invalid_shape', severity: 'error',
         message: 'Malformed voltage assertion (missing, empty, or non-array tags) — rejected.',
-        context: `assertion ${(JSON.stringify(a) ?? String(a)).slice(0, 80)}`,
+        context: `assertion ${safePreview(a)}`,
       })
       continue
     }

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+﻿import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { applyVoltageAssertions } from '../src/signature/voltage-assertions'
@@ -106,6 +106,12 @@ describe('applyVoltageAssertions', () => {
   it('assertion with empty tags -> invalid_shape error', () => {
     const { findings } = applyVoltageAssertions(art([dev('A')], [{ voltageV: 480, tags: [] }]))
     expect(findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
+  })
+
+  it('malformed assertion containing a BigInt does not throw — yields invalid_shape', () => {
+    const bad = { pdf: 'x', apparatus: [dev('A')], voltageAssertions: [10n] } as unknown as ExtractionArtifact
+    expect(() => applyVoltageAssertions(bad)).not.toThrow()
+    expect(applyVoltageAssertions(bad).findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
   })
 })
 

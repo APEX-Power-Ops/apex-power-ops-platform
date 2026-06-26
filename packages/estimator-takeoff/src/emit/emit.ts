@@ -1,7 +1,7 @@
-import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from '@apex/estimator-core'
+﻿import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from '@apex/estimator-core'
 import type { ExtractionArtifact, ExtractedApparatus } from '../extraction/types'
 import type { ApparatusSignature } from '../signature/types'
-import { assessApparatus } from '../signature/normalize'
+import { assessResolvedApparatus } from '../signature/normalize'
 import { applyVoltageAssertions } from '../signature/voltage-assertions'
 import { quantify } from '../quantify/quantify'
 import type { QuantifiedLine } from '../quantify/types'
@@ -15,7 +15,7 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
   const unresolved: { x: ExtractedApparatus; questions: OperatorQuestion[] }[] = []
 
   for (const { apparatus, voltageBasis } of resolved) {
-    const a = assessApparatus(apparatus, voltageBasis)
+    const a = assessResolvedApparatus(apparatus, voltageBasis)
     if (a.signature) { sigs.push(a.signature); questions.push(...a.questions); continue }
     unresolved.push({ x: apparatus, questions: a.questions })
   }
