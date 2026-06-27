@@ -62,16 +62,23 @@ ENUMERATION_CAP = 1000
 # Multi-run isolation guard (fixes 5+6): fail closed on superseded materialise.
 #
 # The access_raw.* and tcc_snapshot.* materialised tables are LATEST-ONLY:
-# load.py drops+recreates access_raw.<table> globally and snapshot_tcc.py
-# replaces tcc_snapshot.<table> globally, while META/evidence rows are keyed by
-# run_id / snapshot_id (retain-all-runs, D3).  Because validate reads the
-# materialised tables but is keyed by run_id / snapshot_id, validating an OLD
-# run_id / snapshot_id after a later load / snapshot replaced the tables would
-# silently read the NEWER materialised data = mixed evidence for the WRONG
-# source.  access_meta.materialized_owner records WHICH run_id owns the current
-# access_raw materialisation and WHICH snapshot_id owns the current tcc_snapshot
-# materialisation; assert_materialized_owner REJECTS a non-owner request so we
-# never silently produce mixed evidence (the simplest honest, fail-closed rule).
+# load.py drops+recreates access_raw.<table> PER TABLE and snapshot_tcc.py
+# replaces tcc_snapshot.<table> PER MATERIALISED TABLE, while META/evidence rows
+# are keyed by run_id / snapshot_id (retain-all-runs, D3).  Because validate
+# reads the materialised tables but is keyed by run_id / snapshot_id, validating
+# an OLD run_id / snapshot_id after a later load / snapshot replaced a table
+# would silently read the NEWER materialised data = mixed evidence for the WRONG
+# source.
+#
+# Ownership is recorded PER (layer, table_name): each load_table stamps ONLY the
+# table it replaced; each snapshot stamps ONLY the tables it materialised.  A
+# WHOLE-LAYER marker would be UNSOUND because a PARTIAL/subset materialisation (a
+# default run after a prior --with-curves run; a mid-slice failure after earlier
+# commits; a subset snapshot that omits a table) replaces only SOME tables -- a
+# later run could stamp the whole layer while a table from a PRIOR run/snapshot
+# survives, and the guard would pass while validate reads the stale table.
+# assert_materialized_owner checks, FOR EACH table it is about to read, that THAT
+# table's owner equals the requested id; it raises if any differs (fail closed).
 # ---------------------------------------------------------------------------
 
 _ACCESS_RAW_LAYER = "access_raw"
@@ -79,23 +86,25 @@ _TCC_SNAPSHOT_LAYER = "tcc_snapshot"
 
 
 class SupersededMaterializationError(RuntimeError):
-    """Raised when a requested run_id / snapshot_id no longer owns the
-    materialised layer it would read (a later load / snapshot replaced it)."""
+    """Raised when a requested run_id / snapshot_id no longer owns a materialised
+    table it would read (a later load / snapshot replaced THAT table)."""
 
 
 def stamp_materialized_owner(
     pg_conn,
     layer: str,
+    table_name: str,
     *,
     run_id: Optional[str] = None,
     snapshot_id: Optional[str] = None,
 ) -> None:
-    """Record that (run_id | snapshot_id) now owns the materialised *layer*.
+    """Record that (run_id | snapshot_id) now owns the materialised *table*.
 
-    Called by load (layer='access_raw', run_id=...) and snapshot_tcc
-    (layer='tcc_snapshot', snapshot_id=...) AFTER they replace the materialised
-    tables, so validate can fail closed for a superseded id.  Upserts the single
-    marker row for the layer (PK = layer).
+    Called by load (layer='access_raw', run_id=..., the one table it just
+    dropped+recreated) and snapshot_tcc (layer='tcc_snapshot', snapshot_id=...,
+    each table it actually materialised) AFTER they replace the materialised
+    table, so validate can fail closed for a superseded id.  Upserts the per-
+    table marker row (PK = (layer, table_name)).
     """
     from datetime import datetime, timezone
 
@@ -103,33 +112,37 @@ def stamp_materialized_owner(
         cur.execute(
             """
             INSERT INTO access_meta.materialized_owner
-                (layer, run_id, snapshot_id, updated_at)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (layer) DO UPDATE SET
+                (layer, table_name, run_id, snapshot_id, updated_at)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (layer, table_name) DO UPDATE SET
                 run_id = EXCLUDED.run_id,
                 snapshot_id = EXCLUDED.snapshot_id,
                 updated_at = EXCLUDED.updated_at
             """,
-            (layer, run_id, snapshot_id, datetime.now(tz=timezone.utc)),
+            (layer, table_name, run_id, snapshot_id,
+             datetime.now(tz=timezone.utc)),
         )
 
 
 def assert_materialized_owner(
     pg_conn,
     layer: str,
+    tables,
     *,
     run_id: Optional[str] = None,
     snapshot_id: Optional[str] = None,
 ) -> None:
     """Raise SupersededMaterializationError unless (run_id | snapshot_id) is the
-    CURRENT owner of the materialised *layer*.
+    CURRENT owner of EVERY materialised *table* in *tables* it would read.
 
-    For layer='access_raw' the owning key is run_id; for layer='tcc_snapshot'
-    it is snapshot_id.  If NO owner marker exists yet (e.g. an in-test fixture
-    that built the materialised tables directly without stamping), the guard is
-    a NO-OP -- it only fires when a marker exists AND names a DIFFERENT owner
-    (the genuine superseded case).  This keeps fail-closed honesty without
-    breaking the synthetic-table tests / first-run paths that never stamp.
+    *tables* is the iterable of table names validate is about to READ on *layer*.
+    For layer='access_raw' the owning key is run_id; for layer='tcc_snapshot' it
+    is snapshot_id.  For EACH table:
+      * No per-table marker (first run / synthetic fixture that built the table
+        directly without stamping) -> NO-OP for that table (do not block).
+      * A marker that names a DIFFERENT owner -> fail closed, naming the table
+        plus the owning vs requested id (the genuine superseded case, incl. a
+        PARTIAL materialisation that left this table from another run/snapshot).
     """
     if layer == _ACCESS_RAW_LAYER:
         expected, col = run_id, "run_id"
@@ -138,29 +151,33 @@ def assert_materialized_owner(
     else:  # pragma: no cover - defensive
         raise ValueError(f"unknown materialised layer: {layer!r}")
 
-    with pg_conn.cursor() as cur:
-        cur.execute(
-            sql.SQL(
-                "SELECT {col} FROM access_meta.materialized_owner WHERE layer=%s"
-            ).format(col=sql.Identifier(col)),
-            (layer,),
-        )
-        row = cur.fetchone()
+    for table_name in tables:
+        with pg_conn.cursor() as cur:
+            cur.execute(
+                sql.SQL(
+                    "SELECT {col} FROM access_meta.materialized_owner "
+                    "WHERE layer=%s AND table_name=%s"
+                ).format(col=sql.Identifier(col)),
+                (layer, table_name),
+            )
+            row = cur.fetchone()
 
-    # No marker -> nothing has claimed ownership (first run / synthetic fixture):
-    # do not block.  A marker that names a different owner -> fail closed.
-    if row is None or row[0] is None:
-        return
-    current = row[0]
-    if current != expected:
-        raise SupersededMaterializationError(
-            f"{col}={expected!r} is SUPERSEDED for materialised layer "
-            f"{layer!r}: the current owner is {col}={current!r}.  The "
-            f"materialised {layer}.* tables were replaced by a later "
-            f"load/snapshot; validating {expected!r} would read mixed evidence "
-            f"for the wrong source.  Re-run extract/load/snapshot for "
-            f"{expected!r}, or validate the current owner {current!r}."
-        )
+        # No marker for this table -> nothing has claimed ownership (first run /
+        # synthetic fixture): do not block.  A marker naming a different owner ->
+        # fail closed.
+        if row is None or row[0] is None:
+            continue
+        current = row[0]
+        if current != expected:
+            raise SupersededMaterializationError(
+                f"{col}={expected!r} is SUPERSEDED for materialised table "
+                f"{layer}.{table_name!r}: that table is owned by "
+                f"{col}={current!r}.  The materialised {layer}.{table_name} "
+                f"table was replaced (or left) by a different load/snapshot; "
+                f"validating {expected!r} would read mixed evidence for the "
+                f"wrong source.  Re-run extract/load/snapshot for {expected!r}, "
+                f"or validate the current owner {current!r}."
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -473,10 +490,15 @@ def antijoin_vs_tcc(
     pm = ProjectionMap.for_table(access_table)
     tcc_table = pm.tcc_table
 
-    # Fail closed if this run_id / snapshot_id no longer owns the materialised
-    # access_raw / tcc_snapshot tables this anti-join would read (fixes 5+6).
-    assert_materialized_owner(pg_conn, _ACCESS_RAW_LAYER, run_id=run_id)
-    assert_materialized_owner(pg_conn, _TCC_SNAPSHOT_LAYER, snapshot_id=snapshot_id)
+    # Fail closed if this run_id / snapshot_id no longer owns the SPECIFIC
+    # materialised access_raw / tcc_snapshot tables this anti-join reads
+    # (per-table guard, fixes 5+6 + Codex review-b53189fc).
+    assert_materialized_owner(
+        pg_conn, _ACCESS_RAW_LAYER, [access_table], run_id=run_id
+    )
+    assert_materialized_owner(
+        pg_conn, _TCC_SNAPSHOT_LAYER, [tcc_table], snapshot_id=snapshot_id
+    )
 
     # -- COUNT-ONLY branch for computed / derived tcc tables. ----------------
     if pm.tcc_build_kind in ("computed", "derived"):
@@ -778,10 +800,20 @@ def reconcile_vs_tcc(pg_conn, run_id: str, snapshot_id: str) -> None:
     a delta is a "gap" or "expected".  delta is NULL-safe (NULL if either side
     is absent -- absence recorded honestly, never fabricated as zero).
     """
-    # Fail closed if a later load / snapshot superseded the materialised layer
-    # this run_id / snapshot_id reads (fixes 5+6).
-    assert_materialized_owner(pg_conn, _ACCESS_RAW_LAYER, run_id=run_id)
-    assert_materialized_owner(pg_conn, _TCC_SNAPSHOT_LAYER, snapshot_id=snapshot_id)
+    # Fail closed if a later load / snapshot superseded any SPECIFIC materialised
+    # table this run_id / snapshot_id reads (per-table guard, fixes 5+6 + Codex
+    # review-b53189fc).  Count-only tables are not materialised, so they carry no
+    # per-table marker and the guard is a no-op for them.
+    _tcc_recon_tcc_tables = [
+        ProjectionMap.for_table(t).tcc_table for t in _TMT_RECON_TABLES
+    ]
+    assert_materialized_owner(
+        pg_conn, _ACCESS_RAW_LAYER, _TMT_RECON_TABLES, run_id=run_id
+    )
+    assert_materialized_owner(
+        pg_conn, _TCC_SNAPSHOT_LAYER, _tcc_recon_tcc_tables,
+        snapshot_id=snapshot_id,
+    )
 
     for access_table in _TMT_RECON_TABLES:
         pm = ProjectionMap.for_table(access_table)
@@ -866,9 +898,15 @@ def resolve_style_classes(
 
     HR1: counts only.  No verdict, no "gap", no chosen class.
     """
-    # Fail closed if a later load superseded the materialised access_raw layer
-    # this run_id reads (fixes 5+6).
-    assert_materialized_owner(pg_conn, _ACCESS_RAW_LAYER, run_id=run_id)
+    # Fail closed if a later load superseded any SPECIFIC materialised access_raw
+    # table this run_id reads -- the frame table plus the three style tables
+    # (per-table guard, fixes 5+6 + Codex review-b53189fc).
+    assert_materialized_owner(
+        pg_conn,
+        _ACCESS_RAW_LAYER,
+        [frame_table, *_ACCESS_STYLE_TABLES.values()],
+        run_id=run_id,
+    )
 
     style_ids = _distinct_int_ids(pg_conn, "access_raw", frame_table, styleid_col)
 
@@ -966,11 +1004,17 @@ def style_provenance_antijoin(
     access_table = _ACCESS_STYLE_TABLES[bc]
     tcc_table = f"brk_{bc.lower()}_styles"
 
-    # Fail closed if a later load superseded the materialised access_raw layer
-    # this run_id reads (fixes 5+6).  (The tcc_snapshot side is guarded at the
-    # run's antijoin_vs_tcc / reconcile_vs_tcc entry points, which carry the
-    # snapshot_id; this function is keyed only by run_id.)
-    assert_materialized_owner(pg_conn, _ACCESS_RAW_LAYER, run_id=run_id)
+    # Fail closed if a later load superseded the SPECIFIC materialised access_raw
+    # style table this run_id reads (per-table guard, fixes 5+6 + Codex
+    # review-b53189fc).  (The tcc_snapshot style table is owned by snapshot_id,
+    # which this function is not given; it is guarded at the run's
+    # antijoin_vs_tcc / reconcile_vs_tcc entry points which carry the
+    # snapshot_id.  We still guard the tcc table here when a marker for it exists
+    # and the run's own snapshot owner cannot be checked -- but absent the
+    # snapshot_id we cannot assert a match, so we only guard the access side.)
+    assert_materialized_owner(
+        pg_conn, _ACCESS_RAW_LAYER, [access_table], run_id=run_id
+    )
 
     access_ids = _distinct_int_ids(pg_conn, "access_raw", access_table, "ID")
     tcc_src = _distinct_int_ids(pg_conn, "tcc_snapshot", tcc_table, "source_id")

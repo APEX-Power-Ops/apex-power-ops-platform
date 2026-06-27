@@ -137,24 +137,33 @@ CREATE TABLE IF NOT EXISTS access_meta.projection_map (
     PRIMARY KEY (access_table, access_column)
 );
 
--- Materialised-layer ownership marker (multi-run isolation guard).
+-- Materialised-table ownership marker (multi-run isolation guard), keyed
+-- PER (layer, table_name) -- NOT whole-layer.
 -- The access_raw.* and tcc_snapshot.* materialised tables are LATEST-ONLY:
--- load.py drops+recreates access_raw.<table> globally and snapshot_tcc.py
--- replaces tcc_snapshot.<table> globally, while META/evidence rows are keyed
--- by run_id / snapshot_id (retain-all-runs, D3).  Because validate reads the
--- materialised tables BY run_id / snapshot_id, a stale run_id would silently
--- read the NEWER materialised data (mixed evidence).  This marker records WHICH
--- run_id owns the current access_raw materialisation and WHICH snapshot_id owns
--- the current tcc_snapshot materialisation, so validate can FAIL CLOSED when the
--- requested id is no longer the owner (never silently produce mixed evidence).
---   layer = 'access_raw'   -> run_id      is the owning extraction run
---   layer = 'tcc_snapshot' -> snapshot_id is the owning snapshot
+-- load.py drops+recreates access_raw.<table> PER TABLE and snapshot_tcc.py
+-- replaces tcc_snapshot.<table> PER MATERIALISED TABLE, while META/evidence
+-- rows are keyed by run_id / snapshot_id (retain-all-runs, D3).  Because
+-- validate reads the materialised tables BY run_id / snapshot_id, a stale id
+-- would silently read NEWER materialised data (mixed evidence).
+-- A WHOLE-LAYER marker is UNSOUND: a PARTIAL/subset materialisation (a default
+-- run after a prior --with-curves run; a mid-slice failure after earlier
+-- commits; a subset snapshot that omits a table) replaces only SOME tables, so
+-- a later run could stamp the whole layer while a table from a PRIOR run/
+-- snapshot survives -- the guard would pass while validate reads the stale
+-- table.  Recording ownership PER (layer, table_name) lets validate fail closed
+-- for EACH table it would read whose owner differs from the requested id.
+--   layer = 'access_raw'   -> run_id      last materialised THIS table
+--   layer = 'tcc_snapshot' -> snapshot_id last materialised THIS table
+-- (count-only tcc tables are NOT materialised, so they are NOT stamped here;
+--  their counts are recorded in access_meta.tcc_snapshot_table by snapshot_id.)
 CREATE TABLE IF NOT EXISTS access_meta.materialized_owner (
-    layer       text        PRIMARY KEY
+    layer       text        NOT NULL
                             CHECK (layer IN ('access_raw', 'tcc_snapshot')),
+    table_name  text        NOT NULL,
     run_id      text,
     snapshot_id text,
-    updated_at  timestamptz
+    updated_at  timestamptz,
+    PRIMARY KEY (layer, table_name)
 );
 
 -- ============================================================

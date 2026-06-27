@@ -49,13 +49,16 @@ ADVISORY_LOCK_KEY: int = 0x41505843484152  # "APXCHAR" in ASCII hex
 # Materialised-owner stamping (multi-run isolation guard, fixes 5+6)
 # ---------------------------------------------------------------------------
 
-def _stamp_access_raw_owner(conn, run_id: str) -> None:
-    """Record run_id as the current owner of the materialised access_raw layer.
+def _stamp_access_raw_owner(conn, run_id: str, table: str) -> None:
+    """Record run_id as the owner of the materialised access_raw.<table>.
 
-    Upserts the single access_meta.materialized_owner row for layer='access_raw'
-    so validate can fail closed when a SUPERSEDED run_id is asked to anti-join
-    against the (latest-only) access_raw.* tables.  Stamped inside the caller's
-    load transaction so ownership is atomic with the load.
+    Upserts the PER-TABLE access_meta.materialized_owner row for
+    (layer='access_raw', table_name=table) so validate can fail closed when a
+    SUPERSEDED run_id is asked to anti-join against THAT (latest-only) table.
+    Stamped inside the caller's load transaction so ownership is atomic with the
+    load of this one table.  Ownership is per-table -- NOT whole-layer -- so a
+    PARTIAL load (only some tables replaced) never falsely claims tables it did
+    not materialise (Codex review-b53189fc).
     """
     from datetime import datetime, timezone
 
@@ -63,14 +66,14 @@ def _stamp_access_raw_owner(conn, run_id: str) -> None:
         cur.execute(
             """
             INSERT INTO access_meta.materialized_owner
-                (layer, run_id, snapshot_id, updated_at)
-            VALUES ('access_raw', %s, NULL, %s)
-            ON CONFLICT (layer) DO UPDATE SET
+                (layer, table_name, run_id, snapshot_id, updated_at)
+            VALUES ('access_raw', %s, %s, NULL, %s)
+            ON CONFLICT (layer, table_name) DO UPDATE SET
                 run_id = EXCLUDED.run_id,
                 snapshot_id = EXCLUDED.snapshot_id,
                 updated_at = EXCLUDED.updated_at
             """,
-            (run_id, datetime.now(tz=timezone.utc)),
+            (table, run_id, datetime.now(tz=timezone.utc)),
         )
 
 
@@ -277,14 +280,15 @@ def load_table(
             cur.execute(update_sql, (row_count, run_id, table))
 
         # ------------------------------------------------------------------
-        # 5'. Stamp this run_id as the CURRENT owner of the materialised
-        #     access_raw layer (multi-run isolation guard, fixes 5+6).  Because
-        #     create_access_raw_table drops+recreates access_raw.<table>
-        #     GLOBALLY (latest-only), validate must fail closed when a stale
-        #     run_id is asked to read it.  Stamped inside this txn so it is
-        #     atomic with the load.
+        # 5'. Stamp this run_id as the owner of the materialised
+        #     access_raw.<table> (per-table multi-run isolation guard, fixes
+        #     5+6 + Codex review-b53189fc).  Because create_access_raw_table
+        #     drops+recreates THIS access_raw.<table> (latest-only), validate
+        #     must fail closed when a stale run_id is asked to read it.  Stamped
+        #     per-table inside this txn so it is atomic with the load and a
+        #     PARTIAL load never claims tables it did not replace.
         # ------------------------------------------------------------------
-        _stamp_access_raw_owner(conn, run_id)
+        _stamp_access_raw_owner(conn, run_id, table)
 
         # ------------------------------------------------------------------
         # 6. COMMIT
