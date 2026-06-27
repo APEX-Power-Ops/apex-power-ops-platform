@@ -69,6 +69,15 @@ metadata, not in a quoted identifier.
   because `source_id` collides across classes (G1 sec 2B per-class id overlap); or use per-class side tables.
   Preserves fidelity (the raw floats/bytes) WITHOUT wiring to serving and WITHOUT claiming the native behavior. The
   curve/char byte-enum legends + the application math stay `deferred`.
+- **028 diagnostic-view transition (031, AFTER the data carry):** once D4/D5 are POPULATED, the live 028 views
+  (`vw_lvbreakertcc_tmt_frame_contract`) still emit `d4_tmt_helper_columns_absent_from_projection` /
+  `d5_inst_override_columns_absent_from_projection` - now stale. A `031` `CREATE OR REPLACE VIEW` must transition the
+  hazard state: **drop** the D4 absent flag (D4 carried + populated), and **change** D5 to
+  `d5_inst_override_carried_reference_only` (native_bounded reference, NOT wired to serving). Sequence: 029 DDL ->
+  029 data (harness) -> 030 DDL -> 030 data (harness) -> **031 view-transition** (guarded to RAISE if the D4 data is
+  not yet populated, so the flags never flip prematurely). Authored at carry time against the actual populated state.
+  This keeps the 028 hazard surface honest after apply (the operator's "not okay after apply unless a follow-up view
+  patch changes the hazard language" requirement).
 
 ## Cross-refs
 - G1 sec 3.1 / sec 3.4 / sec 5 (D4/D5) - the authoritative decoded register this map productizes.

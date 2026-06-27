@@ -56,4 +56,24 @@ COMMENT ON COLUMN tcc.brk_mccb_styles.tmt_thermal          IS 'Access BreakerMCC
 -- Preflight (read-only, record for the change log): SELECT count(*) FROM tcc.brk_iccb_styles;  -- 608
 --                                                   SELECT count(*) FROM tcc.brk_mccb_styles;  -- 10335
 
+-- Exact-shape guard (fail closed): ADD COLUMN IF NOT EXISTS silently skips a pre-existing column of the
+-- WRONG type, so assert the six columns exist with the expected types on both tables before COMMIT.
+DO $$
+DECLARE
+  v_tbl text; v_pair text; v_col text; v_typ text; v_actual text;
+  expected text[] := ARRAY['tmt_tcc_number=text','tmt_notes=text','tmt_trip_plug=smallint',
+                           'tmt_breaker_type=smallint','tmt_thermal_magnetic=smallint','tmt_thermal=smallint'];
+BEGIN
+  FOREACH v_tbl IN ARRAY ARRAY['brk_iccb_styles','brk_mccb_styles'] LOOP
+    FOREACH v_pair IN ARRAY expected LOOP
+      v_col := split_part(v_pair,'=',1); v_typ := split_part(v_pair,'=',2);
+      SELECT data_type INTO v_actual FROM information_schema.columns
+        WHERE table_schema='tcc' AND table_name=v_tbl AND column_name=v_col;
+      IF v_actual IS NULL THEN RAISE EXCEPTION '029 shape: tcc.%.% missing', v_tbl, v_col; END IF;
+      IF v_actual <> v_typ THEN RAISE EXCEPTION '029 shape: tcc.%.% is % (expected %)', v_tbl, v_col, v_actual, v_typ; END IF;
+    END LOOP;
+  END LOOP;
+  RAISE NOTICE '029 shape OK: 6 D4 cols x 2 tables, types match';
+END $$;
+
 COMMIT;
