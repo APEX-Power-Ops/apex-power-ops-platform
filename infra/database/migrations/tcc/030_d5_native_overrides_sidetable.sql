@@ -40,11 +40,11 @@ CREATE TABLE IF NOT EXISTS tcc.brk_style_native_overrides (
 );
 
 COMMENT ON TABLE tcc.brk_style_native_overrides IS
-  'F-79-04 D5 native_bounded raw-carry: the breaker-style inst-override / timing / interrupt-rating block from Access (InstOvr*/NInstOvr*/BrkTimes*/r_int_*/r_iec_*/Breaker_OvrCurves), preserved as reference. NOT wired to serving; behavior un-claimed (override application + curve/char enum legends + curve math are native/bounded - G1 sec 3.4). N = Non-Instantaneous (inst defeated). [NATIVE-BOUNDED] [VERIFIED-LIVE 2026-06-27]';
+  'F-79-04 D5 native_bounded raw-carry: the breaker-style inst-override / timing / interrupt-rating block from Access (InstOvr*/NInstOvr*/BrkTimes*/r_int_*/r_iec_*/Breaker_OvrCurves), preserved as reference. NOT wired to serving; behavior un-claimed (override application + curve/char enum legends + curve math are native/bounded - G1 sec 3.4). N = Non-Instantaneous (inst defeated). [NATIVE-BOUNDED] [VERIFIED-LIVE 2026-06-27] POLICY (a) MAXIMAL RAW CARRY (operator-ratified 2026-06-27): one row per style with >=1 non-null D5 block; Access defaults byte-enum/tolerance cols to 0 (non-null) so inst/ninst blocks are non-null for ~all styles - block non-nullness MUST NOT be read as "has override" (real signal: (inst_override->>''InstOvrAmps'')::numeric > 0); rating-only styles (no InstOvrAmps, r_int/r_iec present) are intentionally retained.';
 COMMENT ON COLUMN tcc.brk_style_native_overrides.breaker_class  IS 'Part of the PK with source_id - source_id collides across classes (G1 sec 2B).';
 COMMENT ON COLUMN tcc.brk_style_native_overrides.source_id      IS 'Access Breaker*Styles.ID; joins tcc.brk_<breaker_class>_styles.source_id (per-class, not a declared FK).';
-COMMENT ON COLUMN tcc.brk_style_native_overrides.inst_override  IS 'Raw InstOvr* (amps/min+max tolerance/clr+opn delay+radius/notetext/clearing+opening curve sets). Verbatim Access column names as JSONB keys.';
-COMMENT ON COLUMN tcc.brk_style_native_overrides.ninst_override IS 'Raw NInstOvr* = the Non-Instantaneous variant (= inst_override where the Access N columns are absent, per DvlEng fallback).';
+COMMENT ON COLUMN tcc.brk_style_native_overrides.inst_override  IS 'Raw InstOvr* (amps/min+max tolerance/clr+opn delay+radius/notetext/clearing+opening curve sets). Verbatim Access column names as JSONB keys. Non-null does NOT mean "has override" - Access defaults byte-enum/tolerance cols to 0; test (inst_override->>''InstOvrAmps'')::numeric > 0 for a real instantaneous override.';
+COMMENT ON COLUMN tcc.brk_style_native_overrides.ninst_override IS 'Raw NInstOvr* = the Non-Instantaneous variant (= inst_override where the Access N columns are absent, per DvlEng fallback). Same default-zero caveat as inst_override: non-null != "has N-override"; test (ninst_override->>''NInstOvrAmps'')::numeric > 0.';
 COMMENT ON COLUMN tcc.brk_style_native_overrides.r_int          IS 'Raw ANSI interrupt ratings (kA) at 240/480/600 V: inst / series / ninst (ninst = PCB-only, getter CTccCurveBase.GetIntKaNonInst).';
 COMMENT ON COLUMN tcc.brk_style_native_overrides.r_iec          IS 'Raw IEC interrupt ratings (kA) at 220-1000 V: inst / ninst (ninst = PCB-only).';
 
@@ -91,10 +91,16 @@ END $$;
 
 COMMIT;
 
--- DATA POPULATION (separate gated step, harness-driven): per class, read the override/timing/rating
--- columns row-level from D:\TCC_NEW.accdb, build the JSONB blocks (verbatim Access keys), and
--- INSERT (breaker_class, source_id, inst_override, ninst_override, brk_times, r_int, r_iec) for ANY
--- style with at least one non-null D5 block (override OR BrkTimes OR r_int OR r_iec - these exist
--- INDEPENDENTLY of an override; e.g. PCB carries r_int_* on ~1616 styles but InstOvrAmps>0 on only
--- ~317, so an override-only filter would silently drop ~1300 rating-only rows). Leave a per-block
--- JSONB NULL where that block is absent. Dry-run on the breaker sandbox; apply on the gate.
+-- DATA POPULATION (separate gated step). POLICY (a) MAXIMAL RAW CARRY (operator-ratified 2026-06-27):
+-- per class, read the override/timing/rating columns row-level from Access (PROD = governed Path A
+-- frozen-snapshot custody with provenance/checksum/run_id; a direct read-only pyodbc DRY-RUN validated
+-- the logic - see infra/database/sandbox/breaker/d4d5-population-dryrun/), build the JSONB blocks
+-- (verbatim Access keys), and INSERT (breaker_class, source_id, inst_override, ninst_override, brk_times,
+-- r_int, r_iec) for ANY style with >=1 non-null D5 block. These blocks exist INDEPENDENTLY of an override:
+-- Access defaults the byte-enum/tolerance cols to 0 (non-null), so inst/ninst are non-null for ~all styles
+-- -> ~one row per style (dry-run: 14222 = ICCB 608 + MCCB 10335 + PCB 3279). Block non-nullness is NOT
+-- "has override"; the real override signal is (inst_override->>'InstOvrAmps')::numeric > 0 (dry-run: real
+-- overrides ICCB 241 / MCCB 129 / PCB 317; the other 13535 are rating-only and MUST be retained - an
+-- InstOvrAmps>0 filter would silently drop them). Leave a per-block JSONB NULL only where every col in that
+-- block is NULL. ovr_curves stays NULL (Breaker_OvrCurves empty in Access). Dry-run targets a *dryrun*
+-- sandbox clone behind a current_database() guard; prod apply on the gate via governed custody.
