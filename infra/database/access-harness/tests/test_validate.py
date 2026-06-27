@@ -174,11 +174,19 @@ def test_nonunique_key_uses_multiset(pg):
     # access excess total = 2.  tcc excess: rating=300 x1 (access x0) = 1.
     assert missing_ct == 2, f"expected 2 access-excess, got {missing_ct}"
     assert extra_ct == 1, f"expected 1 tcc-excess, got {extra_ct}"
-    # The per-key deltas are carried in enumerated_missing for the multiset path.
-    # Canonical string keys map to {access, tcc, delta} dicts.
+    # enumerated_missing carries ONLY positive-delta (access-missing) keys -- I2 fix.
+    # rating=100 (+1) and rating=200 (+1) appear; rating=300 (-1/tcc-excess) must NOT.
     assert isinstance(enumerated, dict)
     deltas = {k: v["delta"] for k, v in enumerated.items()}
-    assert set(deltas.values()) == {1, 1, -1}, f"unexpected deltas: {deltas!r}"
+    assert all(d > 0 for d in deltas.values()), (
+        f"enumerated_missing must contain ONLY positive-delta keys, got: {deltas!r}"
+    )
+    assert set(deltas.values()) == {1, 1}, f"unexpected positive deltas: {deltas!r}"
+    # The tcc-excess key (rating=300, delta=-1) must NOT appear in enumerated_missing.
+    for v in enumerated.values():
+        assert v["delta"] > 0, (
+            f"tcc-excess (negative delta) must not appear in enumerated_missing: {v!r}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -386,3 +394,147 @@ def test_no_interpretive_columns_after_writes(pg):
     )
 
     assert assert_no_interpretive_columns(pg) == []
+
+
+# ---------------------------------------------------------------------------
+# test_multiset_enumerated_missing_is_capped  (I1 regression)
+# ---------------------------------------------------------------------------
+
+def test_multiset_enumerated_missing_is_capped(pg):
+    """multiset enumerated_missing is capped at ENUMERATION_CAP distinct keys.
+
+    Seeds a non-unique left key (access) with many distinct discrepant keys so
+    that the positive-delta count exceeds a small sentinel.  Asserts:
+      - enumerated_missing length <= ENUMERATION_CAP
+      - missing_in_tcc_count reflects the FULL row-count sum (not truncated)
+    """
+    from access_harness.validate import ENUMERATION_CAP
+
+    run_id = _seed_run(pg, "test-validate-run-cap")
+    sid = _seed_snapshot(pg, run_id, "snap-multiset-cap")
+
+    # Build a dataset with many MORE distinct missing keys than ENUMERATION_CAP.
+    # Use a non-unique left by duplicating key 1 so the multiset path is taken.
+    # Then add ENUMERATION_CAP + 50 distinct keys present in access but not tcc.
+    EXTRA = ENUMERATION_CAP + 50
+    access_rows = [(1,), (1,)]  # duplicate -> forces multiset path
+    for i in range(2, EXTRA + 2):
+        access_rows.append((i,))
+
+    with pg.cursor() as cur:
+        cur.execute('CREATE TABLE access_raw."Breaker_TMTFrameAmps" (rating integer)')
+        cur.executemany(
+            'INSERT INTO access_raw."Breaker_TMTFrameAmps" (rating) VALUES (%s)',
+            access_rows,
+        )
+        # tcc_snapshot: only rating=1 once (so rating=1 has +1, all others missing).
+        cur.execute("CREATE TABLE tcc_snapshot.tmt_amps (rating integer)")
+        cur.executemany(
+            "INSERT INTO tcc_snapshot.tmt_amps (rating) VALUES (%s)",
+            [(1,)],
+        )
+
+    antijoin_vs_tcc(pg, run_id, sid, "Breaker_TMTFrameAmps", ["rating"])
+
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT method, missing_in_tcc_count, extra_in_tcc_count, "
+            "enumerated_missing "
+            "FROM access_validation.antijoin_vs_tcc "
+            "WHERE run_id=%s AND access_table=%s",
+            (run_id, "Breaker_TMTFrameAmps"),
+        )
+        row = cur.fetchone()
+
+    assert row is not None
+    method, missing_ct, extra_ct, enumerated = row
+    assert method == "multiset"
+
+    # Full scalar: rating=1 (+1 access-excess) + EXTRA distinct keys missing (+1 each)
+    # = EXTRA + 1 total row-count excess.
+    expected_missing_ct = EXTRA + 1
+    assert missing_ct == expected_missing_ct, (
+        f"scalar missing_in_tcc_count must be {expected_missing_ct}, got {missing_ct}"
+    )
+    assert extra_ct == 0
+
+    # Enumeration must be capped.
+    assert isinstance(enumerated, dict)
+    assert len(enumerated) <= ENUMERATION_CAP, (
+        f"enumerated_missing must be capped at {ENUMERATION_CAP}, "
+        f"got {len(enumerated)} keys"
+    )
+    # All enumerated entries must be positive-delta.
+    for k, v in enumerated.items():
+        assert v["delta"] > 0, (
+            f"enumerated_missing must contain only positive-delta keys, "
+            f"found delta={v['delta']} for key {k!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# test_multiset_enumerated_missing_excludes_tcc_excess  (I2 regression)
+# ---------------------------------------------------------------------------
+
+def test_multiset_enumerated_missing_excludes_tcc_excess(pg):
+    """multiset enumerated_missing must NOT carry tcc-excess (negative-delta) keys.
+
+    Scenario: access has key X once, tcc has key X twice AND key Y once.
+      - key X: delta = +1 - +2 = -1 (tcc-excess / extra_in_tcc)  -- must NOT appear
+      - key Y: delta = 0 - 1 = -1 (tcc-excess / extra_in_tcc)    -- must NOT appear
+      - key Z: access has it twice, tcc zero -> delta = +2         -- MUST appear
+    Scalar extra_in_tcc_count must be 3 (1 + 1 + 1 from X/Y/... contributions).
+    """
+    run_id = _seed_run(pg, "test-validate-run-dir")
+    sid = _seed_snapshot(pg, run_id, "snap-multiset-dir")
+
+    with pg.cursor() as cur:
+        # access: key=1 x2 (makes left non-unique -> multiset), key=3 x2.
+        cur.execute('CREATE TABLE access_raw."Breaker_TMTFrameAmps" (rating integer)')
+        cur.executemany(
+            'INSERT INTO access_raw."Breaker_TMTFrameAmps" (rating) VALUES (%s)',
+            [(1,), (1,), (3,), (3,)],
+        )
+        # tcc: rating=1 x3, rating=2 x1 (tcc-excess on both).
+        cur.execute("CREATE TABLE tcc_snapshot.tmt_amps (rating integer)")
+        cur.executemany(
+            "INSERT INTO tcc_snapshot.tmt_amps (rating) VALUES (%s)",
+            [(1,), (1,), (1,), (2,)],
+        )
+
+    antijoin_vs_tcc(pg, run_id, sid, "Breaker_TMTFrameAmps", ["rating"])
+
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT method, missing_in_tcc_count, extra_in_tcc_count, "
+            "enumerated_missing "
+            "FROM access_validation.antijoin_vs_tcc "
+            "WHERE run_id=%s AND access_table=%s",
+            (run_id, "Breaker_TMTFrameAmps"),
+        )
+        row = cur.fetchone()
+
+    assert row is not None
+    method, missing_ct, extra_ct, enumerated = row
+    assert method == "multiset"
+
+    # rating=1: access=2, tcc=3 -> delta=-1 (tcc-excess)
+    # rating=2: access=0, tcc=1 -> delta=-1 (tcc-excess)
+    # rating=3: access=2, tcc=0 -> delta=+2 (access-missing)
+    assert missing_ct == 2, f"expected missing_in_tcc_count=2 (rating=3 x2), got {missing_ct}"
+    assert extra_ct == 2, f"expected extra_in_tcc_count=2 (1+1 from rating=1,2), got {extra_ct}"
+
+    # enumerated_missing must contain ONLY positive-delta keys.
+    assert isinstance(enumerated, dict)
+    for k, v in enumerated.items():
+        assert v["delta"] > 0, (
+            f"tcc-excess key (negative delta) found in enumerated_missing: "
+            f"key={k!r}, delta={v['delta']}"
+        )
+    # Specifically, rating=3 (positive delta=+2) should be present.
+    # rating=1 and rating=2 (negative deltas) must NOT be present.
+    enumerated_deltas = {k: v["delta"] for k, v in enumerated.items()}
+    assert all(d > 0 for d in enumerated_deltas.values()), (
+        f"enumerated_missing must be all positive-delta, got: {enumerated_deltas!r}"
+    )
+    assert len(enumerated) >= 1, "rating=3 (positive delta) must appear in enumerated_missing"

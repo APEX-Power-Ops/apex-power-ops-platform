@@ -252,12 +252,18 @@ def antijoin_keyset(
     missing_count = sum(v["delta"] for v in diff.values() if v["delta"] > 0)
     extra_count = sum(-v["delta"] for v in diff.values() if v["delta"] < 0)
 
+    # Separate directions: missing = positive-delta only; extra = negative only.
+    missing_in_right = {k: v for k, v in diff.items() if v["delta"] > 0}
+    extra_in_right = {k: v for k, v in diff.items() if v["delta"] < 0}
+
     return {
         "method": "multiset",
-        "missing_in_right": diff,
-        "extra_in_right": diff,
+        "missing_in_right": missing_in_right,
+        "extra_in_right": extra_in_right,
         "missing_count": missing_count,
         "extra_count": extra_count,
+        # Full count of distinct keys that have ANY discrepancy (both directions).
+        "distinct_discrepant_count": len(diff),
     }
 
 
@@ -376,8 +382,14 @@ def antijoin_vs_tcc(
         # Cap the enumeration; the FULL count is missing_count.
         capped = [list(t) for t in missing_tuples[:ENUMERATION_CAP]]
         enumerated = Jsonb(capped)
-    else:  # multiset -> per-key delta mapping
-        enumerated = Jsonb(result["missing_in_right"])
+    else:  # multiset -> per-key delta mapping (positive-delta / access-missing only)
+        # Cap to ENUMERATION_CAP distinct keys; the scalar missing_in_tcc_count
+        # carries the FULL row-count (sum of positive deltas), not truncated.
+        missing_entries = result["missing_in_right"]
+        if len(missing_entries) > ENUMERATION_CAP:
+            capped_keys = list(missing_entries.keys())[:ENUMERATION_CAP]
+            missing_entries = {k: missing_entries[k] for k in capped_keys}
+        enumerated = Jsonb(missing_entries)
 
     _write_antijoin_row(
         pg_conn,
@@ -451,12 +463,19 @@ def _antijoin_keyset_mapped(
     diff = multiset_diff(left_counter, right_counter)
     missing_count = sum(v["delta"] for v in diff.values() if v["delta"] > 0)
     extra_count = sum(-v["delta"] for v in diff.values() if v["delta"] < 0)
+
+    # Separate directions: missing = positive-delta only; extra = negative only.
+    missing_in_right = {k: v for k, v in diff.items() if v["delta"] > 0}
+    extra_in_right = {k: v for k, v in diff.items() if v["delta"] < 0}
+
     return {
         "method": "multiset",
-        "missing_in_right": diff,
-        "extra_in_right": diff,
+        "missing_in_right": missing_in_right,
+        "extra_in_right": extra_in_right,
         "missing_count": missing_count,
         "extra_count": extra_count,
+        # Full count of distinct keys that have ANY discrepancy (both directions).
+        "distinct_discrepant_count": len(diff),
     }
 
 
