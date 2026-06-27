@@ -48,7 +48,7 @@ from typing import Dict, List, Optional
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
-from access_harness.checksum import canonical_row, multiset_diff
+from access_harness.checksum import canonical_row, multiset_diff, table_checksum
 from access_harness.projection import ProjectionMap, assert_key_allowed
 from access_harness.typemap import ColumnType
 
@@ -1053,3 +1053,115 @@ def style_provenance_antijoin(
         "missing_in_tcc_count": len(missing),
         "extra_in_tcc_count": len(extra),
     }
+
+
+# ---------------------------------------------------------------------------
+# reconcile_checksums -- per-table access-vs-staging checksum reconciliation
+# ---------------------------------------------------------------------------
+
+def _read_all_rows(pg_conn, schema: str, table: str, col_names: list) -> list:
+    """SELECT col_names (in order) from schema.table; return list of tuples.
+
+    Reading by the SAME column order used to build col_types guarantees the row
+    tuples align positionally with col_types for canonical_row / table_checksum.
+    """
+    col_ids = sql.SQL(", ").join(sql.Identifier(c) for c in col_names)
+    stmt = sql.SQL("SELECT {cols} FROM {schema}.{table}").format(
+        cols=col_ids, schema=sql.Identifier(schema), table=sql.Identifier(table),
+    )
+    with pg_conn.cursor() as cur:
+        cur.execute(stmt)
+        return [tuple(r) for r in cur.fetchall()]
+
+
+def reconcile_checksums(
+    pg_conn,
+    run_id: str,
+    loaded_tables,
+    col_types_by_table: dict,
+    access_rows_for,
+) -> None:
+    """Record a per-table checksum + the access-vs-staging reconciliation.
+
+    For each table in loaded_tables, compute:
+      * staging checksum = table_checksum(access_raw.<table> rows, col_types)
+      * access  checksum = table_checksum(access_rows_for(table), col_types)
+    using the SAME col_types (the Task-2 symmetric-canonicalization contract).
+    Write access_meta.tables.checksum = staging checksum + load_state='checksummed',
+    and upsert access_validation.checksum_reconciliation (access/staging/matches).
+
+    Purely structural (a hash + a boolean). HR1: records WHAT differs (matches),
+    never opines on whether a mismatch is acceptable. Does NOT raise on mismatch.
+    """
+    for table in loaded_tables:
+        col_types = col_types_by_table[table]
+        col_names = [ct.name for ct in col_types]
+        staging_rows = _read_all_rows(pg_conn, "access_raw", table, col_names)
+        staging_ck = table_checksum(staging_rows, col_types)
+        access_ck = table_checksum(access_rows_for(table), col_types)
+        matches = access_ck == staging_ck
+
+        with pg_conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE access_meta.tables
+                   SET checksum = %s, load_state = 'checksummed'
+                 WHERE run_id = %s AND table_name = %s
+                """,
+                (staging_ck, run_id, table),
+            )
+            cur.execute(
+                """
+                INSERT INTO access_validation.checksum_reconciliation
+                    (run_id, table_name, access_checksum, staging_checksum, matches)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (run_id, table_name) DO UPDATE SET
+                    access_checksum = EXCLUDED.access_checksum,
+                    staging_checksum = EXCLUDED.staging_checksum,
+                    matches = EXCLUDED.matches
+                """,
+                (run_id, table, access_ck, staging_ck, matches),
+            )
+
+
+# ---------------------------------------------------------------------------
+# ChecksumFidelityError + assert_style_parents_faithful (AC-3 fail-closed gate)
+# ---------------------------------------------------------------------------
+
+class ChecksumFidelityError(RuntimeError):
+    """A governed/certified table's access_raw mirror did not round-trip
+    (checksum_reconciliation.matches != True). A mirror that is not byte-faithful
+    must not be certified for population -- fail closed."""
+
+
+def assert_style_parents_faithful(pg_conn, run_id: str) -> None:
+    """Fail closed (AC-3) if any present style parent did not round-trip.
+
+    The 3 BreakerXXXStyles tables are the D4/D5 carriers feeding the 029/030
+    population, so matches=False (or no recorded checksum) there means the mirror
+    is not byte-faithful and must not be certified. The reconciliation evidence is
+    already persisted by reconcile_checksums; this only READS it and raises
+    ChecksumFidelityError naming the offender(s). Style tables not present this run
+    are skipped (not every run loads them).
+    """
+    offenders = []
+    for table in sorted(_ACCESS_STYLE_TABLES.values()):
+        with pg_conn.cursor() as cur:
+            cur.execute(
+                "SELECT 1 FROM information_schema.tables "
+                "WHERE table_schema='access_raw' AND table_name=%s", (table,))
+            if cur.fetchone() is None:
+                continue
+            cur.execute(
+                "SELECT matches FROM access_validation.checksum_reconciliation "
+                "WHERE run_id=%s AND table_name=%s", (run_id, table))
+            row = cur.fetchone()
+        if row is None:
+            offenders.append(f"{table} (no checksum recorded)")
+        elif row[0] is not True:
+            offenders.append(f"{table} (matches={row[0]!r})")
+    if offenders:
+        raise ChecksumFidelityError(
+            "style-parent access_raw mirror is NOT byte-faithful; refusing to "
+            "certify for population. Offending: " + ", ".join(offenders)
+        )

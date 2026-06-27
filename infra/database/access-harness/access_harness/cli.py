@@ -212,9 +212,14 @@ def _frozen_for(args) -> "freeze_mod.FrozenSource":
     return freeze_mod.freeze(accdb, dest)
 
 
-def _load_slice(pg_conn, data_conn, run_id: str, *, with_curves: bool) -> set:
-    """Data-load the breaker/TMT slice into access_raw; return loaded table set."""
+def _load_slice(pg_conn, data_conn, run_id: str, *, with_curves: bool) -> tuple:
+    """Data-load the breaker/TMT slice into access_raw.
+
+    Returns (loaded_table_set, col_types_by_table) so the caller can checksum the
+    loaded tables with the SAME col_types used to load them.
+    """
     loaded = set()
+    col_types_by_table = {}
     for table in SLICE_TABLES:
         if table == CURVES_TABLE and not with_curves:
             # Skip the 1.14M-row curves DATA load; the count-only path produces
@@ -224,8 +229,9 @@ def _load_slice(pg_conn, data_conn, run_id: str, *, with_curves: bool) -> set:
         rows = extract.read_rows(data_conn, table)
         count = load.load_table(pg_conn, table, col_types, rows, run_id)
         loaded.add(table)
+        col_types_by_table[table] = col_types
         print(f"loaded access_raw.{table}: {count} rows")
-    return loaded
+    return loaded, col_types_by_table
 
 
 # ---------------------------------------------------------------------------
@@ -247,10 +253,17 @@ def cmd_load(args) -> int:
         pg_tx = _connect_pg(dsn, autocommit=False)
         try:
             _fence_governed(pg_tx, args)
-            loaded = _load_slice(pg_tx, data_conn, run_id, with_curves=args.with_curves)
+            loaded, col_types_by_table = _load_slice(
+                pg_tx, data_conn, run_id, with_curves=args.with_curves
+            )
+            validate.reconcile_checksums(
+                pg_auto, run_id, sorted(loaded), col_types_by_table,
+                access_rows_for=lambda t: extract.read_rows(data_conn, t),
+            )
         finally:
             pg_tx.close()
             data_conn.close()
+        validate.assert_style_parents_faithful(pg_auto, run_id)
     finally:
         pg_auto.close()
     print(f"run_id: {run_id}; loaded {len(loaded)} slice tables")
@@ -277,12 +290,18 @@ def cmd_inventory(args) -> int:
         data_conn = extract.connect_data(fs.frozen_path)
         ace_conn = extract.connect_ace(fs.frozen_path)
         try:
-            loaded = _load_slice(pg_tx, data_conn, run_id, with_curves=args.with_curves)
+            loaded, col_types_by_table = _load_slice(
+                pg_tx, data_conn, run_id, with_curves=args.with_curves
+            )
             all_tables = extract.list_user_tables(ace_conn)
             count_only = set() if args.with_curves else {CURVES_TABLE}
             inventory.populate_meta(
                 pg_auto, data_conn, ace_conn, run_id, all_tables, loaded,
                 count_only_tables=count_only,
+            )
+            validate.reconcile_checksums(
+                pg_auto, run_id, sorted(loaded), col_types_by_table,
+                access_rows_for=lambda t: extract.read_rows(data_conn, t),
             )
             print(f"inventoried {len(all_tables)} tables; loaded {len(loaded)}")
         finally:
@@ -292,6 +311,7 @@ def cmd_inventory(args) -> int:
             except Exception:
                 pass
             data_conn.close()
+        validate.assert_style_parents_faithful(pg_auto, run_id)
     finally:
         pg_auto.close()
     print(f"run_id: {run_id}")
@@ -449,12 +469,20 @@ def run_all(
     data_conn = extract.connect_data(fs.frozen_path)
     ace_conn = extract.connect_ace(fs.frozen_path)
     try:
-        loaded = _load_slice(pg_tx, data_conn, run_id, with_curves=with_curves)
+        loaded, col_types_by_table = _load_slice(
+            pg_tx, data_conn, run_id, with_curves=with_curves
+        )
         all_tables = extract.list_user_tables(ace_conn)
         count_only = set() if with_curves else {CURVES_TABLE}
         inventory.populate_meta(
             pg_auto, data_conn, ace_conn, run_id, all_tables, loaded,
             count_only_tables=count_only,
+        )
+        # Per-table checksum + access-vs-staging reconciliation (after inventory,
+        # which re-inserts load_state='loaded'; this upgrades it to 'checksummed').
+        validate.reconcile_checksums(
+            pg_auto, run_id, sorted(loaded), col_types_by_table,
+            access_rows_for=lambda t: extract.read_rows(data_conn, t),
         )
     finally:
         try:
@@ -465,6 +493,7 @@ def run_all(
 
     snapshot_id = snapshot_tcc(pg_auto, run_id, TCC_SNAPSHOT_SPEC)
     _run_validation(pg_auto, run_id, snapshot_id)
+    validate.assert_style_parents_faithful(pg_auto, run_id)
 
     return {
         "run_id": run_id,
