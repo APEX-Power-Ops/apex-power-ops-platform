@@ -1,8 +1,10 @@
-# D4/D5 Governed Generation (Phase 2 / D-C) -- Design
+# D4/D5 Governed Generation (Phase 2 / D-C) -- Design (Rev 2)
 
 **Date:** 2026-06-27
 **Lane:** `lvbreaker/tcc-79-d4d5-governed-generation` (off main `6e288120`)
-**Status:** spec for operator ratification (build-only slice; NO prod apply)
+**Status:** Rev 2 (operator review folded: materialized_owner gate, exact per-class manifests,
+temp-stage row-level apply, governed-vs-direct parity regression, explicit no-apply stop line).
+Build-only slice; NO prod apply.
 
 ## Goal
 Replace the Path-B direct-Access dry-run generator with a generator that reads the breaker style
@@ -13,89 +15,142 @@ and the guards are new. This is D-C: generate-from-governed, not direct Access.
 ## Why (the corrected premise, now satisfied)
 Phase 1 materialized a durable, checksum-validated `access_raw` in `tcc_fidelity_governed`
 (run_id `c15adaef-20260608T210440`; ICCB/MCCB/PCB checksum_reconciliation matches=True; key_quality
-ID-unique 608/10335/3279). The prod population SQL must derive from THAT governed mirror (with the
-provenance travelling in the SQL header), not from a re-read of `D:\TCC_NEW.accdb`.
+ID-unique 608/10335/3279). The prod population SQL must derive from THAT governed mirror, with the
+provenance travelling in the SQL header, not from a re-read of `D:\TCC_NEW.accdb`.
 
 ## Source swap (the only logic change)
 - FROM: `access_raw."BreakerICCBStyles"` / `"BreakerMCCBStyles"` / `"BreakerPCBStyles"` in
   `tcc_fidelity_governed` (psycopg).
 - The transform is COPIED VERBATIM from the proven, Codex-converged dry-run generator
   (`infra/database/sandbox/breaker/d4d5-population-dryrun/dry_run_direct_access_population_generator.py`):
-  D4 6-col map (`tmt_tcc_number/tmt_notes/tmt_trip_plug/tmt_breaker_type/tmt_thermal_magnetic/tmt_thermal`
-  <- `TMT_TCCNumber/TMT_Notes/TMT_TripPlug/TMT_BreakerType/TMT_ThermalMagnetic/TMT_Thermal`, ICCB/MCCB
-  only); D5 5-block prefix map (`inst_override`=InstOvr*, `ninst_override`=NInstOvr*, `brk_times`=BrkTimes*,
-  `r_int`=r_int_*, `r_iec`=r_iec_*) keyed by verbatim Access column name; `source_id` = Access `ID`;
-  chunked `UPDATE ... FROM (VALUES ...)` (D4) and `INSERT ... ON CONFLICT (breaker_class,source_id) DO
-  UPDATE` (D5). Verified against the queued DDL: 029 (6 cols x brk_iccb/brk_mccb) + 030
-  (`brk_style_native_overrides`, PK `(breaker_class, source_id)`).
-- NOTE (type fidelity): values now arrive as PG types from `access_raw`, not pyodbc. The block JSONB
-  serializer already coerces Decimal/bytes/datetime. The `InstOvrAmps > 0` real-override metric must
-  numeric-coerce defensively (access_raw may store it as text under the type map). This is a REPORT
-  metric only (policy (a)), so it never drops a row -- but the count must stay honest.
+  D4 6-col map (ICCB/MCCB only); D5 5-block map (`inst_override`=InstOvr*, `ninst_override`=NInstOvr*,
+  `brk_times`=BrkTimes*, `r_int`=r_int_*, `r_iec`=r_iec_*) keyed by verbatim Access column name;
+  `source_id` = Access `ID`; chunked writes. Verified against the queued DDL: 029 (6 cols x
+  brk_iccb/brk_mccb) + 030 (`brk_style_native_overrides`, PK `(breaker_class, source_id)`).
+- Type fidelity: values arrive as PG types from `access_raw`, not pyodbc. `InstOvrAmps` is
+  `double precision` in access_raw, so the `> 0` real-override metric is numerically clean. Other
+  block values keep whatever PG type the harness type-map assigned; the JSONB serializer coerces
+  Decimal/bytes/datetime. A governed-vs-direct parity regression (below) proves no representation drift.
 
 ## Artifacts (separate per migration -- maps to the separate-go apply chain)
-- `029_d4_data.sql`  -- the D4 UPDATEs (brk_iccb_styles + brk_mccb_styles).
-- `030_d5_data.sql`  -- the D5 INSERTs (brk_style_native_overrides).
+- `029_d4_data.sql`  -- D4 staged UPDATEs (brk_iccb_styles + brk_mccb_styles).
+- `030_d5_data.sql`  -- D5 staged INSERTs (brk_style_native_overrides).
 - `generation_report.json` -- per-class counts / D4 non-null per col / D5 block-present / real_override
   / rating_only / samples + the full provenance block.
 
 ## Provenance header (embedded in EACH emitted SQL)
-`run_id`, `snapshot_id`, Access `source_sha256`, `frozen_copy_path`, `driver`, and -- for each table
-that artifact carries -- `row_count`, `checksum`, and `matches`. Plus `generated_at`, `generator_version`,
-and the governed source DB name. The header is a SQL comment block; the integrity it asserts is enforced
-by the gates below at generation time and by the in-tx invariants at apply time.
+`run_id`, `snapshot_id`, governed source DB name, Access `source_sha256`, `frozen_copy_path`,
+`driver`, and -- for each table that artifact carries -- `row_count`, `checksum`, `matches`. Plus
+`generated_at`, `generator_version`. SQL comment block; integrity enforced by the gates (generation
+time) and the in-tx invariants (apply time).
 
-## Fail-closed gates (pre-emit; the generator REFUSES and exits nonzero)
-1. **Wrong source DB:** the read connection `current_database()` must equal `tcc_fidelity_governed`
-   (fence the read before any query). Refuse otherwise.
-2. **run_id missing/ambiguous:** accept an explicit `--run-id`; if omitted, default to the sole row in
-   `access_meta.extraction_run`. Refuse if the requested run_id is absent OR (when none requested) there
-   is not exactly one run.
-3. **Style reconciliation not True:** for EACH of ICCB/MCCB/PCB, `checksum_reconciliation.matches` must
-   be True for this run_id. Refuse otherwise.
-4. **Key quality not unique:** for EACH style parent, `key_quality.is_unique` must be True (candidate
+## Pre-emit fail-closed gates (the generator REFUSES + exits nonzero)
+1. **Wrong source DB:** read connection `current_database()` must equal `tcc_fidelity_governed`
+   (fence before any query).
+2. **run_id missing/ambiguous:** accept explicit `--run-id`; if omitted, default to the sole row in
+   `access_meta.extraction_run`. Refuse if the requested run_id is absent OR (none requested) there is
+   not exactly one run.
+3. **materialized_owner mismatch (NEW -- Rev 2):** for EACH of the 3 style tables,
+   `access_meta.materialized_owner` (layer=`access_raw`, table_name) must equal the SELECTED run_id.
+   This is the load-bearing gate: the harness keeps historical evidence by run_id while `access_raw` is
+   latest-materialized, so an older `--run-id` could otherwise pass historical checksum/key-quality
+   rows while we read NEWER table contents. Refuse on any mismatch (the mixed-evidence class
+   `materialized_owner` exists to close).
+4. **Style reconciliation not True:** for EACH of ICCB/MCCB/PCB, `checksum_reconciliation.matches`
+   must be True for the selected run_id. Refuse otherwise.
+5. **Key quality not unique:** for EACH style parent, `key_quality.is_unique` must be True (candidate
    `['ID']`). Refuse otherwise.
-5. **Required columns absent:** assert the source columns exist in `access_raw` before reading -- the 6
-   D4 Access cols (ICCB/MCCB), the D5 prefix cols (InstOvr*/NInstOvr*/BrkTimes*/r_int_*/r_iec_*), `ID`,
-   and `InstOvrAmps`. Refuse if any required column is missing.
+6. **Required columns absent (EXACT manifest -- Rev 2):** assert every column in the per-class manifest
+   (Appendix A) is present in `access_raw` -- an explicit enumerated list, NOT a prefix wildcard, so a
+   single vanished `InstOvr*`/`r_int_*` field is caught while sibling fields remain. PCB's extra
+   `r_int_ninst_*` (3) and `r_iec_ninst_*` (11) are represented intentionally. Refuse on any missing
+   column. (The manifest is pinned from the governed `access_raw` schema and committed as a constant.)
 
 ## Policy (a) preserved (operator-ratified)
 Carry the raw override/timing/rating blocks VERBATIM. `InstOvrAmps > 0` is a REPORT metric only, never
-a filter. Rating-only styles (no real override, ratings present) are retained. One row per style with
->= 1 non-null D5 block (~14222 total).
+a filter. Rating-only styles retained. One row per style with >= 1 non-null D5 block (~14222 total).
 
-## Guard strategy -- DECISION D1 (lean: A)
-The emitted DATA SQL is the PROD-bound artifact (the SAME file is dry-run on a clone, then applied to
-prod governed `tcc` on the gate -- exactly the 027/028 model).
-- **A (lean):** DROP the dry-run-only `current_database() LIKE '%dryrun%'` name lock. Guard the prod
-  artifact with 027/028-style IN-TX invariants instead: assert the 029/030 DDL is present (target
-  columns/table exist) before writing; assert the source row counts in the header match the live
-  pre-write state expectations (608/10335/3279); keep the ON CONFLICT upsert for idempotency. The
-  dry-run validates this exact SQL on a fresh clone (DDL applied first); prod apply via `apply_migration`
-  preflight on the gate. Rationale: a `%dryrun%` lock would block the prod apply, and 027/028 already
-  proved the invariant-guard + gated-preflight model.
-- **B:** Emit two variants (a `%dryrun%`-locked dry-run SQL + an unlocked prod SQL). More artifacts,
-  divergent text to keep in sync; rejected unless you prefer a hard name-lock on the dry-run copy.
+## Apply pattern -- D1 = A (ratified), with row-level guards (Rev 2)
+The emitted DATA SQL is the SINGLE prod-bound artifact (same file dry-run on a clone, then applied to
+prod governed `tcc` on the gate -- the 027/028 model). NO `%dryrun%` name lock; NO divergent variants.
+Counts alone are insufficient for data SQL (IDs/classes can diverge while counts match), so each
+artifact uses a TEMP-STAGE + ROW-LEVEL-COVERAGE pattern, all inside one `BEGIN; ... COMMIT;` with
+`ON_ERROR_STOP` and an in-tx DO-guard so a RAISE aborts every following write even under `psql -f`:
+
+**029 (D4):** stage `(source_id, tmt_*)` rows into a TEMP table, then assert before writing:
+- stage row count == the header D4 count for that class;
+- no duplicate `source_id` in stage;
+- DDL present: the 6 `tmt_*` target columns exist on `tcc.brk_<class>_styles` (029 DDL applied);
+- coverage: EVERY stage `source_id` joins EXACTLY ONE `tcc.brk_<class>_styles` row (anti-join empty;
+  `source_id` is UNIQUE per mig 007).
+Then `UPDATE ... FROM stage`; assert rows-updated == stage count.
+
+**030 (D5):** stage `(breaker_class, source_id, inst_override, ninst_override, brk_times, r_int, r_iec)`
+into a TEMP table, then assert:
+- stage row count == the header D5 count (per-class and total);
+- no duplicate `(breaker_class, source_id)` in stage;
+- DDL present: `tcc.brk_style_native_overrides` exists with the PK `(breaker_class, source_id)`;
+- coverage: EVERY stage `(breaker_class, source_id)` joins the corresponding `tcc.brk_<class>_styles`
+  by `source_id` (anti-join empty) -- the side table is not a declared FK, so the SQL asserts coverage.
+Then `INSERT ... SELECT FROM stage ON CONFLICT (breaker_class, source_id) DO UPDATE` (idempotent);
+assert inserted+updated == stage count.
+
+The dry-run validates this exact SQL on a fresh clone (029/030 DDL applied first); prod apply via
+`apply_migration` preflight on the gate.
 
 ## Dry-run (after build, before any apply decision)
 Fresh dated clone off `tcc_breaker_baseline_20260625` (e.g. `tcc_breaker_d4d5_gen_<date>`), NOT the
 79audit clone. Apply 029 DDL + 030 DDL, then the generated 029/030 data SQL. Verify: counts
-608/10335/3279 (D5 total 14222), real_override 241/129/317, rating_only retained (13533), idempotent
-double-apply stable, and the provenance header matches the governed run.
+608/10335/3279 (D5 total 14222), real_override 241/129/317, rating_only retained (13533), all
+row-level assertions pass, idempotent double-apply stable, provenance header matches the governed run.
 
-## Review
-Codex `apex-jobs review-run` + opus whole-slice, before any prod apply decision. Convergence-bounded.
+## Testing (TDD) -- includes the governed-vs-direct parity regression (Rev 2)
+- Gate unit tests: each of the 6 pre-emit gates refuses on its own violation (wrong DB, absent/ambiguous
+  run_id, materialized_owner mismatch, a forced matches=False, a forced non-unique key, a dropped
+  manifest column) and passes on the clean governed state.
+- **Parity regression:** generate from governed access_raw AND from the frozen direct-Access read for
+  the same frozen sha; assert IDENTICAL per-class counts (D4 update / D5 insert / real_override /
+  rating_only) and identical representative JSON block shape (key set + value representation, incl.
+  Decimal/text/numeric and the InstOvrAmps coercion). Proves the source swap introduced no drift.
+- Row-level apply assertions exercised against a disposable test DB (TDD on `tcc_fidelity_test` for the
+  generator; the full clone dry-run is the live acceptance).
+
+## STOP LINE (explicit -- Rev 2)
+029/030 are STILL NOT applied to prod by this slice. The deliverable is the generator + the two
+generated SQL artifacts + the clone dry-run evidence + the Codex/opus review record. Prod apply waits
+for SEPARATE operator gos, in order: 029 DDL -> governed 029 data -> 030 DDL -> governed 030 data.
 
 ## Out of scope
-- Prod apply of 029/030 (separate operator gos, in order: 029 DDL -> governed 029 data -> 030 DDL ->
-  governed 030 data).
+- Prod apply of 029/030 (separate gos, above).
 - `031` view-transition (authored AFTER population; carries the 028 frame_counts perf-fix).
 - F-79-03 row-level frame anti-join (separate, parked Access-evidence track).
 
-## Decisions for ratification
-- **D1 -- guard strategy:** A (invariant + count-assert guards on the prod artifact; no `%dryrun%`
-  name lock; dry-run validates on the clone). Lean A.
+## Decisions
+- **D1 -- apply pattern: RATIFIED A** -- single prod-bound artifact, no `%dryrun%` lock, guarded by
+  the temp-stage row-level invariants above (not counts alone); dry-run validates on the clone.
 - **D2 -- run_id selection:** default to the sole `extraction_run` row, accept explicit `--run-id`,
-  refuse if absent/ambiguous. (Confirmation -- implied by the contract.)
-- **D3 -- artifact split:** separate `029_d4_data.sql` + `030_d5_data.sql`. (Confirmation -- implied by
-  the separate-go chain.)
+  refuse if absent/ambiguous. Confirmed.
+- **D3 -- artifact split:** separate `029_d4_data.sql` + `030_d5_data.sql`. Confirmed.
+
+## Appendix A -- exact per-class required-column manifest (pinned from governed `access_raw` 2026-06-27)
+Common to ALL three classes: `ID` (integer), `InstOvrAmps` (double precision).
+D5 blocks (verbatim Access names):
+- `InstOvr*` (16, all classes): InstOvrAmps, InstOvrMinTolerance, InstOvrMaxTolerance, InstOvrClrDelayTime,
+  InstOvrClrRadius, InstOvrOpnDelayTime, InstOvrOpnRadius, InstOvrNoteText, InstOvrClrCurve, InstOvrClrChar,
+  InstOvrCurveCalcClr, InstOvrClrEnteredAt, InstOvrOpenCurve, InstOvrOpenChar, InstOvrCurveCalcOpen,
+  InstOvrOpenEnteredAt.
+- `NInstOvr*` (15, all classes): NInstOvrAmps, NInstOvrMinTolerance, NInstOvrMaxTolerance,
+  NInstOvrClrDelayTime, NInstOvrClrRadius, NInstOvrOpnDelayTime, NInstOvrOpnRadius, NInstOvrClrCurve,
+  NInstOvrClrChar, NInstOvrCurveCalcClr, NInstOvrClrEnteredAt, NInstOvrOpenCurve, NInstOvrOpenChar,
+  NInstOvrCurveCalcOpen, NInstOvrOpenEnteredAt.
+- `BrkTimes*` (4, all classes): BrkTimesMechOpening50, BrkTimesMechOpening60, BrkTimesSTDelayBand50,
+  BrkTimesSTDelayBand60.
+- `r_int_*`: ICCB/MCCB (6): r_int_inst_240/480/600, r_int_series_240/480/600. PCB (9): the 6 +
+  r_int_ninst_240/480/600.
+- `r_iec_*`: ICCB/MCCB (11): r_iec_inst_220/230/240/380/400/415/440/500/550/690/1000. PCB (22): the 11 +
+  r_iec_ninst_220/230/240/380/400/415/440/500/550/690/1000.
+D4 (ICCB/MCCB ONLY; PCB has none): TMT_TCCNumber, TMT_Notes, TMT_TripPlug, TMT_BreakerType,
+TMT_ThermalMagnetic, TMT_Thermal.
+Per-class D5 block-col totals: ICCB/MCCB = 52; PCB = 66. (Non-carried cols excluded by design:
+BreakerID, Style, Ordinal, r_cont_current, c_testing_std, TMT_Use_SST, TMT_SST_Mfr, TMT_SST_Type,
+TMT_SST_Style.)
