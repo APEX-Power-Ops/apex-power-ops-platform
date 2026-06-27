@@ -157,7 +157,10 @@ for cls, atbl, ptbl, has_d4 in CLASSES:
             sql_parts.append(
                 "INSERT INTO tcc.brk_style_native_overrides "
                 "(breaker_class,source_id,inst_override,ninst_override,brk_times,r_int,r_iec,ovr_curves) "
-                "VALUES %s;" % ",".join(vals))
+                "VALUES %s "
+                "ON CONFLICT (breaker_class,source_id) DO UPDATE SET inst_override=EXCLUDED.inst_override, "
+                "ninst_override=EXCLUDED.ninst_override, brk_times=EXCLUDED.brk_times, r_int=EXCLUDED.r_int, "
+                "r_iec=EXCLUDED.r_iec, ovr_curves=EXCLUDED.ovr_curves;" % ",".join(vals))
 
     report["classes"][cls] = {
         "access_table": atbl, "pg_table": ptbl, "total_styles": len(rows),
@@ -177,11 +180,15 @@ guard = (
     "-- dry_run_direct_access_population.sql  (Path B, DRY-RUN ONLY — NOT prod population)\n"
     "-- Source: FROZEN copy of D:\\TCC_NEW.accdb sha256=%s\n"
     "-- Target: a disposable *dryrun* sandbox clone ONLY. Governed custody (Path A) stays the prod standard.\n"
+    "\\set ON_ERROR_STOP on\n"
     "SET client_encoding='UTF8';\nSET standard_conforming_strings=on;\n"
+    "BEGIN;\n"
+    "-- Guard runs INSIDE the txn so a RAISE aborts it and EVERY following write is skipped even when the\n"
+    "-- client does NOT stop on error (psql -f without ON_ERROR_STOP) (Codex review-a1b41b2c).\n"
     "DO $guard$ BEGIN\n"
     "  IF current_database() NOT LIKE '%%dryrun%%' THEN\n"
     "    RAISE EXCEPTION 'dry_run_direct_access_population REFUSES: current_database()=%% is not a *dryrun* sandbox clone', current_database();\n"
-    "  END IF;\nEND $guard$;\nBEGIN;\n" % report["frozen_source"]["sha256"]
+    "  END IF;\nEND $guard$;\n" % report["frozen_source"]["sha256"]
 )
 with open(OUT_SQL, "w", encoding="utf-8") as f:
     f.write(guard)
