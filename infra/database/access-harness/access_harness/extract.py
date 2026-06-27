@@ -24,14 +24,17 @@ CRITICAL DRIVER FACT (verified on this machine, 2026-06-26):
   monkeypatch trap -- that none of the forbidden methods are ever called.
 
 SURROGATE-TOLERANT DECODING:
-  Some text columns in the real data contain lone UTF-16 surrogates that the
-  default pyodbc decoder cannot round-trip (raises UnicodeDecodeError on data
-  reads).  connect_data() registers a custom WCHAR decoder
-  (utf-16-le / surrogatepass) so read_rows() never crashes on such cells.
-  This affects DATA reads only; the metadata functions probe empty rowsets
-  (WHERE 1=0) and are unaffected.
+  Some text columns in the real data could contain lone UTF-16 surrogates that
+  a plain utf-16-le decoder cannot round-trip (it raises UnicodeDecodeError on
+  the data read).  pyodbc's setdecoding() in this version exposes no errors=
+  argument, so connect_data() instead registers OUTPUT CONVERTERS for the wide
+  text SQL types (SQL_WCHAR / SQL_WVARCHAR / SQL_WLONGVARCHAR): the driver hands
+  back the raw little-endian UTF-16 bytes and we decode them ourselves with
+  errors='surrogatepass', so a lone-surrogate cell survives instead of crashing
+  read_rows().  This affects DATA reads only; the metadata functions probe empty
+  rowsets (WHERE 1=0) and are unaffected.
 """
-from typing import Iterator, Optional
+from typing import Iterator
 
 import pyodbc
 
@@ -58,17 +61,40 @@ def _odbc_conn_str(path: str) -> str:
     )
 
 
+# Wide-text SQL types whose values arrive as raw UTF-16-LE bytes from the
+# Access driver.  We decode them ourselves (errors='surrogatepass') so a lone
+# surrogate in a data cell cannot crash the read.
+_WIDE_TEXT_SQL_TYPES = (
+    pyodbc.SQL_WCHAR,
+    pyodbc.SQL_WVARCHAR,
+    pyodbc.SQL_WLONGVARCHAR,
+)
+
+
+def _decode_wide_surrogatepass(raw: bytes):
+    """Decode driver-supplied UTF-16-LE bytes, tolerating lone surrogates.
+
+    pyodbc passes the raw bytes for the registered SQL types to this output
+    converter.  Plain utf-16-le raises UnicodeDecodeError on a lone surrogate;
+    errors='surrogatepass' preserves it so read_rows() never crashes.
+    """
+    if raw is None:
+        return None
+    return raw.decode("utf-16-le", errors="surrogatepass")
+
+
 def connect_data(path: str) -> pyodbc.Connection:
     """Open a READ-ONLY pyodbc connection to an .accdb / .mdb file.
 
-    Registers a surrogate-tolerant WCHAR decoder so that data rows containing
-    lone UTF-16 surrogates do not raise UnicodeDecodeError on read.
+    Registers surrogate-tolerant OUTPUT CONVERTERS for the wide text SQL types
+    so that data rows containing lone UTF-16 surrogates are decoded with
+    errors='surrogatepass' instead of raising UnicodeDecodeError on read.
+    (pyodbc.setdecoding() exposes no errors= argument in this version, so the
+    tolerance is applied in the converter, not via setdecoding.)
     """
     conn = pyodbc.connect(_odbc_conn_str(path), readonly=True)
-    # Decode wide text as utf-16-le with surrogatepass so lone surrogates in
-    # the real data survive the round trip instead of crashing the reader.
-    conn.setdecoding(pyodbc.SQL_WCHAR, encoding="utf-16-le")
-    conn.setdecoding(pyodbc.SQL_WMETADATA, encoding="utf-16-le")
+    for sql_type in _WIDE_TEXT_SQL_TYPES:
+        conn.add_output_converter(sql_type, _decode_wide_surrogatepass)
     return conn
 
 
