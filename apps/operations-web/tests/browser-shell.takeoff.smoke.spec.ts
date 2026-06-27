@@ -106,8 +106,9 @@ test('re-applying an already-asserted tag does not produce a duplicate-tag error
     page.getByRole('button', { name: 'partial preview - NOT a complete bid' }).click(),
   ])
   const dlPath = await download.path()
-  if (dlPath) {
-    const parsed = JSON.parse(fs.readFileSync(dlPath, 'utf-8'))
+  expect(dlPath).toBeTruthy()
+  {
+    const parsed = JSON.parse(fs.readFileSync(dlPath!, 'utf-8'))
     const assertions: Array<{ voltageV: number; tags: string[] }> =
       parsed.artifact?.voltageAssertions ?? []
     // Count occurrences of each tag - must be <=1 per tag
