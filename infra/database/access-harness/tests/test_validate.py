@@ -14,6 +14,7 @@ map.
 import pytest
 
 from access_harness.projection import ForbiddenKeyError
+from access_harness.typemap import ColumnType
 from access_harness.validate import (
     antijoin_keyset,
     antijoin_vs_tcc,
@@ -785,3 +786,190 @@ def test_validate_partial_tcc_snapshot_subset_reads_stale_table_raises(pg):
         )
         (n,) = cur.fetchone()
     assert n == 1, "snapshot S1 must validate cleanly against tmt_amps"
+
+
+# ---------------------------------------------------------------------------
+# Task 2: reconcile_checksums + assert_style_parents_faithful
+# ---------------------------------------------------------------------------
+
+def _ct(name, pg_type="integer"):
+    """A minimal ColumnType for checksum canonicalization in tests."""
+    return ColumnType(
+        access_type="", pg_type=pg_type, nullable=True, size=None,
+        precision=None, round_trippable=True, name=name,
+    )
+
+
+def _seed_loaded_table(pg_conn, run_id, table, staging_count):
+    with pg_conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO access_meta.tables
+                (run_id, table_name, object_type, load_state,
+                 access_row_count, staging_row_count, tcc_build_kind)
+            VALUES (%s, %s, 'TABLE', 'loaded', %s, %s, '1:1_load')
+            ON CONFLICT (run_id, table_name) DO UPDATE SET load_state='loaded'
+            """,
+            (run_id, table, staging_count, staging_count),
+        )
+
+
+def test_reconcile_checksums_match(pg):
+    """Identical access + staging rows -> matches=True, checksum recorded,
+    load_state='checksummed', access_checksum == staging_checksum."""
+    from access_harness.validate import reconcile_checksums
+
+    run_id = _seed_run(pg, "run-cksum-match")
+    with pg.cursor() as cur:
+        cur.execute('CREATE TABLE access_raw."T1" (a integer, b integer)')
+        cur.executemany(
+            'INSERT INTO access_raw."T1" (a, b) VALUES (%s, %s)',
+            [(1, 10), (2, 20), (3, 30)],
+        )
+    _seed_loaded_table(pg, run_id, "T1", 3)
+
+    col_types = {"T1": [_ct("a"), _ct("b")]}
+    access_rows = {"T1": [(1, 10), (2, 20), (3, 30)]}  # identical -> match
+
+    reconcile_checksums(pg, run_id, ["T1"], col_types,
+                        access_rows_for=lambda t: access_rows[t])
+
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT access_checksum, staging_checksum, matches "
+            "FROM access_validation.checksum_reconciliation "
+            "WHERE run_id=%s AND table_name=%s", (run_id, "T1"))
+        access_ck, staging_ck, matches = cur.fetchone()
+        cur.execute(
+            "SELECT checksum, load_state FROM access_meta.tables "
+            "WHERE run_id=%s AND table_name=%s", (run_id, "T1"))
+        meta_ck, state = cur.fetchone()
+
+    assert matches is True
+    assert access_ck == staging_ck
+    assert meta_ck == staging_ck and meta_ck is not None
+    assert state == "checksummed"
+
+
+def test_reconcile_checksums_mismatch_records_not_raises(pg):
+    """Differing access vs staging -> matches=False, both checksums recorded and
+    distinct, no exception (HR1: records the discrepancy, never opines)."""
+    from access_harness.validate import reconcile_checksums
+
+    run_id = _seed_run(pg, "run-cksum-mismatch")
+    with pg.cursor() as cur:
+        cur.execute('CREATE TABLE access_raw."T2" (a integer)')
+        cur.executemany('INSERT INTO access_raw."T2" (a) VALUES (%s)',
+                        [(1,), (2,), (3,)])
+    _seed_loaded_table(pg, run_id, "T2", 3)
+
+    col_types = {"T2": [_ct("a")]}
+    access_rows = {"T2": [(1,), (2,), (999,)]}  # one differing row
+
+    reconcile_checksums(pg, run_id, ["T2"], col_types,
+                        access_rows_for=lambda t: access_rows[t])
+
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT access_checksum, staging_checksum, matches "
+            "FROM access_validation.checksum_reconciliation "
+            "WHERE run_id=%s AND table_name=%s", (run_id, "T2"))
+        access_ck, staging_ck, matches = cur.fetchone()
+    assert matches is False
+    assert access_ck != staging_ck
+    assert access_ck and staging_ck
+
+
+def test_reconcile_checksums_only_processes_listed_tables(pg):
+    """Tables NOT in loaded_tables get no checksum row (count-only/unloaded are
+    excluded by the caller)."""
+    from access_harness.validate import reconcile_checksums
+
+    run_id = _seed_run(pg, "run-cksum-skip")
+    with pg.cursor() as cur:
+        cur.execute('CREATE TABLE access_raw."Kept" (a integer)')
+        cur.execute('INSERT INTO access_raw."Kept" (a) VALUES (1)')
+    _seed_loaded_table(pg, run_id, "Kept", 1)
+
+    reconcile_checksums(pg, run_id, ["Kept"], {"Kept": [_ct("a")]},
+                        access_rows_for=lambda t: [(1,)])
+
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM access_validation.checksum_reconciliation "
+            "WHERE run_id=%s", (run_id,))
+        (n,) = cur.fetchone()
+    assert n == 1, "only the one listed table should be checksummed"
+
+
+def test_reconcile_checksums_type_roundtrip(pg):
+    """AC-3: diverse column types round-trip through a REAL access_raw readback so
+    the access-side and staging-side canonicalize identically (matches=True)."""
+    from datetime import date, datetime
+    from decimal import Decimal
+    from access_harness.validate import reconcile_checksums
+
+    run_id = _seed_run(pg, "run-cksum-types")
+    with pg.cursor() as cur:
+        cur.execute(
+            'CREATE TABLE access_raw."Typed" ('
+            '"i" integer, "f" double precision, "n" numeric, "d" date, '
+            '"ts" timestamp, "b" boolean, "by" bytea, "t" text)'
+        )
+        rows = [
+            (1, 1.5, Decimal("2.50"), date(2026, 6, 27),
+             datetime(2026, 6, 27, 12, 0, 0), True, b"\x01\x02\xff", "memo text"),
+            (None, None, None, None, None, None, None, None),
+        ]
+        cur.executemany(
+            'INSERT INTO access_raw."Typed" '
+            '("i","f","n","d","ts","b","by","t") VALUES (%s,%s,%s,%s,%s,%s,%s,%s)',
+            rows,
+        )
+    _seed_loaded_table(pg, run_id, "Typed", len(rows))
+    col_types = {"Typed": [
+        _ct("i", "integer"), _ct("f", "double precision"), _ct("n", "numeric"),
+        _ct("d", "date"), _ct("ts", "timestamp"), _ct("b", "boolean"),
+        _ct("by", "bytea"), _ct("t", "text"),
+    ]}
+    # access-side rows == the SAME logical values; a faithful round-trip -> match.
+    reconcile_checksums(pg, run_id, ["Typed"], col_types,
+                        access_rows_for=lambda t: list(rows))
+
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT matches FROM access_validation.checksum_reconciliation "
+            "WHERE run_id=%s AND table_name=%s", (run_id, "Typed"))
+        (matches,) = cur.fetchone()
+    assert matches is True, (
+        "diverse-typed access vs staging readback must canonicalize identically")
+
+
+def test_assert_style_parents_faithful_gate(pg):
+    """AC-3: the gate raises when a present style parent has matches=False (or no
+    recorded checksum), and is a no-op when all present style parents match."""
+    from access_harness.validate import (
+        ChecksumFidelityError, assert_style_parents_faithful, reconcile_checksums,
+    )
+
+    run_id = _seed_run(pg, "run-style-gate")
+    with pg.cursor() as cur:
+        cur.execute('CREATE TABLE access_raw."BreakerICCBStyles" ("ID" integer)')
+        cur.executemany(
+            'INSERT INTO access_raw."BreakerICCBStyles" ("ID") VALUES (%s)',
+            [(1,), (2,)],
+        )
+    _seed_loaded_table(pg, run_id, "BreakerICCBStyles", 2)
+
+    # Faithful -> gate passes.
+    reconcile_checksums(pg, run_id, ["BreakerICCBStyles"],
+                        {"BreakerICCBStyles": [_ct("ID")]},
+                        access_rows_for=lambda t: [(1,), (2,)])
+    assert_style_parents_faithful(pg, run_id)  # must not raise
+
+    # Force a mismatch -> gate raises, naming the offending table.
+    reconcile_checksums(pg, run_id, ["BreakerICCBStyles"],
+                        {"BreakerICCBStyles": [_ct("ID")]},
+                        access_rows_for=lambda t: [(1,), (999,)])
+    with pytest.raises(ChecksumFidelityError, match="BreakerICCBStyles"):
+        assert_style_parents_faithful(pg, run_id)
