@@ -1,0 +1,24 @@
+{
+  "pdf": "takeoff-reassert-demo.pdf",
+  "apparatus": [
+    {
+      "raw": "FB-1 400AF/300AT LSI",
+      "tag": "FB-1",
+      "sheet": "E1",
+      "page": 0,
+      "bbox": [0, 0, 1, 1],
+      "evidence": "one-line",
+      "block": "P1"
+    },
+    {
+      "raw": "FB-2 400AF/300AT LSI",
+      "tag": "FB-2",
+      "sheet": "E1",
+      "page": 0,
+      "bbox": [0, 0, 1, 1],
+      "evidence": "one-line",
+      "block": "P1"
+    }
+  ],
+  "voltageAssertions": []
+}

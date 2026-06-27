@@ -28,6 +28,7 @@ const routeChecks = [
   { path: '/pm-review/finance-placeholder', marker: 'Finance is open only as a placeholder design branch.' },
   { path: '/pm-review/customer-billing-placeholder', marker: 'Customer billing delivery stays blocked as a placeholder downstream branch.' },
   { path: '/pm-review/source-writeback-placeholder', marker: 'Source writeback stays blocked as a placeholder downstream branch.' },
+  { path: '/takeoff', marker: 'Takeoff Gate 1' },
 ];
 
 function parseArgs(argv) {
