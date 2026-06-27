@@ -28,7 +28,7 @@ The D4/D5 questions below are now ANSWERED from the decompiled engine (`EasyPowe
 
 Source tables: `BreakerICCBStyles`, `BreakerMCCBStyles` (ICCB/MCCB only; not PCB).
 Target (proposed): `tcc.brk_iccb_styles`, `tcc.brk_mccb_styles`.
-G1 status: **LIKELY DROPPED** - co-located with the D1 `TMT_*`/`SST_*` block, dropped by the same name-vs-id loader assumption; not individually live-confirmed `[OPEN-VALIDATION] [INFERENCE]`.
+G1 status: **SUPERSEDED 2026-06-27 - now CONFIRMED DROPPED + CHARACTERIZED (G1 sec 5 D4).** Decodes + consumption are settled (see RESOLUTION above); the table + questions below are retained as OPTIONAL Access ratification only. (Original template status: LIKELY DROPPED `[OPEN-VALIDATION]`.)
 G1 role: describe the **thermal-magnetic alternative** used when `TMT_Use_SST = 0`, and decode the TMT breaker sub-type.
 
 | column | provisional meaning (G1) | provenance | [CONFIRM-FROM-ACCESS] |
@@ -40,7 +40,7 @@ G1 role: describe the **thermal-magnetic alternative** used when `TMT_Use_SST = 
 | `TMT_ThermalMagnetic` | `0 = With Adjustable Instantaneous`, `1 = Without adj instantaneous` (G1 sec 3, `[DVL-DB]`) | `[DVL-DB]` | confirm decode; interaction with `TMT_TripPlug` |
 | `TMT_Thermal` | RESOLVED: the ICCB-class spelling of `TMT_ThermalMagnetic` (`0 = With Adjustable Instantaneous, 1 = Without`); the engine reads it on ICCB, binds to `TMTThermalMagnetic` | `[DLL]` `[DVL-DB]` | (resolved - G1 sec 3.1 split) |
 
-D4 questions for the operator (the behavior note proper):
+D4 questions (RESOLVED 2026-06-27 from the engine - see RESOLUTION + G1 sec 3.1/3.4; retained for reference, answers now in G1):
 1. **Source query/keys:** Which saved Access queries (if any) read these columns? G1 sec 4 notes zero saved queries walk the TMT joins (the engine resolves them in `DeviceLibrary.cs` application code) - confirm, and name the DLL reader(s) that consume D4 (analogous to `ReadTmgn*`).
 2. **Downstream use:** When `TMT_Use_SST = 0`, how does the engine use D4 to characterize/serve the TMT breaker (curve selection, rating, sub-type display)? What breaks today in lvbreakertcc by their absence (vs only in the broader calc engine)?
 3. **Scope:** Is D4 needed for the lvbreakertcc serving contract, or only for full calc-engine fidelity? (028 currently surfaces `d4_tmt_helper_columns_absent_from_projection` as a hazard string only.)
@@ -52,17 +52,17 @@ D4 questions for the operator (the behavior note proper):
 
 Source tables: `BreakerICCBStyles`, `BreakerMCCBStyles`, `BreakerPCBStyles`.
 Target (proposed): `tcc.brk_{iccb,mccb,pcb}_styles`.
-G1 status: **DEFERRED** - known deferred item (G0 sec 4 inst-override) `[DEFERRED] [INFERENCE]`.
+G1 status: **SUPERSEDED 2026-06-27 - now DEFERRED (serving) + `[NATIVE-BOUNDED]` (data) (G1 sec 5 D5).** The `N` prefix (= Non-Instantaneous) + the full column inventory are RESOLVED (see RESOLUTION above + G1 sec 3.4); the table + questions below are OPTIONAL ratification. (Original: DEFERRED `[INFERENCE]`.)
 G1 role: frame-limited instantaneous override + mechanism timing + interrupt ratings.
 
 | column block | provisional meaning (G1) | provenance | [CONFIRM-FROM-ACCESS] |
 |---|---|---|---|
 | `InstOvr*` (approx 16 cols) | instantaneous-override block: amps / tolerances / open-clear delay + radius | `[DEFERRED] [INFERENCE]` | full column list + per-column meaning + units |
-| `NInstOvr*` (approx 16 cols) | the `N`-variant inst-override block (negative? neutral? new?) - meaning of the `N` prefix unknown | `[INFERENCE]` | what `N` denotes; relationship to `InstOvr*` |
+| `NInstOvr*` (15 cols) | RESOLVED: the **Non-Instantaneous** variant of `InstOvr*` (breaker with instantaneous defeated / short-time-only); defaults to `InstOvr*` when N cols absent (G1 sec 3.4) | `[NATIVE-BOUNDED]` | (resolved) |
 | `BrkTimes*50/60` | mechanism timing at 50/60 Hz | `[INFERENCE]` | exact columns; units; engine use |
 | `r_int_*` / `r_iec_*` | LV interrupt-rating columns (ANSI vs IEC) | `[INFERENCE]` | full list; needed for rating display? |
 
-D5 questions for the operator:
+D5 questions (RESOLVED 2026-06-27 from the engine - see RESOLUTION + G1 sec 3.4; retained for reference, answers now in G1):
 1. **Source/keys:** which Access tables/columns exactly (the `InstOvr*`/`NInstOvr*` blocks are undescribed in G1 - need the real column list), keyed on `Breaker*Styles.ID`.
 2. **Downstream use:** the inst-override mechanism (per G0 sec 4) - how does the engine apply these to the instantaneous trip band / curve? Is it per-frame or per-style?
 3. **Scope/priority:** D5 is the larger, more deferred block. Confirm it is NOT needed for the current lvbreakertcc nominal-curve serving (028 surfaces `d5_inst_override_columns_absent_from_projection` as a hazard string only), and rank it for a future fidelity slice.
@@ -125,12 +125,12 @@ domain is projected): `BreakerHVStyles.Notes`, `DatStyle.NOTES`, `MOCStyles.NOTE
 
 ---
 
-## Gate: design projection ONLY after this note is filled
+## Gate (SUPERSEDED 2026-06-27)
 
-Once the [CONFIRM-FROM-ACCESS] cells and the per-block questions are answered from Access authority, the projection design follows the D1 precedent:
-1. Carry source-faithful values on `brk_*_styles`, keyed on the existing `source_id` (Access `.ID`), name-faithful (no load-time FK coercion).
-2. Decode enums at query time using the confirmed dictionary.
-3. Surface via a view (analogous to `vw_breaker_sst_bridge`), with field-trust tagging.
+The structural/engine answers are RESOLVED (see RESOLUTION above + G1 sec 3.1/3.4/5) - the projection / data-carry design **no longer waits** on filling this template. The data-carry design is settled (`VOCABULARY_MAP.md` Lane-2 plan) and follows the D1 precedent:
+1. Carry source-faithful values on `brk_*_styles` (D4) / a `native_bounded` side table keyed `(breaker_class, source_id)` (D5), keyed on `source_id`, name-faithful (no load-time FK coercion), **lower_snake_case target columns with `COMMENT` preserving the Access names**.
+2. Decode enums at query time using the confirmed dictionary (G1 sec 3.1).
+3. Surface D4 via a view (analogous to `vw_breaker_sst_bridge`) with field-trust tagging; D5 raw stays reference-only (NOT wired to serving).
 4. The 028 projection-hazard strings (`d4_*`, `d5_*`) become resolvable once the columns are carried.
 
-This note does not design that projection. It captures the authority needed to design it correctly, and nothing here is treated as settled until the operator confirms it from Access.
+**The ONLY remaining operator inputs** are the SCOPE CUT-LINE (which of D4/D5 wires into the serving contract vs stays `native_bounded` reference vs `deferred`), the `canonical_term` drafts (`VOCABULARY_MAP.md`), and optional Access ratification of the `[CONFIRM-FROM-ACCESS]` cells. None blocks the data-carry.
