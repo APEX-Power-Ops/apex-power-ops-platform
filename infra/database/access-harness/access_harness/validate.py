@@ -295,12 +295,44 @@ def _access_count(pg_conn, access_table: str) -> int:
     return int(n)
 
 
+def _access_count_or_meta(pg_conn, run_id: str, access_table: str) -> Optional[int]:
+    """Access-side row count, preferring the materialised access_raw table.
+
+    Returns count(*) from access_raw.<access_table> when that table exists
+    (it was data-loaded).  When it does NOT exist (e.g. curves was deliberately
+    NOT data-loaded -- the count-only path), falls back to the row count
+    inventory recorded in access_meta.tables.access_row_count for this run.
+    Returns None if neither is available (honest absence -- never a fabricated 0).
+    """
+    # access_raw table present?
+    with pg_conn.cursor() as cur:
+        cur.execute(
+            "SELECT 1 FROM information_schema.tables "
+            "WHERE table_schema='access_raw' AND table_name=%s",
+            (access_table,),
+        )
+        present = cur.fetchone() is not None
+    if present:
+        return _access_count(pg_conn, access_table)
+    # fall back to the inventory-recorded access_row_count
+    with pg_conn.cursor() as cur:
+        cur.execute(
+            "SELECT access_row_count FROM access_meta.tables "
+            "WHERE run_id=%s AND table_name=%s",
+            (run_id, access_table),
+        )
+        row = cur.fetchone()
+    return int(row[0]) if row is not None and row[0] is not None else None
+
+
 def antijoin_vs_tcc(
     pg_conn,
     run_id: str,
     snapshot_id: str,
     access_table: str,
     access_key_cols: List[str],
+    *,
+    numeric_keys: bool = False,
 ) -> None:
     """Write ONE access_validation.antijoin_vs_tcc row of structural evidence.
 
@@ -322,13 +354,27 @@ def antijoin_vs_tcc(
         capped (<= ENUMERATION_CAP) jsonb array of missing key tuples; the FULL
         count is in missing_in_tcc_count.  For multiset, enumerated_missing is
         the per-key delta mapping.
+
+    numeric_keys (CROSS-TYPE GUARD, brief item 2): when True, every key cell is
+    normalised through a canonical NUMERIC form (Decimal(str(v)).normalize())
+    SYMMETRICALLY on both sides BEFORE canonicalisation, so an Access float
+    (TripAmp 1200.0) and a tcc numeric (rating Decimal('1200')) compare equal
+    instead of fabricating a spurious full delta.  The normalisation is applied
+    identically to both the access and the tcc side.  Used for the amps
+    rating-value anti-join (a frame-free value key -- see the deferral note in
+    the Task-11 report; row-level frame resolution is blocked by the tcc
+    surrogate re-sequencing + computed `size`).
     """
     pm = ProjectionMap.for_table(access_table)
     tcc_table = pm.tcc_table
 
     # -- COUNT-ONLY branch for computed / derived tcc tables. ----------------
     if pm.tcc_build_kind in ("computed", "derived"):
-        access_count = _access_count(pg_conn, access_table)
+        # Curves is NOT data-loaded into access_raw (count-only path), so prefer
+        # the access_raw table when present and fall back to the inventory count.
+        access_count = _access_count_or_meta(pg_conn, run_id, access_table)
+        if access_count is None:
+            access_count = 0
         tcc_count = _tcc_snapshot_count(pg_conn, snapshot_id, tcc_table)
         if tcc_count is None:
             # Fall back to counting a materialised local table if it exists;
@@ -375,6 +421,7 @@ def antijoin_vs_tcc(
         access_key_cols=access_key_cols,
         tcc_table=tcc_table,
         tcc_key_cols=tcc_key_cols,
+        numeric_keys=numeric_keys,
     )
 
     if result["method"] == "setdiff":
@@ -425,12 +472,37 @@ def _count_local_if_present(pg_conn, schema: str, table: str) -> int:
     return int(n)
 
 
+def _normalize_numeric_tuple(row: tuple) -> tuple:
+    """Symmetrically normalise every cell of a key tuple to a canonical numeric.
+
+    A NULL stays None.  A numeric-looking value (int / float / Decimal / numeric
+    string) is normalised through Decimal(str(v)).normalize() and re-emitted as a
+    fixed-point string, so an Access float 1200.0 and a tcc numeric Decimal('1200')
+    collapse to the IDENTICAL token '1200'.  A non-numeric value is left untouched
+    (str-compared as before).  Applied to BOTH sides identically (brief item 2).
+    """
+    import decimal as _dec
+
+    out = []
+    for v in row:
+        if v is None:
+            out.append(None)
+            continue
+        try:
+            d = _dec.Decimal(str(v)).normalize()
+            out.append(format(d, "f"))
+        except (_dec.InvalidOperation, ValueError):
+            out.append(v)
+    return tuple(out)
+
+
 def _antijoin_keyset_mapped(
     pg_conn,
     access_table: str,
     access_key_cols: List[str],
     tcc_table: str,
     tcc_key_cols: List[str],
+    numeric_keys: bool = False,
 ) -> Dict[str, object]:
     """antijoin_keyset variant that reads each side with ITS OWN key columns.
 
@@ -438,9 +510,17 @@ def _antijoin_keyset_mapped(
     mapped tcc_key_cols (which may differ in name, e.g. TripAmp -> rating).
     The compare is positional -- column i on the left aligns to column i on the
     right -- so the tuples are directly comparable.
+
+    numeric_keys: when True, both sides' key tuples are run through
+    _normalize_numeric_tuple SYMMETRICALLY before any compare, so a float-vs-
+    numeric storage difference cannot fabricate a spurious delta (brief item 2).
     """
     left_rows = _read_key_tuples(pg_conn, "access_raw", access_table, access_key_cols)
     right_rows = _read_key_tuples(pg_conn, "tcc_snapshot", tcc_table, tcc_key_cols)
+
+    if numeric_keys:
+        left_rows = [_normalize_numeric_tuple(r) for r in left_rows]
+        right_rows = [_normalize_numeric_tuple(r) for r in right_rows]
 
     left_unique = len(left_rows) == len(set(left_rows))
 
@@ -558,3 +638,249 @@ def reconcile_counts(pg_conn, run_id: str) -> None:
                 """,
                 (run_id, table_name, access_ct, staging_ct, delta),
             )
+
+
+# ---------------------------------------------------------------------------
+# reconcile_vs_tcc -- access_raw vs tcc_snapshot count delta (the F-79-03 shortfall)
+# ---------------------------------------------------------------------------
+
+# The breaker/TMT slice's 5 access-frame/child tables and their tcc counterparts.
+# Sourced from the real ProjectionMap so the names stay in one place.
+_TMT_RECON_TABLES = [
+    "Breaker_TMTFrameSizes",
+    "Breaker_TMTFrameAmps",
+    "Breaker_TMTFrameSettings",
+    "Breaker_TMTFrameCurves",
+    "Breaker_TMTThermalTripAdj",
+]
+
+
+def reconcile_vs_tcc(pg_conn, run_id: str, snapshot_id: str) -> None:
+    """Write access_validation.tcc_count_reconciliation for the 5 TMT tables.
+
+    For each Access frame/child table in the breaker/TMT slice, record the
+    access_raw row count against the recorded tcc_snapshot count and the delta
+    (access - tcc).  This is the access-vs-governed-tcc count reconciliation --
+    it reproduces the F-79-03 shortfalls -- and is DISTINCT from
+    reconcile_counts (which compares access vs the harness's own staging load).
+
+    Purely structural: counts and a signed delta only.  Never opines on whether
+    a delta is a "gap" or "expected".  delta is NULL-safe (NULL if either side
+    is absent -- absence recorded honestly, never fabricated as zero).
+    """
+    for access_table in _TMT_RECON_TABLES:
+        pm = ProjectionMap.for_table(access_table)
+        tcc_table = pm.tcc_table
+        access_ct = _access_count_or_meta(pg_conn, run_id, access_table)
+        tcc_ct = _tcc_snapshot_count(pg_conn, snapshot_id, tcc_table)
+        if access_ct is None or tcc_ct is None:
+            delta = None
+        else:
+            delta = int(access_ct) - int(tcc_ct)
+        with pg_conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO access_validation.tcc_count_reconciliation
+                    (run_id, access_table, tcc_table, snapshot_id,
+                     access_row_count, tcc_row_count, delta)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (run_id, access_table) DO UPDATE SET
+                    tcc_table = EXCLUDED.tcc_table,
+                    snapshot_id = EXCLUDED.snapshot_id,
+                    access_row_count = EXCLUDED.access_row_count,
+                    tcc_row_count = EXCLUDED.tcc_row_count,
+                    delta = EXCLUDED.delta
+                """,
+                (run_id, access_table, tcc_table, snapshot_id,
+                 access_ct, tcc_ct, delta),
+            )
+
+
+# ---------------------------------------------------------------------------
+# resolve_style_classes -- the STYLE-MEDIATED frame resolution (count-only, honest)
+# ---------------------------------------------------------------------------
+
+# Access style tables in the slice, in class order.
+_ACCESS_STYLE_TABLES = {
+    "MCCB": "BreakerMCCBStyles",
+    "ICCB": "BreakerICCBStyles",
+    "PCB": "BreakerPCBStyles",
+}
+
+
+def _distinct_int_ids(pg_conn, schema: str, table: str, col: str) -> set:
+    """Return the DISTINCT non-null values of schema.table.col as a set of ints.
+
+    Cast to text then int is avoided; the column is an Access integer surrogate
+    loaded as integer, so a plain DISTINCT is exact.  NULLs are dropped (a NULL
+    style id resolves to no class -- counted as unresolved, not fabricated).
+    """
+    stmt = sql.SQL(
+        "SELECT DISTINCT {col} FROM {schema}.{table} WHERE {col} IS NOT NULL"
+    ).format(
+        col=sql.Identifier(col),
+        schema=sql.Identifier(schema),
+        table=sql.Identifier(table),
+    )
+    with pg_conn.cursor() as cur:
+        cur.execute(stmt)
+        return {int(r[0]) for r in cur.fetchall()}
+
+
+def resolve_style_classes(
+    pg_conn,
+    run_id: str,
+    frame_table: str = "Breaker_TMTFrameSizes",
+    styleid_col: str = "StyleID",
+) -> Dict[str, int]:
+    """Record the style-mediated frame-resolution AMBIGUITY as structural counts.
+
+    The Access frame's breaker class is IMPLICIT: only frame_table.styleid_col is
+    recorded, and a StyleID can appear across more than one Access style-table ID
+    space (the per-class (class,id) overlap).  For every DISTINCT StyleID we count
+    in how many of the three Access style-table ID spaces it appears:
+
+      * exactly ONE   -> resolved_single_class (clean; tallied per class).
+      * TWO or more   -> ambiguous_multi_class -- the class CANNOT be picked
+                         without fabricating it.  We RECORD the count; we never
+                         choose a class.
+      * ZERO          -> unresolved_no_class (no matching style row).
+
+    These counts ARE the F-79-03 evidence for the operator.  Writes one
+    access_validation.style_resolution row.  Returns the count dict.
+
+    HR1: counts only.  No verdict, no "gap", no chosen class.
+    """
+    style_ids = _distinct_int_ids(pg_conn, "access_raw", frame_table, styleid_col)
+
+    class_id_sets = {
+        cls: _distinct_int_ids(pg_conn, "access_raw", tbl, "ID")
+        for cls, tbl in _ACCESS_STYLE_TABLES.items()
+    }
+
+    single = 0
+    ambiguous = 0
+    none = 0
+    mccb_only = 0
+    iccb_only = 0
+    pcb_only = 0
+    for sid in style_ids:
+        memberships = [cls for cls, ids in class_id_sets.items() if sid in ids]
+        if len(memberships) == 0:
+            none += 1
+        elif len(memberships) == 1:
+            single += 1
+            cls = memberships[0]
+            if cls == "MCCB":
+                mccb_only += 1
+            elif cls == "ICCB":
+                iccb_only += 1
+            elif cls == "PCB":
+                pcb_only += 1
+        else:
+            ambiguous += 1
+
+    counts = {
+        "distinct_styleid_count": len(style_ids),
+        "resolved_single_class_count": single,
+        "ambiguous_multi_class_count": ambiguous,
+        "unresolved_no_class_count": none,
+        "mccb_only_count": mccb_only,
+        "iccb_only_count": iccb_only,
+        "pcb_only_count": pcb_only,
+    }
+
+    with pg_conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO access_validation.style_resolution
+                (run_id, access_frame_table, distinct_styleid_count,
+                 resolved_single_class_count, ambiguous_multi_class_count,
+                 unresolved_no_class_count, mccb_only_count, iccb_only_count,
+                 pcb_only_count)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (run_id, access_frame_table) DO UPDATE SET
+                distinct_styleid_count = EXCLUDED.distinct_styleid_count,
+                resolved_single_class_count = EXCLUDED.resolved_single_class_count,
+                ambiguous_multi_class_count = EXCLUDED.ambiguous_multi_class_count,
+                unresolved_no_class_count = EXCLUDED.unresolved_no_class_count,
+                mccb_only_count = EXCLUDED.mccb_only_count,
+                iccb_only_count = EXCLUDED.iccb_only_count,
+                pcb_only_count = EXCLUDED.pcb_only_count
+            """,
+            (run_id, frame_table, counts["distinct_styleid_count"],
+             counts["resolved_single_class_count"],
+             counts["ambiguous_multi_class_count"],
+             counts["unresolved_no_class_count"],
+             counts["mccb_only_count"], counts["iccb_only_count"],
+             counts["pcb_only_count"]),
+        )
+
+    return counts
+
+
+# ---------------------------------------------------------------------------
+# style_provenance_antijoin -- the CLEANLY-KEYABLE child anti-join
+# ---------------------------------------------------------------------------
+
+def style_provenance_antijoin(
+    pg_conn,
+    run_id: str,
+    breaker_class: str,
+) -> Dict[str, object]:
+    """Anti-join Access BreakerXXXStyles.ID against tcc brk_xxx_styles.source_id.
+
+    This is the ONE cross-instance key that does NOT route through the
+    re-sequenced tmt_frames.id surrogate, so it is the cleanly-keyable child
+    anti-join the slice can honestly run.  The Access style table is in
+    access_raw; the tcc source_id set is in tcc_snapshot (materialised by
+    snapshot_tcc).
+
+    Both sides are read as native integers and compared as a Python set-diff.
+    (Storage on the tcc side is integer source_id and on the Access side is the
+    integer ID, so no int-vs-numeric mismatch arises; the compare is symmetric.)
+
+    Writes one access_validation.style_provenance_antijoin row and returns the
+    result dict.  Purely structural set-diff cardinalities + enumerated missing.
+    """
+    bc = breaker_class.upper()
+    access_table = _ACCESS_STYLE_TABLES[bc]
+    tcc_table = f"brk_{bc.lower()}_styles"
+
+    access_ids = _distinct_int_ids(pg_conn, "access_raw", access_table, "ID")
+    tcc_src = _distinct_int_ids(pg_conn, "tcc_snapshot", tcc_table, "source_id")
+
+    missing = sorted(access_ids - tcc_src)   # in Access, absent from tcc
+    extra = sorted(tcc_src - access_ids)     # in tcc, absent from Access
+
+    enumerated = Jsonb([int(x) for x in missing[:ENUMERATION_CAP]])
+
+    with pg_conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO access_validation.style_provenance_antijoin
+                (run_id, breaker_class, access_style_table, tcc_style_table,
+                 access_id_count, tcc_source_id_count,
+                 missing_in_tcc_count, extra_in_tcc_count, enumerated_missing)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (run_id, breaker_class) DO UPDATE SET
+                access_style_table = EXCLUDED.access_style_table,
+                tcc_style_table = EXCLUDED.tcc_style_table,
+                access_id_count = EXCLUDED.access_id_count,
+                tcc_source_id_count = EXCLUDED.tcc_source_id_count,
+                missing_in_tcc_count = EXCLUDED.missing_in_tcc_count,
+                extra_in_tcc_count = EXCLUDED.extra_in_tcc_count,
+                enumerated_missing = EXCLUDED.enumerated_missing
+            """,
+            (run_id, bc, access_table, tcc_table,
+             len(access_ids), len(tcc_src),
+             len(missing), len(extra), enumerated),
+        )
+
+    return {
+        "breaker_class": bc,
+        "access_id_count": len(access_ids),
+        "tcc_source_id_count": len(tcc_src),
+        "missing_in_tcc_count": len(missing),
+        "extra_in_tcc_count": len(extra),
+    }
