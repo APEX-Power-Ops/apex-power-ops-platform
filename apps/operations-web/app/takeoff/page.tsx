@@ -218,6 +218,14 @@ export default function TakeoffPage() {
     const file = e.target.files?.[0]
     if (!file) return
     const input = e.target
+    // FIX B (P2-2): reset to a clean slate at the START of every load. On a bad JSON or
+    // ArtifactContractError we must NOT leave the previous artifact/eval/worklist + ENABLED
+    // export buttons on screen (stale data could be exported under a new error). Only a
+    // successful parseArtifact below re-populates artifact/evald.
+    setArtifact(null)
+    setEvald(null)
+    setEntries(new Map())
+    setApplyMsg(null)
     setErr(null)
     setBusy(true)
     const reader = new FileReader()
