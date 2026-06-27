@@ -1097,6 +1097,14 @@ def reconcile_checksums(
     Purely structural (a hash + a boolean). HR1: records WHAT differs (matches),
     never opines on whether a mismatch is acceptable. Does NOT raise on mismatch.
     """
+    # Fail closed if a later load superseded any SPECIFIC materialised access_raw
+    # table this run_id would read (per-table guard, consistent with all other
+    # validators that read access_raw; a no-op when no ownership marker was stamped
+    # yet, e.g. the first run or a synthetic test fixture).
+    assert_materialized_owner(
+        pg_conn, _ACCESS_RAW_LAYER, list(loaded_tables), run_id=run_id
+    )
+
     for table in loaded_tables:
         col_types = col_types_by_table[table]
         col_names = [ct.name for ct in col_types]
