@@ -63,9 +63,20 @@ BEGIN
   SELECT count(*) INTO v_jsonb FROM information_schema.columns
     WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND data_type='jsonb';
   IF v_jsonb <> 6 THEN RAISE EXCEPTION '030 shape: expected 6 jsonb blocks (found %)', v_jsonb; END IF;
-  SELECT count(*) INTO v_pk FROM information_schema.table_constraints
-    WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND constraint_type='PRIMARY KEY';
-  IF v_pk <> 1 THEN RAISE EXCEPTION '030 shape: missing PRIMARY KEY'; END IF;
+  -- PK must be EXACTLY (breaker_class, source_id): a source_id-only PK would pass a bare "has a PK"
+  -- check but defeat the cross-class collision guard this table exists for (Codex review-c0e624b6).
+  SELECT count(*) INTO v_pk
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu
+      ON kcu.constraint_schema=tc.constraint_schema AND kcu.constraint_name=tc.constraint_name
+    WHERE tc.table_schema='tcc' AND tc.table_name='brk_style_native_overrides' AND tc.constraint_type='PRIMARY KEY';
+  IF v_pk <> 2 THEN RAISE EXCEPTION '030 shape: PK has % column(s), expected exactly 2 (breaker_class, source_id)', v_pk; END IF;
+  IF (SELECT count(*) FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+          ON kcu.constraint_schema=tc.constraint_schema AND kcu.constraint_name=tc.constraint_name
+        WHERE tc.table_schema='tcc' AND tc.table_name='brk_style_native_overrides'
+          AND tc.constraint_type='PRIMARY KEY' AND kcu.column_name IN ('breaker_class','source_id')) <> 2
+    THEN RAISE EXCEPTION '030 shape: PK columns are not exactly (breaker_class, source_id)'; END IF;
   SELECT count(*) INTO v_chk FROM information_schema.table_constraints
     WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND constraint_type='CHECK'
       AND constraint_name IN ('brk_style_native_overrides_class_chk','brk_style_native_overrides_source_id_chk');
