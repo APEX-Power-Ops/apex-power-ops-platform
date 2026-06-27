@@ -1,0 +1,22 @@
+[project]
+name = "access-harness"
+version = "0.1.0"
+description = "Access Fidelity Harness - mirrors Microsoft Access into Postgres for fidelity validation"
+requires-python = ">=3.12"
+dependencies = [
+    "psycopg[binary]",
+    "pyodbc",
+    "pywin32",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
