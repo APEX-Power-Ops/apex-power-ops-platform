@@ -2,7 +2,7 @@
   "pdf": "takeoff-reassert-demo.pdf",
   "apparatus": [
     {
-      "raw": "FB-1 400AF/300AT LSI",
+      "raw": "FB-1 800AF/800AT LSIG",
       "tag": "FB-1",
       "sheet": "E1",
       "page": 0,
@@ -11,7 +11,7 @@
       "block": "P1"
     },
     {
-      "raw": "FB-2 400AF/300AT LSI",
+      "raw": "FB-2 800AF/800AT LSIG",
       "tag": "FB-2",
       "sheet": "E1",
       "page": 0,

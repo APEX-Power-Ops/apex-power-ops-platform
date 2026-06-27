@@ -180,6 +180,9 @@ export default function HomePage() {
           The promoted field technician route is available in the governed shell at <a href="/field-tech">/field-tech</a>.
         </p>
         <p>
+          The pre-estimate Takeoff Gate 1 voltage review is available in the governed shell at <a href="/takeoff">/takeoff</a>.
+        </p>
+        <p>
           The promoted PM drivers route is available in the governed shell at <a href="/pm-review">/pm-review</a>.
         </p>
         <p>

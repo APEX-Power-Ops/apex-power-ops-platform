@@ -276,9 +276,19 @@ export default function TakeoffPage() {
       setApplyMsg('Enter operator initials (Project Context) before applying voltage answers.')
       return
     }
+    // FIX 1: Recompute currently-resolvable tags INSIDE the handler so stale hidden
+    // entries (already resolved from a prior Apply) are not re-submitted. A re-submitted
+    // resolved tag with a changed operator name would silently rewrite its actor field
+    // (provenance corruption), and is also redundant.
+    const groups = resolvableVoltageGroups(evald.result, artifact)
+    const currentTags = new Set(
+      groups.flatMap((g) => g.blocks.flatMap((b) => b.tags.map((t) => t.tag)))
+    )
     const invalid: string[] = []
     const validEntries: { tag: string; voltageV: number }[] = []
     for (const [tag, raw] of entries.entries()) {
+      // Skip stale/hidden entries whose tag is no longer in the visible worklist
+      if (!currentTags.has(tag)) continue
       if (raw === '' || raw === undefined) continue
       const v = Number(raw)
       if (!Number.isInteger(v) || v <= 0) {
@@ -309,6 +319,13 @@ export default function TakeoffPage() {
     const newEvald = evaluate(clone)
     setArtifact(clone)
     setEvald(newEvald)
+    // FIX 1 (cont.): Prune the just-applied tags from entries so they cannot
+    // re-submit on a future Apply (they are now resolved and will leave the worklist).
+    setEntries((prev) => {
+      const next = new Map(prev)
+      for (const e of validEntries) next.delete(e.tag)
+      return next
+    })
     setApplyMsg(msg)
   }, [artifact, evald, entries, projectCtx.operatorName])
 
@@ -548,10 +565,11 @@ export default function TakeoffPage() {
               Clean Export
             </button>
 
-            {/* Partial Preview Export - enabled when context fields filled (R1), labeled loudly */}
+            {/* Partial Preview Export - disabled when run is clean (FIX 2: contradictory to export
+               clean-status run under the gate1-partial filename with NOT-a-complete-bid label) */}
             <button
               type="button"
-              disabled={!canExport || exporting}
+              disabled={!canExport || exporting || isCleanStatus}
               onClick={() => handleExport('partial')}
               className="rounded border border-gray-300 bg-gray-50 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
             >

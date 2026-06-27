@@ -55,7 +55,7 @@ test('Takeoff Gate 1: E01-11 loads with grouped Voltage Questions worklist', asy
 // PROOF 2 - Re-applying an already-asserted tag does not produce a
 //           duplicate-tag error (merge dedup holds)
 // ---------------------------------------------------------------------------
-test('re-applying an already-asserted tag does not produce a duplicate-tag error (merge dedup holds)', async ({ page }) => {
+test('re-applying never rewrites a resolved tag actor and never duplicates a tag (stale-entry guard + merge dedup)', async ({ page }) => {
   const pageErrors: string[] = []
   page.on('pageerror', (err) => pageErrors.push(err.message))
 
@@ -85,8 +85,13 @@ test('re-applying an already-asserted tag does not produce a duplicate-tag error
   // FB-1 input should no longer be in the worklist
   await expect(fb1Input).not.toBeVisible()
 
-  // Second Apply: enter voltage for FB-2; FB-1 is already in artifact.voltageAssertions
-  // and will be re-submitted through buildAssertions+mergeAssertionsByTag alongside FB-2
+  // CHANGE operator initials to ABC before the second Apply
+  await page.fill('input[aria-label="Operator initials"]', 'ABC')
+
+  // Second Apply: enter voltage for FB-2 (480V) with actor=ABC.
+  // With the stale-entry guard: FB-1 is NOT in the current worklist, so its
+  // entries map entry (if any) is skipped. FB-1's artifact assertion keeps actor=JLS.
+  // Without the fix, stale FB-1 entry would be re-submitted with actor=ABC (provenance corruption).
   await fb2Input.fill('480')
   await page.getByRole('button', { name: 'Apply' }).click()
 
@@ -100,18 +105,21 @@ test('re-applying an already-asserted tag does not produce a duplicate-tag error
   const status = page.getByRole('status')
   await expect(status).toBeVisible()
 
-  // (d) Capture export and verify combined.artifact.voltageAssertions has <=1 per tag
+  // (d) Export via Clean Export (both tags now resolved -> clean status)
+  const cleanExportBtn2 = page.getByRole('button', { name: 'Clean Export' })
+  await expect(cleanExportBtn2).toBeEnabled({ timeout: 5_000 })
   const [download] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'partial preview - NOT a complete bid' }).click(),
+    cleanExportBtn2.click(),
   ])
   const dlPath = await download.path()
   expect(dlPath).toBeTruthy()
   {
     const parsed = JSON.parse(fs.readFileSync(dlPath!, 'utf-8'))
-    const assertions: Array<{ voltageV: number; tags: string[] }> =
+    const assertions: Array<{ voltageV: number; actor: string; tags: string[] }> =
       parsed.artifact?.voltageAssertions ?? []
-    // Count occurrences of each tag - must be <=1 per tag
+
+    // (b) combined.artifact.voltageAssertions has exactly ONE entry per tag
     const tagCounts = new Map<string, number>()
     for (const a of assertions) {
       for (const tag of a.tags) {
@@ -121,6 +129,16 @@ test('re-applying an already-asserted tag does not produce a duplicate-tag error
     for (const [tag, count] of tagCounts.entries()) {
       expect(count, `tag ${tag} appears ${count} times in voltageAssertions`).toBeLessThanOrEqual(1)
     }
+
+    // (c) FB-1's actor is still JLS (NOT rewritten to ABC by the second Apply)
+    const fb1Assertion = assertions.find((a) => a.tags.includes('FB-1'))
+    expect(fb1Assertion, 'FB-1 assertion must exist').toBeTruthy()
+    expect(fb1Assertion!.actor, 'FB-1 actor must remain JLS (stale-entry guard preserved provenance)').toBe('JLS')
+
+    // (d) FB-2's actor is ABC (applied on second Apply)
+    const fb2Assertion = assertions.find((a) => a.tags.includes('FB-2'))
+    expect(fb2Assertion, 'FB-2 assertion must exist').toBeTruthy()
+    expect(fb2Assertion!.actor, 'FB-2 actor must be ABC').toBe('ABC')
   }
 })
 
@@ -172,6 +190,11 @@ test('Takeoff Gate 1: partial export omits envelope; clean export includes price
 
   // Clean Export must be enabled
   await expect(cleanExportBtn).toBeEnabled()
+
+  // FIX 2: Partial Preview Export must be DISABLED when run is clean
+  // (it would otherwise download a clean-status run under a gate1-partial filename
+  // with NOT-a-complete-bid language, which is contradictory)
+  await expect(partialBtn).toBeDisabled()
 
   // Capture clean download
   const [cleanDl] = await Promise.all([
