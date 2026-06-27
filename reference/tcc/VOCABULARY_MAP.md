@@ -77,7 +77,13 @@ metadata, not in a quoted identifier.
   029 data (harness) -> 030 DDL -> 030 data (harness) -> **031 view-transition** (guarded to RAISE if the D4 data is
   not yet populated, so the flags never flip prematurely). Authored at carry time against the actual populated state.
   This keeps the 028 hazard surface honest after apply (the operator's "not okay after apply unless a follow-up view
-  patch changes the hazard language" requirement).
+  patch changes the hazard language" requirement). **The 031 re-creation MUST ALSO fix the 028 view's child-count
+  Cartesian product** (Codex review-2dd99030 P2): the current `frame_counts` CTE LEFT-JOINs amps x settings x thermal
+  x curves (~1.1M curve rows) before `COUNT(DISTINCT ...)`, so a full-view scan multiplies each frame's children and
+  explodes. Aggregate EACH child per-frame in its own CTE (`SELECT frame_id, count(*) FROM tcc.tmt_amps GROUP BY
+  frame_id`, etc.; curves -> `count(*)` AS curve_point_count + `count(DISTINCT class)` AS trip_class_count), then
+  LEFT JOIN the per-frame counts onto the frame base. Latent now (the 028 views are diagnostic-only / unread), so it
+  rides the next view re-creation rather than a redundant transient migration.
 
 ## Cross-refs
 - G1 sec 3.1 / sec 3.4 / sec 5 (D4/D5) - the authoritative decoded register this map productizes.
