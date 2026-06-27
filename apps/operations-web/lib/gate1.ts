@@ -1,7 +1,8 @@
 import {
-  runTakeoff, reconcile,
+  runTakeoff, reconcile, isClean, emitEnvelope,
   type ExtractionArtifact, type TakeoffResult, type ReconciliationReport, type VoltageAssertion,
 } from '@apex/estimator-takeoff'
+import { canonicalJson, sha256Hex } from './gate1-canonical'
 
 export class Gate1Error extends Error {
   constructor(message: string, readonly path?: string) { super(message); this.name = 'Gate1Error' }
@@ -70,4 +71,32 @@ export function mergeAssertionsByTag(existing: VoltageAssertion[] | undefined, g
   for (const a of existing ?? []) for (const tag of a.tags) byTag.set(tag, { ...a, tags: [tag] })
   for (const a of gate1) for (const tag of a.tags) byTag.set(tag, { ...a, tags: [tag] })
   return [...byTag.values()]
+}
+
+export interface Gate1Export { combined: Record<string, unknown>; runnerArtifact: ExtractionArtifact }
+
+export async function buildExport(input: {
+  artifact: ExtractionArtifact; result: TakeoffResult; report: ReconciliationReport
+  projectCtx: { projectNumber: string; packageName?: string; operatorName: string }; nowIso: string
+}): Promise<Gate1Export> {
+  const { artifact, result, report, projectCtx, nowIso } = input
+  const clean = isClean(result) && result.matchedLines.length > 0
+  const envelope = clean ? emitEnvelope(result, { projectNumber: projectCtx.projectNumber }).envelope : undefined
+  const artifactContentHash = await sha256Hex(canonicalJson(artifact))
+  const reportContentHash = await sha256Hex(canonicalJson(report))
+  const manifest = {
+    projectNumber: projectCtx.projectNumber,
+    packageName: projectCtx.packageName ?? null,
+    sheet: artifact.apparatus[0]?.sheet ?? null,
+    pdf: artifact.pdf,
+    status: report.status,
+    apparatusCount: artifact.apparatus.length,
+    unresolvedRows: report.counts.unresolved_rows,
+    gate1AssertionTags: (artifact.voltageAssertions ?? []).flatMap((a) => a.tags),
+    operatorEvidence: { name: projectCtx.operatorName, assertedAtClient: nowIso, authoritative: false },
+    artifactContentHash, reportContentHash,
+  }
+  const combined: Record<string, unknown> = { schemaVersion: 1, manifest, artifact, report }
+  if (envelope) combined.envelope = envelope
+  return { combined, runnerArtifact: artifact }
 }

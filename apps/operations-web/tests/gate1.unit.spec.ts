@@ -56,3 +56,35 @@ test('mergeAssertionsByTag keeps unrelated existing tags', () => {
   expect(merged.some((m) => m.tags.includes('OTHER') && m.voltageV === 208)).toBe(true)
   expect(merged.some((m) => m.tags.includes('FB-1') && m.voltageV === 480)).toBe(true)
 })
+
+import { buildExport } from '../lib/gate1'
+
+test('buildExport omits envelope and labels partial_preview when not clean', async () => {
+  const art = parseArtifact({ pdf: 't.pdf', apparatus: [
+    { raw: 'FB-1 400AF/400AT', tag: 'FB-1', sheet: 'E1', page: 0, bbox: [0, 0, 1, 1], evidence: 'one-line' }], voltageAssertions: [] })
+  const { result, report } = evaluate(art)
+  const { combined } = await buildExport({ artifact: art, result, report,
+    projectCtx: { projectNumber: 'P1', operatorName: 'JLS' }, nowIso: '2026-06-26T00:00:00Z' })
+  const c = combined as any
+  expect(c.manifest.status).toBe('partial_preview')
+  expect(c.envelope).toBeUndefined()
+  expect(c.manifest.operatorEvidence.authoritative).toBe(false)
+  expect(c.manifest.artifactContentHash).toMatch(/^[0-9a-f]{64}$/)
+})
+
+// CLEAN-path proof. Probed minimal single-row artifact: an LV draw-out main reached via the
+// engine baseline (>=800AF + G-function -> draw_out) plus a per-tag 480V Gate-1 assertion.
+// raw "FB-1 800AF/800AT LSIG" + assert 480V on FB-1 -> matched LSIG draw-out, 0 questions/findings,
+// isClean=true, matchedLines=1 (verified by throwaway probe: bid_cents 66000).
+test('buildExport includes a priced envelope when clean', async () => {
+  const art = parseArtifact({ pdf: 'c.pdf', apparatus: [
+    { raw: 'FB-1 800AF/800AT LSIG', tag: 'FB-1', sheet: 'E1', page: 0, bbox: [0, 0, 1, 1], evidence: 'one-line', block: 'P1' }],
+    voltageAssertions: [{ voltageV: 480, tags: ['FB-1'] }] })
+  const { result, report } = evaluate(art)
+  const { combined } = await buildExport({ artifact: art, result, report,
+    projectCtx: { projectNumber: 'P1', operatorName: 'JLS' }, nowIso: '2026-06-26T00:00:00Z' })
+  const c = combined as any
+  expect(c.manifest.status).toBe('clean')
+  expect(c.envelope).toBeDefined()
+  expect(c.envelope.totals.bid_cents).toBeGreaterThan(0)
+})
