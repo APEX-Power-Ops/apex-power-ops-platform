@@ -23,6 +23,16 @@
 - Single writer = the Windows worktree `C:\dev\apex-access-harness`; push to origin from here only.
 - Run tests with `uv run pytest` from `infra/database/access-harness/`.
 
+## Operator audit conditions (binding acceptance criteria)
+
+Folded from the operator spec-review; carry into every task brief AND the per-task reviews:
+
+- **AC-1 (Task 1): the `ensure_database` create/drop test is cluster-mutating -- gate it.** It must be opt-in (skipped unless `ACCESS_HARNESS_ALLOW_DB_CREATE=1`) so a default `uv run pytest` never mutates the cluster, and must NEVER target `tcc_fidelity_governed`.
+- **AC-2 (Task 1): prove wrong-DB refusal for EVERY governed command path.** `load`, `inventory`, AND `run-all` must fence BOTH the autocommit/admin connection AND the transaction connection BEFORE any write (`record_extraction_run`, `load_table`, inventory). A parametrized integration test proves each command raises the fence error (never reaching load/record) when `--governed` resolves to a non-governed DB. Most important safety invariant.
+- **AC-3 (Task 2): checksum type round-trip via real Postgres readback.** Beyond pure-checksum tests, a test loads diverse-typed rows into a real `access_raw` table (integer, double precision, numeric/decimal, date, timestamp, boolean, bytea, text, NULLs), reconciles, and proves access-side == staging-side canonicalization (`matches=True`). AND a style-parent checksum mismatch FAILS CLOSED (raises), not quietly recorded: the pipeline RECORDS the reconciliation (HR1 evidence) then runs a hard gate.
+- **AC-4 (Task 1, minor): `provision-governed` cannot fence before the DB exists.** It creates/no-ops from the admin/base connection, THEN connects to `tcc_fidelity_governed` and runs the fence as a POST-check before applying DDL. Reviewers must NOT flag the absent pre-create fence as a defect.
+- **AC-5 (merge): fold into PR #42.** All slice commits land on `tcc/access-fidelity-harness` (= PR #42); no second "make it durable" PR. The cross-engine IRP pass runs on the full branch before the operator merge gate.
+
 ## File Structure
 
 - `access_harness/config.py` (modify) - add `GOVERNED_DB`, `governed_pg_dsn()`, `assert_current_database()`, `ensure_database()`.
@@ -184,7 +194,13 @@ import psycopg
 def test_ensure_database_idempotent(pg):
     """ensure_database creates a missing DB (True), is a no-op if present (False),
     and never raises on an existing DB.  Uses a uniquely-named throwaway probe DB
-    -- NEVER tcc_fidelity_governed -- and drops it afterward."""
+    -- NEVER tcc_fidelity_governed -- and drops it afterward.
+
+    OPT-IN (AC-1): cluster-mutating (creates/drops a probe db), so it is SKIPPED
+    unless ACCESS_HARNESS_ALLOW_DB_CREATE=1 -- a default suite run never mutates
+    the cluster."""
+    if os.environ.get("ACCESS_HARNESS_ALLOW_DB_CREATE") != "1":
+        pytest.skip("opt-in only: set ACCESS_HARNESS_ALLOW_DB_CREATE=1 (AC-1)")
     base = _base_dsn()  # connect to the base DB (postgres); ensure a DIFFERENT db
     probe = "tcc_fidelity_ensure_probe_t1"
     admin = psycopg.connect(base, autocommit=True)
@@ -414,6 +430,51 @@ Register it in `build_parser()`:
     ).set_defaults(func=cmd_provision_governed)
 ```
 
+Then add the AC-2 per-command fence integration test to `tests/test_cli.py` (proves EVERY governed command path fences before any write):
+
+```python
+def test_governed_command_paths_fence_before_write(monkeypatch):
+    """AC-2: load / inventory / run-all with --governed resolving to a NON-governed
+    DB must raise the fence error BEFORE any write (record_extraction_run and
+    _load_slice never run). Access-dependent steps are monkeypatched to no-ops so
+    the test is fast + independent of the Windows Access path; the fence is the
+    thing under test."""
+    from access_harness import cli, config, extract, freeze as freeze_mod
+
+    base = _base_dsn()
+    monkeypatch.setenv("ACCESS_HARNESS_SUPERUSER_DSN", base)
+    # --governed resolves to tcc_fidelity_test (a NON-governed db) -> fence fires.
+    monkeypatch.setattr(config, "governed_pg_dsn", config.test_pg_dsn)
+
+    class _FS:
+        frozen_path = "X:/frozen.accdb"
+        source_sha256 = "00" * 32
+    monkeypatch.setattr(freeze_mod, "freeze", lambda *a, **k: _FS())
+    monkeypatch.setattr(cli, "driver_preflight", lambda *a, **k: ("drv", "ver", 1))
+    monkeypatch.setattr(extract, "connect_data", lambda *a, **k: object())
+    monkeypatch.setattr(extract, "connect_ace", lambda *a, **k: object())
+
+    def _boom_record(*a, **k):
+        raise AssertionError("record_extraction_run ran BEFORE the fence")
+    def _boom_load(*a, **k):
+        raise AssertionError("_load_slice ran BEFORE the fence")
+    monkeypatch.setattr(freeze_mod, "record_extraction_run", _boom_record)
+    monkeypatch.setattr(cli, "_load_slice", _boom_load)
+
+    class _Args:
+        governed = True
+        with_curves = False
+        accdb = None
+        frozen_dir = None
+
+    for cmd in (cli.cmd_load, cli.cmd_inventory, cli.cmd_run_all):
+        with pytest.raises(RuntimeError, match="FENCE VIOLATION"):
+            cmd(_Args())
+```
+
+Run: `uv run pytest tests/test_cli.py::test_governed_command_paths_fence_before_write -v`
+Expected: PASS -- each command raises the fence (the boom sentinels prove no write was reached). If a `_boom_*` AssertionError surfaces instead, a command writes before fencing -> a real AC-2 defect; fix the connect/fence ordering.
+
 - [ ] **Step 14: Run the full fast suite; verify nothing regressed**
 
 Run: `uv run pytest -q --deselect tests/test_acceptance_f79_03.py`
@@ -594,6 +655,48 @@ def reconcile_checksums(
             )
 ```
 
+Also add the AC-3 fail-closed gate + its error to `validate.py`. `reconcile_checksums` RECORDS the reconciliation (HR1 structural evidence -- it never raises); this GATE, run after recording, refuses to certify a non-faithful style mirror:
+
+```python
+class ChecksumFidelityError(RuntimeError):
+    """A governed/certified table's access_raw mirror did not round-trip
+    (checksum_reconciliation.matches != True). A mirror that is not byte-faithful
+    must not be certified for population -- fail closed."""
+
+
+def assert_style_parents_faithful(pg_conn, run_id: str) -> None:
+    """Fail closed (AC-3) if any present style parent did not round-trip.
+
+    The 3 BreakerXXXStyles tables are the D4/D5 carriers feeding the 029/030
+    population, so matches=False (or no recorded checksum) there means the mirror
+    is not byte-faithful and must not be certified. The reconciliation evidence is
+    already persisted by reconcile_checksums; this only READS it and raises
+    ChecksumFidelityError naming the offender(s). Style tables not present this run
+    are skipped (not every run loads them).
+    """
+    offenders = []
+    for table in sorted(_ACCESS_STYLE_TABLES.values()):
+        with pg_conn.cursor() as cur:
+            cur.execute(
+                "SELECT 1 FROM information_schema.tables "
+                "WHERE table_schema='access_raw' AND table_name=%s", (table,))
+            if cur.fetchone() is None:
+                continue
+            cur.execute(
+                "SELECT matches FROM access_validation.checksum_reconciliation "
+                "WHERE run_id=%s AND table_name=%s", (run_id, table))
+            row = cur.fetchone()
+        if row is None:
+            offenders.append(f"{table} (no checksum recorded)")
+        elif row[0] is not True:
+            offenders.append(f"{table} (matches={row[0]!r})")
+    if offenders:
+        raise ChecksumFidelityError(
+            "style-parent access_raw mirror is NOT byte-faithful; refusing to "
+            "certify for population. Offending: " + ", ".join(offenders)
+        )
+```
+
 - [ ] **Step 4: Run; verify PASS**
 
 Run: `uv run pytest tests/test_validate.py::test_reconcile_checksums_match -v`
@@ -653,12 +756,85 @@ def test_reconcile_checksums_only_processes_listed_tables(pg):
             "WHERE run_id=%s", (run_id,))
         (n,) = cur.fetchone()
     assert n == 1, "only the one listed table should be checksummed"
+
+
+def test_reconcile_checksums_type_roundtrip(pg):
+    """AC-3: diverse column types round-trip through a REAL access_raw readback so
+    the access-side and staging-side canonicalize identically (matches=True)."""
+    from datetime import date, datetime
+    from decimal import Decimal
+    from access_harness.validate import reconcile_checksums
+
+    run_id = _seed_run(pg, "run-cksum-types")
+    with pg.cursor() as cur:
+        cur.execute(
+            'CREATE TABLE access_raw."Typed" ('
+            '"i" integer, "f" double precision, "n" numeric, "d" date, '
+            '"ts" timestamp, "b" boolean, "by" bytea, "t" text)'
+        )
+        rows = [
+            (1, 1.5, Decimal("2.50"), date(2026, 6, 27),
+             datetime(2026, 6, 27, 12, 0, 0), True, b"\x01\x02\xff", "memo text"),
+            (None, None, None, None, None, None, None, None),
+        ]
+        cur.executemany(
+            'INSERT INTO access_raw."Typed" '
+            '("i","f","n","d","ts","b","by","t") VALUES (%s,%s,%s,%s,%s,%s,%s,%s)',
+            rows,
+        )
+    _seed_loaded_table(pg, run_id, "Typed", len(rows))
+    col_types = {"Typed": [
+        _ct("i", "integer"), _ct("f", "double precision"), _ct("n", "numeric"),
+        _ct("d", "date"), _ct("ts", "timestamp"), _ct("b", "boolean"),
+        _ct("by", "bytea"), _ct("t", "text"),
+    ]}
+    # access-side rows == the SAME logical values; a faithful round-trip -> match.
+    reconcile_checksums(pg, run_id, ["Typed"], col_types,
+                        access_rows_for=lambda t: list(rows))
+
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT matches FROM access_validation.checksum_reconciliation "
+            "WHERE run_id=%s AND table_name=%s", (run_id, "Typed"))
+        (matches,) = cur.fetchone()
+    assert matches is True, (
+        "diverse-typed access vs staging readback must canonicalize identically")
+
+
+def test_assert_style_parents_faithful_gate(pg):
+    """AC-3: the gate raises when a present style parent has matches=False (or no
+    recorded checksum), and is a no-op when all present style parents match."""
+    from access_harness.validate import (
+        ChecksumFidelityError, assert_style_parents_faithful, reconcile_checksums,
+    )
+
+    run_id = _seed_run(pg, "run-style-gate")
+    with pg.cursor() as cur:
+        cur.execute('CREATE TABLE access_raw."BreakerICCBStyles" ("ID" integer)')
+        cur.executemany(
+            'INSERT INTO access_raw."BreakerICCBStyles" ("ID") VALUES (%s)',
+            [(1,), (2,)],
+        )
+    _seed_loaded_table(pg, run_id, "BreakerICCBStyles", 2)
+
+    # Faithful -> gate passes.
+    reconcile_checksums(pg, run_id, ["BreakerICCBStyles"],
+                        {"BreakerICCBStyles": [_ct("ID")]},
+                        access_rows_for=lambda t: [(1,), (2,)])
+    assert_style_parents_faithful(pg, run_id)  # must not raise
+
+    # Force a mismatch -> gate raises, naming the offending table.
+    reconcile_checksums(pg, run_id, ["BreakerICCBStyles"],
+                        {"BreakerICCBStyles": [_ct("ID")]},
+                        access_rows_for=lambda t: [(1,), (999,)])
+    with pytest.raises(ChecksumFidelityError, match="BreakerICCBStyles"):
+        assert_style_parents_faithful(pg, run_id)
 ```
 
-- [ ] **Step 6: Run; verify PASS** (the implementation already covers these)
+- [ ] **Step 6: Run; verify PASS**
 
-Run: `uv run pytest tests/test_validate.py -k reconcile_checksums -v`
-Expected: PASS (3 tests).
+Run: `uv run pytest tests/test_validate.py -k "reconcile_checksums or type_roundtrip or style_parents_faithful" -v`
+Expected: PASS (5 tests: match, mismatch, skip, type-roundtrip, gate). The gate `assert_style_parents_faithful` is implemented in Step 3.
 
 - [ ] **Step 7: Wire `reconcile_checksums` into the pipeline; `_load_slice` returns col_types**
 
@@ -753,6 +929,12 @@ def cmd_load(args) -> int:
 In `cmd_inventory`, unpack `_load_slice` and add the same `reconcile_checksums(pg_auto, ...)` call after `inventory.populate_meta`, while `data_conn` is open (before the `data_conn.close()` in its finally).
 
 Ensure `validate` is imported in `cli.py` (it already is: `from access_harness import ... validate`).
+
+Then wire the AC-3 fail-closed gate so a non-faithful style mirror aborts the run (evidence is recorded first, THEN the gate raises):
+- In `run_all`: add `validate.assert_style_parents_faithful(pg_auto, run_id)` immediately AFTER the existing `_run_validation(pg_auto, run_id, snapshot_id)` call and before `return {...}` (so all evidence -- counts, checksums, key_quality -- is persisted before the gate fires).
+- In `cmd_load` and `cmd_inventory`: add `validate.assert_style_parents_faithful(pg_auto, run_id)` immediately AFTER the `reconcile_checksums(...)` call.
+
+The gate runs in every mode (governed and not), so the live acceptance (non-governed, `tcc_fidelity_test`) also exercises it: a faithful run returns normally; a non-faithful style mirror raises `ChecksumFidelityError` and the command exits nonzero.
 
 - [ ] **Step 8: Run the full fast suite**
 
@@ -911,7 +1093,7 @@ Call `_assert_style_parent_coverage(<pg_conn>, <run_id>)` inside the existing ac
 Run: `uv run pytest -q`
 Expected: PASS (all fast + 2 live acceptance). The acceptance now also proves the 3 style parents carry checksum + reconciliation (matches True) + key_quality against REAL Access data in `tcc_fidelity_test`.
 
-If `matches` is False for a style table: STOP and apply systematic-debugging -- determine whether it is a real round-trip fidelity gap (a column the typemap maps lossily) or a canonicalization nuance; surface to the operator. Do NOT relax the assertion to make it pass.
+If `matches` is False for a style table, the AC-3 gate makes `run_all` raise `ChecksumFidelityError` (the command fails closed) -- the acceptance surfaces it as an error at the `run_all` call. STOP and apply systematic-debugging: determine whether it is a real round-trip fidelity gap (a column the typemap maps lossily) or a canonicalization nuance; surface to the operator. Do NOT relax the gate or the assertion to make it pass.
 
 - [ ] **Step 8: Commit Task 3**
 
