@@ -244,29 +244,33 @@ def cmd_load(args) -> int:
     driver_name, dbms_version, _ = driver_preflight(fs.frozen_path)
     dsn = _pg_dsn_for(args)
 
-    pg_auto = _connect_pg(dsn, autocommit=True)
+    pg_auto = None
+    pg_tx = None
+    data_conn = None
     try:
+        pg_auto = _connect_pg(dsn, autocommit=True)
+        pg_tx = _connect_pg(dsn, autocommit=False)
         _fence_governed(pg_auto, args)   # fail closed before ANY work
+        _fence_governed(pg_tx, args)
         run_id = freeze_mod.record_extraction_run(
             pg_auto, fs, driver_name, dbms_version
         )
         data_conn = extract.connect_data(fs.frozen_path)
-        pg_tx = _connect_pg(dsn, autocommit=False)
-        try:
-            _fence_governed(pg_tx, args)
-            loaded, col_types_by_table = _load_slice(
-                pg_tx, data_conn, run_id, with_curves=args.with_curves
-            )
-            validate.reconcile_checksums(
-                pg_auto, run_id, sorted(loaded), col_types_by_table,
-                access_rows_for=lambda t: extract.read_rows(data_conn, t),
-            )
-        finally:
-            pg_tx.close()
-            data_conn.close()
+        loaded, col_types_by_table = _load_slice(
+            pg_tx, data_conn, run_id, with_curves=args.with_curves
+        )
+        validate.reconcile_checksums(
+            pg_auto, run_id, sorted(loaded), col_types_by_table,
+            access_rows_for=lambda t: extract.read_rows(data_conn, t),
+        )
         validate.assert_style_parents_faithful(pg_auto, run_id)
     finally:
-        pg_auto.close()
+        if pg_tx is not None:
+            pg_tx.close()
+        if data_conn is not None:
+            data_conn.close()
+        if pg_auto is not None:
+            pg_auto.close()
     print(f"run_id: {run_id}; loaded {len(loaded)} slice tables")
     return 0
 
@@ -280,9 +284,13 @@ def cmd_inventory(args) -> int:
     driver_name, dbms_version, _ = driver_preflight(fs.frozen_path)
     dsn = _pg_dsn_for(args)
 
-    pg_auto = _connect_pg(dsn, autocommit=True)
-    pg_tx = _connect_pg(dsn, autocommit=False)
+    pg_auto = None
+    pg_tx = None
+    data_conn = None
+    ace_conn = None
     try:
+        pg_auto = _connect_pg(dsn, autocommit=True)
+        pg_tx = _connect_pg(dsn, autocommit=False)
         _fence_governed(pg_auto, args)   # fail closed before ANY work
         _fence_governed(pg_tx, args)
         run_id = freeze_mod.record_extraction_run(
@@ -290,31 +298,33 @@ def cmd_inventory(args) -> int:
         )
         data_conn = extract.connect_data(fs.frozen_path)
         ace_conn = extract.connect_ace(fs.frozen_path)
-        try:
-            loaded, col_types_by_table = _load_slice(
-                pg_tx, data_conn, run_id, with_curves=args.with_curves
-            )
-            all_tables = extract.list_user_tables(ace_conn)
-            count_only = set() if args.with_curves else {CURVES_TABLE}
-            inventory.populate_meta(
-                pg_auto, data_conn, ace_conn, run_id, all_tables, loaded,
-                count_only_tables=count_only,
-            )
-            validate.reconcile_checksums(
-                pg_auto, run_id, sorted(loaded), col_types_by_table,
-                access_rows_for=lambda t: extract.read_rows(data_conn, t),
-            )
-            print(f"inventoried {len(all_tables)} tables; loaded {len(loaded)}")
-        finally:
+        loaded, col_types_by_table = _load_slice(
+            pg_tx, data_conn, run_id, with_curves=args.with_curves
+        )
+        all_tables = extract.list_user_tables(ace_conn)
+        count_only = set() if args.with_curves else {CURVES_TABLE}
+        inventory.populate_meta(
+            pg_auto, data_conn, ace_conn, run_id, all_tables, loaded,
+            count_only_tables=count_only,
+        )
+        validate.reconcile_checksums(
+            pg_auto, run_id, sorted(loaded), col_types_by_table,
+            access_rows_for=lambda t: extract.read_rows(data_conn, t),
+        )
+        validate.assert_style_parents_faithful(pg_auto, run_id)
+        print(f"inventoried {len(all_tables)} tables; loaded {len(loaded)}")
+    finally:
+        if pg_tx is not None:
             pg_tx.close()
+        if ace_conn is not None:
             try:
                 ace_conn.Close()
             except Exception:
                 pass
+        if data_conn is not None:
             data_conn.close()
-        validate.assert_style_parents_faithful(pg_auto, run_id)
-    finally:
-        pg_auto.close()
+        if pg_auto is not None:
+            pg_auto.close()
     print(f"run_id: {run_id}")
     return 0
 
@@ -472,9 +482,11 @@ def run_all(
         pg_auto, fs, driver_name, dbms_version
     )
 
-    data_conn = extract.connect_data(fs.frozen_path)
-    ace_conn = extract.connect_ace(fs.frozen_path)
+    data_conn = None
+    ace_conn = None
     try:
+        data_conn = extract.connect_data(fs.frozen_path)
+        ace_conn = extract.connect_ace(fs.frozen_path)
         loaded, col_types_by_table = _load_slice(
             pg_tx, data_conn, run_id, with_curves=with_curves
         )
@@ -491,11 +503,13 @@ def run_all(
             access_rows_for=lambda t: extract.read_rows(data_conn, t),
         )
     finally:
-        try:
-            ace_conn.Close()
-        except Exception:
-            pass
-        data_conn.close()
+        if ace_conn is not None:
+            try:
+                ace_conn.Close()
+            except Exception:
+                pass
+        if data_conn is not None:
+            data_conn.close()
 
     snapshot_id = snapshot_tcc(pg_auto, run_id, TCC_SNAPSHOT_SPEC)
     _run_validation(pg_auto, run_id, snapshot_id)
