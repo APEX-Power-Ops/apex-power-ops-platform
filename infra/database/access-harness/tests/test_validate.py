@@ -822,6 +822,62 @@ def test_validate_partial_tcc_snapshot_subset_reads_stale_table_raises(pg):
 
 
 # ---------------------------------------------------------------------------
+# P2: reconcile_checksums must guard against superseded access_raw ownership.
+# ---------------------------------------------------------------------------
+
+def test_reconcile_checksums_superseded_run_id_raises(pg):
+    """reconcile_checksums must call assert_materialized_owner BEFORE reading
+    access_raw.<table>, so a superseded run_id raises SupersededMaterializationError
+    instead of silently checksumming data owned by a different run.
+
+    Setup: build access_raw.T_chksuper with data, stamp its owner as new_run,
+    then call reconcile_checksums with old_run -> must raise.
+    When stamped with old_run -> must pass (existing behaviour unchanged).
+    """
+    from access_harness.validate import (
+        SupersededMaterializationError,
+        reconcile_checksums,
+        stamp_materialized_owner,
+    )
+
+    old_run = _seed_run(pg, "run-chk-old")
+    new_run = _seed_run(pg, "run-chk-new")
+
+    # Build a minimal access_raw table and seed the meta row for both runs.
+    with pg.cursor() as cur:
+        cur.execute('CREATE TABLE access_raw."T_chksuper" (a integer)')
+        cur.executemany(
+            'INSERT INTO access_raw."T_chksuper" (a) VALUES (%s)',
+            [(1,), (2,)],
+        )
+    _seed_loaded_table(pg, old_run, "T_chksuper", 2)
+    _seed_loaded_table(pg, new_run, "T_chksuper", 2)
+
+    col_types = {"T_chksuper": [_ct("a")]}
+    access_rows = {"T_chksuper": [(1,), (2,)]}
+
+    # Stamp the table as owned by new_run -> old_run is superseded.
+    stamp_materialized_owner(pg, "access_raw", "T_chksuper", run_id=new_run)
+
+    # Calling reconcile_checksums with old_run must fail closed.
+    with pytest.raises(SupersededMaterializationError):
+        reconcile_checksums(pg, old_run, ["T_chksuper"], col_types,
+                            access_rows_for=lambda t: access_rows[t])
+
+    # Calling reconcile_checksums with new_run (the real owner) must pass.
+    reconcile_checksums(pg, new_run, ["T_chksuper"], col_types,
+                        access_rows_for=lambda t: access_rows[t])
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT matches FROM access_validation.checksum_reconciliation "
+            "WHERE run_id=%s AND table_name=%s", (new_run, "T_chksuper"))
+        row = cur.fetchone()
+    assert row is not None and row[0] is True, (
+        "reconcile_checksums with the current owner must succeed and record matches=True"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Task 2: reconcile_checksums + assert_style_parents_faithful
 # ---------------------------------------------------------------------------
 

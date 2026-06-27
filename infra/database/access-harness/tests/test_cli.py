@@ -132,15 +132,30 @@ def test_governed_command_paths_fence_before_write(monkeypatch):
         raise AssertionError("record_extraction_run ran BEFORE the fence")
     def _boom_load(*a, **k):
         raise AssertionError("_load_slice ran BEFORE the fence")
+    def _boom_snapshot(*a, **k):
+        raise AssertionError("snapshot_tcc ran BEFORE the fence")
+    def _boom_validate(*a, **k):
+        raise AssertionError("_run_validation ran BEFORE the fence")
     monkeypatch.setattr(freeze_mod, "record_extraction_run", _boom_record)
     monkeypatch.setattr(cli, "_load_slice", _boom_load)
+    monkeypatch.setattr(cli, "snapshot_tcc", _boom_snapshot)
+    monkeypatch.setattr(cli, "_run_validation", _boom_validate)
 
     class _Args:
         governed = True
         with_curves = False
         accdb = None
         frozen_dir = None
+        run_id = "x"
+        snapshot_id = "x"
 
-    for cmd in (cli.cmd_load, cli.cmd_inventory, cli.cmd_run_all):
+    for cmd in (
+        cli.cmd_load,
+        cli.cmd_inventory,
+        cli.cmd_run_all,
+        cli.cmd_extract,
+        cli.cmd_snapshot_tcc,
+        cli.cmd_validate,
+    ):
         with pytest.raises(RuntimeError, match="FENCE VIOLATION"):
             cmd(_Args())

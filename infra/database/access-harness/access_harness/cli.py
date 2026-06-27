@@ -189,9 +189,10 @@ def cmd_extract(args) -> int:
 
     driver_name, dbms_version, n_tables = driver_preflight(fs.frozen_path)
 
-    dsn = _pg_dsn_from_env()
+    dsn = _pg_dsn_for(args)
     pg = _connect_pg(dsn, autocommit=True)
     try:
+        _fence_governed(pg, args)   # fail closed before ANY write
         run_id = freeze_mod.record_extraction_run(
             pg, fs, driver_name, dbms_version
         )
@@ -325,9 +326,10 @@ def cmd_inventory(args) -> int:
 def cmd_snapshot_tcc(args) -> int:
     if not args.run_id:
         raise RuntimeError("snapshot-tcc requires --run-id")
-    dsn = _pg_dsn_from_env()
+    dsn = _pg_dsn_for(args)
     pg = _connect_pg(dsn, autocommit=True)
     try:
+        _fence_governed(pg, args)   # fail closed before ANY write
         sid = snapshot_tcc(pg, args.run_id, TCC_SNAPSHOT_SPEC)
     finally:
         pg.close()
@@ -382,9 +384,10 @@ def _run_validation(pg_conn, run_id: str, snapshot_id: str) -> None:
 def cmd_validate(args) -> int:
     if not args.run_id or not args.snapshot_id:
         raise RuntimeError("validate requires --run-id and --snapshot-id")
-    dsn = _pg_dsn_from_env()
+    dsn = _pg_dsn_for(args)
     pg = _connect_pg(dsn, autocommit=True)
     try:
+        _fence_governed(pg, args)   # fail closed before ANY write
         _run_validation(pg, args.run_id, args.snapshot_id)
     finally:
         pg.close()
