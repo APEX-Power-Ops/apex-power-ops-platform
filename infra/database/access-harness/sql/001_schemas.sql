@@ -137,6 +137,26 @@ CREATE TABLE IF NOT EXISTS access_meta.projection_map (
     PRIMARY KEY (access_table, access_column)
 );
 
+-- Materialised-layer ownership marker (multi-run isolation guard).
+-- The access_raw.* and tcc_snapshot.* materialised tables are LATEST-ONLY:
+-- load.py drops+recreates access_raw.<table> globally and snapshot_tcc.py
+-- replaces tcc_snapshot.<table> globally, while META/evidence rows are keyed
+-- by run_id / snapshot_id (retain-all-runs, D3).  Because validate reads the
+-- materialised tables BY run_id / snapshot_id, a stale run_id would silently
+-- read the NEWER materialised data (mixed evidence).  This marker records WHICH
+-- run_id owns the current access_raw materialisation and WHICH snapshot_id owns
+-- the current tcc_snapshot materialisation, so validate can FAIL CLOSED when the
+-- requested id is no longer the owner (never silently produce mixed evidence).
+--   layer = 'access_raw'   -> run_id      is the owning extraction run
+--   layer = 'tcc_snapshot' -> snapshot_id is the owning snapshot
+CREATE TABLE IF NOT EXISTS access_meta.materialized_owner (
+    layer       text        PRIMARY KEY
+                            CHECK (layer IN ('access_raw', 'tcc_snapshot')),
+    run_id      text,
+    snapshot_id text,
+    updated_at  timestamptz
+);
+
 -- ============================================================
 -- access_validation tables
 -- ============================================================

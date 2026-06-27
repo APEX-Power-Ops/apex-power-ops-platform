@@ -32,6 +32,7 @@ from pathlib import Path
 
 import psycopg
 
+from access_harness import config
 from access_harness import extract, freeze as freeze_mod, inventory, load, validate
 from access_harness.config import frozen_dir
 from access_harness.projection import ProjectionMap
@@ -82,13 +83,12 @@ BREAKER_CLASSES = ["MCCB", "ICCB", "PCB"]
 # ---------------------------------------------------------------------------
 
 def _pg_dsn_from_env() -> str:
-    raw = os.environ.get("ACCESS_HARNESS_SUPERUSER_DSN")
-    if not raw:
-        raise RuntimeError(
-            "ACCESS_HARNESS_SUPERUSER_DSN is not set. Export a Postgres "
-            "superuser DSN before running."
-        )
-    return raw
+    # Obtain the local DSN via config.pg_dsn(), which strips a SQLAlchemy-style
+    # driver prefix (postgresql+psycopg:// / +asyncpg://) that psycopg.connect
+    # does NOT understand.  Routing through config keeps the CLI's connection
+    # path byte-identical to the tests' (config.pg_dsn()/test_pg_dsn()), so a
+    # +driver DSN no longer breaks every CLI subcommand.
+    return config.pg_dsn()
 
 
 def _connect_pg(dsn: str, *, autocommit: bool) -> psycopg.Connection:

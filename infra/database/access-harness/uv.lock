@@ -9,7 +9,7 @@ source = { editable = "." }
 dependencies = [
     { name = "psycopg", extra = ["binary"] },
     { name = "pyodbc" },
-    { name = "pywin32" },
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
 ]
 
 [package.optional-dependencies]
@@ -22,7 +22,7 @@ requires-dist = [
     { name = "psycopg", extras = ["binary"] },
     { name = "pyodbc" },
     { name = "pytest", marker = "extra == 'dev'" },
-    { name = "pywin32" },
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
 ]
 provides-extras = ["dev"]
 
