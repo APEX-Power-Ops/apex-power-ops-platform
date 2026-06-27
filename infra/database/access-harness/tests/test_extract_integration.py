@@ -70,6 +70,28 @@ def ace_conn():
 
 
 # ---------------------------------------------------------------------------
+# Surrogate-tolerant decoding (no DB required -- pure decoder behavior).
+# ---------------------------------------------------------------------------
+def test_wide_decoder_tolerates_lone_surrogate():
+    """The WCHAR output converter must not crash on a lone UTF-16 surrogate.
+
+    The full 79-table read happened to contain none, so this proves the
+    documented surrogatepass tolerance directly: a lone high surrogate
+    (U+D800 == b'\\x00\\xd8' little-endian) decodes instead of raising.
+    """
+    lone_high_surrogate = b"\x00\xd8"  # U+D800, utf-16-le
+    decoded = extract._decode_wide_surrogatepass(lone_high_surrogate)
+    assert decoded == "\ud800"
+    # Plain utf-16-le (what the old code relied on) would have raised here.
+    with pytest.raises(UnicodeDecodeError):
+        lone_high_surrogate.decode("utf-16-le")
+    # None passes straight through (NULL cells).
+    assert extract._decode_wide_surrogatepass(None) is None
+    # Normal text still round-trips.
+    assert extract._decode_wide_surrogatepass("abc".encode("utf-16-le")) == "abc"
+
+
+# ---------------------------------------------------------------------------
 # Driver-fact documentation: the catalog methods we ban are unsupported.
 # ---------------------------------------------------------------------------
 def test_catalog_methods_known_broken(conn):

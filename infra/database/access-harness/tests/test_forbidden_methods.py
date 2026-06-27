@@ -6,17 +6,21 @@ broken/unsupported on the Access ODBC driver.  These tests run WITHOUT a
 database so the ban is verified on every machine and in CI.
 
 Two independent guards:
-  1. SOURCE SCAN -- no .py under access_harness/ has a non-comment line that
-     CALLS one of the forbidden methods.  Holds even if a future driver
-     stops crashing.
+  1. SOURCE SCAN (AST) -- parse every .py under access_harness/ with ast.parse
+     and walk for an ast.Call whose func is an ast.Attribute named columns /
+     primaryKeys / foreignKeys (any receiver).  The AST ignores strings and
+     comments entirely, so docstrings that MENTION the names are fine while a
+     real call is caught -- and the bare-closing-triple-quote exploit that
+     fooled the old string-heuristic scanner cannot hide.  Holds even if a
+     future driver stops crashing.
   2. TRAP CURSOR -- drive the metadata functions against a fake cursor whose
      columns()/primaryKeys()/foreignKeys() raise AssertionError('forbidden')
      and assert none of them trip the trap.  (pyodbc.Cursor is an immutable
      C type and cannot be monkeypatched, so the trap lives on the fake; the
-     real ban is anchored by the source scan above.)
+     real ban is anchored by the AST source scan above.)
 """
+import ast
 import pathlib
-import re
 
 import pytest
 
@@ -24,56 +28,82 @@ from access_harness import extract
 
 _PKG_DIR = pathlib.Path(extract.__file__).parent
 
-# Forbidden method-call patterns.  We match ".name(" so that an attribute
-# access like `cursor.columns(` is caught, while string mentions inside
-# comments/docstrings are stripped out before matching.
-_FORBIDDEN_CALL = re.compile(r"\.(columns|primaryKeys|foreignKeys)\s*\(")
+_FORBIDDEN_ATTRS = {"columns", "primaryKeys", "foreignKeys"}
 
 
-def _strip_comments_and_strings(line: str) -> str:
-    """Best-effort removal of #-comments and quoted string contents.
+def _scan_source_for_forbidden_calls(path: pathlib.Path) -> list:
+    """Return [(lineno, attr)] for every forbidden catalog-method CALL in `path`.
 
-    Docstrings and comments are allowed to MENTION the forbidden names (this
-    module's own extract.py documents them).  We only want to flag real calls,
-    so we blank out the contents of quotes and drop everything after a #.
+    AST-based and un-foolable: parses the file and walks for an ``ast.Call``
+    whose ``func`` is an ``ast.Attribute`` with ``attr`` in the forbidden set
+    (any receiver -- ``cur.columns()``, ``self.cur.columns()``, etc.).  Strings
+    and comments are not part of the AST, so they can never register as calls.
     """
-    # Drop inline comment.
-    hash_idx = line.find("#")
-    if hash_idx != -1:
-        line = line[:hash_idx]
-    # Blank out single- and double-quoted string contents.
-    line = re.sub(r"'[^']*'", "''", line)
-    line = re.sub(r'"[^"]*"', '""', line)
-    return line
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    hits = []
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr in _FORBIDDEN_ATTRS
+        ):
+            hits.append((node.func.lineno, node.func.attr))
+    return hits
 
 
 def test_source_scan_no_forbidden_calls():
     """No .py file under access_harness/ CALLS a forbidden catalog method."""
     offenders = []
     for py in sorted(_PKG_DIR.rglob("*.py")):
-        text = py.read_text(encoding="utf-8")
-        in_docstring = False
-        doc_delim = None
-        for lineno, raw in enumerate(text.splitlines(), start=1):
-            stripped = raw.strip()
-            # Track triple-quoted docstring/comment blocks and skip them.
-            if in_docstring:
-                if doc_delim in stripped:
-                    in_docstring = False
-                continue
-            for delim in ('"""', "'''"):
-                if stripped.startswith(delim) and stripped.count(delim) == 1:
-                    in_docstring = True
-                    doc_delim = delim
-                    break
-            if in_docstring:
-                continue
-            code = _strip_comments_and_strings(raw)
-            if _FORBIDDEN_CALL.search(code):
-                offenders.append(f"{py.name}:{lineno}: {raw.strip()}")
+        for lineno, attr in _scan_source_for_forbidden_calls(py):
+            offenders.append(f"{py.name}:{lineno}: .{attr}(")
     assert not offenders, "forbidden catalog-method call(s) found:\n" + "\n".join(
         offenders
     )
+
+
+def test_ast_scanner_catches_bare_triple_quote_exploit(tmp_path):
+    """PROVE the AST scanner catches the shape that fooled the string scanner.
+
+    The old scanner tracked docstrings with string heuristics: a bare closing
+    triple-quote on its own line was misread as a docstring OPENER, swallowing
+    the next line -- so the forbidden call below slipped through undetected.
+    The AST never sees strings/comments, so this call is caught.
+    """
+    exploit = tmp_path / "exploit.py"
+    exploit.write_text(
+        'SQL = """\n'
+        "q\n"
+        '"""\n'
+        "cur.columns()\n",
+        encoding="utf-8",
+    )
+    hits = _scan_source_for_forbidden_calls(exploit)
+    assert hits, "AST scanner failed to catch the bare-triple-quote exploit"
+    assert any(attr == "columns" for _lineno, attr in hits)
+    # The call is on the 4th line of the exploit file.
+    assert hits[0][0] == 4
+
+
+def test_ast_scanner_ignores_forbidden_names_in_strings_and_comments(tmp_path):
+    """Docstrings/comments may MENTION the names; only real calls are flagged."""
+    benign = tmp_path / "benign.py"
+    benign.write_text(
+        '"""This module never calls cur.columns() or .primaryKeys()."""\n'
+        "# foreignKeys() is banned -- see the driver-fact note.\n"
+        'NOTE = "do not use cursor.columns() here"\n'
+        "x = 1\n",
+        encoding="utf-8",
+    )
+    assert _scan_source_for_forbidden_calls(benign) == []
+
+
+def test_real_package_tree_passes_the_scan():
+    """The shipped access_harness/ tree is clean (extract.py calls none of them)."""
+    offenders = []
+    for py in sorted(_PKG_DIR.rglob("*.py")):
+        offenders.extend(_scan_source_for_forbidden_calls(py))
+    assert offenders == []
 
 
 # ---------------------------------------------------------------------------
@@ -91,8 +121,7 @@ class _FakeCursor:
     """Minimal stand-in for pyodbc.Cursor exercised by the metadata functions.
 
     Provides description/statistics/execute/fetchone -- the WORKING surfaces --
-    and inherits the forbidden columns/primaryKeys/foreignKeys from the
-    monkeypatched pyodbc.Cursor via the trap, so any accidental call raises.
+    and a trap on columns/primaryKeys/foreignKeys, so any accidental call raises.
     """
 
     def __init__(self, description, stat_rows):
