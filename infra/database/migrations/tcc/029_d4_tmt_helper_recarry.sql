@@ -39,15 +39,15 @@ ALTER TABLE tcc.brk_mccb_styles
 
 -- COMMENTs preserve the verbatim Access source name + decode (the canonical UI label is
 -- VOCABULARY_MAP.canonical_term, NOT the physical column name).
-COMMENT ON COLUMN tcc.brk_iccb_styles.tmt_tcc_number       IS 'Access BreakerICCBStyles.TMT_TCCNumber: free-text vendor-doc curve-set reference (~99% empty); NOT an FK. [VERIFIED-LIVE 2026-06-27]';
-COMMENT ON COLUMN tcc.brk_iccb_styles.tmt_notes            IS 'Access BreakerICCBStyles.TMT_Notes: human curve-provenance memo. [VERIFIED-LIVE]';
+COMMENT ON COLUMN tcc.brk_iccb_styles.tmt_tcc_number       IS 'Access BreakerICCBStyles.TMT_TCCNumber: free-text vendor-doc curve-set reference (~99% empty); NOT an FK. Source-faithful raw carry: non-null may be empty/whitespace - trim/decode before treating as present (do not test non-null alone; decode at 031/UI). [VERIFIED-LIVE 2026-06-27]';
+COMMENT ON COLUMN tcc.brk_iccb_styles.tmt_notes            IS 'Access BreakerICCBStyles.TMT_Notes: human curve-provenance memo. Source-faithful raw carry: non-null may be empty/default - trim/decode before treating as present (do not test non-null alone; decode at 031/UI). [VERIFIED-LIVE]';
 COMMENT ON COLUMN tcc.brk_iccb_styles.tmt_trip_plug        IS 'Access BreakerICCBStyles.TMT_TripPlug: 0=Trip, 1=Plug. Metadata, not read by the serving cascade. [DVL-DB G1 3.1]';
 COMMENT ON COLUMN tcc.brk_iccb_styles.tmt_breaker_type     IS 'Access BreakerICCBStyles.TMT_BreakerType: 0=Thermal Magnetic, 1=Motor Circuit Protector. [DVL-DB G1 3.1]';
 COMMENT ON COLUMN tcc.brk_iccb_styles.tmt_thermal_magnetic IS 'Access BreakerICCBStyles.TMT_ThermalMagnetic: 0=With Adjustable Instantaneous, 1=Without. Vestigial on ICCB (all 0); the engine reads tmt_thermal here. [DVL-DB G1 3.1]';
 COMMENT ON COLUMN tcc.brk_iccb_styles.tmt_thermal          IS 'Access BreakerICCBStyles.TMT_Thermal: the ICCB-class inst-gate flag (== MCCB TMT_ThermalMagnetic): 0=With Adjustable Instantaneous, 1=Without. Engine-consumed (gates the inst-settings list). [DLL G1 3.1 split]';
 
-COMMENT ON COLUMN tcc.brk_mccb_styles.tmt_tcc_number       IS 'Access BreakerMCCBStyles.TMT_TCCNumber: free-text vendor-doc curve-set reference; NOT an FK. [VERIFIED-LIVE 2026-06-27]';
-COMMENT ON COLUMN tcc.brk_mccb_styles.tmt_notes            IS 'Access BreakerMCCBStyles.TMT_Notes: human curve-provenance memo. [VERIFIED-LIVE]';
+COMMENT ON COLUMN tcc.brk_mccb_styles.tmt_tcc_number       IS 'Access BreakerMCCBStyles.TMT_TCCNumber: free-text vendor-doc curve-set reference; NOT an FK. Source-faithful raw carry: non-null may be empty/whitespace - trim/decode before treating as present (do not test non-null alone; decode at 031/UI). [VERIFIED-LIVE 2026-06-27]';
+COMMENT ON COLUMN tcc.brk_mccb_styles.tmt_notes            IS 'Access BreakerMCCBStyles.TMT_Notes: human curve-provenance memo. Source-faithful raw carry: non-null may be empty/default - trim/decode before treating as present (do not test non-null alone; decode at 031/UI). [VERIFIED-LIVE]';
 COMMENT ON COLUMN tcc.brk_mccb_styles.tmt_trip_plug        IS 'Access BreakerMCCBStyles.TMT_TripPlug: 0=Trip, 1=Plug. Metadata, not read by the serving cascade. [DVL-DB G1 3.1]';
 COMMENT ON COLUMN tcc.brk_mccb_styles.tmt_breaker_type     IS 'Access BreakerMCCBStyles.TMT_BreakerType: 0=Thermal Magnetic, 1=Motor Circuit Protector. [DVL-DB G1 3.1]';
 COMMENT ON COLUMN tcc.brk_mccb_styles.tmt_thermal_magnetic IS 'Access BreakerMCCBStyles.TMT_ThermalMagnetic: the MCCB-class inst-gate flag: 0=With Adjustable Instantaneous, 1=Without. Engine-consumed. [DVL-DB G1 3.1]';
