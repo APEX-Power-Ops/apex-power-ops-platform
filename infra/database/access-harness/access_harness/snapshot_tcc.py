@@ -271,6 +271,24 @@ def snapshot_tcc(pg_conn, run_id: str, table_specs: dict) -> str:
                 (snapshot_id, tcc_table, count),
             )
 
+        # Stamp this snapshot_id as the CURRENT owner of the materialised
+        # tcc_snapshot layer (multi-run isolation guard, fixes 5+6).  Because
+        # _materialise_table drops+recreates tcc_snapshot.<table> GLOBALLY
+        # (latest-only), validate must fail closed when a stale snapshot_id is
+        # asked to read it.
+        cur.execute(
+            """
+            INSERT INTO access_meta.materialized_owner
+                (layer, run_id, snapshot_id, updated_at)
+            VALUES ('tcc_snapshot', %s, %s, %s)
+            ON CONFLICT (layer) DO UPDATE SET
+                run_id = EXCLUDED.run_id,
+                snapshot_id = EXCLUDED.snapshot_id,
+                updated_at = EXCLUDED.updated_at
+            """,
+            (run_id, snapshot_id, captured_at),
+        )
+
     # Commit explicitly so the snapshot is durable even if pg_conn was opened
     # with autocommit=False.  (No-op when autocommit=True.)
     try:

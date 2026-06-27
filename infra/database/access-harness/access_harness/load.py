@@ -46,6 +46,35 @@ ADVISORY_LOCK_KEY: int = 0x41505843484152  # "APXCHAR" in ASCII hex
 
 
 # ---------------------------------------------------------------------------
+# Materialised-owner stamping (multi-run isolation guard, fixes 5+6)
+# ---------------------------------------------------------------------------
+
+def _stamp_access_raw_owner(conn, run_id: str) -> None:
+    """Record run_id as the current owner of the materialised access_raw layer.
+
+    Upserts the single access_meta.materialized_owner row for layer='access_raw'
+    so validate can fail closed when a SUPERSEDED run_id is asked to anti-join
+    against the (latest-only) access_raw.* tables.  Stamped inside the caller's
+    load transaction so ownership is atomic with the load.
+    """
+    from datetime import datetime, timezone
+
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO access_meta.materialized_owner
+                (layer, run_id, snapshot_id, updated_at)
+            VALUES ('access_raw', %s, NULL, %s)
+            ON CONFLICT (layer) DO UPDATE SET
+                run_id = EXCLUDED.run_id,
+                snapshot_id = EXCLUDED.snapshot_id,
+                updated_at = EXCLUDED.updated_at
+            """,
+            (run_id, datetime.now(tz=timezone.utc)),
+        )
+
+
+# ---------------------------------------------------------------------------
 # create_access_raw_table
 # ---------------------------------------------------------------------------
 
@@ -246,6 +275,16 @@ def load_table(
         """)
         with conn.cursor() as cur:
             cur.execute(update_sql, (row_count, run_id, table))
+
+        # ------------------------------------------------------------------
+        # 5'. Stamp this run_id as the CURRENT owner of the materialised
+        #     access_raw layer (multi-run isolation guard, fixes 5+6).  Because
+        #     create_access_raw_table drops+recreates access_raw.<table>
+        #     GLOBALLY (latest-only), validate must fail closed when a stale
+        #     run_id is asked to read it.  Stamped inside this txn so it is
+        #     atomic with the load.
+        # ------------------------------------------------------------------
+        _stamp_access_raw_owner(conn, run_id)
 
         # ------------------------------------------------------------------
         # 6. COMMIT

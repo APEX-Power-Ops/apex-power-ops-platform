@@ -113,13 +113,18 @@ def record_extraction_run(
     dbms_version: str,
     harness_version: str = "0.1.0",
 ) -> str:
-    """Insert one row into access_meta.extraction_run and return run_id.
+    """Upsert one row into access_meta.extraction_run and return run_id.
 
     run_id is deterministic: f"{sha8}-{mtimecompact}", so re-running the same
-    frozen source returns a predictable ID.  Callers that need strict uniqueness
-    per calendar-run should append a uuid4 fragment; for this harness the
-    deterministic form is acceptable because each distinct frozen file has a
-    unique (sha8, mtime) pair.
+    frozen source returns a predictable ID.  Because the id is deterministic, a
+    second run against the SAME frozen file collides on the PK; the statement is
+    therefore an UPSERT (ON CONFLICT (run_id) DO UPDATE) that refreshes the
+    mutable provenance fields instead of raising a PK violation.  This makes
+    extract / load / run-all RE-RUNNABLE (idempotent) -- a second run leaves
+    exactly one row with the latest extracted_at/driver/version.  Callers that
+    need strict uniqueness per calendar-run should append a uuid4 fragment; for
+    this harness the deterministic form is acceptable because each distinct
+    frozen file has a unique (sha8, mtime) pair.
 
     Parameters
     ----------
@@ -165,6 +170,17 @@ def record_extraction_run(
             %(read_only)s,
             %(harness_version)s
         )
+        ON CONFLICT (run_id) DO UPDATE SET
+            source_path      = EXCLUDED.source_path,
+            frozen_copy_path = EXCLUDED.frozen_copy_path,
+            source_size      = EXCLUDED.source_size,
+            source_mtime_utc = EXCLUDED.source_mtime_utc,
+            source_sha256    = EXCLUDED.source_sha256,
+            extracted_at_utc = EXCLUDED.extracted_at_utc,
+            driver_name      = EXCLUDED.driver_name,
+            dbms_version     = EXCLUDED.dbms_version,
+            read_only        = EXCLUDED.read_only,
+            harness_version  = EXCLUDED.harness_version
     """
     with conn.cursor() as cur:
         cur.execute(

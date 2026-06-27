@@ -188,3 +188,42 @@ def test_record_extraction_run_inserts_all_provenance(pg, tmp_path):
     assert db_extracted_at_utc is not None
     age_s = (now - db_extracted_at_utc).total_seconds()
     assert 0 <= age_s < 60, f"extracted_at_utc looks stale: age={age_s}s"
+
+
+def test_record_extraction_run_is_idempotent(pg, tmp_path):
+    """Calling record_extraction_run twice for the SAME frozen source must NOT
+    raise (re-runnable extract/load/run-all) and must leave exactly ONE row.
+
+    run_id is deterministic (sha8-mtimecompact), so a second call against the
+    same frozen file collides on the PK; the insert must be an UPSERT that
+    refreshes the mutable fields instead of raising a PK violation.
+    """
+    content = b"idempotent re-run provenance content"
+    src = _write_temp(tmp_path / "rerun.accdb", content)
+    dest_dir = tmp_path / "frozen"
+
+    fs = freeze(src, dest_dir)
+
+    run_id_1 = record_extraction_run(
+        pg, fs, driver_name="ACEODBC.DLL", dbms_version="04.00.0001",
+        harness_version="0.1.0",
+    )
+    # Second run with DIFFERENT mutable values: must not raise, must refresh.
+    run_id_2 = record_extraction_run(
+        pg, fs, driver_name="ACEODBC.DLL", dbms_version="04.00.0002",
+        harness_version="0.1.0",
+    )
+
+    assert run_id_1 == run_id_2, "deterministic run_id must be stable"
+
+    # Exactly ONE row for that run_id.
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT count(*), max(dbms_version) "
+            "FROM access_meta.extraction_run WHERE run_id=%s",
+            (run_id_1,),
+        )
+        n, dbms = cur.fetchone()
+    assert n == 1, f"re-run must leave exactly one row, found {n}"
+    # Mutable field refreshed to the second call's value (UPSERT, not ignore).
+    assert dbms == "04.00.0002", f"UPSERT must refresh dbms_version, got {dbms!r}"

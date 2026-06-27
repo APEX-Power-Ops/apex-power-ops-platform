@@ -414,15 +414,20 @@ def test_f79_03_pipeline_produces_structural_evidence(live_run, pg_conn):
 # ---------------------------------------------------------------------------
 
 def test_acceptance_skips_with_reason_when_prereqs_absent(monkeypatch):
-    """With a prerequisite forced absent, the prereq probe yields a clear reason.
+    """With TCC_BREAKER_RO_PW forced absent, the HOST prereq probe yields a clear
+    reason (so the acceptance SKIPS loudly for the host gap, never silently
+    no-ops).
 
-    We simulate absence by unsetting TCC_BREAKER_RO_PW and assert _all_prereqs()
-    reports a non-empty, descriptive reason (so the acceptance SKIPS loudly, never
-    silently no-ops).
+    We call the host-specific probe (_host_reason) DIRECTLY rather than
+    _all_prereqs().  On a machine that is ALSO missing an earlier prerequisite
+    (ACCESS_HARNESS_SUPERUSER_DSN or D:\\TCC_NEW.accdb), _all_prereqs() would
+    short-circuit and return that earlier reason -- making this test assert the
+    WRONG skip path.  _host_reason() proves the host-skip path regardless of
+    other missing prerequisites (Codex P2 fix 4).
     """
     monkeypatch.delenv("TCC_BREAKER_RO_PW", raising=False)
-    ok, reason = _all_prereqs()
-    assert ok is False, "with TCC_BREAKER_RO_PW unset, prereqs must be reported absent"
+    ok, reason = _host_reason()
+    assert ok is False, "with TCC_BREAKER_RO_PW unset, the host prereq must be reported absent"
     assert reason and isinstance(reason, str), "skip reason must be non-empty"
     assert "TCC_BREAKER_RO_PW" in reason, (
         f"skip reason must name the missing prerequisite, got {reason!r}"
