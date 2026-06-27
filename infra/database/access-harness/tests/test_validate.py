@@ -349,6 +349,39 @@ def test_reconcile_counts_writes_row_count_reconciliation(pg):
     assert row == (10, 9, 1)
 
 
+def test_reconcile_counts_includes_checksummed_tables(pg):
+    """Regression (cross-task seam): reconcile_checksums upgrades a loaded table's
+    load_state to 'checksummed' and runs BEFORE reconcile_counts in run_all, so
+    reconcile_counts must count 'checksummed' tables too -- otherwise the
+    access-vs-staging row_count_reconciliation evidence is silently EMPTY after a
+    real checksummed run."""
+    run_id = _seed_run(pg, "run-recon-checksummed")
+    with pg.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO access_meta.tables
+                (run_id, table_name, object_type, load_state,
+                 access_row_count, staging_row_count, tcc_build_kind)
+            VALUES (%s, 'TblCk', 'TABLE', 'checksummed', 12, 12, '1:1_load')
+            """,
+            (run_id,),
+        )
+
+    reconcile_counts(pg, run_id)
+
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT access_row_count, staging_row_count, delta "
+            "FROM access_validation.row_count_reconciliation "
+            "WHERE run_id=%s AND table_name=%s",
+            (run_id, "TblCk"),
+        )
+        row = cur.fetchone()
+    assert row == (12, 12, 0), (
+        "reconcile_counts must include checksummed tables (else the row-count "
+        "reconciliation evidence is empty after a real checksummed run)")
+
+
 # ---------------------------------------------------------------------------
 # test_no_interpretive_columns_after_writes
 # ---------------------------------------------------------------------------

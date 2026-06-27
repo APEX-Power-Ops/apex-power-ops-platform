@@ -735,16 +735,20 @@ def _write_antijoin_row(
 def reconcile_counts(pg_conn, run_id: str) -> None:
     """Write access_validation.row_count_reconciliation per loaded table.
 
-    Reads access_meta.tables for the run (load_state='loaded') and writes one
-    row_count_reconciliation row per table: access_row_count, staging_row_count,
-    and delta = access_row_count - staging_row_count.  Purely descriptive.
+    Reads access_meta.tables for the run (load_state IN ('loaded','checksummed'))
+    and writes one row_count_reconciliation row per table: access_row_count,
+    staging_row_count, and delta = access_row_count - staging_row_count.  Purely
+    descriptive.  NOTE: reconcile_checksums upgrades a loaded table's load_state to
+    'checksummed' and runs BEFORE this in run_all, so a 'checksummed' table is a
+    loaded table that has also been checksummed -- it MUST be counted here, else
+    the reconciliation evidence is silently empty after a real run.
     """
     with pg_conn.cursor() as cur:
         cur.execute(
             """
             SELECT table_name, access_row_count, staging_row_count
             FROM access_meta.tables
-            WHERE run_id = %s AND load_state = 'loaded'
+            WHERE run_id = %s AND load_state IN ('loaded', 'checksummed')
             """,
             (run_id,),
         )
