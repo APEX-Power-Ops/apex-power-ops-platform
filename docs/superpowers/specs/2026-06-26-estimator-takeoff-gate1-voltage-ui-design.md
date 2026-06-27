@@ -3,6 +3,8 @@
 > Status: DRAFT for operator review. Lane `estimator-takeoff/gate1-voltage-ui` off main `3dff664c`. Dev-only; merge OPERATOR-GATED. This is the FIRST human gate of the estimator-takeoff pipeline.
 >
 > **Rev 2 (operator review, 2026-06-26) — four contract corrections, all verified against source:** (1) the interactive surface is built from `runTakeoff` + `reconcile` so `TakeoffResult.findings` is available — NOT `runFromArtifact`, whose `RunResult.findings` carries only estimator-core envelope findings and **drops the voltage-assertion findings** (every non-emit return path sets `findings: []`); (2) **untagged rows are read-only, not assertable** — the engine's `VoltageAssertion` is tag-keyed only, no `inputIndex` path; (3) **assertions merge by tag (replace, never blind-append)** — duplicate tags are a hard engine error; (4) **the UI surfaces ALL open items, not just missing voltage** — `isClean` blocks on error findings, any unresolved disposition, and any operator question.
+>
+> **Rev 3 (operator UX direction, 2026-06-26):** title **"Takeoff Gate 1"**; the two panels are named **"Voltage Questions"** and **"Other Open Items"**; operator-facing copy says **"partial preview"** (not the raw enum); **Clean Export** is disabled unless `status === 'clean'` and **Partial Preview Export** is available but visually subordinate + clearly labeled; nav placement = a **top-level operations tool beside Estimator** (pre-estimate intake/review), NOT under PM Review. These supersede any earlier panel-name / route-copy wording further below. The binding build detail lives in the plan's Task 6/7 (`docs/superpowers/plans/2026-06-26-estimator-takeoff-gate1-voltage-ui.md`).
 
 ## Goal
 
