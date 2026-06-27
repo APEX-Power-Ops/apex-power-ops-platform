@@ -159,3 +159,93 @@ def test_governed_command_paths_fence_before_write(monkeypatch):
     ):
         with pytest.raises(RuntimeError, match="FENCE VIOLATION"):
             cmd(_Args())
+
+
+# ---------------------------------------------------------------------------
+# Task 4 -- connection leak proof: fence-raise must close every pg handle
+# ---------------------------------------------------------------------------
+
+def test_no_pg_leak_on_fence_raise(monkeypatch):
+    """Task 4 AC: if _fence_governed raises (wrong DB on --governed), EVERY
+    psycopg connection that was opened must be closed before the exception
+    propagates.  We track this with a fake connection that records open/close
+    and whose cursor returns a NON-governed DB name so assert_current_database
+    raises FENCE VIOLATION.
+
+    This test FAILS against the pre-Task-4 code (cmd_inventory opens pg_tx
+    outside the try, so pg_tx is never closed on the fence-raise path).  After
+    the Task-4 refactor ALL three commands must have closed every opened handle.
+    """
+    import os
+    from contextlib import contextmanager
+    from access_harness import cli, config, freeze as freeze_mod
+
+    # Require a real base DSN so _pg_dsn_from_env / config.test_pg_dsn work.
+    if not os.environ.get("ACCESS_HARNESS_SUPERUSER_DSN"):
+        pytest.skip("ACCESS_HARNESS_SUPERUSER_DSN unset")
+
+    # --governed resolves to tcc_fidelity_test (not tcc_fidelity_governed)
+    # so every _fence_governed call will raise FENCE VIOLATION.
+    monkeypatch.setattr(config, "governed_pg_dsn", config.test_pg_dsn)
+
+    opened = []
+
+    class _FakeConn:
+        """Fake psycopg connection: always reports DB as tcc_fidelity_test."""
+        def __init__(self):
+            self.closed = False
+            opened.append(self)
+
+        @contextmanager
+        def cursor(self):
+            class _Cur:
+                def execute(self_, *_a, **_k):
+                    pass
+                def fetchone(self_):
+                    # Return a NON-governed DB name to trigger the fence.
+                    return ("tcc_fidelity_test",)
+            yield _Cur()
+
+        def close(self):
+            self.closed = True
+
+    def _fake_connect_pg(dsn: str, *, autocommit: bool) -> "_FakeConn":
+        return _FakeConn()
+
+    monkeypatch.setattr(cli, "_connect_pg", _fake_connect_pg)
+
+    # Freeze and driver_preflight must not do real I/O.
+    class _FS:
+        frozen_path = "X:/frozen.accdb"
+        source_sha256 = "00" * 32
+    monkeypatch.setattr(freeze_mod, "freeze", lambda *a, **k: _FS())
+    monkeypatch.setattr(cli, "driver_preflight", lambda *a, **k: ("drv", "ver", 1))
+
+    # connect_data / connect_ace must NOT be reached (fence fires before them).
+    def _boom_data(*a, **k):
+        raise AssertionError("connect_data was reached AFTER the fence fired")
+    def _boom_ace(*a, **k):
+        raise AssertionError("connect_ace was reached AFTER the fence fired")
+    from access_harness import extract
+    monkeypatch.setattr(extract, "connect_data", _boom_data)
+    monkeypatch.setattr(extract, "connect_ace", _boom_ace)
+
+    class _Args:
+        governed = True
+        with_curves = False
+        accdb = None
+        frozen_dir = None
+
+    for cmd in (cli.cmd_load, cli.cmd_inventory, cli.cmd_run_all):
+        opened.clear()
+        with pytest.raises(RuntimeError, match="FENCE VIOLATION"):
+            cmd(_Args())
+        assert len(opened) >= 2, (
+            f"{cmd.__name__}: expected >= 2 pg connections opened, got {len(opened)}"
+        )
+        leaks = [c for c in opened if not c.closed]
+        assert not leaks, (
+            f"{cmd.__name__}: {len(leaks)} pg connection(s) not closed after "
+            f"fence-raise (Task 4 leak). opened={len(opened)}, "
+            f"unclosed={len(leaks)}"
+        )
