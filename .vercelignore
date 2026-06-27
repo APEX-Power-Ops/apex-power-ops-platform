@@ -19,6 +19,9 @@ output/
 packages/*
 !packages/estimator-core/
 !packages/estimator-core/**
+# estimator-takeoff is also a workspace-source dep of operations-web (transpilePackages); keep its source so Turbopack can resolve it.
+!packages/estimator-takeoff/
+!packages/estimator-takeoff/**
 plan/
 pytest-cache-files-*/
 services/
