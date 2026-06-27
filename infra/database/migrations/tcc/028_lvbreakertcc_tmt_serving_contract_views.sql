@@ -9,8 +9,8 @@
 -- =============================================================================
 -- =============================================================================
 -- F-79-02 (HIGH) — #79 lvbreakertcc contract audit promotion.
--- *** QUEUED: apply ONLY AFTER 027 lands and the operator gives a separate go. ***
--- PROD-BOUND, OPERATOR-GATED. Apply against governed Supabase tcc via apply_migration.
+-- *** APPLIED 2026-06-27 (after 027) - see the applied-stamp header above + 028_APPLY_TRANSCRIPT.md. ***
+-- PROD-BOUND. Was applied against governed Supabase tcc via apply_migration (operator-gated; now LIVE).
 --
 -- WHAT: additive, diagnostic-only TMT serving-contract views. They SEPARATE the
 -- TMT frames that can satisfy the current lvbreakertcc nominal-curve serving

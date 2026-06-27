@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS tcc.brk_style_native_overrides (
   r_int          jsonb,               -- raw r_int_inst_* / r_int_series_* / r_int_ninst_* (ANSI interrupt ratings; ninst PCB-only)
   r_iec          jsonb,               -- raw r_iec_inst_* / r_iec_ninst_* (IEC interrupt ratings; ninst PCB-only)
   ovr_curves     jsonb,               -- raw Breaker_OvrCurves points by StyleID (currently empty in Access; reserved)
+  CONSTRAINT brk_style_native_overrides_class_chk     CHECK (breaker_class IN ('ICCB','MCCB','PCB')),
+  CONSTRAINT brk_style_native_overrides_source_id_chk CHECK (source_id > 0),
   PRIMARY KEY (breaker_class, source_id)
 );
 
@@ -45,6 +47,31 @@ COMMENT ON COLUMN tcc.brk_style_native_overrides.inst_override  IS 'Raw InstOvr*
 COMMENT ON COLUMN tcc.brk_style_native_overrides.ninst_override IS 'Raw NInstOvr* = the Non-Instantaneous variant (= inst_override where the Access N columns are absent, per DvlEng fallback).';
 COMMENT ON COLUMN tcc.brk_style_native_overrides.r_int          IS 'Raw ANSI interrupt ratings (kA) at 240/480/600 V: inst / series / ninst (ninst = PCB-only, getter CTccCurveBase.GetIntKaNonInst).';
 COMMENT ON COLUMN tcc.brk_style_native_overrides.r_iec          IS 'Raw IEC interrupt ratings (kA) at 220-1000 V: inst / ninst (ninst = PCB-only).';
+
+-- Exact-shape guard (fail closed): CREATE TABLE IF NOT EXISTS skips a pre-existing table of the wrong
+-- shape, so assert the table, key types, jsonb blocks, PK, and the two CHECK constraints before COMMIT.
+DO $$
+DECLARE v_actual text; v_jsonb int; v_pk int; v_chk int;
+BEGIN
+  SELECT data_type INTO v_actual FROM information_schema.columns
+    WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND column_name='breaker_class';
+  IF v_actual IS NULL THEN RAISE EXCEPTION '030 shape: table/breaker_class missing'; END IF;
+  IF v_actual <> 'text' THEN RAISE EXCEPTION '030 shape: breaker_class is % (expected text)', v_actual; END IF;
+  SELECT data_type INTO v_actual FROM information_schema.columns
+    WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND column_name='source_id';
+  IF v_actual <> 'integer' THEN RAISE EXCEPTION '030 shape: source_id is % (expected integer)', v_actual; END IF;
+  SELECT count(*) INTO v_jsonb FROM information_schema.columns
+    WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND data_type='jsonb';
+  IF v_jsonb <> 6 THEN RAISE EXCEPTION '030 shape: expected 6 jsonb blocks (found %)', v_jsonb; END IF;
+  SELECT count(*) INTO v_pk FROM information_schema.table_constraints
+    WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND constraint_type='PRIMARY KEY';
+  IF v_pk <> 1 THEN RAISE EXCEPTION '030 shape: missing PRIMARY KEY'; END IF;
+  SELECT count(*) INTO v_chk FROM information_schema.table_constraints
+    WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND constraint_type='CHECK'
+      AND constraint_name IN ('brk_style_native_overrides_class_chk','brk_style_native_overrides_source_id_chk');
+  IF v_chk <> 2 THEN RAISE EXCEPTION '030 shape: expected 2 named CHECK constraints (found %)', v_chk; END IF;
+  RAISE NOTICE '030 shape OK: table + key types + 6 jsonb + PK + 2 CHECKs';
+END $$;
 
 COMMIT;
 
