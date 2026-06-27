@@ -48,8 +48,10 @@ COMMENT ON COLUMN tcc.brk_style_native_overrides.r_iec          IS 'Raw IEC inte
 
 COMMIT;
 
--- DATA POPULATION (separate gated step, harness-driven): per class, read the override columns
--- row-level from D:\TCC_NEW.accdb, build the JSONB blocks (verbatim Access keys), and
--- INSERT (breaker_class, source_id, inst_override, ninst_override, brk_times, r_int, r_iec)
--- for the styles that carry an override (with-adjustable-instantaneous breakers; ~241 ICCB / ~129 MCCB /
--- ~317 PCB by InstOvrAmps>0). Dry-run on the breaker sandbox; apply on the gate.
+-- DATA POPULATION (separate gated step, harness-driven): per class, read the override/timing/rating
+-- columns row-level from D:\TCC_NEW.accdb, build the JSONB blocks (verbatim Access keys), and
+-- INSERT (breaker_class, source_id, inst_override, ninst_override, brk_times, r_int, r_iec) for ANY
+-- style with at least one non-null D5 block (override OR BrkTimes OR r_int OR r_iec - these exist
+-- INDEPENDENTLY of an override; e.g. PCB carries r_int_* on ~1616 styles but InstOvrAmps>0 on only
+-- ~317, so an override-only filter would silently drop ~1300 rating-only rows). Leave a per-block
+-- JSONB NULL where that block is absent. Dry-run on the breaker sandbox; apply on the gate.
