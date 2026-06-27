@@ -1,0 +1,18 @@
+{
+  "pdf": "probe-error-finding.pdf",
+  "apparatus": [
+    {
+      "raw": "FB-1 800AF/800AT LSIG",
+      "tag": "FB-1",
+      "sheet": "E1",
+      "page": 0,
+      "bbox": [0, 0, 1, 1],
+      "evidence": "one-line",
+      "block": "P1"
+    }
+  ],
+  "voltageAssertions": [
+    { "voltageV": 480, "tags": ["FB-1"] },
+    { "voltageV": 208, "tags": ["GHOST-TAG-NOT-IN-ARTIFACT"] }
+  ]
+}

@@ -287,3 +287,73 @@ test('zero-matched artifact: nothing-to-price notice visible and both export but
 
   expect(pageErrors).toHaveLength(0)
 })
+
+// ---------------------------------------------------------------------------
+// PROOF 5 extension (P3): the "Download runner artifact (JSON)" button must
+// also be disabled in the zero-matched state.
+// This rides the existing ZERO_MATCHED_PATH fixture.
+// ---------------------------------------------------------------------------
+test('zero-matched artifact: Download runner artifact button is also disabled (P3)', async ({ page }) => {
+  const pageErrors: string[] = []
+  page.on('pageerror', (err) => pageErrors.push(err.message))
+
+  await page.goto('/takeoff', { waitUntil: 'networkidle' })
+
+  await page.setInputFiles('input[type="file"]', ZERO_MATCHED_PATH)
+
+  // Status banner must show blocking notice
+  const status = page.getByRole('status')
+  await expect(status).toContainText('nothing to price', { timeout: 10_000 })
+
+  // Fill project context (so canExport is true - isolates exportBlocked as disabling factor)
+  await page.fill('input[aria-label="Project number"]', 'ZERO-TEST-P3')
+  await page.fill('input[aria-label="Operator initials"]', 'JLS')
+
+  // Download runner artifact (JSON) must be disabled (P3: exportBlocked gates it)
+  const runnerArtifactBtn = page.getByRole('button', { name: 'Download runner artifact (JSON)' })
+  await expect(runnerArtifactBtn).toBeDisabled()
+
+  expect(pageErrors).toHaveLength(0)
+})
+
+// ---------------------------------------------------------------------------
+// PROOF 6 - error-finding artifact: blocking banner visible, all three
+//   export buttons disabled.
+//   Fixture: FB-1 800AF/800AT LSIG + valid 480V assertion on FB-1,
+//            PLUS a second assertion for GHOST-TAG-NOT-IN-ARTIFACT (unknown tag).
+//   Engine-verified (probe 2026-06-26): matchedLines=1, findings=[{severity:'error',
+//   code:'voltage_assertion_unknown_tag'}]. buildExport throws on error findings
+//   even though matchedLines>0 (the cross-engine P2 finding).
+// ---------------------------------------------------------------------------
+const ERROR_FINDING_PATH = path.join(TESTS_DIR, 'fixtures', 'takeoff-error-finding.artifact.json')
+
+test('error-finding artifact: blocking error banner visible and all three export buttons disabled (P2+P3)', async ({ page }) => {
+  const pageErrors: string[] = []
+  page.on('pageerror', (err) => pageErrors.push(err.message))
+
+  await page.goto('/takeoff', { waitUntil: 'networkidle' })
+
+  await page.setInputFiles('input[type="file"]', ERROR_FINDING_PATH)
+
+  // Status banner must show the blocking error findings notice (top-priority banner, P2)
+  const status = page.getByRole('status')
+  await expect(status).toContainText('blocking error findings', { timeout: 10_000 })
+
+  // Fill project context so canExport is true (isolates exportBlocked as the disabling factor)
+  await page.fill('input[aria-label="Project number"]', 'ERR-TEST')
+  await page.fill('input[aria-label="Operator initials"]', 'JLS')
+
+  // Clean Export must be disabled
+  const cleanExportBtn = page.getByRole('button', { name: 'Clean Export' })
+  await expect(cleanExportBtn).toBeDisabled()
+
+  // Partial Preview Export must also be disabled
+  const partialBtn = page.getByRole('button', { name: 'partial preview - NOT a complete bid' })
+  await expect(partialBtn).toBeDisabled()
+
+  // Download runner artifact (JSON) must be disabled (P3: all three blocked when exportBlocked)
+  const runnerArtifactBtn = page.getByRole('button', { name: 'Download runner artifact (JSON)' })
+  await expect(runnerArtifactBtn).toBeDisabled()
+
+  expect(pageErrors).toHaveLength(0)
+})
