@@ -58,8 +58,10 @@ gate discipline as 027/028.
   the "easy one" - decoded, low-risk, unblocks TMT-breaker characterization metadata.
 - **D5 raw-carry (`native_bounded`):** add a side table (e.g. `tcc.brk_style_native_overrides`) or raw columns for
   `InstOvr*` / `NInstOvr*` / `BrkTimes*` / `r_int_*` / `r_iec_*` + the `Breaker_OvrCurves` points, tagged
-  `native_bounded`, keyed on `source_id`. Preserves fidelity (the raw floats/bytes) WITHOUT wiring to serving and
-  WITHOUT claiming the native behavior. The curve/char byte-enum legends + the application math stay `deferred`.
+  `native_bounded`, keyed on **`(breaker_class, source_id)`** - a shared side table MUST include `breaker_class`
+  because `source_id` collides across classes (G1 sec 2B per-class id overlap); or use per-class side tables.
+  Preserves fidelity (the raw floats/bytes) WITHOUT wiring to serving and WITHOUT claiming the native behavior. The
+  curve/char byte-enum legends + the application math stay `deferred`.
 
 ## Cross-refs
 - G1 sec 3.1 / sec 3.4 / sec 5 (D4/D5) - the authoritative decoded register this map productizes.
