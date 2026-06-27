@@ -544,23 +544,30 @@ def test_multiset_enumerated_missing_excludes_tcc_excess(pg):
 # Fixes 5+6: fail-closed on superseded materialised access_raw / tcc_snapshot.
 #
 # The access_raw.* and tcc_snapshot.* materialised tables are LATEST-ONLY:
-# load.py drops+recreates access_raw.<table> globally and snapshot_tcc.py
-# replaces tcc_snapshot.<table> globally, while validate is keyed by
-# run_id / snapshot_id.  Validating an OLD run_id/snapshot_id after a later
-# load/snapshot replaced the materialised tables would read the NEWER data
-# (mixed evidence for the wrong source).  The access_meta.materialized_owner
-# marker + assert_materialized_owner make validate FAIL CLOSED in that case.
+# load.py drops+recreates access_raw.<table> and snapshot_tcc.py replaces
+# tcc_snapshot.<table>, while validate is keyed by run_id / snapshot_id.
+# Ownership is recorded PER (layer, table): each load_table stamps ONLY the
+# table it just replaced, and snapshot_tcc stamps ONLY the tables it actually
+# materialised.  Validating an OLD run_id/snapshot_id whose owned tables were
+# PARTIALLY replaced by a later partial load/snapshot would otherwise read a
+# table left from a DIFFERENT run (mixed evidence for the wrong source).  The
+# per-(layer, table) access_meta.materialized_owner marker +
+# assert_materialized_owner make validate FAIL CLOSED for EACH table it reads
+# whose owner differs from the requested id.
 # ---------------------------------------------------------------------------
 
-def _stamp_owner(pg_conn, layer, *, run_id=None, snapshot_id=None):
-    """Set the materialised-layer owner marker (simulates load/snapshot stamping)."""
+def _stamp_owner(pg_conn, layer, table_name, *, run_id=None, snapshot_id=None):
+    """Stamp the per-table materialised owner (simulates load/snapshot stamping)."""
     from access_harness.validate import stamp_materialized_owner
-    stamp_materialized_owner(pg_conn, layer, run_id=run_id, snapshot_id=snapshot_id)
+    stamp_materialized_owner(
+        pg_conn, layer, table_name, run_id=run_id, snapshot_id=snapshot_id
+    )
 
 
 def test_validate_superseded_run_id_raises(pg):
-    """A run_id that no longer owns the materialised access_raw layer must RAISE
-    rather than silently anti-join against the newer load's data."""
+    """A run_id that no longer owns the materialised access_raw table it would
+    read must RAISE rather than silently anti-join against the newer load's
+    data."""
     from access_harness.validate import SupersededMaterializationError
 
     old_run = _seed_run(pg, "run-old-001")
@@ -582,11 +589,12 @@ def test_validate_superseded_run_id_raises(pg):
             [(100,)],
         )
 
-    # The CURRENT owners: access_raw -> new_run, tcc_snapshot -> sid.
-    _stamp_owner(pg, "access_raw", run_id=new_run)
-    _stamp_owner(pg, "tcc_snapshot", snapshot_id=sid)
+    # The CURRENT owners: access_raw."Breaker_TMTFrameAmps" -> new_run,
+    # tcc_snapshot.tmt_amps -> sid.
+    _stamp_owner(pg, "access_raw", "Breaker_TMTFrameAmps", run_id=new_run)
+    _stamp_owner(pg, "tcc_snapshot", "tmt_amps", snapshot_id=sid)
 
-    # Validating the OLD run_id must fail closed (it no longer owns access_raw).
+    # Validating the OLD run_id must fail closed (it no longer owns the table).
     with pytest.raises(SupersededMaterializationError):
         antijoin_vs_tcc(pg, old_run, sid, "Breaker_TMTFrameAmps", ["rating"])
 
@@ -603,8 +611,9 @@ def test_validate_superseded_run_id_raises(pg):
 
 
 def test_validate_superseded_snapshot_id_raises(pg):
-    """A snapshot_id that no longer owns the materialised tcc_snapshot layer must
-    RAISE rather than read the newer snapshot's materialised tables."""
+    """A snapshot_id that no longer owns the materialised tcc_snapshot table it
+    would read must RAISE rather than read the newer snapshot's materialised
+    tables."""
     from access_harness.validate import SupersededMaterializationError
 
     run_id = _seed_run(pg, "run-snap-guard-001")
@@ -625,9 +634,9 @@ def test_validate_superseded_snapshot_id_raises(pg):
             [(100,)],
         )
 
-    # access_raw owned by run_id; tcc_snapshot owned by the NEW snapshot.
-    _stamp_owner(pg, "access_raw", run_id=run_id)
-    _stamp_owner(pg, "tcc_snapshot", snapshot_id=new_sid)
+    # access_raw owned by run_id; tcc_snapshot.tmt_amps owned by the NEW snapshot.
+    _stamp_owner(pg, "access_raw", "Breaker_TMTFrameAmps", run_id=run_id)
+    _stamp_owner(pg, "tcc_snapshot", "tmt_amps", snapshot_id=new_sid)
 
     # Validating with the OLD snapshot_id must fail closed.
     with pytest.raises(SupersededMaterializationError):
@@ -643,3 +652,136 @@ def test_validate_superseded_snapshot_id_raises(pg):
         )
         (n,) = cur.fetchone()
     assert n == 1, "current snapshot_id must validate cleanly"
+
+
+# ---------------------------------------------------------------------------
+# PER-TABLE ownership (Codex review-b53189fc): a PARTIAL/subset materialisation
+# must NOT stamp whole-layer ownership.  Run A materialises {X, Y}; run B then
+# materialises ONLY {X}, leaving Y from A.  Validating B against Y (owned by A)
+# must FAIL CLOSED; validating B against X (which B owns) must work.
+# ---------------------------------------------------------------------------
+
+def test_validate_partial_access_raw_run_reads_stale_table_raises(pg):
+    """Run B replaced only access_raw.X; access_raw.Y is still owned by run A.
+    Validating run B against Y (the stale table) must RAISE; against X works."""
+    from access_harness.validate import SupersededMaterializationError
+
+    run_a = _seed_run(pg, "run-partial-A")
+    run_b = _seed_run(pg, "run-partial-B")
+    sid = _seed_snapshot(pg, run_b, "snap-partial-ab")
+
+    # X = Breaker_TMTFrameAmps (-> tcc tmt_amps); Y = Breaker_TMTFrameSettings
+    # (-> tcc tmt_settings).  Both are 1:1_load tables in the real ProjectionMap.
+    with pg.cursor() as cur:
+        cur.execute(
+            'CREATE TABLE access_raw."Breaker_TMTFrameAmps" (rating integer)'
+        )
+        cur.executemany(
+            'INSERT INTO access_raw."Breaker_TMTFrameAmps" (rating) VALUES (%s)',
+            [(100,), (200,)],
+        )
+        cur.execute(
+            'CREATE TABLE access_raw."Breaker_TMTFrameSettings" (id integer)'
+        )
+        cur.executemany(
+            'INSERT INTO access_raw."Breaker_TMTFrameSettings" (id) VALUES (%s)',
+            [(1,), (2,)],
+        )
+        cur.execute("CREATE TABLE tcc_snapshot.tmt_amps (rating integer)")
+        cur.executemany(
+            "INSERT INTO tcc_snapshot.tmt_amps (rating) VALUES (%s)",
+            [(100,)],
+        )
+        cur.execute("CREATE TABLE tcc_snapshot.tmt_settings (id integer)")
+        cur.executemany(
+            "INSERT INTO tcc_snapshot.tmt_settings (id) VALUES (%s)",
+            [(1,)],
+        )
+
+    # Run A materialised BOTH access_raw tables; run B then replaced ONLY
+    # Breaker_TMTFrameAmps -> Breaker_TMTFrameSettings is LEFT owned by run A.
+    _stamp_owner(pg, "access_raw", "Breaker_TMTFrameAmps", run_id=run_a)
+    _stamp_owner(pg, "access_raw", "Breaker_TMTFrameSettings", run_id=run_a)
+    _stamp_owner(pg, "access_raw", "Breaker_TMTFrameAmps", run_id=run_b)
+    _stamp_owner(pg, "tcc_snapshot", "tmt_amps", snapshot_id=sid)
+    _stamp_owner(pg, "tcc_snapshot", "tmt_settings", snapshot_id=sid)
+
+    # Validating run B against the STALE table (owned by A) must fail closed.
+    with pytest.raises(SupersededMaterializationError) as exc:
+        antijoin_vs_tcc(pg, run_b, sid, "Breaker_TMTFrameSettings", ["id"])
+    msg = str(exc.value)
+    assert "Breaker_TMTFrameSettings" in msg, "error must name the stale table"
+    assert run_a in msg and run_b in msg, "error must name owning vs requested id"
+
+    # Validating run B against the table it DOES own works.
+    antijoin_vs_tcc(pg, run_b, sid, "Breaker_TMTFrameAmps", ["rating"])
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM access_validation.antijoin_vs_tcc "
+            "WHERE run_id=%s AND access_table=%s",
+            (run_b, "Breaker_TMTFrameAmps"),
+        )
+        (n,) = cur.fetchone()
+    assert n == 1, "run B must validate cleanly against the table it owns"
+
+
+def test_validate_partial_tcc_snapshot_subset_reads_stale_table_raises(pg):
+    """Snapshot S1 materialised {tmt_frames, tmt_amps}; S2 materialised only
+    {tmt_frames}, leaving tmt_amps from S1.  Validating S2 against tmt_amps (the
+    stale snapshot table) must RAISE; validating S2 against tmt_frames works."""
+    from access_harness.validate import SupersededMaterializationError
+
+    run_id = _seed_run(pg, "run-snap-subset")
+    s1 = _seed_snapshot(pg, run_id, "snap-S1")
+    s2 = _seed_snapshot(pg, run_id, "snap-S2")
+
+    # access_raw side: the two access tables behind tmt_amps + the frame sizes
+    # table (-> tcc tmt_frames is computed in the real map, but for this guard
+    # test we use the 1:1_load amps table against tmt_amps and a plain count on
+    # the frames table -- the guard is about the tcc_snapshot owner, so we drive
+    # it through antijoin_vs_tcc on Breaker_TMTFrameAmps which reads
+    # tcc_snapshot.tmt_amps).
+    with pg.cursor() as cur:
+        cur.execute(
+            'CREATE TABLE access_raw."Breaker_TMTFrameAmps" (rating integer)'
+        )
+        cur.executemany(
+            'INSERT INTO access_raw."Breaker_TMTFrameAmps" (rating) VALUES (%s)',
+            [(100,), (200,)],
+        )
+        cur.execute("CREATE TABLE tcc_snapshot.tmt_frames (id integer)")
+        cur.executemany(
+            "INSERT INTO tcc_snapshot.tmt_frames (id) VALUES (%s)",
+            [(1,)],
+        )
+        cur.execute("CREATE TABLE tcc_snapshot.tmt_amps (rating integer)")
+        cur.executemany(
+            "INSERT INTO tcc_snapshot.tmt_amps (rating) VALUES (%s)",
+            [(100,)],
+        )
+
+    # access_raw owned by run_id (single run).
+    _stamp_owner(pg, "access_raw", "Breaker_TMTFrameAmps", run_id=run_id)
+    # S1 materialised BOTH tcc tables; S2 then replaced ONLY tmt_frames ->
+    # tcc_snapshot.tmt_amps is LEFT owned by S1.
+    _stamp_owner(pg, "tcc_snapshot", "tmt_frames", snapshot_id=s1)
+    _stamp_owner(pg, "tcc_snapshot", "tmt_amps", snapshot_id=s1)
+    _stamp_owner(pg, "tcc_snapshot", "tmt_frames", snapshot_id=s2)
+
+    # Validating S2's anti-join against tmt_amps (owned by S1) must fail closed.
+    with pytest.raises(SupersededMaterializationError) as exc:
+        antijoin_vs_tcc(pg, run_id, s2, "Breaker_TMTFrameAmps", ["rating"])
+    msg = str(exc.value)
+    assert "tmt_amps" in msg, "error must name the stale snapshot table"
+    assert s1 in msg and s2 in msg, "error must name owning vs requested snapshot id"
+
+    # S1 (which owns tmt_amps) validates cleanly.
+    antijoin_vs_tcc(pg, run_id, s1, "Breaker_TMTFrameAmps", ["rating"])
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM access_validation.antijoin_vs_tcc "
+            "WHERE run_id=%s AND access_table=%s",
+            (run_id, "Breaker_TMTFrameAmps"),
+        )
+        (n,) = cur.fetchone()
+    assert n == 1, "snapshot S1 must validate cleanly against tmt_amps"

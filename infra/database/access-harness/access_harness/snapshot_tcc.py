@@ -239,8 +239,13 @@ def snapshot_tcc(pg_conn, run_id: str, table_specs: dict) -> str:
     host_conn = host_tcc_conn()
     try:
         # Compute counts / materialise tables BEFORE writing provenance so a
-        # host failure does not leave a dangling snapshot row.
+        # host failure does not leave a dangling snapshot row.  Track WHICH
+        # tables were actually MATERIALISED (columns is not None) -- only those
+        # get a per-table materialised-owner stamp; count-only tables create no
+        # local table, so they must NOT claim materialised ownership (Codex
+        # review-b53189fc).
         per_table_counts: dict = {}
+        materialised_tables: list = []
         for tcc_table, columns in table_specs.items():
             if columns is None:
                 per_table_counts[tcc_table] = _host_count(host_conn, tcc_table)
@@ -248,6 +253,7 @@ def snapshot_tcc(pg_conn, run_id: str, table_specs: dict) -> str:
                 per_table_counts[tcc_table] = _materialise_table(
                     host_conn, pg_conn, tcc_table, list(columns)
                 )
+                materialised_tables.append(tcc_table)
     finally:
         host_conn.close()
 
@@ -271,23 +277,28 @@ def snapshot_tcc(pg_conn, run_id: str, table_specs: dict) -> str:
                 (snapshot_id, tcc_table, count),
             )
 
-        # Stamp this snapshot_id as the CURRENT owner of the materialised
-        # tcc_snapshot layer (multi-run isolation guard, fixes 5+6).  Because
-        # _materialise_table drops+recreates tcc_snapshot.<table> GLOBALLY
-        # (latest-only), validate must fail closed when a stale snapshot_id is
-        # asked to read it.
-        cur.execute(
-            """
-            INSERT INTO access_meta.materialized_owner
-                (layer, run_id, snapshot_id, updated_at)
-            VALUES ('tcc_snapshot', %s, %s, %s)
-            ON CONFLICT (layer) DO UPDATE SET
-                run_id = EXCLUDED.run_id,
-                snapshot_id = EXCLUDED.snapshot_id,
-                updated_at = EXCLUDED.updated_at
-            """,
-            (run_id, snapshot_id, captured_at),
-        )
+        # Stamp this snapshot_id as the owner of EACH materialised
+        # tcc_snapshot.<table> (per-table multi-run isolation guard, fixes 5+6 +
+        # Codex review-b53189fc).  Because _materialise_table drops+recreates
+        # tcc_snapshot.<table> (latest-only) ONLY for the materialised subset,
+        # we stamp ownership PER MATERIALISED TABLE.  A later SUBSET snapshot
+        # that omits a table therefore leaves the prior snapshot as the owner of
+        # that stale table, and validate fails closed instead of reading it.
+        # Count-only tables (no local table) are NOT stamped here -- their
+        # counts live in access_meta.tcc_snapshot_table keyed by snapshot_id.
+        for tcc_table in materialised_tables:
+            cur.execute(
+                """
+                INSERT INTO access_meta.materialized_owner
+                    (layer, table_name, run_id, snapshot_id, updated_at)
+                VALUES ('tcc_snapshot', %s, %s, %s, %s)
+                ON CONFLICT (layer, table_name) DO UPDATE SET
+                    run_id = EXCLUDED.run_id,
+                    snapshot_id = EXCLUDED.snapshot_id,
+                    updated_at = EXCLUDED.updated_at
+                """,
+                (tcc_table, run_id, snapshot_id, captured_at),
+            )
 
     # Commit explicitly so the snapshot is durable even if pg_conn was opened
     # with autocommit=False.  (No-op when autocommit=True.)
