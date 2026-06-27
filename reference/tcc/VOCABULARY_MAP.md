@@ -52,10 +52,17 @@ Both ride the existing `source_id` (= Access `Breaker*Styles.ID`, NOT NULL + UNI
 name-faithful (D1 precedent: no FK coercion). Apply via governed `apply_migration` after a harness dry-run, same
 gate discipline as 027/028.
 
-- **D4 re-carry (`source_faithful`):** `ALTER tcc.brk_iccb_styles / brk_mccb_styles ADD` the six `TMT_*` helper
-  columns (`TMT_TCCNumber`, `TMT_Notes`, `TMT_TripPlug`, `TMT_BreakerType`, `TMT_ThermalMagnetic`, `TMT_Thermal`),
-  read row-level from Access via the harness. Memo (`TMT_Notes`) -> `text` (row-level read, never CSV). This is
-  the "easy one" - decoded, low-risk, unblocks TMT-breaker characterization metadata.
+**Naming rule (HARD):** target columns are **`lower_snake_case`** - NEVER quoted mixed-case Postgres identifiers
+(matches the D1 precedent `tmt_use_sst` / `tmt_sst_mfr`). Preserve the verbatim Access source name + the decode in
+`COMMENT ON COLUMN`. The canonical UI/serving label comes from `canonical_term` (this map), not the physical column
+name - so the physical name stays conventional while the Access provenance + the our-verbiage label both live in
+metadata, not in a quoted identifier.
+
+- **D4 re-carry (`source_faithful`):** `ALTER tcc.brk_iccb_styles / brk_mccb_styles ADD` the six helper columns as
+  `lower_snake_case`: `tmt_tcc_number` (text), `tmt_notes` (text), `tmt_trip_plug` (smallint), `tmt_breaker_type`
+  (smallint), `tmt_thermal_magnetic` (smallint), `tmt_thermal` (smallint) - each `COMMENT`-ed with its verbatim
+  Access name + decode; read row-level from Access via the harness. Memo (`tmt_notes`) -> `text` (row-level read,
+  never CSV). This is the "easy one" - decoded, low-risk, unblocks TMT-breaker characterization metadata.
 - **D5 raw-carry (`native_bounded`):** add a side table (e.g. `tcc.brk_style_native_overrides`) or raw columns for
   `InstOvr*` / `NInstOvr*` / `BrkTimes*` / `r_int_*` / `r_iec_*` + the `Breaker_OvrCurves` points, tagged
   `native_bounded`, keyed on **`(breaker_class, source_id)`** - a shared side table MUST include `breaker_class`
