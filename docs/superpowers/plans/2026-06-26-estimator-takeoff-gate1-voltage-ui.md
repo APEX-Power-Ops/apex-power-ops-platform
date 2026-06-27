@@ -506,18 +506,18 @@ export default function Loading() {
 }
 ```
 
-- [ ] **Step 2: Implement `page.tsx`** — `'use client'`. Structure (authored here; verified by the smoke, not transcribed line-for-line):
+- [ ] **Step 2: Implement `page.tsx`** — `'use client'`. **OPERATOR UX DIRECTION (2026-06-26, BINDING):** title "Takeoff Gate 1"; exactly two panels "Voltage Questions" + "Other Open Items"; the phrase "partial preview" in operator-facing copy wherever unresolved work remains (not the raw enum); **Clean Export disabled unless `status === 'clean'`**; **Partial Preview Export available but visually subordinate + clearly labeled**; NO pricing edits, line edits, catalog changes, or Gate-2 behavior. This is pre-estimate intake/review, kept deliberately narrow.
   - **Imports from `lib/gate1` only** for engine work (`evaluate`, `resolvableVoltageGroups`, `otherOpenItems`, `buildAssertions`, `mergeAssertionsByTag`, `buildExport`, `Gate1Error`) + `parseArtifact`/`ArtifactContractError` for load. NEVER `runFromArtifact`.
   - State: `artifact` (pristine `ExtractionArtifact | null`), `evald` (`{result, report} | null`), `entries` (`Map<tag, voltageV>`), `projectCtx`, `err: string | null`, `busy`.
   - **Load:** `<input type="file" accept="application/json">` -> `FileReader.readAsText` -> `JSON.parse` -> `parseArtifact`; on `ArtifactContractError` set a red `role="alert"` message `artifact contract error at <path>`; else `setArtifact(artifact); setEvald(evaluate(artifact))`, clear entries.
-  - **Project-context form:** required `projectNumber`, optional `packageName`, `operatorName` (initials). Export buttons disabled until `projectNumber` non-empty.
-  - **Panel 1 "Voltage questions I can resolve":** `resolvableVoltageGroups(evald.result, artifact)` grouped table; per tag a numeric `<input>` bound into `entries`. **Apply** button: `clone = structuredClone(artifact); clone.voltageAssertions = mergeAssertionsByTag(clone.voltageAssertions, buildAssertions([...entries].map(([tag, voltageV]) => ({ tag, voltageV })), projectCtx.operatorName)); setEvald(evaluate(clone)); setArtifact(clone)`.
-  - **Panel 2 "Other open items blocking clean output":** `otherOpenItems(evald.result, artifact)` rendered read-only.
+  - **Project-context form:** required `projectNumber`, optional `packageName`, `operatorName` (initials). Export controls disabled until `projectNumber` non-empty.
+  - **Panel 1 — header "Voltage Questions":** `resolvableVoltageGroups(evald.result, artifact)` grouped table (sheet->block->tag); per tag a numeric `<input>` bound into `entries`. **Apply** button: `clone = structuredClone(artifact); clone.voltageAssertions = mergeAssertionsByTag(clone.voltageAssertions, buildAssertions([...entries].map(([tag, voltageV]) => ({ tag, voltageV })), projectCtx.operatorName)); setEvald(evaluate(clone)); setArtifact(clone)`.
+  - **Panel 2 — header "Other Open Items":** `otherOpenItems(evald.result, artifact)` rendered read-only.
   - **Findings strip:** `evald.result.findings` — errors red; `voltage_assertion_conflict` amber, showing `detail.detectedV` vs `detail.assertedV`.
-  - **Status banner:** `evald.report.status` — green "clean" or amber "partial_preview - N unresolved row(s); NOT a complete bid" (`counts.unresolved_rows`).
-  - **Export:** two buttons — "Download export JSON" (`(await buildExport({ artifact, ...evald, projectCtx, nowIso: new Date().toISOString() })).combined`) and "Download runner artifact" (the bare `artifact`); each `JSON.stringify(x, null, 2)` -> Blob download.
+  - **Status banner:** `evald.report.status` — green "clean" or amber "partial preview - N unresolved row(s); NOT a complete bid" (`counts.unresolved_rows`). Operator-facing copy says "partial preview", not the raw enum.
+  - **Export (two affordances):** (1) **"Clean Export"** button — `disabled` unless `evald.report.status === 'clean'`; on click downloads `(await buildExport({ artifact, ...evald, projectCtx, nowIso: new Date().toISOString() })).combined` (which includes the envelope when clean). (2) **"Partial Preview Export"** button — enabled once an artifact + `projectNumber` are present; styled visually subordinate (secondary/muted) and labeled "partial preview - NOT a complete bid"; downloads the same `combined` (envelope omitted when not clean). A small secondary link offers the bare runner `artifact`. Each: `JSON.stringify(x, null, 2)` -> Blob download.
   - Styling: `shell-page` / `hero-card` / `status-pill` + the estimator-intake utility class strings. ASCII-only copy.
-  - The page `<h1>` MUST read exactly `Gate-1 Voltage Takeoff Review` (the smoke + route marker).
+  - The page `<h1>` MUST read exactly `Takeoff Gate 1` (the smoke + route marker).
 
 - [ ] **Step 3: Typecheck + seam grep**
 
@@ -537,42 +537,48 @@ git commit -m "feat(takeoff-ui): /takeoff page - load, two panels, assert+reeval
 
 **Files:**
 - Create: `apps/operations-web/tests/browser-shell.takeoff.smoke.spec.ts`
-- Modify: `apps/operations-web/scripts/smoke-hosted-routes.mjs`
-- Modify: the top-level nav (`apps/operations-web/app/pm-review/page.tsx` link list, or the home nav)
+- Create: `apps/operations-web/tests/fixtures/takeoff-clean-demo.artifact.json` (tiny clean demo for PROOF 3 — single row `FB-1 800AF/800AT LSIG` + `voltageAssertions:[{voltageV:480,tags:['FB-1']}]`)
+- Modify: `apps/operations-web/scripts/smoke-hosted-routes.mjs` (route registry)
+- Modify: the TOP-LEVEL nav where `/estimator` is linked (NOT under PM Review)
 
 **Interfaces:**
-- Consumes: the committed E01-11 fixture `packages/estimator-takeoff/test/fixtures/stack-phx02a-e01-11.artifact.json` (read into the test, uploaded via the file input).
+- Consumes: the committed E01-11 fixture `packages/estimator-takeoff/test/fixtures/stack-phx02a-e01-11.artifact.json` (partial path) + the new clean demo fixture (clean path), both uploaded via the file input.
 
-- [ ] **Step 1: Write the smoke** (mirror `tests/browser-shell.pm-recognition.smoke.spec.ts`; NO API mocks — ephemeral has none)
+- [ ] **Step 1: Write the smoke** — it must prove THREE concrete things (operator-mandated). No API mocks (ephemeral has none).
 
 ```ts
 import { expect, test } from '@playwright/test'
 import { fileURLToPath } from 'node:url'
 
-const FIXTURE = fileURLToPath(new URL(
+const E01_11 = fileURLToPath(new URL(
   '../../../packages/estimator-takeoff/test/fixtures/stack-phx02a-e01-11.artifact.json', import.meta.url))
 
-test('takeoff gate-1 loads, surfaces voltage worklist, reaches partial_preview', async ({ page }) => {
+// PROOF 1 — the real E01-11 fixture loads and renders grouped missing-voltage work.
+test('E01-11 loads and renders the grouped Voltage Questions worklist', async ({ page }) => {
   await page.goto('/takeoff', { waitUntil: 'networkidle' })
-  await expect(page.getByRole('heading', { name: /Gate-1 Voltage Takeoff Review/i })).toBeVisible()
-  await page.setInputFiles('input[type=file]', FIXTURE)
-  await expect(page.getByText(/Voltage questions I can resolve/i)).toBeVisible()
-  await expect(page.getByText(/Other open items blocking clean output/i)).toBeVisible()
-  await expect(page.getByText(/partial_preview/i)).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Takeoff Gate 1/i })).toBeVisible()
+  await page.setInputFiles('input[type=file]', E01_11)
+  await expect(page.getByText(/Voltage Questions/i)).toBeVisible()
+  await expect(page.getByText(/Other Open Items/i)).toBeVisible()
+  await expect(page.getByText(/partial preview/i)).toBeVisible()
+  // assert at least one resolvable tag row is present in the Voltage Questions panel
 })
 ```
+
+- **PROOF 2 — re-assert REPLACES, not duplicates.** Prove that re-asserting a tag that already carries an assertion never trips `voltage_assertion_duplicate_tag` and the new value wins. CONSTRAINT: an already-asserted tag is NOT in the worklist (it has a voltage), so the natural browser flow is: assert tag Y in the worklist -> Apply -> change Y's value and re-assert -> Apply -> assert that NO `voltage_assertion_duplicate_tag` error text appears and the run stays functional (status/banner still render). The implementer may instead craft a tiny fixture pre-seeded with a CLI `voltageAssertions` entry to drive this directly; either way the assertion is "no duplicate-tag error after a re-assert".
+- **PROOF 3 — export matches status.** On E01-11 (partial): the **"Clean Export"** control is `disabled` and **"Partial Preview Export"** is enabled; the partial export JSON has NO `envelope`. With a CLEAN artifact: "Clean Export" is enabled and its JSON has `envelope.totals.bid_cents > 0`. The implementer commits a tiny clean demo fixture under `apps/operations-web/tests/fixtures/` (e.g. the Task-5-proven single row `FB-1 800AF/800AT LSIG` + a `voltageAssertions: [{voltageV:480, tags:['FB-1']}]`), uploads it, and asserts the clean path. Capture the downloaded JSON via Playwright's `page.waitForEvent('download')` and read it, or evaluate the in-page export object — do NOT assert a hardcoded bid beyond `> 0`.
 
 - [ ] **Step 2: Build + run; expect PASS once the page renders the markers** (if it passes without the fixture upload driving the worklist, confirm it is exercising the real page, not a static string)
 
 Run: `pnpm --filter operations-web exec next build && pnpm --filter operations-web exec playwright test tests/browser-shell.takeoff.smoke.spec.ts`
 
-- [ ] **Step 3: Register the route + nav link**
+- [ ] **Step 3: Register the route + nav link (TOP-LEVEL, beside Estimator)**
 
 In `apps/operations-web/scripts/smoke-hosted-routes.mjs` `routeChecks`, add:
 ```js
-{ path: '/takeoff', marker: 'Gate-1 Voltage Takeoff Review' },
+{ path: '/takeoff', marker: 'Takeoff Gate 1' },
 ```
-Add `<Link href="/takeoff">Gate-1 Voltage Takeoff</Link>` in the existing nav link list (match the surrounding pattern).
+Add the link as a **top-level operations tool in the SAME family as Estimator** (it is pre-estimate intake/review, NOT PM approval — do NOT put it under PM Review). Find where `/estimator` is linked (grep `apps/operations-web` for `href="/estimator"` / `/estimator`) and add a sibling `<Link href="/takeoff">Takeoff</Link>` next to it, matching the surrounding pattern. Commit the actual nav file you edited (not necessarily `pm-review/page.tsx`).
 
 - [ ] **Step 4: Full operations-web check; expect PASS**
 
