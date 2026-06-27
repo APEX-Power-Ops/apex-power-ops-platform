@@ -1165,3 +1165,29 @@ def assert_style_parents_faithful(pg_conn, run_id: str) -> None:
             "style-parent access_raw mirror is NOT byte-faithful; refusing to "
             "certify for population. Offending: " + ", ".join(offenders)
         )
+
+
+# ---------------------------------------------------------------------------
+# reconcile_style_key_quality -- key_quality coverage for the 3 style parents
+# ---------------------------------------------------------------------------
+
+def reconcile_style_key_quality(pg_conn, run_id: str) -> None:
+    """Write a key_quality row (keyed on the integer surrogate ID) for each
+    BreakerXXXStyles table present in access_raw.
+
+    The style parents are the D4/D5 carriers; their ID is the keyable surrogate
+    (style_provenance_antijoin already maps ID -> tcc source_id). Recording
+    key_quality completes the style parents' Phase-1 structural coverage. Skips a
+    table that is not present (not loaded this run).
+    """
+    for table in sorted(_ACCESS_STYLE_TABLES.values()):
+        with pg_conn.cursor() as cur:
+            cur.execute(
+                "SELECT 1 FROM information_schema.tables "
+                "WHERE table_schema='access_raw' AND table_name=%s",
+                (table,),
+            )
+            if cur.fetchone() is None:
+                continue
+        key_quality(pg_conn, "access_raw", table, ["ID"],
+                    run_id=run_id, write=True)

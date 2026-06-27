@@ -375,6 +375,9 @@ def _run_validation(pg_conn, run_id: str, snapshot_id: str) -> None:
     for bc in BREAKER_CLASSES:
         validate.style_provenance_antijoin(pg_conn, run_id, bc)
 
+    # (4'') style-parent key-quality coverage (ID uniqueness on each style table).
+    validate.reconcile_style_key_quality(pg_conn, run_id)
+
 
 def cmd_validate(args) -> int:
     if not args.run_id or not args.snapshot_id:
