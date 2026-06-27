@@ -1,0 +1,48 @@
+{
+  "pdf": "zero-matched.pdf",
+  "apparatus": [
+    {
+      "raw": "TX-1 XFMR",
+      "tag": "TX-1",
+      "sheet": "E1",
+      "page": 0,
+      "bbox": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "evidence": "one-line",
+      "block": "P1"
+    },
+    {
+      "raw": "PDU-2 PDU",
+      "tag": "PDU-2",
+      "sheet": "E1",
+      "page": 0,
+      "bbox": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "evidence": "one-line",
+      "block": "P1"
+    },
+    {
+      "raw": "METER-3 METER",
+      "tag": "METER-3",
+      "sheet": "E1",
+      "page": 0,
+      "bbox": [
+        0,
+        0,
+        1,
+        1
+      ],
+      "evidence": "one-line",
+      "block": "P1"
+    }
+  ],
+  "voltageAssertions": []
+}

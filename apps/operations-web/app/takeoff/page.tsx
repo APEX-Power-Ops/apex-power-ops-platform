@@ -207,6 +207,7 @@ export default function TakeoffPage() {
   const voltageGroups = artifact && evald ? resolvableVoltageGroups(evald.result, artifact) : []
   const openItems = artifact ? (evald ? otherOpenItems(evald.result, artifact) : []) : []
   const isCleanStatus = evald?.report.status === 'clean'
+  const hasMatched = (evald?.result.matchedLines.length ?? 0) > 0
   const canExport =
     projectCtx.projectNumber.trim() !== '' && projectCtx.operatorName.trim() !== ''
   const applyDisabled = projectCtx.operatorName.trim() === ''
@@ -439,13 +440,17 @@ export default function TakeoffPage() {
       {evald && (
         <div
           className={`mb-6 rounded border px-4 py-3 text-sm font-medium ${
-            isCleanStatus
+            !hasMatched
+              ? 'border-red-200 bg-red-50 text-red-900'
+              : isCleanStatus
               ? 'border-green-200 bg-green-50 text-green-900'
               : 'border-amber-200 bg-amber-50 text-amber-900'
           }`}
           role="status"
         >
-          {isCleanStatus
+          {!hasMatched
+            ? 'no matched lines - nothing to price; resolve construction/catalog evidence or review the takeoff'
+            : isCleanStatus
             ? 'clean'
             : `partial preview - ${evald.report.counts.unresolved_rows} unresolved row(s); NOT a complete bid`}
         </div>
@@ -558,7 +563,7 @@ export default function TakeoffPage() {
             {/* Clean Export - only enabled when status is clean AND context fields are filled */}
             <button
               type="button"
-              disabled={!isCleanStatus || !canExport || exporting}
+              disabled={!isCleanStatus || !canExport || exporting || !hasMatched}
               onClick={() => handleExport('clean')}
               className="rounded bg-blue-700 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -569,7 +574,7 @@ export default function TakeoffPage() {
                clean-status run under the gate1-partial filename with NOT-a-complete-bid label) */}
             <button
               type="button"
-              disabled={!canExport || exporting || isCleanStatus}
+              disabled={!canExport || exporting || isCleanStatus || !hasMatched}
               onClick={() => handleExport('partial')}
               className="rounded border border-gray-300 bg-gray-50 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
