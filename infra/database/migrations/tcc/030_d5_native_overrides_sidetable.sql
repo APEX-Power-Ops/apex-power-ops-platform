@@ -100,7 +100,7 @@ COMMIT;
 -- Access defaults the byte-enum/tolerance cols to 0 (non-null), so inst/ninst are non-null for ~all styles
 -- -> ~one row per style (dry-run: 14222 = ICCB 608 + MCCB 10335 + PCB 3279). Block non-nullness is NOT
 -- "has override"; the real override signal is (inst_override->>'InstOvrAmps')::numeric > 0 (dry-run: real
--- overrides ICCB 241 / MCCB 129 / PCB 317; the other 13535 are rating-only and MUST be retained - an
+-- overrides ICCB 241 / MCCB 129 / PCB 317 (687); 13533 are rating-only and MUST be retained - an
 -- InstOvrAmps>0 filter would silently drop them). Leave a per-block JSONB NULL only where every col in that
 -- block is NULL. ovr_curves stays NULL (Breaker_OvrCurves empty in Access). Dry-run targets a *dryrun*
 -- sandbox clone behind a current_database() guard; prod apply on the gate via governed custody.

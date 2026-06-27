@@ -18,7 +18,7 @@ run_id / repeatable evidence. This dry-run is a tactical proof of logic, not the
 030 carries one row per style with >=1 non-null D5 block. Access defaults byte-enum/tolerance cols to 0
 (non-null), so `inst_override`/`ninst_override` are non-null for ~all styles (14,222 rows). **Block
 non-nullness is NOT "has override"** — the real signal is `(inst_override->>'InstOvrAmps')::numeric > 0`.
-Rating-only styles (13,535 of them: ICCB 367 + MCCB 10,206 + PCB 2,962) are intentionally retained; an
+Rating-only styles (13,533 of them: ICCB 367 + MCCB 10,204 + PCB 2,962) are intentionally retained; an
 `InstOvrAmps>0` filter would have dropped them (Codex review-333c08d3). The same "non-null != meaningful"
 caution applies to the D4 text fields (`tmt_notes` / `tmt_tcc_number`): trim/decode before treating as
 present; derived booleans (`has_inst_override_amp`, etc.) belong in a decoded/serving layer AFTER the

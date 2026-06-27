@@ -35,10 +35,10 @@ production evidence custody. Governed frozen-snapshot custody (Path A) remains t
 | class | total | real override (InstOvrAmps>0) | rating-only (InstOvrAmps NULL, r_int present) |
 |---|---|---|---|
 | ICCB | 608 | 241 | 367 |
-| MCCB | 10335 | 129 | 10206 |
+| MCCB | 10335 | 129 | 10204 |
 | PCB | 3279 | 317 | 2962 |
 
-- **Codex review-333c08d3 fix VALIDATED:** an `InstOvrAmps>0` population filter would have dropped 367+10206+2962 = **13,535 rating-only rows**. The "any non-null block" rule correctly retains them.
+- **Codex review-333c08d3 fix VALIDATED:** an `InstOvrAmps>0` population filter would have dropped 367+10204+2962 = **13,533 rating-only rows**. The "any non-null block" rule correctly retains them. (2 MCCB styles have neither a real override nor ratings — only default-zero/timing blocks — and still carry under policy (a).)
 
 ## Finding -> one operator decision (HR1: what counts as a "real" override block is a behavioral call)
 `inst_override` and `ninst_override` are non-null on **every** style — not because every style has a real override, but because Access defaults the byte-enum / tolerance columns (`InstOvrClrChar`, `InstOvrCurveCalcClr`, ...) to **0 (non-null)**, not NULL. So "any non-null block" == all 14,222 styles, and each no-override style carries a block of mostly default-zero values.

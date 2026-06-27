@@ -7,12 +7,20 @@ Reads the FROZEN, hash-recorded copy of D:\TCC_NEW.accdb read-only (pyodbc) and 
 
 NOT prod population. Target = a disposable sandbox clone only. Governed custody (Path A) stays the prod standard.
 """
-import pyodbc, json, datetime, decimal, hashlib, os
+import pyodbc, json, datetime, decimal, hashlib, os, sys
 
-SCRATCH = r"C:\Users\jjswe\AppData\Local\Temp\claude\C--Users-jjswe\ed678b40-6d11-42cd-846d-006901d52226\scratchpad"
-FROZEN  = os.path.join(SCRATCH, "frozen", "TCC_NEW.frozen.accdb")
-OUT_SQL = os.path.join(SCRATCH, "dry_run_direct_access_population.sql")
-OUT_RPT = os.path.join(SCRATCH, "dry_run_fidelity_report.json")
+# Paths are parameterized so the committed artifact reproduces from any checkout (Codex review-9034125e):
+#   DRYRUN_FROZEN_ACCDB (or argv[1]) = the FROZEN, hash-recorded .accdb copy (required; a live non-frozen read is not allowed)
+#   DRYRUN_OUT_DIR      (or argv[2]) = output dir (default: a _dryrun_out/ beside this script)
+HERE    = os.path.dirname(os.path.abspath(__file__))
+FROZEN  = os.environ.get("DRYRUN_FROZEN_ACCDB") or (sys.argv[1] if len(sys.argv) > 1 else "")
+OUT_DIR = os.environ.get("DRYRUN_OUT_DIR") or (sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, "_dryrun_out"))
+if not FROZEN or not os.path.isfile(FROZEN):
+    sys.exit("Set DRYRUN_FROZEN_ACCDB=<frozen .accdb copy> (or pass argv[1]); a direct live-file read is not "
+             "allowed for this dry-run. Got: %r" % FROZEN)
+os.makedirs(OUT_DIR, exist_ok=True)
+OUT_SQL = os.path.join(OUT_DIR, "dry_run_direct_access_population.sql")
+OUT_RPT = os.path.join(OUT_DIR, "dry_run_fidelity_report.json")
 
 # (breaker_class, access_table, pg_table, has_d4)
 CLASSES = [
@@ -78,7 +86,8 @@ for cls, atbl, ptbl, has_d4 in CLASSES:
     d4_nonnull = {pg: 0 for pg, _, _ in D4}
     d5_rows = []        # (cls, source_id, inst, ninst, brk, rint, riec)
     block_present = {b: 0 for b, _ in BLOCK_PREFIX}
-    pcb_rating_only = 0
+    real_override = 0   # InstOvrAmps > 0 = the real instantaneous-override signal (NOT block non-nullness)
+    rating_only = 0     # no real override but interrupt ratings present -> retained under policy (a)
     samples = []
 
     for row in rows:
@@ -100,12 +109,16 @@ for cls, atbl, ptbl, has_d4 in CLASSES:
             blocks[bname] = blk if blk else None
             if blk:
                 block_present[bname] += 1
+        # Real-override discriminator: InstOvrAmps>0, NOT block non-nullness (Codex review-9034125e).
+        inst_amps = row.get("InstOvrAmps")
+        is_real_override = inst_amps is not None and inst_amps > 0
+        has_rating = blocks["r_int"] is not None or blocks["r_iec"] is not None
+        if is_real_override:
+            real_override += 1
+        elif has_rating:
+            rating_only += 1
         if any(blocks[b] is not None for b, _ in BLOCK_PREFIX):
             d5_rows.append((sid, blocks))
-            if (blocks["inst_override"] is None and blocks["ninst_override"] is None
-                    and blocks["brk_times"] is None
-                    and (blocks["r_int"] is not None or blocks["r_iec"] is not None)):
-                pcb_rating_only += 1
             if len(samples) < 3:
                 samples.append({
                     "source_id": sid,
@@ -152,7 +165,8 @@ for cls, atbl, ptbl, has_d4 in CLASSES:
         "d4_nonnull_per_col": d4_nonnull if has_d4 else None,
         "d5_insert_count": len(d5_rows),
         "d5_block_present_counts": block_present,
-        "pcb_rating_only_count": pcb_rating_only if cls == "PCB" else None,
+        "real_override_count": real_override,   # InstOvrAmps > 0
+        "rating_only_count": rating_only,        # no real override but ratings present (must be retained)
         "ovr_curves_note": "always NULL (Breaker_OvrCurves empty in Access per G1; not read this dry-run)",
         "samples": samples,
     }
@@ -179,8 +193,8 @@ with open(OUT_RPT, "w", encoding="utf-8") as f:
 print("SQL bytes:", os.path.getsize(OUT_SQL), "| statements:", len(sql_parts))
 for cls in report["classes"]:
     c = report["classes"][cls]
-    print("\n[%s] styles=%d  D4_updates=%s  D5_inserts=%d  PCB_rating_only=%s"
-          % (cls, c["total_styles"], c["d4_update_count"], c["d5_insert_count"], c["pcb_rating_only_count"]))
+    print("\n[%s] styles=%d  D4_updates=%s  D5_inserts=%d  real_override=%d  rating_only=%d"
+          % (cls, c["total_styles"], c["d4_update_count"], c["d5_insert_count"], c["real_override_count"], c["rating_only_count"]))
     print("   D5 blocks present:", c["d5_block_present_counts"])
     if c["d4_nonnull_per_col"]:
         print("   D4 non-null/col:", c["d4_nonnull_per_col"])
