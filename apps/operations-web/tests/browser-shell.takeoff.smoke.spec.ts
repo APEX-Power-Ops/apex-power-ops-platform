@@ -187,3 +187,43 @@ test('Takeoff Gate 1: partial export omits envelope; clean export includes price
 
   expect(pageErrors).toHaveLength(0)
 })
+
+// ---------------------------------------------------------------------------
+// PROOF 4 (FIX B / P2-2) - a failed load clears all stale exportable state
+//   Load a VALID artifact (panels + Export render), then load a CONTRACT-INVALID
+//   fixture: the red error alert must appear AND the Voltage Questions / Other
+//   Open Items / Export controls must NO LONGER render (no stale exportable state).
+// ---------------------------------------------------------------------------
+const INVALID_PATH = path.join(TESTS_DIR, 'fixtures', 'takeoff-invalid.json')
+
+test('a failed (contract-invalid) load clears stale artifact, panels, and export controls (P2-2)', async ({ page }) => {
+  const pageErrors: string[] = []
+  page.on('pageerror', (err) => pageErrors.push(err.message))
+
+  await page.goto('/takeoff', { waitUntil: 'networkidle' })
+
+  // 1. Load a VALID artifact -> panels + Export controls render
+  await page.setInputFiles('input[type="file"]', E01_11_PATH)
+  await expect(page.getByRole('heading', { name: 'Voltage Questions' })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('heading', { name: 'Other Open Items' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Export' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'partial preview - NOT a complete bid' })).toBeVisible()
+
+  // 2. Load a CONTRACT-INVALID fixture ({ pdf } with no apparatus array -> ArtifactContractError)
+  await page.setInputFiles('input[type="file"]', INVALID_PATH)
+
+  // 3. Red error alert appears... (scope to the page's own alert text - the Next.js route
+  //    announcer is also role=alert, so match on the contract-error copy.)
+  const alert = page.getByText('artifact contract error', { exact: false })
+  await expect(alert).toBeVisible({ timeout: 10_000 })
+
+  // 4. ...and ALL stale exportable state is gone (no panels, no export controls, no Loaded line)
+  await expect(page.getByRole('heading', { name: 'Voltage Questions' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Other Open Items' })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Export' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'partial preview - NOT a complete bid' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Clean Export' })).toHaveCount(0)
+  await expect(page.getByText('Loaded:')).toHaveCount(0)
+
+  expect(pageErrors).toHaveLength(0)
+})

@@ -68,6 +68,8 @@ test('buildExport omits envelope and labels partial_preview when not clean', asy
   const c = combined as any
   expect(c.manifest.status).toBe('partial_preview')
   expect(c.envelope).toBeUndefined()
+  // FIX C (P2-3): partial path emits NO envelope, so the exported report carries no envelopeTotals.
+  expect(c.report.envelopeTotals).toBeUndefined()
   expect(c.manifest.operatorEvidence.authoritative).toBe(false)
   expect(c.manifest.artifactContentHash).toMatch(/^[0-9a-f]{64}$/)
 })
@@ -87,4 +89,75 @@ test('buildExport includes a priced envelope when clean', async () => {
   expect(c.manifest.status).toBe('clean')
   expect(c.envelope).toBeDefined()
   expect(c.envelope.totals.bid_cents).toBeGreaterThan(0)
+  // FIX C (P2-3): the exported clean report must be the POST-emit reconcile (matching the runner),
+  // so report.envelopeTotals is present and mirrors the emitted envelope.
+  expect(c.report.envelopeTotals).toBeDefined()
+  expect(c.report.envelopeTotals.bid_cents).toBe(c.envelope.totals.bid_cents)
+  expect(c.report.envelopeTotals.bid_cents).toBeGreaterThan(0)
+})
+
+// ---------------------------------------------------------------------------
+// FIX A (P2-1): advisory-on-matched / non-surfaced operator questions must
+// appear in "Other Open Items" (they block Clean Export via isClean, so the
+// operator must be able to SEE them). Hand-crafted TakeoffResult - no engine.
+// ---------------------------------------------------------------------------
+import type { TakeoffResult, ApparatusDisposition } from '@apex/estimator-takeoff'
+import type { ExtractionArtifact } from '@apex/estimator-takeoff'
+
+function matchedDisposition(inputIndex: number, tag: string): ApparatusDisposition {
+  return {
+    inputIndex, tag, raw: `${tag} 800AF/800AT LSIG`, sheet: 'E1', page: 0,
+    bbox: [0, 0, 1, 1], evidence: 'one-line', status: 'matched',
+    reasonCode: 'catalog_rule', reason: 'matched a catalog rule', ref: 'BRK-X', lineKey: 'L1',
+  }
+}
+
+function questionDisposition(inputIndex: number, tag: string): ApparatusDisposition {
+  return {
+    inputIndex, tag, raw: `${tag} location-only`, sheet: 'E9', page: 0,
+    bbox: [0, 0, 1, 1], evidence: 'one-line', status: 'question',
+    reasonCode: 'location_only_non_authoritative', reason: 'device only on a non-authoritative sheet',
+  }
+}
+
+function emptyResult(dispositions: ApparatusDisposition[], operatorQuestions: TakeoffResult['operatorQuestions']): TakeoffResult {
+  return { matchedLines: [], unmatchedCandidates: [], operatorQuestions, findings: [], dispositions }
+}
+
+function artifactFor(dispositions: ApparatusDisposition[]): ExtractionArtifact {
+  return {
+    pdf: 't.pdf',
+    apparatus: dispositions.map((d) => ({
+      raw: d.raw, tag: d.tag, sheet: d.sheet, page: d.page, bbox: d.bbox, evidence: d.evidence,
+    })),
+  } as unknown as ExtractionArtifact
+}
+
+test('otherOpenItems surfaces an advisory-on-matched operator question (P2-1)', () => {
+  const dispositions = [matchedDisposition(0, 'FB-1')]
+  const result = emptyResult(dispositions, [
+    { question: 'mounting hint conflict on FB-1 - confirm mounting', context: 'E1', code: 'mounting_hint_conflict', inputIndex: 0 },
+  ])
+  const artifact = artifactFor(dispositions)
+  const items = otherOpenItems(result, artifact)
+  // The matched row's disposition is NOT question/unmatched, so before the fix this question
+  // (inputIndex !== undefined, and not surfaced by a disposition) was dropped entirely.
+  const questions = items.filter((i) => i.kind === 'question')
+  expect(questions).toHaveLength(1)
+  expect(questions[0].label).toContain('mounting hint conflict')
+  expect(questions[0].sheet).toBe('E1')
+  expect(questions[0].reasonCode).toBe('mounting_hint_conflict')
+})
+
+test('otherOpenItems surfaces a location_only row exactly once (no duplicate from same-index question) (P2-1)', () => {
+  const dispositions = [questionDisposition(0, 'FB-9')]
+  const result = emptyResult(dispositions, [
+    { question: 'Device appears only on a non-authoritative sheet - include it?', context: 'E9', code: 'location_only', inputIndex: 0 },
+  ])
+  const artifact = artifactFor(dispositions)
+  const items = otherOpenItems(result, artifact)
+  // Disposition is a 'question' (surfaced by the disposition loop). The same-index operatorQuestion
+  // must NOT also be pushed -> exactly one item referencing inputIndex 0.
+  const forRow = items.filter((i) => i.kind === 'question')
+  expect(forRow).toHaveLength(1)
 })

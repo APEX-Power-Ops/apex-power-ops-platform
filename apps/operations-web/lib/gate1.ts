@@ -41,9 +41,14 @@ export function resolvableVoltageGroups(result: TakeoffResult, artifact: Extract
 
 export function otherOpenItems(result: TakeoffResult, artifact: ExtractionArtifact): OpenItem[] {
   const items: OpenItem[] = []
+  // Every inputIndex already represented somewhere on the surface: each disposition this loop
+  // emits, AND each tagged missing_voltage row routed to Panel 1 (Voltage Questions) below.
+  // Used so the operatorQuestions sweep below does not double-list a row (e.g. location_only,
+  // which has BOTH a 'question' disposition AND a same-index operatorQuestion).
+  const surfaced = new Set<number>()
   for (const d of result.dispositions) {
     if (d.status !== 'question' && d.status !== 'unmatched') continue
-    if (d.reasonCode === 'missing_voltage' && d.tag) continue
+    if (d.reasonCode === 'missing_voltage' && d.tag) { surfaced.add(d.inputIndex); continue }
     const row = artifact.apparatus[d.inputIndex]
     if (d.reasonCode === 'missing_voltage') {
       items.push({ kind: 'untagged_missing_voltage', label: row?.raw ?? `row ${d.inputIndex}`, sheet: d.sheet, reasonCode: d.reasonCode })
@@ -52,9 +57,19 @@ export function otherOpenItems(result: TakeoffResult, artifact: ExtractionArtifa
     } else {
       items.push({ kind: 'question', label: `${d.tag ?? row?.raw ?? `row ${d.inputIndex}`}: ${d.reason}`, sheet: d.sheet, reasonCode: d.reasonCode })
     }
+    surfaced.add(d.inputIndex)
   }
+  // Operator questions not already on the surface. Advisory-on-matched questions carry a DEFINED
+  // inputIndex on a 'matched' row (no question/unmatched disposition) - they block Clean Export via
+  // isClean, so the operator must be able to SEE them here. inputIndex === undefined = global
+  // questions (e.g. profile_warning) with no row.
   for (const q of result.operatorQuestions) {
-    if (q.inputIndex === undefined) items.push({ kind: 'question', label: q.question })
+    if (q.inputIndex === undefined) {
+      items.push({ kind: 'question', label: q.question })
+    } else if (!surfaced.has(q.inputIndex)) {
+      items.push({ kind: 'question', label: q.question, sheet: artifact.apparatus[q.inputIndex]?.sheet, reasonCode: q.code })
+      surfaced.add(q.inputIndex)
+    }
   }
   return items
 }
@@ -82,21 +97,28 @@ export async function buildExport(input: {
   const { artifact, result, report, projectCtx, nowIso } = input
   const clean = isClean(result) && result.matchedLines.length > 0
   const envelope = clean ? emitEnvelope(result, { projectNumber: projectCtx.projectNumber }).envelope : undefined
+  // FIX C (P2-3): on a clean run the runner (run.ts) re-reconciles AFTER emit with the envelope's
+  // bid_cents, so its ReconciliationReport carries envelopeTotals. Mirror that here so the exported
+  // report shape AND reportContentHash match the runner. Partials emit no envelope -> export the
+  // input report unchanged (deliberate: a partial preview carries no envelope and no envelopeTotals).
+  const exportReport = envelope
+    ? reconcile(artifact, result, { bid_cents: envelope.totals.bid_cents })
+    : report
   const artifactContentHash = await sha256Hex(canonicalJson(artifact))
-  const reportContentHash = await sha256Hex(canonicalJson(report))
+  const reportContentHash = await sha256Hex(canonicalJson(exportReport))
   const manifest = {
     projectNumber: projectCtx.projectNumber,
     packageName: projectCtx.packageName ?? null,
     sheet: artifact.apparatus[0]?.sheet ?? null,
     pdf: artifact.pdf,
-    status: report.status,
+    status: exportReport.status,
     apparatusCount: artifact.apparatus.length,
-    unresolvedRows: report.counts.unresolved_rows,
+    unresolvedRows: exportReport.counts.unresolved_rows,
     gate1AssertionTags: (artifact.voltageAssertions ?? []).flatMap((a) => a.tags),
     operatorEvidence: { name: projectCtx.operatorName, assertedAtClient: nowIso, authoritative: false },
     artifactContentHash, reportContentHash,
   }
-  const combined: Record<string, unknown> = { schemaVersion: 1, manifest, artifact, report }
+  const combined: Record<string, unknown> = { schemaVersion: 1, manifest, artifact, report: exportReport }
   if (envelope) combined.envelope = envelope
   return { combined, runnerArtifact: artifact }
 }
