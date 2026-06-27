@@ -51,7 +51,7 @@ COMMENT ON COLUMN tcc.brk_style_native_overrides.r_iec          IS 'Raw IEC inte
 -- Exact-shape guard (fail closed): CREATE TABLE IF NOT EXISTS skips a pre-existing table of the wrong
 -- shape, so assert the table, key types, jsonb blocks, PK, and the two CHECK constraints before COMMIT.
 DO $$
-DECLARE v_actual text; v_jsonb int; v_pk int; v_chk int;
+DECLARE v_actual text; v_pair text; v_pk int; v_chk int;
 BEGIN
   SELECT data_type INTO v_actual FROM information_schema.columns
     WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND column_name='breaker_class';
@@ -60,9 +60,14 @@ BEGIN
   SELECT data_type INTO v_actual FROM information_schema.columns
     WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND column_name='source_id';
   IF v_actual <> 'integer' THEN RAISE EXCEPTION '030 shape: source_id is % (expected integer)', v_actual; END IF;
-  SELECT count(*) INTO v_jsonb FROM information_schema.columns
-    WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND data_type='jsonb';
-  IF v_jsonb <> 6 THEN RAISE EXCEPTION '030 shape: expected 6 jsonb blocks (found %)', v_jsonb; END IF;
+  -- verify each expected JSONB block by NAME (a 6-count alone passes a stale table with the right
+  -- count but a missing/renamed block, which would then fail at data population) (Codex review-2dd99030)
+  FOREACH v_pair IN ARRAY ARRAY['inst_override','ninst_override','brk_times','r_int','r_iec','ovr_curves'] LOOP
+    SELECT data_type INTO v_actual FROM information_schema.columns
+      WHERE table_schema='tcc' AND table_name='brk_style_native_overrides' AND column_name=v_pair;
+    IF v_actual IS NULL THEN RAISE EXCEPTION '030 shape: jsonb block % missing', v_pair; END IF;
+    IF v_actual <> 'jsonb' THEN RAISE EXCEPTION '030 shape: % is % (expected jsonb)', v_pair, v_actual; END IF;
+  END LOOP;
   -- PK must be EXACTLY (breaker_class, source_id): a source_id-only PK would pass a bare "has a PK"
   -- check but defeat the cross-class collision guard this table exists for (Codex review-c0e624b6).
   SELECT count(*) INTO v_pk
