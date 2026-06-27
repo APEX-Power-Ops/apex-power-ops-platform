@@ -38,21 +38,44 @@ def populate_meta(
     run_id: str,
     all_tables: list,
     loaded_tables: set,
+    count_only_tables: Optional[set] = None,
 ) -> None:
     """Populate all access_meta tables for one extraction run.
 
     Parameters
     ----------
-    pg_conn       : open psycopg connection (autocommit=True).
-    data_conn     : open pyodbc connection to the .accdb (READ-ONLY).
-    ace_conn      : open ACE OLE DB ADODB.Connection (READ-ONLY).
-    run_id        : run identifier (must already exist in extraction_run).
-    all_tables    : ordered list of all table names to inventory.
-    loaded_tables : set of table names that were successfully loaded into access_raw.
+    pg_conn           : open psycopg connection (autocommit=True).
+    data_conn         : open pyodbc connection to the .accdb (READ-ONLY).
+    ace_conn          : open ACE OLE DB ADODB.Connection (READ-ONLY).
+    run_id            : run identifier (must already exist in extraction_run).
+    all_tables        : ordered list of all table names to inventory.
+    loaded_tables     : set of table names that were successfully loaded into access_raw.
+    count_only_tables : OPTIONAL set of table names that were NOT data-loaded but
+                        whose access_row_count should still be recorded (a cheap
+                        ODBC COUNT(*)).  Used for the curves table -- it is too
+                        large to data-load locally, but its access-side count is
+                        needed for the access-vs-tcc count reconciliation.  These
+                        stay load_state='inventoried_only' (NOT 'loaded').
     """
+    count_only_tables = count_only_tables or set()
     # ------------------------------------------------------------------
     # Delete existing rows for this run_id (idempotency).
     # ------------------------------------------------------------------
+    # FIRST preserve any staging_row_count / checksum already written by an
+    # earlier load step (load_table writes those before inventory runs in the
+    # pipeline).  Re-inserting access_meta.tables without them would silently
+    # WIPE the load-fidelity counts, so we carry them forward per table.
+    with pg_conn.cursor() as cur:
+        cur.execute(
+            "SELECT table_name, staging_row_count, checksum "
+            "FROM access_meta.tables WHERE run_id = %s",
+            (run_id,),
+        )
+        _preserved = {
+            r[0]: {"staging_row_count": r[1], "checksum": r[2]}
+            for r in cur.fetchall()
+        }
+
     # Order matters for FK references: delete child tables before parents.
     # access_meta.tables is the logical parent; others carry (run_id, table_name).
     with pg_conn.cursor() as cur:
@@ -87,12 +110,17 @@ def populate_meta(
         is_loaded = table in loaded_tables
         load_state = "loaded" if is_loaded else "inventoried_only"
 
-        # Row count: cheap COUNT(*) for loaded tables; NULL otherwise.
+        # Row count: cheap COUNT(*) for loaded tables AND for explicitly
+        # count-only tables (e.g. curves -- not data-loaded but its access count
+        # is needed for the access-vs-tcc count reconciliation); NULL otherwise.
         access_row_count: Optional[int] = None
-        if is_loaded:
+        if is_loaded or table in count_only_tables:
             access_row_count = _count_rows(data_conn, table)
 
-        # access_meta.tables
+        # access_meta.tables -- carry forward any preserved load-fidelity values.
+        preserved = _preserved.get(table, {})
+        staging_row_count = preserved.get("staging_row_count")
+        checksum = preserved.get("checksum")
         with pg_conn.cursor() as cur:
             cur.execute(
                 """
@@ -102,9 +130,11 @@ def populate_meta(
                     object_type,
                     load_state,
                     access_row_count,
+                    staging_row_count,
+                    checksum,
                     tcc_build_kind
                 )
-                VALUES (%s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     run_id,
@@ -112,6 +142,8 @@ def populate_meta(
                     "TABLE",
                     load_state,
                     access_row_count,
+                    staging_row_count,
+                    checksum,
                     None,
                 ),
             )
