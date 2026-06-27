@@ -77,12 +77,14 @@ function VoltagePanel({
   onEntryChange,
   onApply,
   applyMessage,
+  applyDisabled,
 }: {
   groups: SheetGroup[]
   entries: Map<string, string>
   onEntryChange: (tag: string, val: string) => void
   onApply: () => void
   applyMessage: string | null
+  applyDisabled: boolean
 }) {
   if (groups.length === 0) {
     return (
@@ -145,7 +147,8 @@ function VoltagePanel({
       <button
         type="button"
         onClick={onApply}
-        className="rounded bg-gray-800 px-4 py-1.5 text-sm font-medium text-white hover:bg-gray-700"
+        disabled={applyDisabled}
+        className="rounded bg-gray-800 px-4 py-1.5 text-sm font-medium text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Apply
       </button>
@@ -197,14 +200,16 @@ export default function TakeoffPage() {
   })
   const [err, setErr] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [applyMsg, setApplyMsg] = useState<string | null>(null)
 
   // Derived
   const voltageGroups = artifact && evald ? resolvableVoltageGroups(evald.result, artifact) : []
-  const openItems = artifact && evald ? otherOpenItems(evald.result, artifact) : []
+  const openItems = artifact ? (evald ? otherOpenItems(evald.result, artifact) : []) : []
   const isCleanStatus = evald?.report.status === 'clean'
   const canExport =
     projectCtx.projectNumber.trim() !== '' && projectCtx.operatorName.trim() !== ''
+  const applyDisabled = projectCtx.operatorName.trim() === ''
 
   // -------------------------------------------------------------------------
   // Load artifact
@@ -212,6 +217,7 @@ export default function TakeoffPage() {
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    const input = e.target
     setErr(null)
     setBusy(true)
     const reader = new FileReader()
@@ -242,7 +248,13 @@ export default function TakeoffPage() {
         }
       } finally {
         setBusy(false)
+        input.value = ''
       }
+    }
+    reader.onerror = () => {
+      setErr('Failed to read file.')
+      setBusy(false)
+      input.value = ''
     }
     reader.readAsText(file)
   }, [])
@@ -252,6 +264,10 @@ export default function TakeoffPage() {
   // -------------------------------------------------------------------------
   const handleApply = useCallback(() => {
     if (!artifact || !evald) return
+    if (projectCtx.operatorName.trim() === '') {
+      setApplyMsg('Enter operator initials (Project Context) before applying voltage answers.')
+      return
+    }
     const invalid: string[] = []
     const validEntries: { tag: string; voltageV: number }[] = []
     for (const [tag, raw] of entries.entries()) {
@@ -280,7 +296,7 @@ export default function TakeoffPage() {
     const clone = structuredClone(artifact) as ExtractionArtifact
     clone.voltageAssertions = mergeAssertionsByTag(
       clone.voltageAssertions,
-      buildAssertions(validEntries, projectCtx.operatorName || 'operator')
+      buildAssertions(validEntries, projectCtx.operatorName.trim())
     )
     const newEvald = evaluate(clone)
     setArtifact(clone)
@@ -295,9 +311,9 @@ export default function TakeoffPage() {
     async (mode: 'clean' | 'partial') => {
       if (!artifact || !evald) return
       if (!canExport) return
-      setBusy(true)
+      setExporting(true)
       try {
-        const { combined, runnerArtifact } = await buildExport({
+        const { combined } = await buildExport({
           artifact,
           result: evald.result,
           report: evald.report,
@@ -311,12 +327,38 @@ export default function TakeoffPage() {
         const slug = projectCtx.projectNumber.trim().replace(/[^a-zA-Z0-9_-]/g, '_')
         const suffix = mode === 'clean' ? 'gate1' : 'gate1-partial'
         downloadBlob(JSON.stringify(combined, null, 2), `${slug}_${suffix}.json`)
-        // Also offer the runner artifact as a secondary download
+      } catch (ex) {
+        setErr(ex instanceof Error ? ex.message : String(ex))
+      } finally {
+        setExporting(false)
+      }
+    },
+    [artifact, evald, projectCtx, canExport]
+  )
+
+  const handleDownloadRunnerArtifact = useCallback(
+    async () => {
+      if (!artifact || !evald) return
+      if (!canExport) return
+      setExporting(true)
+      try {
+        const { runnerArtifact } = await buildExport({
+          artifact,
+          result: evald.result,
+          report: evald.report,
+          projectCtx: {
+            projectNumber: projectCtx.projectNumber.trim(),
+            packageName: projectCtx.packageName.trim() || undefined,
+            operatorName: projectCtx.operatorName.trim(),
+          },
+          nowIso: new Date().toISOString(),
+        })
+        const slug = projectCtx.projectNumber.trim().replace(/[^a-zA-Z0-9_-]/g, '_')
         downloadBlob(JSON.stringify(runnerArtifact, null, 2), `${slug}_runner-artifact.json`)
       } catch (ex) {
         setErr(ex instanceof Error ? ex.message : String(ex))
       } finally {
-        setBusy(false)
+        setExporting(false)
       }
     },
     [artifact, evald, projectCtx, canExport]
@@ -360,7 +402,7 @@ export default function TakeoffPage() {
         )}
         {artifact && evald && (
           <div className="mt-3 text-sm text-gray-600">
-            Loaded: <span className="font-mono">{artifact.pdf}</span> &mdash;{' '}
+            Loaded: <span className="font-mono">{artifact.pdf}</span> -{' '}
             {artifact.apparatus.length} apparatus row(s)
           </div>
         )}
@@ -399,7 +441,7 @@ export default function TakeoffPage() {
       )}
 
       {/* ------------------------------------------------------------------ */}
-      {/* Panel 1: Voltage Questions (only when artifact loaded)                */}
+      {/* Panel 1: Voltage Questions (only when artifact loaded + evald)        */}
       {/* ------------------------------------------------------------------ */}
       {artifact && evald && (
         <VoltagePanel
@@ -410,13 +452,14 @@ export default function TakeoffPage() {
           }
           onApply={handleApply}
           applyMessage={applyMsg}
+          applyDisabled={applyDisabled}
         />
       )}
 
       {/* ------------------------------------------------------------------ */}
       {/* Panel 2: Other Open Items (always visible when artifact loaded, R3)  */}
       {/* ------------------------------------------------------------------ */}
-      {artifact && evald && (
+      {artifact && (
         <OtherOpenItemsPanel items={openItems} />
       )}
 
@@ -490,7 +533,7 @@ export default function TakeoffPage() {
             {/* Clean Export - only enabled when status is clean AND context fields are filled */}
             <button
               type="button"
-              disabled={!isCleanStatus || !canExport || busy}
+              disabled={!isCleanStatus || !canExport || exporting}
               onClick={() => handleExport('clean')}
               className="rounded bg-blue-700 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -500,7 +543,7 @@ export default function TakeoffPage() {
             {/* Partial Preview Export - enabled when context fields filled (R1), labeled loudly */}
             <button
               type="button"
-              disabled={!canExport || busy}
+              disabled={!canExport || exporting}
               onClick={() => handleExport('partial')}
               className="rounded border border-gray-300 bg-gray-50 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -513,6 +556,19 @@ export default function TakeoffPage() {
               partial preview - {evald.report.counts.unresolved_rows} unresolved row(s) remain. Use
               'Clean Export' only after all voltage questions are resolved and status is clean.
             </p>
+          )}
+
+          {canExport && (
+            <div className="mt-4 border-t border-gray-100 pt-3">
+              <button
+                type="button"
+                disabled={exporting}
+                onClick={handleDownloadRunnerArtifact}
+                className="text-xs text-gray-500 underline hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Download runner artifact (JSON)
+              </button>
+            </div>
           )}
         </section>
       )}
