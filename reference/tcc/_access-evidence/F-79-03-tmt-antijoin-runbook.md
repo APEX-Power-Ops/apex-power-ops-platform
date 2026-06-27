@@ -2,7 +2,7 @@
 
 Status: PREP ARTIFACT (operator-run). #79 follow-on. Author: CC. Date: 2026-06-26.
 Disposition: F-79-03 is parked as **NEEDS ACCESS EVIDENCE**, not "needs more Codex review."
-Cite: reference/tcc/G1-SCHEMA-GUIDE.md (lineage section 4; governed-load deltas section 5).
+Cite: reference/tcc/G1-SCHEMA-GUIDE.md (domain map section 1; join graph section 2; lineage section 4; governed-load deltas section 5).
 
 ## Purpose and authority boundary
 
@@ -24,88 +24,110 @@ The TMT tables in governed `tcc.*` carry fewer rows than the Master Reference (A
 | `tcc.tmt_curves` | `Breaker_TMTFrameCurves` | **COMPUTED** (G1 sec 4: "computed, not in Access"; reader N/A) | CAUTION (likely H4) | 1,143,458 | 1,139,025 | -4,433 |
 | `tcc.tmt_thermal_adj` | `Breaker_TMTThermalTripAdj` | **DERIVED** (G1 sec 4/5 "thermal adj - derived"; governed-load delta) | CAUTION (likely H4) | 21,790 | 14,620 | -7,170 |
 
-Keys: frames join Access `Breaker_TMTFrameSizes.ID` == `tcc.tmt_frames.id`. Children key Access `FrameSizeID` == `tcc.<child>.frame_id`; each child also has its own row `ID`/`id`.
+### Keys (G1 sec 1 + sec 2) - the load-bearing correction
 
-Sandbox ID-space already characterized (parallel-codex findings, for context - NOT a substitute for the Access export):
+- **Frames** carry a surrogate PK: Access `Breaker_TMTFrameSizes.ID` (26 fields) == `tcc.tmt_frames.id`. Anti-join the frame **ID set** directly.
+- **Children have NO surrogate row ID.** Each child is keyed by the FK `FrameSizeID` (declared FK -> `Breaker_TMTFrameSizes.ID`) plus a natural attribute set:
+  - `Breaker_TMTFrameAmps` (2 fields): natural key **`(FrameSizeID, TripAmp)`**.
+  - `Breaker_TMTFrameCurves` (4 fields): natural key **`(FrameSizeID, Class, Time, Amps)`** (`Class`: 0=Sec1 Opening / 1=Sec1 Clearing / 2=Sec2 Clearing).
+  - `Breaker_TMTFrameSettings` (5 fields): `FrameSizeID` + setting columns - exact natural key **[CONFIRM-FROM-ACCESS]**.
+  - `Breaker_TMTThermalTripAdj` (3 fields): `FrameSizeID` + adj columns - exact natural key **[CONFIRM-FROM-ACCESS]**.
+- The `tcc.*` children carry their own surrogate `id` plus `frame_id` (the FK to `tmt_frames.id`). The tcc surrogate `id` is a load-order rank and does **NOT** correspond to any Access row id - so a child anti-join MUST be done at the **frame grain** (per-`FrameSizeID`/`frame_id` count), then row-level on the **natural key**, never on a surrogate.
+
+Sandbox ID-space already characterized (parallel-codex findings, context only - NOT a substitute for the Access export):
 - `tmt_frames`: rows 42,069, id 1..42,082, 13 internal gaps {33243-33250, 41555-41559}
-- `tmt_amps`: 66,960, id 1..66,966, 6 gaps
-- `tmt_settings`: 57,983, id 1..57,983, 0 gaps (dense, tail-short by 58)
-- `tmt_curves`: 1,139,025, id 1..1,139,025, 0 gaps (dense, short 4,433)
-- `tmt_thermal_adj`: 14,620, id 1..14,628, 8 gaps {11110-11117}, short 7,170 (looks tail-truncated)
+- `tmt_amps`: 66,960; `tmt_settings`: 57,983 (dense, tail-short 58); `tmt_curves`: 1,139,025 (dense, short 4,433); `tmt_thermal_adj`: 14,620, 8 internal gaps {11110-11117}, short 7,170 (looks tail-truncated)
 
 Shape read (a HINT, not a verdict): mostly-dense loads that stop before the Access count = consistent with H1 (loader truncation) OR H4 (derived subset). The Access export discriminates.
 
-## Procedure (per table; run for all five)
+## Procedure
 
 ### Step 0 - Confirm lineage (resolves H4 up front)
-For `tmt_curves` and `tmt_thermal_adj` ONLY: confirm with the calc-engine / Access authority whether the governed table is a **1:1 load of the Access table** or a **computed/derived** product. G1 says computed/derived. If derived, the Access table count is **not** the correct comparand and the "gap" is H4 by construction; record the real generation input and STOP (no anti-join against the Access table). If the operator asserts it IS a 1:1 load, proceed to Step 1. For `tmt_frames`/`tmt_amps`/`tmt_settings` (DLL 1:1 loads), go straight to Step 1.
+For `tmt_curves` and `tmt_thermal_adj` ONLY: confirm with the calc-engine / Access authority whether the governed table is a **1:1 load of the Access table** or a **computed/derived** product. G1 says computed/derived. If derived, the Access table count is **not** the correct comparand and the "gap" is H4 by construction; record the real generation input and STOP (no anti-join against the Access table). If the operator asserts it IS a 1:1 load, treat it like the others. `tmt_frames`/`tmt_amps`/`tmt_settings` are DLL 1:1 loads - go to Step 1.
 
 ### Step 1 - Live Access count (resolves H3)
-In the live `.accdb`, run and record:
+In the live `.accdb`, record `COUNT(*)` per table:
 ```sql
--- Access (run in TCC_NEW.accdb)
-SELECT COUNT(*) AS live_access_rows FROM Breaker_TMTFrameSizes;   -- and each table
+-- Access (TCC_NEW.accdb)
+SELECT COUNT(*) AS live_access_rows FROM Breaker_TMTFrameSizes;   -- repeat per table
 ```
-If `live_access_rows` is approximately the `tcc` count (not the G1 MR number), the gap is **H3 stale reference count** - record the live number, flag G1 for correction, STOP for that table. Else continue.
+If `live_access_rows` is approximately the `tcc` count (not the G1 MR number), the gap is **H3 stale reference count** - record the live number, flag G1, STOP for that table. Else continue.
 
-### Step 2 - Export the Access key set (the authoritative input)
-Export to CSV (one file per table). Include the key plus the columns needed for characterization:
+### Step 2 - Export the Access evidence (the authoritative input)
+
+**(2a) Frame ID set** (the only surrogate anti-join):
 ```sql
--- Access: frames
-SELECT ID, FrameSizeID_isnull = IIF(1=1,Null,Null)  -- frames has no parent; ID only
-FROM Breaker_TMTFrameSizes;            -- export: ID  (-> frames_access_ids.csv)
-
--- Access: a child (amps shown; settings identical shape)
-SELECT ID, FrameSizeID                 -- key + parent FK for orphan analysis
-FROM Breaker_TMTFrameAmps;             -- export: ID, FrameSizeID (-> amps_access_ids.csv)
+-- Access: frames have a real ID PK
+SELECT ID FROM Breaker_TMTFrameSizes;                 -- export: frames_access_ids.csv
 ```
-Also export, for the child tables, the set of `FrameSizeID` values whose parent is absent from `Breaker_TMTFrameSizes` (Access-side orphan check - feeds H2):
+
+**(2b) Per-frame child counts** (frame-grain, robust, needs no surrogate):
 ```sql
--- Access: children whose parent frame does not exist in Access
-SELECT a.ID, a.FrameSizeID
+-- Access: one query per child table (amps shown)
+SELECT FrameSizeID, COUNT(*) AS access_rows
+FROM Breaker_TMTFrameAmps GROUP BY FrameSizeID;       -- export: amps_access_framecounts.csv
+-- repeat for Breaker_TMTFrameSettings / Breaker_TMTFrameCurves / Breaker_TMTThermalTripAdj
+```
+
+**(2c) Child natural-key set** (for row-level diff inside the affected frames):
+```sql
+-- Access: amps natural key is known
+SELECT FrameSizeID, TripAmp FROM Breaker_TMTFrameAmps;            -- export: amps_access_keys.csv
+-- curves natural key is known
+SELECT FrameSizeID, Class, Time, Amps FROM Breaker_TMTFrameCurves;-- export: curves_access_keys.csv
+-- settings / thermal: export FrameSizeID + ALL columns; CONFIRM the natural key in this step
+SELECT * FROM Breaker_TMTFrameSettings;                          -- export: settings_access_full.csv
+SELECT * FROM Breaker_TMTThermalTripAdj;                         -- export: thermal_access_full.csv
+```
+
+**(2d) Access-side orphan check** (feeds H2 - children whose parent frame is absent in Access):
+```sql
+SELECT a.FrameSizeID, COUNT(*) AS orphan_rows
 FROM Breaker_TMTFrameAmps AS a
 LEFT JOIN Breaker_TMTFrameSizes AS f ON a.FrameSizeID = f.ID
-WHERE f.ID IS NULL;                    -- export: amps_access_orphans.csv
+WHERE f.ID IS NULL
+GROUP BY a.FrameSizeID;                               -- export: amps_access_orphans.csv (repeat per child)
 ```
 
 ### Step 3 - The diff (mechanical; CC/Codex, no business inference)
-Hand the Access CSVs back. CC/Codex pulls the matching `tcc` id sets from the live sandbox viewer (read-only) and computes:
+Hand the CSVs back. CC/Codex pulls the matching `tcc` sets (read-only sandbox viewer / prod) and computes:
 ```sql
--- tcc side (sandbox viewer / prod, read-only): the id set per table
-SELECT id FROM tcc.tmt_frames ORDER BY id;
-SELECT id, frame_id FROM tcc.tmt_amps ORDER BY id;          -- and settings/curves/thermal_adj
+-- tcc side, read-only
+SELECT id FROM tcc.tmt_frames ORDER BY id;                       -- frame id set
+SELECT frame_id, COUNT(*) AS tcc_rows FROM tcc.tmt_amps GROUP BY frame_id;  -- per-frame counts (per child)
 ```
-Then the two directed differences per table:
-- **missing_in_tcc** = `access_ids \ tcc_ids` (the F-79-03 shortfall - the rows to classify)
-- **extra_in_tcc** = `tcc_ids \ access_ids` (restore/projection artifacts; e.g. the 484 orphan `tmt_curves` from T7 - H4)
+Then per table:
+- **Frames:** `missing_in_tcc = access_ids \ tcc_ids`; `extra_in_tcc = tcc_ids \ access_ids`.
+- **Children (frame grain first):** join `*_access_framecounts` to the tcc per-frame counts on `FrameSizeID = frame_id`; the frames where `access_rows > tcc_rows` are where rows were lost (and `tcc_rows > access_rows` = extra/projection artifacts, e.g. the 484 orphan `tmt_curves` from T7 = H4).
+- **Children (row level, only inside the affected frames):** natural-key set-diff using the confirmed key (amps `(FrameSizeID,TripAmp)`, curves `(FrameSizeID,Class,Time,Amps)`, settings/thermal once the key is confirmed in 2c). This names the specific missing child rows.
 
-### Step 4 - Characterize `missing_in_tcc` (discriminates H1 vs H2)
-For the missing key set, the operator pulls the FULL Access rows and answers:
-- **Tail-contiguous?** Are the missing IDs a contiguous block at the high end (e.g. last N)? -> consistent with H1 loader truncation.
-- **Shared exclusion property?** Do the missing rows share a null/invalid parent `FrameSizeID`, an inactive/disabled flag, a scratch/duplicate marker, or a manufacturer/name that fails resolution (the D1 name-vs-id pattern)? -> H2 expected exclusion (document the rule).
+### Step 4 - Characterize the missing set (discriminates H1 vs H2)
+For the missing frames / child rows, the operator inspects the full Access rows and answers:
+- **Tail-contiguous?** Missing frame IDs a contiguous high-end block, or child deficits concentrated in the highest `FrameSizeID`s? -> consistent with H1 loader truncation.
+- **Shared exclusion property?** Missing rows share a null/invalid parent `FrameSizeID`, an inactive/disabled flag, a scratch/duplicate marker, or a manufacturer/name that fails resolution (the D1 name-vs-id pattern)? -> H2 expected exclusion (document the rule).
 - **Random/valid?** Scattered, valid, fully-parented rows with no exclusion property -> H1 loader gap (actionable reload).
 
 ### Step 5 - Operator verdict (the only place truth is decided)
-Per table, the operator records ONE classification (H1/H2/H3/H4) with the evidence that justifies it. CC/Codex supply the diff + characterization; the operator supplies the verdict.
+Per table, the operator records ONE classification (H1/H2/H3/H4) with the justifying evidence. CC/Codex supply the diff + characterization; the operator supplies the verdict.
 
 ## Expected evidence format (one row per table)
 
 | field | source | example |
 |---|---|---|
-| `tcc_table` | fixed | `tcc.tmt_frames` |
-| `access_table` | fixed | `Breaker_TMTFrameSizes` |
+| `tcc_table` | fixed | `tcc.tmt_amps` |
+| `access_table` | fixed | `Breaker_TMTFrameAmps` |
 | `lineage` | Step 0 | `1:1_load` / `computed` / `derived` |
-| `live_access_count` | Step 1 (Access) | `42238` |
-| `tcc_count` | Step 3 (tcc) | `42069` |
-| `delta` | computed | `-169` |
-| `missing_in_tcc_count` | Step 3 | `169` |
-| `missing_in_tcc_sample` | Step 3 | first/last 20 ids |
+| `live_access_count` | Step 1 (Access) | `67206` |
+| `tcc_count` | Step 3 (tcc) | `66960` |
+| `delta` | computed | `-246` |
+| `frames_with_deficit` | Step 3 (children) | count of `FrameSizeID` where access_rows > tcc_rows |
+| `missing_rows_count` | Step 3 | `246` |
+| `missing_rows_sample` | Step 3 | sample natural keys |
 | `missing_tail_contiguous` | Step 4 | `true`/`false` |
 | `missing_shared_property` | Step 4 | e.g. `null FrameSizeID` / `none` |
 | `extra_in_tcc_count` | Step 3 | `0` |
-| `extra_in_tcc_sample` | Step 3 | ids |
 | `operator_classification` | Step 5 | `H1_loader_gap` / `H2_expected_exclusion` / `H3_stale_ref` / `H4_projection_artifact` |
-| `operator_note` | Step 5 | free text justification |
+| `operator_note` | Step 5 | free-text justification |
 
 Deliver as a 5-row table (one per TMT table) plus the raw CSVs. That table is the F-79-03 resolution record; it determines whether each table needs a loader fix (H1), a documented rule (H2), a G1 correction (H3), or a comparand re-characterization (H4) - none of which this packet decides.
 
@@ -113,3 +135,4 @@ Deliver as a 5-row table (one per TMT table) plus the raw CSVs. That table is th
 - It does not assert any table is a loader gap. The sandbox "tail-truncation" shape is a hint only.
 - It does not touch prod or write any migration. F-79-03 is not migration-ready until the verdict table exists.
 - It does not read the Access DB. Every Access query above is for the operator to run; the truth is the operator's export.
+- It does not anti-join children on a surrogate id (they have none in Access, and the tcc `id` is a non-aligning load-order rank) - children diff at the frame grain, then on the natural key.
