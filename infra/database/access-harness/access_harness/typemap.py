@@ -18,6 +18,7 @@ class ColumnType:
     size: Optional[int]    # internal_size (4th element)
     precision: Optional[int]  # precision (5th element)
     round_trippable: bool  # True iff the mapping is lossless / recognized
+    name: str = ""         # column name (element 0 of cursor.description)
 
 
 # Map from Python type object -> Postgres type string.
@@ -46,7 +47,7 @@ def map_description(desc_row: tuple) -> ColumnType:
         5  scale        int | None
         6  null_ok      bool
     """
-    _name, type_code, _display_size, internal_size, precision, _scale, null_ok = desc_row
+    col_name, type_code, _display_size, internal_size, precision, _scale, null_ok = desc_row
 
     pg_type = _TYPE_MAP.get(type_code)
     if pg_type is not None:
@@ -62,6 +63,7 @@ def map_description(desc_row: tuple) -> ColumnType:
         size=internal_size if internal_size else None,
         precision=precision if precision else None,
         round_trippable=round_trippable,
+        name=col_name if col_name else "",
     )
 
 
