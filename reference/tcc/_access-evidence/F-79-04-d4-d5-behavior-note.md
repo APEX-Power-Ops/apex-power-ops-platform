@@ -58,6 +58,62 @@ D5 questions for the operator:
 
 ---
 
+## Memo/notes re-carry handling (D4 `TMT_Notes` + D5 `InstOvrNoteText`)
+
+Added 2026-06-27 from a read-only ODBC probe of the live `D:\TCC_NEW.accdb` (SELECT only; never opened
+writable). The D4 `TMT_Notes` and D5 `InstOvrNoteText` columns are Access **Long Text (memo)** fields. A
+prior CSV export 6x-inflated their line counts (embedded CR/LF mis-parsed as new rows), which seeded a false
+"the notes cannot be queried or migrated" impression. The probe DISPROVES that: every memo column queries
+cleanly and reads back verbatim. The inflation was a CSV-parsing artifact, never a query limit - which is
+exactly why G1 kept the OLEDB `COUNT(*)` as authoritative (sec 5). This sub-section pins the handling so the
+re-carry projection is built correctly; the business meaning is still the operator's Access ruling.
+
+### In-scope breaker-style memo columns (ride `brk_{iccb,mccb,pcb}_styles.source_id`)
+
+| Access column | target style table | rows / non-null | max len | rows w/ embedded CR/LF | dim |
+|---|---|---|---|---|---|
+| `BreakerICCBStyles.TMT_Notes` | `tcc.brk_iccb_styles` | 608 / 608 | 134 | 7 | D4 |
+| `BreakerMCCBStyles.TMT_Notes` | `tcc.brk_mccb_styles` | 10335 / 10236 | 1353 | 5276 | D4 |
+| `BreakerICCBStyles.InstOvrNoteText` | `tcc.brk_iccb_styles` | 608 / 480* | 0* | 0 | D5 |
+| `BreakerMCCBStyles.InstOvrNoteText` | `tcc.brk_mccb_styles` | 10335 / 8679* | 0* | 0 | D5 |
+| `BreakerPCBStyles.InstOvrNoteText` | `tcc.brk_pcb_styles` | 3279 / 3027 | 378 | 17 | D5 |
+
+*ICCB/MCCB `InstOvrNoteText` non-null values are zero-length strings (MAX(LEN)=0); only PCB carries real
+content (max 378). PCB has NO `TMT_Notes` (TMT_Notes is ICCB/MCCB-only, consistent with D4 = the
+thermal-magnetic alternative). Probe samples of `TMT_Notes` read as HUMAN curve-provenance prose
+(e.g. "POWER BREAK with MagneTrip ... Time-current Curves"), i.e. descriptive, not engine-parsed.
+
+Out-of-scope memo columns (catalogued, NOT in this re-carry; each rides its own table's key if/when its
+domain is projected): `BreakerHVStyles.Notes`, `DatStyle.NOTES`, `MOCStyles.NOTES`, `SwitchStyles.Notes`,
+`EMT.Note`, `Relays.Note`, `zSysVersion.Comment`, `WkPermitTasks.{TaskDesc,HRCSubst,DetJobDesc,SafeWorkPract}`.
+
+### Migration contract (how to carry memo columns)
+
+1. **Read row-level, never aggregate.** The Access ODBC/ACE driver truncates or misbehaves on memo columns
+   under aggregate / ORDER BY / GROUP BY / DISTINCT (silent 255-char truncation). A plain row-level SELECT of
+   the column value is complete and reliable - the only supported read path. (The Access Fidelity Harness
+   `access_raw` layer already reads this way.)
+2. **Never via CSV.** Embedded CR/LF makes CSV row-counting wrong (see `TMT_Notes` 5276/10236). Use the
+   direct ODBC -> PG path and preserve the newlines verbatim.
+3. **Type = Postgres `text`** (Access memo is unbounded; no length cap).
+4. **Key = `brk_{iccb,mccb,pcb}_styles.source_id`** (= Access `Breaker*Styles.ID`, NOT NULL + UNIQUE per mig
+   007). One memo value per style row (cardinality 1:1 with the style; no per-frame fan-out).
+5. **Name-faithful (D1 precedent).** Carry the raw memo string; do NOT parse or restructure at load. If a
+   consumer parses structured content, decode at QUERY time, not load. Surface via the style view with
+   field-trust tagging.
+
+### Operator confirmation needed (folds into the D4/D5 questions above)
+
+- **D4 `TMT_Notes`** - probe evidence = human curve-provenance prose. CONFIRM: does any consumer PARSE it, or
+  is it display-only provenance metadata? (Drives surface-in-serving-contract vs reference-metadata-only.)
+- **D5 `InstOvrNoteText`** - ICCB/MCCB are empty-string-populated, only PCB carries text. CONFIRM the
+  `'' -> NULL` vs keep-`''` decision, and whether `InstOvrNoteText` is needed at all for the inst-override
+  projection.
+- **Scope** - confirm these memo columns belong in the lvbreakertcc serving contract vs full-fidelity-only
+  (028 currently flags `d4_*` / `d5_*` as hazard labels only).
+
+---
+
 ## Gate: design projection ONLY after this note is filled
 
 Once the [CONFIRM-FROM-ACCESS] cells and the per-block questions are answered from Access authority, the projection design follows the D1 precedent:
