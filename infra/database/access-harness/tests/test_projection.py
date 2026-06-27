@@ -152,3 +152,30 @@ def test_curves_col_map_real_names():
 
 def test_thermal_adj_col_map_real_names():
     assert ProjectionMap.for_table('Breaker_TMTThermalTripAdj').col_map['Adjustment'] == 'adjustment'
+
+
+# ---------------------------------------------------------------------------
+# Schema-qualified target bypass regression -- the guard must forbid the
+# codebase's OWN idiomatic spelling of the target (tcc.tmt_frames.id), not just
+# the bare two-segment form.  Before the fix these RAISE was missed because the
+# forbidden target was matched by full-string equality against 'tmt_frames.id',
+# so any schema-qualified 3-segment form sailed through ALLOWED.
+# ---------------------------------------------------------------------------
+
+
+def test_schema_qualified_target_still_forbidden():
+    pm = ProjectionMap.for_table('Breaker_TMTFrameSizes')
+    for tcc_ref in ('tcc.tmt_frames.id', 'public.tmt_frames.id', '"tcc"."tmt_frames"."id"'):
+        with pytest.raises(ForbiddenKeyError):
+            assert_key_allowed(pm, 'Breaker_TMTFrameSizes.ID', tcc_ref)
+
+
+def test_child_framesizeid_to_schema_qualified_target_forbidden():
+    with pytest.raises(ForbiddenKeyError):
+        assert_key_allowed(ProjectionMap.for_table('Breaker_TMTFrameAmps'), 'Breaker_TMTFrameAmps.FrameSizeID', 'tcc.tmt_frames.id')
+
+
+def test_legit_targets_still_allowed_after_fix():
+    pm = ProjectionMap.for_table('Breaker_TMTFrameAmps')
+    assert_key_allowed(pm, 'Breaker_TMTFrameAmps.TripAmp', 'tmt_amps.rating')          # natural attr
+    assert_key_allowed(ProjectionMap.for_table('Breaker_TMTFrameSizes'), 'StyleID', 'brk_mccb_styles.source_id')  # style chain

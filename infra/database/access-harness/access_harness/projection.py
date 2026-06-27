@@ -31,9 +31,17 @@ Forbidden-key predicate (assert_key_allowed)
 A pairing (access_col, tcc_col) is FORBIDDEN iff BOTH hold:
 
   1. The tcc side, after normalisation (lowercased, single/double quotes and
-     surrounding whitespace stripped from each dotted segment), equals
-     'tmt_frames.id'.  This accepts both the bare form 'tmt_frames.id' and the
-     quoted form "'tmt_frames'.'id'".
+     surrounding whitespace stripped from each dotted segment), has TRAILING TWO
+     segments equal to ['tmt_frames', 'id'].  Matching the trailing two segments
+     (rather than the whole string) catches every spelling of the same target:
+     the bare 'tmt_frames.id', the quoted "'tmt_frames'.'id'", AND the
+     schema-qualified 3-segment forms 'tcc.tmt_frames.id' /
+     'public.tmt_frames.id' / '"tcc"."tmt_frames"."id"'.  (tcc.tmt_frames.id is
+     the codebase's OWN idiomatic spelling -- the ORM ForeignKey and these
+     docstrings all use it -- so it must trip the guard.)  Legit targets whose
+     trailing two segments differ (brk_*_styles.source_id,
+     tmt_frames.breaker_style_id, tmt_amps.rating, a bare non-frame 'id') do not
+     match.
 
   2. The access side is a RAW SURROGATE -- i.e. the final dotted segment of the
      access column (its actual column name), lowercased, is exactly 'id' or
@@ -211,8 +219,18 @@ def resolve_frame_join(pm: ProjectionMap, breaker_class: str) -> JoinPlan:
 # Lowercased access column-name leaves that are RAW SURROGATES.
 _SURROGATE_LEAVES = {'id', 'framesizeid'}
 
-# The single forbidden tcc target, normalised.
-_FORBIDDEN_TCC_TARGET = 'tmt_frames.id'
+# The forbidden tcc target's TRAILING two segments, normalised.  We match on the
+# trailing two segments (not full-string equality) so that ALL of these spellings
+# of the same target are caught:
+#   'tmt_frames.id'                (bare)
+#   'tcc.tmt_frames.id'            (schema-qualified -- the codebase's OWN
+#                                   idiomatic ForeignKey spelling)
+#   'public.tmt_frames.id'         (default-schema-qualified)
+#   '"tcc"."tmt_frames"."id"'      (quoted 3-segment)
+# while NOT matching legit targets whose trailing two segments differ, e.g.
+# 'brk_mccb_styles.source_id', 'tmt_frames.breaker_style_id', 'tmt_amps.rating',
+# or a bare 'id' that is not 'tmt_frames.id'.
+_FORBIDDEN_TCC_TAIL = ['tmt_frames', 'id']
 
 
 def _normalize_ref(ref: str) -> str:
@@ -244,7 +262,9 @@ def assert_key_allowed(pm: ProjectionMap, access_col: str, tcc_col: str) -> None
     """Raise ForbiddenKeyError for any direct Access-surrogate -> tmt_frames.id join.
 
     The pairing is FORBIDDEN iff BOTH:
-      1. the tcc side normalises to 'tmt_frames.id', AND
+      1. the tcc side's normalised trailing two segments are
+         ['tmt_frames', 'id'] (so 'tmt_frames.id', 'tcc.tmt_frames.id',
+         'public.tmt_frames.id' and the quoted 3-segment form all match), AND
       2. the access side's column leaf is a raw surrogate ('id' or
          'framesizeid').
 
@@ -267,8 +287,8 @@ def assert_key_allowed(pm: ProjectionMap, access_col: str, tcc_col: str) -> None
     ForbiddenKeyError
         If the pairing is a direct surrogate -> tmt_frames.id join.
     """
-    if _normalize_ref(tcc_col) != _FORBIDDEN_TCC_TARGET:
-        return  # target is not tmt_frames.id -- nothing to forbid
+    if _normalize_ref(tcc_col).split('.')[-2:] != _FORBIDDEN_TCC_TAIL:
+        return  # target's trailing two segments are not tmt_frames.id -- nothing to forbid
     if _access_leaf(access_col) not in _SURROGATE_LEAVES:
         return  # access side is a natural attribute -- allowed
 
