@@ -179,6 +179,40 @@ def pg_conn(live_run):
 
 
 # ---------------------------------------------------------------------------
+# Style-parent coverage helper (Task 3).
+# ---------------------------------------------------------------------------
+
+def _assert_style_parent_coverage(pg_conn, run_id):
+    """The 3 style parents must carry a recorded checksum (load_state checksummed),
+    a checksum_reconciliation row, and a key_quality row after run_all."""
+    styles = ("BreakerICCBStyles", "BreakerMCCBStyles", "BreakerPCBStyles")
+    for tbl in styles:
+        with pg_conn.cursor() as cur:
+            cur.execute(
+                "SELECT checksum, load_state FROM access_meta.tables "
+                "WHERE run_id=%s AND table_name=%s", (run_id, tbl))
+            ck, state = cur.fetchone()
+            assert ck is not None, f"{tbl}: no recorded checksum"
+            assert state == "checksummed", f"{tbl}: load_state={state!r}"
+            cur.execute(
+                "SELECT matches FROM access_validation.checksum_reconciliation "
+                "WHERE run_id=%s AND table_name=%s", (run_id, tbl))
+            recon = cur.fetchone()
+            assert recon is not None, f"{tbl}: no checksum_reconciliation row"
+            # Fidelity expectation: the style parents round-trip faithfully
+            # (int/text/float/smallint columns). A False here is a GENUINE
+            # fidelity finding to surface, not to suppress.
+            assert recon[0] is True, (
+                f"{tbl}: access-vs-staging checksum MISMATCH (matches=False) -- "
+                "investigate the round-trip before generating population SQL")
+            cur.execute(
+                "SELECT is_unique FROM access_validation.key_quality "
+                "WHERE run_id=%s AND table_name=%s", (run_id, tbl))
+            kq = cur.fetchone()
+            assert kq is not None, f"{tbl}: no key_quality row"
+
+
+# ---------------------------------------------------------------------------
 # THE acceptance test.
 # ---------------------------------------------------------------------------
 
@@ -219,7 +253,16 @@ def test_f79_03_pipeline_produces_structural_evidence(live_run, pg_conn):
             (run_id,),
         )
         states = dict(cur.fetchall())
-    assert states.get("loaded", 0) == len(live_run["loaded"])
+    # After reconcile_checksums, loaded tables are upgraded to 'checksummed'.
+    # Accept either state -- a run without reconcile_checksums (future test
+    # fixture) may still carry 'loaded'.
+    loaded_or_checksummed = (
+        states.get("loaded", 0) + states.get("checksummed", 0)
+    )
+    assert loaded_or_checksummed == len(live_run["loaded"]), (
+        f"loaded + checksummed count {loaded_or_checksummed} != "
+        f"slice length {len(live_run['loaded'])}"
+    )
     assert states.get("inventoried_only", 0) > 0, "the non-slice tables must be inventoried"
     assert sum(states.values()) == len(live_run["all_tables"])
 
@@ -407,6 +450,14 @@ def test_f79_03_pipeline_produces_structural_evidence(live_run, pg_conn):
     # ------------------------------------------------------------------
     violations = assert_no_interpretive_columns(pg_conn)
     assert violations == [], f"HR1 violation -- interpretive columns: {violations}"
+
+    # ------------------------------------------------------------------
+    # 7. Style-parent checksum + key_quality coverage (Task 3).
+    #    Each of the 3 BreakerXXXStyles tables must carry a recorded checksum
+    #    (load_state='checksummed'), a checksum_reconciliation row with
+    #    matches=True, and a key_quality row after run_all.
+    # ------------------------------------------------------------------
+    _assert_style_parent_coverage(pg_conn, run_id)
 
 
 # ---------------------------------------------------------------------------

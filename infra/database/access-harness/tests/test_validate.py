@@ -973,3 +973,36 @@ def test_assert_style_parents_faithful_gate(pg):
                         access_rows_for=lambda t: [(1,), (999,)])
     with pytest.raises(ChecksumFidelityError, match="BreakerICCBStyles"):
         assert_style_parents_faithful(pg, run_id)
+
+
+# ---------------------------------------------------------------------------
+# Task 3: reconcile_style_key_quality
+# ---------------------------------------------------------------------------
+
+def test_style_key_quality_coverage(pg):
+    """reconcile_style_key_quality writes a key_quality row (is_unique on ID) for
+    each BreakerXXXStyles table present in access_raw."""
+    from access_harness.validate import reconcile_style_key_quality
+
+    run_id = _seed_run(pg, "run-style-kq")
+    with pg.cursor() as cur:
+        for tbl in ("BreakerICCBStyles", "BreakerMCCBStyles", "BreakerPCBStyles"):
+            cur.execute(f'CREATE TABLE access_raw."{tbl}" ("ID" integer)')
+            cur.executemany(
+                f'INSERT INTO access_raw."{tbl}" ("ID") VALUES (%s)',
+                [(1,), (2,), (3,)],
+            )
+
+    reconcile_style_key_quality(pg, run_id)
+
+    with pg.cursor() as cur:
+        cur.execute(
+            "SELECT table_name, is_unique, distinct_count, total_count "
+            "FROM access_validation.key_quality "
+            "WHERE run_id=%s ORDER BY table_name", (run_id,))
+        rows = cur.fetchall()
+    names = [r[0] for r in rows]
+    assert names == ["BreakerICCBStyles", "BreakerMCCBStyles", "BreakerPCBStyles"]
+    for _name, is_unique, distinct_ct, total_ct in rows:
+        assert is_unique is True
+        assert distinct_ct == 3 and total_ct == 3
