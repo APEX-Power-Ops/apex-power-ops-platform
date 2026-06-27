@@ -222,3 +222,57 @@ test('buildExport rejects a zero-matched run (no matched lines - nothing to pric
     nowIso: '2026-06-26T00:00:00Z',
   })).rejects.toThrow('nothing to price')
 })
+
+// ---------------------------------------------------------------------------
+// ERROR-FINDINGS GUARD (P2 cross-engine finding): buildExport must REJECT a run
+// with blocking error-severity findings even when matchedLines.length > 0
+// (i.e. the zero-matched guard does NOT fire first).
+// Hand-crafted TakeoffResult: 1 matched line (FB-1 800AF/800AT LSIG @ 480V) so
+// the zero-matched guard passes, PLUS a 'voltage_assertion_unknown_tag' error
+// finding for a ghost tag. Engine-verified (probe 2026-06-26): this exact
+// artifact yields matchedLines=1 AND findings=[{severity:'error'}].
+// This test: RED before the Layer-1 error-findings guard; GREEN after.
+// ---------------------------------------------------------------------------
+import type { MatchedLine } from '@apex/estimator-takeoff'
+
+test('buildExport rejects a run with blocking error findings (matchedLines>0, error finding present)', async () => {
+  // Minimal matched line stub - only fields needed to pass the guard (buildExport reads
+  // matchedLines.length, not individual line fields).
+  const stubMatchedLine = {
+    ref: 'BRK-800-LSIG-DRAW', qty: 1, block: 'P1',
+    mountingBasis: 'none' as const, voltageBasis: 'asserted' as const,
+    line: {} as unknown,
+  } as unknown as MatchedLine
+
+  const errorResult: TakeoffResult = {
+    matchedLines: [stubMatchedLine],
+    unmatchedCandidates: [],
+    operatorQuestions: [],
+    findings: [{
+      code: 'voltage_assertion_unknown_tag',
+      severity: 'error',
+      message: 'Asserted tag GHOST-TAG-NOT-IN-ARTIFACT does not match any extracted device - check the tag/sheet.',
+      context: 'GHOST-TAG-NOT-IN-ARTIFACT (unknown)',
+      detail: { tag: 'GHOST-TAG-NOT-IN-ARTIFACT' },
+    }],
+    dispositions: [],
+  }
+
+  // Use the clean-demo artifact as a valid container; the result is hand-crafted above.
+  const art = parseArtifact({
+    pdf: 'error-finding-test.pdf',
+    apparatus: [
+      { raw: 'FB-1 800AF/800AT LSIG', tag: 'FB-1', sheet: 'E1', page: 0, bbox: [0, 0, 1, 1], evidence: 'one-line', block: 'P1' },
+    ],
+    voltageAssertions: [{ voltageV: 480, tags: ['FB-1'] }],
+  })
+  const { report } = evaluate(art)
+
+  await expect(buildExport({
+    artifact: art,
+    result: errorResult,
+    report,
+    projectCtx: { projectNumber: 'P-ERR', operatorName: 'JLS' },
+    nowIso: '2026-06-26T00:00:00Z',
+  })).rejects.toThrow('error findings')
+})

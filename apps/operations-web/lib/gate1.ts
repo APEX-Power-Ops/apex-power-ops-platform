@@ -96,6 +96,11 @@ export async function buildExport(input: {
 }): Promise<Gate1Export> {
   const { artifact, result, report, projectCtx, nowIso } = input
   if (result.matchedLines.length === 0) throw new Gate1Error("no matched lines - nothing to price; resolve construction/catalog evidence or review the takeoff")
+  const errorFindings = result.findings.filter((f) => f.severity === 'error')
+  if (errorFindings.length > 0) {
+    const codes = [...new Set(errorFindings.map((f) => f.code))].join(', ')
+    throw new Gate1Error(`blocking error findings [${codes}] - resolve before export`)
+  }
   const clean = isClean(result) && result.matchedLines.length > 0
   const envelope = clean ? emitEnvelope(result, { projectNumber: projectCtx.projectNumber }).envelope : undefined
   // FIX C (P2-3): on a clean run the runner (run.ts) re-reconciles AFTER emit with the envelope's

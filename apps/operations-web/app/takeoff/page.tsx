@@ -211,6 +211,8 @@ export default function TakeoffPage() {
   const canExport =
     projectCtx.projectNumber.trim() !== '' && projectCtx.operatorName.trim() !== ''
   const applyDisabled = projectCtx.operatorName.trim() === ''
+  const hasErrorFindings = (evald?.result.findings ?? []).some((f) => f.severity === 'error')
+  const exportBlocked = !hasMatched || hasErrorFindings
 
   // -------------------------------------------------------------------------
   // Load artifact
@@ -440,7 +442,9 @@ export default function TakeoffPage() {
       {evald && (
         <div
           className={`mb-6 rounded border px-4 py-3 text-sm font-medium ${
-            !hasMatched
+            hasErrorFindings
+              ? 'border-red-200 bg-red-50 text-red-900'
+              : !hasMatched
               ? 'border-red-200 bg-red-50 text-red-900'
               : isCleanStatus
               ? 'border-green-200 bg-green-50 text-green-900'
@@ -448,7 +452,9 @@ export default function TakeoffPage() {
           }`}
           role="status"
         >
-          {!hasMatched
+          {hasErrorFindings
+            ? 'blocking error findings - resolve before export'
+            : !hasMatched
             ? 'no matched lines - nothing to price; resolve construction/catalog evidence or review the takeoff'
             : isCleanStatus
             ? 'clean'
@@ -563,7 +569,7 @@ export default function TakeoffPage() {
             {/* Clean Export - only enabled when status is clean AND context fields are filled */}
             <button
               type="button"
-              disabled={!isCleanStatus || !canExport || exporting || !hasMatched}
+              disabled={!isCleanStatus || !canExport || exporting || exportBlocked}
               onClick={() => handleExport('clean')}
               className="rounded bg-blue-700 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -574,7 +580,7 @@ export default function TakeoffPage() {
                clean-status run under the gate1-partial filename with NOT-a-complete-bid label) */}
             <button
               type="button"
-              disabled={!canExport || exporting || isCleanStatus || !hasMatched}
+              disabled={!canExport || exporting || isCleanStatus || exportBlocked}
               onClick={() => handleExport('partial')}
               className="rounded border border-gray-300 bg-gray-50 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -593,7 +599,7 @@ export default function TakeoffPage() {
             <div className="mt-4 border-t border-gray-100 pt-3">
               <button
                 type="button"
-                disabled={exporting}
+                disabled={!canExport || exporting || exportBlocked}
                 onClick={handleDownloadRunnerArtifact}
                 className="text-xs text-gray-500 underline hover:text-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
