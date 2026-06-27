@@ -11,6 +11,17 @@ D4 (TMT helper columns) and D5 (instantaneous-override / timing / rating columns
 
 Stable re-carry key (already in place): `tcc.brk_{iccb,mccb,pcb}_styles.source_id` = Access `Breaker*Styles.ID`, populated NOT NULL + UNIQUE by migration 007. Any D4/D5 projection rides this key (the D1 SST re-carry, migration 006/007, is the working precedent: carry source-faithful NAME strings, resolve at query time, do not coerce to FK at load).
 
+## RESOLUTION (2026-06-27) - reconciled into G1; only the scope cut-line remains
+
+The D4/D5 questions below are now ANSWERED from the decompiled engine (`EasyPower.DeviceLibrary` + native `DvlEng`/`TccBase`) + live-data probes, cross-checked against G1 and operator-verified. **The authoritative decoded register now lives in G1 sec 3.1 (legends), sec 3.4 (the resolved native tier), and sec 5 D4/D5 (status upgraded) - this packet defers to G1.** Key results:
+
+- **D4 decodes** (all `[DVL-DB]`, in G1 sec 3.1): `TMT_TripPlug` = `0 = Trip, 1 = Plug` (NOT a "rating-plug designation"); `TMT_BreakerType` = `0 = Thermal Magnetic, 1 = Motor Circuit Protector`; `TMT_ThermalMagnetic` = `0 = With Adjustable Instantaneous, 1 = Without`. `TMT_Thermal` = the **ICCB-class spelling** of `TMT_ThermalMagnetic` (both bind to `TMTThermalMagnetic`; per-class split, G1 sec 3.1). `TMT_TCCNumber` = free-text vendor-doc reference (Text, ~99% empty, NOT an FK). `TMT_Notes` = human memo.
+- **D4 consumption:** there is **no saved query** - the bridge is C# app code (`DevLibBreakerStyle.GetBreakerStyles` -> `GetDefaultTripInfo`). The serving cascade reads only `TMT_Use_SST` + the inst-gate flag (`TMT_Thermal`/`ThermalMagnetic`); `BreakerType`/`TripPlug`/`TCCNumber`/`Notes` are metadata, not engine-consumed.
+- **D5 / the `N` prefix:** `N`/`ninst` = **Non-Instantaneous** (instantaneous defeated / short-time-only), NOT an In-vs-Ir basis. Proof: TccBase `CTccCurveBase.GetIntKaNonInst`; DvlEng `r_*_ninst_*` strings + the NInst->Inst fallback (`-Module-.cs:12172`); PCB `r_int_ninst < r_int_inst` in 585/1431 (never higher). The override is applied native (`CdvlInstOvr` = 208-byte container, curve recalc in TccBase) - **`[NATIVE-BOUNDED]`: recoverable input layout only, not enum legends or curve math.** Not consumed by serving.
+- **Trust tiers** (see `VOCABULARY_MAP.md`): `source_faithful` (served managed-cascade fields) / `native_bounded` (D5 override internals) / `deferred` (full-fidelity curve/rating behavior).
+
+**What remains for the operator = the scope cut-line only:** which of D4 / D5 belong in the lvbreakertcc **serving contract** vs carried as `native_bounded` reference vs left `deferred`. Data-carry path: **D4** re-carry the `TMT_*` helper cols into `tcc.brk_{iccb,mccb}_styles` via `source_id`; **D5** raw-carry `InstOvr*`/`NInstOvr*`/`BrkTimes*`/`r_int_*`/`r_iec_*`/`Breaker_OvrCurves` as raw cols or a side table tagged `native_bounded`, WITHOUT wiring to serving. The `[CONFIRM-FROM-ACCESS]` cells below are retained as optional Access-side ratification; the structural/engine answers are no longer blocking.
+
 ---
 
 ## D4 - TMT helper columns (ICCB / MCCB style tables)
@@ -22,12 +33,12 @@ G1 role: describe the **thermal-magnetic alternative** used when `TMT_Use_SST = 
 
 | column | provisional meaning (G1) | provenance | [CONFIRM-FROM-ACCESS] |
 |---|---|---|---|
-| `TMT_TCCNumber` | TCC reference number for the thermal-magnetic curve set | `[INFERENCE]` | exact semantics; is it an FK into a curve/TCC table? which? |
+| `TMT_TCCNumber` | RESOLVED: free-text vendor-doc reference (Text, ~99% empty; e.g. `GES-6164`, `SC-3501-77C`); NOT an FK | `[VERIFIED-LIVE]` | (resolved - display/provenance only) |
 | `TMT_Notes` | free-text note (the memo field that 6x-inflated CSV line counts) | `[VERIFIED-LIVE]` (memo) | any structured content the engine parses, or purely human notes? |
-| `TMT_TripPlug` | trip-plug / rating-plug designation for the TM breaker | `[INFERENCE]` | value domain; does it drive sensor/rating selection? |
+| `TMT_TripPlug` | RESOLVED: `0 = Trip, 1 = Plug` (G1 sec 3.1; ~99% are 0); NOT consumed by the serving cascade | `[DVL-DB]` | (resolved - metadata) |
 | `TMT_BreakerType` | TM breaker sub-type: `0 = Thermal Magnetic`, `1 = Motor Circuit Protector` (per G1 sec 3) | `[DVL-DB]` | confirm the full enum + any values beyond 0/1 |
 | `TMT_ThermalMagnetic` | `0 = With Adjustable Instantaneous`, `1 = Without adj instantaneous` (G1 sec 3, `[DVL-DB]`) | `[DVL-DB]` | confirm decode; interaction with `TMT_TripPlug` |
-| `TMT_Thermal` | thermal-element descriptor/flag | `[INFERENCE]` | meaning + value domain |
+| `TMT_Thermal` | RESOLVED: the ICCB-class spelling of `TMT_ThermalMagnetic` (`0 = With Adjustable Instantaneous, 1 = Without`); the engine reads it on ICCB, binds to `TMTThermalMagnetic` | `[DLL]` `[DVL-DB]` | (resolved - G1 sec 3.1 split) |
 
 D4 questions for the operator (the behavior note proper):
 1. **Source query/keys:** Which saved Access queries (if any) read these columns? G1 sec 4 notes zero saved queries walk the TMT joins (the engine resolves them in `DeviceLibrary.cs` application code) - confirm, and name the DLL reader(s) that consume D4 (analogous to `ReadTmgn*`).
