@@ -1,5 +1,13 @@
 -- 028_lvbreakertcc_tmt_serving_contract_views.sql
 -- =============================================================================
+-- APPLIED to prod (governed Supabase fxoyniqnrlkxfligbxmg, PG 17.6) via MCP
+-- apply_migration on 2026-06-27 (name f79_02_lvbreakertcc_tmt_serving_contract_views).
+-- Preflight: tmt_frames=42069, target views=0, deps=11/11.
+-- Post: views=3, total=42069, serving=40125, hazards=1944, curveless=1923,
+-- orphans=0, partition_ok=true; matches sandbox snapshot exactly. Down available.
+-- Authorization: operator "28 tcc proceed". See 028_APPLY_TRANSCRIPT.md.
+-- =============================================================================
+-- =============================================================================
 -- F-79-02 (HIGH) — #79 lvbreakertcc contract audit promotion.
 -- *** QUEUED: apply ONLY AFTER 027 lands and the operator gives a separate go. ***
 -- PROD-BOUND, OPERATOR-GATED. Apply against governed Supabase tcc via apply_migration.
