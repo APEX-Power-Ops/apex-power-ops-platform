@@ -91,6 +91,28 @@ def _pg_dsn_from_env() -> str:
     return config.pg_dsn()
 
 
+def _pg_dsn_for(args) -> str:
+    """Return the governed DSN when --governed is set, else the base DSN.
+
+    Both go through config so the SQLAlchemy-style +driver prefix is stripped
+    identically to the tests' connection path.
+    """
+    if getattr(args, "governed", False):
+        return config.governed_pg_dsn()
+    return config.pg_dsn()
+
+
+def _fence_governed(conn, args) -> None:
+    """Fail closed: when --governed is set, assert conn is on tcc_fidelity_governed.
+
+    Called immediately after each connection is opened and BEFORE any load /
+    schema action, so a governed command can never write into postgres / _test /
+    any other DB. No-op when --governed is not set.
+    """
+    if getattr(args, "governed", False):
+        config.assert_current_database(conn, config.GOVERNED_DB)
+
+
 def _connect_pg(dsn: str, *, autocommit: bool) -> psycopg.Connection:
     return psycopg.connect(dsn, autocommit=autocommit)
 
@@ -213,23 +235,24 @@ def _load_slice(pg_conn, data_conn, run_id: str, *, with_curves: bool) -> set:
 def cmd_load(args) -> int:
     fs = _frozen_for(args)
     driver_name, dbms_version, _ = driver_preflight(fs.frozen_path)
-    dsn = _pg_dsn_from_env()
+    dsn = _pg_dsn_for(args)
 
     pg_auto = _connect_pg(dsn, autocommit=True)
     try:
+        _fence_governed(pg_auto, args)   # fail closed before ANY work
         run_id = freeze_mod.record_extraction_run(
             pg_auto, fs, driver_name, dbms_version
         )
+        data_conn = extract.connect_data(fs.frozen_path)
+        pg_tx = _connect_pg(dsn, autocommit=False)
+        try:
+            _fence_governed(pg_tx, args)
+            loaded = _load_slice(pg_tx, data_conn, run_id, with_curves=args.with_curves)
+        finally:
+            pg_tx.close()
+            data_conn.close()
     finally:
         pg_auto.close()
-
-    data_conn = extract.connect_data(fs.frozen_path)
-    pg_tx = _connect_pg(dsn, autocommit=False)
-    try:
-        loaded = _load_slice(pg_tx, data_conn, run_id, with_curves=args.with_curves)
-    finally:
-        pg_tx.close()
-        data_conn.close()
     print(f"run_id: {run_id}; loaded {len(loaded)} slice tables")
     return 0
 
@@ -241,37 +264,36 @@ def cmd_load(args) -> int:
 def cmd_inventory(args) -> int:
     fs = _frozen_for(args)
     driver_name, dbms_version, _ = driver_preflight(fs.frozen_path)
-    dsn = _pg_dsn_from_env()
+    dsn = _pg_dsn_for(args)
 
     pg_auto = _connect_pg(dsn, autocommit=True)
+    pg_tx = _connect_pg(dsn, autocommit=False)
     try:
+        _fence_governed(pg_auto, args)   # fail closed before ANY work
+        _fence_governed(pg_tx, args)
         run_id = freeze_mod.record_extraction_run(
             pg_auto, fs, driver_name, dbms_version
         )
-    finally:
-        pg_auto.close()
-
-    data_conn = extract.connect_data(fs.frozen_path)
-    ace_conn = extract.connect_ace(fs.frozen_path)
-    pg_tx = _connect_pg(dsn, autocommit=False)
-    pg_auto = _connect_pg(dsn, autocommit=True)
-    try:
-        loaded = _load_slice(pg_tx, data_conn, run_id, with_curves=args.with_curves)
-        all_tables = extract.list_user_tables(ace_conn)
-        count_only = set() if args.with_curves else {CURVES_TABLE}
-        inventory.populate_meta(
-            pg_auto, data_conn, ace_conn, run_id, all_tables, loaded,
-            count_only_tables=count_only,
-        )
-        print(f"inventoried {len(all_tables)} tables; loaded {len(loaded)}")
-    finally:
-        pg_tx.close()
-        pg_auto.close()
+        data_conn = extract.connect_data(fs.frozen_path)
+        ace_conn = extract.connect_ace(fs.frozen_path)
         try:
-            ace_conn.Close()
-        except Exception:
-            pass
-        data_conn.close()
+            loaded = _load_slice(pg_tx, data_conn, run_id, with_curves=args.with_curves)
+            all_tables = extract.list_user_tables(ace_conn)
+            count_only = set() if args.with_curves else {CURVES_TABLE}
+            inventory.populate_meta(
+                pg_auto, data_conn, ace_conn, run_id, all_tables, loaded,
+                count_only_tables=count_only,
+            )
+            print(f"inventoried {len(all_tables)} tables; loaded {len(loaded)}")
+        finally:
+            pg_tx.close()
+            try:
+                ace_conn.Close()
+            except Exception:
+                pass
+            data_conn.close()
+    finally:
+        pg_auto.close()
     print(f"run_id: {run_id}")
     return 0
 
@@ -364,6 +386,37 @@ def cmd_golden_capture(args) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Subcommand: provision-governed
+# ---------------------------------------------------------------------------
+
+def cmd_provision_governed(args) -> int:
+    """Create tcc_fidelity_governed if absent and apply the harness DDL to it.
+
+    Operator-run only (never the test suite). Connects to the BASE db to create
+    the governed db, then connects to the governed db, FENCES, and applies the
+    idempotent schema DDL (CREATE SCHEMA/TABLE IF NOT EXISTS).
+    """
+    base_dsn = config.pg_dsn()
+    admin = _connect_pg(base_dsn, autocommit=True)
+    try:
+        created = config.ensure_database(admin, config.GOVERNED_DB)
+    finally:
+        admin.close()
+    print(f"governed db {config.GOVERNED_DB}: "
+          f"{'created' if created else 'already present'}")
+
+    gov = _connect_pg(config.governed_pg_dsn(), autocommit=True)
+    try:
+        config.assert_current_database(gov, config.GOVERNED_DB)  # fail closed
+        schema_sql = Path(__file__).parent.parent / "sql" / "001_schemas.sql"
+        config.apply_sql(gov, schema_sql)
+    finally:
+        gov.close()
+    print(f"applied 001_schemas.sql to {config.GOVERNED_DB}")
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Subcommand: run-all (the full slice pipeline)
 # ---------------------------------------------------------------------------
 
@@ -424,10 +477,12 @@ def run_all(
 def cmd_run_all(args) -> int:
     accdb = _accdb_path(args)
     dest = Path(args.frozen_dir) if args.frozen_dir else frozen_dir()
-    dsn = _pg_dsn_from_env()
+    dsn = _pg_dsn_for(args)
     pg_auto = _connect_pg(dsn, autocommit=True)
     pg_tx = _connect_pg(dsn, autocommit=False)
     try:
+        _fence_governed(pg_auto, args)   # fail closed before ANY work
+        _fence_governed(pg_tx, args)
         result = run_all(
             pg_auto, pg_tx, accdb, dest, with_curves=args.with_curves
         )
@@ -459,6 +514,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="also DATA-load the 1.14M-row curves table (default: count-only)",
     )
+    p.add_argument(
+        "--governed",
+        action="store_true",
+        help="target the durable governed DB (tcc_fidelity_governed) and FENCE "
+             "every connection to it (fail closed); off = the base DSN's db",
+    )
     sub = p.add_subparsers(dest="command", required=True)
 
     sub.add_parser("freeze", help="freeze the .accdb (content-addressed copy)").set_defaults(func=cmd_freeze)
@@ -476,6 +537,10 @@ def build_parser() -> argparse.ArgumentParser:
     vp.set_defaults(func=cmd_validate)
 
     sub.add_parser("golden-capture", help="Phase-1 golden capture (fail-closed, opt-in)").set_defaults(func=cmd_golden_capture)
+    sub.add_parser(
+        "provision-governed",
+        help="create tcc_fidelity_governed (if absent) + apply harness DDL",
+    ).set_defaults(func=cmd_provision_governed)
     sub.add_parser("run-all", help="the full breaker/TMT slice pipeline").set_defaults(func=cmd_run_all)
 
     return p
