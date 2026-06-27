@@ -33,3 +33,42 @@ describe('reconcile', () => {
     expect(reconcile(a, result, { bid_cents: 12345 }).envelopeTotals).toEqual({ bid_cents: 12345 })
   })
 })
+
+describe('isClean zero-matched contract (operator-directed root fix)', () => {
+  // A run where every disposition is 'ignored' (non_breaker_excluded), matchedLines=[],
+  // no questions, no errors: the OLD isClean (3 conjuncts only) returned true - a bug.
+  // After the fix (4th conjunct: matchedLines.length > 0) isClean must return false,
+  // mirroring the runner's zero-matched hard-block in run.ts.
+  const zeroMatchedResult = {
+    matchedLines: [],
+    unmatchedCandidates: [],
+    operatorQuestions: [],
+    findings: [],
+    dispositions: [
+      {
+        inputIndex: 0, tag: 'TX-1', raw: 'TX-1 XFMR', sheet: 'E1', page: 0,
+        bbox: [0, 0, 1, 1] as [number, number, number, number], evidence: 'one-line' as const,
+        status: 'ignored' as const, reasonCode: 'non_breaker_excluded', reason: 'non-breaker device token',
+      },
+      {
+        inputIndex: 1, tag: 'PDU-2', raw: 'PDU-2 PDU', sheet: 'E1', page: 0,
+        bbox: [0, 0, 1, 1] as [number, number, number, number], evidence: 'one-line' as const,
+        status: 'ignored' as const, reasonCode: 'non_breaker_excluded', reason: 'non-breaker device token',
+      },
+    ],
+  }
+  const zeroArtifact = art([
+    row({ raw: 'TX-1 XFMR', tag: 'TX-1', sheet: 'E1', page: 0 }),
+    row({ raw: 'PDU-2 PDU', tag: 'PDU-2', sheet: 'E1', page: 0 }),
+  ])
+
+  it('isClean returns false for zero-matched run (matchedLines.length===0 blocks clean)', () => {
+    expect(isClean(zeroMatchedResult as any)).toBe(false)
+  })
+
+  it('reconcile.status is partial_preview (not clean) for zero-matched run', () => {
+    const report = reconcile(zeroArtifact, zeroMatchedResult as any)
+    expect(report.status).toBe('partial_preview')
+    expect(report.status).not.toBe('clean')
+  })
+})

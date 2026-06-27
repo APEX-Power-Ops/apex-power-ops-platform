@@ -20,16 +20,21 @@ export interface ReconciliationReport {
   envelopeTotals?: { bid_cents: number }   // present when an envelope was emitted
 }
 
-// clean = nothing unresolved is hiding. Computed over the EXHAUSTIVE dispositions, NOT the buckets:
-// an 'unrecognized_apparatus_row' is a question DISPOSITION that emits no operatorQuestion, so a
-// bucket-only gate (zero operatorQuestions) would let it pass. The disposition check catches it.
+// clean = nothing unresolved is hiding AND at least one line was matched/priced.
+// The matchedLines>0 conjunct mirrors the runner's zero-matched hard-block in run.ts
+// (which fires before isClean is called): a run where everything was ignored/excluded
+// produces zero priced lines and must NOT be labeled 'clean' - there is no envelope to
+// stand behind. Computed over the EXHAUSTIVE dispositions, NOT the buckets:
+// an 'unrecognized_apparatus_row' is a question DISPOSITION that emits no operatorQuestion,
+// so a bucket-only gate (zero operatorQuestions) would let it pass. The disposition check catches it.
 export function isClean(result: TakeoffResult): boolean {
   const noErrorFindings = result.findings.every((f) => f.severity !== 'error')
   const allRowsResolved = result.dispositions.every(
     (d) => d.status === 'matched' || d.status === 'associated_source' || d.status === 'ignored',
   )                                                   // any 'unmatched' or 'question' row blocks
   const noOpenQuestions = result.operatorQuestions.length === 0   // catches advisory-on-matched + profile_warning
-  return noErrorFindings && allRowsResolved && noOpenQuestions
+  const hasMatchedLines = result.matchedLines.length > 0          // zero priced lines is never 'clean'
+  return noErrorFindings && allRowsResolved && noOpenQuestions && hasMatchedLines
 }
 
 // Internal consistency: matched/unmatched dispositions must exactly mirror the produced line memberships,

@@ -170,9 +170,9 @@ test('otherOpenItems surfaces a location_only row exactly once (no duplicate fro
 // ZERO-MATCHED GUARD (cross-engine finding): buildExport must REJECT a run
 // where matchedLines.length === 0, mirroring the runner's hard block in run.ts.
 // Hand-crafted TakeoffResult: 3 non-breaker apparatus rows all disposition
-// 'ignored' / 'non_breaker_excluded' -> 0 matchedLines, isClean=true.
+// 'ignored' / 'non_breaker_excluded' -> 0 matchedLines, isClean=false (post root-fix).
 // Engine-verified (probe 2026-06-26): TX/PDU/METER rows w/ no frame rating
-// get non_breaker_excluded; reconcile yields report.status='clean'.
+// get non_breaker_excluded; reconcile yields report.status='partial_preview' (isClean=false post root-fix).
 // This test: RED before the Layer-1 guard in buildExport; GREEN after.
 // ---------------------------------------------------------------------------
 function ignoredDisposition(inputIndex: number, tag: string, raw: string): ApparatusDisposition {
@@ -186,7 +186,7 @@ function ignoredDisposition(inputIndex: number, tag: string, raw: string): Appar
 test('buildExport rejects a zero-matched run (no matched lines - nothing to price)', async () => {
   // Craft a minimal all-ignored zero-matched artifact.
   // The apparatus rows are non-breaker tokens (XFMR, PDU, METER) with no frame/trip rating.
-  // Engine-verified: these yield non_breaker_excluded dispositions, matchedLines=0, isClean=true.
+  // Engine-verified: these yield non_breaker_excluded dispositions, matchedLines=0, isClean=false (post root-fix).
   const dispositions = [
     ignoredDisposition(0, 'TX-1', 'TX-1 XFMR'),
     ignoredDisposition(1, 'PDU-2', 'PDU-2 PDU'),
@@ -207,7 +207,7 @@ test('buildExport rejects a zero-matched run (no matched lines - nothing to pric
     voltageAssertions: [],
   } as unknown as ExtractionArtifact
 
-  // report.status is 'clean' per the engine (probe-verified 2026-06-26).
+  // report.status is 'partial_preview' after the root-fix (isClean false when matchedLines=0).
   const zeroReport = reconcile(zeroArtifact, zeroResult)
 
 
