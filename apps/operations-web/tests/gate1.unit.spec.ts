@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { parseArtifact } from '@apex/estimator-takeoff'
+import { parseArtifact, reconcile, type ReconciliationReport } from '@apex/estimator-takeoff'
 import { evaluate, resolvableVoltageGroups, otherOpenItems } from '../lib/gate1'
 
 const ARTIFACT = parseArtifact({
@@ -60,8 +60,12 @@ test('mergeAssertionsByTag keeps unrelated existing tags', () => {
 import { buildExport } from '../lib/gate1'
 
 test('buildExport omits envelope and labels partial_preview when not clean', async () => {
+  // Two-row artifact: FB-1 matched (800AF/LSIG + 480V assertion), FB-2 missing-voltage question.
+  // matchedLines=1 -> passes the zero-matched guard; isClean=false -> partial_preview path.
   const art = parseArtifact({ pdf: 't.pdf', apparatus: [
-    { raw: 'FB-1 400AF/400AT', tag: 'FB-1', sheet: 'E1', page: 0, bbox: [0, 0, 1, 1], evidence: 'one-line' }], voltageAssertions: [] })
+    { raw: 'FB-1 800AF/800AT LSIG', tag: 'FB-1', sheet: 'E1', page: 0, bbox: [0, 0, 1, 1], evidence: 'one-line', block: 'P1' },
+    { raw: 'FB-2 400AF/400AT', tag: 'FB-2', sheet: 'E1', page: 0, bbox: [0, 0, 1, 1], evidence: 'one-line', block: 'P1' }],
+    voltageAssertions: [{ voltageV: 480, tags: ['FB-1'] }] })
   const { result, report } = evaluate(art)
   const { combined } = await buildExport({ artifact: art, result, report,
     projectCtx: { projectNumber: 'P1', operatorName: 'JLS' }, nowIso: '2026-06-26T00:00:00Z' })
@@ -160,4 +164,61 @@ test('otherOpenItems surfaces a location_only row exactly once (no duplicate fro
   // must NOT also be pushed -> exactly one item referencing inputIndex 0.
   const forRow = items.filter((i) => i.kind === 'question')
   expect(forRow).toHaveLength(1)
+})
+
+// ---------------------------------------------------------------------------
+// ZERO-MATCHED GUARD (cross-engine finding): buildExport must REJECT a run
+// where matchedLines.length === 0, mirroring the runner's hard block in run.ts.
+// Hand-crafted TakeoffResult: 3 non-breaker apparatus rows all disposition
+// 'ignored' / 'non_breaker_excluded' -> 0 matchedLines, isClean=true.
+// Engine-verified (probe 2026-06-26): TX/PDU/METER rows w/ no frame rating
+// get non_breaker_excluded; reconcile yields report.status='clean'.
+// This test: RED before the Layer-1 guard in buildExport; GREEN after.
+// ---------------------------------------------------------------------------
+function ignoredDisposition(inputIndex: number, tag: string, raw: string): ApparatusDisposition {
+  return {
+    inputIndex, tag, raw, sheet: 'E1', page: 0,
+    bbox: [0, 0, 1, 1], evidence: 'one-line', status: 'ignored',
+    reasonCode: 'non_breaker_excluded', reason: 'non-breaker device token',
+  }
+}
+
+test('buildExport rejects a zero-matched run (no matched lines - nothing to price)', async () => {
+  // Craft a minimal all-ignored zero-matched artifact.
+  // The apparatus rows are non-breaker tokens (XFMR, PDU, METER) with no frame/trip rating.
+  // Engine-verified: these yield non_breaker_excluded dispositions, matchedLines=0, isClean=true.
+  const dispositions = [
+    ignoredDisposition(0, 'TX-1', 'TX-1 XFMR'),
+    ignoredDisposition(1, 'PDU-2', 'PDU-2 PDU'),
+    ignoredDisposition(2, 'METER-3', 'METER-3 METER'),
+  ]
+  const zeroResult: TakeoffResult = {
+    matchedLines: [],
+    unmatchedCandidates: [],
+    operatorQuestions: [],
+    findings: [],
+    dispositions,
+  }
+  const zeroArtifact = {
+    pdf: 'zero.pdf',
+    apparatus: dispositions.map((d) => ({
+      raw: d.raw, tag: d.tag, sheet: d.sheet, page: d.page, bbox: d.bbox, evidence: d.evidence,
+    })),
+    voltageAssertions: [],
+  } as unknown as ExtractionArtifact
+
+  // report.status is 'clean' per the engine (probe-verified 2026-06-26).
+  const zeroReport = reconcile(zeroArtifact, zeroResult)
+
+
+
+
+
+  await expect(buildExport({
+    artifact: zeroArtifact,
+    result: zeroResult,
+    report: zeroReport,
+    projectCtx: { projectNumber: 'P-ZERO', operatorName: 'JLS' },
+    nowIso: '2026-06-26T00:00:00Z',
+  })).rejects.toThrow('nothing to price')
 })

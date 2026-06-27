@@ -95,6 +95,7 @@ export async function buildExport(input: {
   projectCtx: { projectNumber: string; packageName?: string; operatorName: string }; nowIso: string
 }): Promise<Gate1Export> {
   const { artifact, result, report, projectCtx, nowIso } = input
+  if (result.matchedLines.length === 0) throw new Gate1Error("no matched lines - nothing to price; resolve construction/catalog evidence or review the takeoff")
   const clean = isClean(result) && result.matchedLines.length > 0
   const envelope = clean ? emitEnvelope(result, { projectNumber: projectCtx.projectNumber }).envelope : undefined
   // FIX C (P2-3): on a clean run the runner (run.ts) re-reconciles AFTER emit with the envelope's

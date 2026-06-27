@@ -250,3 +250,40 @@ test('a failed (contract-invalid) load clears stale artifact, panels, and export
 
   expect(pageErrors).toHaveLength(0)
 })
+
+// ---------------------------------------------------------------------------
+// PROOF 5 - zero-matched artifact: "nothing to price" notice visible, both
+//   export buttons disabled. Real fixture: TX-1/PDU-2/METER-3 (XFMR/PDU/METER
+//   tokens, no frame/trip rating). Engine-verified: all get non_breaker_excluded
+//   (ignored), matchedLines=0, report.status=clean, isClean=true. This is the
+//   case the cross-engine review flagged: clean-labeled export with 0 priced lines.
+// ---------------------------------------------------------------------------
+const ZERO_MATCHED_PATH = path.join(TESTS_DIR, 'fixtures', 'takeoff-zero-matched.artifact.json')
+
+test('zero-matched artifact: nothing-to-price notice visible and both export buttons disabled', async ({ page }) => {
+  const pageErrors: string[] = []
+  page.on('pageerror', (err) => pageErrors.push(err.message))
+
+  await page.goto('/takeoff', { waitUntil: 'networkidle' })
+
+  // Load zero-matched fixture (TX-1 XFMR + PDU-2 PDU + METER-3 METER, no voltage assertions)
+  await page.setInputFiles('input[type="file"]', ZERO_MATCHED_PATH)
+
+  // Status banner must contain the nothing-to-price blocking notice
+  const status = page.getByRole('status')
+  await expect(status).toContainText('nothing to price', { timeout: 10_000 })
+
+  // Fill project context so canExport is true (isolates hasMatched as the disabling factor)
+  await page.fill('input[aria-label="Project number"]', 'ZERO-TEST')
+  await page.fill('input[aria-label="Operator initials"]', 'JLS')
+
+  // Clean Export must be disabled
+  const cleanExportBtn = page.getByRole('button', { name: 'Clean Export' })
+  await expect(cleanExportBtn).toBeDisabled()
+
+  // Partial Preview Export must also be disabled
+  const partialBtn = page.getByRole('button', { name: 'partial preview - NOT a complete bid' })
+  await expect(partialBtn).toBeDisabled()
+
+  expect(pageErrors).toHaveLength(0)
+})
