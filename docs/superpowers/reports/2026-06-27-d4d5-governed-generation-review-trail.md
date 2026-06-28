@@ -23,6 +23,7 @@ This record makes the review history auditable from the repo (the live SDD ledge
 | 4 -- corrective: ORDER BY determinism + 030 extra-row guard + cosmetics | `a0caba89` | folded |
 | 5 -- cross-engine corrective wave (4 patches, below) | `1f738b55` | SPEC PASS + QUALITY APPROVED |
 | 5b -- blocker-proof regression test (stale tmt_* -> NULL on source-NULL) | `497ed365` | -- |
+| 6 -- prod-executable SQL: remove psql meta-command + raw-artifact proof | `71ce1a12` | SPEC PASS + QUALITY APPROVED |
 
 ## Whole-slice opus review (`be8f9552`) -- MERGE READY (code-level)
 0 Critical / 0 Important. Cross-task seams verified: single validated `run_id` threaded through
@@ -45,6 +46,21 @@ generation + host-clone dry-run + cross-engine) was still owed.
    source data is carried VERBATIM as UTF-8 (client_encoding=UTF8); ASCII-only governs authored code only.
    Docs clarified (Rev 2.1); NO data escaping (that would break fidelity).
 6. PROCESS: review trail not in the repo. ADDRESSED by this file.
+
+## Cross-engine (Codex) round 2 -- of `e5b21e62`
+1. HIGH (blocker): both emitters embedded `\set ON_ERROR_STOP on`, a psql meta-command that is INVALID
+   server SQL for the apply_migration / psycopg path; the live tests stripped backslash lines before
+   executing, so they proved a CLEANED script, not the artifact (false-green). FIXED (Task 6 `71ce1a12`):
+   removed `\set` from emit_029 + emit_030 (fail-closed is preserved by the in-tx DO-block RAISEs +
+   BEGIN/COMMIT, matching the queued 029/030 DDL which carry no `\set`).
+2. MEDIUM: `_exec_sql_script` no longer strips backslash lines; added prod-executor tests that run the
+   EXACT emit_029/emit_030 output raw through psycopg (commit + data landing) + a structural no-backslash
+   assert -- closing the false-green class.
+3. LOW: the parity test now resolves the gate-selected run_id's `frozen_copy_path` (via select_run_id),
+   not `ORDER BY extracted_at_utc DESC LIMIT 1` (multi-run safe).
+Boundary note (reviewer): the prod-executor coverage proves the artifact is valid pure server SQL that
+psycopg accepts unmodified (the apply_migration path); if apply_migration ever re-wraps/splits the SQL,
+that envelope is outside this test's scope.
 
 ## Test posture
 Single-process full suite green (the implementer's Task 5 run: 227 passed / 1 skipped / 0 regressions).
