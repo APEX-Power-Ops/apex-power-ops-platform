@@ -11,8 +11,9 @@ function specKey(s: ApparatusSignature): string {
       s.frameA ?? '-', s.tripA ?? '-', s.source.block ?? '-',   // voltageV + voltageBasis -> per-tag voltage/provenance preserved
     ].join('|')
   }
-  // transformer (and any future kinds): minimal placeholder key — no priced line is emitted for non-breakers
-  return [s.kind, s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.source.block ?? '-'].join('|')
+  // transformer: full key so two transformers that differ only in coolant/kVA/padMount/ltc get separate lines
+  return [s.kind, s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.source.block ?? '-',
+          s.coolant, s.kvaRating ?? '-', s.padMount ? 'pad' : '-', s.ltc ? 'ltc' : '-'].join('|')
 }
 
 // Stable device identity used for BOTH grouping AND source-retrieval (identical formula in both places).
