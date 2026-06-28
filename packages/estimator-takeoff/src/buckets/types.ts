@@ -1,4 +1,4 @@
-import type { MountingBasis, VoltageBasis } from '../signature/types'
+﻿import type { MountingBasis, VoltageBasis } from '../signature/types'
 import type { QuantifiedLine } from '../quantify/types'
 import type { EvidenceKind } from '../extraction/types'
 export type { EvidenceKind }
@@ -10,6 +10,7 @@ export type OperatorQuestionCode =
   | 'missing_voltage' | 'lv_frame_trip_unparsed' | 'missing_power_functions'
   | 'mounting_hint_conflict' | 'non_breaker_carries_rating' | 'location_only'
   | 'unrecognized_apparatus_row' | 'profile_warning'
+  | 'transformer_attrs_unparsed'
 
 export interface OperatorQuestion { question: string; context: string; code: OperatorQuestionCode; inputIndex?: number }
 export interface TakeoffResult {
@@ -17,26 +18,27 @@ export interface TakeoffResult {
   unmatchedCandidates: UnmatchedCandidate[]
   operatorQuestions: OperatorQuestion[]
   findings: TakeoffFinding[]
-  dispositions: ApparatusDisposition[]   // NEW -- EXACTLY one per artifact.apparatus row
+  dispositions: ApparatusDisposition[]
 }
 
 export type ApparatusDispositionStatus =
-  | 'matched'             // counted into a line that matched a catalog ref
-  | 'associated_source'   // folded as a source/occurrence of a counted device (not its own line)
-  | 'unmatched'           // counted into a line with no catalog rule
-  | 'question'            // breaker-shaped but unresolved - needs an operator answer
-  | 'ignored'             // explicit exclusion (non-breaker / not breaker-shaped)
+  | 'matched'
+  | 'associated_source'
+  | 'unmatched'
+  | 'question'
+  | 'ignored'
 
 export type DispositionReasonCode =
-  | 'catalog_rule'                  // matched
-  | 'occurrence_of_counted_device' // associated_source (sibling occurrence, had a signature)
-  | 'unresolved_tag_attached'      // associated_source (no signature, tag matched a counted line)
-  | 'no_catalog_rule'              // unmatched
-  | 'missing_voltage'              // question
-  | 'location_only_non_authoritative' // question
-  | 'non_breaker_carries_rating'   // question - non-breaker token + breaker rating
-  | 'unrecognized_apparatus_row'   // question - a producer candidate row the engine cannot classify
-  | 'non_breaker_excluded'         // ignored - the ONLY safe-to-ignore case
+  | 'catalog_rule'
+  | 'occurrence_of_counted_device'
+  | 'unresolved_tag_attached'
+  | 'no_catalog_rule'
+  | 'missing_voltage'
+  | 'location_only_non_authoritative'
+  | 'non_breaker_carries_rating'
+  | 'unrecognized_apparatus_row'
+  | 'non_breaker_excluded'
+  | 'transformer_attrs_unparsed'
 
 export interface ApparatusDisposition {
   inputIndex: number
