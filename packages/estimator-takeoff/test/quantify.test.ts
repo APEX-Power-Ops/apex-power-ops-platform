@@ -72,7 +72,9 @@ describe('quantify', () => {
     }
     const { lines } = quantify([sparse, rich])
     expect(lines).toHaveLength(1)
-    expect(lines[0]!.signature.mounting).toBe('molded_case')
+    const rep = lines[0]!.signature
+    if (rep.kind !== 'breaker') throw new Error('expected breaker representative')
+    expect(rep.mounting).toBe('molded_case')
   })
 
   it('exposes lineKey, memberIndices, and associated non-representative occurrences', () => {

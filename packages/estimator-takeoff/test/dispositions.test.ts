@@ -12,9 +12,13 @@ describe('dispositions', () => {
     expect(d).toHaveLength(3)
     d.forEach((x, i) => expect(x.inputIndex).toBe(i))
   })
-  it('classifies non-breaker as ignored/non_breaker_excluded', () => {
-    const d = runTakeoff(art([row({ raw: 'XFMR 1000KVA', tag: 'T' })])).dispositions
+  it('classifies a non-transformer non-breaker as ignored/non_breaker_excluded', () => {
+    const d = runTakeoff(art([row({ raw: 'PDU-1 PDU 100A', tag: 'P' })])).dispositions
     expect(d[0]!).toMatchObject({ status: 'ignored', reasonCode: 'non_breaker_excluded' })
+  })
+  it('classifies a recognized transformer (XFMR token) with no voltage as a missing_voltage question', () => {
+    const d = runTakeoff(art([row({ raw: 'XFMR 1000KVA', tag: 'T' })])).dispositions
+    expect(d[0]!).toMatchObject({ status: 'question', reasonCode: 'missing_voltage' })
   })
   it('classifies an unclassifiable producer row as a question, never ignored', () => {
     const d = runTakeoff(art([row({ raw: 'SPARE', tag: 'S' })])).dispositions
