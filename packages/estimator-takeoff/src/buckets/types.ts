@@ -1,4 +1,4 @@
-﻿import type { MountingBasis, VoltageBasis } from '../signature/types'
+import type { MountingBasis, VoltageBasis } from '../signature/types'
 import type { QuantifiedLine } from '../quantify/types'
 import type { EvidenceKind } from '../extraction/types'
 export type { EvidenceKind }
@@ -6,16 +6,27 @@ export type { EvidenceKind }
 export interface MatchedLine { ref: string; qty: number; block: string; mountingBasis: MountingBasis; voltageBasis: VoltageBasis; line: QuantifiedLine }
 export interface UnmatchedCandidate { reason: string; line: QuantifiedLine }
 
+export interface ScopePendingLine {
+  candidateRefs: string[]
+  defaultRef: string
+  scopeQuestion: string
+  qty: number
+  block: string
+  line: QuantifiedLine
+}
+
 export type OperatorQuestionCode =
   | 'missing_voltage' | 'lv_frame_trip_unparsed' | 'missing_power_functions'
   | 'mounting_hint_conflict' | 'non_breaker_carries_rating' | 'location_only'
   | 'unrecognized_apparatus_row' | 'profile_warning'
   | 'transformer_attrs_unparsed'
+  | 'transformer_scope_pending' | 'transformer_catalog_gap'
 
 export interface OperatorQuestion { question: string; context: string; code: OperatorQuestionCode; inputIndex?: number }
 export interface TakeoffResult {
   matchedLines: MatchedLine[]
   unmatchedCandidates: UnmatchedCandidate[]
+  scopePendingLines: ScopePendingLine[]
   operatorQuestions: OperatorQuestion[]
   findings: TakeoffFinding[]
   dispositions: ApparatusDisposition[]
@@ -27,6 +38,7 @@ export type ApparatusDispositionStatus =
   | 'unmatched'
   | 'question'
   | 'ignored'
+  | 'scope_pending'
 
 export type DispositionReasonCode =
   | 'catalog_rule'
@@ -39,6 +51,8 @@ export type DispositionReasonCode =
   | 'unrecognized_apparatus_row'
   | 'non_breaker_excluded'
   | 'transformer_attrs_unparsed'
+  | 'transformer_scope_pending'
+  | 'transformer_catalog_gap'
 
 export interface ApparatusDisposition {
   inputIndex: number
@@ -65,7 +79,7 @@ export type VoltageAssertionCode =
   | 'voltage_assertion_invalid_shape'
 
 export interface TakeoffFinding {
-  code: VoltageAssertionCode
+  code: VoltageAssertionCode | 'transformer_catalog_gap'
   severity: FindingSeverity
   message: string
   context: string
