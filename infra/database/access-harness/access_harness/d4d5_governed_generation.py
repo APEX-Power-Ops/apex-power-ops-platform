@@ -57,8 +57,10 @@ read_class(conn, cls) -> dict
         }
       }
 
-build_report(conn, run_id, generated_at=None) -> dict
-    Return provenance + per-class counts for a generation run:
+build_report(conn, run_id, generated_at=None, snapshot_id=None) -> dict
+    Return provenance + per-class counts for a generation run.
+    snapshot_id: fail-closed selection (P3) -- auto if exactly one, else refuse.
+    Return provenance + per-class counts:
       {
         "provenance": {run_id, source_sha256, frozen_copy_path, driver_name,
                        dbms_version, read_only, snapshot_id, host, db_name,
@@ -478,7 +480,7 @@ def read_class(conn, cls):
 # Task 2: build_report
 # ---------------------------------------------------------------------------
 
-def build_report(conn, run_id, generated_at=None):
+def build_report(conn, run_id, generated_at=None, snapshot_id=None):
     """Build a provenance + counts report for a governed generation run.
 
     Reads from:
@@ -490,6 +492,13 @@ def build_report(conn, run_id, generated_at=None):
 
     generated_at: if provided (a datetime or ISO string), it is included in the
     provenance block. NOT generated internally -- the controller stamps it.
+
+    snapshot_id: FAIL-CLOSED snapshot selection.
+      - If given, it is verified to belong to run_id (GenerationRefused if not).
+      - If None, the snapshot for run_id is auto-selected ONLY if there is exactly
+        one; if zero or more than one, GenerationRefused is raised instructing the
+        caller to pass --snapshot-id explicitly.  LIMIT 1 with no ORDER BY is
+        deliberately NOT used (non-deterministic provenance is refused).
 
     Returns:
         {
@@ -525,17 +534,45 @@ def build_report(conn, run_id, generated_at=None):
         else:
             source_sha256 = frozen_copy_path = driver_name = dbms_version = read_only = None
 
-        # tcc_snapshot (keyed by snapshot_id PK; linked via run_id FK)
-        cur.execute(
-            "SELECT snapshot_id, host, db_name, role "
-            "FROM access_meta.tcc_snapshot WHERE run_id=%s LIMIT 1",
-            (run_id,),
-        )
-        snap = cur.fetchone()
-        if snap is not None:
-            snapshot_id, snap_host, snap_db, snap_role = snap
+        # tcc_snapshot -- FAIL-CLOSED selection (P3).
+        # Fetch ALL snapshots for this run_id (never LIMIT 1 without ORDER BY).
+        if snapshot_id is not None:
+            # Explicit snapshot_id: verify it belongs to this run_id.
+            cur.execute(
+                "SELECT snapshot_id, host, db_name, role "
+                "FROM access_meta.tcc_snapshot "
+                "WHERE run_id=%s AND snapshot_id=%s",
+                (run_id, snapshot_id),
+            )
+            snap = cur.fetchone()
+            if snap is None:
+                raise GenerationRefused(
+                    "snapshot_id %r does not belong to run_id %r -- "
+                    "verify the snapshot_id and retry" % (snapshot_id, run_id)
+                )
+            resolved_snapshot_id, snap_host, snap_db, snap_role = snap
         else:
-            snapshot_id = snap_host = snap_db = snap_role = None
+            # No explicit snapshot_id: auto-select only if exactly one exists.
+            cur.execute(
+                "SELECT snapshot_id, host, db_name, role "
+                "FROM access_meta.tcc_snapshot WHERE run_id=%s",
+                (run_id,),
+            )
+            snaps = cur.fetchall()
+            if len(snaps) == 1:
+                resolved_snapshot_id, snap_host, snap_db, snap_role = snaps[0]
+            elif len(snaps) == 0:
+                raise GenerationRefused(
+                    "no snapshot found for run_id %r -- "
+                    "run snapshot-tcc first, then pass --snapshot-id" % (run_id,)
+                )
+            else:
+                ids = [s[0] for s in snaps]
+                raise GenerationRefused(
+                    "%d snapshots exist for run_id %r: %r -- "
+                    "pass --snapshot-id to select one explicitly" % (len(snaps), run_id, ids)
+                )
+        snapshot_id = resolved_snapshot_id
 
         # Per style-table checksum + reconciliation + source row_count (PATCH 2)
         style_tables = [m["access_table"] for m in MANIFEST.values()]
@@ -1052,24 +1089,23 @@ def emit_030(class_reads, report):
         "END $vp$;"
     )
 
-    # Extra-row guard (post-write, in-tx): for each class the stage covers, the
-    # count of tcc.brk_style_native_overrides rows for that class must EQUAL the
-    # staged keyset count -- no target row for a staged class may be absent from
-    # the stage (anti-join target LEFT JOIN stage WHERE stage IS NULL -> 0).
-    # Scoped to classes this stage actually carries; classes not in the stage are ignored.
+    # Extra-row guard (post-write, in-tx): for the FULL class domain {ICCB, MCCB, PCB},
+    # every target row in tcc.brk_style_native_overrides must appear in stage_030_d5.
+    # No class-presence filter -- a zero-staged class whose prior apply rows survive
+    # must be detected (every such target row has no matching stage row -> v_extra > 0).
+    # Spec: "target-minus-stage empty per class" across the full domain.
     parts.append(
         "DO $xr$ DECLARE v_extra integer;\n"
         "BEGIN\n"
-        "  -- Extra-row guard: target must not contain (breaker_class, source_id) rows\n"
-        "  -- that are absent from stage_030_d5 for any class the stage covers.\n"
+        "  -- Extra-row guard: FULL domain {ICCB, MCCB, PCB} -- no class-presence filter.\n"
+        "  -- A zero-staged class whose prior-apply rows survived would have every\n"
+        "  -- target row unmatched; this catches it where the old filtered form did not.\n"
         "  SELECT count(*) INTO v_extra\n"
         "    FROM tcc.brk_style_native_overrides t\n"
-        "    -- Restrict to classes the stage carries (avoid flagging unrelated classes)\n"
-        "    WHERE t.breaker_class IN (SELECT DISTINCT breaker_class FROM stage_030_d5)\n"
-        "      AND NOT EXISTS (\n"
-        "        SELECT 1 FROM stage_030_d5 st\n"
-        "        WHERE st.breaker_class = t.breaker_class AND st.source_id = t.source_id\n"
-        "      );\n"
+        "    WHERE NOT EXISTS (\n"
+        "      SELECT 1 FROM stage_030_d5 s\n"
+        "      WHERE s.breaker_class = t.breaker_class AND s.source_id = t.source_id\n"
+        "    );\n"
         "  IF v_extra > 0 THEN\n"
         "    -- single % below is a literal PL/pgSQL placeholder -- NOT a Python %-format target\n"
         "    RAISE EXCEPTION '030 extra-row guard: % stale (breaker_class, source_id) row(s) in target outside the staged keyset -- polluted prior apply detected', v_extra;\n"
@@ -1090,7 +1126,7 @@ import json as _json_io
 import pathlib as _pathlib
 
 
-def generate(conn, requested_run_id, out_dir, generated_at=None):
+def generate(conn, requested_run_id, out_dir, generated_at=None, snapshot_id=None):
     """Full orchestrator for the D4/D5 governed generation.
 
     Steps:
@@ -1098,7 +1134,7 @@ def generate(conn, requested_run_id, out_dir, generated_at=None):
       2. run_id = select_run_id(conn, ...)      -- Gate 2
       3. assert_style_evidence(conn, run_id)   -- Gates 3-6
       4. reads = {cls: read_class(conn, cls)}  -- read all 3 classes
-      5. report = build_report(conn, run_id, generated_at)
+      5. report = build_report(conn, run_id, generated_at, snapshot_id)
       6. Merge per-class counts into report["classes"]
       7. Write 029_d4_data.sql, 030_d5_data.sql, generation_report.json
       8. Return summary dict
@@ -1108,6 +1144,10 @@ def generate(conn, requested_run_id, out_dir, generated_at=None):
     (build_report queries by run_id -- no separate latest-extraction call).
 
     generated_at: if None, stamped internally as UTC ISO string.
+
+    snapshot_id: passed through to build_report for fail-closed snapshot selection
+    (P3).  If None and there are multiple snapshots for the run_id, GenerationRefused
+    is raised -- pass --snapshot-id on the CLI to resolve.
 
     Returns:
         {
@@ -1136,7 +1176,7 @@ def generate(conn, requested_run_id, out_dir, generated_at=None):
     reads = {cls: read_class(conn, cls) for cls in MANIFEST}
 
     # Build report (provenance comes from the SAME run_id -- Task-2 Minor 1 hardening)
-    report = build_report(conn, run_id, generated_at=generated_at)
+    report = build_report(conn, run_id, generated_at=generated_at, snapshot_id=snapshot_id)
 
     # Merge per-class counts into report["classes"] (Task-2 Minor 2 closure)
     for cls, r in reads.items():

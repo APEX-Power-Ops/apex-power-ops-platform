@@ -523,6 +523,38 @@ def run_all(
     }
 
 
+def _default_out_dir() -> str:
+    """Return the canonical absolute out-dir for generate-d4d5, cwd-independent.
+
+    Walks up from this file (__file__ = .../access_harness/cli.py) to the repo
+    root (the ancestor that contains an 'infra' directory), then appends:
+      infra/database/sandbox/breaker/d4d5-governed-generation
+
+    This guarantees the default is always the repo-level canonical location
+    regardless of which directory the CLI is invoked from.
+    """
+    here = Path(__file__).resolve()
+    # Walk up until we find the directory that directly contains 'infra'.
+    candidate = here.parent
+    for _ in range(20):  # safety limit: never traverse more than 20 levels
+        if (candidate / "infra").is_dir():
+            return str(
+                candidate / "infra" / "database" / "sandbox"
+                / "breaker" / "d4d5-governed-generation"
+            )
+        parent = candidate.parent
+        if parent == candidate:
+            break  # reached filesystem root without finding infra/
+        candidate = parent
+    # Fallback: resolve relative to this file's grandparent (access-harness root)
+    # so the default is always absolute even if the repo layout is unexpected.
+    return str(
+        here.parent.parent.parent.parent
+        / "infra" / "database" / "sandbox"
+        / "breaker" / "d4d5-governed-generation"
+    )
+
+
 def cmd_generate_d4d5(args) -> int:
     """Subcommand: generate-d4d5 -- emit governed D4/D5 data SQL files.
 
@@ -546,11 +578,11 @@ def cmd_generate_d4d5(args) -> int:
         # but fence here too so the CLI path is symmetric with the other governed commands.
         config.assert_current_database(pg, config.GOVERNED_DB)
 
-        out_dir = getattr(args, "out_dir", None) or \
-            r"infra/database/sandbox/breaker/d4d5-governed-generation"
+        out_dir = getattr(args, "out_dir", None) or _default_out_dir()
         run_id = getattr(args, "run_id", None) or None
+        snapshot_id = getattr(args, "snapshot_id", None) or None
 
-        result = gen.generate(pg, run_id, out_dir)
+        result = gen.generate(pg, run_id, out_dir, snapshot_id=snapshot_id)
     finally:
         pg.close()
 
@@ -645,8 +677,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     gd.add_argument(
         "--out-dir",
-        default=r"infra/database/sandbox/breaker/d4d5-governed-generation",
-        help="output directory for generated SQL + report (default: infra/database/sandbox/breaker/d4d5-governed-generation)",
+        default=_default_out_dir(),
+        help="output directory for generated SQL + report "
+             "(default: <repo-root>/infra/database/sandbox/breaker/d4d5-governed-generation, "
+             "absolute and cwd-independent)",
+    )
+    gd.add_argument(
+        "--snapshot-id",
+        default=None,
+        help="explicit tcc_snapshot snapshot_id to use for provenance (fail-closed: "
+             "required when the run_id has more than one snapshot; auto-selected when "
+             "exactly one exists)",
     )
     gd.set_defaults(func=cmd_generate_d4d5)
 
