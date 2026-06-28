@@ -1,0 +1,32 @@
+{
+  "pdf": "transformer-mixed-coexistence-fixture",
+  "apparatus": [
+    {
+      "raw": "MSB-1 800AF/800AT LSIG",
+      "tag": "MSB-1",
+      "sheet": "E1",
+      "page": 1,
+      "bbox": [0, 0, 1, 1],
+      "evidence": "one-line",
+      "busVoltageV": 480
+    },
+    {
+      "raw": "T-1 1500KVA 480V DRY-TYPE XFMR",
+      "tag": "T-1",
+      "sheet": "E1",
+      "page": 1,
+      "bbox": [0, 0, 1, 1],
+      "evidence": "one-line",
+      "busVoltageV": 480
+    },
+    {
+      "raw": "T-2 2500KVA PAD-MOUNT OIL XFMR",
+      "tag": "T-2",
+      "sheet": "E1",
+      "page": 1,
+      "bbox": [0, 0, 1, 1],
+      "evidence": "one-line",
+      "busVoltageV": 4160
+    }
+  ]
+}
