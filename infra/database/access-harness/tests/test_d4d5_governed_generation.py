@@ -2827,3 +2827,93 @@ def test_build_report_snapshot_id_not_belonging_to_run_raises(pg):
     # Attempt to use snapshot belonging to run_id_a when building report for run_id_b
     with pytest.raises(gen.GenerationRefused, match="snapshot"):
         gen.build_report(pg, run_id_b, snapshot_id="snap-p3-belongs-to-a")
+
+
+# ===========================================================================
+# Task 9 -- byte-reproducibility: drop wall-clock generated_at
+# ===========================================================================
+
+@pytest.mark.live
+def test_generate_is_byte_deterministic(governed_conn, tmp_path):
+    """Task 9 RED-then-GREEN: two back-to-back generate() calls with generated_at=None
+    must produce byte-identical 029, 030, and report files.
+
+    Before the fix the wall-clock stamp makes every run differ; after the fix
+    generated_at is omitted and all three files are byte-reproducible.
+    """
+    import pathlib
+
+    result_a = gen.generate(governed_conn, None, str(tmp_path / "a"))
+    result_b = gen.generate(governed_conn, None, str(tmp_path / "b"))
+
+    for fname in ("029_d4_data.sql", "030_d5_data.sql", "generation_report.json"):
+        bytes_a = pathlib.Path(result_a["out_dir"], fname).read_bytes()
+        bytes_b = pathlib.Path(result_b["out_dir"], fname).read_bytes()
+        assert bytes_a == bytes_b, (
+            "Task 9 byte-determinism FAILED for %s: "
+            "two generate(None) calls produced different bytes (wall-clock generated_at still present?)"
+            % fname
+        )
+
+
+@pytest.mark.live
+def test_generate_omits_generated_at_when_none(governed_conn, tmp_path):
+    """Task 9: generate() with generated_at=None must omit the field entirely.
+
+    Neither 029 nor 030 SQL header must contain '-- generated_at:',
+    and the report provenance dict must have no 'generated_at' key.
+    """
+    import pathlib
+    import json
+
+    result = gen.generate(governed_conn, None, str(tmp_path / "omit"))
+
+    sql_029 = pathlib.Path(result["sql_029"]).read_text(encoding="utf-8")
+    sql_030 = pathlib.Path(result["sql_030"]).read_text(encoding="utf-8")
+    report = json.loads(pathlib.Path(result["report_json"]).read_text(encoding="utf-8"))
+
+    assert "-- generated_at:" not in sql_029, (
+        "Task 9: 029 SQL must NOT contain '-- generated_at:' when generated_at=None"
+    )
+    assert "-- generated_at:" not in sql_030, (
+        "Task 9: 030 SQL must NOT contain '-- generated_at:' when generated_at=None"
+    )
+    assert "generated_at" not in report.get("provenance", {}), (
+        "Task 9: report provenance must NOT contain 'generated_at' key when generated_at=None; "
+        "got provenance keys: %r" % list(report.get("provenance", {}).keys())
+    )
+
+
+@pytest.mark.live
+def test_generate_stamps_explicit_generated_at(governed_conn, tmp_path):
+    """Task 9: explicit generated_at flows through to 029/030 header and report provenance.
+
+    Proves the explicit-stamp path still works after dropping the wall-clock default.
+    """
+    import pathlib
+    import json
+
+    explicit_ts = "2026-06-28T00:00:00Z"
+    result = gen.generate(governed_conn, None, str(tmp_path / "stamp"), generated_at=explicit_ts)
+
+    sql_029 = pathlib.Path(result["sql_029"]).read_text(encoding="utf-8")
+    sql_030 = pathlib.Path(result["sql_030"]).read_text(encoding="utf-8")
+    report = json.loads(pathlib.Path(result["report_json"]).read_text(encoding="utf-8"))
+
+    assert "-- generated_at:" in sql_029, (
+        "Task 9: 029 SQL must contain '-- generated_at:' when explicit ts passed"
+    )
+    assert explicit_ts in sql_029, (
+        "Task 9: 029 SQL must contain the exact explicit ts %r" % explicit_ts
+    )
+    assert "-- generated_at:" in sql_030, (
+        "Task 9: 030 SQL must contain '-- generated_at:' when explicit ts passed"
+    )
+    assert explicit_ts in sql_030, (
+        "Task 9: 030 SQL must contain the exact explicit ts %r" % explicit_ts
+    )
+    prov = report.get("provenance", {})
+    assert prov.get("generated_at") == explicit_ts, (
+        "Task 9: report provenance['generated_at'] must equal %r, got %r"
+        % (explicit_ts, prov.get("generated_at"))
+    )
