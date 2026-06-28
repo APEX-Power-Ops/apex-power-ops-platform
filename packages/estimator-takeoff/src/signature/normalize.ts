@@ -1,5 +1,5 @@
 import type { ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, Mounting, MountingBasis, MvType, TripFunction, VoltageBasis } from './types'
+import type { BreakerSignature, Mounting, MountingBasis, MvType, TripFunction, VoltageBasis } from './types'
 import type { OperatorQuestion, OperatorQuestionCode } from '../buckets/types'
 import { classifyVoltage } from './voltage'
 
@@ -66,7 +66,7 @@ export type AssessmentCode =
   | 'unrecognized_apparatus_row'  // not breaker-shaped            -> disposition 'question'
 
 export interface ApparatusAssessment {
-  signature: ApparatusSignature | null
+  signature: BreakerSignature | null
   questions: OperatorQuestion[]
   isBreakerShaped: boolean
   assessmentCode: AssessmentCode
@@ -121,7 +121,7 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
 
   const basis: VoltageBasis = voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none')
 
-  const signature: ApparatusSignature = {
+  const signature: BreakerSignature = {
     kind: 'breaker', voltageClass, voltageV: x.busVoltageV, voltageBasis: basis, frameA, tripA, functions,
     mounting, mountingBasis, mvType, tag: x.tag,
     source: { sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block },
@@ -140,6 +140,6 @@ export function assessResolvedApparatus(x: ExtractedApparatus, voltageBasis: Vol
   return assessCore(x, voltageBasis)
 }
 
-export function normalizeApparatus(x: ExtractedApparatus): ApparatusSignature | null {
+export function normalizeApparatus(x: ExtractedApparatus): BreakerSignature | null {
   return assessApparatus(x).signature
 }

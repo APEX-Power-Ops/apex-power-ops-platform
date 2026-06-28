@@ -1,13 +1,13 @@
-import type { ApparatusSignature } from '../signature/types'
+import type { BreakerSignature } from '../signature/types'
 
 export interface BreakerRule {
-  when: (s: ApparatusSignature) => boolean
+  when: (s: BreakerSignature) => boolean
   ref: string                                    // MUST exist in estimator-core EQUIPMENT_MODELS_SEED
 }
 
-const hasG = (s: ApparatusSignature) => s.functions.includes('G')
-const hasFns = (s: ApparatusSignature) => s.functions.length > 0   // a real trip descriptor was parsed (no assumed LS/LSI)
-const hasFrame = (s: ApparatusSignature) => s.frameA !== undefined  // LV pricing requires a parsed frame rating (Plan 2a; closes the unrated-MCB leak)
+const hasG = (s: BreakerSignature) => s.functions.includes('G')
+const hasFns = (s: BreakerSignature) => s.functions.length > 0   // a real trip descriptor was parsed (no assumed LS/LSI)
+const hasFrame = (s: BreakerSignature) => s.frameA !== undefined  // LV pricing requires a parsed frame rating (Plan 2a; closes the unrated-MCB leak)
 
 // Refs are verbatim from the canonical catalog. LS/LSI power-breaker rules require a parsed descriptor so
 // an unknown-function breaker stays unmatched rather than being priced as LS/LSI. Every LV rule additionally

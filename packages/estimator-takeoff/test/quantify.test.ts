@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { quantify } from '../src/quantify/quantify'
-import type { ApparatusSignature } from '../src/signature/types'
+import type { ApparatusSignature, BreakerSignature } from '../src/signature/types'
 
 const sig = (tag: string, evidence: string, sheet = 'E01-11'): ApparatusSignature => ({
   kind: 'breaker', voltageClass: 'LV', voltageBasis: 'detected', functions: ['L', 'S', 'I', 'G'], mounting: 'draw_out', mountingBasis: 'text',
   tag, source: { sheet, page: 1, bbox: [0, 0, 1, 1], evidence },
 })
 
-const mk = (o: { tag?: string; evidence: string; inputIndex: number; mounting?: ApparatusSignature['mounting']; sheet?: string }): ApparatusSignature => ({
+const mk = (o: { tag?: string; evidence: string; inputIndex: number; mounting?: BreakerSignature['mounting']; sheet?: string }): ApparatusSignature => ({
   kind: 'breaker', voltageClass: 'LV', voltageBasis: 'detected', functions: ['L', 'S', 'I', 'G'],
   mounting: o.mounting ?? 'draw_out', mountingBasis: 'text', tag: o.tag, inputIndex: o.inputIndex,
   source: { sheet: o.sheet ?? 'E01-11', page: 1, bbox: [0, 0, 1, 1], evidence: o.evidence },

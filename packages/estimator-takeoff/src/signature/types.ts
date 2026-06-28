@@ -13,18 +13,33 @@ export type MountingBasis = 'hint' | 'text' | 'estimating_baseline' | 'none'
 
 export type VoltageBasis = 'detected' | 'asserted' | 'none'
 
-export interface ApparatusSignature {
-  kind: 'breaker'
+export type Coolant = 'dry' | 'liquid' | 'unknown'
+
+export interface BaseSignature {
   voltageClass: VoltageClass
   voltageV?: number
-  voltageBasis: VoltageBasis   // always present, parallel to mountingBasis
-  frameA?: number
-  tripA?: number
-  functions: TripFunction[]
-  mounting: Mounting
-  mountingBasis: MountingBasis
-  mvType?: MvType
+  voltageBasis: VoltageBasis
   tag?: string
   inputIndex?: number   // artifact-row position; stamped by runTakeoff. Optional: assessCore builds unstamped.
   source: { sheet: string; page: number; bbox: [number, number, number, number]; evidence: string; block?: string }
 }
+
+export interface BreakerSignature extends BaseSignature {
+  kind: 'breaker'
+  frameA?: number
+  tripA?: number
+  functions: TripFunction[]
+  mounting: Mounting          // breaker-only: how the unit is constructed/installed
+  mountingBasis: MountingBasis
+  mvType?: MvType
+}
+
+export interface TransformerSignature extends BaseSignature {
+  kind: 'transformer'
+  kvaRating?: number
+  coolant: Coolant
+  padMount?: boolean
+  ltc?: boolean
+}
+
+export type ApparatusSignature = BreakerSignature | TransformerSignature

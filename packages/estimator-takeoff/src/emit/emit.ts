@@ -1,6 +1,6 @@
 import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from '@apex/estimator-core'
 import type { ExtractionArtifact, ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature } from '../signature/types'
+import type { ApparatusSignature, BreakerSignature } from '../signature/types'
 import { assessResolvedApparatus } from '../signature/normalize'
 import type { AssessmentCode } from '../signature/normalize'
 import { applyVoltageAssertions } from '../signature/voltage-assertions'
@@ -102,12 +102,23 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
   const matchedLines: MatchedLine[] = []
   const unmatchedCandidates: UnmatchedCandidate[] = []
   for (const line of lines) {
-    const ref = matchBreaker(line.signature)
+    const sig = line.signature
+    if (sig.kind !== 'breaker') {
+      // Non-breaker kinds (e.g. transformer) are not matched to a catalog line in V1.
+      // They fall through as unmatched; Task 7 will add family dispatch here.
+      const reason = `no catalog dispatch for kind=${sig.kind}`
+      unmatchedCandidates.push({ reason, line })
+      for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'no_catalog_rule', reason, undefined, line.lineKey)
+      continue
+    }
+    // kind === 'breaker': TypeScript now knows sig is BreakerSignature
+    const bsig: BreakerSignature = sig
+    const ref = matchBreaker(bsig)
     if (ref) {
-      matchedLines.push({ ref, qty: line.qty, block: line.signature.source.block ?? line.signature.source.sheet, mountingBasis: line.signature.mountingBasis, voltageBasis: line.signature.voltageBasis, line })
+      matchedLines.push({ ref, qty: line.qty, block: bsig.source.block ?? bsig.source.sheet, mountingBasis: bsig.mountingBasis, voltageBasis: bsig.voltageBasis, line })
       for (const i of line.memberIndices) stamp(dispositions, i, 'matched', 'catalog_rule', `matched ${ref}`, ref, line.lineKey)
     } else {
-      const reason = `no catalog rule for ${line.signature.mounting}/${line.signature.functions.join('') || '-'}`
+      const reason = `no catalog rule for ${bsig.mounting}/${bsig.functions.join('') || '-'}`
       unmatchedCandidates.push({ reason, line })
       for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'no_catalog_rule', reason, undefined, line.lineKey)
     }
