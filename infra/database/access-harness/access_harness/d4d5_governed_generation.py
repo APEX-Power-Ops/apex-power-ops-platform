@@ -708,7 +708,6 @@ def emit_029(class_reads, report):
     Returns the SQL string.
     """
     parts = [_provenance_header(report)]
-    parts.append("\\set ON_ERROR_STOP on")
     parts.append("SET client_encoding='UTF8';")
     parts.append("SET standard_conforming_strings=on;")
     parts.append("BEGIN;")
@@ -870,7 +869,6 @@ def emit_030(class_reads, report):
     Returns the SQL string.
     """
     parts = [_provenance_header(report)]
-    parts.append("\\set ON_ERROR_STOP on")
     parts.append("SET client_encoding='UTF8';")
     parts.append("SET standard_conforming_strings=on;")
     parts.append("BEGIN;")
