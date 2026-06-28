@@ -54,32 +54,65 @@ BEGIN;
 -- Fail-closed precondition guard: refuse to flip the hazard labels unless the
 -- D4 (029) and D5 (030) data they now assert is actually present.
 -- ---------------------------------------------------------------------------
+-- The 031 relabel makes exactly two PER-FRAME claims: (d4) the helper columns are
+-- present for this ICCB/MCCB frame's style, and (d5) the inst-override block is carried
+-- for this frame's style. The guard enforces each claim at the frame grain it asserts --
+-- a class-level / table-level >0 proxy is neither necessary (a class may have 0 frames)
+-- nor sufficient (a partial/asymmetric carry passes a >0 check). The per-frame anti-joins
+-- below are the exact honesty invariants, so they also reject a skipped per-class 029
+-- recarry and a partial 030 side table, and they do NOT false-positive on style rows that
+-- no frame references (IRP guard-fail-closed + Codex D5 P2, 2026-06-28).
 DO $$
-DECLARE v_iccb bigint; v_mccb bigint; v_d5 bigint;
+DECLARE v_d4_uncov bigint; v_d5_uncov bigint;
 BEGIN
   IF to_regclass('tcc.brk_style_native_overrides') IS NULL THEN
     RAISE EXCEPTION '031 precondition: tcc.brk_style_native_overrides missing -- apply 030 DDL before 031';
   END IF;
 
-  SELECT count(*) INTO v_d5 FROM tcc.brk_style_native_overrides;
-  IF v_d5 = 0 THEN
-    RAISE EXCEPTION '031 precondition: tcc.brk_style_native_overrides is empty -- apply 030 data before 031 (refusing to relabel D5 carried_reference_only)';
+  -- D4: no ICCB/MCCB frame may have an uncarried backing style (tmt_breaker_type NULL).
+  -- tmt_breaker_type (smallint enum 0/1) is the carry sentinel; the text helper cols can
+  -- be empty-string non-null, so they are NOT used.
+  SELECT count(*) INTO v_d4_uncov FROM (
+    SELECT f.id
+    FROM tcc.tmt_frames f
+    JOIN tcc.brk_mccb_styles s ON UPPER(f.breaker_class::text) = 'MCCB' AND s.id = f.breaker_style_id
+    WHERE s.tmt_breaker_type IS NULL
+    UNION ALL
+    SELECT f.id
+    FROM tcc.tmt_frames f
+    JOIN tcc.brk_iccb_styles s ON UPPER(f.breaker_class::text) = 'ICCB' AND s.id = f.breaker_style_id
+    WHERE s.tmt_breaker_type IS NULL
+  ) x;
+  IF v_d4_uncov > 0 THEN
+    RAISE EXCEPTION '031 precondition: % ICCB/MCCB frame(s) have an uncarried backing style (tmt_breaker_type NULL) -- apply 029 data before 031 (refusing to drop the d4-absent hazard flag)', v_d4_uncov;
   END IF;
 
-  -- tmt_breaker_type is a smallint enum (0/1); non-null is a clean "029 data ran"
-  -- sentinel (the text helper cols can be empty-string non-null, so they are NOT used).
-  -- Gate PER CLASS, not summed: the d4-absent flag is carried by ICCB and MCCB frames,
-  -- and the two helper tables are recarried independently (029 data = one UPDATE per
-  -- class). A summed >0 check would let an ICCB-only carry mask a skipped MCCB recarry
-  -- while 031 still strips the flag from every MCCB frame -- so require BOTH classes
-  -- witnessed before dropping the flag (IRP guard-fail-closed, 2026-06-28).
-  SELECT count(*) INTO v_iccb FROM tcc.brk_iccb_styles WHERE tmt_breaker_type IS NOT NULL;
-  SELECT count(*) INTO v_mccb FROM tcc.brk_mccb_styles WHERE tmt_breaker_type IS NOT NULL;
-  IF v_iccb = 0 OR v_mccb = 0 THEN
-    RAISE EXCEPTION '031 precondition: D4 tmt helper columns unpopulated for a class (iccb_nn=%, mccb_nn=%) -- apply 029 data before 031 (refusing to drop the d4-absent hazard flag)', v_iccb, v_mccb;
+  -- D5: no frame may have a backing style without a brk_style_native_overrides row.
+  -- The d5 flag is relabeled "carried_reference_only" UNCONDITIONALLY for every frame, so
+  -- a partial side table would mislabel uncovered frames. Orphan frames (no style parent)
+  -- are excluded -- they cannot have a D5 row and already carry missing_style_parent.
+  SELECT count(*) INTO v_d5_uncov FROM (
+    SELECT UPPER(f.breaker_class::text) AS bc, s.source_id
+    FROM tcc.tmt_frames f
+    JOIN tcc.brk_mccb_styles s ON UPPER(f.breaker_class::text) = 'MCCB' AND s.id = f.breaker_style_id
+    UNION ALL
+    SELECT UPPER(f.breaker_class::text), s.source_id
+    FROM tcc.tmt_frames f
+    JOIN tcc.brk_iccb_styles s ON UPPER(f.breaker_class::text) = 'ICCB' AND s.id = f.breaker_style_id
+    UNION ALL
+    SELECT UPPER(f.breaker_class::text), s.source_id
+    FROM tcc.tmt_frames f
+    JOIN tcc.brk_pcb_styles s ON UPPER(f.breaker_class::text) = 'PCB' AND s.id = f.breaker_style_id
+  ) fs
+  WHERE NOT EXISTS (
+    SELECT 1 FROM tcc.brk_style_native_overrides n
+    WHERE n.breaker_class = fs.bc AND n.source_id = fs.source_id
+  );
+  IF v_d5_uncov > 0 THEN
+    RAISE EXCEPTION '031 precondition: % frame-backing style(s) lack a tcc.brk_style_native_overrides row -- apply 030 data before 031 (refusing to relabel d5 carried_reference_only)', v_d5_uncov;
   END IF;
 
-  RAISE NOTICE '031 precondition OK: D4 ICCB=%, MCCB=%, D5 side rows=%', v_iccb, v_mccb, v_d5;
+  RAISE NOTICE '031 precondition OK: 0 D4-uncarried frames, 0 D5-uncovered frames (full per-frame coverage)';
 END $$;
 
 -- ---------------------------------------------------------------------------
