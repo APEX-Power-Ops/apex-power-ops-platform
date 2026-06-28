@@ -523,6 +523,47 @@ def run_all(
     }
 
 
+def cmd_generate_d4d5(args) -> int:
+    """Subcommand: generate-d4d5 -- emit governed D4/D5 data SQL files.
+
+    Connects to the governed DB (requires --governed), runs the six fail-closed
+    gates, reads all three breaker classes from access_raw, and writes:
+      <out-dir>/029_d4_data.sql
+      <out-dir>/030_d5_data.sql
+      <out-dir>/generation_report.json
+
+    The governed fence is load-bearing: this command always requires --governed
+    and will refuse to run against any other database.
+    """
+    from access_harness import d4d5_governed_generation as gen
+
+    # Always operate on the governed DB
+    dsn = config.governed_pg_dsn()
+    pg = _connect_pg(dsn, autocommit=True)
+    try:
+        # Explicit fence -- generate() also gates via assert_governed_source,
+        # but fence here too so the CLI path is symmetric with the other governed commands.
+        config.assert_current_database(pg, config.GOVERNED_DB)
+
+        out_dir = getattr(args, "out_dir", None) or \
+            r"infra/database/sandbox/breaker/d4d5-governed-generation"
+        run_id = getattr(args, "run_id", None) or None
+
+        result = gen.generate(pg, run_id, out_dir)
+    finally:
+        pg.close()
+
+    print(f"run_id:      {result['run_id']}")
+    print(f"out_dir:     {result['out_dir']}")
+    print(f"029_d4_sql:  {result['sql_029']}")
+    print(f"030_d5_sql:  {result['sql_030']}")
+    print(f"report_json: {result['report_json']}")
+    for cls, counts in result["classes"].items():
+        print(f"  {cls}: d4_update_count={counts.get('d4_update_count', 0)}  "
+              f"d5_insert_count={counts.get('d5_insert_count', 0)}")
+    return 0
+
+
 def cmd_run_all(args) -> int:
     accdb = _accdb_path(args)
     dest = Path(args.frozen_dir) if args.frozen_dir else frozen_dir()
@@ -591,6 +632,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="create tcc_fidelity_governed (if absent) + apply harness DDL",
     ).set_defaults(func=cmd_provision_governed)
     sub.add_parser("run-all", help="the full breaker/TMT slice pipeline").set_defaults(func=cmd_run_all)
+
+    gd = sub.add_parser(
+        "generate-d4d5",
+        help="emit governed D4/D5 data SQL (029_d4_data.sql + 030_d5_data.sql)",
+    )
+    gd.add_argument(
+        "--run-id",
+        default=None,
+        help="specific run_id to generate from (default: sole run in governed DB)",
+    )
+    gd.add_argument(
+        "--out-dir",
+        default=r"infra/database/sandbox/breaker/d4d5-governed-generation",
+        help="output directory for generated SQL + report (default: infra/database/sandbox/breaker/d4d5-governed-generation)",
+    )
+    gd.set_defaults(func=cmd_generate_d4d5)
 
     return p
 
