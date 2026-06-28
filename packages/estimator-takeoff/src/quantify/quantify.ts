@@ -1,14 +1,18 @@
-import type { ApparatusSignature } from '../signature/types'
+import type { ApparatusSignature, BreakerSignature } from '../signature/types'
 import type { QuantifiedLine } from './types'
 
 export const isAuthoritativeEvidence = (e: string): boolean => e === 'one-line' || e.endsWith('-schedule')
 const AUTHORITATIVE = isAuthoritativeEvidence
 
 function specKey(s: ApparatusSignature): string {
-  return [
-    s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.mounting, s.mvType ?? '-', s.functions.join(''),
-    s.frameA ?? '-', s.tripA ?? '-', s.source.block ?? '-',   // voltageV + voltageBasis -> per-tag voltage/provenance preserved
-  ].join('|')
+  if (s.kind === 'breaker') {
+    return [
+      s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.mounting, s.mvType ?? '-', s.functions.join(''),
+      s.frameA ?? '-', s.tripA ?? '-', s.source.block ?? '-',   // voltageV + voltageBasis -> per-tag voltage/provenance preserved
+    ].join('|')
+  }
+  // transformer (and any future kinds): minimal placeholder key — no priced line is emitted for non-breakers
+  return [s.kind, s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.source.block ?? '-'].join('|')
 }
 
 // Stable device identity used for BOTH grouping AND source-retrieval (identical formula in both places).
@@ -20,7 +24,11 @@ function deviceId(s: ApparatusSignature): string {
 // over a detailed schedule row for the same device.
 function pickAuthoritative(occ: ApparatusSignature[]): ApparatusSignature | undefined {
   const auths = occ.filter((o) => AUTHORITATIVE(o.source.evidence))
-  return auths.find((o) => o.mounting !== 'unknown') ?? auths[0]
+  if (auths.length === 0) return undefined
+  // For breakers: prefer known mounting. For other kinds: first authoritative is fine.
+  const richBreaker = auths.find((o) => o.kind === 'breaker' && o.mounting !== 'unknown')
+  if (richBreaker) return richBreaker
+  return auths[0]
 }
 
 export function quantify(sigs: ApparatusSignature[]): {
@@ -51,8 +59,10 @@ export function quantify(sigs: ApparatusSignature[]): {
     const k = specKey(s)
     ;(bySpec.get(k) ?? bySpec.set(k, []).get(k)!).push(s)
   }
+  // QuantifiedLine.signature is BreakerSignature: today assessCore only builds breaker sigs; non-breaker
+  // kinds never reach here (excluded by NON_BREAKER check). Widened to ApparatusSignature in a later task.
   const lines: QuantifiedLine[] = [...bySpec.entries()].map(([k, group]) => ({
-    signature: group[0]!,
+    signature: group[0]! as BreakerSignature,
     qty: group.length,
     sources: group.flatMap((s) => sourcesByDevice.get(deviceId(s)) ?? [s.source]),
     memberTags: group.map((s) => s.tag).filter((t): t is string => !!t),

@@ -1,6 +1,6 @@
-import type { ApparatusSignature } from '../signature/types'
+import type { ApparatusSignature, BreakerSignature } from '../signature/types'
 export interface QuantifiedLine {
-  signature: ApparatusSignature                 // representative (richest authoritative occurrence)
+  signature: BreakerSignature                   // representative (richest authoritative occurrence); widened to ApparatusSignature when non-breaker lines are added
   qty: number                                   // distinct devices counted
   sources: ApparatusSignature['source'][]       // every contributing occurrence (incl. power-plan locations)
   memberTags: string[]                          // every device tag aggregated into this line (for location association)
