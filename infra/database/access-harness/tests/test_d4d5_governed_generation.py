@@ -796,6 +796,13 @@ def test_governed_vs_direct_parity(governed_conn):
             d5_count = 0
             sample_block = None
 
+            # Sort by ID (ascending) so sample selection matches the governed
+            # read_class ORDER BY "ID" ordering (Patch A determinism).
+            try:
+                rows.sort(key=lambda r: int(r["ID"]))
+            except (TypeError, ValueError, KeyError):
+                pass  # defensive: if ID is not castable, keep original order
+
             for row in rows:
                 # D5 blocks -- use MANIFEST exact col lists (not startswith).
                 blocks = {}
@@ -1140,6 +1147,25 @@ class TestEmit030Shape:
     def test_on_commit_drop(self):
         assert "ON COMMIT DROP" in self.sql
 
+    def test_extra_row_guard_present(self):
+        """Task 4 Patch B: extra-row guard DO block must be present in emit_030."""
+        assert "extra-row guard" in self.sql.lower() or "v_extra" in self.sql, \
+            "emit_030 must contain the extra-row guard ($xr$ block with v_extra)"
+
+    def test_extra_row_guard_uses_not_exists_antijoin(self):
+        """Task 4 Patch B: extra-row guard must use NOT EXISTS anti-join."""
+        assert "NOT EXISTS" in self.sql, \
+            "emit_030 extra-row guard must use NOT EXISTS anti-join against stage_030_d5"
+
+    def test_single_percent_comment_present(self):
+        """Task 4 Patch C: the post-write RAISE must have a SQL comment explaining the single-%.
+
+        The comment clarifies that % is a PL/pgSQL placeholder and must NOT be
+        changed to %% (which would break it).  It is emitted as a SQL -- comment.
+        """
+        assert "NOT a Python %-format target" in self.sql, \
+            "emit_030 must emit a SQL comment at the single-% RAISE explaining it is a PL/pgSQL placeholder"
+
 
 # ===========================================================================
 # Task 3 -- LIVE apply test on tcc_fidelity_test
@@ -1466,5 +1492,215 @@ def test_emit_029_030_apply_and_tamper_guard(tcc_test_conn):
     )
 
     # Cleanup: drop tcc schema so other tests in this module are not affected
+    with conn.cursor() as cur:
+        cur.execute("DROP SCHEMA IF EXISTS tcc CASCADE")
+
+
+# ===========================================================================
+# Task 4 Patch A -- LIVE determinism test: read_class ORDER BY "ID"
+# Proves source_id sequences are identical and ascending across two calls.
+# ===========================================================================
+
+@pytest.mark.live
+def test_read_class_deterministic_order_live(governed_conn):
+    """read_class must return d4_rows and d5_rows in ascending ID order.
+
+    Calls read_class twice for each class and asserts:
+      1. The source_id sequences are identical across both calls.
+      2. The sequence is non-decreasing (ascending by ID).
+    This proves the ORDER BY "ID" clause is present and stable.
+    """
+    for cls in ("ICCB", "MCCB", "PCB"):
+        r1 = gen.read_class(governed_conn, cls)
+        r2 = gen.read_class(governed_conn, cls)
+
+        ids_d5_r1 = [sid for sid, _ in r1["d5_rows"]]
+        ids_d5_r2 = [sid for sid, _ in r2["d5_rows"]]
+        assert ids_d5_r1 == ids_d5_r2, (
+            f"{cls}: d5_rows source_id sequence differs across two calls -- "
+            f"ORDER BY 'ID' missing or non-deterministic"
+        )
+        # Verify ascending order
+        assert ids_d5_r1 == sorted(ids_d5_r1), (
+            f"{cls}: d5_rows source_id sequence is not ascending -- "
+            f"ORDER BY \"ID\" not applied"
+        )
+
+        if gen.MANIFEST[cls]["has_d4"]:
+            ids_d4_r1 = [sid for sid, _ in r1["d4_rows"]]
+            ids_d4_r2 = [sid for sid, _ in r2["d4_rows"]]
+            assert ids_d4_r1 == ids_d4_r2, (
+                f"{cls}: d4_rows source_id sequence differs across two calls"
+            )
+            assert ids_d4_r1 == sorted(ids_d4_r1), (
+                f"{cls}: d4_rows source_id sequence is not ascending"
+            )
+
+
+# ===========================================================================
+# Task 4 Patch B -- LIVE extra-row guard test for emit_030
+# Proves that pre-existing rows in tcc.brk_style_native_overrides that are
+# NOT in the stage (a polluted prior apply) cause a RAISE and txn abort.
+# ===========================================================================
+
+@pytest.mark.live
+def test_emit_030_extra_row_guard_raises(tcc_test_conn):
+    """LIVE: extra-row guard in emit_030 must RAISE when target has a stale row.
+
+    Steps:
+      1. Create a minimal tcc schema in tcc_fidelity_test.
+      2. Seed source_id rows so coverage guard passes for staged rows.
+      3. Apply emit_030 (good) -- assert it COMMITs (clean apply).
+      4. Apply emit_030 again -- assert it COMMITs (idempotent double-apply).
+      5. POLLUTE: INSERT an extra (breaker_class, source_id) row into
+         tcc.brk_style_native_overrides that is NOT in the stage.
+      6. Apply emit_030 again -- assert the extra-row guard RAISEs and aborts.
+      7. Verify the stale row is still present (txn aborted, nothing changed).
+    """
+    import psycopg
+
+    conn = tcc_test_conn
+
+    # --- Setup: minimal tcc schema + seed rows ---
+    _create_minimal_tcc_schema(conn)
+    _seed_style_rows(conn, {"ICCB": [10, 20], "MCCB": [30], "PCB": [40, 50]})
+
+    # Build good class_reads: source_ids [10, 20] for ICCB, [30] MCCB, [40, 50] PCB
+    good_reads_030 = {
+        "ICCB": {
+            "d4_rows": [],
+            "d5_rows": [
+                (10, {"inst_override": {"InstOvrAmps": 100}, "ninst_override": None,
+                      "brk_times": None, "r_int": None, "r_iec": None}),
+                (20, {"inst_override": None, "ninst_override": None,
+                      "brk_times": {"BrkTimesMechOpening50": 20},
+                      "r_int": None, "r_iec": None}),
+            ],
+            "counts": {"d4_update_count": 0, "d5_insert_count": 2,
+                       "total_styles": 2, "real_override_count": 1,
+                       "rating_only_count": 0, "d4_nonnull_per_col": {},
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+        "MCCB": {
+            "d4_rows": [],
+            "d5_rows": [
+                (30, {"inst_override": None, "ninst_override": None,
+                      "brk_times": None, "r_int": {"r_int_inst_480": 65}, "r_iec": None}),
+            ],
+            "counts": {"d4_update_count": 0, "d5_insert_count": 1,
+                       "total_styles": 1, "real_override_count": 0,
+                       "rating_only_count": 1, "d4_nonnull_per_col": {},
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+        "PCB": {
+            "d4_rows": [],
+            "d5_rows": [
+                (40, {"inst_override": {"InstOvrAmps": 200}, "ninst_override": None,
+                      "brk_times": None, "r_int": None, "r_iec": None}),
+                (50, {"inst_override": None, "ninst_override": None,
+                      "brk_times": None, "r_int": {"r_int_inst_600": 85}, "r_iec": None}),
+            ],
+            "counts": {"d4_update_count": 0, "d5_insert_count": 2,
+                       "total_styles": 2, "real_override_count": 1,
+                       "rating_only_count": 1, "d4_nonnull_per_col": None,
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+    }
+
+    good_report_030 = {
+        "provenance": {
+            "run_id": "extra-row-guard-test-001",
+            "source_sha256": "deadbeef",
+            "frozen_copy_path": "/test/frozen.accdb",
+            "driver_name": "TestDriver",
+            "dbms_version": "0.0.0",
+            "read_only": True,
+            "snapshot_id": "snap-030-test-001",
+            "host": "testhost",
+            "db_name": "tcc_fidelity_test",
+            "role": "test",
+            "table_checksums": {},
+            "generator_version": "0.2.0",
+        },
+        "classes": {
+            "ICCB": good_reads_030["ICCB"]["counts"],
+            "MCCB": good_reads_030["MCCB"]["counts"],
+            "PCB": good_reads_030["PCB"]["counts"],
+        },
+    }
+
+    # --- Apply emit_030 (clean first apply) -- must COMMIT ---
+    sql_030_good = gen.emit_030(good_reads_030, good_report_030)
+    _exec_sql_script(conn, sql_030_good)
+
+    # Verify rows landed
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM tcc.brk_style_native_overrides"
+        )
+        (cnt,) = cur.fetchone()
+    assert cnt == 5, f"Expected 5 rows after first apply, got {cnt}"
+
+    # --- Apply emit_030 again (idempotent double-apply) -- must COMMIT ---
+    _exec_sql_script(conn, sql_030_good)
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM tcc.brk_style_native_overrides")
+        (cnt,) = cur.fetchone()
+    assert cnt == 5, f"Expected 5 rows after double-apply, got {cnt} (idempotency failed)"
+
+    # --- POLLUTE: add an extra ICCB row (source_id=99) not in the stage ---
+    # We also need a matching row in brk_iccb_styles for the check constraint to pass
+    with conn.cursor() as cur:
+        cur.execute("INSERT INTO tcc.brk_iccb_styles (source_id) VALUES (99)")
+        cur.execute(
+            "INSERT INTO tcc.brk_style_native_overrides "
+            "(breaker_class, source_id, inst_override) VALUES ('ICCB', 99, NULL)"
+        )
+
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM tcc.brk_style_native_overrides")
+        (cnt_after_pollute,) = cur.fetchone()
+    assert cnt_after_pollute == 6, (
+        f"Expected 6 rows after pollution insert, got {cnt_after_pollute}"
+    )
+
+    # --- Apply emit_030 with polluted target -- extra-row guard MUST RAISE ---
+    extra_row_raised = False
+    extra_row_exc = None
+    try:
+        _exec_sql_script(conn, sql_030_good)
+    except Exception as exc:  # noqa: BLE001
+        extra_row_raised = True
+        extra_row_exc = exc
+
+    # Rollback the aborted transaction so the connection is usable again
+    with conn.cursor() as cur:
+        cur.execute("ROLLBACK")
+
+    assert extra_row_raised, (
+        "emit_030 extra-row guard MUST raise when target has a stale (breaker_class, "
+        "source_id) row that is NOT in the stage -- guard is not enforcing"
+    )
+    if extra_row_raised:
+        err_str = str(extra_row_exc).lower()
+        assert (
+            "extra" in err_str
+            or "stale" in err_str
+            or "030" in err_str
+            or "outside" in err_str
+        ), f"Expected extra-row/030 guard error, got: {extra_row_exc!r}"
+
+    # Stale row must still be present (txn aborted -- nothing changed)
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM tcc.brk_style_native_overrides "
+            "WHERE breaker_class='ICCB' AND source_id=99"
+        )
+        (stale_cnt,) = cur.fetchone()
+    assert stale_cnt == 1, (
+        f"Stale ICCB source_id=99 row must still be present after aborted txn, got count={stale_cnt}"
+    )
+
+    # Cleanup
     with conn.cursor() as cur:
         cur.execute("DROP SCHEMA IF EXISTS tcc CASCADE")

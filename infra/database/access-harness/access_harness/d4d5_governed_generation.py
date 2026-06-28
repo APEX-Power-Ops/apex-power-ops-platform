@@ -394,7 +394,7 @@ def read_class(conn, cls):
     block_cols = m["d5_block_cols"]   # {block_name: [col, ...]} -- exact lists
 
     with conn.cursor() as cur:
-        cur.execute(f'SELECT * FROM access_raw."{atbl}"')
+        cur.execute(f'SELECT * FROM access_raw."{atbl}" ORDER BY "ID"')
         col_names = [d.name for d in cur.description]
         rows = [dict(zip(col_names, r)) for r in cur.fetchall()]
 
@@ -975,9 +975,35 @@ def emit_030(class_reads, report):
         "    JOIN tcc.brk_style_native_overrides t\n"
         "      ON t.breaker_class = st.breaker_class AND t.source_id = st.source_id;\n"
         "  IF v_written <> v_expected THEN\n"
+        "    -- single % below is a literal PL/pgSQL placeholder -- NOT a Python %-format target\n"
         "    RAISE EXCEPTION '030 post-write: only % of % rows present in target after INSERT', v_written, v_expected;\n"
         "  END IF;\n"
         "END $pw$;"
+    )
+
+    # Extra-row guard (post-write, in-tx): for each class the stage covers, the
+    # count of tcc.brk_style_native_overrides rows for that class must EQUAL the
+    # staged keyset count -- no target row for a staged class may be absent from
+    # the stage (anti-join target LEFT JOIN stage WHERE stage IS NULL -> 0).
+    # Scoped to classes this stage actually carries; classes not in the stage are ignored.
+    parts.append(
+        "DO $xr$ DECLARE v_extra integer;\n"
+        "BEGIN\n"
+        "  -- Extra-row guard: target must not contain (breaker_class, source_id) rows\n"
+        "  -- that are absent from stage_030_d5 for any class the stage covers.\n"
+        "  SELECT count(*) INTO v_extra\n"
+        "    FROM tcc.brk_style_native_overrides t\n"
+        "    -- Restrict to classes the stage carries (avoid flagging unrelated classes)\n"
+        "    WHERE t.breaker_class IN (SELECT DISTINCT breaker_class FROM stage_030_d5)\n"
+        "      AND NOT EXISTS (\n"
+        "        SELECT 1 FROM stage_030_d5 st\n"
+        "        WHERE st.breaker_class = t.breaker_class AND st.source_id = t.source_id\n"
+        "      );\n"
+        "  IF v_extra > 0 THEN\n"
+        "    -- single % below is a literal PL/pgSQL placeholder -- NOT a Python %-format target\n"
+        "    RAISE EXCEPTION '030 extra-row guard: % stale (breaker_class, source_id) row(s) in target outside the staged keyset -- polluted prior apply detected', v_extra;\n"
+        "  END IF;\n"
+        "END $xr$;"
     )
 
     parts.append("COMMIT;")

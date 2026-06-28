@@ -526,14 +526,15 @@ def run_all(
 def cmd_generate_d4d5(args) -> int:
     """Subcommand: generate-d4d5 -- emit governed D4/D5 data SQL files.
 
-    Connects to the governed DB (requires --governed), runs the six fail-closed
-    gates, reads all three breaker classes from access_raw, and writes:
+    Always connects to the governed DB (hard-wired via config.governed_pg_dsn();
+    no --governed flag required or accepted).  Runs the six fail-closed gates,
+    reads all three breaker classes from access_raw, and writes:
       <out-dir>/029_d4_data.sql
       <out-dir>/030_d5_data.sql
       <out-dir>/generation_report.json
 
-    The governed fence is load-bearing: this command always requires --governed
-    and will refuse to run against any other database.
+    The governed fence is load-bearing: the connection is asserted to be on
+    tcc_fidelity_governed before any read or write and will refuse any other DB.
     """
     from access_harness import d4d5_governed_generation as gen
 
