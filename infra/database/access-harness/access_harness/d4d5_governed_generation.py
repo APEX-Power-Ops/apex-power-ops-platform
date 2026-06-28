@@ -410,6 +410,9 @@ def read_class(conn, cls):
         sid = row["ID"]
 
         # -- D4 (ICCB/MCCB only) --
+        # PATCH 1: stage EVERY style row for D4 classes (source-faithful idempotency).
+        # A rerun must be able to clear stale values that were set by a previous run,
+        # so all-null-D4 rows are included.  The "any non-null" filter has been removed.
         d4vals = {}
         if has_d4:
             for acc_col, pg_col in _D4_ACCESS_TO_PG:
@@ -417,8 +420,7 @@ def read_class(conn, cls):
                 d4vals[pg_col] = v
                 if v is not None:
                     d4_nonnull[pg_col] += 1
-            if any(v is not None for v in d4vals.values()):
-                d4_rows.append((sid, d4vals))
+            d4_rows.append((sid, d4vals))
 
         # -- D5 blocks -- use MANIFEST exact col lists (NOT startswith) --
         blocks = {}
@@ -534,17 +536,43 @@ def build_report(conn, run_id, generated_at=None):
         else:
             snapshot_id = snap_host = snap_db = snap_role = None
 
-        # Per style-table checksum + reconciliation
+        # Per style-table checksum + reconciliation + source row_count (PATCH 2)
         style_tables = [m["access_table"] for m in MANIFEST.values()]
         table_checksums = {}
+        # Check once whether access_meta.tables has a row_count column.
+        cur.execute(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_schema='access_meta' AND table_name='tables' "
+            "AND column_name='row_count' LIMIT 1"
+        )
+        _has_row_count_col = cur.fetchone() is not None
         for tbl in style_tables:
-            cur.execute(
-                "SELECT checksum FROM access_meta.tables "
-                "WHERE run_id=%s AND table_name=%s",
-                (run_id, tbl),
-            )
-            trow = cur.fetchone()
-            checksum = trow[0] if trow is not None else None
+            if _has_row_count_col:
+                cur.execute(
+                    "SELECT checksum, row_count FROM access_meta.tables "
+                    "WHERE run_id=%s AND table_name=%s",
+                    (run_id, tbl),
+                )
+                trow = cur.fetchone()
+                checksum = trow[0] if trow is not None else None
+                row_count = trow[1] if trow is not None else None
+            else:
+                cur.execute(
+                    "SELECT checksum FROM access_meta.tables "
+                    "WHERE run_id=%s AND table_name=%s",
+                    (run_id, tbl),
+                )
+                trow = cur.fetchone()
+                checksum = trow[0] if trow is not None else None
+                # Fallback: count directly from access_raw
+                try:
+                    cur.execute(
+                        'SELECT count(*) FROM access_raw."%s"' % tbl
+                    )
+                    rcount_row = cur.fetchone()
+                    row_count = rcount_row[0] if rcount_row is not None else None
+                except Exception:  # noqa: BLE001
+                    row_count = None
 
             cur.execute(
                 "SELECT matches FROM access_validation.checksum_reconciliation "
@@ -554,7 +582,7 @@ def build_report(conn, run_id, generated_at=None):
             rrow = cur.fetchone()
             matches = rrow[0] if rrow is not None else None
 
-            table_checksums[tbl] = {"checksum": checksum, "matches": matches}
+            table_checksums[tbl] = {"checksum": checksum, "matches": matches, "row_count": row_count}
 
     provenance = {
         "run_id": run_id,
@@ -640,13 +668,14 @@ def _provenance_header(report):
     ]
     if p.get("generated_at") is not None:
         lines.append("-- generated_at:     %s" % p["generated_at"])
-    # Per-table row count + checksum
+    # Per-table row_count + checksum (PATCH 2: row_count included per spec)
     for tbl, info in p.get("table_checksums", {}).items():
         lines.append(
-            "-- table %s: checksum=%s matches=%s" % (
+            "-- table %s: checksum=%s matches=%s row_count=%s" % (
                 tbl,
                 info.get("checksum", "?"),
                 info.get("matches", "?"),
+                info.get("row_count", "?"),
             )
         )
     # Per-class counts from report["classes"] (if already merged)
@@ -913,16 +942,27 @@ def emit_030(class_reads, report):
         "  IF v_tbl_exists <> 1 THEN\n"
         "    RAISE EXCEPTION '030 guard: tcc.brk_style_native_overrides does not exist';\n"
         "  END IF;\n"
+        "  -- PATCH 4: exact-2 PK guard matching the queued DDL (030_d5_native_overrides_sidetable.sql).\n"
+        "  -- Step 1: total PK column count must be exactly 2.\n"
         "  SELECT count(*) INTO v_pk_cols\n"
         "    FROM information_schema.table_constraints tc\n"
         "    JOIN information_schema.key_column_usage kcu\n"
         "      ON kcu.constraint_schema = tc.constraint_schema\n"
         "      AND kcu.constraint_name = tc.constraint_name\n"
         "    WHERE tc.table_schema='tcc' AND tc.table_name='brk_style_native_overrides'\n"
-        "      AND tc.constraint_type='PRIMARY KEY'\n"
-        "      AND kcu.column_name IN ('breaker_class','source_id');\n"
+        "      AND tc.constraint_type='PRIMARY KEY';\n"
         "  IF v_pk_cols <> 2 THEN\n"
-        "    RAISE EXCEPTION '030 guard: PK is not exactly (breaker_class, source_id) -- got %% matching PK col(s)', v_pk_cols;\n"
+        "    RAISE EXCEPTION '030 guard: PK has %% column(s), expected exactly 2 (breaker_class, source_id)', v_pk_cols;\n"
+        "  END IF;\n"
+        "  -- Step 2: membership check -- the 2 PK columns must be exactly (breaker_class, source_id).\n"
+        "  IF (SELECT count(*) FROM information_schema.table_constraints tc\n"
+        "        JOIN information_schema.key_column_usage kcu\n"
+        "          ON kcu.constraint_schema = tc.constraint_schema\n"
+        "          AND kcu.constraint_name = tc.constraint_name\n"
+        "        WHERE tc.table_schema='tcc' AND tc.table_name='brk_style_native_overrides'\n"
+        "          AND tc.constraint_type='PRIMARY KEY'\n"
+        "          AND kcu.column_name IN ('breaker_class','source_id')) <> 2 THEN\n"
+        "    RAISE EXCEPTION '030 guard: PK columns are not exactly (breaker_class, source_id)';\n"
         "  END IF;\n"
         "  -- Guard 4: coverage anti-join -- every stage (breaker_class, source_id)\n"
         "  --   must join its per-class style table source_id\n"
@@ -979,6 +1019,36 @@ def emit_030(class_reads, report):
         "    RAISE EXCEPTION '030 post-write: only % of % rows present in target after INSERT', v_written, v_expected;\n"
         "  END IF;\n"
         "END $pw$;"
+    )
+
+    # PATCH 3: Post-write VALUE parity guard (in-tx, for the staged keyset).
+    # Asserts each target row's payload equals the staged payload using
+    # IS NOT DISTINCT FROM for the 5 JSONB blocks + ovr_curves IS NULL.
+    # This is a regression tripwire for a future broken UPDATE clause; a
+    # negative test is not cleanly constructible because ON CONFLICT DO UPDATE
+    # always overwrites to the stage values -- asserting clean-pass is sufficient.
+    parts.append(
+        "DO $vp$ DECLARE v_mismatch integer;\n"
+        "BEGIN\n"
+        "  -- 030 value-parity guard: for each staged row, target payload must match stage.\n"
+        "  -- Guards against a future broken UPDATE clause leaving stale JSONB.\n"
+        "  SELECT count(*) INTO v_mismatch\n"
+        "    FROM stage_030_d5 st\n"
+        "    JOIN tcc.brk_style_native_overrides t\n"
+        "      ON t.breaker_class = st.breaker_class AND t.source_id = st.source_id\n"
+        "    WHERE NOT (\n"
+        "          t.inst_override  IS NOT DISTINCT FROM st.inst_override\n"
+        "      AND t.ninst_override IS NOT DISTINCT FROM st.ninst_override\n"
+        "      AND t.brk_times      IS NOT DISTINCT FROM st.brk_times\n"
+        "      AND t.r_int          IS NOT DISTINCT FROM st.r_int\n"
+        "      AND t.r_iec          IS NOT DISTINCT FROM st.r_iec\n"
+        "      AND t.ovr_curves IS NULL\n"
+        "    );\n"
+        "  IF v_mismatch > 0 THEN\n"
+        "    -- single % below is a literal PL/pgSQL placeholder -- NOT a Python %-format target\n"
+        "    RAISE EXCEPTION '030 value-parity: % staged row(s) have mismatched payload in target after INSERT', v_mismatch;\n"
+        "  END IF;\n"
+        "END $vp$;"
     )
 
     # Extra-row guard (post-write, in-tx): for each class the stage covers, the

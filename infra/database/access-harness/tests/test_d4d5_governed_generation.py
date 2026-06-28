@@ -415,22 +415,75 @@ def test_read_class_empty_table(pg):
     assert result["d5_rows"] == []
 
 
-def test_read_class_d4_row_only_when_nonnull(pg):
-    """d4_rows only includes rows with >= 1 non-null D4 column."""
-    # Row 1: all D4 cols null -> no d4 row.
-    # Row 2: TMT_TCCNumber set -> one d4 row.
+def test_read_class_d4_full_coverage_every_style_staged(pg):
+    """PATCH 1: d4_rows stages EVERY style for D4 classes, including all-null-D4 rows.
+
+    Source-faithful idempotency requires staging all styles so a rerun clears
+    stale values that were previously set.  d4_update_count == total_styles
+    for ICCB/MCCB.
+    """
     rows = [
-        {"ID": "1"},  # all D4 null
-        {"ID": "2", "TMT_TCCNumber": "ABC"},
+        {"ID": "1"},               # all D4 null -- MUST be staged
+        {"ID": "2", "TMT_TCCNumber": "ABC"},   # non-null D4
     ]
     _seed_style_table_for_read_class(pg, "ICCB", rows)
     result = gen.read_class(pg, "ICCB")
-    assert result["counts"]["d4_update_count"] == 1
-    assert len(result["d4_rows"]) == 1
-    sid, d4vals = result["d4_rows"][0]
-    assert str(sid) == "2"
-    # d4vals is keyed by pg column names (tmt_tcc_number, not TMT_TCCNumber).
-    assert d4vals["tmt_tcc_number"] == "ABC"
+    # Both rows must be staged: d4_update_count == total_styles
+    assert result["counts"]["d4_update_count"] == 2, (
+        "d4_update_count must equal total_styles (2) -- all-null-D4 row must be staged"
+    )
+    assert result["counts"]["total_styles"] == 2
+    assert len(result["d4_rows"]) == 2
+    # The all-null row must be present with all-None D4 values
+    all_null_rows = [(sid, d) for sid, d in result["d4_rows"] if str(sid) == "1"]
+    assert len(all_null_rows) == 1, "all-null-D4 row (ID=1) must appear in d4_rows"
+    _, d4vals_null = all_null_rows[0]
+    for pg_col in ("tmt_tcc_number", "tmt_notes", "tmt_trip_plug",
+                   "tmt_breaker_type", "tmt_thermal_magnetic", "tmt_thermal"):
+        assert d4vals_null[pg_col] is None, (
+            f"all-null-D4 row: {pg_col} must be None, got {d4vals_null[pg_col]!r}"
+        )
+    # The non-null row must also be staged with correct value
+    nonnull_rows = [(sid, d) for sid, d in result["d4_rows"] if str(sid) == "2"]
+    assert len(nonnull_rows) == 1
+    _, d4vals_nn = nonnull_rows[0]
+    assert d4vals_nn["tmt_tcc_number"] == "ABC"
+
+
+def test_read_class_d4_update_count_equals_total_styles_iccb(pg):
+    """PATCH 1: d4_update_count == total_styles for ICCB."""
+    rows = [{"ID": str(i)} for i in range(5)]
+    _seed_style_table_for_read_class(pg, "ICCB", rows)
+    result = gen.read_class(pg, "ICCB")
+    assert result["counts"]["d4_update_count"] == result["counts"]["total_styles"], (
+        "ICCB: d4_update_count must equal total_styles"
+    )
+
+
+def test_read_class_d4_update_count_equals_total_styles_mccb(pg):
+    """PATCH 1: d4_update_count == total_styles for MCCB."""
+    rows = [{"ID": str(i)} for i in range(3)]
+    _seed_style_table_for_read_class(pg, "MCCB", rows)
+    result = gen.read_class(pg, "MCCB")
+    assert result["counts"]["d4_update_count"] == result["counts"]["total_styles"], (
+        "MCCB: d4_update_count must equal total_styles"
+    )
+
+
+def test_read_class_d4_nonnull_per_col_still_present(pg):
+    """PATCH 1: d4_nonnull_per_col is still populated (informational) for D4 classes."""
+    rows = [
+        {"ID": "1"},
+        {"ID": "2", "TMT_TCCNumber": "XYZ"},
+        {"ID": "3", "TMT_Notes": "note"},
+    ]
+    _seed_style_table_for_read_class(pg, "ICCB", rows)
+    result = gen.read_class(pg, "ICCB")
+    nnpc = result["counts"]["d4_nonnull_per_col"]
+    assert nnpc is not None, "d4_nonnull_per_col must be present for D4 classes"
+    assert nnpc["tmt_tcc_number"] == 1, "tmt_tcc_number nonnull count must be 1"
+    assert nnpc["tmt_notes"] == 1, "tmt_notes nonnull count must be 1"
+    assert nnpc["tmt_trip_plug"] == 0, "tmt_trip_plug nonnull count must be 0"
 
 
 def test_read_class_d5_row_only_when_nonnull_block(pg):
@@ -1700,6 +1753,287 @@ def test_emit_030_extra_row_guard_raises(tcc_test_conn):
     assert stale_cnt == 1, (
         f"Stale ICCB source_id=99 row must still be present after aborted txn, got count={stale_cnt}"
     )
+
+    # Cleanup
+    with conn.cursor() as cur:
+        cur.execute("DROP SCHEMA IF EXISTS tcc CASCADE")
+
+
+# ===========================================================================
+# Task 5 PATCH 1 -- LIVE: d4_update_count == total_styles for D4 classes
+# ===========================================================================
+
+@pytest.mark.live
+def test_read_class_iccb_live_d4_count_equals_total_styles(governed_conn):
+    """PATCH 1 live: ICCB d4_update_count must equal total_styles (608)."""
+    result = gen.read_class(governed_conn, "ICCB")
+    c = result["counts"]
+    assert c["d4_update_count"] == c["total_styles"], (
+        f"ICCB: d4_update_count={c['d4_update_count']} != total_styles={c['total_styles']}"
+    )
+    assert c["d4_update_count"] == 608, (
+        f"ICCB: d4_update_count expected 608, got {c['d4_update_count']}"
+    )
+
+
+@pytest.mark.live
+def test_read_class_mccb_live_d4_count_equals_total_styles(governed_conn):
+    """PATCH 1 live: MCCB d4_update_count must equal total_styles (10335)."""
+    result = gen.read_class(governed_conn, "MCCB")
+    c = result["counts"]
+    assert c["d4_update_count"] == c["total_styles"], (
+        f"MCCB: d4_update_count={c['d4_update_count']} != total_styles={c['total_styles']}"
+    )
+    assert c["d4_update_count"] == 10335, (
+        f"MCCB: d4_update_count expected 10335, got {c['d4_update_count']}"
+    )
+
+
+# ===========================================================================
+# Task 5 PATCH 2 -- row_count in provenance (unit + live)
+# ===========================================================================
+
+def test_build_report_provenance_has_row_count(pg):
+    """PATCH 2: build_report provenance must include row_count per style table."""
+    run_id = "run_rpt_rowcount"
+    _seed_run(pg, run_id)
+    with pg.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO access_meta.tcc_snapshot
+                (snapshot_id, run_id, host, db_name, role, captured_at)
+            VALUES ('snap-rc-001', %s, 'testhost', 'testdb', 'reader', now())
+            ON CONFLICT (snapshot_id) DO NOTHING
+            """,
+            (run_id,),
+        )
+    result = gen.build_report(pg, run_id)
+    prov = result["provenance"]
+    assert "table_checksums" in prov, "provenance must have table_checksums"
+    for tbl, info in prov["table_checksums"].items():
+        assert "row_count" in info, (
+            f"table_checksums[{tbl!r}] must contain 'row_count' (PATCH 2)"
+        )
+
+
+def test_emit_029_provenance_header_has_row_count():
+    """PATCH 2: emit_029 SQL header must include row_count for each carried table."""
+    report_with_rowcount = {
+        "provenance": {
+            "run_id": "run-rc-test",
+            "source_sha256": "aabb",
+            "frozen_copy_path": "/frozen/f.accdb",
+            "driver_name": "T",
+            "dbms_version": "0",
+            "read_only": True,
+            "snapshot_id": "snap-rc",
+            "host": "h",
+            "db_name": "d",
+            "role": "r",
+            "table_checksums": {
+                "BreakerICCBStyles": {"checksum": "aa", "matches": True, "row_count": 608},
+                "BreakerMCCBStyles": {"checksum": "bb", "matches": True, "row_count": 10335},
+                "BreakerPCBStyles":  {"checksum": "cc", "matches": True, "row_count": 3279},
+            },
+            "generator_version": "0.2.0",
+            "generated_at": "2026-06-27T00:00:00Z",
+        },
+        "classes": {},
+    }
+    sql = gen.emit_029(_SAMPLE_READS, report_with_rowcount)
+    assert "row_count=608" in sql or "row_count" in sql, (
+        "emit_029 SQL header must embed row_count for carried tables (PATCH 2)"
+    )
+    assert "608" in sql and "10335" in sql, (
+        "emit_029 SQL header must contain ICCB and MCCB row counts"
+    )
+
+
+def test_emit_030_provenance_header_has_row_count():
+    """PATCH 2: emit_030 SQL header must include row_count for each carried table."""
+    report_with_rowcount = {
+        "provenance": {
+            "run_id": "run-rc-test",
+            "source_sha256": "aabb",
+            "frozen_copy_path": "/frozen/f.accdb",
+            "driver_name": "T",
+            "dbms_version": "0",
+            "read_only": True,
+            "snapshot_id": "snap-rc",
+            "host": "h",
+            "db_name": "d",
+            "role": "r",
+            "table_checksums": {
+                "BreakerICCBStyles": {"checksum": "aa", "matches": True, "row_count": 608},
+                "BreakerMCCBStyles": {"checksum": "bb", "matches": True, "row_count": 10335},
+                "BreakerPCBStyles":  {"checksum": "cc", "matches": True, "row_count": 3279},
+            },
+            "generator_version": "0.2.0",
+            "generated_at": "2026-06-27T00:00:00Z",
+        },
+        "classes": {},
+    }
+    sql = gen.emit_030(_SAMPLE_READS, report_with_rowcount)
+    assert "row_count" in sql, (
+        "emit_030 SQL header must embed row_count for carried tables (PATCH 2)"
+    )
+    assert "3279" in sql, (
+        "emit_030 SQL header must contain PCB row count 3279"
+    )
+
+
+# ===========================================================================
+# Task 5 PATCH 3 -- 030 post-write value parity guard (unit)
+# ===========================================================================
+
+class TestEmit030ValueParityGuard:
+    """PATCH 3: emit_030 must contain a value-parity guard after the INSERT."""
+
+    def setup_method(self):
+        self.sql = gen.emit_030(_SAMPLE_READS, _SAMPLE_REPORT)
+
+    def test_value_parity_guard_present(self):
+        """Post-write value-parity DO block must exist after the INSERT."""
+        insert_pos = self.sql.rfind("INSERT INTO tcc.brk_style_native_overrides")
+        # There should be a parity-check block after the post-write count assertion
+        assert "IS NOT DISTINCT FROM" in self.sql[insert_pos:], (
+            "emit_030 must contain IS NOT DISTINCT FROM value-parity guard after INSERT (PATCH 3)"
+        )
+
+    def test_value_parity_checks_all_five_jsonb_blocks(self):
+        """Value-parity guard must check all 5 JSONB blocks."""
+        for col in ("inst_override", "ninst_override", "brk_times", "r_int", "r_iec"):
+            assert col in self.sql, (
+                f"emit_030 must reference {col!r} (PATCH 3 -- all 5 jsonb blocks)"
+            )
+
+    def test_value_parity_checks_ovr_curves_is_null(self):
+        """Value-parity guard must assert ovr_curves IS NULL."""
+        assert "ovr_curves IS NULL" in self.sql, (
+            "emit_030 value-parity guard must assert ovr_curves IS NULL (PATCH 3)"
+        )
+
+    def test_value_parity_do_block_after_postwrite_count(self):
+        """Value-parity DO block must come after the post-write count block."""
+        postwrite_pos = self.sql.find("post-write")
+        parity_pos = self.sql.find("IS NOT DISTINCT FROM")
+        assert parity_pos > postwrite_pos, (
+            "emit_030 value-parity DO block must follow the post-write count assertion (PATCH 3)"
+        )
+
+
+# ===========================================================================
+# Task 5 PATCH 4 -- emit_030 PK guard exact-2 column-count check (unit)
+# ===========================================================================
+
+class TestEmit030ExactPkGuard:
+    """PATCH 4: the 030 PK guard must use a two-step exact-2 check (count <> 2 RAISE)."""
+
+    def setup_method(self):
+        self.sql = gen.emit_030(_SAMPLE_READS, _SAMPLE_REPORT)
+
+    def test_pk_count_exact_two_raise(self):
+        """Guard must raise if PK column count != 2 (total PK cols, not membership)."""
+        # The exact-count check matches the DDL: count(*) of ALL PK cols must be 2
+        # before the membership check.
+        assert "v_pk_cols <> 2" in self.sql, (
+            "emit_030 PK guard must raise when total PK col count <> 2 (PATCH 4)"
+        )
+
+    def test_pk_membership_check_present(self):
+        """Guard must also verify the 2 PK columns are exactly (breaker_class, source_id)."""
+        assert ("breaker_class" in self.sql and "source_id" in self.sql), (
+            "emit_030 PK guard must name breaker_class and source_id (PATCH 4)"
+        )
+        # The membership sub-query checks that both named cols participate
+        assert "kcu.column_name IN" in self.sql or "column_name IN" in self.sql, (
+            "emit_030 PK guard must include a column_name IN membership check (PATCH 4)"
+        )
+
+
+# ===========================================================================
+# Task 5 PATCH 3 -- LIVE: clean 030 apply satisfies value-parity guard
+# ===========================================================================
+
+@pytest.mark.live
+def test_emit_030_value_parity_guard_passes_on_clean_apply(tcc_test_conn):
+    """PATCH 3 live: a clean apply commits successfully (value-parity guard is satisfied).
+
+    A negative test (wrong value landing) is not cleanly constructible because
+    ON CONFLICT DO UPDATE always overwrites to the stage values.  This test
+    confirms the guard does not cause a false rejection on a correct apply.
+    """
+    conn = tcc_test_conn
+    _create_minimal_tcc_schema(conn)
+    _seed_style_rows(conn, {"ICCB": [10, 20], "MCCB": [30], "PCB": [40, 50]})
+
+    good_reads_parity = {
+        "ICCB": {
+            "d4_rows": [],
+            "d5_rows": [
+                (10, {"inst_override": {"InstOvrAmps": 100}, "ninst_override": None,
+                      "brk_times": None, "r_int": None, "r_iec": None}),
+                (20, {"inst_override": None, "ninst_override": {"NInstOvrAmps": 50},
+                      "brk_times": None, "r_int": None, "r_iec": None}),
+            ],
+            "counts": {"d4_update_count": 0, "d5_insert_count": 2,
+                       "total_styles": 2, "real_override_count": 1,
+                       "rating_only_count": 0, "d4_nonnull_per_col": {},
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+        "MCCB": {
+            "d4_rows": [],
+            "d5_rows": [
+                (30, {"inst_override": None, "ninst_override": None,
+                      "brk_times": None, "r_int": {"r_int_inst_480": 65}, "r_iec": None}),
+            ],
+            "counts": {"d4_update_count": 0, "d5_insert_count": 1,
+                       "total_styles": 1, "real_override_count": 0,
+                       "rating_only_count": 1, "d4_nonnull_per_col": {},
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+        "PCB": {
+            "d4_rows": [],
+            "d5_rows": [
+                (40, {"inst_override": {"InstOvrAmps": 200}, "ninst_override": None,
+                      "brk_times": None, "r_int": None, "r_iec": None}),
+                (50, {"inst_override": None, "ninst_override": None,
+                      "brk_times": None, "r_int": None, "r_iec": {"r_iec_inst_220": 30}}),
+            ],
+            "counts": {"d4_update_count": 0, "d5_insert_count": 2,
+                       "total_styles": 2, "real_override_count": 1,
+                       "rating_only_count": 1, "d4_nonnull_per_col": None,
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+    }
+
+    parity_report = {
+        "provenance": {
+            "run_id": "parity-guard-test-001",
+            "source_sha256": "deadbeef",
+            "frozen_copy_path": "/test/frozen.accdb",
+            "driver_name": "TestDriver",
+            "dbms_version": "0.0.0",
+            "read_only": True,
+            "snapshot_id": "snap-parity-001",
+            "host": "testhost",
+            "db_name": "tcc_fidelity_test",
+            "role": "test",
+            "table_checksums": {},
+            "generator_version": "0.2.0",
+        },
+        "classes": {cls: good_reads_parity[cls]["counts"] for cls in ("ICCB", "MCCB", "PCB")},
+    }
+
+    sql_030 = gen.emit_030(good_reads_parity, parity_report)
+    # Must COMMIT without error -- value-parity guard must not cause false rejection
+    _exec_sql_script(conn, sql_030)
+
+    # Verify rows landed
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM tcc.brk_style_native_overrides")
+        (cnt,) = cur.fetchone()
+    assert cnt == 5, f"Expected 5 rows after clean apply with parity guard, got {cnt}"
 
     # Cleanup
     with conn.cursor() as cur:
