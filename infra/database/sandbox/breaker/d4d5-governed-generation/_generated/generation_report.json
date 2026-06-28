@@ -1,0 +1,418 @@
+{
+  "provenance": {
+    "run_id": "c15adaef-20260608T210440",
+    "source_sha256": "c15adaefa57ed1bbc10d82c24842c5d9fc89e5d2b6992f50c0aeba764a59a16a",
+    "frozen_copy_path": "D:\\_access_frozen\\TCC_NEW_20260608T210440_c15adaef.accdb",
+    "driver_name": "ACEODBC.DLL",
+    "dbms_version": "12.00.0000",
+    "read_only": true,
+    "snapshot_id": "c15adaef-20260608T210440-tcc-40067d1d",
+    "host": "100.64.0.1",
+    "governed_source_db": "tcc_fidelity_governed",
+    "tcc_snapshot_db": "tcc_breaker_viewer_20260625",
+    "role": "tcc_breaker_ro",
+    "table_checksums": {
+      "BreakerICCBStyles": {
+        "checksum": "132de0305eaad195b0ebce4f944a19d0da87b96739f7a1908a16892f7d3bb539",
+        "matches": true,
+        "row_count": 608
+      },
+      "BreakerMCCBStyles": {
+        "checksum": "485ef989fd8dcf51da104be4316ff6ef4b8013ab389b93f4da70c71f95f7a006",
+        "matches": true,
+        "row_count": 10335
+      },
+      "BreakerPCBStyles": {
+        "checksum": "8458772933c817977f66bc359c56b21b7e9ff173c64138dc2f9bfe2434566734",
+        "matches": true,
+        "row_count": 3279
+      }
+    },
+    "generator_version": "0.2.0",
+    "generated_at": "2026-06-28T03:58:56Z"
+  },
+  "classes": {
+    "ICCB": {
+      "total_styles": 608,
+      "d4_update_count": 608,
+      "d5_insert_count": 608,
+      "real_override_count": 241,
+      "rating_only_count": 367,
+      "d4_nonnull_per_col": {
+        "tmt_tcc_number": 608,
+        "tmt_notes": 608,
+        "tmt_trip_plug": 608,
+        "tmt_breaker_type": 608,
+        "tmt_thermal_magnetic": 608,
+        "tmt_thermal": 492
+      },
+      "d5_block_present_counts": {
+        "inst_override": 608,
+        "ninst_override": 608,
+        "brk_times": 143,
+        "r_int": 608,
+        "r_iec": 4
+      },
+      "samples": [
+        {
+          "source_id": 1,
+          "d4": {
+            "tmt_tcc_number": "",
+            "tmt_notes": "",
+            "tmt_trip_plug": 0,
+            "tmt_breaker_type": 0,
+            "tmt_thermal_magnetic": 0,
+            "tmt_thermal": null
+          },
+          "d5_blocks_present": [
+            "inst_override",
+            "ninst_override",
+            "r_int"
+          ],
+          "inst_override_keys": [
+            "InstOvrClrCurve",
+            "InstOvrClrChar",
+            "InstOvrCurveCalcClr",
+            "InstOvrClrEnteredAt",
+            "InstOvrOpenCurve",
+            "InstOvrOpenChar",
+            "InstOvrCurveCalcOpen",
+            "InstOvrOpenEnteredAt"
+          ],
+          "r_int": {
+            "r_int_inst_240": 125.0,
+            "r_int_inst_480": 100.0,
+            "r_int_inst_600": 85.0,
+            "r_int_series_240": 125.0,
+            "r_int_series_480": 100.0,
+            "r_int_series_600": 85.0
+          }
+        },
+        {
+          "source_id": 11,
+          "d4": {
+            "tmt_tcc_number": "",
+            "tmt_notes": "",
+            "tmt_trip_plug": 0,
+            "tmt_breaker_type": 0,
+            "tmt_thermal_magnetic": 0,
+            "tmt_thermal": 1
+          },
+          "d5_blocks_present": [
+            "inst_override",
+            "ninst_override",
+            "brk_times",
+            "r_int"
+          ],
+          "inst_override_keys": [
+            "InstOvrAmps",
+            "InstOvrMinTolerance",
+            "InstOvrMaxTolerance",
+            "InstOvrClrDelayTime",
+            "InstOvrClrRadius",
+            "InstOvrOpnDelayTime",
+            "InstOvrOpnRadius",
+            "InstOvrNoteText",
+            "InstOvrClrCurve",
+            "InstOvrClrChar",
+            "InstOvrCurveCalcClr",
+            "InstOvrClrEnteredAt",
+            "InstOvrOpenCurve",
+            "InstOvrOpenChar",
+            "InstOvrCurveCalcOpen",
+            "InstOvrOpenEnteredAt"
+          ],
+          "r_int": {
+            "r_int_inst_240": 85.0,
+            "r_int_inst_480": 65.0,
+            "r_int_inst_600": 50.0,
+            "r_int_series_240": 40.0,
+            "r_int_series_480": 40.0,
+            "r_int_series_600": 40.0
+          }
+        },
+        {
+          "source_id": 21,
+          "d4": {
+            "tmt_tcc_number": "",
+            "tmt_notes": "",
+            "tmt_trip_plug": 0,
+            "tmt_breaker_type": 0,
+            "tmt_thermal_magnetic": 0,
+            "tmt_thermal": 1
+          },
+          "d5_blocks_present": [
+            "inst_override",
+            "ninst_override",
+            "brk_times",
+            "r_int"
+          ],
+          "inst_override_keys": [
+            "InstOvrAmps",
+            "InstOvrMinTolerance",
+            "InstOvrMaxTolerance",
+            "InstOvrClrDelayTime",
+            "InstOvrClrRadius",
+            "InstOvrOpnDelayTime",
+            "InstOvrOpnRadius",
+            "InstOvrNoteText",
+            "InstOvrClrCurve",
+            "InstOvrClrChar",
+            "InstOvrCurveCalcClr",
+            "InstOvrClrEnteredAt",
+            "InstOvrOpenCurve",
+            "InstOvrOpenChar",
+            "InstOvrCurveCalcOpen",
+            "InstOvrOpenEnteredAt"
+          ],
+          "r_int": {
+            "r_int_inst_240": 85.0,
+            "r_int_inst_480": 65.0,
+            "r_int_inst_600": 50.0,
+            "r_int_series_240": 40.0,
+            "r_int_series_480": 40.0,
+            "r_int_series_600": 40.0
+          }
+        }
+      ]
+    },
+    "MCCB": {
+      "total_styles": 10335,
+      "d4_update_count": 10335,
+      "d5_insert_count": 10335,
+      "real_override_count": 129,
+      "rating_only_count": 10204,
+      "d4_nonnull_per_col": {
+        "tmt_tcc_number": 10236,
+        "tmt_notes": 10236,
+        "tmt_trip_plug": 10236,
+        "tmt_breaker_type": 10236,
+        "tmt_thermal_magnetic": 10236,
+        "tmt_thermal": 8799
+      },
+      "d5_block_present_counts": {
+        "inst_override": 10335,
+        "ninst_override": 10335,
+        "brk_times": 23,
+        "r_int": 10333,
+        "r_iec": 4767
+      },
+      "samples": [
+        {
+          "source_id": 1662,
+          "d4": {
+            "tmt_tcc_number": null,
+            "tmt_notes": null,
+            "tmt_trip_plug": null,
+            "tmt_breaker_type": null,
+            "tmt_thermal_magnetic": null,
+            "tmt_thermal": null
+          },
+          "d5_blocks_present": [
+            "inst_override",
+            "ninst_override",
+            "r_int"
+          ],
+          "inst_override_keys": [
+            "InstOvrClrCurve",
+            "InstOvrClrChar",
+            "InstOvrCurveCalcClr",
+            "InstOvrClrEnteredAt",
+            "InstOvrOpenCurve",
+            "InstOvrOpenChar",
+            "InstOvrCurveCalcOpen",
+            "InstOvrOpenEnteredAt"
+          ],
+          "r_int": {
+            "r_int_inst_240": 50.0,
+            "r_int_inst_480": 18.0,
+            "r_int_inst_600": 0.0,
+            "r_int_series_240": 50.0,
+            "r_int_series_480": 18.0,
+            "r_int_series_600": 0.0
+          }
+        },
+        {
+          "source_id": 1672,
+          "d4": {
+            "tmt_tcc_number": null,
+            "tmt_notes": null,
+            "tmt_trip_plug": null,
+            "tmt_breaker_type": null,
+            "tmt_thermal_magnetic": null,
+            "tmt_thermal": null
+          },
+          "d5_blocks_present": [
+            "inst_override",
+            "ninst_override",
+            "r_int"
+          ],
+          "inst_override_keys": [
+            "InstOvrClrCurve",
+            "InstOvrClrChar",
+            "InstOvrCurveCalcClr",
+            "InstOvrClrEnteredAt",
+            "InstOvrOpenCurve",
+            "InstOvrOpenChar",
+            "InstOvrCurveCalcOpen",
+            "InstOvrOpenEnteredAt"
+          ],
+          "r_int": {
+            "r_int_inst_240": 85.0,
+            "r_int_inst_480": 35.0,
+            "r_int_inst_600": 18.0,
+            "r_int_series_240": 85.0,
+            "r_int_series_480": 35.0,
+            "r_int_series_600": 18.0
+          }
+        },
+        {
+          "source_id": 1682,
+          "d4": {
+            "tmt_tcc_number": "",
+            "tmt_notes": "E 150 Line\r\nTypes ES, EH, EX\r\n\r\n60A-100A : Dwg No. TD9806 \r\n Dated 3-2-1988",
+            "tmt_trip_plug": 0,
+            "tmt_breaker_type": 0,
+            "tmt_thermal_magnetic": 1,
+            "tmt_thermal": 1
+          },
+          "d5_blocks_present": [
+            "inst_override",
+            "ninst_override",
+            "r_int"
+          ],
+          "inst_override_keys": [
+            "InstOvrClrDelayTime",
+            "InstOvrClrRadius",
+            "InstOvrOpnDelayTime",
+            "InstOvrOpnRadius",
+            "InstOvrNoteText",
+            "InstOvrClrCurve",
+            "InstOvrClrChar",
+            "InstOvrCurveCalcClr",
+            "InstOvrClrEnteredAt",
+            "InstOvrOpenCurve",
+            "InstOvrOpenChar",
+            "InstOvrCurveCalcOpen",
+            "InstOvrOpenEnteredAt"
+          ],
+          "r_int": {
+            "r_int_inst_240": 25.0,
+            "r_int_inst_480": 18.0,
+            "r_int_inst_600": 14.0,
+            "r_int_series_240": 25.0,
+            "r_int_series_480": 18.0,
+            "r_int_series_600": 14.0
+          }
+        }
+      ]
+    },
+    "PCB": {
+      "total_styles": 3279,
+      "d4_update_count": 0,
+      "d5_insert_count": 3279,
+      "real_override_count": 317,
+      "rating_only_count": 2962,
+      "d4_nonnull_per_col": null,
+      "d5_block_present_counts": {
+        "inst_override": 3279,
+        "ninst_override": 3279,
+        "brk_times": 163,
+        "r_int": 3279,
+        "r_iec": 1651
+      },
+      "samples": [
+        {
+          "source_id": 46,
+          "d4": null,
+          "d5_blocks_present": [
+            "inst_override",
+            "ninst_override",
+            "r_int"
+          ],
+          "inst_override_keys": [
+            "InstOvrClrCurve",
+            "InstOvrClrChar",
+            "InstOvrCurveCalcClr",
+            "InstOvrClrEnteredAt",
+            "InstOvrOpenCurve",
+            "InstOvrOpenChar",
+            "InstOvrCurveCalcOpen",
+            "InstOvrOpenEnteredAt"
+          ],
+          "r_int": {
+            "r_int_inst_240": 42.0,
+            "r_int_inst_480": 30.0,
+            "r_int_inst_600": 30.0,
+            "r_int_series_240": 0.0,
+            "r_int_series_480": 0.0,
+            "r_int_series_600": 0.0,
+            "r_int_ninst_240": 42.0,
+            "r_int_ninst_480": 30.0,
+            "r_int_ninst_600": 30.0
+          }
+        },
+        {
+          "source_id": 47,
+          "d4": null,
+          "d5_blocks_present": [
+            "inst_override",
+            "ninst_override",
+            "r_int"
+          ],
+          "inst_override_keys": [
+            "InstOvrClrCurve",
+            "InstOvrClrChar",
+            "InstOvrCurveCalcClr",
+            "InstOvrClrEnteredAt",
+            "InstOvrOpenCurve",
+            "InstOvrOpenChar",
+            "InstOvrCurveCalcOpen",
+            "InstOvrOpenEnteredAt"
+          ],
+          "r_int": {
+            "r_int_inst_240": 65.0,
+            "r_int_inst_480": 50.0,
+            "r_int_inst_600": 50.0,
+            "r_int_series_240": 0.0,
+            "r_int_series_480": 0.0,
+            "r_int_series_600": 0.0,
+            "r_int_ninst_240": 65.0,
+            "r_int_ninst_480": 50.0,
+            "r_int_ninst_600": 50.0
+          }
+        },
+        {
+          "source_id": 48,
+          "d4": null,
+          "d5_blocks_present": [
+            "inst_override",
+            "ninst_override",
+            "r_int"
+          ],
+          "inst_override_keys": [
+            "InstOvrClrCurve",
+            "InstOvrClrChar",
+            "InstOvrCurveCalcClr",
+            "InstOvrClrEnteredAt",
+            "InstOvrOpenCurve",
+            "InstOvrOpenChar",
+            "InstOvrCurveCalcOpen",
+            "InstOvrOpenEnteredAt"
+          ],
+          "r_int": {
+            "r_int_inst_240": 100.0,
+            "r_int_inst_480": 85.0,
+            "r_int_inst_600": 85.0,
+            "r_int_series_240": 0.0,
+            "r_int_series_480": 0.0,
+            "r_int_series_600": 0.0,
+            "r_int_ninst_240": 100.0,
+            "r_int_ninst_480": 85.0,
+            "r_int_ninst_600": 85.0
+          }
+        }
+      ]
+    }
+  }
+}
