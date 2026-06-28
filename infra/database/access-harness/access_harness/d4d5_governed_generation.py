@@ -35,6 +35,38 @@ assert_style_evidence(conn, run_id)
       for (run_id, table).
     - Gate 6 (manifest columns, EXACT not prefix): every column in required_cols
       must exist in access_raw.<access_table> (information_schema.columns).
+
+Public API (Task 2 -- governed reader + transform + report)
+-----------------------------------------------------------
+read_class(conn, cls) -> dict
+    Read access_raw."<access_table>" via psycopg, apply the VERBATIM transform
+    from the dry-run generator (using MANIFEST d5_block_cols for exact per-class
+    block membership -- NOT str.startswith prefixes), and return:
+      {
+        "d4_rows": [(source_id, {pg_col: value}), ...],
+        "d5_rows": [(source_id, {block_name: {col: value} or None}), ...],
+        "counts": {
+          "total_styles": int,
+          "d4_update_count": int,
+          "d5_insert_count": int,
+          "real_override_count": int,     -- InstOvrAmps > 0 (metric only, no row filter)
+          "rating_only_count": int,
+          "d4_nonnull_per_col": {pg_col: int} or None,
+          "d5_block_present_counts": {block_name: int},
+          "samples": [up to 3 sample dicts],
+        }
+      }
+
+build_report(conn, run_id, generated_at=None) -> dict
+    Return provenance + per-class counts for a generation run:
+      {
+        "provenance": {run_id, source_sha256, frozen_copy_path, driver_name,
+                       dbms_version, read_only, snapshot_id, host, db_name,
+                       role, table_checksums, generator_version,
+                       generated_at (if passed)},
+        "classes": {cls: counts_dict, ...},
+      }
+    generated_at is NOT stamped internally -- pass it in or omit.
 """
 from access_harness.config import GOVERNED_DB, assert_current_database
 
@@ -286,3 +318,244 @@ def assert_style_evidence(conn, run_id):
                 raise GenerationRefused(
                     f"{t} is missing required column(s): {missing}"
                 )
+
+
+# ---------------------------------------------------------------------------
+# D4 column name map: Access column name -> pg column name
+# (ICCB/MCCB only; PCB has no D4).
+# Order matches _D4 list above.
+# ---------------------------------------------------------------------------
+
+_D4_ACCESS_TO_PG = [
+    ("TMT_TCCNumber",       "tmt_tcc_number"),
+    ("TMT_Notes",           "tmt_notes"),
+    ("TMT_TripPlug",        "tmt_trip_plug"),
+    ("TMT_BreakerType",     "tmt_breaker_type"),
+    ("TMT_ThermalMagnetic", "tmt_thermal_magnetic"),
+    ("TMT_Thermal",         "tmt_thermal"),
+]
+
+# Generator version constant (stamped in build_report provenance).
+_GENERATOR_VERSION = "0.2.0"
+
+
+# ---------------------------------------------------------------------------
+# Task 2: read_class
+# ---------------------------------------------------------------------------
+
+def read_class(conn, cls):
+    """Read access_raw."<access_table>" and apply the verbatim D4/D5 transform.
+
+    Source: governed access_raw via psycopg (double-precision InstOvrAmps).
+    Transform: VERBATIM copy of the dry-run generator loop, substituting:
+      - pyodbc cursor -> psycopg cursor
+      - BLOCK_PREFIX startswith predicates -> MANIFEST[cls]["d5_block_cols"]
+        exact column lists (so PCB ninst cols are included and a vanished col
+        is NOT silently absorbed)
+    Policy (a): InstOvrAmps > 0 is a REPORT METRIC ONLY -- never a row filter.
+
+    Returns:
+        {
+          "d4_rows": [(source_id, {pg_col: access_value}), ...],
+          "d5_rows": [(source_id, {block_name: {access_col: value} or None}), ...],
+          "counts": {
+            "total_styles": int,
+            "d4_update_count": int,
+            "d5_insert_count": int,
+            "real_override_count": int,
+            "rating_only_count": int,
+            "d4_nonnull_per_col": {pg_col: int} or None,
+            "d5_block_present_counts": {block_name: int},
+            "samples": [up to 3 sample dicts],
+          }
+        }
+    """
+    m = MANIFEST[cls]
+    atbl = m["access_table"]
+    has_d4 = m["has_d4"]
+    block_cols = m["d5_block_cols"]   # {block_name: [col, ...]} -- exact lists
+
+    with conn.cursor() as cur:
+        cur.execute(f'SELECT * FROM access_raw."{atbl}"')
+        col_names = [d.name for d in cur.description]
+        rows = [dict(zip(col_names, r)) for r in cur.fetchall()]
+
+    d4_rows = []
+    d4_nonnull = {pg: 0 for _, pg in _D4_ACCESS_TO_PG} if has_d4 else None
+    d5_rows = []
+    block_present = {b: 0 for b in block_cols}
+    real_override = 0
+    rating_only = 0
+    samples = []
+
+    for row in rows:
+        sid = row["ID"]
+
+        # -- D4 (ICCB/MCCB only) --
+        d4vals = {}
+        if has_d4:
+            for acc_col, pg_col in _D4_ACCESS_TO_PG:
+                v = row.get(acc_col)
+                d4vals[pg_col] = v
+                if v is not None:
+                    d4_nonnull[pg_col] += 1
+            if any(v is not None for v in d4vals.values()):
+                d4_rows.append((sid, d4vals))
+
+        # -- D5 blocks -- use MANIFEST exact col lists (NOT startswith) --
+        blocks = {}
+        for bname, bcols in block_cols.items():
+            blk = {c: row[c] for c in bcols if row.get(c) is not None}
+            blocks[bname] = blk if blk else None
+            if blk:
+                block_present[bname] += 1
+
+        # -- Real-override discriminator (policy a: metric only, never a filter) --
+        inst_amps = row.get("InstOvrAmps")
+        # Defensive coerce: access_raw stores double precision but an anomalous
+        # text value must not crash the metric (the metric never drops a row).
+        try:
+            inst_amps_f = float(inst_amps) if inst_amps is not None else None
+        except (TypeError, ValueError):
+            inst_amps_f = None
+        is_real = inst_amps_f is not None and inst_amps_f > 0
+        has_rating = blocks.get("r_int") is not None or blocks.get("r_iec") is not None
+
+        if is_real:
+            real_override += 1
+        elif has_rating:
+            rating_only += 1
+
+        # -- D5 row: any block non-null --
+        if any(b is not None for b in blocks.values()):
+            d5_rows.append((sid, blocks))
+            if len(samples) < 3:
+                samples.append({
+                    "source_id": sid,
+                    "d4": {pg: d4vals.get(pg) for _, pg in _D4_ACCESS_TO_PG} if has_d4 else None,
+                    "d5_blocks_present": [b for b in block_cols if blocks.get(b) is not None],
+                    "inst_override_keys": list(blocks["inst_override"].keys()) if blocks.get("inst_override") else [],
+                    "r_int": blocks.get("r_int"),
+                })
+
+    return {
+        "d4_rows": d4_rows,
+        "d5_rows": d5_rows,
+        "counts": {
+            "total_styles": len(rows),
+            "d4_update_count": len(d4_rows) if has_d4 else 0,
+            "d5_insert_count": len(d5_rows),
+            "real_override_count": real_override,
+            "rating_only_count": rating_only,
+            "d4_nonnull_per_col": d4_nonnull,
+            "d5_block_present_counts": block_present,
+            "samples": samples,
+        },
+    }
+
+
+# ---------------------------------------------------------------------------
+# Task 2: build_report
+# ---------------------------------------------------------------------------
+
+def build_report(conn, run_id, generated_at=None):
+    """Build a provenance + counts report for a governed generation run.
+
+    Reads from:
+      - access_meta.extraction_run (run_id, source_sha256, frozen_copy_path,
+        driver_name, dbms_version, read_only)
+      - access_meta.tcc_snapshot (snapshot_id, host, db_name, role for run_id)
+      - access_meta.tables.checksum per style table
+      - access_validation.checksum_reconciliation.matches per style table
+
+    generated_at: if provided (a datetime or ISO string), it is included in the
+    provenance block. NOT generated internally -- the controller stamps it.
+
+    Returns:
+        {
+          "provenance": {
+            "run_id": str,
+            "source_sha256": str or None,
+            "frozen_copy_path": str or None,
+            "driver_name": str or None,
+            "dbms_version": str or None,
+            "read_only": bool or None,
+            "snapshot_id": str or None,
+            "host": str or None,
+            "db_name": str or None,
+            "role": str or None,
+            "table_checksums": {table_name: {"checksum": str, "matches": bool}},
+            "generator_version": str,
+            # "generated_at": ... (only if generated_at parameter is not None)
+          },
+          "classes": {cls: counts_dict, ...},
+        }
+    """
+    with conn.cursor() as cur:
+        # extraction_run
+        cur.execute(
+            "SELECT source_sha256, frozen_copy_path, driver_name, dbms_version, read_only "
+            "FROM access_meta.extraction_run WHERE run_id=%s",
+            (run_id,),
+        )
+        er = cur.fetchone()
+        if er is not None:
+            source_sha256, frozen_copy_path, driver_name, dbms_version, read_only = er
+        else:
+            source_sha256 = frozen_copy_path = driver_name = dbms_version = read_only = None
+
+        # tcc_snapshot (keyed by snapshot_id PK; linked via run_id FK)
+        cur.execute(
+            "SELECT snapshot_id, host, db_name, role "
+            "FROM access_meta.tcc_snapshot WHERE run_id=%s LIMIT 1",
+            (run_id,),
+        )
+        snap = cur.fetchone()
+        if snap is not None:
+            snapshot_id, snap_host, snap_db, snap_role = snap
+        else:
+            snapshot_id = snap_host = snap_db = snap_role = None
+
+        # Per style-table checksum + reconciliation
+        style_tables = [m["access_table"] for m in MANIFEST.values()]
+        table_checksums = {}
+        for tbl in style_tables:
+            cur.execute(
+                "SELECT checksum FROM access_meta.tables "
+                "WHERE run_id=%s AND table_name=%s",
+                (run_id, tbl),
+            )
+            trow = cur.fetchone()
+            checksum = trow[0] if trow is not None else None
+
+            cur.execute(
+                "SELECT matches FROM access_validation.checksum_reconciliation "
+                "WHERE run_id=%s AND table_name=%s",
+                (run_id, tbl),
+            )
+            rrow = cur.fetchone()
+            matches = rrow[0] if rrow is not None else None
+
+            table_checksums[tbl] = {"checksum": checksum, "matches": matches}
+
+    provenance = {
+        "run_id": run_id,
+        "source_sha256": source_sha256,
+        "frozen_copy_path": frozen_copy_path,
+        "driver_name": driver_name,
+        "dbms_version": dbms_version,
+        "read_only": read_only,
+        "snapshot_id": snapshot_id,
+        "host": snap_host,
+        "db_name": snap_db,
+        "role": snap_role,
+        "table_checksums": table_checksums,
+        "generator_version": _GENERATOR_VERSION,
+    }
+    if generated_at is not None:
+        provenance["generated_at"] = generated_at
+
+    return {
+        "provenance": provenance,
+        "classes": {},   # caller populates by calling read_class per cls
+    }
