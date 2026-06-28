@@ -2038,3 +2038,163 @@ def test_emit_030_value_parity_guard_passes_on_clean_apply(tcc_test_conn):
     # Cleanup
     with conn.cursor() as cur:
         cur.execute("DROP SCHEMA IF EXISTS tcc CASCADE")
+
+
+# ===========================================================================
+# Task 5 PATCH 1 -- LIVE regression: source-NULL emit_029 clears stale tmt_* value
+# Proves idempotent recarry: applying 029 with a source-NULL MUST overwrite a
+# previously-set (stale) tmt_* column back to NULL.
+# ===========================================================================
+
+@pytest.mark.live
+def test_emit_029_source_null_clears_stale_tmt_value(tcc_test_conn):
+    """LIVE: emit_029 with all-NULL D4 values clears a stale tmt_tcc_number in target.
+
+    Regression for Task 5 Patch 1 (source-faithful + idempotent recarry):
+    if the target row already has a non-NULL tmt_* value from a prior run, and
+    the current source has NULLs for those columns, the generated 029 UPDATE must
+    overwrite them back to NULL.
+
+    Steps:
+      1. Create a minimal tcc schema in tcc_fidelity_test.
+      2. Seed an ICCB source_id=77 row with a stale tmt_tcc_number = 'STALE-VALUE'.
+         Also seed MCCB+PCB coverage rows so the coverage guard does not fire on
+         the other classes.
+      3. Build synthetic class_reads where ICCB source_id=77 has ALL NULL D4 values
+         (simulating a source row whose TMT columns are blank).
+      4. Apply the generated emit_029 SQL.
+      5. Assert tmt_tcc_number IS NULL (stale value was cleared).
+      6. Assert all other tmt_* columns are also NULL (full six-column recarry).
+    """
+    conn = tcc_test_conn
+
+    # --- Setup: fresh minimal tcc schema ---
+    _create_minimal_tcc_schema(conn)
+
+    # Seed ICCB source_id=77, MCCB source_id=88, PCB source_id=99 for coverage
+    _seed_style_rows(conn, {"ICCB": [77], "MCCB": [88], "PCB": [99]})
+
+    # Write a stale tmt_tcc_number into the ICCB row AFTER the initial seed
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE tcc.brk_iccb_styles"
+            " SET tmt_tcc_number = 'STALE-VALUE',"
+            "     tmt_notes = 'stale-note',"
+            "     tmt_trip_plug = 1"
+            " WHERE source_id = 77"
+        )
+
+    # Verify the stale value is present before applying 029
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT tmt_tcc_number, tmt_notes, tmt_trip_plug"
+            " FROM tcc.brk_iccb_styles WHERE source_id = 77"
+        )
+        pre_row = cur.fetchone()
+    assert pre_row is not None, "ICCB source_id=77 must exist before apply"
+    assert pre_row[0] == "STALE-VALUE", (
+        f"tmt_tcc_number must be 'STALE-VALUE' before apply, got {pre_row[0]!r}"
+    )
+
+    # --- Build synthetic class_reads: all D4 NULLs for source_id=77 ---
+    null_d4_reads = {
+        "ICCB": {
+            "d4_rows": [
+                (77, {
+                    "tmt_tcc_number":       None,
+                    "tmt_notes":            None,
+                    "tmt_trip_plug":        None,
+                    "tmt_breaker_type":     None,
+                    "tmt_thermal_magnetic": None,
+                    "tmt_thermal":          None,
+                }),
+            ],
+            "d5_rows": [],
+            "counts": {
+                "d4_update_count": 1, "d5_insert_count": 0,
+                "total_styles": 1, "real_override_count": 0,
+                "rating_only_count": 0, "d4_nonnull_per_col": {},
+                "d5_block_present_counts": {}, "samples": [],
+            },
+        },
+        "MCCB": {
+            "d4_rows": [
+                (88, {
+                    "tmt_tcc_number":       None,
+                    "tmt_notes":            None,
+                    "tmt_trip_plug":        None,
+                    "tmt_breaker_type":     None,
+                    "tmt_thermal_magnetic": None,
+                    "tmt_thermal":          None,
+                }),
+            ],
+            "d5_rows": [],
+            "counts": {
+                "d4_update_count": 1, "d5_insert_count": 0,
+                "total_styles": 1, "real_override_count": 0,
+                "rating_only_count": 0, "d4_nonnull_per_col": {},
+                "d5_block_present_counts": {}, "samples": [],
+            },
+        },
+        "PCB": {
+            "d4_rows": [],
+            "d5_rows": [],
+            "counts": {
+                "d4_update_count": 0, "d5_insert_count": 0,
+                "total_styles": 1, "real_override_count": 0,
+                "rating_only_count": 0, "d4_nonnull_per_col": None,
+                "d5_block_present_counts": {}, "samples": [],
+            },
+        },
+    }
+
+    null_d4_report = {
+        "provenance": {
+            "run_id": "stale-clear-test-001",
+            "source_sha256": "deadbeef",
+            "frozen_copy_path": "/test/frozen.accdb",
+            "driver_name": "TestDriver",
+            "dbms_version": "0.0.0",
+            "read_only": True,
+            "snapshot_id": "snap-stale-clear-001",
+            "host": "testhost",
+            "db_name": "tcc_fidelity_test",
+            "role": "test",
+            "table_checksums": {},
+            "generator_version": "0.2.0",
+        },
+        "classes": {cls: null_d4_reads[cls]["counts"] for cls in ("ICCB", "MCCB", "PCB")},
+    }
+
+    # --- Apply emit_029: all-NULL D4 values for source_id=77 ---
+    sql_029 = gen.emit_029(null_d4_reads, null_d4_report)
+    _exec_sql_script(conn, sql_029)
+
+    # --- Assert: stale tmt_* columns must all be NULL now ---
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT tmt_tcc_number, tmt_notes, tmt_trip_plug,"
+            "       tmt_breaker_type, tmt_thermal_magnetic, tmt_thermal"
+            " FROM tcc.brk_iccb_styles WHERE source_id = 77"
+        )
+        post_row = cur.fetchone()
+
+    assert post_row is not None, "ICCB source_id=77 must still exist after apply"
+
+    tmt_cols = (
+        "tmt_tcc_number",
+        "tmt_notes",
+        "tmt_trip_plug",
+        "tmt_breaker_type",
+        "tmt_thermal_magnetic",
+        "tmt_thermal",
+    )
+    for idx, col in enumerate(tmt_cols):
+        assert post_row[idx] is None, (
+            f"source-NULL emit_029 must clear stale {col}: "
+            f"expected NULL, got {post_row[idx]!r}"
+        )
+
+    # Cleanup
+    with conn.cursor() as cur:
+        cur.execute("DROP SCHEMA IF EXISTS tcc CASCADE")
