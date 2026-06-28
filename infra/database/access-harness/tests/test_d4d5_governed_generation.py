@@ -984,7 +984,8 @@ _SAMPLE_REPORT = {
         "read_only": True,
         "snapshot_id": "snap-unit-001",
         "host": "testhost",
-        "db_name": "tcc_fidelity_governed",
+        "governed_source_db": "tcc_fidelity_governed",
+        "tcc_snapshot_db": "tcc_breaker_viewer_20260625",
         "role": "reader",
         "table_checksums": {
             "BreakerICCBStyles": {"checksum": "aa", "matches": True},
@@ -1456,7 +1457,8 @@ def test_emit_029_030_apply_and_tamper_guard(tcc_test_conn):
             "read_only": True,
             "snapshot_id": "snap-apply-001",
             "host": "testhost",
-            "db_name": "tcc_fidelity_test",
+            "governed_source_db": "tcc_fidelity_governed",
+            "tcc_snapshot_db": "tcc_fidelity_test",
             "role": "test",
             "table_checksums": {},
             "generator_version": "0.2.0",
@@ -1696,7 +1698,8 @@ def test_emit_030_extra_row_guard_raises(tcc_test_conn):
             "read_only": True,
             "snapshot_id": "snap-030-test-001",
             "host": "testhost",
-            "db_name": "tcc_fidelity_test",
+            "governed_source_db": "tcc_fidelity_governed",
+            "tcc_snapshot_db": "tcc_fidelity_test",
             "role": "test",
             "table_checksums": {},
             "generator_version": "0.2.0",
@@ -1854,7 +1857,8 @@ def test_emit_029_provenance_header_has_row_count():
             "read_only": True,
             "snapshot_id": "snap-rc",
             "host": "h",
-            "db_name": "d",
+            "governed_source_db": "tcc_fidelity_governed",
+            "tcc_snapshot_db": "d",
             "role": "r",
             "table_checksums": {
                 "BreakerICCBStyles": {"checksum": "aa", "matches": True, "row_count": 608},
@@ -1887,7 +1891,8 @@ def test_emit_030_provenance_header_has_row_count():
             "read_only": True,
             "snapshot_id": "snap-rc",
             "host": "h",
-            "db_name": "d",
+            "governed_source_db": "tcc_fidelity_governed",
+            "tcc_snapshot_db": "d",
             "role": "r",
             "table_checksums": {
                 "BreakerICCBStyles": {"checksum": "aa", "matches": True, "row_count": 608},
@@ -1905,6 +1910,142 @@ def test_emit_030_provenance_header_has_row_count():
     )
     assert "3279" in sql, (
         "emit_030 SQL header must contain PCB row count 3279"
+    )
+
+
+# ===========================================================================
+# Task 7 -- Dual provenance labels: governed_source_db + tcc_snapshot_db
+# Fixes custody drift: the header must name BOTH the authoritative governed
+# source (tcc_fidelity_governed) AND the Phase-1 host TCC snapshot db
+# (tcc_breaker_viewer_20260625) as distinct, correctly-labelled comment lines.
+# No bare 'source_db:' line pointing at the snapshot must appear.
+# ===========================================================================
+
+def test_build_report_provenance_has_dual_labels(pg):
+    """Task 7: build_report provenance must have governed_source_db AND tcc_snapshot_db.
+
+    governed_source_db must equal 'tcc_fidelity_governed' (the authoritative
+    D4/D5 source); tcc_snapshot_db must equal the snapshot db_name from
+    access_meta.tcc_snapshot (the Phase-1 host TCC snapshot).  They must be
+    present as DISTINCT fields with DISTINCT values.  No bare 'db_name' field
+    pointing at the snapshot must be present.
+    """
+    run_id = "run_dual_label_001"
+    _seed_run(pg, run_id)
+    with pg.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO access_meta.tcc_snapshot
+                (snapshot_id, run_id, host, db_name, role, captured_at)
+            VALUES ('snap-dual-001', %s, 'snaphost', 'tcc_breaker_viewer_20260625', 'reader', now())
+            ON CONFLICT (snapshot_id) DO NOTHING
+            """,
+            (run_id,),
+        )
+    result = gen.build_report(pg, run_id)
+    prov = result["provenance"]
+
+    # governed_source_db must be present and == GOVERNED_DB constant
+    assert "governed_source_db" in prov, (
+        "Task 7: provenance must contain 'governed_source_db'"
+    )
+    assert prov["governed_source_db"] == "tcc_fidelity_governed", (
+        "Task 7: governed_source_db must be 'tcc_fidelity_governed', "
+        "got %r" % prov["governed_source_db"]
+    )
+
+    # tcc_snapshot_db must be present and == the snapshot db_name
+    assert "tcc_snapshot_db" in prov, (
+        "Task 7: provenance must contain 'tcc_snapshot_db'"
+    )
+    assert prov["tcc_snapshot_db"] == "tcc_breaker_viewer_20260625", (
+        "Task 7: tcc_snapshot_db must be 'tcc_breaker_viewer_20260625', "
+        "got %r" % prov["tcc_snapshot_db"]
+    )
+
+    # The two values must be distinct (different strings)
+    assert prov["governed_source_db"] != prov["tcc_snapshot_db"], (
+        "Task 7: governed_source_db and tcc_snapshot_db must be distinct values"
+    )
+
+    # No bare 'db_name' key in provenance (the mislabel must be gone)
+    assert "db_name" not in prov, (
+        "Task 7: provenance must NOT contain a bare 'db_name' field -- "
+        "use governed_source_db and tcc_snapshot_db instead"
+    )
+
+
+def test_emit_029_header_has_dual_labels_and_no_source_db_mislabel():
+    """Task 7: emit_029 header must carry both governed_source_db and tcc_snapshot_db.
+
+    - Header must contain a line matching '-- governed_source_db:  tcc_fidelity_governed'
+    - Header must contain a line matching '-- tcc_snapshot_db:     tcc_breaker_viewer_20260625'
+    - Header must NOT contain a line matching '-- source_db:' pointing at the snapshot db
+      (that is the mislabel this task corrects).
+    """
+    sql = gen.emit_029(_SAMPLE_READS, _SAMPLE_REPORT)
+
+    # governed_source_db present and labelled correctly
+    assert "governed_source_db:" in sql, (
+        "Task 7: emit_029 header must contain a 'governed_source_db:' line"
+    )
+    assert "tcc_fidelity_governed" in sql, (
+        "Task 7: emit_029 header must contain the value 'tcc_fidelity_governed'"
+    )
+
+    # tcc_snapshot_db present and labelled correctly
+    assert "tcc_snapshot_db:" in sql, (
+        "Task 7: emit_029 header must contain a 'tcc_snapshot_db:' line"
+    )
+    assert "tcc_breaker_viewer_20260625" in sql, (
+        "Task 7: emit_029 header must contain the snapshot db value 'tcc_breaker_viewer_20260625'"
+    )
+
+    # No bare 'source_db:' line pointing at the snapshot db (the mislabel)
+    source_db_lines = [
+        ln for ln in sql.splitlines()
+        if ln.strip().startswith("-- source_db:")
+    ]
+    assert source_db_lines == [], (
+        "Task 7: emit_029 must NOT contain a '-- source_db:' line (custody drift mislabel). "
+        "Offending lines: %r" % source_db_lines
+    )
+
+
+def test_emit_030_header_has_dual_labels_and_no_source_db_mislabel():
+    """Task 7: emit_030 header must carry both governed_source_db and tcc_snapshot_db.
+
+    - Header must contain a line matching '-- governed_source_db:  tcc_fidelity_governed'
+    - Header must contain a line matching '-- tcc_snapshot_db:     tcc_breaker_viewer_20260625'
+    - Header must NOT contain a line matching '-- source_db:' pointing at the snapshot db
+      (that is the mislabel this task corrects).
+    """
+    sql = gen.emit_030(_SAMPLE_READS, _SAMPLE_REPORT)
+
+    # governed_source_db present and labelled correctly
+    assert "governed_source_db:" in sql, (
+        "Task 7: emit_030 header must contain a 'governed_source_db:' line"
+    )
+    assert "tcc_fidelity_governed" in sql, (
+        "Task 7: emit_030 header must contain the value 'tcc_fidelity_governed'"
+    )
+
+    # tcc_snapshot_db present and labelled correctly
+    assert "tcc_snapshot_db:" in sql, (
+        "Task 7: emit_030 header must contain a 'tcc_snapshot_db:' line"
+    )
+    assert "tcc_breaker_viewer_20260625" in sql, (
+        "Task 7: emit_030 header must contain the snapshot db value 'tcc_breaker_viewer_20260625'"
+    )
+
+    # No bare 'source_db:' line pointing at the snapshot db (the mislabel)
+    source_db_lines = [
+        ln for ln in sql.splitlines()
+        if ln.strip().startswith("-- source_db:")
+    ]
+    assert source_db_lines == [], (
+        "Task 7: emit_030 must NOT contain a '-- source_db:' line (custody drift mislabel). "
+        "Offending lines: %r" % source_db_lines
     )
 
 
@@ -2038,7 +2179,8 @@ _PROD_EXEC_REPORT = {
         "read_only": True,
         "snapshot_id": "snap-pe-001",
         "host": "testhost",
-        "db_name": "tcc_fidelity_test",
+        "governed_source_db": "tcc_fidelity_governed",
+        "tcc_snapshot_db": "tcc_fidelity_test",
         "role": "test",
         "table_checksums": {},
         "generator_version": "0.2.0",
@@ -2217,7 +2359,8 @@ def test_emit_030_value_parity_guard_passes_on_clean_apply(tcc_test_conn):
             "read_only": True,
             "snapshot_id": "snap-parity-001",
             "host": "testhost",
-            "db_name": "tcc_fidelity_test",
+            "governed_source_db": "tcc_fidelity_governed",
+            "tcc_snapshot_db": "tcc_fidelity_test",
             "role": "test",
             "table_checksums": {},
             "generator_version": "0.2.0",
@@ -2358,7 +2501,8 @@ def test_emit_029_source_null_clears_stale_tmt_value(tcc_test_conn):
             "read_only": True,
             "snapshot_id": "snap-stale-clear-001",
             "host": "testhost",
-            "db_name": "tcc_fidelity_test",
+            "governed_source_db": "tcc_fidelity_governed",
+            "tcc_snapshot_db": "tcc_fidelity_test",
             "role": "test",
             "table_checksums": {},
             "generator_version": "0.2.0",
