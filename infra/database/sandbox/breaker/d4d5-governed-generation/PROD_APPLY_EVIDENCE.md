@@ -59,14 +59,30 @@ files are 1.28MB/15.7MB, too large for an MCP SQL-as-argument call). Source-of-t
 
 ---
 
-## Pending (operator-gated)
-- Step 5 -- author + apply 031 (view-transition; per the VOCABULARY_MAP plan: drop the D4-absent flag,
-  change the D5 flag to `d5_inst_override_carried_reference_only`, guarded to RAISE if not yet populated;
-  carries the 028 `frame_counts` Cartesian-product perf-fix into the next view re-creation). 031 must be
-  AUTHORED first (does not exist yet) -> design -> validate -> cross-engine -> separate gated apply.
+## Step 5 -- 031 view-transition (`tcc_031_lvbreakertcc_tmt_contract_view_transition`) -- APPLIED 2026-06-28
+- **Lane:** authored + dry-run validated + cross-engine IRP on branch `tcc/031-tmt-contract-view-transition`
+  (final SQL `841ca3a8`, off main `9a2ba40a`). Dry-run 8/8 + guard re-validation green on a clone that
+  first reproduced the prod 028 hash `58cc15fe`. IRP found + fixed a guard fail-open (D4 Important, Claude)
+  and a D5 partial-coverage gap (Codex P2) -> terminal per-frame coverage guard; final Codex pass clean.
+  See `031_DRYRUN_VALIDATION.md` + `031_IRP_REVIEW.md`.
+- **Pre-apply preflight (live prod, read-only):** 031 absent from migration history; pre-031 state confirmed
+  (d4_absent_old=30809, d5_old=42069, d5_carried_new=0); value-parity baseline hash 58cc15fe + aggregates
+  42069/40125/1944/1923/0; 029/030 data present (iccb 608 / mccb 10236 / d5 14222); guard preconditions hold
+  on prod (0 D4-uncarried frames, 0 D5-uncovered frames).
+- **Mechanism:** MCP `apply_migration` (outer BEGIN/COMMIT stripped; runner wraps the tx; the leading
+  per-frame guard runs first and the trailing partition/survivor guard aborts within the runner tx).
+  Returned `{"success":true}` -- both DO-block guards passed.
+- **Post-apply verification (all PASS):** value-parity hash `58cc15fe36e5dabf131e154e730c1833` IDENTICAL to
+  pre-031 (perf-fix value-neutral); aggregates 42069/40125/1944/1923/0 unchanged; d4_absent_survivors=0,
+  d5_old_survivors=0, d5_carried=42069; `projection_hazards` distribution = the exact 6 combos
+  (20073 / 14538 / 5502 / 1923 / 21 / 12, sum 42069). No serving change (Decision 1); the side table and the
+  diagnostic views remain not Data-API-reachable.
 
 ## Summary
-029 + 030 (DDL + data) fully applied + verified on governed prod `fxoyniqnrlkxfligbxmg`. D4 helper cols
-populated (608 ICCB / 10236 MCCB non-null, source cross-check md5 4/4 == governed source); D5 side table
-populated (14222 rows, partition 687/13533/2, 0 orphans, value-parity). NOT wired to serving (the serving
-cut-line stays 028-defined per Decision 1). 031 view-transition is the remaining gated step.
+029 + 030 + 031 (DDL + data + view-transition) fully applied + verified on governed prod
+`fxoyniqnrlkxfligbxmg`. D4 helper cols populated (608 ICCB / 10236 MCCB non-null, source cross-check md5
+4/4 == governed source); D5 side table populated (14222 rows, partition 687/13533/2, 0 orphans,
+value-parity). 031 transitioned the 028 hazard surface (d4-absent dropped, d5 relabeled
+`carried_reference_only`) and removed the `frame_counts` Cartesian -- value-parity hash 58cc15fe unchanged,
+exact 6-combo distribution, 0 stale survivors. NOT wired to serving (the serving cut-line stays 028-defined
+per Decision 1). The breaker D4/D5 carry lane (#79) is complete end-to-end on prod.

@@ -65,10 +65,13 @@ scope were clean from the first pass. No remaining blocker; prod apply is operat
 - Lock safety: ACCESS EXCLUSIVE on the base view only, no current readers/grants, no deadlock path.
 - Scope: exactly drop-d4 + relabel-d5 + perf-fix; no served flips; ASCII clean; COMMENT accurate.
 
-## Operator decision
+## Operator decision -- GO (applied 2026-06-28)
 
-Gate: apply **031 DDL** to governed prod `fxoyniqnrlkxfligbxmg` via MCP `apply_migration` (outer
-BEGIN/COMMIT stripped; the runner wraps the tx; the fail-closed guard still aborts within it). Its OWN
-explicit go. Apply-evidence standard: pre-apply branch SHA, post-apply live re-check (hash `58cc15fe`,
-aggregates, 6-combo distribution, 0 stale survivors), transcript committed. Down available
-(`031_..._down.sql`). Clone disposable (DROP hook-blocked -> manual).
+Operator ratified the record and gave GO conditional on prod MCP reconnection + a live pre-apply baseline
+check. Both met: preflight on live prod confirmed pre-031 state (d4_absent_old=30809, d5_old=42069,
+d5_carried_new=0), hash `58cc15fe`, 029/030 data present, and 0 D4-uncarried / 0 D5-uncovered frames.
+**031 DDL applied** via MCP `apply_migration` (`tcc_031_lvbreakertcc_tmt_contract_view_transition`, outer
+BEGIN/COMMIT stripped) -> `{"success":true}` (both guards passed). Post-apply on live prod: hash
+`58cc15fe` IDENTICAL, aggregates unchanged, 0 stale survivors, d5_carried=42069, exact 6-combo
+distribution. Evidence: `PROD_APPLY_EVIDENCE.md` Step 5. Down available (`031_..._down.sql`). Clone
+`tcc_breaker_d4d5_031val_20260628` disposable (DROP hook-blocked -> manual housekeeping).
