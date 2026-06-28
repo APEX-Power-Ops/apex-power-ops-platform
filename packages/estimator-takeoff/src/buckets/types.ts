@@ -21,6 +21,7 @@ export type OperatorQuestionCode =
   | 'unrecognized_apparatus_row' | 'profile_warning'
   | 'transformer_attrs_unparsed'
   | 'transformer_scope_pending' | 'transformer_catalog_gap'
+  | 'transformer_breaker_conflict'
 
 export interface OperatorQuestion { question: string; context: string; code: OperatorQuestionCode; inputIndex?: number }
 export interface TakeoffResult {
@@ -53,6 +54,7 @@ export type DispositionReasonCode =
   | 'transformer_attrs_unparsed'
   | 'transformer_scope_pending'
   | 'transformer_catalog_gap'
+  | 'transformer_breaker_conflict'
 
 export interface ApparatusDisposition {
   inputIndex: number

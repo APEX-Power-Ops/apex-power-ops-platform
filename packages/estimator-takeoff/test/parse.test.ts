@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseArtifact, ArtifactContractError } from '../src/extraction/parse'
+import { assessApparatus } from '../src/signature/normalize'
 
 const ok = () => ({
   pdf: 'x.pdf',
@@ -28,5 +29,22 @@ describe('parseArtifact', () => {
   it('rejects a malformed voltageAssertions shape', () => { expect(err((a) => (a.voltageAssertions = [{ voltageV: 480 }])).path).toBe('voltageAssertions[0].tags') })
   it('does not throw a raw TypeError on a non-serializable value (BigInt)', () => {
     expect(err((a) => (a.apparatus = [10n])).path).toBe('apparatus[0]')
+  })
+
+  // FIX 3: candidateKind 'transformer' must be accepted (previously only 'breaker' was allowed)
+  it('accepts candidateKind:transformer and the row is recognized as a transformer', () => {
+    const a = {
+      pdf: 'x.pdf',
+      apparatus: [{ raw: 'T-5 480V 750KVA DRY-TYPE', tag: 'T-5', sheet: 'E1', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', busVoltageV: 480, candidateKind: 'transformer' }],
+    }
+    expect(() => parseArtifact(a)).not.toThrow()
+    // Verify the row is transformer-recognized
+    const row = a.apparatus[0] as any
+    const assessment = assessApparatus({ ...row, bbox: row.bbox as [number,number,number,number] })
+    expect(assessment.assessmentCode).toBe('transformer_recognized')
+  })
+
+  it('rejects an unknown candidateKind value', () => {
+    expect(err((a) => (a.apparatus[0].candidateKind = 'relay')).path).toBe('apparatus[0].candidateKind')
   })
 })

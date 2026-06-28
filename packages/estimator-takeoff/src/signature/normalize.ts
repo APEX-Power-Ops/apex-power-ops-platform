@@ -1,4 +1,4 @@
-﻿import type { ExtractedApparatus } from '../extraction/types'
+import type { ExtractedApparatus } from '../extraction/types'
 import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, TransformerSignature, TripFunction, VoltageBasis } from './types'
 import type { OperatorQuestion, OperatorQuestionCode } from '../buckets/types'
 import { classifyVoltage } from './voltage'
@@ -13,7 +13,9 @@ const KVA_RATING = /(?<!\w)\d+(?:\.\d+)?\s*kVA\b/i
 function looksLikeTransformer(x: ExtractedApparatus): boolean {
   if (x.candidateKind === 'transformer') return true
   if (TRANSFORMER_DEVICE.test(x.raw)) return true
-  return KVA_RATING.test(x.raw) && (x.tag !== undefined && x.tag.length > 0)
+  // FIX 4: kVA-rating fallback must not steal NON_BREAKER rows (UPS, PDU, etc. can carry kVA ratings).
+  // A real transformer device token (XFMR/transformer/dry-type/pad-mount/oil-filled) already recognizes above.
+  return KVA_RATING.test(x.raw) && (x.tag !== undefined && x.tag.length > 0) && !NON_BREAKER.test(x.raw)
 }
 
 function looksLikeBreaker(raw: string): boolean {
@@ -147,7 +149,8 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
     if (FRAME_TRIP.test(x.raw)) {
       return {
         signature: null, isBreakerShaped: false, assessmentCode: 'transformer_breaker_conflict',
-        questions: [q(x, 'Label names a transformer but carries a breaker frame/trip rating - confirm device type before counting.', 'non_breaker_carries_rating')],
+        // FIX 5: use 'transformer_breaker_conflict' as the OperatorQuestionCode (now valid in the union)
+        questions: [q(x, 'Label names a transformer but carries a breaker frame/trip rating - confirm device type before counting.', 'transformer_breaker_conflict')],
       }
     }
     return assessTransformer(x, voltageBasis)

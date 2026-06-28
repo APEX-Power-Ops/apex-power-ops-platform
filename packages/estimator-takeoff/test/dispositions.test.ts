@@ -66,4 +66,31 @@ describe('dispositions', () => {
     expect(d[0]!.status).toBe('matched')
     expect(d[1]!).toMatchObject({ status: 'associated_source', reasonCode: 'unresolved_tag_attached' })
   })
+
+  // FIX 5 (opus I3): conflict via runTakeoff -> status 'question', reasonCode 'transformer_breaker_conflict'
+  it('XFMR 800AF/600AT via runTakeoff -> question with transformer_breaker_conflict reasonCode', () => {
+    const a = art([row({ raw: 'XFMR 800AF/600AT', tag: 'X1', busVoltageV: 480 })])
+    const result = runTakeoff(a)
+    const d = result.dispositions
+    expect(d[0]!).toMatchObject({ status: 'question', reasonCode: 'transformer_breaker_conflict' })
+    // No matched line or scope_pending line should be fabricated
+    expect(result.matchedLines).toHaveLength(0)
+    expect(result.scopePendingLines).toHaveLength(0)
+    // The question should use the transformer_breaker_conflict code
+    const q = result.operatorQuestions.find((qq) => qq.code === 'transformer_breaker_conflict')
+    expect(q).toBeDefined()
+  })
+
+  // FIX 6 (opus M2): cross-family tag-collision - voltage-less transformer row must NOT attach to breaker line
+  it('cross-family tag-collision: voltage-less transformer row is NOT folded as associated_source of breaker', () => {
+    const a = art([
+      row({ raw: 'MSB 4000AF/4000AT LSIG', tag: 'T-1', busVoltageV: 480, mountingHint: 'draw_out', evidence: 'one-line' }), // breaker, matched
+      row({ raw: 'XFMR 1000KVA DRY-TYPE', tag: 'T-1', evidence: 'power-plan' }),                                             // transformer, voltage-less, non-authoritative
+    ])
+    const d = runTakeoff(a).dispositions
+    expect(d[0]!.status).toBe('matched')
+    // The transformer row must NOT be 'associated_source' of the breaker - it should surface as its own question
+    expect(d[1]!.status).not.toBe('associated_source')
+    expect(d[1]!.status).toBe('question')
+  })
 })

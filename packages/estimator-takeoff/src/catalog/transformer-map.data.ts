@@ -8,7 +8,9 @@ export const OIL_GROUP = [
   'Transformer - Pad Mount Oil (TTR/WR/IR)',
   'Transformer - Pad Mount Oil (TTR/IR/WR/PF/Oil)',
 ] as const satisfies readonly string[]
-// R1 (estimating authority). If NOT operator-ratified, leave the PLACEHOLDER below (fails Step-4 ratify check).
+// R1 (estimating authority). Defaults are operator-lean PROVISIONAL (estimator-unratified, R1_RATIFIED=false);
+// never auto-priced (fail-closed lives in the scope_pending path). Operator flips R1_RATIFIED to true
+// when the two tiers are confirmed.
 export const DRY_DEFAULT_REF: string = 'Transformer - Dry Type (TTR/WR/IR)'    // [operator lean]
 export const OIL_DEFAULT_REF: string = 'Transformer - Pad Mount Oil (TTR/WR/IR)' // [operator lean]
 export const R1_RATIFIED = false   // operator flips to true when the two tiers are confirmed
