@@ -24,3 +24,6 @@ build-backend = "hatchling.build"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "live: requires tcc_fidelity_governed + frozen Access on this machine; excluded by -m 'not live'",
+]
