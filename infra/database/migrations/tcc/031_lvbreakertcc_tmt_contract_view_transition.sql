@@ -55,7 +55,7 @@ BEGIN;
 -- D4 (029) and D5 (030) data they now assert is actually present.
 -- ---------------------------------------------------------------------------
 DO $$
-DECLARE v_d4 bigint; v_d5 bigint;
+DECLARE v_iccb bigint; v_mccb bigint; v_d5 bigint;
 BEGIN
   IF to_regclass('tcc.brk_style_native_overrides') IS NULL THEN
     RAISE EXCEPTION '031 precondition: tcc.brk_style_native_overrides missing -- apply 030 DDL before 031';
@@ -68,14 +68,18 @@ BEGIN
 
   -- tmt_breaker_type is a smallint enum (0/1); non-null is a clean "029 data ran"
   -- sentinel (the text helper cols can be empty-string non-null, so they are NOT used).
-  SELECT (SELECT count(*) FROM tcc.brk_iccb_styles WHERE tmt_breaker_type IS NOT NULL)
-       + (SELECT count(*) FROM tcc.brk_mccb_styles WHERE tmt_breaker_type IS NOT NULL)
-    INTO v_d4;
-  IF v_d4 = 0 THEN
-    RAISE EXCEPTION '031 precondition: D4 tmt helper columns are unpopulated -- apply 029 data before 031 (refusing to drop the d4-absent hazard flag)';
+  -- Gate PER CLASS, not summed: the d4-absent flag is carried by ICCB and MCCB frames,
+  -- and the two helper tables are recarried independently (029 data = one UPDATE per
+  -- class). A summed >0 check would let an ICCB-only carry mask a skipped MCCB recarry
+  -- while 031 still strips the flag from every MCCB frame -- so require BOTH classes
+  -- witnessed before dropping the flag (IRP guard-fail-closed, 2026-06-28).
+  SELECT count(*) INTO v_iccb FROM tcc.brk_iccb_styles WHERE tmt_breaker_type IS NOT NULL;
+  SELECT count(*) INTO v_mccb FROM tcc.brk_mccb_styles WHERE tmt_breaker_type IS NOT NULL;
+  IF v_iccb = 0 OR v_mccb = 0 THEN
+    RAISE EXCEPTION '031 precondition: D4 tmt helper columns unpopulated for a class (iccb_nn=%, mccb_nn=%) -- apply 029 data before 031 (refusing to drop the d4-absent hazard flag)', v_iccb, v_mccb;
   END IF;
 
-  RAISE NOTICE '031 precondition OK: D4 populated rows=%, D5 side rows=%', v_d4, v_d5;
+  RAISE NOTICE '031 precondition OK: D4 ICCB=%, MCCB=%, D5 side rows=%', v_iccb, v_mccb, v_d5;
 END $$;
 
 -- ---------------------------------------------------------------------------
@@ -265,8 +269,11 @@ COMMENT ON VIEW tcc.vw_lvbreakertcc_tmt_frame_contract IS
   '#79 F-79-02/04: class-keyed TMT frame contract view with curve-serving posture and projection hazards. 031 transition: d4-absent flag dropped (029 carried the six TMT_* helper cols); d5 relabeled to d5_inst_override_carried_reference_only (030 native_bounded reference, NOT served); frame child-counts via per-frame aggregation CTEs (no Cartesian). No serving change; does not infer Access behavior.';
 
 -- ---------------------------------------------------------------------------
--- Post-transition invariants for the change log: the three views still partition
--- the contract, and NEITHER stale flag survives.
+-- Post-transition checks for the change log. serving+hazards=total is a real
+-- structural partition invariant. The d4/d5 survivor counts are an AUTHORING
+-- tripwire only: they read the just-replaced view text, so they catch a stale
+-- literal accidentally left in the new view definition by a bad edit -- they are
+-- NOT the data gate (the leading precondition guard is the data gate).
 -- ---------------------------------------------------------------------------
 DO $$
 DECLARE
