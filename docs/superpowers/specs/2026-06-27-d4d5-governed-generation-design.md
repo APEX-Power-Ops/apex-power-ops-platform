@@ -68,6 +68,12 @@ time) and the in-tx invariants (apply time).
    `r_int_ninst_*` (3) and `r_iec_ninst_*` (11) are represented intentionally. Refuse on any missing
    column. (The manifest is pinned from the governed `access_raw` schema and committed as a constant.)
 
+## Data fidelity vs ASCII-only (Rev 2.1, cross-engine review)
+The ASCII-only convention governs AUTHORED code/SQL structure/comments only. SOURCE DATA is carried
+VERBATIM as UTF-8: TMT_Notes and JSONB block values may contain non-ASCII text ((c)/(r)/degree/+-, smart
+quotes, bullets), and the emitter sets `client_encoding='UTF8'` so they apply faithfully to the UTF-8
+prod tcc. The generator MUST NOT escape or strip source data -- doing so would break source fidelity.
+
 ## Policy (a) preserved (operator-ratified)
 Carry the raw override/timing/rating blocks VERBATIM. `InstOvrAmps > 0` is a REPORT metric only, never
 a filter. Rating-only styles retained. One row per style with >= 1 non-null D5 block (~14222 total).

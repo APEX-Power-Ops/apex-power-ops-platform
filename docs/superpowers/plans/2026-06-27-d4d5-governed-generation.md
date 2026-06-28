@@ -19,7 +19,11 @@ in the breaker-sandbox dir.
 `tcc_breaker_baseline_20260625` (live dry-run, controller-run).
 
 ## Global Constraints
-- ASCII-only in all SQL / comments / copy (no em-dashes or smart quotes; use `--` and `->`).
+- ASCII-only in AUTHORED SQL / comments / copy (no em-dashes or smart quotes; use `--` and `->`).
+  NOTE (Rev 2.1, cross-engine review): VERBATIM SOURCE DATA literals carried from Access (e.g. TMT_Notes
+  may contain (c)/(r)/degree/+- and smart quotes) are NOT subject to this -- they are emitted verbatim as
+  UTF-8 (the generator sets `client_encoding='UTF8'`). Escaping or stripping source data would be a
+  source-fidelity violation; the prod tcc DB is UTF-8.
 - Commit identity `jasonlswenson-sys <jasonlswenson@gmail.com>`; every commit ends with
   `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`.
 - NO new dependencies. NO prod apply of 029/030 in this slice (build + dry-run + review only).
