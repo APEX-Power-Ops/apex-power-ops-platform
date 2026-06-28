@@ -24,6 +24,7 @@ This record makes the review history auditable from the repo (the live SDD ledge
 | 5 -- cross-engine corrective wave (4 patches, below) | `1f738b55` | SPEC PASS + QUALITY APPROVED |
 | 5b -- blocker-proof regression test (stale tmt_* -> NULL on source-NULL) | `497ed365` | -- |
 | 6 -- prod-executable SQL: remove psql meta-command + raw-artifact proof | `71ce1a12` | SPEC PASS + QUALITY APPROVED |
+| 7 -- provenance labels: governed_source_db vs tcc_snapshot_db | `73b59f4f` | controller-verified (trivial label fix) |
 
 ## Whole-slice opus review (`be8f9552`) -- MERGE READY (code-level)
 0 Critical / 0 Important. Cross-task seams verified: single validated `run_id` threaded through
@@ -61,6 +62,19 @@ generation + host-clone dry-run + cross-engine) was still owed.
 Boundary note (reviewer): the prod-executor coverage proves the artifact is valid pure server SQL that
 psycopg accepts unmodified (the apply_migration path); if apply_migration ever re-wraps/splits the SQL,
 that envelope is outside this test's scope.
+
+## Cross-engine (Codex) round 3 -- of `5cdd8faf` (+ first real generated artifacts)
+1. MEDIUM (provenance/custody drift): the generated header labeled the Phase-1 host TCC snapshot
+   (`tcc_breaker_viewer_20260625`) as `source_db`, but the D4/D5 source is governed `access_raw` in
+   `tcc_fidelity_governed`. FIXED (Task 7 `73b59f4f`): emit two DISTINCT labels --
+   `governed_source_db = tcc_fidelity_governed` (authoritative source) + `tcc_snapshot_db = <host
+   snapshot>` (informational); the bare `source_db:` mislabel removed.
+2. LOW: spec/plan prose still referenced `\set ON_ERROR_STOP` (a future-agent hazard now that the code
+   dropped it). Patched: spec apply-pattern + plan Task-3 prose + the plan's emit-shape test assertion
+   now describe pure-server-SQL / no-meta-command.
+Note: the generated artifacts (`_generated/029_d4_data.sql` etc.) are intentionally NOT committed until
+the host-clone dry-run validates them, so they were not independently auditable in this round; the
+reported header/count checks were consistent with the code.
 
 ## Test posture
 Single-process full suite green (the implementer's Task 5 run: 227 passed / 1 skipped / 0 regressions).

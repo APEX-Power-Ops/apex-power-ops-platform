@@ -320,7 +320,7 @@ def test_emit_029_has_stage_and_rowlevel_guards():
     sql = gen.emit_029(SAMPLE_READS, SAMPLE_REPORT)
     assert "CREATE TEMP TABLE" in sql
     assert "BEGIN;" in sql and "COMMIT;" in sql
-    assert "ON_ERROR_STOP" in sql
+    assert not any(line.startswith("\\") for line in sql.splitlines())  # PURE server SQL: no psql meta-commands
     assert "run_id" in sql and SAMPLE_REPORT["provenance"]["run_id"] in sql  # provenance header
     # row-level guards: stage count, dup-key, coverage anti-join, post-write count
     for needle in ("stage count", "duplicate", "anti-join", "rows updated"):
@@ -344,8 +344,11 @@ def test_generated_sql_applies_and_guards_fire_on_tcc_fidelity_test(...):
 
 - [ ] **Step 3: Implement the emitters + CLI**
 
-Each emitter builds: (a) the provenance comment header from `report["provenance"]`; (b)
-`\set ON_ERROR_STOP on` + `BEGIN;`; (c) `CREATE TEMP TABLE stage_... ON COMMIT DROP` + chunked
+Each emitter builds: (a) the provenance comment header from `report["provenance"]` (distinct
+`governed_source_db` = tcc_fidelity_governed AND `tcc_snapshot_db` = the host snapshot); (b)
+`SET client_encoding='UTF8';` + `SET standard_conforming_strings=on;` + `BEGIN;` (NO `\set` meta-command --
+the artifact must be PURE server SQL for apply_migration/psycopg; fail-closed is the in-tx DO RAISE);
+(c) `CREATE TEMP TABLE stage_... ON COMMIT DROP` + chunked
 `INSERT ... VALUES` of the staged rows (verbatim literal helpers from the dry-run generator:
 `lit_text`/`lit_int`/`sql_jsonb`); (d) DO-block assertions IN-TX -- stage count == header count, no
 duplicate key (`GROUP BY ... HAVING count(*)>1`), DDL present (target cols/table/PK exist), coverage

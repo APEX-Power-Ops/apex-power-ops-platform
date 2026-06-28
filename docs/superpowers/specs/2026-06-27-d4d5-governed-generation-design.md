@@ -41,7 +41,10 @@ provenance travelling in the SQL header, not from a re-read of `D:\TCC_NEW.accdb
   / rating_only / samples + the full provenance block.
 
 ## Provenance header (embedded in EACH emitted SQL)
-`run_id`, `snapshot_id`, governed source DB name, Access `source_sha256`, `frozen_copy_path`,
+`run_id`, `snapshot_id`, `governed_source_db` (= `tcc_fidelity_governed`, where `access_raw` lives -- the
+ACTUAL D4/D5 source) AND `tcc_snapshot_db` (= the Phase-1 read-only host TCC bridge, e.g.
+`tcc_breaker_viewer_20260625`, INFORMATIONAL -- NOT the D4/D5 source; keep the two labels DISTINCT so
+custody is unambiguous), Access `source_sha256`, `frozen_copy_path`,
 `driver`, and -- for each table that artifact carries -- `row_count`, `checksum`, `matches`. Plus
 `generated_at`, `generator_version`. SQL comment block; integrity enforced by the gates (generation
 time) and the in-tx invariants (apply time).
@@ -82,8 +85,10 @@ a filter. Rating-only styles retained. One row per style with >= 1 non-null D5 b
 The emitted DATA SQL is the SINGLE prod-bound artifact (same file dry-run on a clone, then applied to
 prod governed `tcc` on the gate -- the 027/028 model). NO `%dryrun%` name lock; NO divergent variants.
 Counts alone are insufficient for data SQL (IDs/classes can diverge while counts match), so each
-artifact uses a TEMP-STAGE + ROW-LEVEL-COVERAGE pattern, all inside one `BEGIN; ... COMMIT;` with
-`ON_ERROR_STOP` and an in-tx DO-guard so a RAISE aborts every following write even under `psql -f`:
+artifact uses a TEMP-STAGE + ROW-LEVEL-COVERAGE pattern, all inside one `BEGIN; ... COMMIT;` where an
+in-tx DO-guard RAISE aborts the transaction (the trailing COMMIT then rolls back). The artifact is PURE
+SERVER SQL -- NO psql meta-commands (no `\set`) -- so it executes unmodified via the prod apply path
+(apply_migration / psycopg server protocol):
 
 **029 (D4):** stage `(source_id, tmt_*)` rows into a TEMP table, then assert before writing:
 - stage row count == the header D4 count for that class;
