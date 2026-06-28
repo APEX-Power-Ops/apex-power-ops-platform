@@ -1190,11 +1190,10 @@ def generate(conn, requested_run_id, out_dir, generated_at=None, snapshot_id=Non
     path_030 = out_path / "030_d5_data.sql"
     path_rpt = out_path / "generation_report.json"
 
-    path_029.write_text(sql_029, encoding="utf-8")
-    path_030.write_text(sql_030, encoding="utf-8")
-    path_rpt.write_text(
-        _json_io.dumps(report, indent=2, default=_jdefault, ensure_ascii=False),
-        encoding="utf-8",
+    path_029.write_bytes(sql_029.encode("utf-8"))
+    path_030.write_bytes(sql_030.encode("utf-8"))
+    path_rpt.write_bytes(
+        _json_io.dumps(report, indent=2, default=_jdefault, ensure_ascii=False).encode("utf-8")
     )
 
     return {

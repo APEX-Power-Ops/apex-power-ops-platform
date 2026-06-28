@@ -2917,3 +2917,82 @@ def test_generate_stamps_explicit_generated_at(governed_conn, tmp_path):
         "Task 9: report provenance['generated_at'] must equal %r, got %r"
         % (explicit_ts, prov.get("generated_at"))
     )
+
+
+# ===========================================================================
+# Task 10 -- no CR doubling: generate() writes exact bytes (write_bytes not write_text)
+# Fixes Windows text-mode CR doubling: write_text without newline= translates \n
+# to \r\n, doubling a source \r\n into \r\r\n inside tmt_notes SQL literals.
+# ===========================================================================
+
+@pytest.mark.live
+def test_generate_artifacts_have_no_doubled_cr(governed_conn, tmp_path):
+    """Task 10: generate() must not introduce doubled CR sequences when writing artifacts.
+
+    Root cause: Path.write_text without newline= causes Windows text mode to
+    translate every \n -> \r\n, so a source \r\n in a tmt_notes SQL literal
+    becomes \r\r\n.  Fix: switch to write_bytes so no newline translation occurs.
+
+    Strategy: emit the SQL strings (the authoritative byte source), count how
+    many \r\r\n sequences each string already contains from genuine source data,
+    then assert the written file bytes contain NO MORE than that count.  Any
+    excess would mean the write introduced additional doubled CRs.
+
+    Before the fix, write_text translates every \n to \r\n on Windows, turning
+    all 36828 \r\n sequences into \r\r\n (plus inflating the 4 pre-existing ones),
+    so the file has 36832 \r\r\n vs the string's 4 -> assertion FAILS.
+    After the fix, write_bytes writes the string's exact bytes, so the file
+    has the same 4 \r\r\n as the string -> assertion PASSES.
+
+    Additional assertion: source CRLF (\r\n) is preserved in 029 bytes (not
+    stripped to \n), proving the fix preserves rather than drops source CRs.
+    """
+    import pathlib
+
+    # Emit the SQL strings so we have the authoritative byte source counts.
+    from access_harness import d4d5_governed_generation as _gen
+    reads = {
+        cls: _gen.read_class(governed_conn, cls)
+        for cls in ("ICCB", "MCCB", "PCB")
+    }
+    # Use generate() for the write path under test, but also inspect the raw
+    # strings to measure the baseline doubled-CR count from source data.
+    run_id = _gen.select_run_id(governed_conn, None)
+    report = _gen.build_report(governed_conn, run_id)
+    # Merge per-class counts into report (same as generate() does internally)
+    for cls, r in reads.items():
+        report["classes"].setdefault(cls, {}).update(r["counts"])
+
+    sql_029_str = _gen.emit_029(reads, report)
+    sql_030_str = _gen.emit_030(reads, report)
+    import json as _json
+    rpt_str = __import__("json").dumps(report, indent=2,
+                                       default=str, ensure_ascii=False)
+
+    baseline = {
+        "sql_029": sql_029_str.count("\r\r\n"),
+        "sql_030": sql_030_str.count("\r\r\n"),
+        "report_json": rpt_str.count("\r\r\n"),
+    }
+
+    # Now run generate() to exercise the write path.
+    result = gen.generate(governed_conn, None, str(tmp_path))
+
+    # Each written file must contain no MORE \r\r\n than the baseline string.
+    for key in ("sql_029", "sql_030", "report_json"):
+        data = pathlib.Path(result[key]).read_bytes()
+        count_in_file = data.count(b"\r\r\n")
+        assert count_in_file <= baseline[key], (
+            "Task 10: %s write introduced %d extra \\r\\r\\n (file=%d, string baseline=%d); "
+            "write_text without newline= doubles source CRLFs on Windows"
+            % (key, count_in_file - baseline[key], count_in_file, baseline[key])
+        )
+
+    # Source CRLF must be preserved (not stripped to LF) in the 029 artifact.
+    # The multi-line tmt_notes values from Access carry \r\n verbatim; the fix
+    # preserves them as single \r\n rather than dropping or doubling them.
+    data_029 = pathlib.Path(result["sql_029"]).read_bytes()
+    assert b"\r\n" in data_029, (
+        "Task 10: 029 bytes must contain at least one \\r\\n (source CRLF preserved); "
+        "tmt_notes from Access carry CRLF line endings that must survive the write"
+    )
