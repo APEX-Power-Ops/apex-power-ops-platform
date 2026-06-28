@@ -1121,7 +1121,6 @@ def emit_030(class_reads, report):
 # Task 3 -- generate() orchestrator
 # ---------------------------------------------------------------------------
 
-import datetime as _dt
 import json as _json_io
 import pathlib as _pathlib
 
@@ -1143,7 +1142,8 @@ def generate(conn, requested_run_id, out_dir, generated_at=None, snapshot_id=Non
     come from the SAME selected run_id that passed assert_style_evidence
     (build_report queries by run_id -- no separate latest-extraction call).
 
-    generated_at: if None, stamped internally as UTC ISO string.
+    generated_at: if None, OMITTED from the artifacts (keeps 029/030/report
+    byte-reproducible across runs); pass an explicit ISO string to stamp provenance.
 
     snapshot_id: passed through to build_report for fail-closed snapshot selection
     (P3).  If None and there are multiple snapshots for the run_id, GenerationRefused
@@ -1167,10 +1167,6 @@ def generate(conn, requested_run_id, out_dir, generated_at=None, snapshot_id=Non
 
     # Gates 3-6
     assert_style_evidence(conn, run_id)
-
-    # Stamp generated_at if not provided
-    if generated_at is None:
-        generated_at = _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Read all 3 classes
     reads = {cls: read_class(conn, cls) for cls in MANIFEST}
