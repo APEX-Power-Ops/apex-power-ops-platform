@@ -40,11 +40,17 @@ column is byte-identical to 028; only `projection_hazards` changes.
 
 Leading in-tx DO block RAISEs unless ALL of:
 - `tcc.brk_style_native_overrides` exists (030 DDL), and is non-empty (030 data);
-- `tmt_breaker_type` is non-null on at least one helper-table row (029 data).
+- `tmt_breaker_type` is non-null on at least one row of `brk_iccb_styles` **AND** at
+  least one row of `brk_mccb_styles` (029 data, gated PER CLASS).
 
 `tmt_breaker_type` (smallint enum 0/1) is the population sentinel; the text helper cols
-can be empty-string non-null, so they are deliberately NOT used. Trailing DO block
-re-asserts `serving + hazards = total` and that NEITHER stale flag survives.
+can be empty-string non-null, so they are deliberately NOT used. The two classes are
+gated independently (NOT summed): all d4-flagged frames are MCCB (ICCB has 0 tmt_frames),
+so a summed check would let an ICCB-only carry mask a skipped MCCB recarry while 031
+strips the flag from every MCCB frame -- requiring both classes witnessed closes that
+fail-open (IRP guard-fail-closed Important, 2026-06-28). Trailing DO block re-asserts
+`serving + hazards = total` (a real structural invariant); the d4/d5 survivor counts are
+an authoring tripwire (they read the just-replaced view text), not the data gate.
 
 ## Grounded premises (verified against prod fxoyniqnrlkxfligbxmg, 2026-06-28)
 
