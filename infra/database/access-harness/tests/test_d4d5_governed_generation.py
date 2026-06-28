@@ -710,6 +710,35 @@ def test_policy_a_iccb_no_row_dropped_live(governed_conn):
 
 
 @pytest.mark.live
+def test_generate_compose_live(governed_conn, tmp_path):
+    """generate() orchestrator: files written + report['classes'] populated for all 3 classes.
+
+    Closes Task-2 Minor 2: build_report returns classes:{} and the orchestrator
+    merges them with the per-class counts from read_class.
+    """
+    result = gen.generate(governed_conn, None, str(tmp_path))
+    # All 3 output files must exist
+    import pathlib
+    assert pathlib.Path(result["sql_029"]).exists(), "029_d4_data.sql not written"
+    assert pathlib.Path(result["sql_030"]).exists(), "030_d5_data.sql not written"
+    assert pathlib.Path(result["report_json"]).exists(), "generation_report.json not written"
+    # report["classes"] must be populated for all 3 classes
+    classes = result["classes"]
+    assert set(classes.keys()) == {"ICCB", "MCCB", "PCB"}, \
+        f"Expected ICCB/MCCB/PCB in classes, got {set(classes.keys())}"
+    for cls in ("ICCB", "MCCB", "PCB"):
+        c = classes[cls]
+        assert "d4_update_count" in c, f"{cls} missing d4_update_count"
+        assert "d5_insert_count" in c, f"{cls} missing d5_insert_count"
+        assert c["d5_insert_count"] > 0, f"{cls} d5_insert_count should be > 0"
+    # PCB has no D4
+    assert classes["PCB"]["d4_update_count"] == 0, "PCB d4_update_count must be 0"
+    # ICCB + MCCB have D4
+    assert classes["ICCB"]["d4_update_count"] > 0, "ICCB d4_update_count must be > 0"
+    assert classes["MCCB"]["d4_update_count"] > 0, "MCCB d4_update_count must be > 0"
+
+
+@pytest.mark.live
 def test_governed_vs_direct_parity(governed_conn):
     """Governed-vs-direct parity: counts from access_raw must match frozen Access.
 
@@ -868,3 +897,574 @@ def test_governed_vs_direct_parity(governed_conn):
                     f"{cls_key}: inst_override block value mismatch "
                     f"direct={d_blk!r} gov={g_blk!r}"
                 )
+
+
+# ===========================================================================
+# Task 3 -- Unit (non-live) tests: emit_029 + emit_030 shape checks
+# ===========================================================================
+
+# Synthetic data for emit shape tests (no DB required).
+
+_SAMPLE_REPORT = {
+    "provenance": {
+        "run_id": "run-unit-test-001",
+        "source_sha256": "aabbccdd" * 8,
+        "frozen_copy_path": "/frozen/TCC_NEW.accdb",
+        "driver_name": "TestDriver",
+        "dbms_version": "0.0.0",
+        "read_only": True,
+        "snapshot_id": "snap-unit-001",
+        "host": "testhost",
+        "db_name": "tcc_fidelity_governed",
+        "role": "reader",
+        "table_checksums": {
+            "BreakerICCBStyles": {"checksum": "aa", "matches": True},
+            "BreakerMCCBStyles": {"checksum": "bb", "matches": True},
+            "BreakerPCBStyles": {"checksum": "cc", "matches": True},
+        },
+        "generator_version": "0.2.0",
+        "generated_at": "2026-06-27T00:00:00Z",
+    },
+    "classes": {
+        "ICCB": {
+            "d4_update_count": 2,
+            "d5_insert_count": 3,
+            "total_styles": 3,
+            "real_override_count": 1,
+            "rating_only_count": 1,
+            "d4_nonnull_per_col": {},
+            "d5_block_present_counts": {},
+            "samples": [],
+        },
+        "MCCB": {
+            "d4_update_count": 1,
+            "d5_insert_count": 1,
+            "total_styles": 1,
+            "real_override_count": 0,
+            "rating_only_count": 1,
+            "d4_nonnull_per_col": {},
+            "d5_block_present_counts": {},
+            "samples": [],
+        },
+        "PCB": {
+            "d4_update_count": 0,
+            "d5_insert_count": 2,
+            "total_styles": 2,
+            "real_override_count": 0,
+            "rating_only_count": 2,
+            "d4_nonnull_per_col": None,
+            "d5_block_present_counts": {},
+            "samples": [],
+        },
+    },
+}
+
+_SAMPLE_READS = {
+    "ICCB": {
+        "d4_rows": [
+            (101, {
+                "tmt_tcc_number": "TCC-A",
+                "tmt_notes": "note one",
+                "tmt_trip_plug": 0,
+                "tmt_breaker_type": 1,
+                "tmt_thermal_magnetic": None,
+                "tmt_thermal": 0,
+            }),
+            (102, {
+                "tmt_tcc_number": None,
+                "tmt_notes": None,
+                "tmt_trip_plug": 1,
+                "tmt_breaker_type": 0,
+                "tmt_thermal_magnetic": 1,
+                "tmt_thermal": None,
+            }),
+        ],
+        "d5_rows": [
+            (101, {"inst_override": {"InstOvrAmps": 100.0}, "ninst_override": None,
+                   "brk_times": None, "r_int": {"r_int_inst_240": 50}, "r_iec": None}),
+            (102, {"inst_override": None, "ninst_override": None,
+                   "brk_times": {"BrkTimesMechOpening50": 30}, "r_int": None, "r_iec": None}),
+            (103, {"inst_override": {"InstOvrAmps": 0}, "ninst_override": None,
+                   "brk_times": None, "r_int": None, "r_iec": {"r_iec_inst_220": 25}}),
+        ],
+        "counts": _SAMPLE_REPORT["classes"]["ICCB"],
+    },
+    "MCCB": {
+        "d4_rows": [
+            (201, {
+                "tmt_tcc_number": "TCC-B",
+                "tmt_notes": None,
+                "tmt_trip_plug": 0,
+                "tmt_breaker_type": 0,
+                "tmt_thermal_magnetic": 0,
+                "tmt_thermal": 1,
+            }),
+        ],
+        "d5_rows": [
+            (201, {"inst_override": None, "ninst_override": None,
+                   "brk_times": None, "r_int": {"r_int_inst_480": 65}, "r_iec": None}),
+        ],
+        "counts": _SAMPLE_REPORT["classes"]["MCCB"],
+    },
+    "PCB": {
+        "d4_rows": [],
+        "d5_rows": [
+            (301, {"inst_override": {"InstOvrAmps": 200}, "ninst_override": None,
+                   "brk_times": None, "r_int": None, "r_iec": None}),
+            (302, {"inst_override": None, "ninst_override": None,
+                   "brk_times": None, "r_int": {"r_int_inst_600": 85}, "r_iec": None}),
+        ],
+        "counts": _SAMPLE_REPORT["classes"]["PCB"],
+    },
+}
+
+
+class TestEmit029Shape:
+    """Shape tests for emit_029 (no DB required)."""
+
+    def setup_method(self):
+        self.sql = gen.emit_029(_SAMPLE_READS, _SAMPLE_REPORT)
+
+    def test_contains_create_temp_table_stage(self):
+        assert "CREATE TEMP TABLE stage_029_" in self.sql, \
+            "emit_029 must create a per-class temp stage table"
+
+    def test_contains_begin_and_commit(self):
+        assert "BEGIN;" in self.sql
+        assert "COMMIT;" in self.sql
+
+    def test_contains_on_error_stop(self):
+        assert "\\set ON_ERROR_STOP on" in self.sql, \
+            "emit_029 must set ON_ERROR_STOP"
+
+    def test_contains_provenance_run_id(self):
+        assert "run-unit-test-001" in self.sql, \
+            "emit_029 must embed the run_id in the provenance header"
+
+    def test_guard_stage_count(self):
+        """Stage-count guard must be present."""
+        assert "stage row count" in self.sql or "v_stage_count" in self.sql, \
+            "emit_029 must contain a stage row count guard"
+
+    def test_guard_duplicate(self):
+        """Duplicate source_id guard must be present."""
+        assert "duplicate" in self.sql.lower() or "HAVING count(*) > 1" in self.sql, \
+            "emit_029 must contain a duplicate source_id guard"
+
+    def test_guard_ddl_present(self):
+        """DDL-present guard (information_schema.columns) must be present."""
+        assert "information_schema.columns" in self.sql, \
+            "emit_029 must check DDL presence via information_schema.columns"
+
+    def test_guard_coverage_antijoin(self):
+        """Coverage anti-join guard (orphan rows) must be present."""
+        assert "orphan" in self.sql.lower() or "LEFT JOIN" in self.sql or "NOT EXISTS" in self.sql, \
+            "emit_029 must contain a coverage anti-join guard"
+
+    def test_contains_update(self):
+        assert "UPDATE tcc." in self.sql, "emit_029 must emit UPDATE tcc.<table>"
+
+    def test_post_write_assertion(self):
+        """Post-write assertion (DO block after UPDATE) must be present."""
+        # The post-write DO block comes AFTER the UPDATE
+        update_pos = self.sql.rfind("UPDATE tcc.")
+        postwrite_pos = self.sql.find("post-write", update_pos)
+        assert postwrite_pos > update_pos, \
+            "emit_029 must contain a post-write count assertion after the UPDATE"
+
+    def test_no_dryrun_lock(self):
+        """emit_029 is prod-bound -- must NOT contain the dryrun sandbox guard."""
+        assert "dryrun" not in self.sql.lower(), \
+            "emit_029 must NOT contain a dryrun database guard"
+
+    def test_iccb_and_mccb_both_present(self):
+        assert "stage_029_iccb" in self.sql, "ICCB stage table missing"
+        assert "stage_029_mccb" in self.sql, "MCCB stage table missing"
+
+    def test_on_commit_drop(self):
+        assert "ON COMMIT DROP" in self.sql, "Temp stage table must use ON COMMIT DROP"
+
+
+class TestEmit030Shape:
+    """Shape tests for emit_030 (no DB required)."""
+
+    def setup_method(self):
+        self.sql = gen.emit_030(_SAMPLE_READS, _SAMPLE_REPORT)
+
+    def test_contains_stage_030_d5(self):
+        assert "stage_030_d5" in self.sql, "emit_030 must create stage_030_d5"
+
+    def test_contains_on_conflict(self):
+        assert "ON CONFLICT (breaker_class, source_id) DO UPDATE" in self.sql, \
+            "emit_030 must use ON CONFLICT (breaker_class, source_id) DO UPDATE"
+
+    def test_contains_target_table(self):
+        assert "brk_style_native_overrides" in self.sql, \
+            "emit_030 must target brk_style_native_overrides"
+
+    def test_contains_begin_and_commit(self):
+        assert "BEGIN;" in self.sql
+        assert "COMMIT;" in self.sql
+
+    def test_contains_on_error_stop(self):
+        assert "\\set ON_ERROR_STOP on" in self.sql
+
+    def test_contains_provenance_run_id(self):
+        assert "run-unit-test-001" in self.sql
+
+    def test_guard_stage_count(self):
+        assert "stage row count" in self.sql or "v_stage_count" in self.sql
+
+    def test_guard_duplicate(self):
+        assert "duplicate" in self.sql.lower() or "HAVING count(*) > 1" in self.sql
+
+    def test_guard_ddl_present(self):
+        assert "information_schema.tables" in self.sql or "information_schema.columns" in self.sql
+
+    def test_guard_pk_shape(self):
+        """PK must be exactly (breaker_class, source_id)."""
+        assert "PRIMARY KEY" in self.sql or "v_pk_cols" in self.sql, \
+            "emit_030 must verify the PK shape"
+
+    def test_guard_coverage_antijoin(self):
+        """Per-class coverage anti-join must be present."""
+        assert "NOT EXISTS" in self.sql or "orphan" in self.sql.lower(), \
+            "emit_030 must contain a per-class coverage anti-join guard"
+
+    def test_post_write_assertion(self):
+        insert_pos = self.sql.rfind("INSERT INTO tcc.brk_style_native_overrides")
+        postwrite_pos = self.sql.find("post-write", insert_pos)
+        assert postwrite_pos > insert_pos, \
+            "emit_030 must contain a post-write assertion after the INSERT"
+
+    def test_on_commit_drop(self):
+        assert "ON COMMIT DROP" in self.sql
+
+
+# ===========================================================================
+# Task 3 -- LIVE apply test on tcc_fidelity_test
+# Proves the coverage anti-join guard is real and raises on orphan rows.
+# ===========================================================================
+
+@pytest.fixture(scope="module")
+def tcc_test_conn():
+    """Module-scoped connection to tcc_fidelity_test for Task 3 live apply tests.
+
+    Skips if ACCESS_HARNESS_SUPERUSER_DSN is unset.
+    """
+    if not os.environ.get("ACCESS_HARNESS_SUPERUSER_DSN"):
+        pytest.skip("ACCESS_HARNESS_SUPERUSER_DSN unset -- skipping live apply tests")
+    from access_harness.config import test_pg_dsn
+    import psycopg
+    conn = psycopg.connect(test_pg_dsn(), autocommit=True)
+    # Verify we are on tcc_fidelity_test
+    with conn.cursor() as cur:
+        cur.execute("SELECT current_database()")
+        (db,) = cur.fetchone()
+    if db != "tcc_fidelity_test":
+        conn.close()
+        pytest.skip(f"Expected tcc_fidelity_test, got {db!r}")
+    yield conn
+    conn.close()
+
+
+def _create_minimal_tcc_schema(conn):
+    """Create a minimal tcc schema with the 3 style tables and brk_style_native_overrides.
+
+    Used by the live apply test to simulate the migration-029/030 DDL without
+    touching the real tcc DB.
+    """
+    with conn.cursor() as cur:
+        cur.execute("DROP SCHEMA IF EXISTS tcc CASCADE")
+        cur.execute("CREATE SCHEMA tcc")
+
+        # brk_iccb_styles with tmt_* columns (mig 029 shape)
+        cur.execute("""
+            CREATE TABLE tcc.brk_iccb_styles (
+                id serial PRIMARY KEY,
+                source_id integer NOT NULL UNIQUE,
+                tmt_tcc_number       text,
+                tmt_notes            text,
+                tmt_trip_plug        smallint,
+                tmt_breaker_type     smallint,
+                tmt_thermal_magnetic smallint,
+                tmt_thermal          smallint
+            )
+        """)
+
+        # brk_mccb_styles with tmt_* columns
+        cur.execute("""
+            CREATE TABLE tcc.brk_mccb_styles (
+                id serial PRIMARY KEY,
+                source_id integer NOT NULL UNIQUE,
+                tmt_tcc_number       text,
+                tmt_notes            text,
+                tmt_trip_plug        smallint,
+                tmt_breaker_type     smallint,
+                tmt_thermal_magnetic smallint,
+                tmt_thermal          smallint
+            )
+        """)
+
+        # brk_pcb_styles (no D4 cols needed for apply test, but needed for D5 coverage)
+        cur.execute("""
+            CREATE TABLE tcc.brk_pcb_styles (
+                id serial PRIMARY KEY,
+                source_id integer NOT NULL UNIQUE
+            )
+        """)
+
+        # brk_style_native_overrides (mig 030 shape)
+        cur.execute("""
+            CREATE TABLE tcc.brk_style_native_overrides (
+                breaker_class  text    NOT NULL,
+                source_id      integer NOT NULL,
+                inst_override  jsonb,
+                ninst_override jsonb,
+                brk_times      jsonb,
+                r_int          jsonb,
+                r_iec          jsonb,
+                ovr_curves     jsonb,
+                CONSTRAINT brk_style_native_overrides_class_chk
+                    CHECK (breaker_class IN ('ICCB','MCCB','PCB')),
+                CONSTRAINT brk_style_native_overrides_source_id_chk
+                    CHECK (source_id > 0),
+                PRIMARY KEY (breaker_class, source_id)
+            )
+        """)
+
+
+def _seed_style_rows(conn, source_ids_by_class):
+    """Seed style rows so the coverage guard has something to join against."""
+    with conn.cursor() as cur:
+        for sid in source_ids_by_class.get("ICCB", []):
+            cur.execute("INSERT INTO tcc.brk_iccb_styles (source_id) VALUES (%s)", (sid,))
+        for sid in source_ids_by_class.get("MCCB", []):
+            cur.execute("INSERT INTO tcc.brk_mccb_styles (source_id) VALUES (%s)", (sid,))
+        for sid in source_ids_by_class.get("PCB", []):
+            cur.execute("INSERT INTO tcc.brk_pcb_styles (source_id) VALUES (%s)", (sid,))
+
+
+def _exec_sql_script(conn, sql_str):
+    """Execute a multi-statement SQL script string against the connection.
+
+    psql metacommands (lines starting with backslash, e.g. \\set ON_ERROR_STOP)
+    are not valid SQL and cannot be passed to psycopg.execute().  Strip them
+    before execution -- the ON_ERROR_STOP behaviour is irrelevant when running
+    via psycopg because any error already raises immediately.
+
+    Runs the entire script in one cursor.execute() call so multi-statement
+    execution (including DO blocks and DDL) works correctly.
+    """
+    # Strip psql metacommand lines (\\set, \\i, \\c, etc.)
+    cleaned_lines = [
+        line for line in sql_str.splitlines()
+        if not line.strip().startswith("\\")
+    ]
+    cleaned = "\n".join(cleaned_lines)
+    with conn.cursor() as cur:
+        cur.execute(cleaned)
+
+
+@pytest.mark.live
+def test_emit_029_030_apply_and_tamper_guard(tcc_test_conn):
+    """LIVE apply test: prove the coverage anti-join guard RAISEs on orphan rows.
+
+    Steps:
+      1. Create a minimal tcc schema in tcc_fidelity_test.
+      2. Seed a few source_id rows in the style tables.
+      3. Build small synthetic class_reads whose source_ids EXIST in the target.
+      4. Apply emit_029 -- assert it COMMITs and values landed.
+      5. Apply emit_030 -- assert it COMMITs and rows landed.
+      6. TAMPER: build class_reads with a source_id NOT in the target (orphan).
+      7. Apply tampered emit_029 -- assert a psycopg error is raised (guard fires).
+      8. Assert nothing was written (txn aborted).
+    """
+    import psycopg
+
+    conn = tcc_test_conn
+
+    # --- Setup: minimal tcc schema + seed rows ---
+    _create_minimal_tcc_schema(conn)
+    _seed_style_rows(conn, {"ICCB": [10, 20], "MCCB": [30], "PCB": [40, 50]})
+
+    # --- Build class_reads that are KNOWN-GOOD (all source_ids exist) ---
+    good_reads = {
+        "ICCB": {
+            "d4_rows": [
+                (10, {"tmt_tcc_number": "TCC-X", "tmt_notes": None,
+                      "tmt_trip_plug": 0, "tmt_breaker_type": 1,
+                      "tmt_thermal_magnetic": 0, "tmt_thermal": 0}),
+                (20, {"tmt_tcc_number": None, "tmt_notes": "note2",
+                      "tmt_trip_plug": 1, "tmt_breaker_type": 0,
+                      "tmt_thermal_magnetic": 1, "tmt_thermal": 1}),
+            ],
+            "d5_rows": [
+                (10, {"inst_override": {"InstOvrAmps": 100}, "ninst_override": None,
+                      "brk_times": None, "r_int": None, "r_iec": None}),
+                (20, {"inst_override": None, "ninst_override": None,
+                      "brk_times": {"BrkTimesMechOpening50": 20},
+                      "r_int": None, "r_iec": None}),
+            ],
+            "counts": {"d4_update_count": 2, "d5_insert_count": 2,
+                       "total_styles": 2, "real_override_count": 1,
+                       "rating_only_count": 0, "d4_nonnull_per_col": {},
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+        "MCCB": {
+            "d4_rows": [
+                (30, {"tmt_tcc_number": "TCC-Y", "tmt_notes": None,
+                      "tmt_trip_plug": 0, "tmt_breaker_type": 0,
+                      "tmt_thermal_magnetic": 0, "tmt_thermal": 0}),
+            ],
+            "d5_rows": [
+                (30, {"inst_override": None, "ninst_override": None,
+                      "brk_times": None, "r_int": {"r_int_inst_480": 65}, "r_iec": None}),
+            ],
+            "counts": {"d4_update_count": 1, "d5_insert_count": 1,
+                       "total_styles": 1, "real_override_count": 0,
+                       "rating_only_count": 1, "d4_nonnull_per_col": {},
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+        "PCB": {
+            "d4_rows": [],
+            "d5_rows": [
+                (40, {"inst_override": {"InstOvrAmps": 200}, "ninst_override": None,
+                      "brk_times": None, "r_int": None, "r_iec": None}),
+                (50, {"inst_override": None, "ninst_override": None,
+                      "brk_times": None, "r_int": {"r_int_inst_600": 85}, "r_iec": None}),
+            ],
+            "counts": {"d4_update_count": 0, "d5_insert_count": 2,
+                       "total_styles": 2, "real_override_count": 1,
+                       "rating_only_count": 1, "d4_nonnull_per_col": None,
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+    }
+
+    good_report = {
+        "provenance": {
+            "run_id": "apply-test-001",
+            "source_sha256": "deadbeef",
+            "frozen_copy_path": "/test/frozen.accdb",
+            "driver_name": "TestDriver",
+            "dbms_version": "0.0.0",
+            "read_only": True,
+            "snapshot_id": "snap-apply-001",
+            "host": "testhost",
+            "db_name": "tcc_fidelity_test",
+            "role": "test",
+            "table_checksums": {},
+            "generator_version": "0.2.0",
+        },
+        "classes": {
+            "ICCB": good_reads["ICCB"]["counts"],
+            "MCCB": good_reads["MCCB"]["counts"],
+            "PCB": good_reads["PCB"]["counts"],
+        },
+    }
+
+    # --- Apply emit_029 (good) -- should COMMIT ---
+    sql_029_good = gen.emit_029(good_reads, good_report)
+    _exec_sql_script(conn, sql_029_good)
+
+    # Verify values landed for ICCB source_id=10
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT tmt_tcc_number, tmt_trip_plug FROM tcc.brk_iccb_styles WHERE source_id=10"
+        )
+        row = cur.fetchone()
+    assert row is not None, "ICCB source_id=10 must exist after emit_029 apply"
+    assert row[0] == "TCC-X", f"tmt_tcc_number mismatch: {row[0]!r}"
+    assert row[1] == 0, f"tmt_trip_plug mismatch: {row[1]!r}"
+
+    # --- Apply emit_030 (good) -- should COMMIT ---
+    sql_030_good = gen.emit_030(good_reads, good_report)
+    _exec_sql_script(conn, sql_030_good)
+
+    # Verify D5 row landed for ICCB source_id=10
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT inst_override FROM tcc.brk_style_native_overrides "
+            "WHERE breaker_class='ICCB' AND source_id=10"
+        )
+        row = cur.fetchone()
+    assert row is not None, "D5 row for ICCB source_id=10 must exist after emit_030 apply"
+    assert row[0] is not None, "inst_override must be non-null for ICCB source_id=10"
+    assert row[0].get("InstOvrAmps") == 100, f"InstOvrAmps mismatch: {row[0]!r}"
+
+    # --- TAMPER: add an orphan source_id (9999) not in tcc.brk_iccb_styles ---
+    tampered_reads = {
+        "ICCB": {
+            "d4_rows": [
+                (10, {"tmt_tcc_number": "TAMPERED", "tmt_notes": None,
+                      "tmt_trip_plug": 0, "tmt_breaker_type": 0,
+                      "tmt_thermal_magnetic": 0, "tmt_thermal": 0}),
+                # orphan: source_id 9999 does not exist in brk_iccb_styles
+                (9999, {"tmt_tcc_number": "ORPHAN", "tmt_notes": None,
+                        "tmt_trip_plug": 0, "tmt_breaker_type": 0,
+                        "tmt_thermal_magnetic": 0, "tmt_thermal": 0}),
+            ],
+            "d5_rows": good_reads["ICCB"]["d5_rows"],
+            "counts": {
+                "d4_update_count": 2,  # 2 rows so count guard passes
+                "d5_insert_count": 2, "total_styles": 2,
+                "real_override_count": 0, "rating_only_count": 0,
+                "d4_nonnull_per_col": {}, "d5_block_present_counts": {}, "samples": [],
+            },
+        },
+        "MCCB": good_reads["MCCB"],
+        "PCB": good_reads["PCB"],
+    }
+    tampered_report = dict(good_report)
+    tampered_report = {
+        "provenance": good_report["provenance"],
+        "classes": {
+            "ICCB": tampered_reads["ICCB"]["counts"],
+            "MCCB": good_reads["MCCB"]["counts"],
+            "PCB": good_reads["PCB"]["counts"],
+        },
+    }
+
+    sql_029_tampered = gen.emit_029(tampered_reads, tampered_report)
+
+    # The coverage anti-join guard MUST RAISE -- the orphan source_id 9999 has no
+    # matching row in tcc.brk_iccb_styles.
+    tamper_raised = False
+    tamper_exc = None
+    try:
+        _exec_sql_script(conn, sql_029_tampered)
+    except Exception as exc:  # noqa: BLE001
+        tamper_raised = True
+        tamper_exc = exc
+
+    # The guard raised -- but the connection is now in an aborted transaction block
+    # (BEGIN was issued before the DO block raised).  Roll back so subsequent
+    # statements can execute on the same connection.
+    with conn.cursor() as cur:
+        cur.execute("ROLLBACK")
+
+    if tamper_raised:
+        err_str = str(tamper_exc).lower()
+        # Guard message must mention 'orphan' or '029 guard'
+        assert "orphan" in err_str or "029 guard" in err_str or "no match" in err_str, \
+            f"Expected orphan/guard error, got: {tamper_exc!r}"
+
+    assert tamper_raised, (
+        "Tampered emit_029 (orphan source_id=9999) MUST raise via the coverage anti-join guard -- "
+        "guard is NOT enforcing row-level coverage"
+    )
+
+    # Verify the ICCB row was NOT updated to 'TAMPERED' (txn aborted -- rollback confirmed)
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT tmt_tcc_number FROM tcc.brk_iccb_styles WHERE source_id=10"
+        )
+        row = cur.fetchone()
+    assert row is not None
+    assert row[0] == "TCC-X", (
+        f"tmt_tcc_number must still be 'TCC-X' (not 'TAMPERED') after aborted txn: {row[0]!r}"
+    )
+
+    # Cleanup: drop tcc schema so other tests in this module are not affected
+    with conn.cursor() as cur:
+        cur.execute("DROP SCHEMA IF EXISTS tcc CASCADE")
