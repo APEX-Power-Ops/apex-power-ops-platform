@@ -1,0 +1,9 @@
+# Generated governed D4/D5 artifacts are byte-exact custody records: their sha256
+# is pinned in README.md and validated on a host clone. The source data carries
+# embedded CR bytes verbatim, so EOL normalization (core.autocrlf) MUST NOT touch
+# these files -- otherwise the committed blob diverges from the validated/SHA-pinned
+# bytes and the verbatim source data is silently corrupted. -text disables CRLF<->LF
+# conversion in BOTH directions (add and checkout).
+029_d4_data.sql -text
+030_d5_data.sql -text
+generation_report.json -text
