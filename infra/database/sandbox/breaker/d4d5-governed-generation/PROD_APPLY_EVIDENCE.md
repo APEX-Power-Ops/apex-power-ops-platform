@@ -39,9 +39,34 @@ files are 1.28MB/15.7MB, too large for an MCP SQL-as-argument call). Source-of-t
 
 ---
 
-## Pending (operator-gated, each its own go)
-- Step 3 -- 030 DDL (`tcc_030_d5_native_overrides_sidetable`, MCP apply_migration; side table absent on
-  prod, fresh CREATE).
-- Step 4 -- 030 data (`030_d5_data.sql`, sha256 e384648c..., host-side psql -f; D5 14222 rows; verify
-  partition 687/13533/2, 0 orphans, ovr_curves 0, value-parity).
-- Step 5 -- author + apply 031 (view-transition; carries the 028 frame_counts perf-fix).
+## Step 3 -- 030 DDL (`tcc_030_d5_native_overrides_sidetable`) -- APPLIED 2026-06-28
+- **Mechanism:** MCP `apply_migration` (outer BEGIN/COMMIT omitted; runner wraps; fail-closed shape guard
+  aborts within it). Returned `{"success":true}`. Side table was absent pre-apply -> fresh CREATE.
+- **Post-state (verified):** `tcc.brk_style_native_overrides` exists with 8 cols
+  (breaker_class:text, source_id:integer, inst_override/ninst_override/brk_times/r_int/r_iec/ovr_curves:jsonb),
+  PK exactly (breaker_class, source_id), 2 named CHECK constraints, 0 rows.
+
+## Step 4 -- 030 data (`030_d5_data.sql`) -- APPLIED 2026-06-28
+- **Pre-apply SHA:** host file sha256 = `e384648c17336f25a4ded90ca98cef309f71a72863acbf11b7dcbab2c6c5e365`
+  == validated == origin/main blob.
+- **Mechanism:** host-side `psql "$SUPABASE_PROD_DSN" -v ON_ERROR_STOP=1 -f 030_d5_data.sql`. `PSQL_EXIT=0`.
+- **Transcript (key lines):** `SET; SET; BEGIN; CREATE TABLE (stage_030_d5); <INSERT batches>; DO (guard);
+  INSERT 0 14222 (into tcc.brk_style_native_overrides); DO; DO; DO (value-parity + full-domain extra-row +
+  PK-exact guards); COMMIT`. All in-tx guards passed.
+- **Post-apply verification (all PASS):** D5 per-class 608 / 10335 / 3279 = 14222; partition real 687 /
+  rating_only 13533 / neither 2; orphans 0; ovr_curves non-null 0; value-parity ICCB sid 11
+  InstOvrAmps=46000.0 with a 16-key inst_override block.
+
+---
+
+## Pending (operator-gated)
+- Step 5 -- author + apply 031 (view-transition; per the VOCABULARY_MAP plan: drop the D4-absent flag,
+  change the D5 flag to `d5_inst_override_carried_reference_only`, guarded to RAISE if not yet populated;
+  carries the 028 `frame_counts` Cartesian-product perf-fix into the next view re-creation). 031 must be
+  AUTHORED first (does not exist yet) -> design -> validate -> cross-engine -> separate gated apply.
+
+## Summary
+029 + 030 (DDL + data) fully applied + verified on governed prod `fxoyniqnrlkxfligbxmg`. D4 helper cols
+populated (608 ICCB / 10236 MCCB non-null, source cross-check md5 4/4 == governed source); D5 side table
+populated (14222 rows, partition 687/13533/2, 0 orphans, value-parity). NOT wired to serving (the serving
+cut-line stays 028-defined per Decision 1). 031 view-transition is the remaining gated step.
