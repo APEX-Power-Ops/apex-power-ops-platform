@@ -6,7 +6,6 @@
 -- source_sha256:       c15adaefa57ed1bbc10d82c24842c5d9fc89e5d2b6992f50c0aeba764a59a16a
 -- frozen_copy_path:    D:\_access_frozen\TCC_NEW_20260608T210440_c15adaef.accdb
 -- driver:              ACEODBC.DLL
--- generated_at:     2026-06-28T03:58:56Z
 -- table BreakerICCBStyles: checksum=132de0305eaad195b0ebce4f944a19d0da87b96739f7a1908a16892f7d3bb539 matches=True row_count=608
 -- table BreakerMCCBStyles: checksum=485ef989fd8dcf51da104be4316ff6ef4b8013ab389b93f4da70c71f95f7a006 matches=True row_count=10335
 -- table BreakerPCBStyles: checksum=8458772933c817977f66bc359c56b21b7e9ff173c64138dc2f9bfe2434566734 matches=True row_count=3279
