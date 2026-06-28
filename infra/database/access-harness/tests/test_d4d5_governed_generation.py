@@ -2542,3 +2542,288 @@ def test_emit_029_source_null_clears_stale_tmt_value(tcc_test_conn):
     # Cleanup
     with conn.cursor() as cur:
         cur.execute("DROP SCHEMA IF EXISTS tcc CASCADE")
+
+
+# ===========================================================================
+# Task 8 -- P2b: full-domain extra-row guard (ICCB/MCCB/PCB, not just staged)
+# ===========================================================================
+
+def test_emit_030_extra_row_guard_uses_full_domain():
+    """P2b (unit): extra-row guard SQL must NOT filter to staged classes.
+
+    The guard must check ALL of tcc.brk_style_native_overrides (full domain
+    ICCB/MCCB/PCB) without a restriction on which classes appear in the stage.
+    The old guard had a 't.breaker_class IN (SELECT DISTINCT breaker_class FROM
+    stage_030_d5)' clause -- the new guard must remove that restriction so a
+    zero-staged class cannot leave stale rows undetected.
+    """
+    sql = gen.emit_030(_SAMPLE_READS, _SAMPLE_REPORT)
+
+    # The old filtered form must be absent.
+    assert "SELECT DISTINCT breaker_class FROM stage_030_d5" not in sql, (
+        "P2b: extra-row guard must NOT filter to 'SELECT DISTINCT breaker_class FROM "
+        "stage_030_d5' -- that misses zero-staged classes"
+    )
+    # The NOT EXISTS anti-join against stage_030_d5 must still be present.
+    assert "NOT EXISTS" in sql, (
+        "P2b: extra-row guard must still use NOT EXISTS anti-join against stage_030_d5"
+    )
+    # The RAISE for extra rows must still be present.
+    assert "extra-row guard" in sql.lower() or "v_extra" in sql, (
+        "P2b: extra-row guard DO block must still be present"
+    )
+
+
+@pytest.mark.live
+def test_emit_030_extra_row_guard_raises_for_zero_staged_class(tcc_test_conn):
+    """P2b (live): extra-row guard must RAISE when a class has ZERO staged rows
+    but the target already has rows for that class from a prior apply.
+
+    Scenario:
+      1. Create tcc schema + seed rows for ICCB[10,20], MCCB[30], PCB[40,50].
+      2. Apply emit_030 with ALL three classes staged -> 5 rows land.
+      3. Re-stage with PCB d5_rows=[] (zero PCB staged); ICCB+MCCB rows unchanged.
+         PCB rows remain in the target from step 2.
+      4. Apply partial emit_030 -> guard MUST RAISE for PCB stale rows.
+      5. Rollback; verify stale PCB rows still present.
+    """
+    conn = tcc_test_conn
+
+    # Setup
+    _create_minimal_tcc_schema(conn)
+    _seed_style_rows(conn, {"ICCB": [10, 20], "MCCB": [30], "PCB": [40, 50]})
+
+    # Step 2: full apply -- all classes staged
+    full_reads = {
+        "ICCB": {
+            "d4_rows": [],
+            "d5_rows": [
+                (10, {"inst_override": {"InstOvrAmps": 100}, "ninst_override": None,
+                      "brk_times": None, "r_int": None, "r_iec": None}),
+                (20, {"inst_override": None, "ninst_override": None,
+                      "brk_times": {"BrkTimesMechOpening50": 20},
+                      "r_int": None, "r_iec": None}),
+            ],
+            "counts": {"d4_update_count": 0, "d5_insert_count": 2,
+                       "total_styles": 2, "real_override_count": 1,
+                       "rating_only_count": 0, "d4_nonnull_per_col": {},
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+        "MCCB": {
+            "d4_rows": [],
+            "d5_rows": [
+                (30, {"inst_override": None, "ninst_override": None,
+                      "brk_times": None, "r_int": {"r_int_inst_480": 65}, "r_iec": None}),
+            ],
+            "counts": {"d4_update_count": 0, "d5_insert_count": 1,
+                       "total_styles": 1, "real_override_count": 0,
+                       "rating_only_count": 1, "d4_nonnull_per_col": {},
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+        "PCB": {
+            "d4_rows": [],
+            "d5_rows": [
+                (40, {"inst_override": {"InstOvrAmps": 200}, "ninst_override": None,
+                      "brk_times": None, "r_int": None, "r_iec": None}),
+                (50, {"inst_override": None, "ninst_override": None,
+                      "brk_times": None, "r_int": {"r_int_inst_600": 85}, "r_iec": None}),
+            ],
+            "counts": {"d4_update_count": 0, "d5_insert_count": 2,
+                       "total_styles": 2, "real_override_count": 1,
+                       "rating_only_count": 1, "d4_nonnull_per_col": None,
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+    }
+    full_report = {
+        "provenance": {
+            "run_id": "p2b-full-run-001",
+            "source_sha256": "deadbeef", "frozen_copy_path": "/test/f.accdb",
+            "driver_name": "T", "dbms_version": "0", "read_only": True,
+            "snapshot_id": "snap-p2b-001", "host": "h",
+            "governed_source_db": "tcc_fidelity_governed",
+            "tcc_snapshot_db": "tcc_fidelity_test", "role": "test",
+            "table_checksums": {}, "generator_version": "0.2.0",
+        },
+        "classes": {cls: full_reads[cls]["counts"] for cls in ("ICCB", "MCCB", "PCB")},
+    }
+    sql_full = gen.emit_030(full_reads, full_report)
+    _exec_sql_script(conn, sql_full)
+
+    # Confirm 5 rows landed
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM tcc.brk_style_native_overrides")
+        (cnt,) = cur.fetchone()
+    assert cnt == 5, f"Expected 5 rows after full apply, got {cnt}"
+
+    # Step 3: new stage with PCB d5_rows=[] (zero PCB staged)
+    partial_reads = {
+        "ICCB": full_reads["ICCB"],
+        "MCCB": full_reads["MCCB"],
+        "PCB": {
+            "d4_rows": [],
+            "d5_rows": [],  # zero PCB staged
+            "counts": {"d4_update_count": 0, "d5_insert_count": 0,
+                       "total_styles": 2, "real_override_count": 0,
+                       "rating_only_count": 0, "d4_nonnull_per_col": None,
+                       "d5_block_present_counts": {}, "samples": []},
+        },
+    }
+    partial_report = {
+        "provenance": full_report["provenance"],
+        "classes": {cls: partial_reads[cls]["counts"] for cls in ("ICCB", "MCCB", "PCB")},
+    }
+    sql_partial = gen.emit_030(partial_reads, partial_report)
+
+    # Step 4: apply partial -- extra-row guard MUST RAISE for PCB stale rows
+    raised = False
+    exc_caught = None
+    try:
+        _exec_sql_script(conn, sql_partial)
+    except Exception as exc:  # noqa: BLE001
+        raised = True
+        exc_caught = exc
+
+    with conn.cursor() as cur:
+        cur.execute("ROLLBACK")
+
+    assert raised, (
+        "P2b: emit_030 extra-row guard MUST RAISE when PCB has zero staged rows "
+        "but 2 PCB rows exist in the target -- full-domain guard is not enforcing"
+    )
+    if raised:
+        err_str = str(exc_caught).lower()
+        assert (
+            "extra" in err_str or "stale" in err_str or "030" in err_str
+        ), f"P2b: expected extra-row/030 guard error, got: {exc_caught!r}"
+
+    # Step 5: verify stale PCB rows still present (txn aborted)
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT count(*) FROM tcc.brk_style_native_overrides "
+            "WHERE breaker_class='PCB'"
+        )
+        (pcb_cnt,) = cur.fetchone()
+    assert pcb_cnt == 2, (
+        f"P2b: stale PCB rows must still be present after aborted txn, got {pcb_cnt}"
+    )
+
+    # Cleanup
+    with conn.cursor() as cur:
+        cur.execute("DROP SCHEMA IF EXISTS tcc CASCADE")
+
+
+# ===========================================================================
+# Task 8 -- P2a: out-dir default is absolute and cwd-independent
+# ===========================================================================
+
+def test_cli_out_dir_default_is_absolute():
+    """P2a (unit): the generate-d4d5 --out-dir default must be an absolute path.
+
+    The default must not be a relative path that resolves differently depending
+    on the working directory when the CLI is invoked.
+    """
+    from access_harness.cli import build_parser
+    import os
+
+    parser = build_parser()
+    args = parser.parse_args(["generate-d4d5"])
+    out_dir_default = args.out_dir
+
+    assert os.path.isabs(out_dir_default), (
+        "P2a: --out-dir default must be an absolute path, got %r" % out_dir_default
+    )
+
+
+def test_cli_out_dir_default_ends_with_canonical_suffix():
+    """P2a (unit): --out-dir default must end with the canonical path suffix."""
+    from access_harness.cli import build_parser
+    import pathlib
+
+    parser = build_parser()
+    args = parser.parse_args(["generate-d4d5"])
+    out_dir_default = pathlib.Path(args.out_dir)
+
+    canonical_suffix = pathlib.Path(
+        "infra", "database", "sandbox", "breaker", "d4d5-governed-generation"
+    )
+    # The default must end with these 5 parts (platform-normalized)
+    assert out_dir_default.parts[-5:] == canonical_suffix.parts, (
+        "P2a: --out-dir default must end with "
+        "'infra/database/sandbox/breaker/d4d5-governed-generation', "
+        "got %r (parts=%r)" % (str(out_dir_default), out_dir_default.parts[-5:])
+    )
+
+
+# ===========================================================================
+# Task 8 -- P3: fail-closed snapshot selection in build_report
+# ===========================================================================
+
+def _seed_snapshot(conn, snapshot_id, run_id, db_name="testdb"):
+    """Seed a tcc_snapshot row for P3 tests."""
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO access_meta.tcc_snapshot
+                (snapshot_id, run_id, host, db_name, role, captured_at)
+            VALUES (%s, %s, 'testhost', %s, 'reader', now())
+            ON CONFLICT (snapshot_id) DO NOTHING
+            """,
+            (snapshot_id, run_id, db_name),
+        )
+
+
+def test_build_report_one_snapshot_auto_selected(pg):
+    """P3: exactly one snapshot for a run_id -> auto-selected (no snapshot_id arg needed)."""
+    run_id = "run_p3_one_snap"
+    _seed_run(pg, run_id)
+    _seed_snapshot(pg, "snap-p3-001", run_id)
+    result = gen.build_report(pg, run_id)
+    prov = result["provenance"]
+    assert prov["snapshot_id"] == "snap-p3-001", (
+        "P3: with exactly one snapshot, snapshot_id must be auto-selected, "
+        "got %r" % prov["snapshot_id"]
+    )
+
+
+def test_build_report_two_snapshots_no_id_raises(pg):
+    """P3: two snapshots for a run_id + no snapshot_id -> GenerationRefused."""
+    run_id = "run_p3_two_snaps"
+    _seed_run(pg, run_id)
+    _seed_snapshot(pg, "snap-p3-A", run_id)
+    _seed_snapshot(pg, "snap-p3-B", run_id)
+    with pytest.raises(gen.GenerationRefused, match="snapshot"):
+        gen.build_report(pg, run_id)
+
+
+def test_build_report_two_snapshots_explicit_id_uses_it(pg):
+    """P3: two snapshots + explicit valid snapshot_id -> uses it without refusing."""
+    run_id = "run_p3_explicit"
+    _seed_run(pg, run_id)
+    _seed_snapshot(pg, "snap-p3-X", run_id)
+    _seed_snapshot(pg, "snap-p3-Y", run_id)
+    result = gen.build_report(pg, run_id, snapshot_id="snap-p3-Y")
+    prov = result["provenance"]
+    assert prov["snapshot_id"] == "snap-p3-Y", (
+        "P3: explicit snapshot_id must be used, got %r" % prov["snapshot_id"]
+    )
+
+
+def test_build_report_zero_snapshots_no_id_raises(pg):
+    """P3: zero snapshots for a run_id + no snapshot_id -> GenerationRefused."""
+    run_id = "run_p3_zero_snaps"
+    _seed_run(pg, run_id)
+    # No snapshot seeded
+    with pytest.raises(gen.GenerationRefused, match="snapshot"):
+        gen.build_report(pg, run_id)
+
+
+def test_build_report_snapshot_id_not_belonging_to_run_raises(pg):
+    """P3: explicit snapshot_id that does not belong to the run_id -> GenerationRefused."""
+    run_id_a = "run_p3_wrong_run_a"
+    run_id_b = "run_p3_wrong_run_b"
+    _seed_run(pg, run_id_a)
+    _seed_run(pg, run_id_b)
+    _seed_snapshot(pg, "snap-p3-belongs-to-a", run_id_a)
+    # Attempt to use snapshot belonging to run_id_a when building report for run_id_b
+    with pytest.raises(gen.GenerationRefused, match="snapshot"):
+        gen.build_report(pg, run_id_b, snapshot_id="snap-p3-belongs-to-a")
