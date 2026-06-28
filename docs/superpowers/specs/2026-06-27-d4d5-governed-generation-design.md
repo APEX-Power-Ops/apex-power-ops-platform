@@ -20,7 +20,9 @@ provenance travelling in the SQL header, not from a re-read of `D:\TCC_NEW.accdb
 
 ## Source swap (the only logic change)
 - FROM: `access_raw."BreakerICCBStyles"` / `"BreakerMCCBStyles"` / `"BreakerPCBStyles"` in
-  `tcc_fidelity_governed` (psycopg).
+  `tcc_fidelity_governed` (psycopg). DETERMINISM (Rev 2.1): every class read uses `ORDER BY "ID"` so the
+  generated SQL chunk order AND the report samples are byte-stable across runs (a provenance + diff
+  requirement; Postgres does not guarantee row order without it).
 - The transform is COPIED VERBATIM from the proven, Codex-converged dry-run generator
   (`infra/database/sandbox/breaker/d4d5-population-dryrun/dry_run_direct_access_population_generator.py`):
   D4 6-col map (ICCB/MCCB only); D5 5-block map (`inst_override`=InstOvr*, `ninst_override`=NInstOvr*,
@@ -93,7 +95,11 @@ into a TEMP table, then assert:
 - coverage: EVERY stage `(breaker_class, source_id)` joins the corresponding `tcc.brk_<class>_styles`
   by `source_id` (anti-join empty) -- the side table is not a declared FK, so the SQL asserts coverage.
 Then `INSERT ... SELECT FROM stage ON CONFLICT (breaker_class, source_id) DO UPDATE` (idempotent);
-assert inserted+updated == stage count.
+assert inserted+updated == stage count. EXTRA-ROW GUARD (Rev 2.1): a post-write assertion that, for EACH
+class, the count of `brk_style_native_overrides` rows with that breaker_class equals the staged keyset for
+that class -- equivalently, NO target `(breaker_class, source_id)` exists outside the stage (anti-join
+target-minus-stage = 0). ON CONFLICT only makes the staged rows stable; this guard fails closed if a
+polluted prior apply left extra rows the stage does not cover.
 
 The dry-run validates this exact SQL on a fresh clone (029/030 DDL applied first); prod apply via
 `apply_migration` preflight on the gate.
@@ -101,8 +107,12 @@ The dry-run validates this exact SQL on a fresh clone (029/030 DDL applied first
 ## Dry-run (after build, before any apply decision)
 Fresh dated clone off `tcc_breaker_baseline_20260625` (e.g. `tcc_breaker_d4d5_gen_<date>`), NOT the
 79audit clone. Apply 029 DDL + 030 DDL, then the generated 029/030 data SQL. Verify: counts
-608/10335/3279 (D5 total 14222), real_override 241/129/317, rating_only retained (13533), all
-row-level assertions pass, idempotent double-apply stable, provenance header matches the governed run.
+608/10335/3279 (D5 total 14222), and the explicit partition (verified live 2026-06-27 via read_class):
+real_override 241/129/317 (687) + rating_only 367/10204/2962 (13533) + neither 0/2/0 (2) = 14222, where
+rating_only = no real override AND r_int/r_iec present, and neither = no real override and no rating
+(MCCB has the only 2 neither styles). All rating_only AND neither rows are RETAINED (policy (a)); the
+InstOvrAmps>0 metric drops nothing. All row-level assertions pass, idempotent double-apply stable,
+provenance header matches the governed run.
 
 ## Testing (TDD) -- includes the governed-vs-direct parity regression (Rev 2)
 - Gate unit tests: each of the 6 pre-emit gates refuses on its own violation (wrong DB, absent/ambiguous

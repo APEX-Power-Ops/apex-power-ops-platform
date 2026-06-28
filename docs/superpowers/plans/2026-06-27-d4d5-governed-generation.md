@@ -368,7 +368,9 @@ git commit -m "feat(d4d5-gen): temp-stage row-level SQL emitter + generate-d4d5 
 1. Run `generate-d4d5` against governed `access_raw` on Windows -> the 3 artifacts.
 2. Fresh dated clone off `tcc_breaker_baseline_20260625` on host `apex-dev-pg` (NOT 79audit); apply 029
    DDL + 030 DDL + the generated 029/030 data SQL; verify counts 608/10335/3279 (D5 14222),
-   real_override 241/129/317, rating_only 13533, all row-level guards pass, idempotent double-apply.
+   partition real_override 241/129/317 (687) + rating_only 367/10204/2962 (13533) + neither 0/2/0 (2)
+   = 14222 (all retained; rating_only = no real override AND rating present, neither = no override and no
+   rating), all row-level guards pass, idempotent double-apply.
 3. Commit the validated artifacts + a dry-run fidelity README under the sandbox dir.
 4. Cross-engine: Codex `apex-jobs review-run` + opus whole-slice. Convergence-bounded.
 5. STOP. No prod apply -- separate operator gos for 029 DDL -> governed 029 data -> 030 DDL ->
