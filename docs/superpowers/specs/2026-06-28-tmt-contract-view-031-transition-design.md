@@ -38,19 +38,25 @@ column is byte-identical to 028; only `projection_hazards` changes.
 
 ## Fail-closed guard
 
-Leading in-tx DO block RAISEs unless ALL of:
-- `tcc.brk_style_native_overrides` exists (030 DDL), and is non-empty (030 data);
-- `tmt_breaker_type` is non-null on at least one row of `brk_iccb_styles` **AND** at
-  least one row of `brk_mccb_styles` (029 data, gated PER CLASS).
+Leading in-tx DO block gates each relabel claim at the PER-FRAME grain it asserts, and
+RAISEs unless ALL of:
+- `tcc.brk_style_native_overrides` exists (030 DDL);
+- zero ICCB/MCCB frames have an uncarried backing style (`tmt_breaker_type` NULL) -- the
+  D4 honesty invariant (029 data; dropping the d4-absent flag claims D4 present per frame);
+- zero frames have a backing style without a side-table row -- the D5 honesty invariant
+  (030 data; the d5 flag is relabeled "carried" unconditionally for every frame).
 
-`tmt_breaker_type` (smallint enum 0/1) is the population sentinel; the text helper cols
-can be empty-string non-null, so they are deliberately NOT used. The two classes are
-gated independently (NOT summed): all d4-flagged frames are MCCB (ICCB has 0 tmt_frames),
-so a summed check would let an ICCB-only carry mask a skipped MCCB recarry while 031
-strips the flag from every MCCB frame -- requiring both classes witnessed closes that
-fail-open (IRP guard-fail-closed Important, 2026-06-28). Trailing DO block re-asserts
-`serving + hazards = total` (a real structural invariant); the d4/d5 survivor counts are
-an authoring tripwire (they read the just-replaced view text), not the data gate.
+`tmt_breaker_type` (smallint enum 0/1) is the carry sentinel (the text helper cols can be
+empty-string non-null, so they are NOT used). The per-frame anti-joins are the EXACT
+honesty invariants -- a class-level / table-level `>0` proxy is neither necessary (a class
+may have 0 frames) nor sufficient (a partial or asymmetric carry passes a `>0` check).
+They reject a skipped per-class 029 recarry AND a partial 030 side table, and do not
+false-positive on style rows that no frame references (e.g. the 99 unreferenced
+NULL-`tmt_breaker_type` MCCB styles). Evolved through the IRP: summed -> per-class
+(guard-fail-closed Important) -> per-frame coverage (Codex D5 P2), 2026-06-28. Trailing DO
+block re-asserts `serving + hazards = total` (a real structural invariant); the d4/d5
+survivor counts are an authoring tripwire (they read the just-replaced view text), not the
+data gate.
 
 ## Grounded premises (verified against prod fxoyniqnrlkxfligbxmg, 2026-06-28)
 

@@ -6,29 +6,43 @@
 
 ## Verdict
 
-**Ship after the applied fix.** One Important defect found (guard fail-open) -- fixed at `a582f1a2`
-and re-validated. Everything else converges to ship. No remaining blocker; prod apply is operator-gated.
+**Ship after the applied fixes.** The cross-engine IRP found two guard-honesty gaps -- a D4 fail-open
+(Important, Claude) and a D5 partial-coverage gap (P2, Codex) -- both closed by hardening the guard to
+its exact per-frame coverage invariant (`841ca3a8`) and re-validated. The view body, value-parity, and
+scope were clean from the first pass. No remaining blocker; prod apply is operator-gated.
 
 ## Cross-engine passes
 
 - **Codex (head 56cc2d25):** clean -- "No actionable correctness issues ... relative to the existing
   028 view contract and the documented 029/030 carry sequence."
-- **Codex (head a582f1a2, post-fix):** no new SQL defect; one P2 process finding -- the committed
-  validation evidence was pinned to `56cc2d25` and stale vs the guard-fixed bytes. RESOLVED: evidence
-  amended to cover `a582f1a2` (`031_DRYRUN_VALIDATION.md`).
-- **Claude 4 lenses:** value-parity = ship; guard-fail-closed = fix-first (the Important below);
-  down+lock-safety = ship; spec-conformance = ship.
+- **Codex (head a582f1a2, post per-class fix):** no new SQL defect; one P2 process finding -- the
+  committed validation evidence was pinned to `56cc2d25` and stale vs the guard-fixed bytes. RESOLVED:
+  evidence amended.
+- **Codex (head 28a794d5, evidence-refresh):** raised the **D5 coverage P2** (below) -- the guard only
+  checked the side table non-empty, so a partial 030 would mislabel uncovered frames. RESOLVED at
+  `841ca3a8` (per-frame coverage anti-join).
+- **Claude 4 lenses (head a582f1a2):** value-parity = ship; guard-fail-closed = fix-first (the
+  Important below); down+lock-safety = ship; spec-conformance = ship.
 
 ## Findings
 
-### Important -- FIXED
-- **D4 guard was fail-open to an asymmetric per-class partial 029 recarry.** The leading guard summed
-  ICCB+MCCB `tmt_breaker_type` non-null into one `>0` check. All 30809 d4-flagged frames are MCCB
+### Guard honesty -- FIXED (two findings, one terminal fix)
+- **D4 fail-open to an asymmetric per-class partial 029 recarry (Important, Claude).** The leading guard
+  summed ICCB+MCCB `tmt_breaker_type` non-null into one `>0` check. All 30809 d4-flagged frames are MCCB
   (ICCB has 0 `tmt_frames`), so an ICCB-only carry (608) would mask a skipped MCCB recarry while 031
-  strips the d4 flag from every MCCB frame whose helper cols are NULL -- labels flipping ahead of the
-  data. **Fix (a582f1a2):** gate per class -- `RAISE IF v_iccb=0 OR v_mccb=0`. **Re-validated:** the
-  asymmetric negative (MCCB nulled, ICCB intact) now raises `... (iccb_nn=608, mccb_nn=0)`; value-parity
-  hash `58cc15fe` and the 6-combo distribution are unchanged (guard-only change).
+  strips the d4 flag from every MCCB frame -- labels flipping ahead of the data.
+- **D5 partial-coverage gap (P2, Codex).** The d5 flag is relabeled `carried_reference_only`
+  UNCONDITIONALLY for every frame, but the guard only checked the side table non-empty -- a partially
+  populated 030 would mislabel frames whose style has no side-table row as carried.
+- **Terminal fix (841ca3a8):** gate each relabel claim at its exact PER-FRAME grain -- anti-joins
+  asserting (a) 0 ICCB/MCCB frames have an uncarried backing style (`tmt_breaker_type` NULL) and (b) 0
+  frames have a backing style without a side-table row. This is the precise honesty invariant: it subsumes
+  the per-class fix, rejects a skipped per-class recarry AND a partial side table, vacuously passes a class
+  with 0 frames, and does not false-positive on the 99 unreferenced NULL-`tmt_breaker_type` MCCB styles
+  (verified: 0 referenced by any frame). **Re-validated:** D4-coverage negative (skip MCCB) raises
+  `30809 ... uncarried backing style`; D5-coverage negative (PARTIAL side table) raises `30809
+  frame-backing style(s) lack a ... row`; positive applies with `0 D4-uncarried, 0 D5-uncovered`;
+  value-parity hash `58cc15fe` + the 6-combo distribution unchanged (every guard change is precondition-only).
 
 ### Minor -- addressed / accepted
 - **Trailing d4/d5 survivor checks are an authoring tripwire, not a data gate** (they read the
