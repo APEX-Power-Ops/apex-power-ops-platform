@@ -38,6 +38,15 @@ describe('matchTransformer', () => {
     expect(matchTransformer(tx({ coolant: 'unknown' }))).toBeNull()
   })
 
+  // FIX 2: liquid-but-not-pad-mount -> null (catalog gap, no V1 ref applicable)
+  it('liquid non-pad-mount -> null (catalog gap, no V1 ref)', () => {
+    expect(matchTransformer(tx({ coolant: 'liquid', padMount: false }))).toBeNull()
+  })
+
+  it('liquid without padMount set -> null (catalog gap)', () => {
+    expect(matchTransformer(tx({ coolant: 'liquid' }))).toBeNull()
+  })
+
   it('ltc:true dry -> still returns DRY_GROUP with V2 deferral note in scopeQuestion', () => {
     const r = matchTransformer(tx({ coolant: 'dry', ltc: true }))!
     expect(r).not.toBeNull()
@@ -48,8 +57,8 @@ describe('matchTransformer', () => {
     expect(r.scopeQuestion).toContain('base unit only')
   })
 
-  it('ltc:true liquid -> still returns OIL_GROUP with V2 deferral note in scopeQuestion', () => {
-    const r = matchTransformer(tx({ coolant: 'liquid', ltc: true }))!
+  it('ltc:true liquid pad-mount -> still returns OIL_GROUP with V2 deferral note in scopeQuestion', () => {
+    const r = matchTransformer(tx({ coolant: 'liquid', padMount: true, ltc: true }))!
     expect(r).not.toBeNull()
     expect(r.group).toEqual([...OIL_GROUP])
     expect(r.scopeQuestion).toContain('LTC')

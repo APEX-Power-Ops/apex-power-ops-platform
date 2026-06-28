@@ -1,4 +1,4 @@
-﻿import { describe, it, expect } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { assessApparatus } from '../src/signature/normalize'
 
 const base = { sheet: 'E1', page: 1, bbox: [0,0,1,1] as [number,number,number,number], evidence: 'one-line' as const }
@@ -18,6 +18,23 @@ describe('transformer recognition', () => {
     const a = assessApparatus({ ...base, raw: 'XFMR 800AF/600AT', tag: 'X1', busVoltageV: 480 })
     expect(a.assessmentCode).toBe('transformer_breaker_conflict')
     expect(a.signature).toBeNull()
+  })
+
+  // FIX 4: UPS/PDU with kVA rating must NOT be recognized as a transformer
+  it('does NOT recognize UPS-1 with kVA as a transformer (NON_BREAKER gate)', () => {
+    const a = assessApparatus({ ...base, raw: 'UPS-1 250 KVA', tag: 'UPS-1', busVoltageV: 480 })
+    expect(a.assessmentCode).toBe('non_breaker_excluded')
+  })
+
+  it('does NOT recognize PDU-1 with kVA as a transformer (NON_BREAKER gate)', () => {
+    const a = assessApparatus({ ...base, raw: 'PDU-1 100 KVA', tag: 'PDU-1', busVoltageV: 480 })
+    expect(a.assessmentCode).toBe('non_breaker_excluded')
+  })
+
+  // opus M4: bare TX (no kVA, no device token) -> unrecognized_apparatus_row
+  it('TX-1 alone (no kVA, no device token) -> unrecognized_apparatus_row', () => {
+    const a = assessApparatus({ ...base, raw: 'TX-1', tag: 'TX-1', busVoltageV: 480 })
+    expect(a.assessmentCode).toBe('unrecognized_apparatus_row')
   })
 })
 

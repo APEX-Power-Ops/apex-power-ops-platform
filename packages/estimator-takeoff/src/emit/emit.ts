@@ -15,6 +15,20 @@ import type {
 
 const UNSTAMPED = '__unstamped__'
 
+// COMPILER-CHECKED mapping: every non-'classified' AssessmentCode -> a valid DispositionReasonCode.
+// A future unmapped code is a COMPILE ERROR (restores the cast-safety invariant killed by 'as DispositionReasonCode').
+const ASSESS_TO_REASON: Record<Exclude<AssessmentCode, 'classified'>, DispositionReasonCode> = {
+  transformer_recognized:        'transformer_scope_pending',   // unreachable (has signature); present for exhaustiveness
+  transformer_breaker_conflict:  'transformer_breaker_conflict',
+  transformer_scope_pending:     'transformer_scope_pending',
+  transformer_catalog_gap:       'transformer_catalog_gap',
+  transformer_attrs_unparsed:    'transformer_attrs_unparsed',
+  non_breaker_excluded:          'non_breaker_excluded',
+  non_breaker_carries_rating:    'non_breaker_carries_rating',
+  missing_voltage:               'missing_voltage',
+  unrecognized_apparatus_row:    'unrecognized_apparatus_row',
+}
+
 // baseDisp creates a LOUD sentinel disposition: its `reason` is UNSTAMPED so assertExhaustive can detect any
 // row that was never stamped (status+reasonCode alone cannot -- a real unrecognized_apparatus_row shares them).
 function baseDisp(x: ExtractedApparatus, i: number): ApparatusDisposition {
@@ -50,7 +64,10 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
   const { resolved, findings } = applyVoltageAssertions(artifact)
   const questions: OperatorQuestion[] = []
   const sigs: ApparatusSignature[] = []
-  const unresolved: { i: number; x: ExtractedApparatus; questions: OperatorQuestion[]; assessmentCode: AssessmentCode }[] = []
+  // isBreakerShaped tracks whether normalize recognized the row as breaker-shaped (not transformer-shaped).
+  // A transformer-recognized row that is voltage-less gets assessmentCode 'missing_voltage' but isBreakerShaped=false.
+  // We use isBreakerShaped to prevent cross-family silent attachment (FIX 6).
+  const unresolved: { i: number; x: ExtractedApparatus; questions: OperatorQuestion[]; assessmentCode: AssessmentCode; isBreakerShaped: boolean }[] = []
 
   resolved.forEach(({ apparatus: x, voltageBasis }, i) => {
     const a = assessResolvedApparatus(x, voltageBasis)
@@ -64,11 +81,10 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
       stamp(dispositions, i, 'ignored', 'non_breaker_excluded', 'non-breaker device token')   // FINAL, not attach-eligible
       return
     }
-    // every other null shape is a question; assessmentCode is one of non_breaker_carries_rating |
-    // missing_voltage | unrecognized_apparatus_row, each also a valid DispositionReasonCode.
+    // every other null shape is a question; use ASSESS_TO_REASON for a compiler-checked mapping
     // ('classified' is excluded by the a.signature guard above; 'non_breaker_excluded' handled above)
-    stamp(dispositions, i, 'question', a.assessmentCode as DispositionReasonCode, a.questions[0]?.question ?? 'producer candidate could not be classified as a breaker')
-    unresolved.push({ i, x, questions: a.questions, assessmentCode: a.assessmentCode })
+    stamp(dispositions, i, 'question', ASSESS_TO_REASON[a.assessmentCode as Exclude<AssessmentCode,'classified'>], a.questions[0]?.question ?? 'producer candidate could not be classified as a breaker')
+    unresolved.push({ i, x, questions: a.questions, assessmentCode: a.assessmentCode, isBreakerShaped: a.isBreakerShaped })
   })
 
   const { lines, associated, locationOnly } = quantify(sigs)
@@ -80,8 +96,14 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
   // ambiguity (non_breaker_carries_rating, unrecognized_apparatus_row) or an AUTHORITATIVE missing-voltage row
   // (a distinct breaker) into associated_source just because its tag collides with a counted line - that is the
   // silent-loss class this slice exists to kill. Ineligible rows KEEP their 'question' disposition + surface.
-  for (const { i, x, questions: qs, assessmentCode } of unresolved) {
-    const attachEligible = assessmentCode === 'missing_voltage' && !isAuthoritativeEvidence(x.evidence)
+  //
+  // FIX 6: also do NOT attach a transformer-shaped row to a (breaker) counted line - cross-family tag collision
+  // would fold a voltage-less transformer as 'associated_source' of a breaker (silent cross-family loss).
+  // isBreakerShaped=false means the assessor recognized it as transformer-shaped (or genuinely ambiguous non-breaker).
+  for (const { i, x, questions: qs, assessmentCode, isBreakerShaped } of unresolved) {
+    const attachEligible = assessmentCode === 'missing_voltage'
+      && !isAuthoritativeEvidence(x.evidence)
+      && isBreakerShaped
     const l = attachEligible && x.tag ? byTag.get(x.tag) : undefined
     if (l) {
       l.sources.push({ sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block })
