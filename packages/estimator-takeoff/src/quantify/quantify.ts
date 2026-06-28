@@ -1,4 +1,4 @@
-import type { ApparatusSignature, BreakerSignature } from '../signature/types'
+import type { ApparatusSignature } from '../signature/types'
 import type { QuantifiedLine } from './types'
 
 export const isAuthoritativeEvidence = (e: string): boolean => e === 'one-line' || e.endsWith('-schedule')
@@ -59,10 +59,9 @@ export function quantify(sigs: ApparatusSignature[]): {
     const k = specKey(s)
     ;(bySpec.get(k) ?? bySpec.set(k, []).get(k)!).push(s)
   }
-  // QuantifiedLine.signature is BreakerSignature: today assessCore only builds breaker sigs; non-breaker
-  // kinds never reach here (excluded by NON_BREAKER check). Widened to ApparatusSignature in a later task.
+  // QuantifiedLine.signature is ApparatusSignature (widened in Task 3 to admit transformer signatures).
   const lines: QuantifiedLine[] = [...bySpec.entries()].map(([k, group]) => ({
-    signature: group[0]! as BreakerSignature,
+    signature: group[0]!,
     qty: group.length,
     sources: group.flatMap((s) => sourcesByDevice.get(deviceId(s)) ?? [s.source]),
     memberTags: group.map((s) => s.tag).filter((t): t is string => !!t),

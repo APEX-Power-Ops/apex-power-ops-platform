@@ -9,7 +9,7 @@ const art = (apparatus: any[]): ExtractionArtifact => ({ pdf: 'x.pdf', apparatus
 describe('reconcile', () => {
   const a = art([
     row({ raw: 'MSB 4000AF/4000AT LSIG', tag: 'A', busVoltageV: 480, mountingHint: 'draw_out' }),  // matched
-    row({ raw: 'XFMR 1000KVA', tag: 'T' }),                                                          // ignored / non_breaker_excluded
+    row({ raw: 'XFMR 1000KVA', tag: 'T' }),                                                          // transformer_recognized -> missing_voltage -> question (Task 3: XFMR recognized, no voltage)
     row({ raw: 'MCB 100AF/100AT', tag: 'B' }),                                                       // breaker-shaped, no voltage -> question
   ])
   const result = runTakeoff(a)
@@ -18,8 +18,8 @@ describe('reconcile', () => {
   it('counts inputs, matched lines, ignored, and questions', () => {
     expect(report.counts.apparatus_in).toBe(3)
     expect(report.counts.matched_lines).toBe(1)
-    expect(report.counts.ignored).toBe(1)
-    expect(report.counts.operator_questions).toBeGreaterThanOrEqual(1)
+    expect(report.counts.ignored).toBe(0)   // XFMR now routes to transformer path (question), not non_breaker_excluded (ignored)
+    expect(report.counts.operator_questions).toBeGreaterThanOrEqual(2)  // XFMR missing_voltage + MCB missing_voltage
   })
   it('is accounted (exhaustive + index-aligned)', () => {
     expect(report.accounted).toBe(true)
