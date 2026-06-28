@@ -13,7 +13,7 @@ export interface ReconciliationReport {
     error_findings: number
     warning_findings: number
     ignored: number
-    unresolved_rows: number       // dispositions with status 'unmatched' or 'question' (blocks clean)
+    unresolved_rows: number       // dispositions with status 'unmatched', 'question', or 'scope_pending' (blocks clean)
   }
   accounted: boolean              // every input row has a disposition AND index-aligned
   dispositions: ApparatusDisposition[]
@@ -31,7 +31,7 @@ export function isClean(result: TakeoffResult): boolean {
   const noErrorFindings = result.findings.every((f) => f.severity !== 'error')
   const allRowsResolved = result.dispositions.every(
     (d) => d.status === 'matched' || d.status === 'associated_source' || d.status === 'ignored',
-  )                                                   // any 'unmatched' or 'question' row blocks
+  )                                                   // any 'unmatched', 'question', or 'scope_pending' row blocks
   const noOpenQuestions = result.operatorQuestions.length === 0   // catches advisory-on-matched + profile_warning
   const hasMatchedLines = result.matchedLines.length > 0          // zero priced lines is never 'clean'
   return noErrorFindings && allRowsResolved && noOpenQuestions && hasMatchedLines
@@ -54,6 +54,7 @@ function reconcilesInternally(result: TakeoffResult): boolean {
   const lineKeys = new Set<string>([
     ...result.matchedLines.map((m) => m.line.lineKey),
     ...result.unmatchedCandidates.map((u) => u.line.lineKey),
+    ...(result.scopePendingLines ?? []).map((s) => s.line.lineKey),
   ])
   if (d.some((x) => x.lineKey !== undefined && !lineKeys.has(x.lineKey))) return false
   return true
@@ -74,7 +75,7 @@ export function reconcile(
     error_findings: result.findings.filter((f) => f.severity === 'error').length,
     warning_findings: result.findings.filter((f) => f.severity === 'warning').length,
     ignored: d.filter((x) => x.status === 'ignored').length,
-    unresolved_rows: d.filter((x) => x.status === 'unmatched' || x.status === 'question').length,
+    unresolved_rows: d.filter((x) => x.status === 'unmatched' || x.status === 'question' || x.status === 'scope_pending').length,
   }
   const accounted = d.length === apparatus_in && d.every((x, i) => x.inputIndex === i) && reconcilesInternally(result)
   const report: ReconciliationReport = {

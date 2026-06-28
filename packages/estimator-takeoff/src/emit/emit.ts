@@ -1,15 +1,16 @@
 import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from '@apex/estimator-core'
 import type { ExtractionArtifact, ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature } from '../signature/types'
+import type { ApparatusSignature, BreakerSignature, TransformerSignature } from '../signature/types'
 import { assessResolvedApparatus } from '../signature/normalize'
 import type { AssessmentCode } from '../signature/normalize'
 import { applyVoltageAssertions } from '../signature/voltage-assertions'
 import { quantify, isAuthoritativeEvidence } from '../quantify/quantify'
 import type { QuantifiedLine } from '../quantify/types'
 import { matchBreaker } from '../catalog/breaker-map'
+import { matchTransformer } from '../catalog/transformer-map'
 import type {
   MatchedLine, OperatorQuestion, TakeoffResult, UnmatchedCandidate, TakeoffFinding,
-  ApparatusDisposition, ApparatusDispositionStatus, DispositionReasonCode,
+  ApparatusDisposition, ApparatusDispositionStatus, DispositionReasonCode, ScopePendingLine,
 } from '../buckets/types'
 
 const UNSTAMPED = '__unstamped__'
@@ -101,33 +102,44 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
 
   const matchedLines: MatchedLine[] = []
   const unmatchedCandidates: UnmatchedCandidate[] = []
+  const scopePendingLines: ScopePendingLine[] = []
+
   for (const line of lines) {
     const sig = line.signature
-    if (sig.kind !== 'breaker') {
-      // Non-breaker kinds (e.g. transformer) are not matched to a catalog line in V1.
-      // They fall through as unmatched; Task 7 will add family dispatch here.
-      const reason = `no catalog dispatch for kind=${sig.kind}`
-      unmatchedCandidates.push({ reason, line })
-      for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'no_catalog_rule', reason, undefined, line.lineKey)
+    if (sig.kind === 'breaker') {
+      // kind === 'breaker': TypeScript now knows sig is BreakerSignature
+      const bsig: BreakerSignature = sig
+      const ref = matchBreaker(bsig)
+      if (ref) {
+        matchedLines.push({ ref, qty: line.qty, block: bsig.source.block ?? bsig.source.sheet, mountingBasis: bsig.mountingBasis, voltageBasis: bsig.voltageBasis, line })
+        for (const i of line.memberIndices) stamp(dispositions, i, 'matched', 'catalog_rule', `matched ${ref}`, ref, line.lineKey)
+      } else {
+        const reason = `no catalog rule for ${bsig.mounting}/${bsig.functions.join('') || '-'}`
+        unmatchedCandidates.push({ reason, line })
+        for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'no_catalog_rule', reason, undefined, line.lineKey)
+      }
       continue
     }
-    // kind === 'breaker': TypeScript now knows sig is BreakerSignature
-    const bsig: BreakerSignature = sig
-    const ref = matchBreaker(bsig)
-    if (ref) {
-      matchedLines.push({ ref, qty: line.qty, block: bsig.source.block ?? bsig.source.sheet, mountingBasis: bsig.mountingBasis, voltageBasis: bsig.voltageBasis, line })
-      for (const i of line.memberIndices) stamp(dispositions, i, 'matched', 'catalog_rule', `matched ${ref}`, ref, line.lineKey)
+    // kind === 'transformer'
+    const tsig: TransformerSignature = sig
+    const scope = matchTransformer(tsig)
+    if (scope) {
+      scopePendingLines.push({ candidateRefs: scope.group, defaultRef: scope.defaultRef, scopeQuestion: scope.scopeQuestion, qty: line.qty, block: tsig.source.block ?? tsig.source.sheet, line })
+      for (const i of line.memberIndices) stamp(dispositions, i, 'scope_pending', 'transformer_scope_pending', scope.scopeQuestion, scope.defaultRef, line.lineKey)
+      questions.push({ question: scope.scopeQuestion, context: `${tsig.tag ?? tsig.source.sheet} (candidate group: ${scope.group.join(' | ')})`, code: 'transformer_scope_pending' })
     } else {
-      const reason = `no catalog rule for ${bsig.mounting}/${bsig.functions.join('') || '-'}`
+      const reason = `recognized transformer (coolant ${tsig.coolant}, ${tsig.kvaRating ?? '?'}kVA) - no applicable priced ref-group`
       unmatchedCandidates.push({ reason, line })
-      for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'no_catalog_rule', reason, undefined, line.lineKey)
+      for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'transformer_catalog_gap', reason, undefined, line.lineKey)
+      findings.push({ code: 'transformer_catalog_gap', severity: 'warning', message: reason, context: tsig.tag ?? tsig.source.sheet })
+      questions.push({ question: `Catalog gap: ${reason} - estimator must author/confirm a ref before pricing.`, context: tsig.tag ?? tsig.source.sheet, code: 'transformer_catalog_gap' })
     }
   }
 
   for (const w of artifact.profileWarnings ?? []) questions.push({ question: w, context: 'legend/profile', code: 'profile_warning' })
 
   assertExhaustive(dispositions, apparatus.length)
-  return { matchedLines, unmatchedCandidates, operatorQuestions: questions, findings, dispositions }
+  return { matchedLines, unmatchedCandidates, scopePendingLines, operatorQuestions: questions, findings, dispositions }
 }
 
 export function emitEnvelope(result: Pick<TakeoffResult, 'matchedLines' | 'unmatchedCandidates' | 'operatorQuestions' | 'findings'>, opts: { projectNumber: string }) {

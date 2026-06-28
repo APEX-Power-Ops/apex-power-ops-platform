@@ -42,9 +42,11 @@ export function runFromArtifact(json: unknown, opts: { projectNumber: string; al
     return { report: accountedReport, findings: [], exitCode: 1, stderr }
   }
 
-  // 2. Zero matched guard: nothing to price.
-  if (result.matchedLines.length === 0) {
-    stderr.push('no matched lines - nothing to price; resolve construction/catalog evidence or review the takeoff')
+  // 2. Zero matched guard: nothing to price ONLY if there is also nothing scope-pending.
+  //    A run with only scope_pending falls through: isClean is false (scope_pending blocks)
+  //    -> open-items path -> --allow-open-items -> partial_preview.
+  if (result.matchedLines.length === 0 && result.scopePendingLines.length === 0) {
+    stderr.push('no matched or scope-pending lines - nothing to price; resolve construction/catalog evidence or review the takeoff')
     return { report: accountedReport, findings: [], exitCode: 1, stderr }
   }
 
@@ -55,10 +57,17 @@ export function runFromArtifact(json: unknown, opts: { projectNumber: string; al
     return { report, envelope, findings, exitCode: 0, stderr }
   }
 
-  // 4. Open items present (unmatched/questions, no error findings).
+  // 4. Open items present (unmatched/questions/scope_pending, no error findings).
   if (!opts.allowOpenItems) {
     stderr.push(`open items present: ${accountedReport.counts.unresolved_rows} unresolved row(s) (${accountedReport.counts.unmatched_candidates} unmatched candidate-lines, ${accountedReport.counts.operator_questions} flagged questions); pass --allow-open-items to emit a partial preview`)
     return { report: accountedReport, findings: [], exitCode: 1, stderr }
+  }
+  // scope_pending-only runs have no matched lines so emitEnvelope would throw.
+  // We must guard against calling it when there are zero matched lines.
+  if (result.matchedLines.length === 0) {
+    // Only scope_pending lines present: partial_preview without envelope.
+    stderr.push(`WARNING: partial preview - ${accountedReport.counts.unresolved_rows} unresolved row(s) (scope-pending, no priced lines yet); envelope deferred until scope questions are resolved`)
+    return { report: accountedReport, findings: [], exitCode: 0, stderr }
   }
   const { envelope, findings } = emitEnvelope(result, { projectNumber: opts.projectNumber })
   const report = reconcile(artifact, result, { bid_cents: envelope.totals.bid_cents })   // status === 'partial_preview' (isClean false)
