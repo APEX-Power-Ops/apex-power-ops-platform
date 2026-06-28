@@ -7,23 +7,37 @@ fresh host-clone validation that proved them. Prod apply is operator-gated (sepa
 ## Artifacts (this directory root -- the anchored default `--out-dir`, SHA-pinned)
 | File | sha256 |
 |---|---|
-| `029_d4_data.sql` | `911cc4db8727b27e1abc8a7da64be390bc7979825c58e2bd8f293ae943a41dd6` |
-| `030_d5_data.sql` | `95be4dd8c03f36b2701a153bd4082eb3ca373d4302ebb37057e2823e4b6e3d48` |
-| `generation_report.json` | `c5fa1b6a6dcb01ac277973b525caeeb40dc660d2de33f29091331c35a51900c7` |
+| `029_d4_data.sql` | `27334c756b792704d791771fcc766e46bcc5f711de386332eab2e832a760afd1` |
+| `030_d5_data.sql` | `e384648c17336f25a4ded90ca98cef309f71a72863acbf11b7dcbab2c6c5e365` |
+| `generation_report.json` | `0dd3b3341e60cc48e0aaedf42e69f0981dac3c681fcefd38d2d965605bf4869f` |
 
 These are **byte-reproducible**: two back-to-back `generate-d4d5` runs (and runs from different working
 dirs) produce identical SHAs. Generation is deterministic because Task 9 removed the wall-clock
 `generated_at` (now omitted unless an explicit value is passed); provenance is carried by `run_id`
 (embeds the extraction timestamp), `source_sha256`, `snapshot_id`, and per-table checksums instead.
 
-### SUPERSEDES the 2026-06-27 dry-run set (commit `4c00d2a0`, in `_generated/`)
-The earlier `_generated/` artifacts are SUPERSEDED and removed from the tree (recoverable from git history
-at `4c00d2a0`). They differed in two ways, both now folded:
+### Byte fidelity (Task 10 + `.gitattributes -text`)
+The artifacts are written with exact-byte writes (`write_bytes`), so output is NOT subject to platform
+newline translation: file line endings are LF, and source values carry their newlines verbatim. In
+particular, `029_d4_data.sql` contains exactly **4** `\r\r\n` sequences -- these are NOT corruption: MCCB
+source rows ID 93192/93212/93252/93282 genuinely store a `\r\r\n` in `TMT_Notes` in Access (verified by
+direct query of governed `access_raw`), and the verbatim-source-data rule requires carrying them as-is.
+A `.gitattributes` marks the three artifacts `-text` so git never CRLF/LF-converts them in either
+direction; the committed blob sha256 therefore equals the validated bytes above.
+
+### SUPERSEDES the earlier artifact sets
+The 2026-06-27 dry-run set (commit `4c00d2a0`, in `_generated/`) and the 2026-06-28 intermediate set
+(commits `00cdefa7`/`ba1a4802`) are SUPERSEDED and removed/replaced (recoverable from git history). The
+folded fixes:
 - Codex round-4 **P2b**: the 030 extra-row guard now anti-joins the FULL class domain {ICCB, MCCB, PCB}
   (no staged-class filter), so a zero-staged class's stale prior-apply rows are caught.
 - Task 9 determinism: the wall-clock `generated_at` is gone, so the SHA is a true content fingerprint.
+- Task 10 byte fidelity: `write_text` -> `write_bytes` stops Windows text mode from doubling source
+  `\r\n` into `\r\r\n` (Codex round-5 catch); the prior intermediate 029 (`911cc4db`) had 36832 spurious
+  doublings inside `tmt_notes`.
 
-Superseded SHAs (for audit): 029 `15f3a2a2...`, 030 `9415729a...`, report `2248971e...`.
+Superseded SHAs (for audit): dry-run 029 `15f3a2a2...` / 030 `9415729a...` / report `2248971e...`;
+intermediate 029 `911cc4db...` / 030 `95be4dd8...` / report `c5fa1b6a...`.
 
 ## Provenance (from the artifact headers / report)
 - run_id: `c15adaef-20260608T210440`
@@ -42,10 +56,11 @@ Superseded SHAs (for audit): 029 `15f3a2a2...`, 030 `9415729a...`, report `22489
 - D5 total = 14222 ; D4 full-coverage recarry stages every ICCB+MCCB style (608 + 10335).
 
 ## Host-clone validation (2026-06-28 UTC) -- the re-validation of the regenerated set
-- Clone: `tcc_breaker_d4d5_gen_20260628` = `CREATE DATABASE ... TEMPLATE tcc_breaker_baseline_20260625`
-  (fresh dated clone off the frozen baseline on `apex-dev-pg`; NOT the prior hook-blocked clone).
+- Clone: `tcc_breaker_d4d5_gen_20260628b` = `CREATE DATABASE ... TEMPLATE tcc_breaker_baseline_20260625`
+  (fresh dated clone off the frozen baseline on `apex-dev-pg`; validates the Task-10 byte-faithful set).
 - **Transfer fidelity:** the 029/030 data files were scp'd to the host and their sha256 confirmed
-  IDENTICAL to the Windows-side SHAs above -- the validated files ARE the committed artifacts.
+  IDENTICAL to the Windows-side SHAs above (029 `27334c75...`, 030 `e384648c...`) -- the validated files
+  ARE the committed artifacts.
 - Apply path: `docker exec -i apex-dev-pg psql -U postgres -d <clone> -v ON_ERROR_STOP=1 < <file>` --
   the artifacts are PURE server SQL (no psql meta-commands), the same server-protocol path as the
   eventual gated apply. `ON_ERROR_STOP=1` is passed EXTERNALLY (not embedded).
@@ -74,6 +89,15 @@ UPDATE are idempotent; all in-tx guards passed again).
 | ovr_curves non-null | 0 | 0 (reserved) |
 | value-parity spot | ICCB sid 11: InstOvrAmps=46000.0, 16-key inst block | full block carried |
 
+### Source cross-check (non-self-referential) -- closes the Codex round-5 gap
+The in-tx value-parity guard compares the target against the same stage literal, so it cannot catch a
+literal that is itself wrong. To verify the round-trip against the ORIGINAL source, the applied
+`tcc.brk_mccb_styles.tmt_notes` on the clone was compared by md5 to the governed `access_raw."BreakerMCCBStyles"."TMT_Notes"`
+for the four rows that genuinely carry a `\r\r\n` (ID 93192/93212/93252/93282). All four md5s MATCH exactly
+(e70bad27.../2a40772d.../87565a38.../9fea28c8...; identical length and one `\r\r\n` each), and the clone has
+exactly 4 MCCB rows containing `\r\r\n` -- so the generated 029 carries those notes byte-for-byte from
+source, with no doubling and no stripping.
+
 ### Guard proofs demonstrated on the clone
 - DDL exact-shape guards (029/030) -- passed.
 - 029: stage-count, no-dup, DDL-present, coverage anti-join, post-write count -- all passed on real data.
@@ -87,10 +111,11 @@ UPDATE are idempotent; all in-tx guards passed again).
 - Idempotency: clean double-apply stable; the polluted re-apply fail-closed (rolled back).
 
 ## Cleanup
-Host `/tmp/d4d5_gen_20260628` removed. The clones `tcc_breaker_d4d5_gen_20260627` (prior dry-run) and
-`tcc_breaker_d4d5_gen_20260628` (this run; intentionally left polluted by the guard test) are harmless
-throwaway copies on the dev host; `DROP DATABASE` is blocked by a safety hook, so dispose of them manually
-(operator-side) when convenient.
+Host scratch dirs removed. Three throwaway clones remain on the dev host (`apex-dev-pg`):
+`tcc_breaker_d4d5_gen_20260627` (prior dry-run), `tcc_breaker_d4d5_gen_20260628` and
+`tcc_breaker_d4d5_gen_20260628b` (both intentionally left polluted by the extra-row guard test). All are
+harmless copies; `DROP DATABASE` is blocked by a safety hook, so dispose of them manually (operator-side)
+when convenient.
 
 ## Status / next (operator-gated)
 Validation PASSED. NOT applied to prod. Prod apply stays gated, in order, each on an explicit go:
