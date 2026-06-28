@@ -808,15 +808,24 @@ def test_governed_vs_direct_parity(governed_conn):
 
     import pyodbc
 
-    # -- Resolve the frozen copy path from the governed DB --
+    # -- Resolve the run_id that generate() / select_run_id would use, then read
+    # THAT run's frozen_copy_path.  Using the gate-selected run_id (not latest)
+    # ensures the Access file we compare against is the one whose data is in
+    # access_raw -- safe with a sole run today, correct if multiple runs exist.
+    try:
+        selected_run_id = gen.select_run_id(governed_conn, None)
+    except gen.GenerationRefused as exc:
+        pytest.skip(f"select_run_id refused (ambiguous or empty): {exc}")
+
     with governed_conn.cursor() as cur:
         cur.execute(
             "SELECT frozen_copy_path FROM access_meta.extraction_run "
-            "ORDER BY extracted_at_utc DESC LIMIT 1"
+            "WHERE run_id = %s",
+            (selected_run_id,),
         )
         row = cur.fetchone()
     if row is None:
-        pytest.skip("no extraction_run row in governed DB")
+        pytest.skip("no extraction_run row in governed DB for selected run_id")
     frozen_path = row[0]
     if not frozen_path or not pathlib.Path(frozen_path).exists():
         # Fall back to the known constant path.
@@ -1093,9 +1102,21 @@ class TestEmit029Shape:
         assert "BEGIN;" in self.sql
         assert "COMMIT;" in self.sql
 
-    def test_contains_on_error_stop(self):
-        assert "\\set ON_ERROR_STOP on" in self.sql, \
-            "emit_029 must set ON_ERROR_STOP"
+    def test_no_backslash_metacommands(self):
+        """Task 6 Patch 1: emit_029 must contain no psql metacommand lines.
+
+        The prod apply path (apply_migration / psycopg, server protocol) cannot
+        parse backslash metacommands such as \\set.  Every line in the emitted SQL
+        must be pure server SQL.
+        """
+        backslash_lines = [
+            line for line in self.sql.splitlines()
+            if line.strip().startswith("\\")
+        ]
+        assert backslash_lines == [], (
+            "emit_029 must not contain any psql metacommand lines (lines starting "
+            "with backslash).  Offending lines: %r" % backslash_lines
+        )
 
     def test_contains_provenance_run_id(self):
         assert "run-unit-test-001" in self.sql, \
@@ -1166,8 +1187,21 @@ class TestEmit030Shape:
         assert "BEGIN;" in self.sql
         assert "COMMIT;" in self.sql
 
-    def test_contains_on_error_stop(self):
-        assert "\\set ON_ERROR_STOP on" in self.sql
+    def test_no_backslash_metacommands(self):
+        """Task 6 Patch 1: emit_030 must contain no psql metacommand lines.
+
+        The prod apply path (apply_migration / psycopg, server protocol) cannot
+        parse backslash metacommands such as \\set.  Every line in the emitted SQL
+        must be pure server SQL.
+        """
+        backslash_lines = [
+            line for line in self.sql.splitlines()
+            if line.strip().startswith("\\")
+        ]
+        assert backslash_lines == [], (
+            "emit_030 must not contain any psql metacommand lines (lines starting "
+            "with backslash).  Offending lines: %r" % backslash_lines
+        )
 
     def test_contains_provenance_run_id(self):
         assert "run-unit-test-001" in self.sql
@@ -1327,22 +1361,14 @@ def _seed_style_rows(conn, source_ids_by_class):
 def _exec_sql_script(conn, sql_str):
     """Execute a multi-statement SQL script string against the connection.
 
-    psql metacommands (lines starting with backslash, e.g. \\set ON_ERROR_STOP)
-    are not valid SQL and cannot be passed to psycopg.execute().  Strip them
-    before execution -- the ON_ERROR_STOP behaviour is irrelevant when running
-    via psycopg because any error already raises immediately.
-
     Runs the entire script in one cursor.execute() call so multi-statement
     execution (including DO blocks and DDL) works correctly.
+
+    IMPORTANT: the emitted SQL must be pure server SQL (no psql metacommands).
+    This helper executes the string EXACTLY as given -- no preprocessing.
     """
-    # Strip psql metacommand lines (\\set, \\i, \\c, etc.)
-    cleaned_lines = [
-        line for line in sql_str.splitlines()
-        if not line.strip().startswith("\\")
-    ]
-    cleaned = "\n".join(cleaned_lines)
     with conn.cursor() as cur:
-        cur.execute(cleaned)
+        cur.execute(sql_str)
 
 
 @pytest.mark.live
@@ -1949,6 +1975,180 @@ class TestEmit030ExactPkGuard:
         assert "kcu.column_name IN" in self.sql or "column_name IN" in self.sql, (
             "emit_030 PK guard must include a column_name IN membership check (PATCH 4)"
         )
+
+
+# ===========================================================================
+# Task 6 PATCH 2 -- LIVE prod-executor: exact artifact executes unmodified
+# Proves the emitted SQL is pure server SQL by feeding the raw emit_029 /
+# emit_030 strings directly to psycopg with NO preprocessing.  This closes
+# the false-green where the old helper stripped backslash lines.
+# ===========================================================================
+
+_PROD_EXEC_READS = {
+    "ICCB": {
+        "d4_rows": [
+            (10, {"tmt_tcc_number": "TCC-PE", "tmt_notes": None,
+                  "tmt_trip_plug": 0, "tmt_breaker_type": 1,
+                  "tmt_thermal_magnetic": None, "tmt_thermal": 0}),
+        ],
+        "d5_rows": [
+            (10, {"inst_override": {"InstOvrAmps": 100}, "ninst_override": None,
+                  "brk_times": None, "r_int": None, "r_iec": None}),
+        ],
+        "counts": {"d4_update_count": 1, "d5_insert_count": 1,
+                   "total_styles": 1, "real_override_count": 1,
+                   "rating_only_count": 0, "d4_nonnull_per_col": {},
+                   "d5_block_present_counts": {}, "samples": []},
+    },
+    "MCCB": {
+        "d4_rows": [
+            (30, {"tmt_tcc_number": None, "tmt_notes": None,
+                  "tmt_trip_plug": 0, "tmt_breaker_type": 0,
+                  "tmt_thermal_magnetic": 0, "tmt_thermal": 0}),
+        ],
+        "d5_rows": [
+            (30, {"inst_override": None, "ninst_override": None,
+                  "brk_times": None, "r_int": {"r_int_inst_480": 65}, "r_iec": None}),
+        ],
+        "counts": {"d4_update_count": 1, "d5_insert_count": 1,
+                   "total_styles": 1, "real_override_count": 0,
+                   "rating_only_count": 1, "d4_nonnull_per_col": {},
+                   "d5_block_present_counts": {}, "samples": []},
+    },
+    "PCB": {
+        "d4_rows": [],
+        "d5_rows": [
+            (40, {"inst_override": {"InstOvrAmps": 200}, "ninst_override": None,
+                  "brk_times": None, "r_int": None, "r_iec": None}),
+        ],
+        "counts": {"d4_update_count": 0, "d5_insert_count": 1,
+                   "total_styles": 1, "real_override_count": 1,
+                   "rating_only_count": 0, "d4_nonnull_per_col": None,
+                   "d5_block_present_counts": {}, "samples": []},
+    },
+}
+
+_PROD_EXEC_REPORT = {
+    "provenance": {
+        "run_id": "prod-exec-test-001",
+        "source_sha256": "deadbeef",
+        "frozen_copy_path": "/test/frozen.accdb",
+        "driver_name": "TestDriver",
+        "dbms_version": "0.0.0",
+        "read_only": True,
+        "snapshot_id": "snap-pe-001",
+        "host": "testhost",
+        "db_name": "tcc_fidelity_test",
+        "role": "test",
+        "table_checksums": {},
+        "generator_version": "0.2.0",
+    },
+    "classes": {cls: _PROD_EXEC_READS[cls]["counts"] for cls in ("ICCB", "MCCB", "PCB")},
+}
+
+
+def _assert_no_backslash_lines(sql_str, label):
+    """Structural guard: assert no line in sql_str starts with a backslash."""
+    bad = [ln for ln in sql_str.splitlines() if ln.strip().startswith("\\")]
+    assert bad == [], (
+        "%s contains psql metacommand line(s) -- not executable via psycopg server protocol: %r"
+        % (label, bad)
+    )
+
+
+@pytest.mark.live
+def test_prod_executor_emit_029_exact_artifact(tcc_test_conn):
+    """Task 6 Patch 2: emit_029 exact artifact executes via psycopg with NO preprocessing.
+
+    Takes the raw string returned by emit_029() and feeds it directly to
+    psycopg (server protocol, same path as apply_migration).  Asserts it
+    COMMITS and values land.  Also asserts the artifact contains no backslash
+    metacommand lines (structural guard against re-introduction).
+    """
+    conn = tcc_test_conn
+
+    sql_029 = gen.emit_029(_PROD_EXEC_READS, _PROD_EXEC_REPORT)
+
+    # Structural guard: no backslash lines in the raw artifact
+    _assert_no_backslash_lines(sql_029, "emit_029")
+
+    # Setup: schema with target rows so coverage guard passes
+    _create_minimal_tcc_schema(conn)
+    _seed_style_rows(conn, {"ICCB": [10], "MCCB": [30], "PCB": [40]})
+
+    # Execute the EXACT emitted SQL with no preprocessing -- must COMMIT
+    with conn.cursor() as cur:
+        cur.execute(sql_029)
+
+    # Verify the D4 update landed for ICCB source_id=10
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT tmt_tcc_number, tmt_trip_plug FROM tcc.brk_iccb_styles WHERE source_id=10"
+        )
+        row = cur.fetchone()
+    assert row is not None, "ICCB source_id=10 must exist after prod-executor emit_029"
+    assert row[0] == "TCC-PE", (
+        "tmt_tcc_number must be 'TCC-PE' after prod-executor apply, got %r" % (row[0],)
+    )
+    assert row[1] == 0, (
+        "tmt_trip_plug must be 0 after prod-executor apply, got %r" % (row[1],)
+    )
+
+    # Cleanup
+    with conn.cursor() as cur:
+        cur.execute("DROP SCHEMA IF EXISTS tcc CASCADE")
+
+
+@pytest.mark.live
+def test_prod_executor_emit_030_exact_artifact(tcc_test_conn):
+    """Task 6 Patch 2: emit_030 exact artifact executes via psycopg with NO preprocessing.
+
+    Takes the raw string returned by emit_030() and feeds it directly to
+    psycopg (server protocol, same path as apply_migration).  Asserts it
+    COMMITS and rows land.  Also asserts the artifact contains no backslash
+    metacommand lines (structural guard against re-introduction).
+    """
+    conn = tcc_test_conn
+
+    sql_030 = gen.emit_030(_PROD_EXEC_READS, _PROD_EXEC_REPORT)
+
+    # Structural guard: no backslash lines in the raw artifact
+    _assert_no_backslash_lines(sql_030, "emit_030")
+
+    # Setup: schema with target rows so coverage guard passes
+    _create_minimal_tcc_schema(conn)
+    _seed_style_rows(conn, {"ICCB": [10], "MCCB": [30], "PCB": [40]})
+
+    # Execute the EXACT emitted SQL with no preprocessing -- must COMMIT
+    with conn.cursor() as cur:
+        cur.execute(sql_030)
+
+    # Verify the D5 row landed for ICCB source_id=10
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT inst_override FROM tcc.brk_style_native_overrides "
+            "WHERE breaker_class='ICCB' AND source_id=10"
+        )
+        row = cur.fetchone()
+    assert row is not None, (
+        "D5 row for ICCB source_id=10 must exist after prod-executor emit_030"
+    )
+    assert row[0] is not None, "inst_override must be non-null for ICCB source_id=10"
+    assert row[0].get("InstOvrAmps") == 100, (
+        "InstOvrAmps must be 100 after prod-executor apply, got %r" % (row[0],)
+    )
+
+    # Verify total row count: 3 rows (ICCB/10, MCCB/30, PCB/40)
+    with conn.cursor() as cur:
+        cur.execute("SELECT count(*) FROM tcc.brk_style_native_overrides")
+        (cnt,) = cur.fetchone()
+    assert cnt == 3, (
+        "Expected 3 rows in brk_style_native_overrides after prod-executor apply, got %d" % cnt
+    )
+
+    # Cleanup
+    with conn.cursor() as cur:
+        cur.execute("DROP SCHEMA IF EXISTS tcc CASCADE")
 
 
 # ===========================================================================
