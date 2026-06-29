@@ -1,6 +1,6 @@
 import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from '@apex/estimator-core'
 import type { ExtractionArtifact, ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, TransformerSignature } from '../signature/types'
+import type { ApparatusSignature, BreakerSignature, TransformerSignature, RelaySignature } from '../signature/types'
 import { assessResolvedApparatus } from '../signature/normalize'
 import type { AssessmentCode } from '../signature/normalize'
 import { applyVoltageAssertions } from '../signature/voltage-assertions'
@@ -9,6 +9,8 @@ import type { QuantifiedLine } from '../quantify/types'
 import { matchBreaker } from '../catalog/breaker-map'
 import { matchTransformer } from '../catalog/transformer-map'
 import { R1_RATIFIED } from '../catalog/transformer-map.data'
+import { matchRelay } from '../catalog/relay-map'
+import { RELAY_R1_RATIFIED } from '../catalog/relay-map.data'
 import type {
   MatchedLine, OperatorQuestion, TakeoffResult, UnmatchedCandidate, TakeoffFinding,
   ApparatusDisposition, ApparatusDispositionStatus, DispositionReasonCode, ScopePendingLine,
@@ -140,6 +142,36 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
         const reason = `no catalog rule for ${bsig.mounting}/${bsig.functions.join('') || '-'}`
         unmatchedCandidates.push({ reason, line })
         for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'no_catalog_rule', reason, undefined, line.lineKey)
+      }
+      continue
+    }
+    if (sig.kind === 'relay') {
+      const rsig: RelaySignature = sig
+      const scope = matchRelay(rsig)
+      if (scope) {
+        scopePendingLines.push({
+          candidateRefs: scope.group,
+          provisionalDefaultRef: scope.defaultRef,   // may be undefined (no-default relay)
+          r1Ratified: RELAY_R1_RATIFIED,
+          scopeQuestion: scope.scopeQuestion,
+          qty: line.qty,
+          block: rsig.source.block ?? rsig.source.sheet,
+          line,
+        })
+        for (const i of line.memberIndices) {
+          stamp(dispositions, i, 'scope_pending', 'relay_scope_pending', scope.scopeQuestion, undefined, line.lineKey)
+          const disp = dispositions[i]!
+          disp.candidateRefs = scope.group
+          disp.provisionalDefaultRef = scope.defaultRef
+          disp.scopeQuestion = scope.scopeQuestion
+        }
+        questions.push({ question: scope.scopeQuestion, context: `${rsig.tag ?? rsig.source.sheet} (candidate group: ${scope.group.join(' | ')})`, code: 'relay_scope_pending' })
+      } else {
+        const reason = `recognized relay (role ${rsig.role ?? 'unknown'}) - no applicable priced ref-group`
+        unmatchedCandidates.push({ reason, line })
+        for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'relay_catalog_gap', reason, undefined, line.lineKey)
+        findings.push({ code: 'relay_catalog_gap', severity: 'warning', message: reason, context: rsig.tag ?? rsig.source.sheet })
+        questions.push({ question: `Catalog gap: ${reason} - estimator must author/confirm a ref before pricing.`, context: rsig.tag ?? rsig.source.sheet, code: 'relay_catalog_gap' })
       }
       continue
     }

@@ -62,11 +62,11 @@ describe('quantify', () => {
     expect(lines.map((l) => l.signature.source.block).sort()).toEqual(['P1-110', 'P2-110'])
   })
   it('prefers the richest authoritative occurrence (known mounting) as the representative', () => {
-    const sparse: ApparatusSignature = {
+    const sparse: BreakerSignature = {
       kind: 'breaker', voltageClass: 'LV', voltageBasis: 'detected', functions: ['L', 'S', 'I', 'G'], mounting: 'unknown', mountingBasis: 'none',
       tag: 'X-FB', source: { sheet: 'E01-11', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line' },
     }
-    const rich: ApparatusSignature = {
+    const rich: BreakerSignature = {
       ...sparse, mounting: 'molded_case', mountingBasis: 'text',
       source: { sheet: 'E05-20', page: 1, bbox: [0, 0, 1, 1], evidence: 'panel-schedule' },
     }
