@@ -10,16 +10,19 @@ const NON_BREAKER = /\b(PDU|UPS|STS|ATS|MTS|SPD|PQM|METER|BUS\s*DUCT)\b/i
 const TRANSFORMER_DEVICE = /\b(XFMR|transformer|dry.?type|pad.?mount|oil.?filled)\b/i
 const KVA_RATING = /(?<!\w)\d+(?:\.\d+)?\s*kVA\b/i
 
-const RELAY_DEVICE = /\b(protective\s+relay|relay|SEL-?\d|multilin|beckwith|basler|micom)\b/i
-const ANSI_FN = /\b(2[1-7]|32|37|38|40|46N?|47|49[RT]?|50N?|51N?|55|59|60|63|64|67|79|81|86|87[TBGN]?)\b/g
+const RELAY_DEVICE = /\b(protective\s+relay|relay|SEL-?\d{2,4}[A-Z]?|multilin|beckwith|basler|micom)\b/i
+const ANSI_FN = /\b(2[1-7]|32|37|38|40|46N?|47|49[RT]?|50N?|51N?|55|59|60|63|64|67|79|81|86|87[TBGN]?)\b/gi
 // Transformer-protection accessory relays (pressure/temperature/Buchholz/gas) are NOT standalone
 // protective-relay DEVICES the firm prices. Exclude them from token-based recognition so a plain
 // "FAULT PRESSURE RELAY" does not become a priced relay (an explicit candidateKind:'relay' still wins).
 const RELAY_ACCESSORY = /\b((sudden|fault)\s*pressure|pressure|buchholz|gas\s*accumulator)\s*relay\b/i
+// A relay MODEL family is a strong device anchor (device-first); it outranks a transformer text token.
+const RELAY_MODEL = /\b(SEL-?\d{2,4}[A-Z]?|multilin|beckwith|basler|micom)\b/i
 
 function looksLikeTransformer(x: ExtractedApparatus): boolean {
   if (x.candidateKind === 'relay') return false                  // relay producer signal wins over XFMR text
   if (x.candidateKind === 'transformer') return true
+  if (RELAY_MODEL.test(x.raw) && x.tag !== undefined && x.tag.length > 0) return false   // model+tag relay outranks a transformer token
   if (TRANSFORMER_DEVICE.test(x.raw)) return true
   // FIX 4: kVA-rating fallback must not steal NON_BREAKER rows (UPS, PDU, etc. can carry kVA ratings).
   // A real transformer device token (XFMR/transformer/dry-type/pad-mount/oil-filled) already recognizes above.
@@ -103,7 +106,7 @@ function looksLikeRelay(x: ExtractedApparatus): boolean {
 }
 
 function parseRelayTechnology(raw: string): RelayTechnology {
-  if (/\b(SEL-?\d|multilin|beckwith|basler|micom|microprocessor|uP)\b/i.test(raw)) return 'microprocessor'
+  if (/\b(SEL-?\d{2,4}[A-Z]?|multilin|beckwith|basler|micom|microprocessor|uP)\b/i.test(raw)) return 'microprocessor'
   if (/\b(electromechanical|EM|solid.?state)\b/i.test(raw)) return 'electromechanical_solid_state'
   return 'unknown'
 }
@@ -122,7 +125,7 @@ function parseRelayModel(raw: string): string | undefined {
 function deriveRole(ansi: string[], raw: string, tech: RelayTechnology): RelayRole {
   const has = (n: string) => ansi.includes(n)
   // Complex / multi-element roles first (these take their tier even on legacy technology).
-  if (has('87T') || /transformer\s+diff/i.test(raw)) return 'differential'
+  if (has('87T') || /(transformer|XFMR)\s+diff/i.test(raw)) return 'differential'
   if (has('87B') || /\bbus\b/i.test(raw)) return 'bus_differential'
   if (has('87')) return 'differential'
   if (/generator/i.test(raw) || (has('40') && (has('32') || has('46')))) return 'generator'
