@@ -90,7 +90,7 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
 
   const { lines, associated, locationOnly } = quantify(sigs)
   const byTag = new Map<string, QuantifiedLine>()
-  for (const l of lines) for (const t of l.memberTags) byTag.set(t, l)
+  for (const l of lines) if (l.signature.kind === 'breaker') for (const t of l.memberTags) byTag.set(t, l)
 
   // Attach + suppress ONLY a benign same-device occurrence: a breaker-shaped row missing only its voltage on a
   // NON-authoritative sheet (a plausible power-plan re-occurrence of a counted device). NEVER launder a genuine

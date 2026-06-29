@@ -18,7 +18,7 @@ function specKey(s: ApparatusSignature): string {
 
 // Stable device identity used for BOTH grouping AND source-retrieval (identical formula in both places).
 function deviceId(s: ApparatusSignature): string {
-  return s.tag ?? `${specKey(s)}@${s.source.sheet}:${s.source.bbox.join(',')}`
+  return s.tag ? `${s.kind}:${s.tag}` : `${specKey(s)}@${s.source.sheet}:${s.source.bbox.join(',')}`
 }
 
 // Prefer the RICHEST authoritative occurrence (known construction) so a sparse one-line row does not win

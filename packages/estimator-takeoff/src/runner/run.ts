@@ -45,7 +45,7 @@ export function runFromArtifact(json: unknown, opts: { projectNumber: string; al
   // 2. Zero matched guard: nothing to price ONLY if there is also nothing scope-pending.
   //    A run with only scope_pending falls through: isClean is false (scope_pending blocks)
   //    -> open-items path -> --allow-open-items -> partial_preview.
-  if (result.matchedLines.length === 0 && result.scopePendingLines.length === 0) {
+  if (result.matchedLines.length === 0 && (result.scopePendingLines ?? []).length === 0) {
     stderr.push('no matched or scope-pending lines - nothing to price; resolve construction/catalog evidence or review the takeoff')
     return { report: accountedReport, findings: [], exitCode: 1, stderr }
   }

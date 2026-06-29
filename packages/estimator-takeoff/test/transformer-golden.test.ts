@@ -9,7 +9,7 @@ describe('transformer family golden', () => {
   it('families coexist: breaker prices, transformers scope_pending, partial_preview', () => {
     const r = runTakeoff(fixture as any)
     expect(r.matchedLines.length).toBe(1)                        // the breaker (MSB-1 draw-out LSIG)
-    expect(r.scopePendingLines.length).toBe(2)                   // T-1 dry + T-2 oil
+    expect((r.scopePendingLines ?? []).length).toBe(2)                   // T-1 dry + T-2 oil
     const res = runFromArtifact(fixture as any, { projectNumber: 'PHX-TX', allowOpenItems: true })
     expect(res.report?.status).toBe('partial_preview')
     expect(res.envelope!.totals.bid_cents).toBeGreaterThan(0)    // the breaker line priced
