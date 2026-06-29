@@ -20,6 +20,13 @@ describe('transformer recognition', () => {
     expect(a.signature).toBeNull()
   })
 
+  // kVA-breaker regression: a breaker label carrying a kVA value (no transformer token) must match as a breaker
+  it('does NOT misclassify a kVA-bearing breaker label as a transformer conflict', () => {
+    const a = assessApparatus({ ...base, raw: 'MSB-1 500KVA 800AF/800AT LSIG', tag: 'MSB-1', busVoltageV: 480 })
+    expect(a.assessmentCode).toBe('classified')
+    expect(a.signature?.kind).toBe('breaker')
+  })
+
   // FIX 4: UPS/PDU with kVA rating must NOT be recognized as a transformer
   it('does NOT recognize UPS-1 with kVA as a transformer (NON_BREAKER gate)', () => {
     const a = assessApparatus({ ...base, raw: 'UPS-1 250 KVA', tag: 'UPS-1', busVoltageV: 480 })
