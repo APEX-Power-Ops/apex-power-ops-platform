@@ -135,3 +135,27 @@ Mirroring the relay packet's operator-pinned test list, pre-stated so the spec i
 2. Brainstorm -> spec the GFP engine slice (design doc), folding ratified decisions, reusing the relay/transformer scope_pending machinery.
 3. writing-plans -> SDD build, mirroring the breaker / transformer / relay contract-first / fixture-driven / fail-closed TDD rigor, with cross-engine (Codex) IRP before merge.
 4. Breaker AND transformer AND relay goldens stay byte-identical throughout (three prior families now regression-guard the fourth).
+
+---
+
+## Part 9 - Operator ratification (2026-06-29)
+
+The operator independently grounded the packet (confirmed: exactly one GFP-priced ref; section 7.14 overloaded by CT refs; exact-ref matching required and section-based matching forbidden) and ratified D1-D4 as written, with spec-phase tightening on recognition precedence. Recorded here so the spec is built on the ratified state.
+
+**Ratified decisions:**
+- **D1 (accounting):** the single ref `Ground Fault Protection Device LV` is the complete V1 priced set; author NO new hours. SME note left open (do NOT block V1): whether GFPE / ground-fault-sensor / dedicated ground-fault-relay variants ever price differently from the one "device" ref (catalog gap if so; fail-closed meanwhile).
+- **D2 (disposition):** `scope_pending(single ref)` for V1; NEVER auto-price. Accounting is unambiguous but RECOGNITION is not - GFP's main risk is double-counting breaker LSIG/GF elements or relay ground elements, so a one-click confirm gate is the safer V1 posture. Auto-price deferred to V2 after producer evidence proves recognition quality.
+- **D3 (recognition):** strong-anchor / device-first. Dedicated GFP / GFPE / GFR-style device evidence surfaces the GFP family. Bare ANSI 50G/51G/50N/51N/64 NEVER counts. Breaker hasG/LSIG stays breaker; a multifunction relay with a ground element stays relay.
+- **D4 (V1 scope):** standalone LV GFP only. Defer MV/HV schemes, zone interlocking, network-protector ground relays, and auto-pricing.
+
+**Spec-phase directives (operator):**
+- **Precedence wording must be tightened.** The packet's "route GFP before breaker" is necessary but NOT sufficient: the implementation must NOT let a GFP regex steal breaker rows. The strong-anchor exclusion (GFP yields to the breaker hasG/LSIG path and to the relay path) is the load-bearing guard, not the routing order.
+- **Pinned regression tests (operator-required, in addition to Part 7):**
+  1. `800AF/800AT LSIG` + ground-fault text -> breaker ONLY (no GFP line).
+  2. dedicated `GROUND FAULT RELAY` -> GFP.
+  3. `SEL` / relay + `50G/51G` -> remains relay UNLESS dedicated GFP wording is present.
+  4. bare ANSI ground functions -> NO counted device.
+
+These are folded into the spec; the spec is built on this ratified state.
+
+(Host worktree cleanup - the ~45 stale `apex-jobs/runs/review-*` worktrees + the orphaned `apex-family-admission` worktree - is to be done as a SEPARATE housekeeping pass, inventory-first, NOT inside this GFP lane. Recorded here only so it is not forgotten.)
