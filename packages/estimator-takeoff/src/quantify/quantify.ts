@@ -15,6 +15,10 @@ function specKey(s: ApparatusSignature): string {
     // per-device application tier; voltage optional/contextual; role+technology+model dedup
     return [s.kind, s.role ?? '-', s.technology, s.model ?? '-', s.voltageClass ?? '-', s.source.block ?? '-'].join('|')
   }
+  if (s.kind === 'gfp') {
+    // single-ref family: per device; voltage optional/contextual; ANSI evidence NOT in the key.
+    return [s.kind, s.voltageClass ?? '-', s.source.block ?? '-'].join('|')
+  }
   // transformer: full key so two transformers that differ only in coolant/kVA/padMount/ltc get separate lines
   return [s.kind, s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.source.block ?? '-',
           s.coolant, s.kvaRating ?? '-', s.padMount ? 'pad' : '-', s.ltc ? 'ltc' : '-'].join('|')

@@ -1,5 +1,5 @@
 import type { ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, TransformerSignature, TripFunction, VoltageBasis } from './types'
+import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, GfpSignature, TransformerSignature, TripFunction, VoltageBasis } from './types'
 import type { OperatorQuestion, OperatorQuestionCode } from '../buckets/types'
 import { classifyVoltage } from './voltage'
 
@@ -11,6 +11,9 @@ const TRANSFORMER_DEVICE = /\b(XFMR|transformer|dry.?type|pad.?mount|oil.?filled
 const KVA_RATING = /(?<!\w)\d+(?:\.\d+)?\s*kVA\b/i
 
 const RELAY_DEVICE = /\b(protective\s+relay|relay|SEL-?\d{2,4}[A-Z]?|multilin|beckwith|basler|micom)\b/i
+// STANDALONE GFP device NOUNS only. Deliberately does NOT match a bare ANSI ground function (50G/51G/64),
+// the trip-function letter G, bare "ground fault protection" (function name), "ground fault test", or "per 7.14".
+const GFP_DEVICE = /\b(GFPE?|GFR|ground[\s-]?fault\s+(relay|sensor|monitor|module|system|device|unit)|ground[\s-]?fault\s+protection\s+(system|device|unit|relay|module|panel))\b/i
 const ANSI_FN = /\b(2[1-7]|32|37|38|40|46N?|47|49[RT]?|50N?|51N?|55|59|60|63|64|67|79|81|86|87[TBGN]?)\b/gi
 // Transformer-protection accessory relays (pressure/temperature/Buchholz/gas) are NOT standalone
 // protective-relay DEVICES the firm prices. Exclude them from token-based recognition so a plain
@@ -109,6 +112,35 @@ function looksLikeRelay(x: ExtractedApparatus): boolean {
   return RELAY_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0
 }
 
+// LOAD-BEARING standalone guard: a parent-shaped row (a breaker by frame/hint, or a NON_BREAKER device)
+// carries its ground-fault burden in the PARENT ref, so it can NEVER become a GFP device - even with
+// candidateKind:'gfp'. Exported for a direct unit test (the rule that prevents drift).
+export function isGfpParentShape(x: ExtractedApparatus): boolean {
+  return looksLikeBreaker(x.raw) || NON_BREAKER.test(x.raw)
+}
+
+function looksLikeGfp(x: ExtractedApparatus): boolean {
+  if (isGfpParentShape(x)) return false                 // parent exclusion BEFORE candidateKind (non-negotiable #1)
+  if (x.candidateKind === 'gfp') return true            // producer asserts a STANDALONE GFP device
+  if (x.candidateKind !== undefined && x.candidateKind !== 'relay') return false  // defer to breaker/transformer producer signals; a relay row with dedicated GFP wording still becomes GFP
+  return GFP_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0
+}
+
+function assessGfp(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
+  // No FRAME_TRIP/conflict guard: looksLikeGfp (isGfpParentShape) already excludes any breaker-shaped row,
+  // so assessGfp is only reached for a clean standalone device. The invariant is pinned by a test.
+  const voltageClass = classifyVoltage(x.busVoltageV)   // MAY be undefined - GFP voltage contextual, NOT gated
+  const sig: GfpSignature = {
+    kind: 'gfp',
+    ansiFunctions: parseAnsiFunctions(x.raw),
+    voltageClass, voltageV: x.busVoltageV,
+    voltageBasis: voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none'),
+    tag: x.tag,
+    source: { sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block },
+  }
+  return { signature: sig, isBreakerShaped: false, assessmentCode: 'gfp_recognized', questions: [] }
+}
+
 function parseRelayTechnology(raw: string): RelayTechnology {
   if (/\b(SEL-?\d{2,4}[A-Z]?|multilin|beckwith|basler|micom|microprocessor|uP)\b/i.test(raw)) return 'microprocessor'
   if (/\b(electromechanical|EM|solid.?state)\b/i.test(raw)) return 'electromechanical_solid_state'
@@ -174,6 +206,7 @@ export type AssessmentCode =
   | 'transformer_attrs_unparsed'
   | 'relay_recognized'
   | 'relay_breaker_conflict'
+  | 'gfp_recognized'
   | 'non_breaker_excluded'
   | 'non_breaker_carries_rating'
   | 'missing_voltage'
@@ -234,6 +267,10 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
       }
     }
     return assessTransformer(x, voltageBasis)
+  }
+
+  if (looksLikeGfp(x)) {
+    return assessGfp(x, voltageBasis)
   }
 
   if (looksLikeRelay(x)) {

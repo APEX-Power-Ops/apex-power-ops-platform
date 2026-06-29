@@ -25,6 +25,7 @@ export type OperatorQuestionCode =
   | 'transformer_breaker_conflict'
   | 'relay_scope_pending' | 'relay_catalog_gap'
   | 'relay_breaker_conflict'
+  | 'gfp_scope_pending'
 
 export interface OperatorQuestion { question: string; context: string; code: OperatorQuestionCode; inputIndex?: number }
 export interface TakeoffResult {
@@ -60,6 +61,7 @@ export type DispositionReasonCode =
   | 'transformer_breaker_conflict'
   | 'relay_scope_pending' | 'relay_catalog_gap'
   | 'relay_breaker_conflict'
+  | 'gfp_scope_pending'
 
 export interface ApparatusDisposition {
   inputIndex: number
