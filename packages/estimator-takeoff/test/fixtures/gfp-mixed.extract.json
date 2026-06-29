@@ -1,0 +1,8 @@
+{
+  "pdf": "gfp-mixed.pdf",
+  "apparatus": [
+    { "raw": "MSB-1 1600AF/1600AT LSIG DRAW-OUT", "tag": "MSB-1", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line", "busVoltageV": 480, "candidateKind": "breaker" },
+    { "raw": "SEL-751 FEEDER PROTECTION RELAY", "tag": "R-1", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line", "candidateKind": "relay" },
+    { "raw": "GROUND FAULT PROTECTION SYSTEM (NEC 230.95)", "tag": "GFP-1", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line" }
+  ]
+}
