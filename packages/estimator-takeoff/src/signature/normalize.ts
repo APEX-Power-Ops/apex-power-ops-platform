@@ -22,7 +22,11 @@ const RELAY_MODEL = /\b(SEL-?\d{2,4}[A-Z]?|multilin|beckwith|basler|micom)\b/i
 function looksLikeTransformer(x: ExtractedApparatus): boolean {
   if (x.candidateKind === 'relay') return false                  // relay producer signal wins over XFMR text
   if (x.candidateKind === 'transformer') return true
-  if (RELAY_MODEL.test(x.raw) && x.tag !== undefined && x.tag.length > 0) return false   // model+tag relay outranks a transformer token
+  // A relay MODEL + tag outranks a transformer text token (device-first) ONLY when the row lacks
+  // strong transformer evidence. A real transformer (kVA rating or a coolant/construction token) that
+  // merely MENTIONS a relay model must stay a transformer - never silently reclassified as a relay.
+  if (RELAY_MODEL.test(x.raw) && x.tag !== undefined && x.tag.length > 0
+      && !KVA_RATING.test(x.raw) && parseCoolant(x.raw) === 'unknown') return false
   if (TRANSFORMER_DEVICE.test(x.raw)) return true
   // FIX 4: kVA-rating fallback must not steal NON_BREAKER rows (UPS, PDU, etc. can carry kVA ratings).
   // A real transformer device token (XFMR/transformer/dry-type/pad-mount/oil-filled) already recognizes above.
