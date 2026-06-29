@@ -21,6 +21,8 @@ describe('GFP family golden - breaker + relay + standalone GFP coexist', () => {
     expect(r.dispositions.every((d) => d.reasonCode !== 'gfp_scope_pending' || d.tag === 'GFP-1')).toBe(true)
     const msb = r.dispositions.find((d) => d.tag === 'MSB-1')!
     expect(msb.status).toBe('matched')
+    expect(msb.reasonCode).not.toBe('gfp_scope_pending')   // direct (non-vacuous) guard: the LSIG breaker is NOT a GFP line
+    expect((r.scopePendingLines ?? []).filter((s) => s.line.signature.kind === 'gfp')).toHaveLength(1)  // exactly one GFP line (GFP-1), not the breaker
   })
 
   it('the standalone GFP -> scope_pending with the single ref as provisional default', () => {

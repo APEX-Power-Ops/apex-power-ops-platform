@@ -28,6 +28,14 @@ describe('operator-pinned GFP recognition invariants', () => {
     }
   })
 
+  // #2b - the abbreviation token-path (GFP/GFPE/GFR) on an UNCLASSIFIED row (no candidateKind)
+  it('bare GFP/GFPE/GFR abbreviation + tag (no candidateKind) -> gfp_recognized (token path)', () => {
+    for (const raw of ['GFP-1', 'GFPE-2', 'GFR-3']) {
+      const a = assessApparatus(row({ raw, tag: raw }))
+      expect(a.signature?.kind, raw).toBe('gfp')
+    }
+  })
+
   // #3 - a relay element stays relay; only an explicit standalone GFP device becomes GFP
   it('SEL-751 50G 51G (candidateKind relay) stays relay, not GFP', () => {
     const r = runTakeoff(art([row({ raw: 'SEL-751 50G 51G', tag: 'R-1', candidateKind: 'relay' })]))
