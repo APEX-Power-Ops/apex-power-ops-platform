@@ -54,8 +54,8 @@ function validateRow(row: unknown, p: string): void {
   if (r['block'] !== undefined && !isStr(r['block'])) fail(`${p}.block`, 'string', r['block'])
   if (r['busVoltageV'] !== undefined && !(typeof r['busVoltageV'] === 'number' && Number.isInteger(r['busVoltageV']) && (r['busVoltageV'] as number) > 0)) fail(`${p}.busVoltageV`, 'positive integer', r['busVoltageV'])
   if (r['mountingHint'] !== undefined && !MOUNTING.has(r['mountingHint'] as string)) fail(`${p}.mountingHint`, [...MOUNTING].join('|'), r['mountingHint'])
-  // FIX 3: widen candidateKind to accept 'breaker' | 'transformer' | 'relay'
-  if (r['candidateKind'] !== undefined && r['candidateKind'] !== 'breaker' && r['candidateKind'] !== 'transformer' && r['candidateKind'] !== 'relay') fail(`${p}.candidateKind`, "'breaker'|'transformer'|'relay'", r['candidateKind'])
+  // candidateKind: 'breaker' | 'transformer' | 'relay' | 'gfp'
+  if (r['candidateKind'] !== undefined && r['candidateKind'] !== 'breaker' && r['candidateKind'] !== 'transformer' && r['candidateKind'] !== 'relay' && r['candidateKind'] !== 'gfp') fail(`${p}.candidateKind`, "'breaker'|'transformer'|'relay'|'gfp'", r['candidateKind'])
 }
 
 function validateAssertionShape(va: unknown, p: string): void {
