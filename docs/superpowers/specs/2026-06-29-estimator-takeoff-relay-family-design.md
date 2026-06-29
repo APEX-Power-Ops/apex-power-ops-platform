@@ -1,6 +1,6 @@
 # Estimator-Takeoff Relay Family (V1) - Design
 
-Status: SPEC (operator-ratified packet 002; this folds the ratified D1-D4 + 4 findings). Date: 2026-06-29.
+Status: SPEC Rev 2 (operator-ratified packet 002; folds D1-D4 + the packet's 4 findings; Rev 2 folds the operator's 4 spec-review patches: 87T device-first, no-default downstream report/renderer, RelayTechnology rename to electromechanical_solid_state, ASSESS_TO_REASON named task). Date: 2026-06-29.
 Lane: estimator-takeoff/relay-family-admission (off main 4f05495f). Dev-only; merge operator-gated.
 Packet: docs/superpowers/packets/estimator-takeoff-family-relays.md (Part 6 decisions + Part 9 ratification).
 Predecessors (reused, must stay byte-identical): breaker engine (signature-deterministic) + transformer slice (scope_pending machinery, merged PR #49).
@@ -38,14 +38,14 @@ Widen `ExtractedApparatus.candidateKind` from `'breaker' | 'transformer'` to `'b
 - Change `BaseSignature.voltageClass: VoltageClass` to `voltageClass?: VoltageClass` (optional).
 - Re-declare `voltageClass: VoltageClass` (required) on `BreakerSignature` and `TransformerSignature` (interface override narrows optional->required; breaker/transformer keep voltage required, zero behavior change).
 - Add `RelaySignature extends BaseSignature { kind: 'relay'; technology: RelayTechnology; ansiFunctions?: string[]; model?: string; role?: RelayRole; voltageClass?: VoltageClass /* contextual, may be absent */ }`. RelaySignature carries NO breaker/transformer fields (the family-leak lesson from the transformer build).
-- `export type RelayTechnology = 'em' | 'microprocessor' | 'unknown'`.
+- `export type RelayTechnology = 'electromechanical_solid_state' | 'microprocessor' | 'unknown'`. (Named for the NETA 7.9.1 procedure "Electromechanical and Solid-State"; this bucket maps to the existing `Protective Relay (Electromechanical)` tier until SME says otherwise. 7.9.2 = `microprocessor`.)
 - `export type RelayRole = 'overcurrent' | 'feeder' | 'motor' | 'bus_differential' | 'differential' | 'line' | 'generator' | 'multifunction_meter' | 'electromechanical' | 'unknown'` (one role per the 9 priced tiers, plus `unknown` for illegible).
 - `export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature`.
 
 ### 3. Recognition + parse (`signature/normalize.ts`) - device-first + never-missing-voltage
 - `RELAY_DEVICE` token (ASCII regex): `RELAY`, `PROTECTIVE RELAY`, and a bounded set of common model families (e.g. `SEL-?\d`, `MULTILIN`, `BECKWITH`, `BASLER`, `MICOM`); plus `candidateKind:'relay'`.
 - `looksLikeRelay(x)` = (`candidateKind==='relay'`) OR (`RELAY_DEVICE` matches `x.raw` AND `x.tag` is present). DEVICE-FIRST: ANSI presence alone does NOT make `looksLikeRelay` true. Guard against transformer-accessory false positives ("fault pressure relay", "sudden pressure relay" on a transformer row): if `looksLikeTransformer(x)` is true, transformer wins (the relay branch is checked AFTER transformer in `assessCore`, mirroring how transformer is checked before breaker).
-- `parseRelayTechnology(raw)`: `microprocessor` for model families / `MICROPROCESSOR` / `uP`; `em` for `ELECTROMECHANICAL`/`EM`/`SOLID.?STATE`; else `unknown`. (Drives the EM tier vs function tiers per D1 convention.)
+- `parseRelayTechnology(raw)`: `microprocessor` for model families / `MICROPROCESSOR` / `uP`; `electromechanical_solid_state` for `ELECTROMECHANICAL`/`EM`/`SOLID.?STATE`; else `unknown`. (Drives the Electromechanical tier vs function tiers per D1 convention.)
 - `parseAnsiFunctions(raw)`: extract ANSI device numbers (e.g. `\b(2[0-9]|3[0-9]|4[0-9]|5[0-9]|6[0-9]|7[0-9]|8[0-9])[A-Z]?\b` bounded to a known ANSI set) ONLY from an already-recognized relay device's raw; returned as `ansiFunctions` ATTRIBUTES. Never used to create or count a device.
 - `parseRelayModel(raw)`: capture a model token if present (evidence/display only).
 - `assessRelay(x)`: build a `RelaySignature` with `voltageClass = classifyVoltage(x.busVoltageV)` (MAY be undefined - NOT gated; no `missing_voltage`), `voltageV = x.busVoltageV`, `voltageBasis` derived `detected`/`none`, `technology`, `ansiFunctions`, `model`, `role` from `deriveRole(ansiFunctions, raw, technology)`. Assessment code `relay_recognized`.
@@ -59,7 +59,7 @@ Widen `ExtractedApparatus.candidateKind` from `'breaker' | 'transformer'` to `'b
   - role legible and mapped to a tier -> `{ group: RELAY_TIERS, defaultRef: ROLE_TO_TIER[role], scopeQuestion }` (provisional default; never auto-priced).
   - clearly a relay device but role `unknown`/illegible -> `{ group: RELAY_TIERS, scopeQuestion }` with NO `defaultRef` (the no-default case).
   - dominant role is an orphan device type (ORPHAN_ANSI) with no tier home -> `null` (-> `catalog_gap`).
-- `em` technology with a single legible function -> the `Protective Relay (Electromechanical)` tier as the provisional default (D1 convention: legacy EM uses the cheap tier; a microprocessor single-function relay uses its function tier).
+- `electromechanical_solid_state` technology with a single legible function -> the `Protective Relay (Electromechanical)` tier as the provisional default (D1 convention: legacy EM/solid-state uses the cheap tier; a microprocessor single-function relay uses its function tier).
 
 ### 5. Quantify (`quantify/quantify.ts`)
 Add an explicit `s.kind === 'relay'` branch to `specKey` BEFORE the transformer branch (so the transformer branch's `s.coolant`/`s.voltageClass` reads stay narrowed and the un-narrowed `voltageClass` read at line 15 no longer applies to relays): key = `[s.kind, s.role ?? '-', s.technology, s.model ?? '-', s.voltageClass ?? '-', s.source.block ?? '-']`. `deviceId` already kind-prefixes (`relay:TAG`), preventing cross-family bucketing. `unit_of_issue: each`.
@@ -68,12 +68,14 @@ Add an explicit `s.kind === 'relay'` branch to `specKey` BEFORE the transformer 
 - Widen `ScopePendingLine.provisionalDefaultRef: string` to `provisionalDefaultRef?: string` (optional). Readers default appropriately; operations-web does not read it (verified), but the cross-package typecheck gate is mandatory. (Alternative - a distinct no-default shape - rejected as higher surface; widening is minimal and `ApparatusDisposition.provisionalDefaultRef` is already optional.)
 - Add codes: `OperatorQuestionCode` += `relay_scope_pending`, `relay_catalog_gap`, `relay_breaker_conflict`; `DispositionReasonCode` += `relay_scope_pending`, `relay_catalog_gap`, `relay_breaker_conflict`; `TakeoffFinding.code` union += `relay_catalog_gap`.
 - `emit/emit.ts`: in the per-row match loop dispatch on `sig.kind` (breaker -> matchBreaker, transformer -> matchTransformer, relay -> matchRelay). A relay `RelayScopeMatch` -> `scope_pending` ScopePendingLine + disposition, stamping `candidateRefs=group`, `provisionalDefaultRef=match.defaultRef` (may be undefined), `r1Ratified=false`, `scopeQuestion`. A `null` match -> `catalog_gap` finding + disposition. Breaker + transformer emit blocks byte-identical.
-- `runner/run.ts` + `runner/report.ts`: the zero-matched guard already counts `scopePendingLines`; relay scope_pending rows make a relay-only extraction a `partial_preview` (not clean, not "nothing to price"), exactly as transformer-only does. Report `scopePending[]` carries relay rows with optional default.
+- **Update the compiler-checked `ASSESS_TO_REASON` map (emit.ts)** for the new `AssessmentCode` members `relay_recognized` / `relay_breaker_conflict` -> their `DispositionReasonCode`. Adding the members forces this anyway, but it is a recurring safety seam in this package (the transformer slice's laundering-cast fix), so it is a NAMED task with its own test.
+- `runner/run.ts` + `runner/report.ts`: the zero-matched guard already counts `scopePendingLines`; relay scope_pending rows make a relay-only extraction a `partial_preview` (not clean, not "nothing to price"), exactly as transformer-only does. **Downstream no-default task:** `ReconciliationReport.scopePending[].provisionalDefaultRef` is REQUIRED today (report.ts) - widen it to optional; the JSON omits it when absent, and the text renderer (report.ts ~line 125) prints `provisional=none` (i.e. `sp.provisionalDefaultRef ?? 'none'`) instead of `provisional=undefined`.
 
 ## Recognition signal + role mapping (the crux, expanded)
 
 Device-first rule (D3): establish the relay device, THEN read ANSI as role evidence.
 - Anchor present (candidateKind/RELAY_DEVICE token) + tag -> relay device.
+- BARE ANSI IS NOT AN ANCHOR. A row whose `raw` is just an ANSI number (e.g. `87T`) with no `candidateKind:'relay'` and no `RELAY`/model token is `unrecognized_apparatus_row`, NOT a relay - even for `87T`. The producer must establish the device anchor (a relay symbol/box surfaced as `candidateKind:'relay'`); only then does the row's `87T` text drive `deriveRole -> differential`. Concretely: bare `87T` text alone -> unrecognized; `candidateKind:'relay'` + `87T` -> a relay device with the `differential` role. Both are tested (and the golden's 87T row carries the `candidateKind:'relay'` anchor).
 - `deriveRole(ansiFunctions, raw, technology)` provisional mapping (R1, illustrative, estimator confirms):
   - `87T` (or `transformer differential`) -> `differential`
   - `87B` / `bus` -> `bus_differential`
@@ -83,7 +85,7 @@ Device-first rule (D3): establish the relay device, THEN read ANSI as role evide
   - 50/51 only / `OVERCURRENT` -> `overcurrent`
   - `FEEDER` context -> `feeder`
   - multifunction + metering (`METER` / many functions + `MFR`) -> `multifunction_meter`
-  - single function + `em` technology -> `electromechanical`
+  - single function + `electromechanical_solid_state` technology -> `electromechanical`
   - none of the above legible -> `unknown` (no-default scope_pending)
   - orphan-dominant (86/79/25/27/59/81 standalone) -> catalog_gap
 
@@ -96,17 +98,18 @@ Every outcome is `scope_pending` or `catalog_gap`; none auto-prices. The role ma
 ## Testing (TDD; operator-pinned tests in bold)
 
 - **no-voltage relay:** a relay row with no `busVoltageV` -> `scope_pending`/`catalog_gap`, NEVER `missing_voltage`.
-- **standalone-ANSI non-count:** a row that is a bare ANSI number with no device anchor -> NOT counted as a relay (unrecognized).
+- **standalone-ANSI non-count:** a row whose `raw` is a bare `87T` (no anchor) -> NOT counted as a relay (`unrecognized_apparatus_row`).
+- **anchored 87T:** `candidateKind:'relay'` + `87T` -> `scope_pending` with the `differential` role/tier. (The pair with the test above proves device-first.)
 - **exact-ref validation:** a test asserts every ref in `relay-map.data.ts` exists VERBATIM in the live estimator-core seed (string-keyed match safety).
-- **no-default scope_pending:** an illegible-role relay device -> `scope_pending` with `candidateRefs` set and `provisionalDefaultRef` undefined.
+- **no-default scope_pending:** an illegible-role relay device -> `scope_pending` with `candidateRefs` set and `provisionalDefaultRef` undefined, and the reconciliation report renders `provisional=none` (JSON optional / text `none`).
 - **breaker AND transformer goldens byte-identical.**
 - Recognition: device-first anchor cases; relay model families; `relay_breaker_conflict` on a relay carrying AF/AT.
-- Parse: technology (em vs microprocessor), ANSI-as-attributes, fail-closed unknown role.
+- Parse: technology (electromechanical_solid_state vs microprocessor), ANSI-as-attributes, fail-closed unknown role.
 - Match: each legible role -> correct provisional tier; illegible -> no default; orphan -> catalog_gap.
 - Quantify: two relays differing only in role/technology get separate lines; relay/breaker/transformer same tag not cross-bucketed.
 - Cross-family guards: a relay can never reach `matchBreaker` or `matchTransformer`; a transformer/breaker row never produces a relay line.
 - Disposition/runner: relay-only extraction -> `partial_preview`; relay `scope_pending` carried in the report (with and without default).
-- Golden: a real relaying-derived fixture (mixed: an 87T differential, a feeder microprocessor relay, a bare illegible relay, plus a breaker and a transformer) -> breaker prices, transformer scope_pending, relay scope_pending (one with default, one without), `partial_preview`; Gate-2 stand-in resolves a relay tier and prices via estimator-core.
+- Golden: a real relaying-derived fixture (mixed: an 87T differential relay whose row carries the `candidateKind:'relay'` anchor, a feeder microprocessor relay, a bare illegible relay, plus a breaker and a transformer) -> breaker prices, transformer scope_pending, relay scope_pending (one with default, one without), `partial_preview`; Gate-2 stand-in resolves a relay tier and prices via estimator-core.
 
 ## Out of scope (V2)
 
