@@ -83,7 +83,7 @@ Verified current shapes (`origin/main`):
 1. A recognized transformer with complete attributes but no chosen tier -> `scope_pending`, 0 priced lines for it, a Gate-2 scope question carrying the candidate group + default. Never auto-priced.
 2. A recognized transformer that no ref-group covers -> `catalog_gap` question + warning finding with attributes; never a `custom_equipment`/fabricated line; never new hours.
 3. A transformer-recognized row that also carries a breaker frame/trip -> `transformer_breaker_conflict` question; neither a breaker nor a transformer line is fabricated.
-4. Missing kVA or coolant -> `transformer_attrs_unparsed` question; not guessed.
+4. Missing kVA AND coolant -> `transformer_attrs_unparsed` question; not guessed. (kVA is metadata-only and not match-critical; the tier is scope-driven, not kVA-driven. Unknown coolant alone already surfaces as a `catalog_gap` via matchTransformer returning null.)
 5. LTC-positive (out of V1 scope) -> `scope_pending` with an explicit "LTC scope deferred to V2" note; never matched to the LTC ref.
 6. The breaker golden envelope is byte-identical before/after this slice (regression guard).
 7. Every artifact row still gets EXACTLY one disposition (`assertExhaustive` holds across the new `scope_pending` status).

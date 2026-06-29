@@ -18,6 +18,7 @@ export interface ReconciliationReport {
   accounted: boolean              // every input row has a disposition AND index-aligned
   dispositions: ApparatusDisposition[]
   envelopeTotals?: { bid_cents: number }   // present when an envelope was emitted
+  scopePending: { lineKey: string; tag?: string; qty: number; candidateRefs: string[]; provisionalDefaultRef: string; r1Ratified: boolean; scopeQuestion: string }[]
 }
 
 // clean = nothing unresolved is hiding AND at least one line was matched/priced.
@@ -78,9 +79,18 @@ export function reconcile(
     unresolved_rows: d.filter((x) => x.status === 'unmatched' || x.status === 'question' || x.status === 'scope_pending').length,
   }
   const accounted = d.length === apparatus_in && d.every((x, i) => x.inputIndex === i) && reconcilesInternally(result)
+  const scopePending = (result.scopePendingLines ?? []).map((sp) => ({
+    lineKey: sp.line.lineKey,
+    tag: sp.line.signature.tag,
+    qty: sp.qty,
+    candidateRefs: sp.candidateRefs,
+    provisionalDefaultRef: sp.provisionalDefaultRef,
+    r1Ratified: sp.r1Ratified,
+    scopeQuestion: sp.scopeQuestion,
+  }))
   const report: ReconciliationReport = {
     status: isClean(result) ? 'clean' : 'partial_preview',
-    counts, accounted, dispositions: d,
+    counts, accounted, dispositions: d, scopePending,
   }
   if (envelopeTotals) report.envelopeTotals = envelopeTotals
   return report
@@ -107,6 +117,15 @@ export function renderReportText(report: ReconciliationReport): string {
   out.push(`  ${pad('idx', 5)}${pad('status', 20)}${pad('reasonCode', 32)}${pad('tag', 18)}ref`)
   for (const x of report.dispositions) {
     out.push(`  ${pad(String(x.inputIndex), 5)}${pad(x.status, 20)}${pad(x.reasonCode, 32)}${pad(x.tag ?? '-', 18)}${x.ref ?? ''}`)
+  }
+  if (report.scopePending.length > 0) {
+    out.push('')
+    out.push('  Scope-pending (Gate-2):')
+    for (const sp of report.scopePending) {
+      out.push('    [' + (sp.tag ?? sp.lineKey) + '] qty=' + sp.qty + ' provisional=' + sp.provisionalDefaultRef + ' r1Ratified=' + sp.r1Ratified)
+      out.push('      candidates: ' + sp.candidateRefs.join(' | '))
+      out.push('      question: ' + sp.scopeQuestion)
+    }
   }
   return out.join('\n')
 }
