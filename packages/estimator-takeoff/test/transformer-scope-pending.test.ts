@@ -20,11 +20,12 @@ describe('scope_pending disposition -- dry transformer with voltage', () => {
     expect(r.scopePendingLines).toHaveLength(1)
   })
 
-  it('scopePendingLine carries candidateRefs (DRY_GROUP) and a defaultRef', () => {
+  it('scopePendingLine carries candidateRefs (DRY_GROUP), provisionalDefaultRef, and r1Ratified=false', () => {
     const sp = r.scopePendingLines[0]!
     expect(sp.candidateRefs.length).toBeGreaterThan(0)
-    expect(sp.defaultRef).toBeTruthy()
-    expect(sp.candidateRefs).toContain(sp.defaultRef)
+    expect(sp.provisionalDefaultRef).toBeTruthy()
+    expect(sp.candidateRefs).toContain(sp.provisionalDefaultRef)
+    expect(sp.r1Ratified).toBe(false)
   })
 
   it('scopePendingLine carries qty and a lineKey', () => {
@@ -38,8 +39,13 @@ describe('scope_pending disposition -- dry transformer with voltage', () => {
     expect(r.dispositions[0]!.reasonCode).toBe('transformer_scope_pending')
   })
 
-  it('disposition carries the defaultRef as ref', () => {
-    expect(r.dispositions[0]!.ref).toBe(r.scopePendingLines[0]!.defaultRef)
+  it('disposition ref is undefined (no authoritative ref yet); provisionalDefaultRef is set', () => {
+    // CONTRACT CHANGE: ref slot must be undefined for scope_pending (ref implies an authoritative matched ref).
+    // The provisional default is surfaced separately via provisionalDefaultRef.
+    expect(r.dispositions[0]!.ref).toBeUndefined()
+    expect(r.dispositions[0]!.provisionalDefaultRef).toBe(r.scopePendingLines[0]!.provisionalDefaultRef)
+    expect(r.dispositions[0]!.candidateRefs).toEqual(r.scopePendingLines[0]!.candidateRefs)
+    expect(r.dispositions[0]!.scopeQuestion).toBe(r.scopePendingLines[0]!.scopeQuestion)
   })
 
   it('isClean returns false (scope_pending blocks clean)', () => {
@@ -124,5 +130,36 @@ describe('breaker path invariant -- scope_pending does not affect breaker runs',
     const report = reconcile(art([matchedBreaker, dryRow]), r)
     expect(report.counts.unresolved_rows).toBeGreaterThanOrEqual(1)
     expect(report.accounted).toBe(true)
+  })
+})
+describe('Gate-2 structured report via reconcile()', () => {
+  const r = runTakeoff(art([dryRow]))
+
+  it('reconcile().scopePending has one entry for the scope_pending line', () => {
+    const report = reconcile(art([dryRow]), r)
+    expect(report.scopePending).toHaveLength(1)
+    const sp = report.scopePending[0]!
+    expect(sp.lineKey).toBeTruthy()
+    expect(sp.qty).toBeGreaterThan(0)
+  })
+
+  it('reconcile().scopePending entry carries candidateRefs (the dry/oil group)', () => {
+    const report = reconcile(art([dryRow]), r)
+    const sp = report.scopePending[0]!
+    expect(sp.candidateRefs.length).toBeGreaterThan(0)
+    expect(sp.provisionalDefaultRef).toBeTruthy()
+    expect(sp.candidateRefs).toContain(sp.provisionalDefaultRef)
+  })
+
+  it('reconcile().scopePending entry carries r1Ratified=false', () => {
+    const report = reconcile(art([dryRow]), r)
+    const sp = report.scopePending[0]!
+    expect(sp.r1Ratified).toBe(false)
+  })
+
+  it('reconcile().scopePending entry carries a scopeQuestion', () => {
+    const report = reconcile(art([dryRow]), r)
+    const sp = report.scopePending[0]!
+    expect(sp.scopeQuestion).toBeTruthy()
   })
 })

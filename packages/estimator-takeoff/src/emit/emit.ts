@@ -8,6 +8,7 @@ import { quantify, isAuthoritativeEvidence } from '../quantify/quantify'
 import type { QuantifiedLine } from '../quantify/types'
 import { matchBreaker } from '../catalog/breaker-map'
 import { matchTransformer } from '../catalog/transformer-map'
+import { R1_RATIFIED } from '../catalog/transformer-map.data'
 import type {
   MatchedLine, OperatorQuestion, TakeoffResult, UnmatchedCandidate, TakeoffFinding,
   ApparatusDisposition, ApparatusDispositionStatus, DispositionReasonCode, ScopePendingLine,
@@ -146,8 +147,24 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
     const tsig: TransformerSignature = sig
     const scope = matchTransformer(tsig)
     if (scope) {
-      scopePendingLines.push({ candidateRefs: scope.group, defaultRef: scope.defaultRef, scopeQuestion: scope.scopeQuestion, qty: line.qty, block: tsig.source.block ?? tsig.source.sheet, line })
-      for (const i of line.memberIndices) stamp(dispositions, i, 'scope_pending', 'transformer_scope_pending', scope.scopeQuestion, scope.defaultRef, line.lineKey)
+      // scope_pending: ref slot is NOT populated (ref implies an authoritative matched ref).
+      // candidateRefs, provisionalDefaultRef, and scopeQuestion are carried on the disposition for Gate-2.
+      scopePendingLines.push({
+        candidateRefs: scope.group,
+        provisionalDefaultRef: scope.defaultRef,
+        r1Ratified: R1_RATIFIED,
+        scopeQuestion: scope.scopeQuestion,
+        qty: line.qty,
+        block: tsig.source.block ?? tsig.source.sheet,
+        line,
+      })
+      for (const i of line.memberIndices) {
+        stamp(dispositions, i, 'scope_pending', 'transformer_scope_pending', scope.scopeQuestion, undefined, line.lineKey)
+        const disp = dispositions[i]!
+        disp.candidateRefs = scope.group
+        disp.provisionalDefaultRef = scope.defaultRef
+        disp.scopeQuestion = scope.scopeQuestion
+      }
       questions.push({ question: scope.scopeQuestion, context: `${tsig.tag ?? tsig.source.sheet} (candidate group: ${scope.group.join(' | ')})`, code: 'transformer_scope_pending' })
     } else {
       const reason = `recognized transformer (coolant ${tsig.coolant}, ${tsig.kvaRating ?? '?'}kVA) - no applicable priced ref-group`

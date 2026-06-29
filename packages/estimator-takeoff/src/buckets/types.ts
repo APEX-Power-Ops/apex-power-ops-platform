@@ -8,7 +8,8 @@ export interface UnmatchedCandidate { reason: string; line: QuantifiedLine }
 
 export interface ScopePendingLine {
   candidateRefs: string[]
-  defaultRef: string
+  provisionalDefaultRef: string
+  r1Ratified: boolean
   scopeQuestion: string
   qty: number
   block: string
@@ -69,6 +70,9 @@ export interface ApparatusDisposition {
   reason: string
   ref?: string
   lineKey?: string
+  candidateRefs?: string[]
+  provisionalDefaultRef?: string
+  scopeQuestion?: string
 }
 
 export type FindingSeverity = 'error' | 'warning'
