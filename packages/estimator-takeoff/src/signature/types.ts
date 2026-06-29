@@ -5,7 +5,7 @@ export type Mounting =
 export type MvType = 'air_frame' | 'vacuum' | 'sf6' | 'oil' | 'unknown'
 export type TripFunction = 'L' | 'S' | 'I' | 'G'
 
-// How the resolved mounting was determined — surfaced so the estimator can see when construction was
+// How the resolved mounting was determined -- surfaced so the estimator can see when construction was
 // ASSUMED (estimating_baseline) vs read from evidence (hint) or label text. NOTE: trip FUNCTIONS are
 // parsed text-only (never inferred); add a parallel `functionBasis` here only if a function-inference
 // path is ever introduced.
@@ -16,7 +16,7 @@ export type VoltageBasis = 'detected' | 'asserted' | 'none'
 export type Coolant = 'dry' | 'liquid' | 'unknown'
 
 export interface BaseSignature {
-  voltageClass: VoltageClass
+  voltageClass?: VoltageClass        // optional at the base; required for breaker/transformer (re-declared), contextual for relay
   voltageV?: number
   voltageBasis: VoltageBasis
   tag?: string
@@ -26,6 +26,7 @@ export interface BaseSignature {
 
 export interface BreakerSignature extends BaseSignature {
   kind: 'breaker'
+  voltageClass: VoltageClass         // required for breakers (narrows the optional base)
   frameA?: number
   tripA?: number
   functions: TripFunction[]
@@ -36,10 +37,27 @@ export interface BreakerSignature extends BaseSignature {
 
 export interface TransformerSignature extends BaseSignature {
   kind: 'transformer'
+  voltageClass: VoltageClass         // required for transformers (narrows the optional base)
   kvaRating?: number
   coolant: Coolant
   padMount?: boolean
   ltc?: boolean
 }
 
+export type RelayTechnology = 'electromechanical_solid_state' | 'microprocessor' | 'unknown'
+export type RelayRole =
+  | 'overcurrent' | 'feeder' | 'motor' | 'bus_differential' | 'differential'
+  | 'line' | 'generator' | 'multifunction_meter' | 'electromechanical' | 'unknown'
+
+export interface RelaySignature extends BaseSignature {
+  kind: 'relay'
+  technology: RelayTechnology
+  ansiFunctions?: string[]
+  model?: string
+  role?: RelayRole
+  // voltageClass stays optional (inherited): relay voltage is contextual and never gates.
+}
+
+// NOTE: ApparatusSignature union is widened to include RelaySignature in Task 3 (the wire task).
+// Do NOT add RelaySignature to this union in Task 2.
 export type ApparatusSignature = BreakerSignature | TransformerSignature
