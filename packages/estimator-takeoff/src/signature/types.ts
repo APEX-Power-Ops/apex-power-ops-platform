@@ -58,4 +58,10 @@ export interface RelaySignature extends BaseSignature {
   // voltageClass stays optional (inherited): relay voltage is contextual and never gates.
 }
 
+export interface GfpSignature extends BaseSignature {
+  kind: 'gfp'
+  ansiFunctions?: string[]   // evidence/display only (e.g. 64, 50G); never used to match or to count
+  // voltageClass stays optional (inherited): GFP voltage is contextual and never gates.
+}
+
 export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature

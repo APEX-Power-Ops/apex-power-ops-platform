@@ -56,4 +56,13 @@ describe('parseArtifact', () => {
     }
     expect(() => parseArtifact(a)).not.toThrow()
   })
+
+  it('accepts candidateKind:gfp and the row parses without error', () => {
+    const a = {
+      pdf: 'x.pdf',
+      apparatus: [{ raw: 'GFP-1 GROUND FAULT PROTECTION SYSTEM', tag: 'GFP-1', sheet: 'E1', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', candidateKind: 'gfp' }],
+    }
+    expect(() => parseArtifact(a)).not.toThrow()
+    expect(a.apparatus[0]!.candidateKind).toBe('gfp')
+  })
 })
