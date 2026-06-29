@@ -15,7 +15,8 @@ function looksLikeTransformer(x: ExtractedApparatus): boolean {
   if (TRANSFORMER_DEVICE.test(x.raw)) return true
   // FIX 4: kVA-rating fallback must not steal NON_BREAKER rows (UPS, PDU, etc. can carry kVA ratings).
   // A real transformer device token (XFMR/transformer/dry-type/pad-mount/oil-filled) already recognizes above.
-  return KVA_RATING.test(x.raw) && (x.tag !== undefined && x.tag.length > 0) && !NON_BREAKER.test(x.raw)
+  // kVA-breaker guard: also exclude a breaker label that merely carries a kVA value (e.g. a main feeding a 500kVA xfmr) via !looksLikeBreaker.
+  return KVA_RATING.test(x.raw) && (x.tag !== undefined && x.tag.length > 0) && !NON_BREAKER.test(x.raw) && !looksLikeBreaker(x.raw)
 }
 
 function looksLikeBreaker(raw: string): boolean {
