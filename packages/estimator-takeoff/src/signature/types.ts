@@ -58,6 +58,4 @@ export interface RelaySignature extends BaseSignature {
   // voltageClass stays optional (inherited): relay voltage is contextual and never gates.
 }
 
-// NOTE: ApparatusSignature union is widened to include RelaySignature in Task 3 (the wire task).
-// Do NOT add RelaySignature to this union in Task 2.
-export type ApparatusSignature = BreakerSignature | TransformerSignature
+export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature

@@ -11,6 +11,10 @@ function specKey(s: ApparatusSignature): string {
       s.frameA ?? '-', s.tripA ?? '-', s.source.block ?? '-',   // voltageV + voltageBasis -> per-tag voltage/provenance preserved
     ].join('|')
   }
+  if (s.kind === 'relay') {
+    // per-device application tier; voltage optional/contextual; role+technology+model dedup
+    return [s.kind, s.role ?? '-', s.technology, s.model ?? '-', s.voltageClass ?? '-', s.source.block ?? '-'].join('|')
+  }
   // transformer: full key so two transformers that differ only in coolant/kVA/padMount/ltc get separate lines
   return [s.kind, s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.source.block ?? '-',
           s.coolant, s.kvaRating ?? '-', s.padMount ? 'pad' : '-', s.ltc ? 'ltc' : '-'].join('|')

@@ -8,7 +8,7 @@ export interface UnmatchedCandidate { reason: string; line: QuantifiedLine }
 
 export interface ScopePendingLine {
   candidateRefs: string[]
-  provisionalDefaultRef: string
+  provisionalDefaultRef?: string
   r1Ratified: boolean
   scopeQuestion: string
   qty: number
@@ -23,6 +23,7 @@ export type OperatorQuestionCode =
   | 'transformer_attrs_unparsed'
   | 'transformer_scope_pending' | 'transformer_catalog_gap'
   | 'transformer_breaker_conflict'
+  | 'relay_scope_pending' | 'relay_catalog_gap'
 
 export interface OperatorQuestion { question: string; context: string; code: OperatorQuestionCode; inputIndex?: number }
 export interface TakeoffResult {
@@ -56,6 +57,7 @@ export type DispositionReasonCode =
   | 'transformer_scope_pending'
   | 'transformer_catalog_gap'
   | 'transformer_breaker_conflict'
+  | 'relay_scope_pending' | 'relay_catalog_gap'
 
 export interface ApparatusDisposition {
   inputIndex: number
@@ -85,7 +87,7 @@ export type VoltageAssertionCode =
   | 'voltage_assertion_invalid_shape'
 
 export interface TakeoffFinding {
-  code: VoltageAssertionCode | 'transformer_catalog_gap'
+  code: VoltageAssertionCode | 'transformer_catalog_gap' | 'relay_catalog_gap'
   severity: FindingSeverity
   message: string
   context: string
