@@ -45,6 +45,15 @@ describe('parseArtifact', () => {
   })
 
   it('rejects an unknown candidateKind value', () => {
-    expect(err((a) => (a.apparatus[0].candidateKind = 'relay')).path).toBe('apparatus[0].candidateKind')
+    expect(err((a) => (a.apparatus[0].candidateKind = 'foobar')).path).toBe('apparatus[0].candidateKind')
+  })
+
+  // Task 2: candidateKind 'relay' must be accepted
+  it('accepts candidateKind:relay and the row parses without error', () => {
+    const a = {
+      pdf: 'x.pdf',
+      apparatus: [{ raw: 'R-1 MICROPROCESSOR RELAY', tag: 'R-1', sheet: 'E1', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', busVoltageV: 480, candidateKind: 'relay' }],
+    }
+    expect(() => parseArtifact(a)).not.toThrow()
   })
 })
