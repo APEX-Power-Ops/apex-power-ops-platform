@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Rev 2 (operator plan review, 2026-06-29):** folded 4 patches - (1) `deriveRole` now reaches the `electromechanical` tier for legacy single-function EM/solid-state relays (+tests); (2) no-default text-render gate now calls `renderReportText` and asserts `provisional=none`; (3) `matchBreaker`/`matchTransformer` get direct type+runtime guards vs a relay signature; (4) `RELAY_ACCESSORY` exclusion so a standalone transformer-accessory pressure relay is not recognized as a priced relay.
+
 **Goal:** Admit the RELAY apparatus family into `packages/estimator-takeoff` V1 - recognized device-first, counted per device, routed to a Gate-2 application-tier scope decision (never auto-priced), with breaker and transformer behavior byte-identical.
 
 **Architecture:** Reuse the transformer slice's scope_pending machinery (discriminated-union signature, `scope_pending` disposition, candidate ref-GROUP, R1-provisional defaults, kind-prefixed `deviceId`, cross-family guards). Add a third signature `kind: 'relay'`, a device-first recognizer/parser, an application-tier match table, and three relay-specific guardrails: voltage optional/contextual (never gates), recognition device-first (ANSI numbers are attributes, never countable devices), and an optional provisional default (no-default scope_pending).
@@ -153,6 +155,10 @@ describe('matchRelay', () => {
     expect(m.group).toEqual([...RELAY_TIERS])
     expect(m.defaultRef).toBe('Protective Relay (Differential Protection)')
     expect(m.scopeQuestion.length).toBeGreaterThan(0)
+  })
+  it('electromechanical role -> the Electromechanical tier as default', () => {
+    const m = matchRelay(base({ role: 'electromechanical', technology: 'electromechanical_solid_state' }))!
+    expect(m.defaultRef).toBe('Protective Relay (Electromechanical)')
   })
   it('illegible role (unknown) -> group with NO defaultRef (no-default case)', () => {
     const m = matchRelay(base({ role: 'unknown' }))!
@@ -466,6 +472,17 @@ describe('relay recognition - device-first', () => {
     expect(a.assessmentCode).toBe('relay_breaker_conflict')
     expect(a.signature).toBeNull()
   })
+  it('a legacy single-function EM/solid-state relay -> electromechanical role', () => {
+    const a = assessApparatus(row({ raw: 'EM OVERCURRENT RELAY 51', tag: 'R-4', candidateKind: 'relay' }))
+    expect(a.assessmentCode).toBe('relay_recognized')
+    expect(a.signature && a.signature.kind === 'relay' ? a.signature.technology : null).toBe('electromechanical_solid_state')
+    expect(a.signature && a.signature.kind === 'relay' ? a.signature.role : null).toBe('electromechanical')
+  })
+  it('a standalone transformer-accessory pressure relay is NOT a protective relay device', () => {
+    const a = assessApparatus(row({ raw: 'FAULT PRESSURE RELAY', tag: 'X63' }))   // no candidateKind anchor
+    expect(a.signature).toBeNull()
+    expect(a.assessmentCode).toBe('unrecognized_apparatus_row')
+  })
 })
 
 describe('relay end-to-end through runTakeoff', () => {
@@ -514,13 +531,18 @@ Add near the other token regexes:
 ```ts
 const RELAY_DEVICE = /\b(protective\s+relay|relay|SEL-?\d|multilin|beckwith|basler|micom)\b/i
 const ANSI_FN = /\b(2[1-7]|32|37|38|40|46N?|47|49[RT]?|50N?|51N?|55|59|60|63|64|67|79|81|86|87[TBGN]?)\b/g
+// Transformer-protection accessory relays (pressure/temperature/Buchholz/gas) are NOT standalone
+// protective-relay DEVICES the firm prices. Exclude them from token-based recognition so a plain
+// "FAULT PRESSURE RELAY" does not become a priced relay (an explicit candidateKind:'relay' still wins).
+const RELAY_ACCESSORY = /\b((sudden|fault)\s*pressure|pressure|buchholz|gas\s*accumulator)\s*relay\b/i
 ```
 
-Device-first recognizer (a RELAY token alone is not enough without a tag, mirroring the kVA-breaker guard discipline):
+Device-first recognizer (a RELAY token alone is not enough without a tag, mirroring the kVA-breaker guard discipline; the accessory exclusion makes the transformer-first claim true even for a STANDALONE pressure relay that carries no transformer token):
 
 ```ts
 function looksLikeRelay(x: ExtractedApparatus): boolean {
-  if (x.candidateKind === 'relay') return true
+  if (x.candidateKind === 'relay') return true                  // explicit producer signal wins
+  if (RELAY_ACCESSORY.test(x.raw)) return false                 // transformer accessory, not a priced relay device
   return RELAY_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0
 }
 
@@ -541,8 +563,9 @@ function parseRelayModel(raw: string): string | undefined {
   return m ? m[0] : undefined
 }
 
-function deriveRole(ansi: string[], raw: string, _tech: RelayTechnology): RelayRole {
+function deriveRole(ansi: string[], raw: string, tech: RelayTechnology): RelayRole {
   const has = (n: string) => ansi.includes(n)
+  // Complex / multi-element roles first (these take their tier even on legacy technology).
   if (has('87T') || /transformer\s+diff/i.test(raw)) return 'differential'
   if (has('87B') || /\bbus\b/i.test(raw)) return 'bus_differential'
   if (has('87')) return 'differential'
@@ -550,6 +573,9 @@ function deriveRole(ansi: string[], raw: string, _tech: RelayTechnology): RelayR
   if (has('21') || /\b(line|distance)\b/i.test(raw)) return 'line'
   if (/motor/i.test(raw) || (has('49') && has('50') && has('51'))) return 'motor'
   if (/multi.?function/i.test(raw) && /meter/i.test(raw)) return 'multifunction_meter'
+  // Legacy single-function EM/solid-state -> the cheap electromechanical tier (spec line 62).
+  // Placed BEFORE the generic feeder/overcurrent roles so a simple EM relay does not fall into the uP tier.
+  if (tech === 'electromechanical_solid_state' && ansi.length <= 1) return 'electromechanical'
   if (/feeder/i.test(raw)) return 'feeder'
   if (has('50') || has('51') || /overcurrent/i.test(raw)) return 'overcurrent'
   return 'unknown'
@@ -580,7 +606,7 @@ function assessRelay(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Appara
 
 Add the imports for `RelaySignature`, `RelayTechnology`, `RelayRole` to the existing `import type ... from './types'`.
 
-Route in `assessCore` - relay AFTER transformer, BEFORE NON_BREAKER (so a `Multi-function (w Meter)` relay's METER token is not swallowed by NON_BREAKER; transformer accessories like `fault pressure relay` stay with the transformer because transformer is checked first):
+Route in `assessCore` - relay AFTER transformer, BEFORE NON_BREAKER (so a `Multi-function (w Meter)` relay's METER token is not swallowed by NON_BREAKER). A transformer-accessory pressure relay on a row that ALSO carries a transformer token stays with the transformer because transformer is checked first; a STANDALONE pressure relay (no transformer token) is excluded by `RELAY_ACCESSORY` in `looksLikeRelay` and falls through to `unrecognized_apparatus_row`:
 
 ```ts
   if (looksLikeTransformer(x)) {
@@ -622,10 +648,16 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-relay-family && git add -A && gi
 import { describe, it, expect } from 'vitest'
 import { runTakeoff } from '../src/emit/emit'
 import { matchBreaker } from '../src/catalog/breaker-map'
+import { matchTransformer } from '../src/catalog/transformer-map'
 import type { ExtractionArtifact } from '../src/extraction/types'
+import type { RelaySignature } from '../src/signature/types'
 
 const row = (o: Partial<any> & { raw: string }) => ({ sheet: 'E01-11', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', ...o })
 const art = (apparatus: any[]): ExtractionArtifact => ({ pdf: 'x.pdf', apparatus })
+const relaySig: RelaySignature = {
+  kind: 'relay', technology: 'microprocessor', role: 'feeder', voltageBasis: 'none', tag: 'R1',
+  source: { sheet: 'E01', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line' },
+}
 
 describe('relay cross-family guards', () => {
   it('a relay and a breaker sharing a tag are NOT cross-bucketed', () => {
@@ -636,11 +668,21 @@ describe('relay cross-family guards', () => {
     expect((r.scopePendingLines ?? []).length).toBe(1)   // the relay
     expect(r.matchedLines.length).toBe(1)                 // the breaker
   })
-  it('matchBreaker only accepts BreakerSignature (relay can never reach it)', () => {
-    // type-level guarantee + runtime: a relay row never produces a matchedLine
-    const r = runTakeoff(art([row({ raw: 'SEL-751 FEEDER', tag: 'R1', candidateKind: 'relay' })]))
-    expect(r.matchedLines.length).toBe(0)
-    expect(typeof matchBreaker).toBe('function')
+  it('matchBreaker is type- AND runtime-defended against a relay signature', () => {
+    let forced: unknown
+    expect(() => {
+      // @ts-expect-error relay is not a BreakerSignature - the family-dispatch boundary is type-defended
+      forced = matchBreaker(relaySig)
+    }).not.toThrow()
+    expect(forced).toBeFalsy()                            // even force-passed, no breaker rule matches a relay
+  })
+  it('matchTransformer is type- AND runtime-defended against a relay signature', () => {
+    let forced: unknown
+    expect(() => {
+      // @ts-expect-error relay is not a TransformerSignature
+      forced = matchTransformer(relaySig)
+    }).not.toThrow()
+    expect(forced).toBeNull()                             // coolant undefined -> no group -> null
   })
   it('two relays differing only in technology get separate lines', () => {
     const r = runTakeoff(art([
@@ -697,7 +739,7 @@ A mixed one-line: a priced breaker, a scope_pending transformer, an 87T differen
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { runTakeoff } from '../src/emit/emit'
-import { reconcile } from '../src/runner/report'
+import { reconcile, renderReportText } from '../src/runner/report'
 import type { ExtractionArtifact } from '../src/extraction/types'
 
 const artifact = JSON.parse(readFileSync(new URL('./fixtures/relay-mixed.extract.json', import.meta.url), 'utf8')) as ExtractionArtifact
@@ -715,9 +757,14 @@ describe('relay golden - breaker + transformer + relay coexist', () => {
     expect(diff.provisionalDefaultRef).toBe('Protective Relay (Differential Protection)')
     expect(bare.provisionalDefaultRef).toBeUndefined()
   })
-  it('reconcile renders provisional=none for the no-default relay (text)', () => {
+  it('no-default relay renders provisional=none in BOTH JSON and text', () => {
     const report = reconcile(artifact, r, { bid_cents: 0 })
+    // JSON: at least one scope-pending entry carries no provisional default
     expect(report.scopePending.some((s) => s.provisionalDefaultRef === undefined)).toBe(true)
+    // TEXT (human report): the renderer must print provisional=none, never provisional=undefined
+    const text = renderReportText(report)
+    expect(text).toContain('provisional=none')
+    expect(text).not.toContain('provisional=undefined')
   })
 })
 ```
@@ -740,15 +787,18 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-relay-family && git add -A && gi
 
 ---
 
-## Hard-gate tests (operator-pinned; the final review verifies all present + green)
+## Hard-gate tests (operator-pinned + Rev 2 review; the final review verifies all present + green)
 
 1. bare `87T` is NOT counted (Task 4).
 2. `candidateKind:'relay'` + `87T` -> scope_pending differential (Task 4).
 3. relay without voltage never emits `missing_voltage` (Task 4).
-4. no-default scope_pending cleanly represented in JSON/text (Tasks 3, 4, 6).
+4. no-default scope_pending cleanly represented in JSON AND text - `renderReportText` prints `provisional=none`, never `provisional=undefined` (Tasks 3, 6).
 5. exact relay refs resolve in the live seed (Task 1).
 6. breaker AND transformer goldens byte-identical (every task).
 7. operations-web typecheck stays green (Tasks 3, 4, 6 - the cross-package gate).
+8. legacy single-function EM/solid-state relay -> electromechanical role/tier (Tasks 2, 4) - the EM tier is reachable, not dead.
+9. standalone transformer-accessory pressure relay is NOT a priced relay device (Task 4 - `RELAY_ACCESSORY` exclusion).
+10. `matchBreaker` AND `matchTransformer` are type- (`@ts-expect-error`) AND runtime-defended against a relay signature (Task 5).
 
 ## Self-Review notes
 
