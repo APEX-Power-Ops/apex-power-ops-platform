@@ -54,7 +54,7 @@ The estimator-core seed carries **9 relay-family refs at NETA 7.9**, all `unit_o
 | Protective Relay (Motor Control) | 7.9 | 6.0 | 8.0 | each | motor protection |
 | Protective Relay - (Bus Differential) | 7.9 | 6.0 | 8.0 | each | 87B |
 | Protective Relay (Differential Protection) | 7.9 | 6.0 | 8.0 | each | 87 / 87T |
-| Protective Relay (Line Protection) | 7.9 | 8.0 | 10.0 | each | line / distance (21) |
+| Protective Relay - (Line Protection) | 7.9 | 8.0 | 10.0 | each | line / distance (21); note the " - " in the exact ref |
 | Protective Relay (Generator Protection) | 7.9 | 8.0 | 10.0 | each | gen multi-element |
 | Protective Relay (Multi-function w Meter) | 7.9 | 8.0 | 10.0 | each | multifunction + metering |
 
@@ -141,3 +141,23 @@ The records lane's per-variant element enumeration (the AZ21 case: 18 SEL relays
 2. Brainstorm -> spec the relay engine slice (design doc), folding the ratified decisions, reusing the transformer slice's scope_pending machinery.
 3. writing-plans -> SDD build, mirroring the breaker + transformer contract-first / fixture-driven / fail-closed TDD rigor, with cross-engine (Codex) IRP review before merge.
 4. Breaker AND transformer goldens stay byte-identical throughout (two prior families now regression-guard the third).
+
+---
+
+## Part 9 - Operator ratification (2026-06-29)
+
+The operator independently grounded the packet and ratified D2-D4 with amendments, set a V1 policy for D1, and raised four findings (folded into the spec). Recorded here so the spec is built on the ratified state.
+
+**Ratified decisions:**
+- **D1 (catalog) - V1 POLICY, not "complete":** use the existing 9 relay refs, author NO new hours; send the orphan edge cases (86 lockout/aux, 79 reclosing, 25 sync-check, 27/59/81 standalone voltage/frequency) to `catalog_gap` or no-default `scope_pending` until estimator/SME authority decides. The catalog is NOT declared complete.
+- **D2 (match model):** scope-driven YES, never auto-priced; **allow NO provisional default for illegible relays** (not just "weaker default").
+- **D3 (recognition):** YES, but **device-first only** - ANSI function numbers are role EVIDENCE for an already-established relay device, never countable devices. Never count a standalone 50/51/79/81/etc. as a relay.
+- **D4 (V1 scope):** YES, V1 = the 9 existing relay tiers only; defer GFP-LV, network-protector, and relaytcc model hints.
+
+**Findings folded into the spec (with grounded engine locations):**
+1. **(High) Voltage must not be blindly reused.** `BaseSignature.voltageClass` is REQUIRED (`signature/types.ts`) and `assessTransformer` hard-gates on it (`-> missing_voltage` before tier logic, `signature/normalize.ts`). Relay voltage must be optional/contextual; the relay assess path must never emit `missing_voltage`. Required test: a relay with no `busVoltageV` surfaces as `scope_pending`/`catalog_gap`, NOT `missing_voltage`.
+2. **(High) Device-first recognition.** Per Part 1b the estimate is per device, not per element; D3 recognition must establish a relay DEVICE (tag/model/relay-box/`candidateKind:'relay'`) before reading ANSI as attributes. Required test: a standalone ANSI number with no device anchor is NOT counted as a relay device.
+3. **(Medium) No-default contract change.** `ScopePendingLine.provisionalDefaultRef` is REQUIRED today (`buckets/types.ts`). The no-default relay case needs an explicit spec task: widen the type (+ report/runner/emit, with the cross-package operations-web typecheck gate) or a distinct no-default shape.
+4. **(Low) Exact ref string fixed.** The Line-Protection ref is `Protective Relay - (Line Protection)` (with " - ", per the seed); matching is string-keyed. Corrected in the Part 2 table above.
+
+**Required spec tests (operator-pinned):** no-voltage relay (not `missing_voltage`); standalone-ANSI non-count (device-first); exact-ref validation vs the live seed; no-default `scope_pending`; breaker AND transformer goldens byte-identical.
