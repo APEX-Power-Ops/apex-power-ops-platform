@@ -21,7 +21,9 @@
 - Commits authored `jasonlswenson-sys <jasonlswenson@gmail.com>`; every commit ends `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`. Merge operator-gated; cross-engine (Codex) IRP before merge.
 - Spec: `docs/superpowers/specs/2026-06-29-estimator-takeoff-relay-family-design.md` (Rev 2). Packet: `docs/superpowers/packets/estimator-takeoff-family-relays.md`.
 
-**Host command prefix (every test/typecheck step):** `ssh olares-mesh 'cd /home/olares/code/apex/apex-relay-family && <cmd>'`. The exact relay refs (string-keyed) are, VERBATIM from the seed - note the " - " in two of them:
+**Host command prefix (every test/typecheck step):** pnpm lives under node v20 (not on the default non-interactive PATH), and the fresh worktree already has `node_modules` installed. Use:
+`ssh olares-mesh 'export PATH=/home/olares/.nvm/versions/node/v20.20.2/bin:$HOME/.local/bin:$PATH; cd /home/olares/code/apex/apex-relay-family && <cmd>'`
+Baseline (established pre-build): estimator-takeoff 207 pass + 1 todo, estimator-takeoff typecheck clean, operations-web typecheck clean. The exact relay refs (string-keyed) are, VERBATIM from the seed - note the " - " in two of them:
 `Protective Relay (Electromechanical)`, `Protective Relay (Overcurrent Protection)`, `Protective Relay (Feeder Protection)`, `Protective Relay (Motor Control)`, `Protective Relay - (Bus Differential)`, `Protective Relay (Differential Protection)`, `Protective Relay - (Line Protection)`, `Protective Relay (Generator Protection)`, `Protective Relay (Multi-function w Meter)`.
 
 ---
