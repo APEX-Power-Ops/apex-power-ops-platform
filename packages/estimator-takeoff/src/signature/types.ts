@@ -64,4 +64,4 @@ export interface GfpSignature extends BaseSignature {
   // voltageClass stays optional (inherited): GFP voltage is contextual and never gates.
 }
 
-export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature
+export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature | GfpSignature

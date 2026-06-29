@@ -1,6 +1,6 @@
 import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from '@apex/estimator-core'
 import type { ExtractionArtifact, ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, TransformerSignature, RelaySignature } from '../signature/types'
+import type { ApparatusSignature, BreakerSignature, TransformerSignature, RelaySignature, GfpSignature } from '../signature/types'
 import { assessResolvedApparatus } from '../signature/normalize'
 import type { AssessmentCode } from '../signature/normalize'
 import { applyVoltageAssertions } from '../signature/voltage-assertions'
@@ -11,6 +11,8 @@ import { matchTransformer } from '../catalog/transformer-map'
 import { R1_RATIFIED } from '../catalog/transformer-map.data'
 import { matchRelay } from '../catalog/relay-map'
 import { RELAY_R1_RATIFIED } from '../catalog/relay-map.data'
+import { matchGfp } from '../catalog/gfp-map'
+import { GFP_R1_RATIFIED } from '../catalog/gfp-map.data'
 import type {
   MatchedLine, OperatorQuestion, TakeoffResult, UnmatchedCandidate, TakeoffFinding,
   ApparatusDisposition, ApparatusDispositionStatus, DispositionReasonCode, ScopePendingLine,
@@ -32,6 +34,7 @@ const ASSESS_TO_REASON: Record<Exclude<AssessmentCode, 'classified'>, Dispositio
   unrecognized_apparatus_row:    'unrecognized_apparatus_row',
   relay_recognized:              'relay_scope_pending',   // unreachable (has signature); present for exhaustiveness
   relay_breaker_conflict:        'relay_breaker_conflict',
+  gfp_recognized:                'gfp_scope_pending',   // unreachable (has signature); present for exhaustiveness
 }
 
 // baseDisp creates a LOUD sentinel disposition: its `reason` is UNSTAMPED so assertExhaustive can detect any
@@ -175,6 +178,28 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
         findings.push({ code: 'relay_catalog_gap', severity: 'warning', message: reason, context: rsig.tag ?? rsig.source.sheet })
         questions.push({ question: `Catalog gap: ${reason} - estimator must author/confirm a ref before pricing.`, context: rsig.tag ?? rsig.source.sheet, code: 'relay_catalog_gap' })
       }
+      continue
+    }
+    if (sig.kind === 'gfp') {
+      const gsig: GfpSignature = sig
+      const scope = matchGfp(gsig)
+      scopePendingLines.push({
+        candidateRefs: scope.group,
+        provisionalDefaultRef: scope.defaultRef,
+        r1Ratified: GFP_R1_RATIFIED,
+        scopeQuestion: scope.scopeQuestion,
+        qty: line.qty,
+        block: gsig.source.block ?? gsig.source.sheet,
+        line,
+      })
+      for (const i of line.memberIndices) {
+        stamp(dispositions, i, 'scope_pending', 'gfp_scope_pending', scope.scopeQuestion, undefined, line.lineKey)
+        const disp = dispositions[i]!
+        disp.candidateRefs = scope.group
+        disp.provisionalDefaultRef = scope.defaultRef
+        disp.scopeQuestion = scope.scopeQuestion
+      }
+      questions.push({ question: scope.scopeQuestion, context: `${gsig.tag ?? gsig.source.sheet} (standalone GFP; priced per device; NETA 7.14)`, code: 'gfp_scope_pending' })
       continue
     }
     // kind === 'transformer'
