@@ -17,11 +17,11 @@ describe('scope_pending disposition -- dry transformer with voltage', () => {
 
   it('produces exactly one scopePendingLines entry (no priced line)', () => {
     expect(r.matchedLines).toHaveLength(0)
-    expect(r.scopePendingLines).toHaveLength(1)
+    expect(r.scopePendingLines ?? []).toHaveLength(1)
   })
 
   it('scopePendingLine carries candidateRefs (DRY_GROUP), provisionalDefaultRef, and r1Ratified=false', () => {
-    const sp = r.scopePendingLines[0]!
+    const sp = (r.scopePendingLines ?? [])[0]!
     expect(sp.candidateRefs.length).toBeGreaterThan(0)
     expect(sp.provisionalDefaultRef).toBeTruthy()
     expect(sp.candidateRefs).toContain(sp.provisionalDefaultRef)
@@ -29,7 +29,7 @@ describe('scope_pending disposition -- dry transformer with voltage', () => {
   })
 
   it('scopePendingLine carries qty and a lineKey', () => {
-    const sp = r.scopePendingLines[0]!
+    const sp = (r.scopePendingLines ?? [])[0]!
     expect(sp.qty).toBeGreaterThan(0)
     expect(sp.line.lineKey).toBeTruthy()
   })
@@ -43,9 +43,9 @@ describe('scope_pending disposition -- dry transformer with voltage', () => {
     // CONTRACT CHANGE: ref slot must be undefined for scope_pending (ref implies an authoritative matched ref).
     // The provisional default is surfaced separately via provisionalDefaultRef.
     expect(r.dispositions[0]!.ref).toBeUndefined()
-    expect(r.dispositions[0]!.provisionalDefaultRef).toBe(r.scopePendingLines[0]!.provisionalDefaultRef)
-    expect(r.dispositions[0]!.candidateRefs).toEqual(r.scopePendingLines[0]!.candidateRefs)
-    expect(r.dispositions[0]!.scopeQuestion).toBe(r.scopePendingLines[0]!.scopeQuestion)
+    expect(r.dispositions[0]!.provisionalDefaultRef).toBe((r.scopePendingLines ?? [])[0]!.provisionalDefaultRef)
+    expect(r.dispositions[0]!.candidateRefs).toEqual((r.scopePendingLines ?? [])[0]!.candidateRefs)
+    expect(r.dispositions[0]!.scopeQuestion).toBe((r.scopePendingLines ?? [])[0]!.scopeQuestion)
   })
 
   it('isClean returns false (scope_pending blocks clean)', () => {
@@ -74,7 +74,7 @@ describe('catalog_gap finding -- unknown-coolant transformer with voltage', () =
 
   it('is unmatched (never priced), status unmatched', () => {
     expect(r.matchedLines).toHaveLength(0)
-    expect(r.scopePendingLines).toHaveLength(0)
+    expect(r.scopePendingLines ?? []).toHaveLength(0)
     expect(r.dispositions[0]!.status).toBe('unmatched')
     expect(r.dispositions[0]!.reasonCode).toBe('transformer_catalog_gap')
   })
@@ -118,14 +118,14 @@ describe('breaker path invariant -- scope_pending does not affect breaker runs',
   it('a breaker-only run still produces matchedLines and isClean (no regression)', () => {
     const r = runTakeoff(art([matchedBreaker]))
     expect(r.matchedLines).toHaveLength(1)
-    expect(r.scopePendingLines).toHaveLength(0)
+    expect(r.scopePendingLines ?? []).toHaveLength(0)
     expect(isClean(r)).toBe(true)
   })
 
   it('mixed breaker+transformer: matched from breaker, scope_pending from transformer, partial_preview', () => {
     const r = runTakeoff(art([matchedBreaker, dryRow]))
     expect(r.matchedLines).toHaveLength(1)
-    expect(r.scopePendingLines).toHaveLength(1)
+    expect(r.scopePendingLines ?? []).toHaveLength(1)
     expect(isClean(r)).toBe(false)
     const report = reconcile(art([matchedBreaker, dryRow]), r)
     expect(report.counts.unresolved_rows).toBeGreaterThanOrEqual(1)

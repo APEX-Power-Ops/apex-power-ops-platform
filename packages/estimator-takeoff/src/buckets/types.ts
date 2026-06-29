@@ -28,7 +28,7 @@ export interface OperatorQuestion { question: string; context: string; code: Ope
 export interface TakeoffResult {
   matchedLines: MatchedLine[]
   unmatchedCandidates: UnmatchedCandidate[]
-  scopePendingLines: ScopePendingLine[]
+  scopePendingLines?: ScopePendingLine[]
   operatorQuestions: OperatorQuestion[]
   findings: TakeoffFinding[]
   dispositions: ApparatusDisposition[]

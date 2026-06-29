@@ -75,7 +75,7 @@ describe('dispositions', () => {
     expect(d[0]!).toMatchObject({ status: 'question', reasonCode: 'transformer_breaker_conflict' })
     // No matched line or scope_pending line should be fabricated
     expect(result.matchedLines).toHaveLength(0)
-    expect(result.scopePendingLines).toHaveLength(0)
+    expect(result.scopePendingLines ?? []).toHaveLength(0)
     // The question should use the transformer_breaker_conflict code
     const q = result.operatorQuestions.find((qq) => qq.code === 'transformer_breaker_conflict')
     expect(q).toBeDefined()
