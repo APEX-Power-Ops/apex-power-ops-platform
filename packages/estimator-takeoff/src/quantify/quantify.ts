@@ -30,9 +30,11 @@ function deviceId(s: ApparatusSignature): string {
 function pickAuthoritative(occ: ApparatusSignature[]): ApparatusSignature | undefined {
   const auths = occ.filter((o) => AUTHORITATIVE(o.source.evidence))
   if (auths.length === 0) return undefined
-  // For breakers: prefer known mounting. For other kinds: first authoritative is fine.
+  // For breakers: prefer known mounting. For relays: prefer legible role. Otherwise: first authoritative.
   const richBreaker = auths.find((o) => o.kind === 'breaker' && o.mounting !== 'unknown')
   if (richBreaker) return richBreaker
+  const richRelay = auths.find((o) => o.kind === 'relay' && o.role !== undefined && o.role !== 'unknown')
+  if (richRelay) return richRelay
   return auths[0]
 }
 
