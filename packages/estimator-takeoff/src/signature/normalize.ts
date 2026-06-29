@@ -1,5 +1,5 @@
 import type { ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, TransformerSignature, TripFunction, VoltageBasis } from './types'
+import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, TransformerSignature, TripFunction, VoltageBasis } from './types'
 import type { OperatorQuestion, OperatorQuestionCode } from '../buckets/types'
 import { classifyVoltage } from './voltage'
 
@@ -10,7 +10,15 @@ const NON_BREAKER = /\b(PDU|UPS|STS|ATS|MTS|SPD|PQM|METER|BUS\s*DUCT)\b/i
 const TRANSFORMER_DEVICE = /\b(XFMR|transformer|dry.?type|pad.?mount|oil.?filled)\b/i
 const KVA_RATING = /(?<!\w)\d+(?:\.\d+)?\s*kVA\b/i
 
+const RELAY_DEVICE = /\b(protective\s+relay|relay|SEL-?\d|multilin|beckwith|basler|micom)\b/i
+const ANSI_FN = /\b(2[1-7]|32|37|38|40|46N?|47|49[RT]?|50N?|51N?|55|59|60|63|64|67|79|81|86|87[TBGN]?)\b/g
+// Transformer-protection accessory relays (pressure/temperature/Buchholz/gas) are NOT standalone
+// protective-relay DEVICES the firm prices. Exclude them from token-based recognition so a plain
+// "FAULT PRESSURE RELAY" does not become a priced relay (an explicit candidateKind:'relay' still wins).
+const RELAY_ACCESSORY = /\b((sudden|fault)\s*pressure|pressure|buchholz|gas\s*accumulator)\s*relay\b/i
+
 function looksLikeTransformer(x: ExtractedApparatus): boolean {
+  if (x.candidateKind === 'relay') return false                  // relay producer signal wins over XFMR text
   if (x.candidateKind === 'transformer') return true
   if (TRANSFORMER_DEVICE.test(x.raw)) return true
   // FIX 4: kVA-rating fallback must not steal NON_BREAKER rows (UPS, PDU, etc. can carry kVA ratings).
@@ -88,6 +96,68 @@ function parseLtc(raw: string): boolean {
   return /\b(LTC|load\s*tap\s*changer|on.?load\s*tap)\b/i.test(raw)
 }
 
+function looksLikeRelay(x: ExtractedApparatus): boolean {
+  if (x.candidateKind === 'relay') return true                  // explicit producer signal wins
+  if (RELAY_ACCESSORY.test(x.raw)) return false                 // transformer accessory, not a priced relay device
+  return RELAY_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0
+}
+
+function parseRelayTechnology(raw: string): RelayTechnology {
+  if (/\b(SEL-?\d|multilin|beckwith|basler|micom|microprocessor|uP)\b/i.test(raw)) return 'microprocessor'
+  if (/\b(electromechanical|EM|solid.?state)\b/i.test(raw)) return 'electromechanical_solid_state'
+  return 'unknown'
+}
+
+function parseAnsiFunctions(raw: string): string[] {
+  const out = new Set<string>()
+  for (const m of raw.matchAll(ANSI_FN)) out.add(m[1]!.toUpperCase())
+  return [...out]
+}
+
+function parseRelayModel(raw: string): string | undefined {
+  const m = raw.match(/\b(SEL-?\d{2,4}[A-Z]?|multilin\s*\w+|beckwith\s*\w+|basler\s*\w+|micom\s*\w+)\b/i)
+  return m ? m[0] : undefined
+}
+
+function deriveRole(ansi: string[], raw: string, tech: RelayTechnology): RelayRole {
+  const has = (n: string) => ansi.includes(n)
+  // Complex / multi-element roles first (these take their tier even on legacy technology).
+  if (has('87T') || /transformer\s+diff/i.test(raw)) return 'differential'
+  if (has('87B') || /\bbus\b/i.test(raw)) return 'bus_differential'
+  if (has('87')) return 'differential'
+  if (/generator/i.test(raw) || (has('40') && (has('32') || has('46')))) return 'generator'
+  if (has('21') || /\b(line|distance)\b/i.test(raw)) return 'line'
+  if (/motor/i.test(raw) || (has('49') && has('50') && has('51'))) return 'motor'
+  if (/multi.?function/i.test(raw) && /meter/i.test(raw)) return 'multifunction_meter'
+  // Legacy single-function EM/solid-state -> the cheap electromechanical tier (before the generic feeder/OC roles).
+  if (tech === 'electromechanical_solid_state' && ansi.length <= 1) return 'electromechanical'
+  if (/feeder/i.test(raw)) return 'feeder'
+  if (has('50') || has('51') || /overcurrent/i.test(raw)) return 'overcurrent'
+  return 'unknown'
+}
+
+function assessRelay(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
+  if (FRAME_TRIP.test(x.raw)) {
+    return {
+      signature: null, isBreakerShaped: false, assessmentCode: 'relay_breaker_conflict',
+      questions: [q(x, 'Label names a relay but carries a breaker frame/trip rating - confirm device type before counting.', 'relay_breaker_conflict')],
+    }
+  }
+  const ansiFunctions = parseAnsiFunctions(x.raw)
+  const technology = parseRelayTechnology(x.raw)
+  const role = deriveRole(ansiFunctions, x.raw, technology)
+  const voltageClass = classifyVoltage(x.busVoltageV)   // MAY be undefined - relay voltage is contextual, NOT gated
+  const sig: RelaySignature = {
+    kind: 'relay', technology, ansiFunctions, role,
+    model: parseRelayModel(x.raw),
+    voltageClass, voltageV: x.busVoltageV,
+    voltageBasis: voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none'),
+    tag: x.tag,
+    source: { sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block },
+  }
+  return { signature: sig, isBreakerShaped: false, assessmentCode: 'relay_recognized', questions: [] }
+}
+
 export type AssessmentCode =
   | 'classified'
   | 'transformer_recognized'
@@ -95,6 +165,8 @@ export type AssessmentCode =
   | 'transformer_scope_pending'
   | 'transformer_catalog_gap'
   | 'transformer_attrs_unparsed'
+  | 'relay_recognized'
+  | 'relay_breaker_conflict'
   | 'non_breaker_excluded'
   | 'non_breaker_carries_rating'
   | 'missing_voltage'
@@ -155,6 +227,10 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
       }
     }
     return assessTransformer(x, voltageBasis)
+  }
+
+  if (looksLikeRelay(x)) {
+    return assessRelay(x, voltageBasis)
   }
 
   if (NON_BREAKER.test(x.raw)) {

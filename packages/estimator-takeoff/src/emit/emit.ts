@@ -30,6 +30,8 @@ const ASSESS_TO_REASON: Record<Exclude<AssessmentCode, 'classified'>, Dispositio
   non_breaker_carries_rating:    'non_breaker_carries_rating',
   missing_voltage:               'missing_voltage',
   unrecognized_apparatus_row:    'unrecognized_apparatus_row',
+  relay_recognized:              'relay_scope_pending',   // unreachable (has signature); present for exhaustiveness
+  relay_breaker_conflict:        'relay_breaker_conflict',
 }
 
 // baseDisp creates a LOUD sentinel disposition: its `reason` is UNSTAMPED so assertExhaustive can detect any
