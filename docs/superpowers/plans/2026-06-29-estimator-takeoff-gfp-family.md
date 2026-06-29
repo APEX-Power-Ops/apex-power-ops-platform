@@ -15,7 +15,7 @@
   2. **Bare/function text NEVER counts.** `ground fault protection` (bare/function), `ground fault test`, `per 7.14`, and ANSI `50G/51G/50N/51N/64` are NOT GFP device tokens. They are role/scope evidence only.
   3. **Standalone noun forms + tag -> scope_pending(single ref).** `GROUND FAULT RELAY`, `GROUND FAULT PROTECTION SYSTEM`, `GFP/GFPE/GFR` (with a tag, on a non-parent row) -> `scope_pending` with `candidateRefs=[GFP_REF]`, `provisionalDefaultRef=GFP_REF`.
 - **STANDALONE-ONLY.** GFP is a narrow escape hatch, not a "ground fault mentioned" family. A real standalone GFP device is its OWN, non-parent-shaped row.
-- **`candidateKind:'gfp'` = producer asserts a STANDALONE GFP device** (honored only on a non-parent row). `looksLikeGfp` also DEFERS to an explicit non-gfp `candidateKind` (relay/transformer/breaker) - producer authority, mirroring the existing `looksLikeTransformer` deferral to `candidateKind:'relay'`. (Plan refinement of spec Rev 2; flagged to operator.)
+- **`candidateKind:'gfp'` = producer asserts a STANDALONE GFP device** (honored only on a non-parent row). `looksLikeGfp` DEFERS to an explicit `candidateKind` of `breaker`/`transformer` ONLY (NOT `relay`): a producer-classified relay row that ALSO carries dedicated GFP wording (`GROUND FAULT RELAY`/`...SYSTEM`) still becomes a standalone GFP - matching Rev 2's "dedicated ground-fault relay -> GFP" rule - while breaker/transformer producer signals are never stolen. (Operator-ratified patch.)
 - **GFP never auto-prices.** Every recognized standalone GFP device -> `scope_pending`. No "matched" GFP line; no GFP `catalog_gap` in V1.
 - **ASCII-only** in all authored code/comments AND engine-emitted strings (no em-dashes). Verbatim source DATA may be UTF-8.
 - **No new catalog refs, no new hours.** V1 uses the single existing NETA-7.14 ref `Ground Fault Protection Device LV`. Matched by exact STRING, never section ("7.14" is overloaded with CT refs in the firm catalog).
@@ -72,6 +72,12 @@ describe('GFP catalog authority', () => {
     expect(m).toBeDefined()
     expect(m!.lifecycle_status).toBe('active')
     expect(m!.unit_of_issue).toBe('each')
+  })
+  it('section 7.14 is OVERLOADED (CT refs share it) -> must match by STRING, not section', () => {
+    const at714 = EQUIPMENT_MODELS_SEED.filter((m: { neta_section?: { ATS?: string } }) => m.neta_section?.ATS === '7.14')
+    expect(at714.length).toBeGreaterThan(1)                                                   // 7.14 is NOT unique to GFP
+    expect(at714.some((m: { ref: string }) => /current transformer/i.test(m.ref))).toBe(true) // a CT ref shares 7.14
+    expect(at714.some((m: { ref: string }) => m.ref === GFP_REF)).toBe(true)                  // and so does the GFP ref
   })
   it.todo('R1: SME confirms the single-ref-covers-all convention -> flip GFP_R1_RATIFIED=true')
   it('R1 is tracked + provisional (fail-closed lives in the scope_pending tests)', () => {
@@ -340,7 +346,7 @@ export function isGfpParentShape(x: ExtractedApparatus): boolean {
 function looksLikeGfp(x: ExtractedApparatus): boolean {
   if (isGfpParentShape(x)) return false                 // parent exclusion BEFORE candidateKind (non-negotiable #1)
   if (x.candidateKind === 'gfp') return true            // producer asserts a STANDALONE GFP device
-  if (x.candidateKind !== undefined) return false       // defer to an explicit other-family producer signal (producer authority)
+  if (x.candidateKind !== undefined && x.candidateKind !== 'relay') return false  // defer to breaker/transformer producer signals; a relay row with dedicated GFP wording still becomes GFP
   return GFP_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0
 }
 
@@ -458,8 +464,11 @@ import type { ExtractionArtifact } from '../src/extraction/types'
 
 const row = (o: Partial<any> & { raw: string }) => ({ sheet: 'E01-11', page: 1, bbox: [0, 0, 1, 1] as [number, number, number, number], evidence: 'one-line' as const, ...o })
 const art = (apparatus: any[]): ExtractionArtifact => ({ pdf: 'x.pdf', apparatus })
+// The invariant is "no GFP LINE" - check BOTH dispositions AND scope-pending lines (a line can exist
+// even if a disposition reason code differs).
 const noGfp = (r: ReturnType<typeof runTakeoff>) =>
-  r.dispositions.every((d) => d.reasonCode !== 'gfp_scope_pending')
+  r.dispositions.every((d) => d.reasonCode !== 'gfp_scope_pending') &&
+  (r.scopePendingLines ?? []).every((s) => s.line.signature.kind !== 'gfp')
 
 describe('operator-pinned GFP recognition invariants', () => {
   // #1 - breaker with GF function stays breaker; NEVER a GFP line
@@ -487,6 +496,10 @@ describe('operator-pinned GFP recognition invariants', () => {
   it('an UNCLASSIFIED dedicated GROUND FAULT RELAY row -> GFP', () => {
     const a = assessApparatus(row({ raw: 'GROUND FAULT RELAY 64', tag: 'G2' }))
     expect(a.signature?.kind).toBe('gfp')
+  })
+  it('candidateKind:relay + dedicated GROUND FAULT RELAY wording -> GFP (deferral excludes relay)', () => {
+    const a = assessApparatus(row({ raw: 'GROUND FAULT RELAY', tag: 'G3', candidateKind: 'relay' }))
+    expect(a.signature?.kind).toBe('gfp')   // dedicated GFP wording wins over a relay producer signal (Rev 2)
   })
 
   // #4 - bare ANSI / function text never counts
@@ -693,7 +706,7 @@ git commit -m "test(takeoff): GFP family golden - standalone GFP + breaker + rel
 
 **Spec coverage:** Every spec Rev 2 contract item maps to a task - catalog (T1), signature+candidateKind+match (T2), recognition+union-wire+specKey+emit+codes (T3), the 6 operator-pinned recognition cases + cross-family + quantify (T4), real golden + Gate-2 stand-in + embedded-stays-parent-end-to-end (T5). The three non-negotiables are in Global Constraints and tested in T3/T4.
 
-**Plan refinement of spec (flag to operator):** `looksLikeGfp` defers to an explicit non-gfp `candidateKind` (`if (x.candidateKind !== undefined) return false` after the `=== 'gfp'` check). This preserves producer authority (a `candidateKind:'relay'` row stays relay even with GFP wording) and mirrors the existing `looksLikeTransformer` deferral to `candidateKind:'relay'`. The dedicated-text -> GFP path therefore applies to UNCLASSIFIED rows (or `candidateKind:'gfp'`). If the operator wants dedicated GFP wording to OVERRIDE `candidateKind:'relay'`, drop that line and re-test #3.
+**candidateKind deferral (operator-ratified, consistent with spec Rev 2):** `looksLikeGfp` defers to an explicit `candidateKind` of `breaker`/`transformer` only (`if (x.candidateKind !== undefined && x.candidateKind !== 'relay') return false` after the `=== 'gfp'` check). This keeps breaker/transformer producer signals from being stolen, lets `candidateKind:'gfp'` win, AND lets a producer-classified relay row carrying dedicated GFP wording become a standalone GFP - matching Rev 2's "dedicated ground-fault relay -> GFP" rule. The spec's `looksLikeGfp` (Section 3) carries the same deferral line, so plan and spec agree.
 
 **Type-forced safety:** widening `ApparatusSignature` (T3) forces the `gfp` branch in `specKey` AND the emit match loop (the `const tsig: TransformerSignature = sig` narrowing breaks otherwise), and the new `AssessmentCode` member forces the `ASSESS_TO_REASON` update - the same compiler-driven safety the relay lane relied on.
 
