@@ -1,0 +1,10 @@
+{
+  "pdf": "relay-mixed.pdf",
+  "apparatus": [
+    { "raw": "MSB-1 800AF/600AT LSIG DRAW-OUT", "tag": "MSB-1", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line", "busVoltageV": 480, "candidateKind": "breaker" },
+    { "raw": "T-1 1500KVA 480V DRY-TYPE XFMR", "tag": "T-1", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line", "busVoltageV": 480 },
+    { "raw": "SEL-787 87T XFMR DIFFERENTIAL RELAY", "tag": "R-1", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line", "candidateKind": "relay" },
+    { "raw": "SEL-751 FEEDER PROTECTION RELAY", "tag": "R-2", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line", "candidateKind": "relay" },
+    { "raw": "PROTECTIVE RELAY", "tag": "R-3", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line", "candidateKind": "relay" }
+  ]
+}
