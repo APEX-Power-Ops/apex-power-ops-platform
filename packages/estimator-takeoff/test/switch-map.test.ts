@@ -49,6 +49,11 @@ describe('matchSwitch', () => {
     expect(matchSwitch(sig({ switchType: 'fused_disconnect', voltageClass: 'HV' }))).toBeNull()
     expect(matchSwitch(sig({ switchType: 'cutout', voltageClass: 'HV' }))).toBeNull()
   })
+  it('Codex P2: vacuum is a gap at EVERY voltage incl. absent - never widened to any:unknown', () => {
+    expect(matchSwitch(sig({ switchType: 'vacuum' }))).toBeNull()                       // no voltage -> still gap (not any:unknown)
+    expect(matchSwitch(sig({ switchType: 'vacuum', voltageClass: 'HV' }))).toBeNull()
+    expect(matchSwitch(sig({ switchType: 'vacuum', voltageClass: 'LV' }))).toBeNull()
+  })
   it('all 11 SWITCH_REFS resolve verbatim in the live seed; PDU also sits at firm 7.5 (string-match proof)', () => {
     const names = new Set(EQUIPMENT_MODELS_SEED.map((r: { ref: string }) => r.ref))
     for (const ref of SWITCH_REFS) expect(names.has(ref), `seed missing ${ref}`).toBe(true)

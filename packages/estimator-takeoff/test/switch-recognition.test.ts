@@ -46,6 +46,8 @@ describe('parseSwitchType - precedence (R1 provisional)', () => {
     expect(parseSwitchType('Air Switch')).toBe('open')          // air switch -> open
     expect(parseSwitchType('Open Switch')).toBe('open')
     expect(parseSwitchType('Disconnect')).toBe('unknown')       // generic anchor
+    expect(parseSwitchType('Non-Fused Disconnect')).toBe('unknown')  // Codex P2: "fused" substring of "non-fused" must NOT win
+    expect(parseSwitchType('Non-Fused Switch')).toBe('unknown')
   })
   it('actuation outranks medium (motor-operated SF6 -> motor_operated)', () => {
     expect(parseSwitchType('Motor Operated SF6 Switch MV')).toBe('motor_operated')

@@ -6,6 +6,11 @@ export interface SwitchScopeMatch { group: string[]; defaultRef?: string; scopeQ
 const SCOPE_Q =
   'Select switch/disconnect voltage class and construction type (fused/open/oil/SF6/cutout/motor-operated/Vista) and confirm the priced ref; switches are priced per device and are never auto-priced.'
 
+// Recognized switch TYPES that have NO priced ref at ANY voltage -> always a catalog gap. Listed explicitly so the
+// `any:unknown` widening below (which exists to surface a group when only voltage is illegible) can NEVER hide a
+// type-level gap: a vacuum switch with no voltage must stay a gap, not borrow the full any:unknown candidate set.
+const NO_HOME_SWITCH_TYPES = new Set<SwitchType>(['vacuum'])
+
 // LV is fused-only (both LV refs are "Fused Disconnect"), so a definitively non-fused LV disconnect has no priced
 // home. MV/HV are NOT gated here: "Switch MV - Open" / "Switch HV - Open" are plausible non-fused homes.
 function isNonFusedLvGap(sig: SwitchSignature): boolean {
@@ -14,6 +19,7 @@ function isNonFusedLvGap(sig: SwitchSignature): boolean {
 }
 
 export function matchSwitch(sig: SwitchSignature): SwitchScopeMatch | null {
+  if (NO_HOME_SWITCH_TYPES.has(sig.switchType)) return null     // vacuum: no ref at any voltage -> gap, never widen
   if (isNonFusedLvGap(sig)) return null                         // D1: non-fused LV -> catalog_gap
   const vc: VoltageClass | 'unknown' = sig.voltageClass ?? 'unknown'
   const typeKey: SwitchType | 'any' = sig.switchType === 'unknown' ? 'any' : sig.switchType

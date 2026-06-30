@@ -24,7 +24,7 @@ const INSTRUMENT_TAG = /^(CT|PT|VT|CCVT)[-_ ]?\w*$/i
 // transfer switch (7.18/22), circuit switcher (7.3). None are 7.5 switches.
 const SWITCH_EXCLUDE = /\b(circuit\s+switcher|transfer\s+switch|switchgear|switchboard)\b/i
 // COMPOUND switch-device anchors - NEVER the bare token "switch".
-const SWITCH_DEVICE = /\b(disconnect(\s+switch)?|fus(ed|ible)\s+switch|safety\s+switch|load[\s-]?break\s+switch|LBS|isolat(ion|ing)\s+switch|knife\s+switch|air\s+switch|oil\s+switch|SF6\s+switch|cutout|non[\s-]?fused\s+disconnect)\b/i
+const SWITCH_DEVICE = /\b(disconnect(\s+switch)?|fus(ed|ible)\s+switch|safety\s+switch|load[\s-]?break\s+switch|LBS|isolat(ion|ing)\s+switch|knife\s+switch|air\s+switch|oil\s+switch|SF6\s+switch|vacuum\s+switch|cutout|non[\s-]?fused\s+disconnect)\b/i
 // The UNAMBIGUOUS breaker subset for the switch-local conflict guard - DELIBERATELY excludes the shared
 // vacuum/SF6/air-frame medium tokens (those are switch construction evidence, not conflict signals).
 const SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i
@@ -155,7 +155,7 @@ export function parseSwitchType(raw: string): SwitchType {
   if (/\boil\b/i.test(raw)) return 'oil'
   if (/\bcutout\b/i.test(raw)) return 'cutout'
   if (/\bvacuum\b/i.test(raw)) return 'vacuum'                          // recognized; no priced ref -> gap
-  if (/fus(ed|ible)/i.test(raw)) return 'fused_disconnect'
+  if (/fus(ed|ible)/i.test(raw) && !/non[\s-]?fused/i.test(raw)) return 'fused_disconnect'  // NOT "non-fused" (substring trap)
   if (/air\s+switch|\bopen\b/i.test(raw)) return 'open'                 // air-open switches ARE the firm "Open" refs
   return 'unknown'                                                       // generic disconnect/switch anchor -> group, no default
 }
