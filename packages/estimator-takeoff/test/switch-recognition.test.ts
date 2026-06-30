@@ -46,10 +46,13 @@ describe('parseSwitchType - precedence (R1 provisional)', () => {
     expect(parseSwitchType('Air Switch')).toBe('open')          // air switch -> open
     expect(parseSwitchType('Open Switch')).toBe('open')
     expect(parseSwitchType('Disconnect')).toBe('unknown')       // generic anchor
-    expect(parseSwitchType('Non-Fused Disconnect')).toBe('unknown')  // Codex P2: "fused" substring of "non-fused" must NOT win
+    // The whole negated-fused class (Codex P2, passes 1-3): (non|un) x (fused|fusible) all -> 'unknown', never fused.
+    expect(parseSwitchType('Non-Fused Disconnect')).toBe('unknown')
     expect(parseSwitchType('Non-Fused Switch')).toBe('unknown')
-    expect(parseSwitchType('Unfused Disconnect')).toBe('unknown')    // Codex P2 (pass 2): the "unfused" synonym too
+    expect(parseSwitchType('Unfused Disconnect')).toBe('unknown')
     expect(parseSwitchType('Un-Fused Disconnect')).toBe('unknown')
+    expect(parseSwitchType('Non-Fusible Disconnect')).toBe('unknown')
+    expect(parseSwitchType('Non-Fusible Switch')).toBe('unknown')
   })
   it('actuation outranks medium (motor-operated SF6 -> motor_operated)', () => {
     expect(parseSwitchType('Motor Operated SF6 Switch MV')).toBe('motor_operated')
@@ -60,8 +63,10 @@ describe('parseFused / parseAmpRating', () => {
   it('NF -> false; fused/fusible -> true; else undefined', () => {
     expect(parseFused('NF Disconnect')).toBe(false)
     expect(parseFused('Non-Fused Disconnect')).toBe(false)
-    expect(parseFused('Unfused Disconnect')).toBe(false)   // the "unfused" synonym (Codex P2 pass 2)
+    expect(parseFused('Unfused Disconnect')).toBe(false)        // negated-fused class (Codex P2, passes 1-3)
     expect(parseFused('Un-Fused Switch')).toBe(false)
+    expect(parseFused('Non-Fusible Disconnect')).toBe(false)
+    expect(parseFused('Non-Fusible Switch')).toBe(false)
     expect(parseFused('Fused Disconnect')).toBe(true)
     expect(parseFused('Fusible Switch')).toBe(true)
     expect(parseFused('Disconnect Switch')).toBeUndefined()
