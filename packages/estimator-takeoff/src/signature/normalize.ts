@@ -27,7 +27,9 @@ const SWITCH_EXCLUDE = /\b(circuit[\s-]+switcher|transfer[\s-]+switch|switchgear
 // R1-c: load-interrupter switch = the same MV device class as a load-break switch (LBS); add it as a synonym anchor.
 // `load[\s-]?interrupter(\s+switch)?` matches "load interrupter", "load-interrupter", "load interrupter switch" -
 // but NOT a bare "interrupter" (requires the "load" prefix). Type stays 'unknown' -> Gate-2, fail-closed.
-const SWITCH_DEVICE = /\b(disconnect(\s+switch)?|fus(ed|ible)\s+switch|safety\s+switch|load[\s-]?break\s+switch|load[\s-]?interrupter(\s+switch)?|LBS|isolat(ion|ing)\s+switch|knife\s+switch|air\s+switch|oil\s+switch|SF6\s+switch|vacuum\s+switch|cutout|non[\s-]?fused\s+disconnect)\b/i
+// pad[\s-]?mount\s+vista anchors the BARE S&C "Pad-Mount Vista" SWITCH product name (no "switch"/"disc" noun); the
+// positional "pad-mount vista" is switch-specific (a pad-mount TRANSFORMER reads "pad-mount xfmr/transformer/oil").
+const SWITCH_DEVICE = /\b(disconnect(\s+switch)?|fus(ed|ible)\s+switch|safety\s+switch|load[\s-]?break\s+switch|load[\s-]?interrupter(\s+switch)?|LBS|isolat(ion|ing)\s+switch|knife\s+switch|air\s+switch|oil\s+switch|SF6\s+switch|vacuum\s+switch|pad[\s-]?mount\s+vista|cutout|non[\s-]?fused\s+disconnect)\b/i
 // D3 clarification (operator-ratified): bare "switch"/"DISC" do NOT count, but a switch-ish NOUN paired with an
 // explicit CONSTRUCTION medium/type token (EITHER ORDER) IS a compound switch anchor - so "Switch (SF6)",
 // "Switch, SF6", "DISC SF6", "Switch (Vacuum)", "Switch MV - Motor Operated" recognize (closing the misprice where
@@ -55,9 +57,13 @@ const NEGATED_FUSED = /\b(non|un)[\s-]?fus(ed|ible)\b/i
 const NF_ABBR = /\bN\.?F\.?\b/i
 // PLAIN continuous amps ONLY: the \bA\b boundary means 800AF / 800AT do NOT match (AF/AT can never be amps).
 const SWITCH_AMP = /(?<!\d)(\d{2,6})\s*A\b/i
-// R1-b: "Vista" is an S&C switch product name, never a transformer descriptor. Used in looksLikeTransformer to let a
-// switch-anchored Vista row escape the "pad mount" transformer token (which dispatches BEFORE the switch route).
-const VISTA = /\bvista\b/i
+// R1-b: the S&C "Vista" SWITCH product. Discriminate on the PRODUCT NAME ("Pad-Mount Vista" / "Vista Switch|Disconnect"),
+// NOT a bare "vista" - "vista" alone is a common US place name (Vista, Chula Vista, Buena Vista) and is NOT
+// transformer-disqualifying. Used in looksLikeTransformer to route a Vista switch out of the "pad mount" transformer token.
+const VISTA_SWITCH = /\b(pad[\s-]?mount\s+vista|vista\s+(switch|disconnect|disc))\b/i
+// Strong power-transformer evidence, EXCLUDING the shared 'pad-mount' token (so a real kVA/XFMR row that merely sits at
+// a "Vista" site keeps its transformer scope, while a bare "Pad-Mount Vista" switch - which has no kVA/XFMR - does not).
+const XFMR_EVIDENCE = /\b(XFMR|transformer|dry.?type|oil.?filled)\b/i
 
 // Transformer-protection accessory relays (pressure/temperature/Buchholz/gas) are NOT standalone
 // protective-relay DEVICES the firm prices. Exclude them from token-based recognition so a plain
@@ -75,10 +81,11 @@ function looksLikeTransformer(x: ExtractedApparatus): boolean {
   // NOTE: a BLANKET text-based switch yield is still deliberately NOT added. "pad mount" lives in BOTH
   // TRANSFORMER_DEVICE and parseCoolant, so `isSwitchAnchored -> yield` stole real transformer rows that merely
   // mention an accessory disconnect (e.g. "1500KVA DRY-TYPE XFMR FUSED DISCONNECT" - which IS isSwitchAnchored).
-  // R1-b (operator-ratified): the NARROW exception is "vista". An S&C Vista is a switch product, never a transformer
-  // descriptor, so a switch-anchored vista row yields to the switch route instead of being claimed by "pad mount".
-  // Gated on isSwitchAnchored AND \bvista\b so a real pad-mount/kVA transformer (no "vista") still stays a transformer.
-  if (isSwitchAnchored(x.raw) && VISTA.test(x.raw)) return false
+  // R1-b (operator-ratified): the NARROW exception is the S&C "Vista" SWITCH product. Discriminate on the PRODUCT
+  // NAME (VISTA_SWITCH: "Pad-Mount Vista" / "Vista Switch|Disconnect"), NOT a bare "vista" (a common place name), AND
+  // require NO strong transformer evidence (kVA / XFMR-noun). So "Pad-Mount Vista" -> switch, while a real
+  // "1500KVA DRY-TYPE XFMR ..., VISTA SUB" or "...kVA ... w/ Vista disconnect" stays a transformer (no misprice).
+  if (VISTA_SWITCH.test(x.raw) && !KVA_RATING.test(x.raw) && !XFMR_EVIDENCE.test(x.raw)) return false
   // A relay MODEL + tag outranks a transformer text token (device-first) ONLY when the row lacks
   // strong transformer evidence. A real transformer (kVA rating or a coolant/construction token) that
   // merely MENTIONS a relay model must stay a transformer - never silently reclassified as a relay.
