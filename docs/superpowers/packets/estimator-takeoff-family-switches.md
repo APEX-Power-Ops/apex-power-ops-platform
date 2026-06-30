@@ -1,8 +1,8 @@
 # Apparatus Family Admission Process - Packet 005: Switches / Disconnects (NETA 7.5)
 
-Status: SCOPING PACKET (pre-spec). Author: CC (technical authority). Date: 2026-06-30.
+Status: RATIFIED (D1-D4 ratified 2026-06-30 with tightenings - see Part 9). Author: CC (technical authority). Date: 2026-06-30.
 Lane: estimator-takeoff/switch-family-admission (off main 89aa24a1). Dev-only; merge operator-gated.
-Feeds: docs/superpowers/specs/<date>-estimator-takeoff-switch-family-design.md (next, after operator ratifies the Open Decisions in Part 6).
+Feeds: docs/superpowers/specs/2026-06-30-estimator-takeoff-switch-family-design.md (the ratified state in Part 9 is the spec's basis).
 
 Grounding sources (read-only, this session, verified directly against the live files at main 89aa24a1):
 - Doctrine + templates: Packet 001 (transformers), 002 (relays), 003 (GFP), 004 (instrument transformers), all merged to main.
@@ -168,6 +168,59 @@ Pre-stated so the spec inherits them:
 
 ---
 
-## Part 9 - Operator ratification
+## Part 9 - Operator ratification (2026-06-30)
 
-(to be completed at operator review - records the ratified D1-D4 + any tightening patches + the must-pin test list, so the spec is built on the ratified state.)
+Operator ratified D1-D4 on 2026-06-30 with four tightenings (D2 conservative-default; D3 NF-as-paired-attribute; D3 breaker-hint conflict guard in BOTH directions; D3 circuit-switcher exclusion ordered FIRST) and eight added must-pin tests. The spec is built on THIS ratified state.
+
+### D1 - Accounting / catalog completeness - RATIFIED
+- The 11 switch refs are the V1 priced set, matched by EXACT ref STRING only (never by section). No new hours.
+- Confirmed independently by the operator: firm section 7.5 carries 12 refs because `PDU (Power Distribution Unit)` also sits at 7.5 - so the PDU-overload test is REQUIRED (match by string, never by section).
+- Bounded catalog gaps (LV non-fused disconnect; explicit vacuum switch; HV fused/cutout/oil/SF6) become `switch_catalog_gap` (surfaced, never fabricated, never a nearest-ref guess).
+
+### D2 - Match model + scope - RATIFIED with conservative-default tightening
+- Scope-driven: the engine surfaces a candidate ref-GROUP (voltage class x plausible type) + a Gate-2 scope question; NEVER auto-priced.
+- Provisional default ONLY when BOTH a voltage class AND a specific type/construction token are present:
+  - `fused disconnect`, `cutout`, `oil`, `SF6`, `Vista`, `motor operated`/`M.O.`, and explicit `open` MAY default where the catalog has a home (with legible voltage).
+  - A generic `disconnect`/`switch` anchor ALONE produces a candidate group with NO default - it does NOT default to "fused disconnect" by assumption.
+- R1 (the voltage class x type -> default-ref table, and the open-vs-enclosed default tier) stays PROVISIONAL until the estimator/SME confirms.
+
+### D3 - Recognition + cross-family guards (THE CRUX) - RATIFIED with three tightenings
+Device-first recognition by a disconnect/switch-DEVICE anchor (a COMPOUND noun): `disconnect`/`disconnect switch`, `fused`/`fusible switch`, `safety switch`, `load(-)break switch`/`LBS`, `isolation`/`isolating switch`, `knife switch`, `air switch`, `oil switch`, `SF6 switch`, `cutout` + a tag, OR producer `candidateKind:'switch'`. NEVER the bare word "switch".
+
+TIGHTENING 1 - NF is NOT a standalone anchor. `NF` (non-fused) is an ATTRIBUTE only (it sets `fused:false`), valid solely when paired with a real anchor (`disconnect`, `disc`, `safety switch`, `switch`) or `candidateKind:'switch'`. A bare tagged row (`NF-1`) or raw text merely containing `NF` does NOT mint a switch candidate.
+
+TIGHTENING 2 - Breaker-hint conflict guard, BOTH directions (grounded mechanism). The live breaker recognizer (normalize.ts L7) is `BREAKER_HINT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|vacuum|SF6|air\s*frame|GB|FB)\b/i`, and `looksLikeBreaker = BREAKER_HINT || FRAME_TRIP` (L46-47). CRITICAL: `vacuum`, `SF6`, and `air frame` are SHARED medium tokens that live inside BREAKER_HINT - so `looksLikeBreaker("SF6 switch")` is TRUE today, and such a row currently falls through to the BREAKER assessment (L362 `!looksLikeBreaker` is false). A naive ITX-style guard (`if looksLikeBreaker -> conflict`) would therefore WRONGLY block every legitimate SF6/vacuum/air switch that D4 commits to recognizing. Resolution (do NOT modify BREAKER_HINT - keep the breaker path byte-intact): the switch route uses a SWITCH-LOCAL conflict predicate keyed on the UNAMBIGUOUS breaker subset + frame/trip, NOT on the shared medium:
+  - `SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i` (the unambiguous subset) OR `FRAME_TRIP` (`###AF/###AT`) OR trip functions (LSIG) OR a `NON_BREAKER` token.
+  - The shared medium tokens (`vacuum`/`SF6`/`air frame`) are NOT conflict signals; they are switch CONSTRUCTION evidence consumed by `parseSwitchType`.
+  Both directions, pinned:
+  - `SF6 switch` (compound anchor present, no unambiguous breaker hint) -> SWITCH family (SF6 group).
+  - `SF6 breaker` / `VCB` / `ACB` / `800AF/800AT` / LSIG (no switch anchor, or anchor + unambiguous hint) -> stays BREAKER, or `switch_parent_conflict` when a switch anchor co-occurs with an unambiguous hint/frame-trip. NEVER a silent switch line; NEVER suppress a real breaker.
+  Build-time watch: introducing the switch route re-routes any row that TODAY falls through to the breaker assessment via `looksLikeBreaker=true` but actually carries a switch anchor. The five-golden byte-identical gate is the net - if an existing golden row moves, investigate before proceeding.
+
+TIGHTENING 3 - Circuit-switcher exclusion is load-bearing and ORDERED FIRST. `Circuit Switcher MV/HV` (firm 7.3) CONTAINS the "switch" token, so the recognizer must EXCLUDE `circuit switcher` (plus `transfer switch`, `switchgear`, `switchboard`) as its FIRST action, BEFORE any anchor/SF6 matching. Note the live `NON_BREAKER` (L8) already carries the ATS/MTS abbreviations, but the SPELLED-OUT `transfer switch`/`circuit switcher`/`switchgear`/`switchboard` are NOT in any existing guard - the switch recognizer owns this exclusion list.
+
+Route: the switch recognizer runs in `assessCore` AFTER the five prior families (insert after `looksLikeRelay`, L353; before the NON_BREAKER/breaker tail, L356-362). Its FIRST action is the TIGHTENING-3 exclusion, THEN the TIGHTENING-2 conflict guard, THEN compound-anchor detection - so it cannot steal a breaker and cannot itself be stolen. All five prior goldens (breaker/transformer/relay/GFP/instrument) stay BYTE-IDENTICAL.
+
+### D4 - V1 sub-type scope - RATIFIED (full 11-ref set)
+V1 covers ALL 11 refs (LV/MV/HV x fused-disconnect / open / oil / SF6 / cutout / motor-operated / Vista). The full set is cheap (recognition is text-driven, refs already exist) and every ambiguous/unhomed case fails closed to `switch_catalog_gap`. Narrowing to common fused/open only would discard useful coverage without reducing risk. DEFER: load-interrupter vs isolation-only test-scope split; the fuse-element test as a separate line; the Gate-2 resolution UI; open-vs-enclosed auto-inference (operator picks at Gate-2 in V1).
+
+### Consolidated must-pin test list (Part 7 carried + eight added at ratification)
+Carried from Part 7: switchboard/switchgear exclusion; ATS/MTS exclusion; bare-"switch"-not-counted; breaker discriminator + parent_conflict; device-first/A-prime; type+voltage recognition; voltage classification (no `missing_voltage`); `switch_catalog_gap`; exact-ref + PDU-overload proof; disposition -> Gate-2; five prior goldens byte-identical.
+
+Added at ratification (the tightening tests):
+1. `NF` with NO disconnect/switch anchor -> NOT counted (no switch candidate).
+2. `NF disconnect` + tag -> switch candidate (then catalog_gap or no-default per voltage/type).
+3. `Circuit Switcher MV/HV` -> NOT a switch (excluded FIRST, before any SF6/anchor matching).
+4. `Automatic Transfer Switch` / `Manual Transfer Switch` (spelled out) -> NOT a 7.5 switch.
+5. `Switchgear` / `Switchboard` -> NOT a switch.
+6. `SF6 switch` -> switch (SF6 group); `SF6 breaker` / `VCB` / `800AF/800AT` LSIG -> NOT a switch (stays breaker, or `switch_parent_conflict`). BOTH directions.
+7. Generic `disconnect` + voltage but NO fused/open/type token -> scope_pending with NO provisional default.
+8. LV non-fused / vacuum / HV fused/cutout/oil/SF6 -> `switch_catalog_gap`.
+
+### Engine-seam consequences of the tightenings (for the spec)
+- Anchor set = COMPOUND switch-device nouns; the bare token "switch" is NOT an anchor. `NF` is an attribute lexeme, never an anchor.
+- `looksLikeSwitch`: run the TIGHTENING-3 EXCLUSION pass (`circuit switcher`, `transfer switch`, `switchgear`, `switchboard`) FIRST, then the TIGHTENING-2 switch-local conflict guard (`SWITCH_BREAKER_CONFLICT` | FRAME_TRIP | LSIG | NON_BREAKER), then compound-anchor / `candidateKind:'switch'` detection. SF6/air/vacuum are switch-eligible ONLY with an anchor and absent an unambiguous breaker hint.
+- `matchSwitch`: conservative-default rule - default ref only with voltage class + a specific type token; a generic anchor yields a group with no default.
+- Do NOT alter BREAKER_HINT/FRAME_TRIP/NON_BREAKER or any prior family path; the switch family is purely additive.
+
+Status: RATIFIED. Proceed to spec.
