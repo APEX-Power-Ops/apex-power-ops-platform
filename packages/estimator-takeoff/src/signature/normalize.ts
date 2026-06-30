@@ -1,5 +1,5 @@
 import type { ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, GfpSignature, TransformerSignature, TripFunction, VoltageBasis, InstrumentTransformerSignature, ItxPackaging, ItxPackagingEvidence, ItxType } from './types'
+import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, GfpSignature, TransformerSignature, TripFunction, VoltageBasis, InstrumentTransformerSignature, ItxPackaging, ItxPackagingEvidence, ItxType, SwitchType } from './types'
 import type { OperatorQuestion, OperatorQuestionCode } from '../buckets/types'
 import { classifyVoltage } from './voltage'
 
@@ -18,6 +18,25 @@ const ANSI_FN = /\b(2[1-7]|32|37|38|40|46N?|47|49[RT]?|50N?|51N?|55|59|60|63|64|
 const INSTRUMENT_TX_DEVICE = /\b(current\s+transformer|potential\s+transformer|voltage\s+transformer|coupling[\s-]?capacitor(\s+voltage\s+transformer)?|CCVT|instrument\s+transformer)\b/i
 const INSTRUMENT_TX_ABBR = /\b(CT|PT|VT)\b/i
 const INSTRUMENT_TAG = /^(CT|PT|VT|CCVT)[-_ ]?\w*$/i
+
+// --- Switch / disconnect family (NETA 7.5) ---
+// Overload families EXCLUDED FIRST (T3): "switch" appears in switchboard/switchgear (7.1 assemblies),
+// transfer switch (7.18/22), circuit switcher (7.3). None are 7.5 switches.
+const SWITCH_EXCLUDE = /\b(circuit\s+switcher|transfer\s+switch|switchgear|switchboard)\b/i
+// COMPOUND switch-device anchors - NEVER the bare token "switch".
+const SWITCH_DEVICE = /\b(disconnect(\s+switch)?|fus(ed|ible)\s+switch|safety\s+switch|load[\s-]?break\s+switch|LBS|isolat(ion|ing)\s+switch|knife\s+switch|air\s+switch|oil\s+switch|SF6\s+switch|cutout|non[\s-]?fused\s+disconnect)\b/i
+// The UNAMBIGUOUS breaker subset for the switch-local conflict guard - DELIBERATELY excludes the shared
+// vacuum/SF6/air-frame medium tokens (those are switch construction evidence, not conflict signals).
+const SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i
+// A single numbered frame/trip token (catches 800AF or 800AT even WITHOUT the full FRAME_TRIP pair).
+const SWITCH_FRAME_TRIP = /\b\d{2,6}\s*A[FT]\b/i
+// A breaker trip-function descriptor on a switch row = conflict (mirrors parseFunctions' L(SIGE) shape;
+// the lookahead + \b spare anchors like "LBS" and English words like "LIGHT").
+const SWITCH_TRIP_FN = /\bL(?=[SIGE])(S?)(I?)(G?)(E?)\b/i
+// The non-fused attribute - consumed ONLY when a real anchor is present (looksLikeSwitch gates it).
+const SWITCH_NF = /\bN\.?F\.?\b|\bnon[\s-]?fused\b/i
+// PLAIN continuous amps ONLY: the \bA\b boundary means 800AF / 800AT do NOT match (AF/AT can never be amps).
+const SWITCH_AMP = /(?<!\d)(\d{2,6})\s*A\b/i
 
 // Transformer-protection accessory relays (pressure/temperature/Buchholz/gas) are NOT standalone
 // protective-relay DEVICES the firm prices. Exclude them from token-based recognition so a plain
@@ -116,6 +135,36 @@ function looksLikeRelay(x: ExtractedApparatus): boolean {
   if (x.candidateKind === 'relay') return true                  // explicit producer signal wins
   if (RELAY_ACCESSORY.test(x.raw)) return false                 // transformer accessory, not a priced relay device
   return RELAY_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0
+}
+
+export function looksLikeSwitch(x: ExtractedApparatus): boolean {
+  if (SWITCH_EXCLUDE.test(x.raw)) return false                          // T3: overload families excluded FIRST
+  if (x.candidateKind === 'switch') return true                         // explicit producer signal wins
+  if (x.candidateKind !== undefined) return false                       // defer to other producers (TS narrows: not 'switch' here)
+  return SWITCH_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0       // compound anchor + tag
+}
+
+export function parseSwitchType(raw: string): SwitchType {
+  if (/pad[\s-]?mount\s+vista|\bvista\b/i.test(raw)) return 'vista'
+  if (/motor[\s-]?operated|\bM\.?O\.?\b/i.test(raw)) return 'motor_operated'
+  if (/\bSF6\b/i.test(raw)) return 'sf6'
+  if (/\boil\b/i.test(raw)) return 'oil'
+  if (/\bcutout\b/i.test(raw)) return 'cutout'
+  if (/\bvacuum\b/i.test(raw)) return 'vacuum'                          // recognized; no priced ref -> gap
+  if (/fus(ed|ible)/i.test(raw)) return 'fused_disconnect'
+  if (/air\s+switch|\bopen\b/i.test(raw)) return 'open'                 // air-open switches ARE the firm "Open" refs
+  return 'unknown'                                                       // generic disconnect/switch anchor -> group, no default
+}
+
+export function parseFused(raw: string): boolean | undefined {
+  if (SWITCH_NF.test(raw)) return false
+  if (/fus(ed|ible)/i.test(raw)) return true
+  return undefined
+}
+
+export function parseAmpRating(raw: string): number | undefined {
+  const m = raw.match(SWITCH_AMP)
+  return m ? Number(m[1]) : undefined
 }
 
 // LOAD-BEARING standalone guard: a parent-shaped row (a breaker by frame/hint, or a NON_BREAKER device)
