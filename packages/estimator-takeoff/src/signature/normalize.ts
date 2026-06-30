@@ -171,6 +171,7 @@ function parsePackaging(raw: string): { packaging: ItxPackaging; packagingEviden
   if (/\bset\s+of\s+3\b/i.test(raw)) return { packaging: 'set', packagingEvidence: 'set_of_3', phaseCount: 3 }
   if (/\b3\s*(?:phase|ph|-phase)\b/i.test(raw) || /\b3\s*x\b/i.test(raw) || /\(3\)/.test(raw)) return { packaging: 'set', packagingEvidence: 'three_phase', phaseCount: 3 }
   if (/\bset\b/i.test(raw)) return { packaging: 'set', packagingEvidence: 'set_token' }
+  if (/\bindividual\b/i.test(raw)) return { packaging: 'individual', packagingEvidence: 'individual_token' }   // explicit individual token (P2-b) -> the individual provisional default
   return { packaging: 'unknown', packagingEvidence: 'none' }
 }
 

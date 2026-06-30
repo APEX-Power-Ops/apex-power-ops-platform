@@ -26,4 +26,10 @@ describe('instrument-transformer end-to-end', () => {
     expect((r.scopePendingLines ?? []).length).toBe(0)
     expect(r.dispositions[0]!.reasonCode).toBe('instrument_transformer_catalog_gap')
   })
+  it('CCVT Individual (480V) -> scope_pending with the individual provisional default (P2-b)', () => {
+    const r = runTakeoff(art([row({ raw: 'CCVT VOLTAGE TRANSFORMER - INDIVIDUAL', tag: 'CCVT-1', busVoltageV: 480 })]))
+    const sp = (r.scopePendingLines ?? [])[0]!
+    expect(sp.provisionalDefaultRef).toBe('CCVT Voltage Transformer - Individual')
+    expect(sp.packagingEvidence).toBe('individual_token')
+  })
 })

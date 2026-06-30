@@ -37,4 +37,10 @@ describe('matchInstrumentTransformer', () => {
     expect(matchInstrumentTransformer(sig({ itxType: 'vt', voltageClass: 'LV' }))).toBeNull()
     expect(matchInstrumentTransformer(sig({ itxType: 'vt', voltageClass: 'HV' }))).toBeNull()
   })
+  it('individual packaging evidence -> the individual (non-set) default where the group has one (P2-b)', () => {
+    const ccvt = matchInstrumentTransformer(sig({ itxType: 'ccvt', voltageClass: 'MV', packaging: 'individual', packagingEvidence: 'individual_token' }))!
+    expect(ccvt.defaultRef).toBe('CCVT Voltage Transformer - Individual')   // the non-set ref
+    const ct = matchInstrumentTransformer(sig({ itxType: 'ct', voltageClass: 'MV', packaging: 'individual', packagingEvidence: 'individual_token' }))!
+    expect(ct.defaultRef).toBe('Current Transformer - Bushing HV/MV')        // first non-set ref in ct:MV
+  })
 })
