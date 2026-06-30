@@ -65,4 +65,13 @@ describe('parseArtifact', () => {
     expect(() => parseArtifact(a)).not.toThrow()
     expect(a.apparatus[0]!.candidateKind).toBe('gfp')
   })
+
+  it('accepts candidateKind:instrument_transformer', () => {
+    const a = {
+      pdf: 'x.pdf',
+      apparatus: [{ raw: 'CT-1 600:5', tag: 'CT-1', sheet: 'E1', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', candidateKind: 'instrument_transformer' }],
+    }
+    expect(() => parseArtifact(a)).not.toThrow()
+    expect(a.apparatus[0]!.candidateKind).toBe('instrument_transformer')
+  })
 })
