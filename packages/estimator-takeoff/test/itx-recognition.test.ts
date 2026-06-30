@@ -48,7 +48,7 @@ describe('operator must-pin: instrument vs power transformer', () => {
   })
   it('phase/default-gate: (3) notation drives the default; no packaging -> no default', () => {
     const withPhase = runTakeoff(art([row({ raw: 'CURRENT TRANSFORMER (3) MV', tag: 'CT-1', busVoltageV: 4160 })]))
-    expect((withPhase.scopePendingLines ?? [])[0]!.provisionalDefaultRef).toBeDefined()
+    expect((withPhase.scopePendingLines ?? [])[0]!.provisionalDefaultRef).toBe('Current Transformer MV - Set of 3')
     expect((withPhase.scopePendingLines ?? [])[0]!.phaseCount).toBe(3)
   })
   it('type unparsed: candidateKind itx + opaque ratio/tag (no type token) -> type_unparsed, NO instrument line', () => {
