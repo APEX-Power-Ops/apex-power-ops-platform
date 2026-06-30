@@ -1,6 +1,6 @@
 # Estimator-Takeoff Instrument Transformer (CT / VT / CCVT) Family (V1) - Design
 
-Status: SPEC (operator-ratified packet 004; folds D1-D4 + the 2 operator patches [D3 additive-exclusion-not-kVA-requirement; D2 default-only-with-packaging-evidence] + the contract patch [phaseCount + packagingEvidence on signature + scope_pending + report] + the 7 must-pin tests). Date: 2026-06-29.
+Status: SPEC Rev 2.1 (operator-ratified packet 004; folds D1-D4 + the 2 operator patches [D3 additive-exclusion-not-kVA-requirement; D2 default-only-with-packaging-evidence] + the contract patch [phaseCount + packagingEvidence on signature + scope_pending + report] + the 7 must-pin tests; Rev 2.1 folds 4 spec-review patches: A-prime bare-abbreviation recognition [instrument-shaped tag required], instrument_transformer_parent_conflict guard [instrument-before-breaker must not suppress a real breaker], phase/default-gate consistency [a 3-phase notation produces packaging evidence], and packagingEvidence/phaseCount also on ApparatusDisposition). Date: 2026-06-29.
 Lane: estimator-takeoff/instrument-transformer-family-admission (off main fcbbe3c2). Dev-only; merge operator-gated.
 Packet: docs/superpowers/packets/estimator-takeoff-family-instrument-transformers.md (Part 6 decisions + Part 9 ratification).
 Predecessors (reused, must stay byte-identical): breaker engine + transformer slice (PR #49) + relay slice (PR #50) + GFP slice (PR #51).
@@ -26,7 +26,10 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
 
 ## The V1 Contract
 
-1. **Recognize instrument transformers DEVICE-FIRST by TYPE.** An instrument transformer is established by a producer `candidateKind:'instrument_transformer'` OR an instrument-type token + a device identity (tag). Type tokens: full device nouns `CURRENT TRANSFORMER` (CT), `POTENTIAL TRANSFORMER`/`VOLTAGE TRANSFORMER` (VT/PT), `CCVT`/`COUPLING(-)CAPACITOR (VOLTAGE TRANSFORMER)` (CCVT), or the bare abbreviations `CT`/`PT`/`VT` WITH a tag. A bare abbreviation with NO tag/anchor is NEVER counted.
+1. **Recognize instrument transformers DEVICE-FIRST by TYPE (Option A-prime).** An instrument transformer is established by a producer `candidateKind:'instrument_transformer'` OR an instrument-type token + a device identity (tag), with a TIERED anchor strength:
+   - **Full device nouns** (`CURRENT TRANSFORMER` -> CT, `POTENTIAL TRANSFORMER`/`VOLTAGE TRANSFORMER` -> VT, `CCVT`/`COUPLING(-)CAPACITOR` -> CCVT) recognize with ANY tag.
+   - **Bare abbreviations** (`CT`/`PT`/`VT`) recognize ONLY when the TAG ITSELF is instrument-shaped (e.g. `CT-1`, `PT-2`, `VT-A`, `CCVT-1`) OR the producer set `candidateKind:'instrument_transformer'`. A bare abbreviation in the raw text of a row whose TAG belongs to another family (a breaker/relay/GFP row that merely mentions "CT") is NOT an instrument transformer.
+   - A bare abbreviation with NO tag, or an abbreviation-only row with a non-instrument-shaped tag, is NEVER counted.
 2. **Route instrument FIRST; exclude instrument from power additively.** In `assessCore`, the instrument recognizer runs BEFORE the power-transformer block. `looksLikeTransformer` gains an additive exclusion: an explicit `candidateKind:'instrument_transformer'` -> false, and a FULL instrument device-noun token (current/potential/voltage transformer, CCVT, coupling-capacitor; NOT the bare CT/PT/VT abbreviations - too collision-prone for the power exclusion) -> false. NOTHING else in `looksLikeTransformer` changes; no kVA/coolant requirement is added.
 3. **Scope-driven; never auto-price.** A recognized instrument transformer -> `scope_pending`: a candidate ref-GROUP (the type x voltage refs, individual + set variants) + a Gate-2 packaging/count scope question, with a PROVISIONAL default ONLY where packaging evidence is explicit, NO default otherwise. A recognized type x voltage with no priced home (D1 gaps) -> `catalog_gap`.
 4. **phaseCount + packagingEvidence are contract.** The signature carries them; emit stamps them onto the `scope_pending` line; the reconciliation report surfaces them. (The operator's Gate-2 packaging decision depends on this evidence.)
@@ -60,13 +63,25 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
 ### 3. Recognition + parse (`signature/normalize.ts`)
 - Token regexes (ASCII):
   - `INSTRUMENT_TX_DEVICE` (full device nouns - used for BOTH recognition AND the power exclusion; conservative, no bare abbreviations): `/\b(current\s+transformer|potential\s+transformer|voltage\s+transformer|coupling[\s-]?capacitor(\s+voltage\s+transformer)?|CCVT|instrument\s+transformer)\b/i`.
-  - `INSTRUMENT_TX_ABBR` (bare abbreviations - recognition ONLY, tag-gated, NOT in the power exclusion): `/\b(CT|PT|VT)\b/`.
-- `looksLikeInstrumentTransformer(x)`: `x.candidateKind === 'instrument_transformer'` -> true; else `(INSTRUMENT_TX_DEVICE.test(x.raw) || INSTRUMENT_TX_ABBR.test(x.raw)) && x.tag !== undefined && x.tag.length > 0`. (Device-first; bare abbreviation needs a tag.)
-- `parseItxType(raw)`: CCVT/coupling-capacitor -> `ccvt`; potential/voltage transformer or `\bPT\b`/`\bVT\b` -> `vt`; current transformer or `\bCT\b` -> `ct`. (Order: CCVT before VT so "CCVT" is not read as VT.)
-- `parsePackaging(raw)`: returns `{ packaging, packagingEvidence }` - `set of 3` -> `('set','set_of_3')`; `\bset\b` -> `('set','set_token')`; `3\s*(phase|ph|-phase)` or `3\s*x` -> `('set','three_phase')`; else `('unknown','none')`. (Symbol-group evidence is producer-supplied via a future field; `symbol_group` reserved.)
-- `parsePhaseCount(raw)`: a leading `3 x` / `(3)` / `3-phase` -> 3; else undefined.
+  - `INSTRUMENT_TX_ABBR` (bare abbreviations - recognition ONLY, NOT in the power exclusion): `/\b(CT|PT|VT)\b/`.
+  - `INSTRUMENT_TAG` (the TAG names an instrument type - the A-prime anchor for bare abbreviations): `/^(CT|PT|VT|CCVT)[-_ ]?\w*$/i` (e.g. `CT-1`, `PT-2`, `VT-A`, `CCVT-1`).
+- `looksLikeInstrumentTransformer(x)` (A-prime):
+  - `if (x.candidateKind === 'instrument_transformer') return true`;
+  - `if (INSTRUMENT_TX_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0) return true` (full device noun + ANY tag);
+  - `if (INSTRUMENT_TX_ABBR.test(x.raw) && x.tag !== undefined && INSTRUMENT_TAG.test(x.tag)) return true` (bare abbreviation requires an INSTRUMENT-SHAPED tag);
+  - `return false`. (A breaker/relay/GFP row whose tag is NOT instrument-shaped but whose raw merely contains "CT" is NOT claimed.)
+- `parseItxType(raw)`: CCVT/coupling-capacitor or `\bCCVT\b` -> `ccvt`; potential/voltage transformer or `\bPT\b`/`\bVT\b` -> `vt`; current transformer or `\bCT\b` -> `ct`. (Order: CCVT before VT so "CCVT" is not read as VT.) When recognized via tag (A-prime), the TAG prefix may also disambiguate type.
+- `parsePackaging(raw)`: returns `{ packaging, packagingEvidence, phaseCount }`, with a UNIFIED 3-phase signal so the default gate (D2) is consistent - ANY of `set of 3` / `3 phase` / `3-phase` / `3\s*x` / `(3)` is packaging evidence:
+  - `set of 3` -> `('set','set_of_3', 3)`;
+  - `3\s*(phase|ph|-?phase)` / `3\s*x` / `\(3\)` -> `('set','three_phase', 3)`;
+  - bare `\bset\b` -> `('set','set_token', undefined)`;
+  - else `('unknown','none', undefined)`.
+  (A 3-phase NOTATION therefore ALWAYS yields packagingEvidence !== 'none' AND phaseCount=3, so it both drives the default gate and surfaces as count evidence - resolving the Rev-2.0 inconsistency. `symbol_group` evidence is producer-supplied via a reserved future field.)
 - `parseRatio(raw)`: capture `\d+:\d+` if present (evidence only).
-- `assessInstrumentTransformer(x, voltageBasis?)`: build the signature (itxType, packaging+packagingEvidence, phaseCount, ratio, `voltageClass = classifyVoltage(x.busVoltageV)` MAY be undefined - NOT gated). `assessmentCode: 'instrument_transformer_recognized'`. Conflict guard: if the row ALSO carries a power-transformer signal (`KVA_RATING` or a coolant token) -> `instrument_transformer_power_conflict` question, signature null (an instrument-vs-power ambiguity is surfaced, never silently picked).
+- `assessInstrumentTransformer(x, voltageBasis?)`: CONFLICT GUARDS FIRST (instrument routes before breaker/NON_BREAKER, so a misrouted parent must surface a question, never a silent instrument scope_pending):
+  - `if (looksLikeBreaker(x.raw) || NON_BREAKER.test(x.raw))` -> `instrument_transformer_parent_conflict` question, signature null (covers the operator-pinned `candidateKind:'instrument_transformer'` + `AF/AT` -> question case);
+  - `else if (KVA_RATING.test(x.raw) || parseCoolant(x.raw) !== 'unknown')` -> `instrument_transformer_power_conflict` question, signature null (instrument-vs-power ambiguity surfaced);
+  - else build the signature (itxType, packaging+packagingEvidence+phaseCount, ratio, `voltageClass = classifyVoltage(x.busVoltageV)` MAY be undefined - NOT gated). `assessmentCode: 'instrument_transformer_recognized'`.
 - `looksLikeTransformer` (power) - ADDITIVE exclusion ONLY (insert after the `candidateKind === 'relay'` line, before `candidateKind === 'transformer'`):
   ```ts
   if (x.candidateKind === 'instrument_transformer') return false   // explicit instrument producer signal yields
@@ -74,7 +89,7 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
   ```
   Everything else in `looksLikeTransformer` is UNCHANGED (so a bare "Transformer T-1" still -> TRANSFORMER_DEVICE -> assessTransformer -> `transformer_attrs_unparsed`).
 - `assessCore` order: insert the instrument route FIRST, before the `looksLikeTransformer` block: `if (looksLikeInstrumentTransformer(x)) return assessInstrumentTransformer(x, voltageBasis)`. New order: instrument -> transformer -> GFP -> relay -> NON_BREAKER -> breaker.
-- New `AssessmentCode` members: `instrument_transformer_recognized`, `instrument_transformer_power_conflict`.
+- New `AssessmentCode` members: `instrument_transformer_recognized`, `instrument_transformer_parent_conflict`, `instrument_transformer_power_conflict`.
 
 ### 4. Match (`catalog/instrument-transformer-map.ts` + `.data.ts`)
 - `.data.ts`: the 9 refs VERBATIM (exact strings); an `ITX_GROUPS: Record<\`${ItxType}:${VoltageClass|'unknown'}\`, string[]>`-shaped map -> candidate ref-group (individual + set variants for that type x voltage); `ITX_R1_RATIFIED = false`.
@@ -87,8 +102,8 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
 - Add an `s.kind === 'instrument_transformer'` branch to `specKey` BEFORE the transformer fall-through: `[s.kind, s.itxType, s.voltageClass ?? '-', s.packaging, s.source.block ?? '-'].join('|')`. (`phaseCount`/`ratio` are evidence, NOT in the key - two banks of the same type/voltage/packaging aggregate; the operator resolves count at Gate-2.) `deviceId` kind-prefixes (`instrument_transformer:TAG`). `pickAuthoritative` needs no itx-specific change.
 
 ### 6. Disposition + contract (`buckets/types.ts`, `emit/emit.ts`, `runner/report.ts`)
-- `buckets/types.ts`: `OperatorQuestionCode` += `instrument_transformer_scope_pending` | `instrument_transformer_catalog_gap` | `instrument_transformer_power_conflict`; `DispositionReasonCode` += same three; `TakeoffFinding.code` += `instrument_transformer_catalog_gap`. **Add the contract evidence fields to `ScopePendingLine`: `packagingEvidence?: string` + `phaseCount?: number`** (optional; only instrument-transformer lines set them).
-- `emit/emit.ts`: import `matchInstrumentTransformer` + `ITX_R1_RATIFIED` + the type. Add the `sig.kind === 'instrument_transformer'` branch in the match loop BEFORE the transformer fall-through: a scope match -> `scope_pending` (candidateRefs=group, provisionalDefaultRef=defaultRef [may be undefined], r1Ratified=ITX_R1_RATIFIED, **packagingEvidence=sig.packagingEvidence, phaseCount=sig.phaseCount**, scopeQuestion); a `null` match -> `catalog_gap` finding + disposition. **Update `ASSESS_TO_REASON`** for `instrument_transformer_recognized` -> `instrument_transformer_scope_pending` and `instrument_transformer_power_conflict` -> `instrument_transformer_power_conflict`.
+- `buckets/types.ts`: `OperatorQuestionCode` += `instrument_transformer_scope_pending` | `instrument_transformer_catalog_gap` | `instrument_transformer_parent_conflict` | `instrument_transformer_power_conflict`; `DispositionReasonCode` += same four; `TakeoffFinding.code` += `instrument_transformer_catalog_gap`. **Add the contract evidence fields to `ScopePendingLine`: `packagingEvidence?: string` + `phaseCount?: number`** (optional; only instrument-transformer lines set them). **Also add optional `packagingEvidence?: string` + `phaseCount?: number` to `ApparatusDisposition`** (the disposition already carries candidateRefs/provisionalDefaultRef/scopeQuestion for scope_pending rows; the evidence rides alongside so Gate-2/UI consumers that inspect dispositions - not just the report - have it).
+- `emit/emit.ts`: import `matchInstrumentTransformer` + `ITX_R1_RATIFIED` + the type. Add the `sig.kind === 'instrument_transformer'` branch in the match loop BEFORE the transformer fall-through: a scope match -> `scope_pending` (candidateRefs=group, provisionalDefaultRef=defaultRef [may be undefined], r1Ratified=ITX_R1_RATIFIED, **packagingEvidence=sig.packagingEvidence, phaseCount=sig.phaseCount**, scopeQuestion), AND stamp `disp.packagingEvidence`/`disp.phaseCount` on each member disposition (alongside the existing candidateRefs/provisionalDefaultRef/scopeQuestion stamping); a `null` match -> `catalog_gap` finding + disposition. **Update `ASSESS_TO_REASON`** for `instrument_transformer_recognized` -> `instrument_transformer_scope_pending`, `instrument_transformer_parent_conflict` -> `instrument_transformer_parent_conflict`, and `instrument_transformer_power_conflict` -> `instrument_transformer_power_conflict`.
 - `runner/report.ts`: the `scopePending` projection gains `packagingEvidence` + `phaseCount`; `renderReportText` prints them on the Gate-2 block (e.g. `packaging=set_of_3 phases=3`). Family-agnostic scope_pending handling (partial_preview) otherwise unchanged.
 
 ## The crux, expanded - the must-pin recognition cases
@@ -97,9 +112,10 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
 2. **"Potential Transformer" / "Voltage Transformer" + tag -> instrument.** Same path; `parseItxType` -> `vt`.
 3. **"Transformer T-1 500kVA dry-type" -> POWER transformer.** No instrument device noun -> `looksLikeInstrumentTransformer` false; `looksLikeTransformer` unchanged -> TRANSFORMER_DEVICE + kVA -> assessTransformer (recognized power transformer). Byte-identical.
 4. **"Transformer T-1" (bare) -> existing fail-closed behavior.** No instrument noun, no kVA/coolant -> instrument false; `looksLikeTransformer` -> TRANSFORMER_DEVICE true -> assessTransformer -> `transformer_attrs_unparsed`. IDENTICAL to today (the additive exclusion did not touch this path).
-5. **Bare "CT" / "PT" with no anchor -> not counted.** `INSTRUMENT_TX_ABBR` matches but no tag -> `looksLikeInstrumentTransformer` false; not an instrument device noun for the power exclusion; no power signal -> falls to NON_BREAKER/unrecognized. Not counted.
+5. **Bare "CT" / "PT" without an instrument-shaped tag -> not counted (A-prime).** A breaker/relay row whose tag is e.g. `MSB-1` but whose raw text contains "CT" -> `INSTRUMENT_TX_ABBR` matches but `INSTRUMENT_TAG.test('MSB-1')` is false -> `looksLikeInstrumentTransformer` false; it is NOT a full device noun (so the power exclusion does not fire either) -> the row continues down its real family path. A bare "CT" with no tag -> not counted. Only `CT-1`-shaped tags (or `candidateKind:'instrument_transformer'`) promote a bare abbreviation.
 6. **Type+voltage but NO packaging evidence -> scope_pending, NO default.** e.g. "Current Transformer, 480V" + tag, no set/phase token -> group offered, `provisionalDefaultRef` undefined (D2).
-7. **Instrument+power conflict -> question.** A row with an instrument noun AND a kVA rating -> `instrument_transformer_power_conflict` (surfaced, never silently picked).
+7. **Instrument+power conflict -> question.** A row with an instrument noun AND a kVA/coolant signal -> `instrument_transformer_power_conflict` (surfaced, never silently picked).
+8. **Parent conflict -> question (instrument-before-breaker must not suppress a real breaker).** `candidateKind:'instrument_transformer'` (or an instrument token) on a row carrying `###AF/###AT` (or a breaker hint / NON_BREAKER token) -> `instrument_transformer_parent_conflict` question, NO instrument scope_pending. Because instrument routes FIRST, this guard is what prevents an instrument signal from swallowing a genuine breaker/parent row.
 
 ## R1 (estimating authority) - provisional
 
@@ -111,9 +127,13 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
 - **#2 Potential Transformer / Voltage Transformer + tag -> instrument_transformer (itxType vt).**
 - **#3 "Transformer T-1 500kVA dry-type" -> power transformer (transformer_scope_pending / its existing path), NOT instrument.**
 - **#4 "Transformer T-1" (bare) -> `transformer_attrs_unparsed` (existing fail-closed behavior, unchanged).**
-- **#5 bare "CT"/"PT" no anchor -> NOT counted (unrecognized).**
+- **#5 bare "CT"/"PT" without an instrument-shaped tag -> NOT counted (A-prime).** Pin BOTH: (a) a breaker row tag `MSB-1` whose raw contains "CT" -> stays breaker, no instrument line; (b) a row raw "CT 600:5" with tag `CT-1` -> instrument (instrument-shaped tag promotes the bare abbreviation); (c) `candidateKind:'instrument_transformer'` + bare "CT" -> instrument.
 - **#6 type+voltage, no packaging evidence -> scope_pending with `provisionalDefaultRef` undefined.**
 - **#7 breaker AND transformer AND relay AND GFP goldens byte-identical.**
+- **A-prime negative (no drift):** a relay/GFP row whose tag is non-instrument-shaped but whose raw mentions "VT"/"PT" -> NOT reclassified to instrument (stays its real family).
+- **parent conflict:** `candidateKind:'instrument_transformer'` + `800AF/800AT` -> `instrument_transformer_parent_conflict` question, NO instrument scope_pending; a real breaker row is NOT suppressed.
+- **power conflict:** instrument noun + kVA/coolant -> `instrument_transformer_power_conflict`.
+- **phase/default-gate consistency:** "Current Transformer (3) MV" + tag -> packagingEvidence `three_phase`, phaseCount 3, AND a provisionalDefaultRef IS set (the 3-phase notation drives the D2 gate); "Current Transformer MV" + tag (no packaging) -> NO default.
 - type recognition: CT/PT/CCVT -> correct itxType + candidate group.
 - voltage classification: MV CT -> MV CT group; absent voltage -> wider group + note, NOT `missing_voltage`.
 - set-vs-each: "Current Transformer (3) MV" / "...Set of 3" -> scope_pending surfacing BOTH individual + set candidates, `packagingEvidence` + `phaseCount` carried onto the line AND the report.
