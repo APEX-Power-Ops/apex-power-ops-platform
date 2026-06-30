@@ -326,9 +326,10 @@ const SWITCH_DEVICE = /\b(disconnect(\s+switch)?|fus(ed|ible)\s+switch|safety\s+
 const SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i
 // A single numbered frame/trip token (catches 800AF or 800AT even WITHOUT the full FRAME_TRIP pair).
 const SWITCH_FRAME_TRIP = /\b\d{2,6}\s*A[FT]\b/i
-// A breaker trip-function descriptor on a switch row = conflict (mirrors parseFunctions' L(SIGE) shape;
-// the lookahead + \b spare anchors like "LBS" and English words like "LIGHT").
-const SWITCH_TRIP_FN = /\bL(?=[SIGE])(S?)(I?)(G?)(E?)\b/i
+// A breaker trip-function descriptor on a switch row = conflict (mirrors parseFunctions' L(SIGE) shape).
+// REQUIRES >=2 function letters after L (lookahead [SIGE]{2}): "LSIG" matches, but a bare 2-char TAG prefix
+// carried into the raw (LS-1/LG-2/LI-7/LE-3) does NOT - avoids the false-positive. (Rev 2.1 post-build patch.)
+const SWITCH_TRIP_FN = /\bL(?=[SIGE]{2})(S?)(I?)(G?)(E?)\b/i
 // The non-fused attribute - consumed ONLY when a real anchor is present (looksLikeSwitch gates it).
 const SWITCH_NF = /\bN\.?F\.?\b|\bnon[\s-]?fused\b/i
 // PLAIN continuous amps ONLY: the \bA\b boundary means 800AF / 800AT do NOT match (AF/AT can never be amps).
@@ -643,6 +644,9 @@ describe('switch pipeline', () => {
     const report = buildReconciliationReport(res)
     expect(report.scopePending[0]!.switchType).toBe('fused_disconnect')
     expect(renderReportText(report)).toContain('type=fused_disconnect')
+    // CORE CONTRACT (switches never auto-price): the envelope is a partial preview with an unresolved row.
+    expect(report.status).toBe('partial_preview')
+    expect(report.counts.unresolved_rows).toBeGreaterThan(0)
   })
   it('an LV non-fused disconnect -> switch_catalog_gap (no scope_pending line)', () => {
     const res = runTakeoff(art([{ raw: 'NF Disconnect', tag: 'DS-2', busVoltageV: 480 }]))
@@ -739,14 +743,14 @@ describe('switch golden - coexistence', () => {
 })
 ```
 
-- [ ] **Step 2: Run the golden, verify it FAILS first, then PASSES after confirming behavior** (it should pass given Tasks 1-4; if it fails, fix the implementation, not the golden, unless the golden's expectation is wrong).
+- [ ] **Step 2: Add the golden and verify it PASSES against Tasks 1-4** (the behavior is already implemented, so the golden is expected to pass on first run; if it fails, fix the implementation - not the golden - unless the golden's expectation is itself wrong).
 
 Run: `ssh olares-mesh 'export PATH=/home/olares/.nvm/versions/node/v20.20.2/bin:$HOME/.local/bin:$PATH; cd /home/olares/code/apex/apex-switch && pnpm --filter @apex/estimator-takeoff test -- switch-golden'`
 Expected: PASS.
 
 - [ ] **Step 3: Run the FULL suite + both typechecks; confirm the five prior goldens are byte-identical (the build-time watch).**
 
-Run: `ssh olares-mesh 'export PATH=/home/olares/.nvm/versions/node/v20.20.2/bin:$HOME/.local/bin:$PATH; cd /home/olares/code/apex/apex-switch && pnpm --filter @apex/estimator-takeoff test 2>&1 | tail -30 && pnpm --filter @apex/estimator-takeoff typecheck && pnpm --filter "./apps/operations-web" typecheck'`
+Run (NO `| tail` on the test command - a pipe masks a failing suite's exit code [tail returns 0] and the && chain would false-green onto the typechecks; let the test exit code propagate): `ssh olares-mesh 'export PATH=/home/olares/.nvm/versions/node/v20.20.2/bin:$HOME/.local/bin:$PATH; cd /home/olares/code/apex/apex-switch && pnpm --filter @apex/estimator-takeoff test && pnpm --filter @apex/estimator-takeoff typecheck && pnpm --filter "./apps/operations-web" typecheck'`
 Expected: ALL tests pass; the prior golden files (`transformer-golden`, `relay-golden`, `gfp-golden`, `itx-golden`, `golden-e01-11`) unchanged and green. **Build-time watch:** if any prior golden row moved into the switch family (a row carrying a shared `SF6`/`vacuum`/`air` token with a switch anchor that previously fell through to the breaker assessment), STOP and investigate before proceeding - the goldens must stay byte-identical.
 
 - [ ] **Step 4: Commit.**
