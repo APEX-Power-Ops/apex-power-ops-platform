@@ -38,4 +38,19 @@ describe('switch pipeline', () => {
     expect(res.scopePendingLines?.some((s) => s.switchType === 'fused_disconnect')).toBe(true)
     expect(res.matchedLines.length).toBe(1)   // the breaker priced
   })
+  it('Codex P1: a Vacuum Switch is a switch_catalog_gap, NEVER silently priced as a breaker', () => {
+    // "vacuum" is in BREAKER_HINT, so without a vacuum-switch anchor the row falls to the breaker path and is
+    // mispriced. The vacuum-switch anchor routes it to the switch family -> recognized vacuum switch -> gap.
+    const res = runTakeoff(art([{ raw: 'Vacuum Switch', tag: 'DS-9', busVoltageV: 15000 }]))
+    expect(res.matchedLines.length).toBe(0)                                       // NOT a priced breaker line
+    expect(res.findings.some((f) => f.code === 'switch_catalog_gap')).toBe(true)  // surfaced as a switch gap
+    expect(res.scopePendingLines?.length ?? 0).toBe(0)
+  })
+  it('Codex P2: an MV non-fused disconnect is NOT defaulted to the fused-disconnect ref', () => {
+    const res = runTakeoff(art([{ raw: 'Non-Fused Disconnect', tag: 'DS-10', busVoltageV: 15000 }]))
+    const sp = res.scopePendingLines?.[0]
+    expect(sp).toBeDefined()
+    expect(sp!.switchType).toBe('unknown')                       // not 'fused_disconnect'
+    expect(sp!.provisionalDefaultRef).toBeUndefined()            // generic -> no default (never the fused ref)
+  })
 })

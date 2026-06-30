@@ -45,7 +45,11 @@ function pickAuthoritative(occ: ApparatusSignature[]): ApparatusSignature | unde
   if (richBreaker) return richBreaker
   const richRelay = auths.find((o) => o.kind === 'relay' && o.role !== undefined && o.role !== 'unknown')
   if (richRelay) return richRelay
-  const richSwitch = auths.find((o) => o.kind === 'switch' && (o.switchType !== 'unknown' || o.fused !== undefined || o.ampRating !== undefined))
+  // For switches: prefer GAP-RELEVANT evidence (a legible type OR a fused/non-fused signal) over an amp-only
+  // occurrence, so a "Disconnect 400A" row cannot win over a "NF Disconnect" sibling and drop fused:false (which
+  // would defeat the LV non-fused catalog-gap check). Amp-only is the last-resort tier below auths[0]-equivalent.
+  const richSwitch = auths.find((o) => o.kind === 'switch' && (o.switchType !== 'unknown' || o.fused !== undefined))
+    ?? auths.find((o) => o.kind === 'switch' && o.ampRating !== undefined)
   if (richSwitch) return richSwitch
   return auths[0]
 }
