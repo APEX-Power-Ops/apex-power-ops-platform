@@ -149,6 +149,12 @@ function assessGfp(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparatu
 
 function looksLikeInstrumentTransformer(x: ExtractedApparatus): boolean {
   if (x.candidateKind === 'instrument_transformer') return true
+  // A relay or GFP producer signal outranks a full-noun instrument device token (A-prime negative guard):
+  // a relay/GFP row that merely MENTIONS "potential transformer" / "voltage transformer" stays its real
+  // family and is NOT reclassified as an instrument transformer. Also applies when RELAY_DEVICE matches
+  // the raw with a non-instrument-shaped tag (e.g. "SEL-351 RELAY POTENTIAL TRANSFORMER" tag "REL-1").
+  if (x.candidateKind === 'relay' || x.candidateKind === 'gfp') return false
+  if (RELAY_DEVICE.test(x.raw) && x.tag !== undefined && !INSTRUMENT_TAG.test(x.tag)) return false
   if (INSTRUMENT_TX_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0) return true   // full noun + any tag
   if (INSTRUMENT_TX_ABBR.test(x.raw) && x.tag !== undefined && INSTRUMENT_TAG.test(x.tag)) return true  // bare abbr needs instrument-shaped tag (A-prime)
   return false

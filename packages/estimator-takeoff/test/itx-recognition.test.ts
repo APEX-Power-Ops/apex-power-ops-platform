@@ -5,8 +5,11 @@ import type { ExtractionArtifact } from '../src/extraction/types'
 
 const row = (o: Partial<any> & { raw: string }) => ({ sheet: 'E01-11', page: 1, bbox: [0,0,1,1] as [number,number,number,number], evidence: 'one-line' as const, ...o })
 const art = (apparatus: any[]): ExtractionArtifact => ({ pdf: 'x.pdf', apparatus })
+// noItx: true iff NO instrument-transformer assessment occurred (scope_pending OR catalog_gap) and
+// no instrument-transformer kind appears on a scope-pending line. Checks both outcome codes so a
+// catalog-gap instrument row does not pass silently as "no instrument line."
 const noItx = (r: ReturnType<typeof runTakeoff>) =>
-  r.dispositions.every((d) => d.reasonCode !== 'instrument_transformer_scope_pending') &&
+  r.dispositions.every((d) => d.reasonCode !== 'instrument_transformer_scope_pending' && d.reasonCode !== 'instrument_transformer_catalog_gap') &&
   (r.scopePendingLines ?? []).every((s) => s.line.signature.kind !== 'instrument_transformer')
 
 describe('operator must-pin: instrument vs power transformer', () => {
@@ -32,6 +35,15 @@ describe('operator must-pin: instrument vs power transformer', () => {
     expect(noItx(runTakeoff(art([row({ raw: 'FEEDER WITH CT METERING', tag: 'F-1' })])))).toBe(true)
     expect(assessApparatus(row({ raw: 'CT 600:5', tag: 'CT-1' })).signature?.kind).toBe('instrument_transformer')
     expect(assessApparatus(row({ raw: 'CT 600:5', tag: 'X9', candidateKind: 'instrument_transformer' })).signature?.kind).toBe('instrument_transformer')
+  })
+  it('A-prime negative (no drift): relay/GFP row with full-noun VT/PT in raw and non-instrument tag -> stays its real family', () => {
+    // relay row: RELAY_DEVICE token wins over the POTENTIAL TRANSFORMER mention when tag is non-instrument-shaped
+    const relayRow = assessApparatus(row({ raw: 'SEL-351 RELAY POTENTIAL TRANSFORMER METERING 51 27 59', tag: 'REL-1' }))
+    expect(relayRow.signature?.kind).not.toBe('instrument_transformer')
+    expect(relayRow.assessmentCode).toBe('relay_recognized')
+    // GFP row: same protection - full noun VT mention does not reclassify a GFP device row
+    const gfpRow = assessApparatus(row({ raw: 'GROUND FAULT RELAY VOLTAGE TRANSFORMER INPUTS', tag: 'GFP-1' }))
+    expect(gfpRow.signature?.kind).not.toBe('instrument_transformer')
   })
   it('#6 type+voltage, no packaging -> scope_pending, no default', () => {
     const r = runTakeoff(art([row({ raw: 'CURRENT TRANSFORMER', tag: 'CT-1', busVoltageV: 4160 })]))
