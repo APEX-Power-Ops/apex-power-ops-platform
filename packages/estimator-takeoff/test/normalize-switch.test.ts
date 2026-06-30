@@ -87,12 +87,18 @@ describe('assessSwitch via assessApparatus', () => {
       expect(a.signature?.kind, raw).toBe('switch')
       if (a.signature?.kind === 'switch') expect(a.signature.switchType, raw).toBe(type)
     }
+    // NF (non-fused) is a ratified construction-type qualifier: "NF Switch"/"NF DISC" -> switch, fused:false.
+    for (const raw of ['NF Switch', 'NF DISC']) {
+      const a = assessApparatus(row(raw, { tag: 'SW-NF', busVoltageV: 15000 }))
+      expect(a.signature?.kind, raw).toBe('switch')
+      if (a.signature?.kind === 'switch') { expect(a.signature.switchType, raw).toBe('unknown'); expect(a.signature.fused, raw).toBe(false) }
+    }
     // breaker-shaped rows are NOT pulled into the switch family.
     for (const raw of ['SF6 Breaker', 'VCB', '800AF/800AT LSIG']) {
       expect(assessApparatus(row(raw, { tag: 'CB-1', busVoltageV: 480 })).signature?.kind, raw).not.toBe('switch')
     }
-    // exclusions still run first.
-    for (const raw of ['Switchgear - MV', 'Transfer Switch', 'Circuit Switcher MV']) {
+    // exclusions still run first - INCLUDING hyphenated overload-family forms.
+    for (const raw of ['Switchgear - MV', 'Transfer Switch', 'Circuit Switcher MV', 'Fused Transfer-Switch', 'Circuit-Switcher SF6 Switch']) {
       expect(assessApparatus(row(raw, { tag: 'X-1', busVoltageV: 15000 })).signature?.kind, raw).not.toBe('switch')
     }
     // bare switch / bare DISC (no construction evidence) -> NOT counted as a switch.
