@@ -38,7 +38,8 @@ const SWITCH_FRAME_TRIP = /\b\d{2,6}\s*A[FT]\b/i
 // (L+B), LV (L+V), and English words like LESS/LIGHT.
 const SWITCH_TRIP_FN = /\bL(?=[SIGE]{2})(S?)(I?)(G?)(E?)\b/i
 // The non-fused attribute - consumed ONLY when a real anchor is present (looksLikeSwitch gates it).
-const SWITCH_NF = /\bN\.?F\.?\b|\bnon[\s-]?fused\b/i
+// Covers both synonyms: "non-fused"/"NF" and "unfused"/"un-fused".
+const SWITCH_NF = /\bN\.?F\.?\b|\b(non|un)[\s-]?fused\b/i
 // PLAIN continuous amps ONLY: the \bA\b boundary means 800AF / 800AT do NOT match (AF/AT can never be amps).
 const SWITCH_AMP = /(?<!\d)(\d{2,6})\s*A\b/i
 
@@ -155,7 +156,7 @@ export function parseSwitchType(raw: string): SwitchType {
   if (/\boil\b/i.test(raw)) return 'oil'
   if (/\bcutout\b/i.test(raw)) return 'cutout'
   if (/\bvacuum\b/i.test(raw)) return 'vacuum'                          // recognized; no priced ref -> gap
-  if (/fus(ed|ible)/i.test(raw) && !/non[\s-]?fused/i.test(raw)) return 'fused_disconnect'  // NOT "non-fused" (substring trap)
+  if (/fus(ed|ible)/i.test(raw) && !/(non|un)[\s-]?fused/i.test(raw)) return 'fused_disconnect'  // NOT non-fused/unfused (substring trap)
   if (/air\s+switch|\bopen\b/i.test(raw)) return 'open'                 // air-open switches ARE the firm "Open" refs
   return 'unknown'                                                       // generic disconnect/switch anchor -> group, no default
 }

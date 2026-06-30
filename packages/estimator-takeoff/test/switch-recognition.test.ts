@@ -48,6 +48,8 @@ describe('parseSwitchType - precedence (R1 provisional)', () => {
     expect(parseSwitchType('Disconnect')).toBe('unknown')       // generic anchor
     expect(parseSwitchType('Non-Fused Disconnect')).toBe('unknown')  // Codex P2: "fused" substring of "non-fused" must NOT win
     expect(parseSwitchType('Non-Fused Switch')).toBe('unknown')
+    expect(parseSwitchType('Unfused Disconnect')).toBe('unknown')    // Codex P2 (pass 2): the "unfused" synonym too
+    expect(parseSwitchType('Un-Fused Disconnect')).toBe('unknown')
   })
   it('actuation outranks medium (motor-operated SF6 -> motor_operated)', () => {
     expect(parseSwitchType('Motor Operated SF6 Switch MV')).toBe('motor_operated')
@@ -58,6 +60,8 @@ describe('parseFused / parseAmpRating', () => {
   it('NF -> false; fused/fusible -> true; else undefined', () => {
     expect(parseFused('NF Disconnect')).toBe(false)
     expect(parseFused('Non-Fused Disconnect')).toBe(false)
+    expect(parseFused('Unfused Disconnect')).toBe(false)   // the "unfused" synonym (Codex P2 pass 2)
+    expect(parseFused('Un-Fused Switch')).toBe(false)
     expect(parseFused('Fused Disconnect')).toBe(true)
     expect(parseFused('Fusible Switch')).toBe(true)
     expect(parseFused('Disconnect Switch')).toBeUndefined()
