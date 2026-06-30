@@ -19,6 +19,9 @@ function specKey(s: ApparatusSignature): string {
     // single-ref family: per device; voltage optional/contextual; ANSI evidence NOT in the key.
     return [s.kind, s.voltageClass ?? '-', s.source.block ?? '-'].join('|')
   }
+  if (s.kind === 'instrument_transformer') {
+    return [s.kind, s.itxType, s.voltageClass ?? '-', s.packaging, s.source.block ?? '-'].join('|')   // phaseCount/ratio are evidence, not key
+  }
   // transformer: full key so two transformers that differ only in coolant/kVA/padMount/ltc get separate lines
   return [s.kind, s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.source.block ?? '-',
           s.coolant, s.kvaRating ?? '-', s.padMount ? 'pad' : '-', s.ltc ? 'ltc' : '-'].join('|')

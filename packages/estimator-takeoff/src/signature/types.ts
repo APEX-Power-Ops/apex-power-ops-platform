@@ -77,4 +77,4 @@ export interface InstrumentTransformerSignature extends BaseSignature {
   // voltageClass stays optional (inherited): contextual; drives the group when present, never gates.
 }
 
-export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature | GfpSignature
+export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature | GfpSignature | InstrumentTransformerSignature
