@@ -16,6 +16,8 @@ export interface ScopePendingLine {
   line: QuantifiedLine
   packagingEvidence?: string   // CONTRACT: carried from InstrumentTransformerSignature for Gate-2
   phaseCount?: number          // CONTRACT: carried from InstrumentTransformerSignature for Gate-2
+  switchType?: string          // CONTRACT: carried from SwitchSignature for Gate-2
+  fused?: boolean              // CONTRACT: carried from SwitchSignature for Gate-2
 }
 
 export type OperatorQuestionCode =
@@ -31,6 +33,7 @@ export type OperatorQuestionCode =
   | 'instrument_transformer_scope_pending' | 'instrument_transformer_catalog_gap'
   | 'instrument_transformer_parent_conflict' | 'instrument_transformer_power_conflict'
   | 'instrument_transformer_type_unparsed'
+  | 'switch_scope_pending' | 'switch_catalog_gap' | 'switch_parent_conflict'
 
 export interface OperatorQuestion { question: string; context: string; code: OperatorQuestionCode; inputIndex?: number }
 export interface TakeoffResult {
@@ -70,6 +73,7 @@ export type DispositionReasonCode =
   | 'instrument_transformer_scope_pending' | 'instrument_transformer_catalog_gap'
   | 'instrument_transformer_parent_conflict' | 'instrument_transformer_power_conflict'
   | 'instrument_transformer_type_unparsed'
+  | 'switch_scope_pending' | 'switch_catalog_gap' | 'switch_parent_conflict'
 
 export interface ApparatusDisposition {
   inputIndex: number
@@ -89,6 +93,8 @@ export interface ApparatusDisposition {
   scopeQuestion?: string
   packagingEvidence?: string   // CONTRACT: instrument transformer Gate-2 evidence
   phaseCount?: number          // CONTRACT: instrument transformer Gate-2 evidence
+  switchType?: string          // CONTRACT: switch Gate-2 evidence
+  fused?: boolean              // CONTRACT: switch Gate-2 evidence
 }
 
 export type FindingSeverity = 'error' | 'warning'
@@ -101,7 +107,7 @@ export type VoltageAssertionCode =
   | 'voltage_assertion_invalid_shape'
 
 export interface TakeoffFinding {
-  code: VoltageAssertionCode | 'transformer_catalog_gap' | 'relay_catalog_gap' | 'instrument_transformer_catalog_gap'
+  code: VoltageAssertionCode | 'transformer_catalog_gap' | 'relay_catalog_gap' | 'instrument_transformer_catalog_gap' | 'switch_catalog_gap'
   severity: FindingSeverity
   message: string
   context: string

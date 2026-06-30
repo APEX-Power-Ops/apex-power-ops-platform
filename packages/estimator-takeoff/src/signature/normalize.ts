@@ -1,5 +1,5 @@
 import type { ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, GfpSignature, TransformerSignature, TripFunction, VoltageBasis, InstrumentTransformerSignature, ItxPackaging, ItxPackagingEvidence, ItxType, SwitchType } from './types'
+import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, GfpSignature, TransformerSignature, TripFunction, VoltageBasis, InstrumentTransformerSignature, ItxPackaging, ItxPackagingEvidence, ItxType, SwitchType, SwitchSignature } from './types'
 import type { OperatorQuestion, OperatorQuestionCode } from '../buckets/types'
 import { classifyVoltage } from './voltage'
 
@@ -332,6 +332,8 @@ export type AssessmentCode =
   | 'non_breaker_carries_rating'
   | 'missing_voltage'
   | 'unrecognized_apparatus_row'
+  | 'switch_recognized'
+  | 'switch_parent_conflict'
 
 export interface ApparatusAssessment {
   signature: ApparatusSignature | null
@@ -377,6 +379,27 @@ function assessTransformer(x: ExtractedApparatus, voltageBasis?: VoltageBasis): 
   return { signature: sig, isBreakerShaped: false, assessmentCode: 'transformer_recognized', questions: [] }
 }
 
+function assessSwitch(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
+  // CONFLICT GUARD FIRST (switch routes before the breaker fallback): a misrouted parent surfaces a question,
+  // never a silent switch scope_pending and never suppressing a real breaker. Keyed on the UNAMBIGUOUS breaker
+  // subset + full pair + single AF/AT token + trip functions + NON_BREAKER - NOT the shared SF6/vacuum/air medium.
+  if (SWITCH_BREAKER_CONFLICT.test(x.raw) || FRAME_TRIP.test(x.raw) || SWITCH_FRAME_TRIP.test(x.raw)
+      || SWITCH_TRIP_FN.test(x.raw) || NON_BREAKER.test(x.raw)) {
+    return { signature: null, isBreakerShaped: false, assessmentCode: 'switch_parent_conflict',
+      questions: [q(x, 'Label names a switch/disconnect but the row carries a breaker signal (frame/trip, trip functions, or a breaker/parent token) - confirm device type before counting.', 'switch_parent_conflict')] }
+  }
+  const sig: SwitchSignature = {
+    kind: 'switch',
+    switchType: parseSwitchType(x.raw),
+    fused: parseFused(x.raw),
+    ampRating: parseAmpRating(x.raw),
+    voltageClass: classifyVoltage(x.busVoltageV), voltageV: x.busVoltageV,
+    voltageBasis: voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none'),
+    tag: x.tag, source: { sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block },
+  }
+  return { signature: sig, isBreakerShaped: false, assessmentCode: 'switch_recognized', questions: [] }
+}
+
 // PRIVATE -- the basis-taking core. NOT exported.
 function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
   if (looksLikeInstrumentTransformer(x)) {
@@ -400,6 +423,10 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
 
   if (looksLikeRelay(x)) {
     return assessRelay(x, voltageBasis)
+  }
+
+  if (looksLikeSwitch(x)) {
+    return assessSwitch(x, voltageBasis)
   }
 
   if (NON_BREAKER.test(x.raw)) {

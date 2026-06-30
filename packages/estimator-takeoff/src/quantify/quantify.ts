@@ -22,6 +22,9 @@ function specKey(s: ApparatusSignature): string {
   if (s.kind === 'instrument_transformer') {
     return [s.kind, s.itxType, s.voltageClass ?? '-', s.packaging, s.source.block ?? '-'].join('|')   // phaseCount/ratio are evidence, not key
   }
+  if (s.kind === 'switch') {
+    return [s.kind, s.switchType, s.voltageClass ?? '-', s.fused === undefined ? '-' : (s.fused ? 'F' : 'NF'), s.source.block ?? '-'].join('|')
+  }
   // transformer: full key so two transformers that differ only in coolant/kVA/padMount/ltc get separate lines
   return [s.kind, s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.source.block ?? '-',
           s.coolant, s.kvaRating ?? '-', s.padMount ? 'pad' : '-', s.ltc ? 'ltc' : '-'].join('|')
@@ -42,6 +45,8 @@ function pickAuthoritative(occ: ApparatusSignature[]): ApparatusSignature | unde
   if (richBreaker) return richBreaker
   const richRelay = auths.find((o) => o.kind === 'relay' && o.role !== undefined && o.role !== 'unknown')
   if (richRelay) return richRelay
+  const richSwitch = auths.find((o) => o.kind === 'switch' && (o.switchType !== 'unknown' || o.fused !== undefined || o.ampRating !== undefined))
+  if (richSwitch) return richSwitch
   return auths[0]
 }
 
