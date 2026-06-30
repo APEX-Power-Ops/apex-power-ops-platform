@@ -25,6 +25,13 @@ const INSTRUMENT_TAG = /^(CT|PT|VT|CCVT)[-_ ]?\w*$/i
 const SWITCH_EXCLUDE = /\b(circuit\s+switcher|transfer\s+switch|switchgear|switchboard)\b/i
 // COMPOUND switch-device anchors - NEVER the bare token "switch".
 const SWITCH_DEVICE = /\b(disconnect(\s+switch)?|fus(ed|ible)\s+switch|safety\s+switch|load[\s-]?break\s+switch|LBS|isolat(ion|ing)\s+switch|knife\s+switch|air\s+switch|oil\s+switch|SF6\s+switch|vacuum\s+switch|cutout|non[\s-]?fused\s+disconnect)\b/i
+// D3 clarification (operator-ratified): bare "switch"/"DISC" do NOT count, but a switch-ish NOUN paired with an
+// explicit CONSTRUCTION medium/type token (EITHER ORDER) IS a compound switch anchor - so "Switch (SF6)",
+// "Switch, SF6", "DISC SF6", "Switch (Vacuum)", "Switch MV - Motor Operated" recognize (closing the misprice where
+// a shared medium [SF6/vacuum/air in BREAKER_HINT] otherwise carried a switch label to the breaker path). Full
+// "disconnect" and the medium+"switch" compounds already count via SWITCH_DEVICE. Exclusions + conflict guard still run.
+const SWITCH_NOUN = /\b(switch|disc)\b/i
+const SWITCH_CONSTRUCTION = /\b(SF6|vacuum|oil|air|pad[\s-]?mount|vista|cutout|fus(ed|ible)|motor[\s-]?operated|M\.?O\.?)\b/i
 // The UNAMBIGUOUS breaker subset for the switch-local conflict guard - DELIBERATELY excludes the shared
 // vacuum/SF6/air-frame medium tokens (those are switch construction evidence, not conflict signals).
 const SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i
@@ -56,9 +63,10 @@ const RELAY_MODEL = /\b(SEL-?\d{2,4}[A-Z]?|multilin|beckwith|basler|micom)\b/i
 function looksLikeTransformer(x: ExtractedApparatus): boolean {
   if (x.candidateKind === 'relay') return false                  // relay producer signal wins over XFMR text
   if (x.candidateKind === 'instrument_transformer') return false   // explicit instrument producer signal yields
-  if (x.candidateKind === 'switch') return false                   // explicit switch producer signal yields (a pad-mount Vista SWITCH must not be claimed by the pad-mount transformer text)
+  if (x.candidateKind === 'switch') return false                   // explicit switch producer signal yields
   if (INSTRUMENT_TX_DEVICE.test(x.raw)) return false               // instrument device noun is NOT a power transformer (additive; no kVA/coolant requirement)
-  if (x.candidateKind === 'transformer') return true
+  if (x.candidateKind === 'transformer') return true               // producer:transformer wins (before the text-based switch yield below)
+  if (isSwitchAnchored(x.raw)) return false                        // D3: a switch-anchored row ("Switch (Pad Mount Vista)") yields to the switch route over transformer pad-mount text
   // A relay MODEL + tag outranks a transformer text token (device-first) ONLY when the row lacks
   // strong transformer evidence. A real transformer (kVA rating or a coolant/construction token) that
   // merely MENTIONS a relay model must stay a transformer - never silently reclassified as a relay.
@@ -146,11 +154,21 @@ function looksLikeRelay(x: ExtractedApparatus): boolean {
   return RELAY_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0
 }
 
+// True when the raw carries a switch anchor under the D3 grammar: a full SWITCH_DEVICE compound, OR a switch-ish
+// NOUN (bare "switch"/"DISC") paired with explicit CONSTRUCTION evidence. Exclusions are honored here so the
+// breaker-fallback guard and looksLikeSwitch share ONE definition. Does NOT require a tag (the device-first tag
+// gate lives in looksLikeSwitch); the breaker gate uses it tagless so a tagless medium-carrying switch label is
+// never mispriced as a breaker.
+function isSwitchAnchored(raw: string): boolean {
+  if (SWITCH_EXCLUDE.test(raw)) return false
+  return SWITCH_DEVICE.test(raw) || (SWITCH_NOUN.test(raw) && SWITCH_CONSTRUCTION.test(raw))
+}
+
 export function looksLikeSwitch(x: ExtractedApparatus): boolean {
   if (SWITCH_EXCLUDE.test(x.raw)) return false                          // T3: overload families excluded FIRST
   if (x.candidateKind === 'switch') return true                         // explicit producer signal wins
   if (x.candidateKind !== undefined) return false                       // defer to other producers (TS narrows: not 'switch' here)
-  return SWITCH_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0       // compound anchor + tag
+  return isSwitchAnchored(x.raw) && x.tag !== undefined && x.tag.length > 0       // (compound device OR noun+construction) + tag
 }
 
 export function parseSwitchType(raw: string): SwitchType {
@@ -447,10 +465,10 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
   }
   // ROOT guard for the shared-medium misprice class: a SWITCH-anchored row must NEVER be claimed by the breaker
   // fallback, even when it carries a shared medium (vacuum/SF6/air) that BREAKER_HINT matches. looksLikeSwitch
-  // requires a tag (device-first), so a TAGLESS "Vacuum Switch"/"SF6 Switch" would otherwise fall through here and
-  // be priced as a breaker; SWITCH_DEVICE.test forces it to unrecognized_apparatus_row (fail-closed) instead.
-  // An explicit candidateKind:'breaker' still builds a breaker (the `!== 'breaker'` short-circuit).
-  if (x.candidateKind !== 'breaker' && (!looksLikeBreaker(x.raw) || SWITCH_DEVICE.test(x.raw))) return { signature: null, questions: [], isBreakerShaped: false, assessmentCode: 'unrecognized_apparatus_row' }
+  // requires a tag (device-first), so a TAGLESS "Vacuum Switch"/"Switch (SF6)" would otherwise fall through here and
+  // be priced as a breaker; isSwitchAnchored (full SWITCH_DEVICE compound OR the noun+construction grammar) forces it
+  // to unrecognized_apparatus_row (fail-closed) instead. An explicit candidateKind:'breaker' still builds a breaker.
+  if (x.candidateKind !== 'breaker' && (!looksLikeBreaker(x.raw) || isSwitchAnchored(x.raw))) return { signature: null, questions: [], isBreakerShaped: false, assessmentCode: 'unrecognized_apparatus_row' }
 
   const questions: OperatorQuestion[] = []
   const voltageClass = classifyVoltage(x.busVoltageV)

@@ -78,4 +78,23 @@ describe('assessSwitch via assessApparatus', () => {
       expect(a.assessmentCode, raw).toBe('unrecognized_apparatus_row')
     }
   })
+  it('D3 grammar (operator-ratified): switch/DISC + construction recognizes; bare switch/DISC does not', () => {
+    // switch-ish noun + explicit construction medium/type (either order) -> switch, NOT a breaker.
+    for (const [raw, type] of [['Switch (SF6)', 'sf6'], ['Switch, SF6', 'sf6'], ['DISC SF6', 'sf6'], ['Switch (Vacuum)', 'vacuum'], ['Switch MV - Motor Operated', 'motor_operated'], ['Pad Mount Vista Disconnect', 'vista']] as const) {
+      const a = assessApparatus(row(raw, { tag: 'SW-1', busVoltageV: 15000 }))
+      expect(a.signature?.kind, raw).toBe('switch')
+      if (a.signature?.kind === 'switch') expect(a.signature.switchType, raw).toBe(type)
+    }
+    // breaker-shaped rows are NOT pulled into the switch family.
+    for (const raw of ['SF6 Breaker', 'VCB', '800AF/800AT LSIG']) {
+      expect(assessApparatus(row(raw, { tag: 'CB-1', busVoltageV: 480 })).signature?.kind, raw).not.toBe('switch')
+    }
+    // exclusions still run first.
+    for (const raw of ['Switchgear - MV', 'Transfer Switch', 'Circuit Switcher MV']) {
+      expect(assessApparatus(row(raw, { tag: 'X-1', busVoltageV: 15000 })).signature?.kind, raw).not.toBe('switch')
+    }
+    // bare switch / bare DISC (no construction evidence) -> NOT counted as a switch.
+    expect(assessApparatus(row('Switch', { tag: 'SW-9', busVoltageV: 15000 })).signature?.kind).not.toBe('switch')
+    expect(assessApparatus(row('DISC', { tag: 'D-9', busVoltageV: 15000 })).signature?.kind).not.toBe('switch')
+  })
 })
