@@ -148,3 +148,28 @@ Pre-stated so the spec inherits them:
 2. Brainstorm -> spec the instrument-transformer engine slice (design doc), folding the ratified decisions, reusing the transformer/relay/GFP scope_pending machinery.
 3. writing-plans -> SDD build (Workflow-orchestrated subagent TDD, ultracode), mirroring the prior families' contract-first / fixture-driven / fail-closed TDD rigor, with cross-engine (Codex) IRP before merge.
 4. Breaker AND transformer AND relay AND GFP goldens stay byte-identical throughout (four prior families now regression-guard the fifth).
+
+---
+
+## Part 9 - Operator ratification (2026-06-29)
+
+The operator independently grounded the packet (confirmed: the 9 refs exist; canonical 7.10.1/2/3 maps to CT/PT/CCVT; the current power-transformer recognizer WOULD claim Current/Potential Transformer unless instrument routes first) and ratified D1-D4 with two tightening patches + a must-pin test list. Recorded so the spec is built on the ratified state.
+
+**Ratified decisions:**
+- **D1 (accounting):** the 9 instrument-transformer refs are the V1 priced set; exact ref-STRING matching ONLY (NEVER section - firm 7.1/7.6/7.14/7.15 all drifted from canonical 7.10); author NO new hours; bounded gaps -> `catalog_gap`. SME owns the set/each counting convention.
+- **D2 (match model) - PATCHED:** scope-driven, never auto-price; candidate ref-GROUP + Gate-2 packaging/count question. **Provisional default ONLY when PACKAGING evidence is explicit** (a `set` / `3 phase` / `set of 3` / clear symbol-grouping token) - type+voltage ALONE is NOT enough (PT-MV vs PT-MV-Set; CT individual vs set). Without packaging evidence -> scope_pending with NO default.
+- **D3 (recognition) - PATCHED (do NOT over-tighten power recognition):** route the instrument recognizer FIRST, and add an instrument-token EXCLUSION at the TOP of `looksLikeTransformer` (so power yields instrument types) - but DO NOT add a kVA/coolant REQUIREMENT to power-transformer recognition. The existing power-transformer behavior (recognize "transformer"/XFMR device text, then fail-close to `transformer_attrs_unparsed` when attrs incomplete) must stay IDENTICAL for non-instrument rows, so a bare "Transformer T-1" still surfaces as a transformer question. An instrument+power evidence conflict (a row with BOTH kVA/coolant AND an instrument-type token) -> a question, never a silent pick. Transformer golden byte-identical.
+- **D4 (V1 scope):** CT + VT/PT + CCVT at the 9 refs; defer high-accuracy (7.10.4 RESERVED), metering-vs-relaying accuracy class, embedded-vs-standalone bushing-CT nuance, ratio-based selection, Gate-2 UI.
+
+**Contract patch (operator) - phase/packaging evidence is part of the CONTRACT, not just internal parsing:** the spec MUST place the evidence explicitly on `InstrumentTransformerSignature.phaseCount` + `InstrumentTransformerSignature.packagingEvidence`, AND carry it through the `scope_pending` line + the reconciliation report output, so Gate-2 has the evidence it needs to choose packaging.
+
+**Must-pin spec/plan hard-gate tests (operator):**
+1. "Current Transformer ..." + tag -> instrument transformer, NOT power transformer.
+2. "Potential Transformer" / "Voltage Transformer" + tag -> instrument transformer.
+3. "Transformer T-1 500kVA dry-type" -> remains POWER transformer.
+4. "Transformer T-1" (bare, no kVA/coolant) -> still surfaces under the existing transformer fail-closed behavior (`transformer_attrs_unparsed`); NOT reclassified, NOT requiring kVA.
+5. Bare "CT" / "PT" with no real device anchor -> NOT counted.
+6. Type+voltage but NO packaging evidence -> scope_pending with NO provisional default.
+7. All prior breaker/transformer/relay/GFP goldens BYTE-IDENTICAL.
+
+These are folded into the spec; the spec is built on this ratified state.
