@@ -77,4 +77,15 @@ export interface InstrumentTransformerSignature extends BaseSignature {
   // voltageClass stays optional (inherited): contextual; drives the group when present, never gates.
 }
 
+export type SwitchType =
+  | 'fused_disconnect' | 'open' | 'oil' | 'sf6' | 'cutout'
+  | 'motor_operated' | 'vista' | 'vacuum' | 'unknown'
+export interface SwitchSignature extends BaseSignature {
+  kind: 'switch'
+  switchType: SwitchType
+  fused?: boolean        // CONTRACT: NF -> false; fused/fusible -> true; undefined when unstated. Disambiguates the LV non-fused gap.
+  ampRating?: number     // evidence/display only (continuous A; NOT a frame/trip pair)
+  // voltageClass stays optional (inherited): contextual; drives the group when present, never gates.
+}
+
 export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature | GfpSignature | InstrumentTransformerSignature
