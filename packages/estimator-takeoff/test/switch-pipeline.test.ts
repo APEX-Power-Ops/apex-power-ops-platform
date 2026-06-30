@@ -20,6 +20,10 @@ describe('switch pipeline', () => {
     const report = reconcile(a, res)
     expect(report.scopePending[0]!.switchType).toBe('fused_disconnect')
     expect(renderReportText(report)).toContain('type=fused_disconnect')
+    // CORE CONTRACT (switches never auto-price): a recognized switch leaves the envelope a partial preview with
+    // an unresolved row - it is NEVER a clean priced line. (Operator spec-review round-2 assertion.)
+    expect(report.status).toBe('partial_preview')
+    expect(report.counts.unresolved_rows).toBeGreaterThan(0)
   })
   it('an LV non-fused disconnect -> switch_catalog_gap (no scope_pending line)', () => {
     const res = runTakeoff(art([{ raw: 'NF Disconnect', tag: 'DS-2', busVoltageV: 480 }]))

@@ -45,4 +45,19 @@ describe('assessSwitch via assessApparatus', () => {
     expect(assessApparatus(row('Circuit Switcher MV')).signature).toBeNull()
     expect(assessApparatus(row('Switchgear - Medium Voltage')).signature).toBeNull()
   })
+  it('SWITCH_TRIP_FN does not false-positive on a 2-char tag prefix carried into the raw (LS/LG/LI/LE)', () => {
+    // A legitimate disconnect whose tag (LS-1 / LG-2 / LI-7 / LE-3) is embedded in the raw must be RECOGNIZED,
+    // not mis-flagged as switch_parent_conflict. The guard requires >=2 trip-function letters after L, so a bare
+    // 2-char tag prefix (where the delimiter satisfies \b after a single SIGE letter) no longer trips it.
+    for (const raw of ['LS-1 Fused Disconnect', 'LG-2 Disconnect Switch', 'LI-7 Safety Switch', 'LE-3 Disconnect Switch']) {
+      const a = assessApparatus(row(raw, { tag: raw.split(' ')[0], busVoltageV: 15000 }))
+      expect(a.signature?.kind, raw).toBe('switch')
+      expect(a.assessmentCode, raw).toBe('switch_recognized')
+    }
+    // A GENUINE trip descriptor (LSIG, >=2 letters) on a switch row STILL conflicts (must-pin #21 preserved).
+    expect(assessApparatus(row('DS-9 Disconnect Switch LSIG', { tag: 'DS-9' })).assessmentCode).toBe('switch_parent_conflict')
+    // LV (L+V) and LBS (L+B) prefixes never trip the guard.
+    expect(assessApparatus(row('LV-4 Disconnect Switch', { tag: 'LV-4', busVoltageV: 15000 })).signature?.kind).toBe('switch')
+    expect(assessApparatus(row('LBS-1 Load Break Switch', { tag: 'LBS-1', busVoltageV: 15000 })).signature?.kind).toBe('switch')
+  })
 })
