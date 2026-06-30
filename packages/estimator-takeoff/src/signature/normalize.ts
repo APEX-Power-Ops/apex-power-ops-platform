@@ -30,9 +30,13 @@ const SWITCH_DEVICE = /\b(disconnect(\s+switch)?|fus(ed|ible)\s+switch|safety\s+
 const SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i
 // A single numbered frame/trip token (catches 800AF or 800AT even WITHOUT the full FRAME_TRIP pair).
 const SWITCH_FRAME_TRIP = /\b\d{2,6}\s*A[FT]\b/i
-// A breaker trip-function descriptor on a switch row = conflict (mirrors parseFunctions' L(SIGE) shape;
-// the lookahead + \b spare anchors like "LBS" and English words like "LIGHT").
-const SWITCH_TRIP_FN = /\bL(?=[SIGE])(S?)(I?)(G?)(E?)\b/i
+// A breaker trip-function descriptor on a switch row = conflict (mirrors parseFunctions' L(SIGE) shape).
+// REQUIRES >=2 function letters after L (lookahead `[SIGE]{2}`): a genuine descriptor is the LSI/LSIG family,
+// so "LSIG" matches while a bare 2-char TAG prefix carried into the raw (LS-1 / LG-2 / LI-7 / LE-3, where the
+// delimiter satisfies \b after a single SIGE letter) does NOT - avoiding the false-positive that mis-flagged a
+// legitimate disconnect as switch_parent_conflict. The ordered (S?)(I?)(G?)(E?) groups + \b still spare LBS
+// (L+B), LV (L+V), and English words like LESS/LIGHT.
+const SWITCH_TRIP_FN = /\bL(?=[SIGE]{2})(S?)(I?)(G?)(E?)\b/i
 // The non-fused attribute - consumed ONLY when a real anchor is present (looksLikeSwitch gates it).
 const SWITCH_NF = /\bN\.?F\.?\b|\bnon[\s-]?fused\b/i
 // PLAIN continuous amps ONLY: the \bA\b boundary means 800AF / 800AT do NOT match (AF/AT can never be amps).
