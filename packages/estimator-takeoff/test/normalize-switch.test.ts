@@ -68,4 +68,14 @@ describe('assessSwitch via assessApparatus', () => {
     expect(a.assessmentCode).toBe('switch_recognized')
     if (a.signature?.kind === 'switch') expect(a.signature.switchType).toBe('vista')
   })
+  it('Codex P1 (pass 6): a TAGLESS vacuum/SF6 switch is NOT priced as a breaker (root breaker-gate guard)', () => {
+    // looksLikeSwitch requires a tag (device-first), so a tagless switch anchor with a shared medium (vacuum/SF6
+    // in BREAKER_HINT) would otherwise fall through to the breaker assessment and be priced. The breaker-gate
+    // SWITCH_DEVICE guard forces it to unrecognized_apparatus_row (fail-closed) instead - never a priced breaker.
+    for (const raw of ['Vacuum Switch', 'SF6 Switch']) {
+      const a = assessApparatus(row(raw, { tag: undefined, busVoltageV: 15000 }))
+      expect(a.signature?.kind, raw).not.toBe('breaker')
+      expect(a.assessmentCode, raw).toBe('unrecognized_apparatus_row')
+    }
+  })
 })
