@@ -36,10 +36,10 @@ describe('matchSwitch', () => {
     expect(m!.group.length).toBeGreaterThan(1)
     expect(m!.defaultRef).toBeUndefined()
   })
-  it('absent voltage -> wider group, NO default', () => {
+  it('R1-a: typed switch + absent voltage -> the TYPE-only group (not all 11), NO default', () => {
     const m = matchSwitch(sig({ switchType: 'sf6' }))   // no voltageClass
-    expect(m!.defaultRef).toBeUndefined()
-    expect(m!.group.length).toBeGreaterThan(0)
+    expect(m!.defaultRef).toBeUndefined()               // no default without a voltage class (D2 unchanged)
+    expect(m!.group).toEqual(['Switch (SF6) - Medium Voltage'])  // narrowed to SF6 refs, was the full any:unknown set
   })
   it('LV non-fused disconnect -> catalog_gap (LV is fused-only)', () => {
     expect(matchSwitch(sig({ switchType: 'unknown', fused: false, voltageClass: 'LV' }))).toBeNull()
