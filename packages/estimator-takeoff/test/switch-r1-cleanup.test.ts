@@ -80,23 +80,29 @@ describe('R1-c: load-interrupter switch anchor', () => {
 // switch family, NOT be claimed by the "pad mount" transformer token (which
 // dispatches before the switch route). NARROW: isSwitchAnchored AND \bvista\b.
 // ============================================================================
-describe('R1-b: bare-text Vista switch yields to switch (with transformer regression guards)', () => {
-  it('Pad-Mount Vista Switch / Vista Switch -> switch, not transformer', () => {
-    for (const r of ['Pad Mount Vista Switch', 'Pad-Mount Vista Switch', 'Vista Switch']) {
+describe('R1-b: Vista switch product -> switch; place-name / kVA transformers stay transformer', () => {
+  it('Vista switch product labels -> switch (vista), INCLUDING the bare "Pad-Mount Vista" product name (no "switch" word)', () => {
+    for (const r of ['Pad-Mount Vista', 'Pad Mount Vista', 'Pad Mount Vista Switch', 'Vista Switch', 'Vista Disconnect']) {
       const a = assessApparatus(row(r, { tag: 'DS-V' }))
       expect(a.signature?.kind, r).toBe('switch')
       expect((a.signature as SwitchSignature).switchType, r).toBe('vista')
     }
-    expect(parseSwitchType('Vista Switch')).toBe('vista')
+    expect(parseSwitchType('Pad-Mount Vista')).toBe('vista')
   })
-  it('GUARD: real pad-mount / kVA transformers (no "vista") STAY transformer', () => {
-    for (const r of ['1500KVA Pad Mount Transformer', 'T-2 2500KVA PAD-MOUNT OIL XFMR', 'Pad-Mount Oil Transformer'])
+  it('GUARD: real pad-mount / kVA transformers (no vista product name) STAY transformer', () => {
+    for (const r of ['1500KVA Pad Mount Transformer', 'T-2 2500KVA PAD-MOUNT OIL XFMR', 'Pad-Mount Oil Transformer', '1500KVA DRY-TYPE XFMR FUSED DISCONNECT'])
       expect(assessApparatus(row(r, { tag: 'T-1', busVoltageV: 480 })).signature?.kind, r).toBe('transformer')
   })
-  it('GUARD: a real transformer with an accessory disconnect (no vista) stays transformer', () => {
-    // isSwitchAnchored is TRUE here ("...DISCONNECT"), so the NARROW vista-only gate (isSwitchAnchored AND vista)
-    // is what keeps this a transformer - exactly the regression the blanket isSwitchAnchored yield caused.
-    expect(assessApparatus(row('1500KVA DRY-TYPE XFMR FUSED DISCONNECT', { tag: 'T-3', busVoltageV: 480 })).signature?.kind).toBe('transformer')
+  it('GUARD (misprice class - opus finding): a real transformer at a "VISTA" site with a switch accessory STAYS transformer', () => {
+    // "vista" is a US place name (Vista/Chula Vista/Buena Vista). The product-name discriminator (pad-mount-vista /
+    // vista-switch/disc) plus the kVA/XFMR-evidence guard keep these real transformers in the transformer family.
+    for (const r of [
+      '1500KVA DRY-TYPE XFMR FUSED DISCONNECT, VISTA SUB',
+      'XFMR 750KVA DRY TYPE BUENA VISTA SUBSTATION DISCONNECT',
+      'CHULA VISTA 1000KVA PAD MOUNT TRANSFORMER W/ LOAD INTERRUPTER',
+      'T-5 2500KVA PAD-MOUNT XFMR w/ Vista disconnect',
+    ])
+      expect(assessApparatus(row(r, { tag: 'T-9', busVoltageV: 15000 })).signature?.kind, r).toBe('transformer')
   })
 })
 
