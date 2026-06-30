@@ -445,7 +445,12 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
     }
     return { signature: null, questions: [], isBreakerShaped: false, assessmentCode: 'non_breaker_excluded' }
   }
-  if (x.candidateKind !== 'breaker' && !looksLikeBreaker(x.raw)) return { signature: null, questions: [], isBreakerShaped: false, assessmentCode: 'unrecognized_apparatus_row' }
+  // ROOT guard for the shared-medium misprice class: a SWITCH-anchored row must NEVER be claimed by the breaker
+  // fallback, even when it carries a shared medium (vacuum/SF6/air) that BREAKER_HINT matches. looksLikeSwitch
+  // requires a tag (device-first), so a TAGLESS "Vacuum Switch"/"SF6 Switch" would otherwise fall through here and
+  // be priced as a breaker; SWITCH_DEVICE.test forces it to unrecognized_apparatus_row (fail-closed) instead.
+  // An explicit candidateKind:'breaker' still builds a breaker (the `!== 'breaker'` short-circuit).
+  if (x.candidateKind !== 'breaker' && (!looksLikeBreaker(x.raw) || SWITCH_DEVICE.test(x.raw))) return { signature: null, questions: [], isBreakerShaped: false, assessmentCode: 'unrecognized_apparatus_row' }
 
   const questions: OperatorQuestion[] = []
   const voltageClass = classifyVoltage(x.busVoltageV)
