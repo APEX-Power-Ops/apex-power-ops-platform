@@ -98,15 +98,20 @@ export const ITX_REFS = [
 
 // R1 (estimating authority) PROVISIONAL: candidate ref-GROUP keyed by `${itxType}:${voltageClass|'unknown'}`.
 // Individual + set variants are BOTH offered (the operator picks packaging at Gate-2). The Bushing HV/MV refs
-// cover HV and MV. PT is MV-specific + a generic "(set)" fallback (no LV/HV PT ref - a D1 gap). CCVT is voltage-agnostic.
+// cover HV and MV CT. PT is MV-specific; there is NO priced LV/HV PT ref, so vt:LV / vt:HV are INTENTIONALLY
+// EMPTY -> instrument_transformer_catalog_gap (a bounded V1 gap per spec R1). The generic "Potential Transformer
+// (set)" is offered ONLY for vt:unknown (voltage absent -> wider group). CCVT is voltage-agnostic.
+// CRITICAL: an EMPTY group ([]) is NOT the same as a MISSING key. matchInstrumentTransformer falls back to the
+// `:unknown` group ONLY on a missing (undefined) key; an explicit [] yields null -> catalog_gap. Keep vt:LV / vt:HV
+// present-and-empty so a KNOWN non-MV voltage fails closed instead of silently borrowing the vt:unknown set.
 export const ITX_GROUPS: Record<string, string[]> = {
   'ct:LV': ['Current Transformer LV - Set of 3'],
   'ct:MV': ['Current Transformer - Bushing HV/MV', 'Current Transformer - Bushing, HV/MV (Set)', 'Current Transformer MV - Set of 3'],
   'ct:HV': ['Current Transformer - Bushing HV/MV', 'Current Transformer - Bushing, HV/MV (Set)'],
   'ct:unknown': ['Current Transformer - Bushing HV/MV', 'Current Transformer - Bushing, HV/MV (Set)', 'Current Transformer LV - Set of 3', 'Current Transformer MV - Set of 3'],
   'vt:MV': ['Potential Transformer - MV', 'Potential Transformer - MV Set'],
-  'vt:LV': ['Potential Transformer (set)'],
-  'vt:HV': ['Potential Transformer (set)'],
+  'vt:LV': [],   // bounded catalog gap: no priced LV PT ref (spec R1) - present-and-empty -> catalog_gap, never vt:unknown fallback
+  'vt:HV': [],   // bounded catalog gap: no priced HV PT ref (spec R1) - present-and-empty -> catalog_gap, never vt:unknown fallback
   'vt:unknown': ['Potential Transformer - MV', 'Potential Transformer - MV Set', 'Potential Transformer (set)'],
   'ccvt:LV': ['CCVT Voltage Transformer - Individual', 'CCVT Voltage Transformer - Set of 3'],
   'ccvt:MV': ['CCVT Voltage Transformer - Individual', 'CCVT Voltage Transformer - Set of 3'],
@@ -160,6 +165,16 @@ describe('matchInstrumentTransformer', () => {
     expect(m.group.length).toBeGreaterThanOrEqual(2)
     expect(m.defaultRef).toBeUndefined()
   })
+  it('set_of_3 / three_phase ranks the EXPLICIT Set-of-3 ref above a broader bushing (Set)', () => {
+    const a = matchInstrumentTransformer(sig({ itxType: 'ct', voltageClass: 'MV', packaging: 'set', packagingEvidence: 'set_of_3' }))!
+    expect(a.defaultRef).toBe('Current Transformer MV - Set of 3')          // NOT 'Current Transformer - Bushing, HV/MV (Set)'
+    const b = matchInstrumentTransformer(sig({ itxType: 'ct', voltageClass: 'MV', packaging: 'set', packagingEvidence: 'three_phase' }))!
+    expect(b.defaultRef).toBe('Current Transformer MV - Set of 3')
+  })
+  it('LV/HV PT has NO priced home -> null (catalog_gap), never the generic "(set)" ref (bounded V1 gap)', () => {
+    expect(matchInstrumentTransformer(sig({ itxType: 'vt', voltageClass: 'LV' }))).toBeNull()
+    expect(matchInstrumentTransformer(sig({ itxType: 'vt', voltageClass: 'HV' }))).toBeNull()
+  })
 })
 ```
 Append to `test/parse.test.ts` (mirror the existing relay/gfp candidateKind cases):
@@ -200,18 +215,30 @@ export interface ItxScopeMatch { group: string[]; defaultRef?: string; scopeQues
 const SCOPE_Q =
   'Select instrument-transformer packaging/count (individual vs 3-phase set) and confirm the priced ref; instrument transformers are priced per device or per set and are never auto-priced.'
 
-// A "set" packaging prefers a set-variant ref (named "Set"/"Set of 3"); individual prefers a non-set ref.
-const isSetRef = (ref: string): boolean => /\bset\b/i.test(ref)
+// RANKED set selection. A "set" packaging prefers a set-variant ref; individual prefers a non-set ref. A KNOWN
+// 3-phase set (set_of_3 / three_phase) must pick the EXPLICIT "Set of 3" ref, NOT merely the first set-named ref -
+// e.g. ct:MV is ['...Bushing HV/MV', '...Bushing, HV/MV (Set)', '...MV - Set of 3'] and a naive `find(isSetRef)`
+// returns the broad bushing "(Set)" at index 1, not the MV "Set of 3" the Gate-2 evidence implies. group[0] is the
+// last-resort fallback so a default (when evidence exists) is never empty.
+const matchesSetOf3 = (ref: string): boolean => /set\s+of\s+3/i.test(ref)
+const matchesAnySet = (ref: string): boolean => /\bset\b/i.test(ref)
 
 export function matchInstrumentTransformer(sig: InstrumentTransformerSignature): ItxScopeMatch | null {
   const vc: VoltageClass | 'unknown' = sig.voltageClass ?? 'unknown'
   const group = ITX_GROUPS[`${sig.itxType}:${vc}`] ?? ITX_GROUPS[`${sig.itxType}:unknown`]
-  if (!group || group.length === 0) return null                     // no priced home -> catalog_gap
-  // D2: provisional default ONLY with explicit packaging evidence.
+  if (!group || group.length === 0) return null                     // no priced home (missing OR empty group) -> catalog_gap
+  // D2: provisional default ONLY with explicit packaging evidence, ranked within the group.
   let defaultRef: string | undefined
   if (sig.packagingEvidence !== 'none') {
-    const want = sig.packaging === 'set'
-    defaultRef = group.find((r) => isSetRef(r) === want) ?? group[0]
+    if (sig.packaging === 'set') {
+      defaultRef = (sig.packagingEvidence === 'set_of_3' || sig.packagingEvidence === 'three_phase')
+        ? (group.find(matchesSetOf3) ?? group.find(matchesAnySet) ?? group[0])   // explicit Set of 3 wins
+        : (group.find(matchesAnySet) ?? group[0])                                 // weaker set signal -> any set ref
+    } else if (sig.packaging === 'individual') {
+      defaultRef = group.find((r) => !matchesAnySet(r)) ?? group[0]               // individual -> a non-set ref
+    } else {
+      defaultRef = group[0]
+    }
   }
   return { group: [...group], defaultRef, scopeQuestion: SCOPE_Q }
 }
@@ -269,6 +296,16 @@ describe('instrument-transformer recognition', () => {
     const a = assessApparatus(row({ raw: 'CURRENT TRANSFORMER 500KVA', tag: 'CT-1' }))
     expect(a.assessmentCode).toBe('instrument_transformer_power_conflict')
   })
+  it('type unparsed: instrument flagged (candidateKind) but no CT/PT/VT/CCVT token -> type_unparsed, null sig (no fabricated CT)', () => {
+    const a = assessApparatus(row({ raw: '600:5', tag: 'X9', candidateKind: 'instrument_transformer' }))
+    expect(a.assessmentCode).toBe('instrument_transformer_type_unparsed')
+    expect(a.signature).toBeNull()
+  })
+  it('generic INSTRUMENT TRANSFORMER noun with no CT/PT/VT type -> type_unparsed (not a fabricated ct)', () => {
+    const a = assessApparatus(row({ raw: 'INSTRUMENT TRANSFORMER', tag: 'IT-1' }))
+    expect(a.assessmentCode).toBe('instrument_transformer_type_unparsed')
+    expect(a.signature).toBeNull()
+  })
   it('a bare instrument transformer with no voltage never emits missing_voltage', () => {
     expect(assessApparatus(row({ raw: 'CURRENT TRANSFORMER', tag: 'CT-1' })).assessmentCode).toBe('instrument_transformer_recognized')
   })
@@ -310,6 +347,11 @@ describe('instrument-transformer end-to-end', () => {
     const sp = (r.scopePendingLines ?? [])[0]!
     expect(sp.provisionalDefaultRef).toBeUndefined()
   })
+  it('LV PT (480V) has no priced home -> catalog_gap disposition, NO scope_pending (bounded V1 gap)', () => {
+    const r = runTakeoff(art([row({ raw: 'POTENTIAL TRANSFORMER', tag: 'PT-9', busVoltageV: 480 })]))
+    expect((r.scopePendingLines ?? []).length).toBe(0)
+    expect(r.dispositions[0]!.reasonCode).toBe('instrument_transformer_catalog_gap')
+  })
 })
 ```
 
@@ -322,7 +364,7 @@ describe('instrument-transformer end-to-end', () => {
   - Add regexes (near the other device regexes):
 ```ts
 const INSTRUMENT_TX_DEVICE = /\b(current\s+transformer|potential\s+transformer|voltage\s+transformer|coupling[\s-]?capacitor(\s+voltage\s+transformer)?|CCVT|instrument\s+transformer)\b/i
-const INSTRUMENT_TX_ABBR = /\b(CT|PT|VT)\b/
+const INSTRUMENT_TX_ABBR = /\b(CT|PT|VT)\b/i
 const INSTRUMENT_TAG = /^(CT|PT|VT|CCVT)[-_ ]?\w*$/i
 ```
   - Recognition + parsers + assessor:
@@ -334,10 +376,11 @@ function looksLikeInstrumentTransformer(x: ExtractedApparatus): boolean {
   return false
 }
 
-function parseItxType(raw: string, tag?: string): ItxType {
+function parseItxType(raw: string, tag?: string): ItxType | undefined {
   if (/\b(CCVT|coupling[\s-]?capacitor)\b/i.test(raw) || (tag !== undefined && /^CCVT/i.test(tag))) return 'ccvt'
   if (/\b(potential\s+transformer|voltage\s+transformer|PT|VT)\b/i.test(raw) || (tag !== undefined && /^(PT|VT)/i.test(tag))) return 'vt'
-  return 'ct'   // current transformer / CT / default for an established instrument device
+  if (/\b(current\s+transformer|CT)\b/i.test(raw) || (tag !== undefined && /^CT/i.test(tag))) return 'ct'
+  return undefined   // NO CT/PT/VT/CCVT type token (e.g. candidateKind-only row with an opaque tag/ratio) -> fail closed; NEVER fabricate 'ct'
 }
 
 function parsePackaging(raw: string): { packaging: ItxPackaging; packagingEvidence: ItxPackagingEvidence; phaseCount?: number } {
@@ -363,9 +406,15 @@ function assessInstrumentTransformer(x: ExtractedApparatus, voltageBasis?: Volta
     return { signature: null, isBreakerShaped: false, assessmentCode: 'instrument_transformer_power_conflict',
       questions: [q(x, 'Label names an instrument transformer but carries a power-transformer signal (kVA/coolant) - confirm device type before counting.', 'instrument_transformer_power_conflict')] }
   }
+  const itxType = parseItxType(x.raw, x.tag)
+  if (itxType === undefined) {
+    // Flagged as an instrument transformer (candidateKind or context) but no CT/PT/VT/CCVT type token -> fail closed.
+    return { signature: null, isBreakerShaped: false, assessmentCode: 'instrument_transformer_type_unparsed',
+      questions: [q(x, 'Row is flagged as an instrument transformer but names no CT/PT/VT/CCVT type - confirm the instrument-transformer type before counting.', 'instrument_transformer_type_unparsed')] }
+  }
   const pk = parsePackaging(x.raw)
   const sig: InstrumentTransformerSignature = {
-    kind: 'instrument_transformer', itxType: parseItxType(x.raw, x.tag),
+    kind: 'instrument_transformer', itxType,
     packaging: pk.packaging, packagingEvidence: pk.packagingEvidence, phaseCount: pk.phaseCount,
     ratio: parseRatio(x.raw),
     voltageClass: classifyVoltage(x.busVoltageV), voltageV: x.busVoltageV,
@@ -386,7 +435,7 @@ function assessInstrumentTransformer(x: ExtractedApparatus, voltageBasis?: Volta
     return assessInstrumentTransformer(x, voltageBasis)
   }
 ```
-  - `AssessmentCode` += `instrument_transformer_recognized`, `instrument_transformer_parent_conflict`, `instrument_transformer_power_conflict`.
+  - `AssessmentCode` += `instrument_transformer_recognized`, `instrument_transformer_parent_conflict`, `instrument_transformer_power_conflict`, `instrument_transformer_type_unparsed`.
 (c) `src/quantify/quantify.ts` specKey (before the transformer fall-through):
 ```ts
   if (s.kind === 'instrument_transformer') {
@@ -394,14 +443,14 @@ function assessInstrumentTransformer(x: ExtractedApparatus, voltageBasis?: Volta
   }
 ```
 (d) `src/buckets/types.ts`:
-  - `OperatorQuestionCode` += `'instrument_transformer_scope_pending' | 'instrument_transformer_catalog_gap' | 'instrument_transformer_parent_conflict' | 'instrument_transformer_power_conflict'`.
-  - `DispositionReasonCode` += the same four.
+  - `OperatorQuestionCode` += `'instrument_transformer_scope_pending' | 'instrument_transformer_catalog_gap' | 'instrument_transformer_parent_conflict' | 'instrument_transformer_power_conflict' | 'instrument_transformer_type_unparsed'`.
+  - `DispositionReasonCode` += the same five.
   - `TakeoffFinding.code` union += `'instrument_transformer_catalog_gap'`.
   - `ScopePendingLine` += `packagingEvidence?: string` + `phaseCount?: number`.
   - `ApparatusDisposition` += `packagingEvidence?: string` + `phaseCount?: number`.
 (e) `src/emit/emit.ts`:
   - Imports: add `InstrumentTransformerSignature` to the `../signature/types` import; `import { matchInstrumentTransformer } from '../catalog/instrument-transformer-map'`; `import { ITX_R1_RATIFIED } from '../catalog/instrument-transformer-map.data'`.
-  - `ASSESS_TO_REASON` += `instrument_transformer_recognized: 'instrument_transformer_scope_pending'`, `instrument_transformer_parent_conflict: 'instrument_transformer_parent_conflict'`, `instrument_transformer_power_conflict: 'instrument_transformer_power_conflict'`.
+  - `ASSESS_TO_REASON` += `instrument_transformer_recognized: 'instrument_transformer_scope_pending'`, `instrument_transformer_parent_conflict: 'instrument_transformer_parent_conflict'`, `instrument_transformer_power_conflict: 'instrument_transformer_power_conflict'`, `instrument_transformer_type_unparsed: 'instrument_transformer_type_unparsed'`.
   - Match-loop branch BEFORE the transformer fall-through:
 ```ts
     if (sig.kind === 'instrument_transformer') {
@@ -495,6 +544,11 @@ describe('operator must-pin: instrument vs power transformer', () => {
     const withPhase = runTakeoff(art([row({ raw: 'CURRENT TRANSFORMER (3) MV', tag: 'CT-1', busVoltageV: 4160 })]))
     expect((withPhase.scopePendingLines ?? [])[0]!.provisionalDefaultRef).toBeDefined()
     expect((withPhase.scopePendingLines ?? [])[0]!.phaseCount).toBe(3)
+  })
+  it('type unparsed: candidateKind itx + opaque ratio/tag (no type token) -> type_unparsed, NO instrument line', () => {
+    const r = runTakeoff(art([row({ raw: '600:5', tag: 'X9', candidateKind: 'instrument_transformer' })]))
+    expect(noItx(r)).toBe(true)
+    expect(r.dispositions[0]!.reasonCode).toBe('instrument_transformer_type_unparsed')
   })
 })
 ```
@@ -608,4 +662,10 @@ describe('instrument-transformer golden - breaker + power transformer + CT + PT 
 
 **Placeholder scan:** none  -  complete code in every step.
 
-**Type consistency:** `InstrumentTransformerSignature`/`ItxType`/`ItxPackaging`/`ItxPackagingEvidence` (T2) -> union (T3); `matchInstrumentTransformer`/`ItxScopeMatch` (T2) used in emit (T3); `ITX_REFS`/`ITX_GROUPS`/`ITX_R1_RATIFIED` (T1) used in T2/T3; the four new codes added once (T3) and asserted in T3/T4/T5; `packagingEvidence`/`phaseCount` added to `ScopePendingLine` + `ApparatusDisposition` + report (T3) and asserted end-to-end (T3/T4/T5). Power-exclusion is additive (no kVA/coolant requirement)  -  pinned by T3/T4 #3/#4.
+**Type consistency:** `InstrumentTransformerSignature`/`ItxType`/`ItxPackaging`/`ItxPackagingEvidence` (T2) -> union (T3); `matchInstrumentTransformer`/`ItxScopeMatch` (T2) used in emit (T3); `ITX_REFS`/`ITX_GROUPS`/`ITX_R1_RATIFIED` (T1) used in T2/T3; the FOUR `AssessmentCode` members (recognized, parent_conflict, power_conflict, type_unparsed) and the FIVE disposition/question codes (scope_pending, catalog_gap, parent_conflict, power_conflict, type_unparsed) added once (T3) and asserted in T3/T4/T5; `parseItxType` returns `ItxType | undefined` (T3) and the undefined branch is consumed by the type_unparsed guard; `packagingEvidence`/`phaseCount` added to `ScopePendingLine` + `ApparatusDisposition` + report (T3) and asserted end-to-end (T3/T4/T5). Power-exclusion is additive (no kVA/coolant requirement)  -  pinned by T3/T4 #3/#4.
+
+**Plan-review patches (Codex/IRP, applied before SDD):**
+- **P1 ranked set selector (T2):** `matchInstrumentTransformer` ranks within the candidate group - a `set_of_3`/`three_phase` signal picks the EXPLICIT "Set of 3" ref, not the first set-named ref (the broad bushing "(Set)" at index 1 of ct:MV). Pinned by `itx-map` ("set_of_3 / three_phase ranks the EXPLICIT Set-of-3 ref...") + the T3 pipeline + the T5 golden, which all assert `Current Transformer MV - Set of 3`.
+- **P2 type-unparsed fail-closed (T3):** `parseItxType` no longer defaults to `ct`; a row flagged instrument with no CT/PT/VT/CCVT token -> `instrument_transformer_type_unparsed` (null signature, question, NO scope_pending), mirroring the parent/power conflict guards. Pinned by `normalize-itx` (candidateKind+opaque, generic INSTRUMENT TRANSFORMER) + the T4 disposition must-pin.
+- **P3 LV/HV PT catalog-gap (T1):** `vt:LV` / `vt:HV` are present-and-EMPTY (`[]`) -> `catalog_gap`, NOT mapped to the generic "(set)" ref (a bounded V1 gap per spec R1). An empty group != a missing key (the `?? :unknown` fallback fires only on a MISSING key). Pinned by `itx-map` (LV/HV PT -> null) + the T3 pipeline catalog_gap test.
+- **Minor abbr case (T3):** `INSTRUMENT_TX_ABBR` is `/i` (tags already are).
