@@ -14,6 +14,8 @@ export interface ScopePendingLine {
   qty: number
   block: string
   line: QuantifiedLine
+  packagingEvidence?: string   // CONTRACT: carried from InstrumentTransformerSignature for Gate-2
+  phaseCount?: number          // CONTRACT: carried from InstrumentTransformerSignature for Gate-2
 }
 
 export type OperatorQuestionCode =
@@ -26,6 +28,9 @@ export type OperatorQuestionCode =
   | 'relay_scope_pending' | 'relay_catalog_gap'
   | 'relay_breaker_conflict'
   | 'gfp_scope_pending'
+  | 'instrument_transformer_scope_pending' | 'instrument_transformer_catalog_gap'
+  | 'instrument_transformer_parent_conflict' | 'instrument_transformer_power_conflict'
+  | 'instrument_transformer_type_unparsed'
 
 export interface OperatorQuestion { question: string; context: string; code: OperatorQuestionCode; inputIndex?: number }
 export interface TakeoffResult {
@@ -62,6 +67,9 @@ export type DispositionReasonCode =
   | 'relay_scope_pending' | 'relay_catalog_gap'
   | 'relay_breaker_conflict'
   | 'gfp_scope_pending'
+  | 'instrument_transformer_scope_pending' | 'instrument_transformer_catalog_gap'
+  | 'instrument_transformer_parent_conflict' | 'instrument_transformer_power_conflict'
+  | 'instrument_transformer_type_unparsed'
 
 export interface ApparatusDisposition {
   inputIndex: number
@@ -79,6 +87,8 @@ export interface ApparatusDisposition {
   candidateRefs?: string[]
   provisionalDefaultRef?: string
   scopeQuestion?: string
+  packagingEvidence?: string   // CONTRACT: instrument transformer Gate-2 evidence
+  phaseCount?: number          // CONTRACT: instrument transformer Gate-2 evidence
 }
 
 export type FindingSeverity = 'error' | 'warning'
@@ -91,7 +101,7 @@ export type VoltageAssertionCode =
   | 'voltage_assertion_invalid_shape'
 
 export interface TakeoffFinding {
-  code: VoltageAssertionCode | 'transformer_catalog_gap' | 'relay_catalog_gap'
+  code: VoltageAssertionCode | 'transformer_catalog_gap' | 'relay_catalog_gap' | 'instrument_transformer_catalog_gap'
   severity: FindingSeverity
   message: string
   context: string

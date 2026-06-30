@@ -1,5 +1,5 @@
 import type { ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, GfpSignature, TransformerSignature, TripFunction, VoltageBasis } from './types'
+import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, GfpSignature, TransformerSignature, TripFunction, VoltageBasis, InstrumentTransformerSignature, ItxPackaging, ItxPackagingEvidence, ItxType } from './types'
 import type { OperatorQuestion, OperatorQuestionCode } from '../buckets/types'
 import { classifyVoltage } from './voltage'
 
@@ -15,6 +15,10 @@ const RELAY_DEVICE = /\b(protective\s+relay|relay|SEL-?\d{2,4}[A-Z]?|multilin|be
 // the trip-function letter G, bare "ground fault protection" (function name), "ground fault test", or "per 7.14".
 const GFP_DEVICE = /\b(GFPE?|GFR|ground[\s-]?fault\s+(relay|sensor|monitor|module|system|device|unit)|ground[\s-]?fault\s+protection\s+(system|device|unit|relay|module|panel))\b/i
 const ANSI_FN = /\b(2[1-7]|32|37|38|40|46N?|47|49[RT]?|50N?|51N?|55|59|60|63|64|67|79|81|86|87[TBGN]?)\b/gi
+const INSTRUMENT_TX_DEVICE = /\b(current\s+transformer|potential\s+transformer|voltage\s+transformer|coupling[\s-]?capacitor(\s+voltage\s+transformer)?|CCVT|instrument\s+transformer)\b/i
+const INSTRUMENT_TX_ABBR = /\b(CT|PT|VT)\b/i
+const INSTRUMENT_TAG = /^(CT|PT|VT|CCVT)[-_ ]?\w*$/i
+
 // Transformer-protection accessory relays (pressure/temperature/Buchholz/gas) are NOT standalone
 // protective-relay DEVICES the firm prices. Exclude them from token-based recognition so a plain
 // "FAULT PRESSURE RELAY" does not become a priced relay (an explicit candidateKind:'relay' still wins).
@@ -24,6 +28,8 @@ const RELAY_MODEL = /\b(SEL-?\d{2,4}[A-Z]?|multilin|beckwith|basler|micom)\b/i
 
 function looksLikeTransformer(x: ExtractedApparatus): boolean {
   if (x.candidateKind === 'relay') return false                  // relay producer signal wins over XFMR text
+  if (x.candidateKind === 'instrument_transformer') return false   // explicit instrument producer signal yields
+  if (INSTRUMENT_TX_DEVICE.test(x.raw)) return false               // instrument device noun is NOT a power transformer (additive; no kVA/coolant requirement)
   if (x.candidateKind === 'transformer') return true
   // A relay MODEL + tag outranks a transformer text token (device-first) ONLY when the row lacks
   // strong transformer evidence. A real transformer (kVA rating or a coolant/construction token) that
@@ -141,6 +147,61 @@ function assessGfp(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparatu
   return { signature: sig, isBreakerShaped: false, assessmentCode: 'gfp_recognized', questions: [] }
 }
 
+function looksLikeInstrumentTransformer(x: ExtractedApparatus): boolean {
+  if (x.candidateKind === 'instrument_transformer') return true
+  if (INSTRUMENT_TX_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0) return true   // full noun + any tag
+  if (INSTRUMENT_TX_ABBR.test(x.raw) && x.tag !== undefined && INSTRUMENT_TAG.test(x.tag)) return true  // bare abbr needs instrument-shaped tag (A-prime)
+  return false
+}
+
+function parseItxType(raw: string, tag?: string): ItxType | undefined {
+  if (/\b(CCVT|coupling[\s-]?capacitor)\b/i.test(raw) || (tag !== undefined && /^CCVT/i.test(tag))) return 'ccvt'
+  if (/\b(potential\s+transformer|voltage\s+transformer|PT|VT)\b/i.test(raw) || (tag !== undefined && /^(PT|VT)/i.test(tag))) return 'vt'
+  if (/\b(current\s+transformer|CT)\b/i.test(raw) || (tag !== undefined && /^CT/i.test(tag))) return 'ct'
+  return undefined   // NO CT/PT/VT/CCVT type token (e.g. candidateKind-only row with an opaque tag/ratio) -> fail closed; NEVER fabricate 'ct'
+}
+
+function parsePackaging(raw: string): { packaging: ItxPackaging; packagingEvidence: ItxPackagingEvidence; phaseCount?: number } {
+  if (/\bset\s+of\s+3\b/i.test(raw)) return { packaging: 'set', packagingEvidence: 'set_of_3', phaseCount: 3 }
+  if (/\b3\s*(?:phase|ph|-phase)\b/i.test(raw) || /\b3\s*x\b/i.test(raw) || /\(3\)/.test(raw)) return { packaging: 'set', packagingEvidence: 'three_phase', phaseCount: 3 }
+  if (/\bset\b/i.test(raw)) return { packaging: 'set', packagingEvidence: 'set_token' }
+  return { packaging: 'unknown', packagingEvidence: 'none' }
+}
+
+function parseRatio(raw: string): string | undefined {
+  const m = raw.match(/\b\d+\s*:\s*\d+\b/)
+  return m ? m[0].replace(/\s+/g, '') : undefined
+}
+
+function assessInstrumentTransformer(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
+  // Conflict guards FIRST (instrument routes before breaker/NON_BREAKER): a misrouted parent surfaces a
+  // question, never a silent instrument scope_pending.
+  if (looksLikeBreaker(x.raw) || NON_BREAKER.test(x.raw)) {
+    return { signature: null, isBreakerShaped: false, assessmentCode: 'instrument_transformer_parent_conflict',
+      questions: [q(x, 'Label names an instrument transformer but the row is breaker/parent-shaped (frame/trip or a parent-device token) - confirm device type before counting.', 'instrument_transformer_parent_conflict')] }
+  }
+  if (KVA_RATING.test(x.raw) || parseCoolant(x.raw) !== 'unknown') {
+    return { signature: null, isBreakerShaped: false, assessmentCode: 'instrument_transformer_power_conflict',
+      questions: [q(x, 'Label names an instrument transformer but carries a power-transformer signal (kVA/coolant) - confirm device type before counting.', 'instrument_transformer_power_conflict')] }
+  }
+  const itxType = parseItxType(x.raw, x.tag)
+  if (itxType === undefined) {
+    // Flagged as an instrument transformer (candidateKind or context) but no CT/PT/VT/CCVT type token -> fail closed.
+    return { signature: null, isBreakerShaped: false, assessmentCode: 'instrument_transformer_type_unparsed',
+      questions: [q(x, 'Row is flagged as an instrument transformer but names no CT/PT/VT/CCVT type - confirm the instrument-transformer type before counting.', 'instrument_transformer_type_unparsed')] }
+  }
+  const pk = parsePackaging(x.raw)
+  const sig: InstrumentTransformerSignature = {
+    kind: 'instrument_transformer', itxType,
+    packaging: pk.packaging, packagingEvidence: pk.packagingEvidence, phaseCount: pk.phaseCount,
+    ratio: parseRatio(x.raw),
+    voltageClass: classifyVoltage(x.busVoltageV), voltageV: x.busVoltageV,
+    voltageBasis: voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none'),
+    tag: x.tag, source: { sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block },
+  }
+  return { signature: sig, isBreakerShaped: false, assessmentCode: 'instrument_transformer_recognized', questions: [] }
+}
+
 function parseRelayTechnology(raw: string): RelayTechnology {
   if (/\b(SEL-?\d{2,4}[A-Z]?|multilin|beckwith|basler|micom|microprocessor|uP)\b/i.test(raw)) return 'microprocessor'
   if (/\b(electromechanical|EM|solid.?state)\b/i.test(raw)) return 'electromechanical_solid_state'
@@ -207,6 +268,10 @@ export type AssessmentCode =
   | 'relay_recognized'
   | 'relay_breaker_conflict'
   | 'gfp_recognized'
+  | 'instrument_transformer_recognized'
+  | 'instrument_transformer_parent_conflict'
+  | 'instrument_transformer_power_conflict'
+  | 'instrument_transformer_type_unparsed'
   | 'non_breaker_excluded'
   | 'non_breaker_carries_rating'
   | 'missing_voltage'
@@ -258,6 +323,10 @@ function assessTransformer(x: ExtractedApparatus, voltageBasis?: VoltageBasis): 
 
 // PRIVATE -- the basis-taking core. NOT exported.
 function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
+  if (looksLikeInstrumentTransformer(x)) {
+    return assessInstrumentTransformer(x, voltageBasis)
+  }
+
   if (looksLikeTransformer(x)) {
     if (FRAME_TRIP.test(x.raw)) {
       return {

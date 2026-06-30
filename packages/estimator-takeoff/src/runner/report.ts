@@ -18,7 +18,7 @@ export interface ReconciliationReport {
   accounted: boolean              // every input row has a disposition AND index-aligned
   dispositions: ApparatusDisposition[]
   envelopeTotals?: { bid_cents: number }   // present when an envelope was emitted
-  scopePending: { lineKey: string; tag?: string; qty: number; candidateRefs: string[]; provisionalDefaultRef?: string; r1Ratified: boolean; scopeQuestion: string }[]
+  scopePending: { lineKey: string; tag?: string; qty: number; candidateRefs: string[]; provisionalDefaultRef?: string; r1Ratified: boolean; scopeQuestion: string; packagingEvidence?: string; phaseCount?: number }[]
 }
 
 // clean = nothing unresolved is hiding AND at least one line was matched/priced.
@@ -87,6 +87,8 @@ export function reconcile(
     provisionalDefaultRef: sp.provisionalDefaultRef,
     r1Ratified: sp.r1Ratified,
     scopeQuestion: sp.scopeQuestion,
+    packagingEvidence: sp.packagingEvidence,
+    phaseCount: sp.phaseCount,
   }))
   const report: ReconciliationReport = {
     status: isClean(result) ? 'clean' : 'partial_preview',
@@ -122,7 +124,7 @@ export function renderReportText(report: ReconciliationReport): string {
     out.push('')
     out.push('  Scope-pending (Gate-2):')
     for (const sp of report.scopePending) {
-      out.push('    [' + (sp.tag ?? sp.lineKey) + '] qty=' + sp.qty + ' provisional=' + (sp.provisionalDefaultRef ?? 'none') + ' r1Ratified=' + sp.r1Ratified)
+      out.push('    [' + (sp.tag ?? sp.lineKey) + '] qty=' + sp.qty + ' provisional=' + (sp.provisionalDefaultRef ?? 'none') + ' r1Ratified=' + sp.r1Ratified + (sp.packagingEvidence ? ' packaging=' + sp.packagingEvidence : '') + (sp.phaseCount ? ' phases=' + sp.phaseCount : ''))
       out.push('      candidates: ' + sp.candidateRefs.join(' | '))
       out.push('      question: ' + sp.scopeQuestion)
     }

@@ -1,6 +1,6 @@
 import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from '@apex/estimator-core'
 import type { ExtractionArtifact, ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, TransformerSignature, RelaySignature, GfpSignature } from '../signature/types'
+import type { ApparatusSignature, BreakerSignature, TransformerSignature, RelaySignature, GfpSignature, InstrumentTransformerSignature } from '../signature/types'
 import { assessResolvedApparatus } from '../signature/normalize'
 import type { AssessmentCode } from '../signature/normalize'
 import { applyVoltageAssertions } from '../signature/voltage-assertions'
@@ -13,6 +13,8 @@ import { matchRelay } from '../catalog/relay-map'
 import { RELAY_R1_RATIFIED } from '../catalog/relay-map.data'
 import { matchGfp } from '../catalog/gfp-map'
 import { GFP_R1_RATIFIED } from '../catalog/gfp-map.data'
+import { matchInstrumentTransformer } from '../catalog/instrument-transformer-map'
+import { ITX_R1_RATIFIED } from '../catalog/instrument-transformer-map.data'
 import type {
   MatchedLine, OperatorQuestion, TakeoffResult, UnmatchedCandidate, TakeoffFinding,
   ApparatusDisposition, ApparatusDispositionStatus, DispositionReasonCode, ScopePendingLine,
@@ -35,6 +37,10 @@ const ASSESS_TO_REASON: Record<Exclude<AssessmentCode, 'classified'>, Dispositio
   relay_recognized:              'relay_scope_pending',   // unreachable (has signature); present for exhaustiveness
   relay_breaker_conflict:        'relay_breaker_conflict',
   gfp_recognized:                'gfp_scope_pending',   // unreachable (has signature); present for exhaustiveness
+  instrument_transformer_recognized:        'instrument_transformer_scope_pending',   // unreachable (has signature); present for exhaustiveness
+  instrument_transformer_parent_conflict:   'instrument_transformer_parent_conflict',
+  instrument_transformer_power_conflict:    'instrument_transformer_power_conflict',
+  instrument_transformer_type_unparsed:     'instrument_transformer_type_unparsed',
 }
 
 // baseDisp creates a LOUD sentinel disposition: its `reason` is UNSTAMPED so assertExhaustive can detect any
@@ -200,6 +206,31 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
         disp.scopeQuestion = scope.scopeQuestion
       }
       questions.push({ question: scope.scopeQuestion, context: `${gsig.tag ?? gsig.source.sheet} (standalone GFP; priced per device; NETA 7.14)`, code: 'gfp_scope_pending' })
+      continue
+    }
+    if (sig.kind === 'instrument_transformer') {
+      const isig: InstrumentTransformerSignature = sig
+      const scope = matchInstrumentTransformer(isig)
+      if (scope) {
+        scopePendingLines.push({
+          candidateRefs: scope.group, provisionalDefaultRef: scope.defaultRef, r1Ratified: ITX_R1_RATIFIED,
+          scopeQuestion: scope.scopeQuestion, qty: line.qty, block: isig.source.block ?? isig.source.sheet, line,
+          packagingEvidence: isig.packagingEvidence, phaseCount: isig.phaseCount,
+        })
+        for (const i of line.memberIndices) {
+          stamp(dispositions, i, 'scope_pending', 'instrument_transformer_scope_pending', scope.scopeQuestion, undefined, line.lineKey)
+          const disp = dispositions[i]!
+          disp.candidateRefs = scope.group; disp.provisionalDefaultRef = scope.defaultRef; disp.scopeQuestion = scope.scopeQuestion
+          disp.packagingEvidence = isig.packagingEvidence; disp.phaseCount = isig.phaseCount
+        }
+        questions.push({ question: scope.scopeQuestion, context: `${isig.tag ?? isig.source.sheet} (${isig.itxType}; candidate group: ${scope.group.join(' | ')})`, code: 'instrument_transformer_scope_pending' })
+      } else {
+        const reason = `recognized instrument transformer (${isig.itxType}, ${isig.voltageClass ?? 'unknown'}V) - no applicable priced ref-group`
+        unmatchedCandidates.push({ reason, line })
+        for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'instrument_transformer_catalog_gap', reason, undefined, line.lineKey)
+        findings.push({ code: 'instrument_transformer_catalog_gap', severity: 'warning', message: reason, context: isig.tag ?? isig.source.sheet })
+        questions.push({ question: `Catalog gap: ${reason} - estimator must author/confirm a ref before pricing.`, context: isig.tag ?? isig.source.sheet, code: 'instrument_transformer_catalog_gap' })
+      }
       continue
     }
     // kind === 'transformer'
