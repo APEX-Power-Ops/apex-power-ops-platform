@@ -63,10 +63,13 @@ const RELAY_MODEL = /\b(SEL-?\d{2,4}[A-Z]?|multilin|beckwith|basler|micom)\b/i
 function looksLikeTransformer(x: ExtractedApparatus): boolean {
   if (x.candidateKind === 'relay') return false                  // relay producer signal wins over XFMR text
   if (x.candidateKind === 'instrument_transformer') return false   // explicit instrument producer signal yields
-  if (x.candidateKind === 'switch') return false                   // explicit switch producer signal yields
+  if (x.candidateKind === 'switch') return false                   // explicit switch producer signal yields (a pad-mount Vista SWITCH must set candidateKind:'switch' to escape pad-mount transformer text)
   if (INSTRUMENT_TX_DEVICE.test(x.raw)) return false               // instrument device noun is NOT a power transformer (additive; no kVA/coolant requirement)
-  if (x.candidateKind === 'transformer') return true               // producer:transformer wins (before the text-based switch yield below)
-  if (isSwitchAnchored(x.raw)) return false                        // D3: a switch-anchored row ("Switch (Pad Mount Vista)") yields to the switch route over transformer pad-mount text
+  if (x.candidateKind === 'transformer') return true
+  // NOTE: a TEXT-based switch yield was deliberately NOT added here. "pad mount" lives in BOTH TRANSFORMER_DEVICE
+  // and parseCoolant, so a blanket `isSwitchAnchored -> yield` stole real transformer rows that merely mention an
+  // accessory disconnect (e.g. "1500KVA DRY-TYPE XFMR FUSED DISCONNECT"). Bare-text Pad-Mount-Vista disambiguation
+  // is the R1/SME anchor-coverage follow-up; producer candidateKind:'switch' is the escape hatch in the meantime.
   // A relay MODEL + tag outranks a transformer text token (device-first) ONLY when the row lacks
   // strong transformer evidence. A real transformer (kVA rating or a coolant/construction token) that
   // merely MENTIONS a relay model must stay a transformer - never silently reclassified as a relay.

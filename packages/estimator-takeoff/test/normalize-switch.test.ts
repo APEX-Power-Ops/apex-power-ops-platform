@@ -80,7 +80,9 @@ describe('assessSwitch via assessApparatus', () => {
   })
   it('D3 grammar (operator-ratified): switch/DISC + construction recognizes; bare switch/DISC does not', () => {
     // switch-ish noun + explicit construction medium/type (either order) -> switch, NOT a breaker.
-    for (const [raw, type] of [['Switch (SF6)', 'sf6'], ['Switch, SF6', 'sf6'], ['DISC SF6', 'sf6'], ['Switch (Vacuum)', 'vacuum'], ['Switch MV - Motor Operated', 'motor_operated'], ['Pad Mount Vista Disconnect', 'vista']] as const) {
+    // (Pad-Mount-Vista bare-text is NOT here: "pad mount" collides with the transformer recognizer -> deferred R1;
+    //  it is reachable via candidateKind:'switch', proven in the pass-5 test above.)
+    for (const [raw, type] of [['Switch (SF6)', 'sf6'], ['Switch, SF6', 'sf6'], ['DISC SF6', 'sf6'], ['Switch (Vacuum)', 'vacuum'], ['Switch MV - Motor Operated', 'motor_operated']] as const) {
       const a = assessApparatus(row(raw, { tag: 'SW-1', busVoltageV: 15000 }))
       expect(a.signature?.kind, raw).toBe('switch')
       if (a.signature?.kind === 'switch') expect(a.signature.switchType, raw).toBe(type)
@@ -96,5 +98,11 @@ describe('assessSwitch via assessApparatus', () => {
     // bare switch / bare DISC (no construction evidence) -> NOT counted as a switch.
     expect(assessApparatus(row('Switch', { tag: 'SW-9', busVoltageV: 15000 })).signature?.kind).not.toBe('switch')
     expect(assessApparatus(row('DISC', { tag: 'D-9', busVoltageV: 15000 })).signature?.kind).not.toBe('switch')
+  })
+  it('Codex P2 (pass 7): a transformer with an accessory disconnect mention stays a TRANSFORMER (no switch steal)', () => {
+    // The switch grammar must NOT steal a real transformer that merely names an accessory disconnect - the
+    // strong transformer evidence (kVA + XFMR/dry-type) wins; no text-based switch yield in looksLikeTransformer.
+    const a = assessApparatus(row('T-1 1500KVA DRY-TYPE XFMR FUSED DISCONNECT', { tag: 'T-1', busVoltageV: 480 }))
+    expect(a.signature?.kind).toBe('transformer')
   })
 })
