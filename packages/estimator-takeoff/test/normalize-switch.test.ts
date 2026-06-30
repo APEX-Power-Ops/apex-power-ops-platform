@@ -60,4 +60,12 @@ describe('assessSwitch via assessApparatus', () => {
     expect(assessApparatus(row('LV-4 Disconnect Switch', { tag: 'LV-4', busVoltageV: 15000 })).signature?.kind).toBe('switch')
     expect(assessApparatus(row('LBS-1 Load Break Switch', { tag: 'LBS-1', busVoltageV: 15000 })).signature?.kind).toBe('switch')
   })
+  it('Codex P2 (pass 5): candidateKind:switch wins over pad-mount transformer text (Vista not stolen)', () => {
+    // looksLikeTransformer must yield to an explicit switch producer signal, exactly as it does for relay /
+    // instrument_transformer - so a pad-mount Vista SWITCH is recognized as a switch, not a pad-mount transformer.
+    const a = assessApparatus(row('Pad Mount Vista Disconnect', { candidateKind: 'switch', busVoltageV: 15000 }))
+    expect(a.signature?.kind).toBe('switch')
+    expect(a.assessmentCode).toBe('switch_recognized')
+    if (a.signature?.kind === 'switch') expect(a.signature.switchType).toBe('vista')
+  })
 })

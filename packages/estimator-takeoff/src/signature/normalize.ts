@@ -56,6 +56,7 @@ const RELAY_MODEL = /\b(SEL-?\d{2,4}[A-Z]?|multilin|beckwith|basler|micom)\b/i
 function looksLikeTransformer(x: ExtractedApparatus): boolean {
   if (x.candidateKind === 'relay') return false                  // relay producer signal wins over XFMR text
   if (x.candidateKind === 'instrument_transformer') return false   // explicit instrument producer signal yields
+  if (x.candidateKind === 'switch') return false                   // explicit switch producer signal yields (a pad-mount Vista SWITCH must not be claimed by the pad-mount transformer text)
   if (INSTRUMENT_TX_DEVICE.test(x.raw)) return false               // instrument device noun is NOT a power transformer (additive; no kVA/coolant requirement)
   if (x.candidateKind === 'transformer') return true
   // A relay MODEL + tag outranks a transformer text token (device-first) ONLY when the row lacks
