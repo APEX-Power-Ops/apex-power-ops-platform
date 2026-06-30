@@ -22,7 +22,7 @@ const INSTRUMENT_TAG = /^(CT|PT|VT|CCVT)[-_ ]?\w*$/i
 // --- Switch / disconnect family (NETA 7.5) ---
 // Overload families EXCLUDED FIRST (T3): "switch" appears in switchboard/switchgear (7.1 assemblies),
 // transfer switch (7.18/22), circuit switcher (7.3). None are 7.5 switches.
-const SWITCH_EXCLUDE = /\b(circuit\s+switcher|transfer\s+switch|switchgear|switchboard)\b/i
+const SWITCH_EXCLUDE = /\b(circuit[\s-]+switcher|transfer[\s-]+switch|switchgear|switchboard)\b/i  // [\s-]+ so hyphenated forms (Transfer-Switch, Circuit-Switcher) are excluded too
 // COMPOUND switch-device anchors - NEVER the bare token "switch".
 const SWITCH_DEVICE = /\b(disconnect(\s+switch)?|fus(ed|ible)\s+switch|safety\s+switch|load[\s-]?break\s+switch|LBS|isolat(ion|ing)\s+switch|knife\s+switch|air\s+switch|oil\s+switch|SF6\s+switch|vacuum\s+switch|cutout|non[\s-]?fused\s+disconnect)\b/i
 // D3 clarification (operator-ratified): bare "switch"/"DISC" do NOT count, but a switch-ish NOUN paired with an
@@ -31,7 +31,7 @@ const SWITCH_DEVICE = /\b(disconnect(\s+switch)?|fus(ed|ible)\s+switch|safety\s+
 // a shared medium [SF6/vacuum/air in BREAKER_HINT] otherwise carried a switch label to the breaker path). Full
 // "disconnect" and the medium+"switch" compounds already count via SWITCH_DEVICE. Exclusions + conflict guard still run.
 const SWITCH_NOUN = /\b(switch|disc)\b/i
-const SWITCH_CONSTRUCTION = /\b(SF6|vacuum|oil|air|pad[\s-]?mount|vista|cutout|fus(ed|ible)|motor[\s-]?operated|M\.?O\.?)\b/i
+const SWITCH_CONSTRUCTION = /\b(SF6|vacuum|oil|air|pad[\s-]?mount|vista|cutout|fus(ed|ible)|motor[\s-]?operated|M\.?O\.?|N\.?F\.?)\b/i  // NF = non-fused, a ratified construction-type qualifier
 // The UNAMBIGUOUS breaker subset for the switch-local conflict guard - DELIBERATELY excludes the shared
 // vacuum/SF6/air-frame medium tokens (those are switch construction evidence, not conflict signals).
 const SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i
