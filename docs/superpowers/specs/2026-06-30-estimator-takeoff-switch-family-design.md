@@ -1,6 +1,6 @@
 # Estimator-Takeoff Switch / Disconnect Family (V1) - Design
 
-Status: SPEC Rev 1.0 (operator-ratified packet 005; folds D1-D4 + the four operator tightenings [D2 conservative-default; D3 NF-as-paired-attribute; D3 breaker-hint conflict guard BOTH directions; D3 circuit-switcher exclusion ordered FIRST] + the eight added must-pin tests). Date: 2026-06-30.
+Status: SPEC Rev 2.0 (operator-ratified packet 005; Rev 1.0 folded D1-D4 + the four operator tightenings [D2 conservative-default; D3 NF-as-paired-attribute; D3 breaker-hint conflict guard BOTH directions; D3 circuit-switcher exclusion ordered FIRST] + the eight added must-pin tests; Rev 2.0 folds 3 spec-review patches: [Important] the breaker-conflict guard now also catches single-token numbered AF|AT and trip-function-only rows, and SWITCH_AMP parses PLAIN amps only so AF/AT can never become switch amp evidence; [Medium] pickAuthoritative's rich-switch preference also keeps fused/ampRating evidence so a non-fused NF representative is not lost to a sparse sibling; [Refinement] air switch -> open). Date: 2026-06-30.
 Lane: estimator-takeoff/switch-family-admission (off main 89aa24a1). Dev-only; merge operator-gated.
 Packet: docs/superpowers/packets/estimator-takeoff-family-switches.md (Part 6 decisions + Part 9 ratification).
 Predecessors (reused, must stay byte-identical): breaker engine + transformer slice (PR #49) + relay slice (PR #50) + GFP slice (PR #51) + instrument-transformer slice (PR #52).
@@ -20,7 +20,8 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
 - **Switches never auto-price.** Every recognized switch -> `scope_pending` (candidate ref-GROUP + optional provisional default) or `catalog_gap`. No "matched" switch line in V1.
 - **Recognition is device-first (anchor), NEVER the bare token "switch"** (D3). The anchor set is COMPOUND switch-device nouns; the bare word "switch" with no qualifier is not an anchor.
 - **NF is an ATTRIBUTE, never a standalone anchor** (D3 T1): `NF` (non-fused) sets `fused:false` only when paired with a real anchor or `candidateKind:'switch'`; a bare `NF-1` tag or raw text merely containing `NF` does NOT mint a switch candidate.
-- **The breaker-conflict guard keys on the UNAMBIGUOUS breaker subset, NOT the shared medium** (D3 T2): `vacuum`/`SF6`/`air frame` live inside the live `BREAKER_HINT` (normalize.ts L7), so the switch route uses a switch-local `SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i` plus `FRAME_TRIP` + LSIG trip functions + `NON_BREAKER`. The shared medium tokens are switch CONSTRUCTION evidence, not conflict signals. `BREAKER_HINT`/`FRAME_TRIP`/`NON_BREAKER` are NOT modified.
+- **The breaker-conflict guard keys on the UNAMBIGUOUS breaker subset, NOT the shared medium** (D3 T2): `vacuum`/`SF6`/`air frame` live inside the live `BREAKER_HINT` (normalize.ts L7), so the switch route uses a switch-local predicate over (a) `SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i`, (b) the full `FRAME_TRIP` pair, (c) a single numbered `AF|AT` token (`SWITCH_FRAME_TRIP`), (d) a trip-function descriptor (`SWITCH_TRIP_FN`, the LSIG family), and (e) `NON_BREAKER`. The shared medium tokens (`SF6`/`vacuum`/`air frame`) are switch CONSTRUCTION evidence, NOT conflict signals. `BREAKER_HINT`/`FRAME_TRIP`/`NON_BREAKER` are NOT modified.
+- **SWITCH_AMP parses PLAIN continuous amps only** (D3 T2 corollary): a numbered `AF`/`AT` token can NEVER be read as switch amp evidence (it has no priced-amp meaning for a switch and is breaker-shaped) - the amp parser requires a plain `A` word boundary, so `800AF`/`800AT` are excluded by construction and only reach the conflict guard.
 - **Circuit-switcher exclusion ordered FIRST** (D3 T3): `circuit switcher` (firm 7.3), `transfer switch`, `switchgear`, `switchboard` are EXCLUDED as the recognizer's first action, before any anchor/medium matching. Excluded rows keep their current (pre-switch-family) disposition - byte-identical.
 - **Provisional default ONLY with voltage class AND a specific type token** (D2): a candidate group is always offered; a `provisionalDefaultRef` is set only when BOTH a voltage class AND a specific type/construction token (fused disconnect / cutout / oil / SF6 / Vista / motor operated / explicit open) are present. A generic `disconnect`/`switch` anchor alone -> group, NO default. Illegible voltage -> group, NO default.
 - **Gates (verified on host):** `pnpm --filter @apex/estimator-takeoff test`; `pnpm --filter @apex/estimator-takeoff typecheck`; `pnpm --filter './apps/operations-web' typecheck` (cross-package false-green-trap gate).
@@ -64,8 +65,10 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
   - `SWITCH_EXCLUDE` (the "switch"-overload families - tested FIRST, T3): `/\b(circuit\s+switcher|transfer\s+switch|switchgear|switchboard)\b/i`.
   - `SWITCH_DEVICE` (compound switch-device anchors - NEVER the bare token "switch"): `/\b(disconnect(\s+switch)?|fus(ed|ible)\s+switch|safety\s+switch|load[\s-]?break\s+switch|LBS|isolat(ion|ing)\s+switch|knife\s+switch|air\s+switch|oil\s+switch|SF6\s+switch|cutout|non[\s-]?fused\s+disconnect)\b/i`.
   - `SWITCH_BREAKER_CONFLICT` (the UNAMBIGUOUS breaker subset for the switch-local guard - DELIBERATELY excludes the shared `vacuum`/`SF6`/`air frame`): `/\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i`.
+  - `SWITCH_FRAME_TRIP` (a single numbered frame/trip token - catches `800AF` or `800AT` even WITHOUT the full `FRAME_TRIP` pair): `/\b\d{2,6}\s*A[FT]\b/i`.
+  - `SWITCH_TRIP_FN` (a breaker trip-function descriptor on a switch row = conflict; mirrors the breaker `parseFunctions` L(SIGE) shape; `\b`-anchored so it does NOT match anchors like `LBS` or English words): `/\bL(?=[SIGE])(S?)(I?)(G?)(E?)\b/i`.
   - `SWITCH_NF` (the non-fused attribute - consumed ONLY when a real anchor is present): `/\bN\.?F\.?\b|\bnon[\s-]?fused\b/i`.
-  - `SWITCH_AMP` (continuous-ampere evidence; NOT a frame/trip pair): `/(?<!\d)(\d{2,6})\s*A(?:F|T)?\b/i` - reused for evidence only; the FRAME_TRIP guard already separates breaker rows.
+  - `SWITCH_AMP` (PLAIN continuous-ampere evidence ONLY - a `\bA\b` word boundary means `800AF`/`800AT` do NOT match, so AF/AT can never become switch amp evidence): `/(?<!\d)(\d{2,6})\s*A\b/i` - evidence only.
 - `looksLikeSwitch(x)`:
   ```ts
   function looksLikeSwitch(x: ExtractedApparatus): boolean {
@@ -78,21 +81,21 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
   (Like `looksLikeInstrumentTransformer`, the breaker-conflict guard is NOT in `looksLikeSwitch`; a conflicted row ENTERS the switch route and is flagged inside `assessSwitch`, mirroring the instrument parent-conflict precedent at normalize.ts L186.)
 - `parseSwitchType(raw): SwitchType` - text-only, fail-closed, with a documented PRECEDENCE (most specific product/actuation first; provisional R1):
   ```
-  pad-mount vista        -> 'vista'
-  motor operated / M.O.  -> 'motor_operated'
-  SF6                    -> 'sf6'
-  oil                    -> 'oil'
-  cutout                 -> 'cutout'
-  vacuum                 -> 'vacuum'        (recognized; no priced ref -> gap)
-  fused/fusible (disc)   -> 'fused_disconnect'
-  explicit "open"        -> 'open'
-  else                   -> 'unknown'       (generic disconnect/switch anchor; group + NO default)
+  pad-mount vista          -> 'vista'
+  motor operated / M.O.    -> 'motor_operated'
+  SF6                      -> 'sf6'
+  oil                      -> 'oil'
+  cutout                   -> 'cutout'
+  vacuum                   -> 'vacuum'        (recognized; no priced ref -> gap)
+  fused/fusible (disc)     -> 'fused_disconnect'
+  air switch / "open"      -> 'open'          (air-open switches ARE the firm "Open" refs; spec-review refinement)
+  else                     -> 'unknown'       (generic disconnect/switch anchor; group + NO default)
   ```
   A generic `disconnect`/`safety switch` with no medium/actuation token -> `'unknown'` (still a recognized switch; D2 conservative -> no default).
 - `parseFused(raw): boolean | undefined`: `SWITCH_NF` -> `false`; `/\bfus(ed|ible)\b/i` -> `true`; else `undefined`.
 - `parseAmpRating(raw): number | undefined`: continuous A (evidence only).
 - `assessSwitch(x, voltageBasis?): ApparatusAssessment` - CONFLICT GUARD FIRST (switch routes before the breaker fallback, so a misrouted parent must surface a question, never a silent switch scope_pending):
-  - `if (SWITCH_BREAKER_CONFLICT.test(x.raw) || FRAME_TRIP.test(x.raw) || NON_BREAKER.test(x.raw))` -> `switch_parent_conflict` question, signature null. (Covers `candidateKind:'switch'` + `AF/AT` -> question, and a switch-anchored row carrying VCB/ACB/breaker -> question. The shared `SF6`/`vacuum`/`air frame` do NOT trip this guard.)
+  - `if (SWITCH_BREAKER_CONFLICT.test(x.raw) || FRAME_TRIP.test(x.raw) || SWITCH_FRAME_TRIP.test(x.raw) || SWITCH_TRIP_FN.test(x.raw) || NON_BREAKER.test(x.raw))` -> `switch_parent_conflict` question, signature null. (Covers `candidateKind:'switch'` + a full `AF/AT` pair, a SINGLE `800AF`/`800AT` token, a trip-function-only row [`LSIG` with no AF/AT], a switch-anchored row carrying VCB/ACB/breaker, and a NON_BREAKER token. The shared `SF6`/`vacuum`/`air frame` do NOT trip this guard.)
   - else build the signature: `switchType = parseSwitchType(x.raw)`, `fused = parseFused(x.raw)`, `ampRating = parseAmpRating(x.raw)`, `voltageClass = classifyVoltage(x.busVoltageV)` (MAY be undefined - NOT gated). `assessmentCode: 'switch_recognized'`.
 - `assessCore` order: insert the switch route AFTER the `looksLikeRelay` block (normalize.ts L352-354) and BEFORE the `NON_BREAKER` block (L356): `if (looksLikeSwitch(x)) return assessSwitch(x, voltageBasis)`. New order: instrument -> transformer -> GFP -> relay -> SWITCH -> NON_BREAKER -> breaker. This placement is load-bearing: a switch-anchored row carrying a shared medium token (`SF6 switch`, `vacuum switch`) has `looksLikeBreaker === true` today and would otherwise fall through to the breaker assessment (L362 `!looksLikeBreaker` is false); the switch route intercepts it first.
 - New `AssessmentCode` members: `switch_recognized`, `switch_parent_conflict`. (No `switch_type_unparsed`: a generic anchor with no type token is a RECOGNIZED switch with `switchType:'unknown'`, not a null - it produces a no-default scope_pending, per D2.)
@@ -125,7 +128,7 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
 
 ### 5. Quantify (`quantify/quantify.ts`)
 - Add an `s.kind === 'switch'` branch to `specKey` BEFORE the transformer fall-through: `[s.kind, s.switchType, s.voltageClass ?? '-', s.fused === undefined ? '-' : (s.fused ? 'F' : 'NF'), s.source.block ?? '-'].join('|')`. (`ampRating` is evidence, NOT in the key - two switches of the same type/voltage/fused aggregate.) `deviceId` kind-prefixes (`switch:TAG`), so switch rows never cross-bucket with breakers.
-- `pickAuthoritative`: add a `richSwitch = auths.find((o) => o.kind === 'switch' && o.switchType !== 'unknown')` preference (mirrors the relay role preference) so a detailed schedule row naming the type wins over a sparse generic one-line occurrence for the same device.
+- `pickAuthoritative`: add a `richSwitch = auths.find((o) => o.kind === 'switch' && (o.switchType !== 'unknown' || o.fused !== undefined || o.ampRating !== undefined))` preference (mirrors the relay role preference, broadened per spec review). It must keep ANY recognition evidence - critically `fused:false` from an `NF disconnect` row whose `switchType` is still `unknown` - so a sparse same-tag one-line occurrence cannot win and erase the evidence that drives the LV non-fused catalog-gap proof.
 
 ### 6. Disposition + contract (`buckets/types.ts`, `emit/emit.ts`, `runner/report.ts`)
 - `buckets/types.ts`: `OperatorQuestionCode` += `switch_scope_pending` | `switch_catalog_gap` | `switch_parent_conflict`; `DispositionReasonCode` += same three; `TakeoffFinding.code` += `switch_catalog_gap` (ONLY catalog_gap is a finding; the parent-conflict is a question/disposition code, not a finding). Add optional contract evidence fields to `ScopePendingLine`: `switchType?: string` + `fused?: boolean`; and the same optional fields to `ApparatusDisposition` (carried alongside candidateRefs/provisionalDefaultRef/scopeQuestion so Gate-2/UI consumers have the recognition evidence).
@@ -147,7 +150,7 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
 
 ## R1 (estimating authority) - provisional
 
-`SWITCH_R1_RATIFIED = false`. R1 here = (a) the voltage-x-type -> default-ref table (the `SWITCH_GROUPS` defaults), (b) the `parseSwitchType` precedence (vista > motor_operated > sf6 > oil > cutout > vacuum > fused_disconnect > open), (c) the open-vs-enclosed default tier (the enclosed "Switch LV - Fused Disconnect" 1.0h as the LV default over the "(Open)" 2.0h variant), and (d) the bounded catalog gaps (LV non-fused, vacuum, HV fused/cutout/oil/SF6). Surfaced as `r1Ratified:false` on the scope_pending line. Never auto-priced, so fail-closed. The SME confirms the convention + gaps, then flips it.
+`SWITCH_R1_RATIFIED = false`. R1 here = (a) the voltage-x-type -> default-ref table (the `SWITCH_GROUPS` defaults), (b) the `parseSwitchType` precedence (vista > motor_operated > sf6 > oil > cutout > vacuum > fused_disconnect > open), (c) the `air switch -> open` mapping (an air-open switch maps to the firm "Open" refs), (d) the open-vs-enclosed default tier (the enclosed "Switch LV - Fused Disconnect" 1.0h as the LV default over the "(Open)" 2.0h variant), and (e) the bounded catalog gaps (LV non-fused, LV open, vacuum, HV fused/cutout/oil/SF6). Surfaced as `r1Ratified:false` on the scope_pending line. Never auto-priced, so fail-closed. The SME confirms the convention + mappings + gaps, then flips it.
 
 ## Testing (TDD; operator must-pin tests in bold)
 
@@ -171,6 +174,9 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
 - **#18 Runner:** a switch-only extraction -> `partial_preview`; the scope_pending carried in the report with `switchType`/`fused`.
 - **#19 (the real golden):** a service one-line with a fused disconnect + an MV switch + a REAL breaker + an assembly (switchgear) coexisting -> the switches scope_pend to their groups, the breaker prices, the assembly is excluded (not a switch), `partial_preview`; a Gate-2 stand-in prices a chosen switch ref via estimator-core.
 - **#20 BREAKER AND TRANSFORMER AND RELAY AND GFP AND INSTRUMENT goldens byte-identical** (five prior families regression-guard the sixth). Includes the build-time watch: confirm no existing golden row that today falls through to the breaker assessment via a shared medium token (`SF6 switch`-shaped) moves into the switch family.
+- **#21 (spec-review Important - AF/AT/LSIG guard + amp parse):** a switch-anchored row with a SINGLE `800AF` (no `/`-pair) -> `switch_parent_conflict`; a switch-anchored row with a trip-function descriptor only (e.g. "Disconnect DS-1 LSIG", no AF/AT) -> `switch_parent_conflict`; `parseAmpRating` reads "400A" as 400 but returns undefined for "800AF"/"800AT" (AF/AT never become switch amp evidence).
+- **#22 (spec-review Refinement - air switch -> open):** "Air Switch" + MV + tag -> `switchType:'open'` -> `open:MV` group, default `Switch MV - Open`; "Air Switch" + HV -> default `Switch HV - Open`; "Air Switch" + LV -> `switch_catalog_gap` (`open:LV` absent); "Air Switch" no voltage -> the wider open group, NO default. (Negative: "air frame" with no switch anchor is NOT pulled into the switch family - it stays its breaker path.)
+- **#23 (spec-review Medium - rich switch keeps fused evidence):** for one tag, an authoritative schedule row "NF Disconnect" (fused:false, switchType unknown) + a sparser authoritative one-line occurrence (no fused signal) -> `pickAuthoritative` returns the `fused:false` occurrence as the representative, so an LV bank yields `switch_catalog_gap` (the non-fused gap proof is NOT erased by the sparse sibling).
 
 ## Out of scope (V2)
 
