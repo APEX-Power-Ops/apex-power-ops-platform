@@ -38,9 +38,11 @@ const SWITCH_FRAME_TRIP = /\b\d{2,6}\s*A[FT]\b/i
 // (L+B), LV (L+V), and English words like LESS/LIGHT.
 const SWITCH_TRIP_FN = /\bL(?=[SIGE]{2})(S?)(I?)(G?)(E?)\b/i
 // The non-fused attribute - consumed ONLY when a real anchor is present (looksLikeSwitch gates it).
-// ROOT pattern for negated-fused: either prefix (non|un) x either stem (fused|fusible), plus the "NF" abbr.
-// Closes the whole class (non-fused / unfused / non-fusible / un-fusible) so no fused-synonym leaks through.
-const SWITCH_NF = /\bN\.?F\.?\b|\b(non|un)[\s-]?fus(ed|ible)\b/i
+// Split into two strengths so parseFused can rank them: explicit NEGATED wording (non|un x fused|fusible - the
+// whole negated-fused class) is authoritative, while the bare NF ABBREVIATION is weaker than explicit fused
+// wording (so a fused device whose TAG starts with NF, e.g. "NF-1 Fused Disconnect", is not misread as non-fused).
+const NEGATED_FUSED = /\b(non|un)[\s-]?fus(ed|ible)\b/i
+const NF_ABBR = /\bN\.?F\.?\b/i
 // PLAIN continuous amps ONLY: the \bA\b boundary means 800AF / 800AT do NOT match (AF/AT can never be amps).
 const SWITCH_AMP = /(?<!\d)(\d{2,6})\s*A\b/i
 
@@ -157,14 +159,15 @@ export function parseSwitchType(raw: string): SwitchType {
   if (/\boil\b/i.test(raw)) return 'oil'
   if (/\bcutout\b/i.test(raw)) return 'cutout'
   if (/\bvacuum\b/i.test(raw)) return 'vacuum'                          // recognized; no priced ref -> gap
-  if (/fus(ed|ible)/i.test(raw) && !/(non|un)[\s-]?fus(ed|ible)/i.test(raw)) return 'fused_disconnect'  // NOT any negated-fused form
+  if (/fus(ed|ible)/i.test(raw) && !NEGATED_FUSED.test(raw)) return 'fused_disconnect'  // NOT any negated-fused form
   if (/air\s+switch|\bopen\b/i.test(raw)) return 'open'                 // air-open switches ARE the firm "Open" refs
   return 'unknown'                                                       // generic disconnect/switch anchor -> group, no default
 }
 
 export function parseFused(raw: string): boolean | undefined {
-  if (SWITCH_NF.test(raw)) return false
-  if (/fus(ed|ible)/i.test(raw)) return true
+  if (NEGATED_FUSED.test(raw)) return false            // "non-fused"/"unfused"/"non-fusible" -> non-fused (authoritative)
+  if (/fus(ed|ible)/i.test(raw)) return true           // explicit "fused"/"fusible" wording beats a bare NF tag prefix
+  if (NF_ABBR.test(raw)) return false                  // bare "NF" abbreviation - only when there is no explicit fused wording
   return undefined
 }
 

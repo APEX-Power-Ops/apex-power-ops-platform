@@ -69,6 +69,8 @@ describe('parseFused / parseAmpRating', () => {
     expect(parseFused('Non-Fusible Switch')).toBe(false)
     expect(parseFused('Fused Disconnect')).toBe(true)
     expect(parseFused('Fusible Switch')).toBe(true)
+    expect(parseFused('NF-1 Fused Disconnect')).toBe(true)   // Codex P2 (pass 4): explicit "Fused" beats the NF-1 TAG prefix
+    expect(parseFused('NF-1 Disconnect')).toBe(false)        // a bare NF tag with no explicit fused wording -> non-fused
     expect(parseFused('Disconnect Switch')).toBeUndefined()
   })
   it('parseAmpRating reads PLAIN amps only - AF/AT are NOT amps', () => {
