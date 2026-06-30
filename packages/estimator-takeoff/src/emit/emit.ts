@@ -1,6 +1,6 @@
 import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from '@apex/estimator-core'
 import type { ExtractionArtifact, ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, TransformerSignature, RelaySignature, GfpSignature, InstrumentTransformerSignature } from '../signature/types'
+import type { ApparatusSignature, BreakerSignature, TransformerSignature, RelaySignature, GfpSignature, InstrumentTransformerSignature, SwitchSignature } from '../signature/types'
 import { assessResolvedApparatus } from '../signature/normalize'
 import type { AssessmentCode } from '../signature/normalize'
 import { applyVoltageAssertions } from '../signature/voltage-assertions'
@@ -15,6 +15,8 @@ import { matchGfp } from '../catalog/gfp-map'
 import { GFP_R1_RATIFIED } from '../catalog/gfp-map.data'
 import { matchInstrumentTransformer } from '../catalog/instrument-transformer-map'
 import { ITX_R1_RATIFIED } from '../catalog/instrument-transformer-map.data'
+import { matchSwitch } from '../catalog/switch-map'
+import { SWITCH_R1_RATIFIED } from '../catalog/switch-map.data'
 import type {
   MatchedLine, OperatorQuestion, TakeoffResult, UnmatchedCandidate, TakeoffFinding,
   ApparatusDisposition, ApparatusDispositionStatus, DispositionReasonCode, ScopePendingLine,
@@ -41,6 +43,8 @@ const ASSESS_TO_REASON: Record<Exclude<AssessmentCode, 'classified'>, Dispositio
   instrument_transformer_parent_conflict:   'instrument_transformer_parent_conflict',
   instrument_transformer_power_conflict:    'instrument_transformer_power_conflict',
   instrument_transformer_type_unparsed:     'instrument_transformer_type_unparsed',
+  switch_recognized:        'switch_scope_pending',   // unreachable (has signature); present for exhaustiveness
+  switch_parent_conflict:   'switch_parent_conflict',
 }
 
 // baseDisp creates a LOUD sentinel disposition: its `reason` is UNSTAMPED so assertExhaustive can detect any
@@ -230,6 +234,31 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
         for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'instrument_transformer_catalog_gap', reason, undefined, line.lineKey)
         findings.push({ code: 'instrument_transformer_catalog_gap', severity: 'warning', message: reason, context: isig.tag ?? isig.source.sheet })
         questions.push({ question: `Catalog gap: ${reason} - estimator must author/confirm a ref before pricing.`, context: isig.tag ?? isig.source.sheet, code: 'instrument_transformer_catalog_gap' })
+      }
+      continue
+    }
+    if (sig.kind === 'switch') {
+      const ssig: SwitchSignature = sig
+      const scope = matchSwitch(ssig)
+      if (scope) {
+        scopePendingLines.push({
+          candidateRefs: scope.group, provisionalDefaultRef: scope.defaultRef, r1Ratified: SWITCH_R1_RATIFIED,
+          scopeQuestion: scope.scopeQuestion, qty: line.qty, block: ssig.source.block ?? ssig.source.sheet, line,
+          switchType: ssig.switchType, fused: ssig.fused,
+        })
+        for (const i of line.memberIndices) {
+          stamp(dispositions, i, 'scope_pending', 'switch_scope_pending', scope.scopeQuestion, undefined, line.lineKey)
+          const disp = dispositions[i]!
+          disp.candidateRefs = scope.group; disp.provisionalDefaultRef = scope.defaultRef; disp.scopeQuestion = scope.scopeQuestion
+          disp.switchType = ssig.switchType; disp.fused = ssig.fused
+        }
+        questions.push({ question: scope.scopeQuestion, context: `${ssig.tag ?? ssig.source.sheet} (switch ${ssig.switchType}, ${ssig.voltageClass ?? 'unknown'}V; candidate group: ${scope.group.join(' | ')})`, code: 'switch_scope_pending' })
+      } else {
+        const reason = `recognized switch (${ssig.switchType}, ${ssig.voltageClass ?? 'unknown'}V, fused=${ssig.fused ?? '?'}) - no applicable priced ref`
+        unmatchedCandidates.push({ reason, line })
+        for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'switch_catalog_gap', reason, undefined, line.lineKey)
+        findings.push({ code: 'switch_catalog_gap', severity: 'warning', message: reason, context: ssig.tag ?? ssig.source.sheet })
+        questions.push({ question: `Catalog gap: ${reason} - estimator must author/confirm a ref before pricing.`, context: ssig.tag ?? ssig.source.sheet, code: 'switch_catalog_gap' })
       }
       continue
     }
