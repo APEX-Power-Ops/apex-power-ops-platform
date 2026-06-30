@@ -1,0 +1,9 @@
+{
+  "pdf": "itx-mixed.pdf",
+  "apparatus": [
+    { "raw": "MSB-1 1600AF/1600AT LSIG DRAW-OUT", "tag": "MSB-1", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line", "busVoltageV": 480, "candidateKind": "breaker" },
+    { "raw": "T-1 1500KVA 480V DRY-TYPE XFMR", "tag": "T-1", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line", "busVoltageV": 480 },
+    { "raw": "CURRENT TRANSFORMER MV SET OF 3 600:5", "tag": "CT-1", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line", "busVoltageV": 4160 },
+    { "raw": "POTENTIAL TRANSFORMER - MV", "tag": "PT-1", "sheet": "E01-11", "page": 1, "bbox": [0,0,1,1], "evidence": "one-line", "busVoltageV": 4160 }
+  ]
+}
