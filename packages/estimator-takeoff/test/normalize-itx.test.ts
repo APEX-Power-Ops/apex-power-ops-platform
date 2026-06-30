@@ -28,6 +28,10 @@ describe('instrument-transformer recognition', () => {
     const s = itx(assessApparatus(row({ raw: 'CURRENT TRANSFORMER (3) MV', tag: 'CT-1' })))
     expect(s?.packagingEvidence).toBe('three_phase'); expect(s?.phaseCount).toBe(3)
   })
+  it('explicit Individual token -> packaging individual + packagingEvidence individual_token (P2-b)', () => {
+    const s = itx(assessApparatus(row({ raw: 'CCVT VOLTAGE TRANSFORMER - INDIVIDUAL', tag: 'CCVT-1' })))
+    expect(s?.packaging).toBe('individual'); expect(s?.packagingEvidence).toBe('individual_token')
+  })
   it('parent conflict: candidateKind itx + AF/AT -> parent_conflict, null sig', () => {
     const a = assessApparatus(row({ raw: '800AF/800AT LSIG', tag: 'MSB-1', candidateKind: 'instrument_transformer' }))
     expect(a.assessmentCode).toBe('instrument_transformer_parent_conflict')

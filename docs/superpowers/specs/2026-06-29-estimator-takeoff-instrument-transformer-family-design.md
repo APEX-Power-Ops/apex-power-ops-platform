@@ -1,6 +1,6 @@
 # Estimator-Takeoff Instrument Transformer (CT / VT / CCVT) Family (V1) - Design
 
-Status: SPEC Rev 2.2 (operator-ratified packet 004; folds D1-D4 + the 2 operator patches [D3 additive-exclusion-not-kVA-requirement; D2 default-only-with-packaging-evidence] + the contract patch [phaseCount + packagingEvidence on signature + scope_pending + report] + the 7 must-pin tests; Rev 2.1 folds 4 spec-review patches: A-prime bare-abbreviation recognition [instrument-shaped tag required], instrument_transformer_parent_conflict guard [instrument-before-breaker must not suppress a real breaker], phase/default-gate consistency [a 3-phase notation produces packaging evidence], and packagingEvidence/phaseCount also on ApparatusDisposition; Rev 2.2 folds 4 plan-review [Codex/IRP] patches: P1 ranked set-default selection [explicit "Set of 3" wins over a broader bushing "(Set)"], P2 type-unparsed fail-closed [parseItxType never fabricates ct; no-type-token instrument -> instrument_transformer_type_unparsed], P3 LV/HV PT bounded catalog_gap [vt:LV / vt:HV present-and-empty, never the generic "(set)"], and the abbreviation regex made case-insensitive). Date: 2026-06-29.
+Status: SPEC Rev 2.2 (operator-ratified packet 004; folds D1-D4 + the 2 operator patches [D3 additive-exclusion-not-kVA-requirement; D2 default-only-with-packaging-evidence] + the contract patch [phaseCount + packagingEvidence on signature + scope_pending + report] + the 7 must-pin tests; Rev 2.1 folds 4 spec-review patches: A-prime bare-abbreviation recognition [instrument-shaped tag required], instrument_transformer_parent_conflict guard [instrument-before-breaker must not suppress a real breaker], phase/default-gate consistency [a 3-phase notation produces packaging evidence], and packagingEvidence/phaseCount also on ApparatusDisposition; Rev 2.2 folds 4 plan-review [Codex/IRP] patches: P1 ranked set-default selection [explicit "Set of 3" wins over a broader bushing "(Set)"], P2 type-unparsed fail-closed [parseItxType never fabricates ct; no-type-token instrument -> instrument_transformer_type_unparsed], P3 LV/HV PT bounded catalog_gap [vt:LV / vt:HV present-and-empty, never the generic "(set)"], and the abbreviation regex made case-insensitive; Rev 2.3 folds the post-build Codex-IRP follow-up P2-b: an explicit "individual" token is parsed to packaging evidence individual_token so the matchInstrumentTransformer individual branch becomes reachable and Gate-2 gets the individual default where the group has one [the P2-a duplicate-tag evidence-merge in pickAuthoritative is deferred to V2/SME]). Date: 2026-06-29.
 Lane: estimator-takeoff/instrument-transformer-family-admission (off main fcbbe3c2). Dev-only; merge operator-gated.
 Packet: docs/superpowers/packets/estimator-takeoff-family-instrument-transformers.md (Part 6 decisions + Part 9 ratification).
 Predecessors (reused, must stay byte-identical): breaker engine + transformer slice (PR #49) + relay slice (PR #50) + GFP slice (PR #51).
@@ -47,7 +47,7 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
   ```ts
   export type ItxType = 'ct' | 'vt' | 'ccvt'
   export type ItxPackaging = 'individual' | 'set' | 'unknown'
-  export type ItxPackagingEvidence = 'set_token' | 'set_of_3' | 'three_phase' | 'symbol_group' | 'none'
+  export type ItxPackagingEvidence = 'set_token' | 'set_of_3' | 'three_phase' | 'individual_token' | 'symbol_group' | 'none'
   export interface InstrumentTransformerSignature extends BaseSignature {
     kind: 'instrument_transformer'
     itxType: ItxType
@@ -75,6 +75,7 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
   - `set of 3` -> `('set','set_of_3', 3)`;
   - `3\s*(phase|ph|-?phase)` / `3\s*x` / `\(3\)` -> `('set','three_phase', 3)`;
   - bare `\bset\b` -> `('set','set_token', undefined)`;
+  - explicit `\bindividual\b` -> `('individual','individual_token', undefined)` (P2-b: honors the firm's "- Individual" ref naming; makes the matchInstrumentTransformer individual branch reachable so Gate-2 gets the individual default where the group has a non-set ref);
   - else `('unknown','none', undefined)`.
   (A 3-phase NOTATION therefore ALWAYS yields packagingEvidence !== 'none' AND phaseCount=3, so it both drives the default gate and surfaces as count evidence - resolving the Rev-2.0 inconsistency. `symbol_group` evidence is producer-supplied via a reserved future field.)
 - `parseRatio(raw)`: capture `\d+:\d+` if present (evidence only).
@@ -136,6 +137,7 @@ Predecessors (reused, must stay byte-identical): breaker engine + transformer sl
 - **power conflict:** instrument noun + kVA/coolant -> `instrument_transformer_power_conflict`.
 - **type unparsed (plan-review P2):** a row flagged instrument (`candidateKind:'instrument_transformer'`) with only an opaque tag/ratio (e.g. raw "600:5", tag "X9") -> `instrument_transformer_type_unparsed`, null signature, NO scope_pending; a generic "INSTRUMENT TRANSFORMER" with no CT/PT/VT type -> same (never a fabricated `ct`).
 - **ranked set default (plan-review P1):** packaging `set` + evidence `set_of_3`/`three_phase` on MV CT -> `provisionalDefaultRef` is "Current Transformer MV - Set of 3" (the EXPLICIT Set-of-3), NOT the broader bushing "Current Transformer - Bushing, HV/MV (Set)".
+- **individual default (IRP follow-up P2-b):** an explicit "Individual" token (e.g. "CCVT Voltage Transformer - Individual", "Current Transformer ... Individual") -> packagingEvidence `individual_token` and a `provisionalDefaultRef` of the non-set ref where the group has one ("CCVT Voltage Transformer - Individual"; "Current Transformer - Bushing HV/MV"); falls back to group[0] where the group is set-only.
 - **LV/HV PT catalog gap (plan-review P3):** a vt at a KNOWN LV or HV voltage -> `catalog_gap` (null match), NEVER the generic "Potential Transformer (set)"; absent voltage (vt:unknown) still offers the wider group including "(set)".
 - **phase/default-gate consistency:** "Current Transformer (3) MV" + tag -> packagingEvidence `three_phase`, phaseCount 3, AND a provisionalDefaultRef IS set (the 3-phase notation drives the D2 gate); "Current Transformer MV" + tag (no packaging) -> NO default.
 - type recognition: CT/PT/CCVT -> correct itxType + candidate group.

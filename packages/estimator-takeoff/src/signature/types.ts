@@ -66,7 +66,7 @@ export interface GfpSignature extends BaseSignature {
 
 export type ItxType = 'ct' | 'vt' | 'ccvt'
 export type ItxPackaging = 'individual' | 'set' | 'unknown'
-export type ItxPackagingEvidence = 'set_token' | 'set_of_3' | 'three_phase' | 'symbol_group' | 'none'
+export type ItxPackagingEvidence = 'set_token' | 'set_of_3' | 'three_phase' | 'individual_token' | 'symbol_group' | 'none'
 export interface InstrumentTransformerSignature extends BaseSignature {
   kind: 'instrument_transformer'
   itxType: ItxType
