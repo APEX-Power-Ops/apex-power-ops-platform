@@ -64,4 +64,17 @@ export interface GfpSignature extends BaseSignature {
   // voltageClass stays optional (inherited): GFP voltage is contextual and never gates.
 }
 
+export type ItxType = 'ct' | 'vt' | 'ccvt'
+export type ItxPackaging = 'individual' | 'set' | 'unknown'
+export type ItxPackagingEvidence = 'set_token' | 'set_of_3' | 'three_phase' | 'symbol_group' | 'none'
+export interface InstrumentTransformerSignature extends BaseSignature {
+  kind: 'instrument_transformer'
+  itxType: ItxType
+  packaging: ItxPackaging
+  packagingEvidence: ItxPackagingEvidence   // CONTRACT: why packaging was inferred (drives the Gate-2 default gate)
+  phaseCount?: number                         // CONTRACT: observed phase/count evidence (e.g. 3)
+  ratio?: string                              // evidence/display only (e.g. "600:5")
+  // voltageClass stays optional (inherited): contextual; drives the group when present, never gates.
+}
+
 export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature | GfpSignature
