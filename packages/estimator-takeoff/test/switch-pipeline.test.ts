@@ -53,4 +53,16 @@ describe('switch pipeline', () => {
     expect(sp!.switchType).toBe('unknown')                       // not 'fused_disconnect'
     expect(sp!.provisionalDefaultRef).toBeUndefined()            // generic -> no default (never the fused ref)
   })
+  it('D3 grammar blocker: medium-carrying switch labels scope_pend, never priced as breakers', () => {
+    // The exact merge-blocker rows the operator flagged: each must NOT produce a matched breaker line.
+    for (const raw of ['Switch (SF6)', 'Switch, SF6', 'DISC SF6']) {
+      const res = runTakeoff(art([{ raw, tag: 'SW-1', busVoltageV: 15000 }]))
+      expect(res.matchedLines.length, raw).toBe(0)                                  // NOT a priced breaker
+      expect(res.scopePendingLines?.some((s) => s.switchType === 'sf6'), raw).toBe(true)
+    }
+    // Switch (Vacuum) -> catalog_gap (vacuum has no priced ref), still never a breaker
+    const vac = runTakeoff(art([{ raw: 'Switch (Vacuum)', tag: 'SW-2', busVoltageV: 15000 }]))
+    expect(vac.matchedLines.length).toBe(0)
+    expect(vac.findings.some((f) => f.code === 'switch_catalog_gap')).toBe(true)
+  })
 })
