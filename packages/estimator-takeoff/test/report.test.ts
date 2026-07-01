@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { runTakeoff } from '../src/emit/emit'
-import { reconcile, isClean } from '../src/runner/report'
+import { reconcile, isClean, renderReportText } from '../src/runner/report'
 import type { ExtractionArtifact } from '../src/extraction/types'
 
 const row = (o: Partial<any> & { raw: string }) => ({ sheet: 'E01-11', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', ...o })
@@ -70,5 +70,16 @@ describe('isClean zero-matched contract (operator-directed root fix)', () => {
     const report = reconcile(zeroArtifact, zeroMatchedResult as any)
     expect(report.status).toBe('partial_preview')
     expect(report.status).not.toBe('clean')
+  })
+})
+
+describe('renderReportText - finding auditability (IRP re-review P2)', () => {
+  it('carries findings and renders their detail so a sheet-voltage assumption is auditable', () => {
+    const a2: any = { pdf: 'x', apparatus: [row({ raw: 'FB-1 800AF/800AT LSIG', tag: 'FB-1', sheet: 'E01-05' })],
+      voltageAssertions: [{ voltageV: 480, tags: [], sheets: ['E01-05'], source: 'operator_sheet_voltage' }] }
+    const result = runTakeoff(a2)
+    const rep = reconcile(a2, result)
+    expect(rep.findings.some((f) => f.code === 'voltage_assertion_sheet_applied')).toBe(true)
+    expect(renderReportText(rep)).toContain('operator sheet-voltage assumption of 480V')
   })
 })
