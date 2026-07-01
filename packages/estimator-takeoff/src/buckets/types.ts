@@ -105,11 +105,14 @@ export type VoltageAssertionCode =
   | 'voltage_assertion_conflict'
   | 'voltage_assertion_invalid_voltage'
   | 'voltage_assertion_invalid_shape'
+  | 'voltage_assertion_unknown_sheet'
+  | 'voltage_assertion_sheet_conflict'
+  | 'voltage_assertion_sheet_applied'
 
 export interface TakeoffFinding {
   code: VoltageAssertionCode | 'transformer_catalog_gap' | 'relay_catalog_gap' | 'instrument_transformer_catalog_gap' | 'switch_catalog_gap'
   severity: FindingSeverity
   message: string
   context: string
-  detail?: { tag?: string; detectedV?: number; assertedV?: number; actor?: string; source?: string }
+  detail?: { tag?: string; detectedV?: number; assertedV?: number; actor?: string; source?: string; sheet?: string; sheets?: string[]; rows?: number }
 }

@@ -1,5 +1,5 @@
 import type { ExtractionArtifact } from '../extraction/types'
-import type { TakeoffResult, ApparatusDisposition } from '../buckets/types'
+import type { TakeoffResult, ApparatusDisposition, TakeoffFinding } from '../buckets/types'
 
 export interface ReconciliationReport {
   status: 'clean' | 'partial_preview'
@@ -17,6 +17,7 @@ export interface ReconciliationReport {
   }
   accounted: boolean              // every input row has a disposition AND index-aligned
   dispositions: ApparatusDisposition[]
+  findings: TakeoffFinding[]      // full finding list (not just counts) so the report + export are auditable
   envelopeTotals?: { bid_cents: number }   // present when an envelope was emitted
   scopePending: { lineKey: string; tag?: string; qty: number; candidateRefs: string[]; provisionalDefaultRef?: string; r1Ratified: boolean; scopeQuestion: string; packagingEvidence?: string; phaseCount?: number; switchType?: string; fused?: boolean }[]
 }
@@ -94,7 +95,7 @@ export function reconcile(
   }))
   const report: ReconciliationReport = {
     status: isClean(result) ? 'clean' : 'partial_preview',
-    counts, accounted, dispositions: d, scopePending,
+    counts, accounted, dispositions: d, findings: result.findings, scopePending,
   }
   if (envelopeTotals) report.envelopeTotals = envelopeTotals
   return report
@@ -117,6 +118,10 @@ export function renderReportText(report: ReconciliationReport): string {
   out.push(`  findings             ${c.error_findings} error, ${c.warning_findings} warning`)
   out.push(`  accounted            ${report.accounted}`)
   if (report.envelopeTotals) out.push(`  bid_cents            ${report.envelopeTotals.bid_cents}`)
+  if (report.findings.length > 0) {
+    out.push('  findings detail:')
+    for (const f of report.findings) out.push(`    [${f.severity}] ${f.code}: ${f.message}`)
+  }
   out.push('')
   out.push(`  ${pad('idx', 5)}${pad('status', 20)}${pad('reasonCode', 32)}${pad('tag', 18)}ref`)
   for (const x of report.dispositions) {

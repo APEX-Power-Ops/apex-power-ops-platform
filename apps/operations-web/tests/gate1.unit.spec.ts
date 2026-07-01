@@ -57,6 +57,13 @@ test('mergeAssertionsByTag keeps unrelated existing tags', () => {
   expect(merged.some((m) => m.tags.includes('FB-1') && m.voltageV === 480)).toBe(true)
 })
 
+test('mergeAssertionsByTag PRESERVES a sheet-only assertion when a tag voltage is applied (IRP P2-1)', () => {
+  const existing = [{ voltageV: 480, tags: [] as string[], sheets: ['E01-05'], source: 'operator_sheet_voltage' as const }]
+  const merged = mergeAssertionsByTag(existing, buildAssertions([{ tag: 'FB-1', voltageV: 208 }], 'JLS'))
+  expect(merged.some((m) => m.tags.length === 0 && (m.sheets ?? []).includes('E01-05') && m.voltageV === 480)).toBe(true)
+  expect(merged.some((m) => m.tags.includes('FB-1') && m.voltageV === 208)).toBe(true)
+})
+
 import { buildExport } from '../lib/gate1'
 
 test('buildExport omits envelope and labels partial_preview when not clean', async () => {

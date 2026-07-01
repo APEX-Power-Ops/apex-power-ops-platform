@@ -62,5 +62,8 @@ function validateAssertionShape(va: unknown, p: string): void {
   if (!isObj(va)) fail(p, 'object', va)
   const v = va as Record<string, unknown>
   if (typeof v['voltageV'] !== 'number') fail(`${p}.voltageV`, 'number', v['voltageV'])
-  if (!Array.isArray(v['tags']) || (v['tags'] as unknown[]).length === 0 || !(v['tags'] as unknown[]).every(isStr)) fail(`${p}.tags`, 'non-empty string[]', v['tags'])
+  const tags = v['tags']; const sheets = v['sheets']
+  if (!Array.isArray(tags) || !(tags as unknown[]).every(isStr)) fail(`${p}.tags`, 'string[]', tags)
+  if (sheets !== undefined && (!Array.isArray(sheets) || !(sheets as unknown[]).every(isStr))) fail(`${p}.sheets`, 'string[]', sheets)
+  if ((tags as unknown[]).length === 0 && !(Array.isArray(sheets) && (sheets as unknown[]).length > 0)) fail(`${p}.tags`, 'non-empty tags or sheets', va)
 }

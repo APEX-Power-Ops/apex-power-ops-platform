@@ -83,9 +83,15 @@ export function buildAssertions(entries: { tag: string; voltageV: number }[], ac
 // duplicate-tag error. Each output assertion carries exactly one tag.
 export function mergeAssertionsByTag(existing: VoltageAssertion[] | undefined, gate1: VoltageAssertion[]): VoltageAssertion[] {
   const byTag = new Map<string, VoltageAssertion>()
-  for (const a of existing ?? []) for (const tag of a.tags) byTag.set(tag, { ...a, tags: [tag] })
-  for (const a of gate1) for (const tag of a.tags) byTag.set(tag, { ...a, tags: [tag] })
-  return [...byTag.values()]
+  const sheetScoped: VoltageAssertion[] = []
+  const collect = (a: VoltageAssertion) => {
+    // Sheet-scoped operator attestations carry no tags - pass them through untouched (de-dup is per-tag only).
+    if (a.tags.length === 0 && a.sheets && a.sheets.length > 0) { sheetScoped.push(a); return }
+    for (const tag of a.tags) byTag.set(tag, { ...a, tags: [tag] })
+  }
+  for (const a of existing ?? []) collect(a)
+  for (const a of gate1) collect(a)
+  return [...sheetScoped, ...byTag.values()]
 }
 
 export interface Gate1Export { combined: Record<string, unknown>; runnerArtifact: ExtractionArtifact }
