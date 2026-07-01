@@ -43,6 +43,7 @@ export function applyVoltageAssertions(
   if (rawAssertions.length === 0) return { resolved: passthrough(), findings }
 
   const tainted = new Set<string>()
+  const taintedSheets = new Set<string>()
   const validPairs: ValidPair[] = []
   const validSheetPairs: ValidSheetPair[] = []
 
@@ -50,9 +51,13 @@ export function applyVoltageAssertions(
   // then voltage validation; taint tags of invalid entries (invalid -> error + taint).
   for (const item of rawAssertions as unknown[]) {
     const a = item as { voltageV?: unknown; tags?: unknown; sheets?: unknown; actor?: string; source?: string }
-    const tags = Array.isArray(a?.tags) ? (a.tags as string[]) : []
-    const sheets = Array.isArray(a?.sheets) ? (a.sheets as string[]) : []
-    if (a == null || typeof a !== 'object' || (tags.length === 0 && sheets.length === 0)) {
+    const rawTags = a?.tags
+    const rawSheets = a?.sheets
+    const tagsOk = rawTags === undefined || (Array.isArray(rawTags) && rawTags.every((t) => typeof t === 'string'))
+    const sheetsOk = rawSheets === undefined || (Array.isArray(rawSheets) && rawSheets.every((s) => typeof s === 'string'))
+    const tags = Array.isArray(rawTags) ? (rawTags as string[]) : []
+    const sheets = Array.isArray(rawSheets) ? (rawSheets as string[]) : []
+    if (a == null || typeof a !== 'object' || !tagsOk || !sheetsOk || (tags.length === 0 && sheets.length === 0)) {
       findings.push({
         code: 'voltage_assertion_invalid_shape', severity: 'error',
         message: 'Malformed voltage assertion (no tags and no sheets) - rejected.',
@@ -71,6 +76,7 @@ export function applyVoltageAssertions(
         })
       }
       for (const sheet of sheets) {
+        taintedSheets.add(sheet)
         findings.push({
           code: 'voltage_assertion_invalid_voltage', severity: 'error',
           message: `Voltage assertion ${String(a.voltageV)} for sheet ${sheet} is not a positive integer - rejected.`,
@@ -121,8 +127,8 @@ export function applyVoltageAssertions(
   }
 
   // Sheet-scoped assertions (operator sheet-voltage). Precedence tag > detected > sheet: these fill only
-  // rows with no per-tag assertion and no detected bus voltage. Same taint discipline as tags.
-  const taintedSheets = new Set<string>()
+  // rows with no per-tag assertion and no detected bus voltage. Fail-closed like tags: an invalid-voltage
+  // sheet or a sheet asserted at >1 DISTINCT voltage is tainted (a same-voltage repeat is not a conflict).
   const bySheet = new Map<string, ValidSheetPair[]>()
   for (const p of validSheetPairs) (bySheet.get(p.sheet) ?? bySheet.set(p.sheet, []).get(p.sheet)!).push(p)
   for (const [sheet, ps] of bySheet) {
@@ -187,16 +193,26 @@ export function applyVoltageAssertions(
     return { apparatus, voltageBasis: 'none' }
   })
 
-  // Surface the sheet-level assumption so the envelope never hides that it rests on an operator block attestation.
+  // Surface the sheet-level assumption so the envelope never hides that it rests on an operator block
+  // attestation. One warning per DISTINCT applied voltage, naming the voltage and the sheets it filled.
   if (sheetApplied.size > 0) {
-    const appliedSheets = [...sheetApplied.keys()].sort()
-    const totalApplied = [...sheetApplied.values()].reduce((sum, n) => sum + n, 0)
-    findings.push({
-      code: 'voltage_assertion_sheet_applied', severity: 'warning',
-      message: `${totalApplied} row(s) priced under an operator sheet-voltage assumption (sheets: ${appliedSheets.join(', ')}; source operator_sheet_voltage).`,
-      context: `operator_sheet_voltage (${appliedSheets.length} sheet(s))`,
-      detail: { sheets: appliedSheets, rows: totalApplied },
-    })
+    const byVoltage = new Map<number, { sheets: string[]; rows: number }>()
+    for (const [sheet, rows] of sheetApplied) {
+      const v = sheetEffective.get(sheet)!.voltageV
+      const g = byVoltage.get(v) ?? { sheets: [], rows: 0 }
+      g.sheets.push(sheet)
+      g.rows += rows
+      byVoltage.set(v, g)
+    }
+    for (const [v, g] of byVoltage) {
+      const sheets = g.sheets.sort()
+      findings.push({
+        code: 'voltage_assertion_sheet_applied', severity: 'warning',
+        message: `${g.rows} row(s) priced under an operator sheet-voltage assumption of ${v}V (sheets: ${sheets.join(', ')}; source operator_sheet_voltage).`,
+        context: `operator_sheet_voltage (${sheets.length} sheet(s) @ ${v}V)`,
+        detail: { sheets, rows: g.rows },
+      })
+    }
   }
 
   return { resolved, findings }

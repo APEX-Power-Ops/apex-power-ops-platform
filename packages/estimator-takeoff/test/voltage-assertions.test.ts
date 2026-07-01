@@ -209,3 +209,26 @@ describe('applyVoltageAssertions - sheet-scoped (sheet-voltage lane)', () => {
     expect(resolved[0]!.apparatus.busVoltageV).toBe(480)
   })
 })
+
+describe('applyVoltageAssertions - sheet fail-closed hardening (IRP P2-2/P2-3)', () => {
+  const on = (tag: string | undefined, sheet: string, busVoltageV?: number): ExtractedApparatus => ({
+    raw: `${tag ?? 'X'} 800AF/800AT LSIG`, tag, sheet, page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', block: 'B', busVoltageV,
+  })
+  const art2 = (apparatus: ExtractedApparatus[], va: any[]): ExtractionArtifact => ({ pdf: 'x', apparatus, voltageAssertions: va })
+
+  it('(h) malformed tags (non-array) with sheets present -> invalid_shape, not applied', () => {
+    const { resolved, findings } = applyVoltageAssertions(art2([on(undefined, 'E01-05')], [{ voltageV: 480, tags: 'A', sheets: ['E01-05'] }]))
+    expect(findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
+    expect(resolved[0]!.voltageBasis).toBe('none')
+  })
+  it('(i) malformed sheets (non-string element) with tags present -> invalid_shape', () => {
+    const { findings } = applyVoltageAssertions(art2([on('A', 'E01-05')], [{ voltageV: 480, tags: ['A'], sheets: [5] }]))
+    expect(findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
+  })
+  it('(j) invalid-voltage sheet assertion taints the sheet (sibling valid entry cannot fill)', () => {
+    const { resolved, findings } = applyVoltageAssertions(art2([on(undefined, 'E01-05')],
+      [{ voltageV: 0, tags: [], sheets: ['E01-05'] }, { voltageV: 480, tags: [], sheets: ['E01-05'], source: 'operator_sheet_voltage' }]))
+    expect(findings.some((f) => f.code === 'voltage_assertion_invalid_voltage')).toBe(true)
+    expect(resolved[0]!.voltageBasis).toBe('none')
+  })
+})
