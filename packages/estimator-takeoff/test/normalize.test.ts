@@ -41,7 +41,7 @@ describe('normalizeApparatus — parse', () => {
 describe('normalizeApparatus — trip functions are text-only (no fabrication)', () => {
   it('does not fabricate G from "GE"', () => {
     const s = asBreaker(normalizeApparatus(mk('ACME-FB GE 800AF/800AT', 480)))
-    expect(s.functions).toEqual([]); expect(s.mounting).toBe('unknown'); expect(s.mountingBasis).toBe('none')
+    expect(s.functions).toEqual([]); expect(s.mounting).toBe('molded_case'); expect(s.mountingBasis).toBe('estimating_baseline')
   })
   it('does not fabricate functions from "SE"', () => {
     expect(asBreaker(normalizeApparatus(mk('PNL-SE 600AF/600AT', 480))).functions).toEqual([])
@@ -67,15 +67,16 @@ describe('normalizeApparatus — construction (mounting) + provenance', () => {
     const s = asBreaker(normalizeApparatus(mk('MSB-P1-110-GB 4000AF/4000AT LSIG', 480)))
     expect(s.mounting).toBe('draw_out'); expect(s.mountingBasis).toBe('estimating_baseline')
   })
-  it('stays unknown (fail-closed) for a 400AF LSI breaker with no evidence', () => {
+  it('baseline: a 400AF LSI breaker (no evidence) -> insulated_case / estimating_baseline', () => {
     const s = asBreaker(normalizeApparatus(mk('HF-P1-110-01-FB 400AF/300AT LSI', 480)))
-    expect(s.mounting).toBe('unknown'); expect(s.mountingBasis).toBe('none')
+    expect(s.mounting).toBe('insulated_case'); expect(s.mountingBasis).toBe('estimating_baseline')
   })
-  it('does NOT apply the baseline for a large frame without ground-fault (LS/LSI)', () => {
-    expect(asBreaker(normalizeApparatus(mk('BIG-FB 1600AF/1600AT LSI', 480))).mounting).toBe('unknown')
+  it('baseline: a large frame (>=800) with LS/LSI (no G) -> draw_out / estimating_baseline', () => {
+    const s = asBreaker(normalizeApparatus(mk('BIG-FB 1600AF/1600AT LSI', 480)))
+    expect(s.mounting).toBe('draw_out'); expect(s.mountingBasis).toBe('estimating_baseline')
   })
-  it('does not treat an incidental "DO"/"EO" token as real construction', () => {
-    expect(asBreaker(normalizeApparatus(mk('PANEL-DO-3 200AF/200AT LSI', 480))).mounting).toBe('unknown')
+  it('does not treat an incidental "DO"/"EO" token as draw-out (baseline -> insulated_case, not draw_out)', () => {
+    expect(asBreaker(normalizeApparatus(mk('PANEL-DO-3 200AF/200AT LSI', 480))).mounting).toBe('insulated_case')
   })
 })
 
@@ -171,5 +172,20 @@ describe('parseFunctions decoration hardening (mounting lane)', () => {
     expect(asBreaker(normalizeApparatus(mk('B 400AF/400AT LI', 480))).functions).toEqual(['L', 'I'])
     expect(asBreaker(normalizeApparatus(mk('B 4000AF/4000AT LSIG', 480))).functions).toEqual(['L', 'S', 'I', 'G'])
     expect(asBreaker(normalizeApparatus(mk('B 800AF/800AT LSIGE', 480))).functions).toEqual(['L', 'S', 'I', 'G'])
+  })
+})
+
+describe('mounting baseline cells (mounting lane)', () => {
+  it('frame present, no functions -> molded_case / estimating_baseline', () => {
+    const s = asBreaker(normalizeApparatus(mk('MC-1 250AF/250AT', 480)))
+    expect(s.mounting).toBe('molded_case'); expect(s.mountingBasis).toBe('estimating_baseline')
+  })
+  it('no frame -> unknown / none (fail-closed; catalog requires frame)', () => {
+    const s = asBreaker(normalizeApparatus(mk('NOFRAME-FB LSIG', 480)))
+    expect(s.mounting).toBe('unknown'); expect(s.mountingBasis).toBe('none')
+  })
+  it('precedence: explicit text mount (MCCB) wins over baseline even with functions', () => {
+    const s = asBreaker(normalizeApparatus(mk('PNL MCCB 250AF/250AT LSI', 480)))
+    expect(s.mounting).toBe('molded_case'); expect(s.mountingBasis).toBe('text')
   })
 })

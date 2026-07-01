@@ -149,9 +149,11 @@ function resolveMounting(
     return { mounting: x.mountingHint, basis: 'hint', conflict }
   }
   if (textMount !== 'unknown') return { mounting: textMount, basis: 'text', conflict: false }
-  const hasG = functions.includes('G')
-  if (frameA !== undefined && frameA >= 800 && hasG) return { mounting: 'draw_out', basis: 'estimating_baseline', conflict: false }
-  return { mounting: 'unknown', basis: 'none', conflict: false }
+  if (frameA === undefined) return { mounting: 'unknown', basis: 'none', conflict: false }
+  if (functions.length > 0) {
+    return { mounting: frameA >= 800 ? 'draw_out' : 'insulated_case', basis: 'estimating_baseline', conflict: false }
+  }
+  return { mounting: 'molded_case', basis: 'estimating_baseline', conflict: false }
 }
 
 // Transformer attribute parsers -- text-only, fail-closed.
