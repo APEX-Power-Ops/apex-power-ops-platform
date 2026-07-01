@@ -17,10 +17,11 @@ export interface ExtractedApparatus {
 
 export interface VoltageAssertion {
   voltageV: number          // engine requires Number.isInteger(voltageV) && voltageV > 0
-  tags: string[]            // device tags this assertion covers (>= 1)
+  tags: string[]            // device tags this assertion covers (may be empty IFF sheets is non-empty)
+  sheets?: string[]         // sheet ids (operator sheet-voltage; fallback - a tag assertion or detected voltage wins)
   actor?: string            // evidence-only; engine never branches on it
   note?: string             // evidence-only
-  source?: 'cli' | 'gate1'  // evidence-only
+  source?: 'cli' | 'gate1' | 'operator_sheet_voltage'  // evidence-only
   at?: string               // untrusted metadata; engine never trusts it for ordering/authority
 }
 

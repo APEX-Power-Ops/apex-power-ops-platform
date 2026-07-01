@@ -75,3 +75,20 @@ describe('parseArtifact', () => {
     expect(a.apparatus[0]!.candidateKind).toBe('instrument_transformer')
   })
 })
+
+describe('parseArtifact - sheet-voltage assertions (sheet-voltage lane)', () => {
+  it('accepts a sheet-only assertion (empty tags + non-empty sheets)', () => {
+    const a: any = ok(); a.voltageAssertions = [{ voltageV: 480, tags: [], sheets: ['E01-05'], source: 'operator_sheet_voltage' }]
+    expect(parseArtifact(a)).toBe(a)
+  })
+  it('accepts a tags-only assertion (back-compat)', () => {
+    const a: any = ok(); a.voltageAssertions = [{ voltageV: 480, tags: ['MSB-1'], source: 'cli' }]
+    expect(parseArtifact(a)).toBe(a)
+  })
+  it('rejects an assertion with neither tags nor sheets', () => {
+    expect(err((a) => (a.voltageAssertions = [{ voltageV: 480, tags: [] }])).path).toBe('voltageAssertions[0].tags')
+  })
+  it('rejects a non-string sheets entry', () => {
+    expect(err((a) => (a.voltageAssertions = [{ voltageV: 480, tags: [], sheets: [5] }])).path).toBe('voltageAssertions[0].sheets')
+  })
+})
