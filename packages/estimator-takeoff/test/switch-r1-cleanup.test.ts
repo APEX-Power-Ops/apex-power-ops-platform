@@ -81,21 +81,20 @@ describe('R1-c: load-interrupter switch anchor', () => {
 // dispatches before the switch route). NARROW: isSwitchAnchored AND \bvista\b.
 // ============================================================================
 describe('R1-b: Vista switch product -> switch; place-name / kVA transformers stay transformer', () => {
-  it('Vista switch product labels -> switch (vista), INCLUDING the bare "Pad-Mount Vista" product name (no "switch" word)', () => {
-    for (const r of ['Pad-Mount Vista', 'Pad Mount Vista', 'Pad Mount Vista Switch', 'Vista Switch', 'Vista Disconnect']) {
+  it('Vista switch product labels -> switch (vista), incl. bare + fully-hyphenated "Pad-Mount[-]Vista" (no "switch" word)', () => {
+    for (const r of ['Pad-Mount Vista', 'Pad Mount Vista', 'Pad-Mount-Vista', 'Pad Mount-Vista', 'Pad Mount Vista Switch', 'Vista Switch', 'Vista Disconnect']) {
       const a = assessApparatus(row(r, { tag: 'DS-V' }))
       expect(a.signature?.kind, r).toBe('switch')
       expect((a.signature as SwitchSignature).switchType, r).toBe('vista')
     }
-    expect(parseSwitchType('Pad-Mount Vista')).toBe('vista')
+    expect(parseSwitchType('Pad-Mount-Vista')).toBe('vista')
   })
   it('GUARD: real pad-mount / kVA transformers (no vista product name) STAY transformer', () => {
     for (const r of ['1500KVA Pad Mount Transformer', 'T-2 2500KVA PAD-MOUNT OIL XFMR', 'Pad-Mount Oil Transformer', '1500KVA DRY-TYPE XFMR FUSED DISCONNECT'])
       expect(assessApparatus(row(r, { tag: 'T-1', busVoltageV: 480 })).signature?.kind, r).toBe('transformer')
   })
-  it('GUARD (misprice class - opus finding): a real transformer at a "VISTA" site with a switch accessory STAYS transformer', () => {
-    // "vista" is a US place name (Vista/Chula Vista/Buena Vista). The product-name discriminator (pad-mount-vista /
-    // vista-switch/disc) plus the kVA/XFMR-evidence guard keep these real transformers in the transformer family.
+  it('GUARD (misprice class - opus): a real transformer at a "VISTA" site with a switch accessory STAYS transformer', () => {
+    // "vista" is a US place name (Vista/Chula Vista/Buena Vista). Product-name discriminator + the kVA/XFMR-evidence guard.
     for (const r of [
       '1500KVA DRY-TYPE XFMR FUSED DISCONNECT, VISTA SUB',
       'XFMR 750KVA DRY TYPE BUENA VISTA SUBSTATION DISCONNECT',
@@ -103,6 +102,24 @@ describe('R1-b: Vista switch product -> switch; place-name / kVA transformers st
       'T-5 2500KVA PAD-MOUNT XFMR w/ Vista disconnect',
     ])
       expect(assessApparatus(row(r, { tag: 'T-9', busVoltageV: 15000 })).signature?.kind, r).toBe('transformer')
+  })
+  it('GUARD (misprice class - MVA + non-oil-filled coolant, even with the vista PRODUCT phrase): STAYS transformer', () => {
+    // The veto must mirror the engine's own evidence: kVA OR MVA rating OR a liquid-coolant token (mineral oil / liquid),
+    // not just the literal "oil-filled". A real liquid/MVA transformer that contains "pad-mount vista" stays a transformer.
+    for (const r of [
+      '2.5 MVA PAD-MOUNT VISTA, MINERAL OIL, 12.47KV',
+      'PAD-MOUNT VISTA, LIQUID FILLED, 13.8KV',
+      'Pad-Mount Liquid Filled w/ Vista Disconnect',
+      '1000 KVA PAD-MOUNT VISTA',
+      'PAD-MOUNT VISTA OIL-FILLED 5MVA',
+    ])
+      expect(assessApparatus(row(r, { tag: 'T-8', busVoltageV: 12470 })).signature?.kind, r).toBe('transformer')
+  })
+  it('place-name "vista" on a non-Vista switch (load interrupter) types as unknown, NOT the Vista product (codex P2-3)', () => {
+    const a = assessApparatus(row('CHULA VISTA LOAD INTERRUPTER', { tag: 'LIS-9', busVoltageV: 15000 }))
+    expect(a.signature?.kind).toBe('switch')
+    expect((a.signature as SwitchSignature).switchType).toBe('unknown')   // generic load-interrupter -> Gate-2, no Vista default
+    expect(parseSwitchType('CHULA VISTA LOAD INTERRUPTER')).toBe('unknown')
   })
 })
 
