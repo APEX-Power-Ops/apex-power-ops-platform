@@ -44,7 +44,7 @@ const SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/
 const SWITCH_FRAME_TRIP = /\b\d{2,6}\s*A[FT]\b/i
 // A breaker trip-function descriptor on a switch row = conflict. NOTE: this DELIBERATELY diverges from
 // parseFunctions - parseFunctions tolerates trailing decoration (LSIGM/LSIM) for breaker pricing, but this
-// mirror keeps the strict `[SIGE]{2}` + trailing- shape ON PURPOSE, to preserve the false-positive guard
+// mirror keeps the strict `[SIGE]{2}` + trailing word-boundary shape ON PURPOSE, to preserve the false-positive guard
 // that stops tag prefixes (LS-1/LG-2) mis-flagging a legitimate disconnect as switch_parent_conflict.
 // REQUIRES >=2 function letters after L (lookahead `[SIGE]{2}`): a genuine descriptor is the LSI/LSIG family,
 // so "LSIG" matches while a bare 2-char TAG prefix carried into the raw (LS-1 / LG-2 / LI-7 / LE-3, where the
