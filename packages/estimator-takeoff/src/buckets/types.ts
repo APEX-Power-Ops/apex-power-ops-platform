@@ -114,5 +114,5 @@ export interface TakeoffFinding {
   severity: FindingSeverity
   message: string
   context: string
-  detail?: { tag?: string; detectedV?: number; assertedV?: number; actor?: string; source?: string }
+  detail?: { tag?: string; detectedV?: number; assertedV?: number; actor?: string; source?: string; sheet?: string; sheets?: string[]; rows?: number }
 }

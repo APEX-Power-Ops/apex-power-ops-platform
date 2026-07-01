@@ -166,3 +166,46 @@ describe('synthetic mixed-voltage: per-tag, not block-scoped', () => {
     expect(house.voltageBasis).toBe('asserted')
   })
 })
+describe('applyVoltageAssertions - sheet-scoped (sheet-voltage lane)', () => {
+  const on = (tag: string | undefined, sheet: string, busVoltageV?: number): ExtractedApparatus => ({
+    raw: `${tag ?? 'X'} 800AF/800AT LSIG`, tag, sheet, page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', block: 'B', busVoltageV,
+  })
+  const sheetAssert = (voltageV: number, sheets: string[]) => ({ voltageV, tags: [] as string[], sheets, source: 'operator_sheet_voltage' as const })
+
+  it('(a) fills an undetected + untagged row on an asserted sheet -> basis asserted + warning', () => {
+    const { resolved, findings } = applyVoltageAssertions(art([on(undefined, 'E01-05')], [sheetAssert(480, ['E01-05'])]))
+    expect(resolved[0]!.voltageBasis).toBe('asserted')
+    expect(resolved[0]!.apparatus.busVoltageV).toBe(480)
+    expect(findings.some((f) => f.code === 'voltage_assertion_sheet_applied' && f.severity === 'warning')).toBe(true)
+  })
+  it('(b) detected voltage WINS over a sheet assertion (no override, no conflict)', () => {
+    const { resolved, findings } = applyVoltageAssertions(art([on('A', 'E01-05', 415)], [sheetAssert(480, ['E01-05'])]))
+    expect(resolved[0]!.voltageBasis).toBe('detected')
+    expect(resolved[0]!.apparatus.busVoltageV).toBe(415)
+    expect(findings.some((f) => f.code === 'voltage_assertion_conflict')).toBe(false)
+  })
+  it('(c) a per-tag assertion WINS over a sheet assertion for the same row', () => {
+    const { resolved } = applyVoltageAssertions(art([on('A', 'E01-05')], [{ voltageV: 208, tags: ['A'] }, sheetAssert(480, ['E01-05'])]))
+    expect(resolved[0]!.voltageBasis).toBe('asserted')
+    expect(resolved[0]!.apparatus.busVoltageV).toBe(208)
+  })
+  it('(d) unknown sheet -> error finding', () => {
+    const { findings } = applyVoltageAssertions(art([on('A', 'E01-05')], [sheetAssert(480, ['E09-99'])]))
+    expect(findings.some((f) => f.code === 'voltage_assertion_unknown_sheet' && f.severity === 'error')).toBe(true)
+  })
+  it('(e) conflicting sheet voltage -> sheet_conflict error + not applied', () => {
+    const { resolved, findings } = applyVoltageAssertions(art([on(undefined, 'E01-05')], [sheetAssert(480, ['E01-05']), sheetAssert(208, ['E01-05'])]))
+    expect(findings.some((f) => f.code === 'voltage_assertion_sheet_conflict' && f.severity === 'error')).toBe(true)
+    expect(resolved[0]!.voltageBasis).toBe('none')
+  })
+  it('(f) empty tags AND empty sheets -> invalid_shape', () => {
+    const { findings } = applyVoltageAssertions(art([on('A', 'E01-05')], [{ voltageV: 480, tags: [] }]))
+    expect(findings.some((f) => f.code === 'voltage_assertion_invalid_shape')).toBe(true)
+  })
+  it('(g) tag-only assertions behave identically (regression)', () => {
+    const { resolved, findings } = applyVoltageAssertions(art([on('A', 'E01-05')], [{ voltageV: 480, tags: ['A'], source: 'cli' }]))
+    expect(findings).toEqual([])
+    expect(resolved[0]!.voltageBasis).toBe('asserted')
+    expect(resolved[0]!.apparatus.busVoltageV).toBe(480)
+  })
+})
