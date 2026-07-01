@@ -60,8 +60,10 @@ const SWITCH_AMP = /(?<!\d)(\d{2,6})\s*A\b/i
 // R1-b: the S&C "Vista" SWITCH product. Discriminate on the PRODUCT NAME ("Pad-Mount Vista" / "Vista Switch|Disconnect"),
 // NOT a bare "vista" - "vista" alone is a common US place name (Vista, Chula Vista, Buena Vista) and is NOT
 // transformer-disqualifying. Used in looksLikeTransformer to route a Vista switch out of the "pad mount" transformer token.
-// [\s-]+ between mount and vista so fully-hyphenated OCR forms ("Pad-Mount-Vista", "Pad Mount-Vista") match too.
-const VISTA_SWITCH = /\b(pad[\s-]?mount[\s-]+vista|vista\s+(switch|disconnect|disc))\b/i
+// [\s-]+ between mount and vista so fully-hyphenated OCR forms ("Pad-Mount-Vista") match. Product name in EITHER order
+// (mirrors the D3 SWITCH_NOUN grammar): "Pad-Mount Vista", "Vista Switch|Disconnect", and noun-first "Switch Vista" /
+// "DISC Vista". A bare place-name "vista" (e.g. "Chula Vista") NOT adjacent to a switch noun deliberately does NOT match.
+const VISTA_SWITCH = /\b(pad[\s-]?mount[\s-]+vista|vista\s+(switch|disconnect|disc)|(switch|disc)[\s-]+vista)\b/i
 // Strong power-transformer evidence that VETOES the Vista switch yield - mirrors the engine's own evidence set
 // (kVA OR MVA rating, transformer device noun, liquid coolant) so a real liquid/MVA transformer that merely contains a
 // "vista" product phrase stays a transformer. DELIBERATELY excludes the shared 'pad-mount' token and bare 'oil' (an

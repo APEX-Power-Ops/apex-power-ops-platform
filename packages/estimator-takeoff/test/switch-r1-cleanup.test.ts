@@ -81,13 +81,21 @@ describe('R1-c: load-interrupter switch anchor', () => {
 // dispatches before the switch route). NARROW: isSwitchAnchored AND \bvista\b.
 // ============================================================================
 describe('R1-b: Vista switch product -> switch; place-name / kVA transformers stay transformer', () => {
-  it('Vista switch product labels -> switch (vista), incl. bare + fully-hyphenated "Pad-Mount[-]Vista" (no "switch" word)', () => {
-    for (const r of ['Pad-Mount Vista', 'Pad Mount Vista', 'Pad-Mount-Vista', 'Pad Mount-Vista', 'Pad Mount Vista Switch', 'Vista Switch', 'Vista Disconnect']) {
+  it('Vista switch product labels -> switch (vista) in EITHER order, incl. bare/hyphenated + noun-first "Switch Vista"/"DISC Vista"', () => {
+    // noun-first "Switch Vista" / "DISC Vista" is the round-2->round-3 regression the mirror alternation closes.
+    for (const r of ['Pad-Mount Vista', 'Pad Mount Vista', 'Pad-Mount-Vista', 'Pad Mount-Vista', 'Pad Mount Vista Switch', 'Vista Switch', 'Vista Disconnect', 'Switch Vista', 'DISC Vista']) {
       const a = assessApparatus(row(r, { tag: 'DS-V' }))
       expect(a.signature?.kind, r).toBe('switch')
+      expect(a.isBreakerShaped, r).toBe(false)                              // no Vista row is ever breaker-shaped
       expect((a.signature as SwitchSignature).switchType, r).toBe('vista')
     }
-    expect(parseSwitchType('Pad-Mount-Vista')).toBe('vista')
+    expect(parseSwitchType('Switch Vista')).toBe('vista')
+    expect(parseSwitchType('DISC Vista')).toBe('vista')
+    // Switch Vista at an MV bus -> the Vista provisional ref (pipeline ref/type acceptance)
+    const sp = (runTakeoff({ pdf: 'v.pdf', apparatus: [{ raw: 'Switch Vista', tag: 'DS-SV', sheet: 'E-1', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line', busVoltageV: 15000 }] }).scopePendingLines ?? [])
+      .find((s) => s.line.signature.tag === 'DS-SV')
+    expect(sp?.switchType).toBe('vista')
+    expect(sp?.provisionalDefaultRef).toBe('Switch (Pad Mount Vista) - Medium Voltage')
   })
   it('GUARD: real pad-mount / kVA transformers (no vista product name) STAY transformer', () => {
     for (const r of ['1500KVA Pad Mount Transformer', 'T-2 2500KVA PAD-MOUNT OIL XFMR', 'Pad-Mount Oil Transformer', '1500KVA DRY-TYPE XFMR FUSED DISCONNECT'])
