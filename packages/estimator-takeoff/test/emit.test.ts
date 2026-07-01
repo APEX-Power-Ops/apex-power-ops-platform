@@ -7,9 +7,10 @@ describe('runTakeoff + emitEnvelope (golden)', () => {
   const result = runTakeoff(fixture as ExtractionArtifact)
 
   it('matches two draw-out breakers; de-dups ACC across one-line + power-plan keeping BOTH sources, no spurious question', () => {
-    expect(result.matchedLines).toHaveLength(2)
+    expect(result.matchedLines).toHaveLength(3)
     const refs = result.matchedLines.map((m) => m.ref)
-    expect(refs.every((r) => r === 'Circuit Breaker LV - Draw-Out (LSIG)')).toBe(true)
+    expect(refs.filter((r) => r === 'Circuit Breaker LV - Draw-Out (LSIG)')).toHaveLength(2)
+    expect(refs).toContain('Circuit Breaker LV - Insulated Case (LS/LSI)')
     const acc = result.matchedLines.find((m) => m.line.signature.tag === 'ACC-1-09-FB')!
     expect(acc.qty).toBe(1)
     expect(acc.mountingBasis).toBe('hint')
@@ -23,9 +24,11 @@ describe('runTakeoff + emitEnvelope (golden)', () => {
     expect(envelope.scopes.map((s) => s.name)).toContain('Block P1-110')
   })
 
-  it('fails closed: the 400AF LSI breaker with no evidence is unmatched, not guessed', () => {
-    expect(result.unmatchedCandidates).toHaveLength(1)
-    expect(result.unmatchedCandidates[0]!.line.signature.tag).toBe('HF-P1-110-01-FB')
+  it('assumes-with-provenance: the 400AF LSI breaker prices as Insulated Case (LS/LSI), basis estimating_baseline', () => {
+    const hf = result.matchedLines.find((m) => m.line.signature.tag === 'HF-P1-110-01-FB')!
+    expect(hf.ref).toBe('Circuit Breaker LV - Insulated Case (LS/LSI)')
+    expect(hf.mountingBasis).toBe('estimating_baseline')
+    expect(result.unmatchedCandidates).toHaveLength(0)
   })
 
   it('emits a valid envelope with no error-severity findings and at least one scope', () => {

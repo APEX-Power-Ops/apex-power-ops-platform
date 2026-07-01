@@ -42,7 +42,10 @@ const SWITCH_CONSTRUCTION = /\b(SF6|vacuum|oil|air|pad[\s-]?mount|vista|cutout|f
 const SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i
 // A single numbered frame/trip token (catches 800AF or 800AT even WITHOUT the full FRAME_TRIP pair).
 const SWITCH_FRAME_TRIP = /\b\d{2,6}\s*A[FT]\b/i
-// A breaker trip-function descriptor on a switch row = conflict (mirrors parseFunctions' L(SIGE) shape).
+// A breaker trip-function descriptor on a switch row = conflict. NOTE: this DELIBERATELY diverges from
+// parseFunctions - parseFunctions tolerates trailing decoration (LSIGM/LSIM) for breaker pricing, but this
+// mirror keeps the strict `[SIGE]{2}` + trailing word-boundary shape ON PURPOSE, to preserve the false-positive guard
+// that stops tag prefixes (LS-1/LG-2) mis-flagging a legitimate disconnect as switch_parent_conflict.
 // REQUIRES >=2 function letters after L (lookahead `[SIGE]{2}`): a genuine descriptor is the LSI/LSIG family,
 // so "LSIG" matches while a bare 2-char TAG prefix carried into the raw (LS-1 / LG-2 / LI-7 / LE-3, where the
 // delimiter satisfies \b after a single SIGE letter) does NOT - avoiding the false-positive that mis-flagged a
@@ -110,7 +113,7 @@ function looksLikeBreaker(raw: string): boolean {
 function parseFunctions(raw: string): TripFunction[] {
   const ft = raw.match(FRAME_TRIP)
   const region = ft && ft.index !== undefined ? raw.slice(ft.index + ft[0].length) : raw
-  const m = region.match(/\bL(?=[SIGE])(S?)(I?)(G?)(E?)\b/i)
+  const m = region.match(/\bL(?=[SIGE])(S?)(I?)(G?)(E?)[MN.,C]*\b/i)
   if (!m) return []
   const tok = m[0].toUpperCase()
   const out: TripFunction[] = ['L']
@@ -146,9 +149,11 @@ function resolveMounting(
     return { mounting: x.mountingHint, basis: 'hint', conflict }
   }
   if (textMount !== 'unknown') return { mounting: textMount, basis: 'text', conflict: false }
-  const hasG = functions.includes('G')
-  if (frameA !== undefined && frameA >= 800 && hasG) return { mounting: 'draw_out', basis: 'estimating_baseline', conflict: false }
-  return { mounting: 'unknown', basis: 'none', conflict: false }
+  if (frameA === undefined) return { mounting: 'unknown', basis: 'none', conflict: false }
+  if (functions.length > 0) {
+    return { mounting: frameA >= 800 ? 'draw_out' : 'insulated_case', basis: 'estimating_baseline', conflict: false }
+  }
+  return { mounting: 'molded_case', basis: 'estimating_baseline', conflict: false }
 }
 
 // Transformer attribute parsers -- text-only, fail-closed.
@@ -519,7 +524,10 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
     if (r.conflict) {
       questions.push(q(x, `Construction hint "${x.mountingHint}" conflicts with the label text - verify breaker construction.`, 'mounting_hint_conflict'))
     }
-    if (functions.length === 0 && (mounting === 'draw_out' || mounting === 'electrically_operated' || mounting === 'insulated_case')) {
+    if (functions.length === 0 && (
+          mounting === 'draw_out' || mounting === 'electrically_operated' || mounting === 'insulated_case'
+       || (mounting === 'molded_case' && mountingBasis === 'estimating_baseline' && frameA !== undefined && frameA >= 800)
+    )) {
       questions.push(q(x, 'Power-breaker trip-function descriptor (e.g. LSIG) missing - confirm functions (affects LSIG vs LS/LSI vs unmatched).', 'missing_power_functions'))
     }
   }

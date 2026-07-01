@@ -51,3 +51,11 @@ describe('matchBreaker', () => {
     for (const rule of BREAKER_MAP) expect(resolver.tryResolve(rule.ref)).not.toBeNull()
   })
 })
+
+describe('matchBreaker - baseline insulated_case pricing (mounting lane)', () => {
+  it('maps LV insulated_case with LS/LSI functions to the insulated-case ref', () => {
+    const ref = matchBreaker({ ...base, mounting: 'insulated_case', functions: ['L', 'S', 'I'], frameA: 400 })!
+    expect(ref).toBe('Circuit Breaker LV - Insulated Case (LS/LSI)')
+    expect(resolver.tryResolve(ref)).not.toBeNull()
+  })
+})
