@@ -152,3 +152,24 @@ it('sets a structured assessmentCode distinguishing the null-signature shapes', 
   expect(at('MCB 100AF/100AT').assessmentCode).toBe('missing_voltage')
   expect(at('ATS 800AF/800AT').assessmentCode).toBe('non_breaker_carries_rating')
 })
+
+describe('parseFunctions decoration hardening (mounting lane)', () => {
+  it('parses LSIGM decorated descriptor as LSIG (M is a modifier, not dropped)', () => {
+    expect(asBreaker(normalizeApparatus(mk('BKR-1 1200AF/1200AT LSIGM', 480))).functions).toEqual(['L', 'S', 'I', 'G'])
+  })
+  it('parses LSIM as LSI (M modifier, no ground fault)', () => {
+    expect(asBreaker(normalizeApparatus(mk('BKR-2 800AF/800AT LSIM', 480))).functions).toEqual(['L', 'S', 'I'])
+  })
+  it('tolerates trailing N.C. decoration on LSIGM', () => {
+    expect(asBreaker(normalizeApparatus(mk('BKR-3 1600AF/1600AT LSIGM,N.C.', 480))).functions).toEqual(['L', 'S', 'I', 'G'])
+  })
+  it('does NOT over-capture a run-together suffix word (LSIGMAIN is not LSIG)', () => {
+    expect(asBreaker(normalizeApparatus(mk('BKR-4 800AF/800AT LSIGMAIN', 480))).functions).not.toEqual(['L', 'S', 'I', 'G'])
+  })
+  it('preserves plain LSI / LI / LSIG / LSIGE (regression)', () => {
+    expect(asBreaker(normalizeApparatus(mk('B 400AF/400AT LSI', 480))).functions).toEqual(['L', 'S', 'I'])
+    expect(asBreaker(normalizeApparatus(mk('B 400AF/400AT LI', 480))).functions).toEqual(['L', 'I'])
+    expect(asBreaker(normalizeApparatus(mk('B 4000AF/4000AT LSIG', 480))).functions).toEqual(['L', 'S', 'I', 'G'])
+    expect(asBreaker(normalizeApparatus(mk('B 800AF/800AT LSIGE', 480))).functions).toEqual(['L', 'S', 'I', 'G'])
+  })
+})

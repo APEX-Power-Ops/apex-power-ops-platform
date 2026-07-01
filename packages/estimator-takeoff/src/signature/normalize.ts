@@ -42,7 +42,10 @@ const SWITCH_CONSTRUCTION = /\b(SF6|vacuum|oil|air|pad[\s-]?mount|vista|cutout|f
 const SWITCH_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i
 // A single numbered frame/trip token (catches 800AF or 800AT even WITHOUT the full FRAME_TRIP pair).
 const SWITCH_FRAME_TRIP = /\b\d{2,6}\s*A[FT]\b/i
-// A breaker trip-function descriptor on a switch row = conflict (mirrors parseFunctions' L(SIGE) shape).
+// A breaker trip-function descriptor on a switch row = conflict. NOTE: this DELIBERATELY diverges from
+// parseFunctions - parseFunctions tolerates trailing decoration (LSIGM/LSIM) for breaker pricing, but this
+// mirror keeps the strict `[SIGE]{2}` + trailing- shape ON PURPOSE, to preserve the false-positive guard
+// that stops tag prefixes (LS-1/LG-2) mis-flagging a legitimate disconnect as switch_parent_conflict.
 // REQUIRES >=2 function letters after L (lookahead `[SIGE]{2}`): a genuine descriptor is the LSI/LSIG family,
 // so "LSIG" matches while a bare 2-char TAG prefix carried into the raw (LS-1 / LG-2 / LI-7 / LE-3, where the
 // delimiter satisfies \b after a single SIGE letter) does NOT - avoiding the false-positive that mis-flagged a
@@ -110,7 +113,7 @@ function looksLikeBreaker(raw: string): boolean {
 function parseFunctions(raw: string): TripFunction[] {
   const ft = raw.match(FRAME_TRIP)
   const region = ft && ft.index !== undefined ? raw.slice(ft.index + ft[0].length) : raw
-  const m = region.match(/\bL(?=[SIGE])(S?)(I?)(G?)(E?)\b/i)
+  const m = region.match(/\bL(?=[SIGE])(S?)(I?)(G?)(E?)[MN.,C]*\b/i)
   if (!m) return []
   const tok = m[0].toUpperCase()
   const out: TripFunction[] = ['L']
