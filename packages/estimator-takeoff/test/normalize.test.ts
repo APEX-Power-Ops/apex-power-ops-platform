@@ -189,3 +189,19 @@ describe('mounting baseline cells (mounting lane)', () => {
     expect(s.mounting).toBe('molded_case'); expect(s.mountingBasis).toBe('text')
   })
 })
+
+describe('missing_power_functions A-prime trigger (mounting lane)', () => {
+  it('flags a baseline large-frame (>=800) molded_case with no functions', () => {
+    const a = assessApparatus(mk('BIG-MC 1000AF/1000AT', 480))
+    expect(asBreaker(a.signature).mounting).toBe('molded_case')
+    expect(a.questions.some((qq) => qq.code === 'missing_power_functions')).toBe(true)
+  })
+  it('does NOT flag a small-frame (<800) baseline molded_case (genuine MCCB-scale)', () => {
+    const a = assessApparatus(mk('SM-MC 250AF/250AT', 480))
+    expect(a.questions.some((qq) => qq.code === 'missing_power_functions')).toBe(false)
+  })
+  it('does NOT flag a text-resolved molded_case (explicit MCCB, no functions)', () => {
+    const a = assessApparatus(mk('PNL MCCB 1000AF/1000AT', 480))
+    expect(a.questions.some((qq) => qq.code === 'missing_power_functions')).toBe(false)
+  })
+})

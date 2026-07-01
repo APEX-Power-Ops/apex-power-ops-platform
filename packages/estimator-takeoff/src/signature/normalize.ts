@@ -524,7 +524,10 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
     if (r.conflict) {
       questions.push(q(x, `Construction hint "${x.mountingHint}" conflicts with the label text - verify breaker construction.`, 'mounting_hint_conflict'))
     }
-    if (functions.length === 0 && (mounting === 'draw_out' || mounting === 'electrically_operated' || mounting === 'insulated_case')) {
+    if (functions.length === 0 && (
+          mounting === 'draw_out' || mounting === 'electrically_operated' || mounting === 'insulated_case'
+       || (mounting === 'molded_case' && mountingBasis === 'estimating_baseline' && frameA !== undefined && frameA >= 800)
+    )) {
       questions.push(q(x, 'Power-breaker trip-function descriptor (e.g. LSIG) missing - confirm functions (affects LSIG vs LS/LSI vs unmatched).', 'missing_power_functions'))
     }
   }
