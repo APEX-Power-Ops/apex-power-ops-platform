@@ -1,0 +1,63 @@
+-- 012_ops_app_role_boundary_down.sql
+-- Restores the pre-012 (insecure) posture: ladder symmetry, NOT a security recommendation.
+-- Ordered per spec S7: [d1] fn owner -> postgres + SECURITY INVOKER (added in Task 3);
+-- [d2] restore the pre-012 completion guard (added in Task 5); [d3] DROP OWNED BY the
+-- three roles; [d4] guarded DROP ROLE; [d5] restore PUBLIC EXECUTE + CONNECT.
+-- Every step is guarded so this file is safe to run even when 012 was never applied
+-- (test _clean_slate runs it unconditionally).
+
+-- [d3] revoke everything granted TO the roles in THIS database
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'ops_intake_writer') then
+    drop owned by ops_intake_writer;
+  end if;
+  if exists (select 1 from pg_roles where rolname = 'ops_api') then
+    drop owned by ops_api;
+  end if;
+  if exists (select 1 from pg_roles where rolname = 'ops_fn_owner') then
+    drop owned by ops_fn_owner;
+  end if;
+end $$;
+
+-- [d4] guarded/drop-if-safe role drop (DEV-7, operator-ratified). PRIMARY guard: never
+-- drop a login role whose SCRAM password was set out-of-band (pg_authid.rolpassword IS NOT
+-- NULL). Dropping it and letting the up-side recreate it password-less would break every
+-- scram login (Tasks 9/10/12). SECONDARY guard (DEV-4): DROP ROLE also fails with
+-- dependent_objects_still_exist if the role owns grants in ANOTHER database of this cluster.
+-- Either way [d3] DROP OWNED already revoked THIS DB's grants, so posture is restored
+-- whether or not the role object survives. ops_fn_owner (NOLOGIN, no password) drops cleanly.
+-- Reading pg_authid requires superuser; the down runs as the admin identity.
+do $$
+declare r text;
+begin
+  foreach r in array array['ops_intake_writer', 'ops_api', 'ops_fn_owner'] loop
+    if exists (select 1 from pg_roles where rolname = r) then
+      if exists (select 1 from pg_authid where rolname = r and rolpassword is not null) then
+        raise notice '012_down: role % has an out-of-band password set; left in place (DEV-7)', r;
+        continue;
+      end if;
+      begin
+        execute format('drop role %I', r);
+      exception when dependent_objects_still_exist then
+        raise notice '012_down: role % retains dependencies in another database; left in place', r;
+      end;
+    end if;
+  end loop;
+end $$;
+
+-- [d5] restore PUBLIC posture (pre-012): EXECUTE on all ops/core (+work) functions, CONNECT.
+-- CREATE on schema public is NOT re-granted (PG15+ default lacks it; DEV-5).
+do $$
+begin
+  if to_regnamespace('ops') is not null then
+    execute 'grant execute on all routines in schema ops to public';
+  end if;
+  if to_regnamespace('core') is not null then
+    execute 'grant execute on all routines in schema core to public';
+  end if;
+  if to_regnamespace('work') is not null then
+    execute 'grant execute on all routines in schema work to public';
+  end if;
+  execute format('grant connect on database %I to public', current_database());
+end $$;
