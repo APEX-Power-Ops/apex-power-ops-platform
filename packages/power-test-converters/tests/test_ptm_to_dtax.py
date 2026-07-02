@@ -308,4 +308,3 @@ def test_template_mode_preserves_doble_skeleton(tmp_path: Path) -> None:
         parsed.find("./dta-sessions/dta-session/two-winding-transformer/bushing-test-set")
         is None
     )
-
