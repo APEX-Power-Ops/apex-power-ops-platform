@@ -139,3 +139,81 @@ begin
     end if;
   end if;
 end $$;
+
+-- [3] SECURITY DEFINER conversion + dedicated owner (D3, M4) + owner grants (S5) --------
+-- Exact signatures grounded from pg_proc. The loop FAILS LOUD if any signature drifted.
+
+do $$
+declare
+  sig text;
+  sigs text[] := array[
+    'ops.attest_apparatus_complete(uuid,uuid,text)',
+    'ops.revoke_completion_attestation(uuid,uuid,text)',
+    'ops.approve_and_recognize(uuid,uuid,ops.obligation_clearance,text,ops.obligation_clearance,text)',
+    'ops.reverse_recognition(uuid,uuid,text)',
+    'ops.record_billing_application(uuid,uuid,date,text,uuid[],numeric)',
+    'ops.issue_billing_application(uuid,uuid,text)',
+    'ops.issue_billing_application(uuid,uuid,date,text,uuid[],numeric)',
+    'ops.discard_draft_billing_application(uuid,uuid)',
+    'ops.void_billing_application(uuid,uuid,text)'
+  ];
+begin
+  foreach sig in array sigs loop
+    if to_regprocedure(sig) is null then
+      raise exception '012: expected function % is missing - signature drift', sig;
+    end if;
+    execute format('alter function %s security definer set search_path = ops, pg_temp', sig);
+    execute format('alter function %s owner to ops_fn_owner', sig);
+  end loop;
+end $$;
+
+-- Owner object grants: ONLY what the 9 fn bodies need (S5; read-surface verified against
+-- live pg_get_functiondef 2026-07-01 - no core.* reads, so no core USAGE for the owner).
+grant usage on schema ops to ops_fn_owner;
+
+-- RV-1: SELECT on every table the fn bodies read/join. scopes is REQUIRED (attest,
+-- approve_and_recognize, and the revrec insert-integrity trigger all join ops.scopes).
+grant select on ops.apparatus, ops.scopes, ops.completion_attestation,
+  ops.revenue_recognition_event, ops.scope_quote, ops.projects, ops.persons
+  to ops_fn_owner;
+
+-- Write/lock surface. Table-level UPDATE is acceptable HERE ONLY: NOLOGIN + fn-gated +
+-- non-membered; the append-only/integrity triggers still bar real ledger mutation.
+grant update on ops.apparatus to ops_fn_owner;                       -- status writes + recognition FOR UPDATE
+grant insert, update on ops.completion_attestation to ops_fn_owner;
+grant insert, update on ops.revenue_recognition_event to ops_fn_owner;  -- UPDATE solely for reverse_recognition's FOR UPDATE
+grant update on ops.projects to ops_fn_owner;                        -- solely for billing project FOR UPDATE locks
+grant select, insert, update, delete on ops.billing_application,
+  ops.billing_application_line, ops.billing_application_draft to ops_fn_owner;
+
+-- [3a] posture asserts
+do $$
+begin
+  if exists (
+    select 1 from unnest(array[
+      'ops.attest_apparatus_complete(uuid,uuid,text)',
+      'ops.revoke_completion_attestation(uuid,uuid,text)',
+      'ops.approve_and_recognize(uuid,uuid,ops.obligation_clearance,text,ops.obligation_clearance,text)',
+      'ops.reverse_recognition(uuid,uuid,text)',
+      'ops.record_billing_application(uuid,uuid,date,text,uuid[],numeric)',
+      'ops.issue_billing_application(uuid,uuid,text)',
+      'ops.issue_billing_application(uuid,uuid,date,text,uuid[],numeric)',
+      'ops.discard_draft_billing_application(uuid,uuid)',
+      'ops.void_billing_application(uuid,uuid,text)'
+    ]) s(sig)
+    join pg_proc p on p.oid = to_regprocedure(s.sig)
+    where not p.prosecdef or p.proowner <> 'ops_fn_owner'::regrole
+  ) then
+    raise exception '012 posture: a mutation fn is not DEFINER-owned by ops_fn_owner';
+  end if;
+  if not has_table_privilege('ops_fn_owner', 'ops.scopes', 'SELECT') then
+    raise exception '012 posture: ops_fn_owner missing SELECT on ops.scopes (RV-1)';
+  end if;
+  if not has_table_privilege('ops_fn_owner', 'ops.revenue_recognition_event', 'UPDATE')
+     or not has_table_privilege('ops_fn_owner', 'ops.projects', 'UPDATE') then
+    raise exception '012 posture: ops_fn_owner missing a FOR UPDATE lock grant';
+  end if;
+  if not has_table_privilege('ops_fn_owner', 'ops.billing_application', 'SELECT') then
+    raise exception '012 posture: ops_fn_owner missing billing SELECT (RV-2)';
+  end if;
+end $$;

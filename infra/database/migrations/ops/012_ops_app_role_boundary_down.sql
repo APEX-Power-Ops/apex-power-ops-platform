@@ -6,6 +6,32 @@
 -- Every step is guarded so this file is safe to run even when 012 was never applied
 -- (test _clean_slate runs it unconditionally).
 
+-- [d1] revert the 9 fns: owner -> postgres, SECURITY INVOKER, unpin search_path.
+-- Guarded per-signature so a partially-applied ladder is safe.
+do $$
+declare
+  sig text;
+  sigs text[] := array[
+    'ops.attest_apparatus_complete(uuid,uuid,text)',
+    'ops.revoke_completion_attestation(uuid,uuid,text)',
+    'ops.approve_and_recognize(uuid,uuid,ops.obligation_clearance,text,ops.obligation_clearance,text)',
+    'ops.reverse_recognition(uuid,uuid,text)',
+    'ops.record_billing_application(uuid,uuid,date,text,uuid[],numeric)',
+    'ops.issue_billing_application(uuid,uuid,text)',
+    'ops.issue_billing_application(uuid,uuid,date,text,uuid[],numeric)',
+    'ops.discard_draft_billing_application(uuid,uuid)',
+    'ops.void_billing_application(uuid,uuid,text)'
+  ];
+begin
+  foreach sig in array sigs loop
+    if to_regprocedure(sig) is not null then
+      execute format('alter function %s owner to postgres', sig);
+      execute format('alter function %s security invoker', sig);
+      execute format('alter function %s reset search_path', sig);
+    end if;
+  end loop;
+end $$;
+
 -- [d3] revoke everything granted TO the roles in THIS database
 do $$
 begin

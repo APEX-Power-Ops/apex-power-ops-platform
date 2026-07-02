@@ -164,3 +164,61 @@ def test_012_public_create_on_schema_public_revoked():
             " where n.nspname='public' and a.grantee = 0 and a.privilege_type='CREATE')"
         ).fetchone()
         assert row[0] is False, "PUBLIC retains CREATE on schema public"
+
+
+# ---------- Task 3: DEFINER conversion + owner ----------
+
+SIGS = [
+    "ops.attest_apparatus_complete(uuid,uuid,text)",
+    "ops.revoke_completion_attestation(uuid,uuid,text)",
+    "ops.approve_and_recognize(uuid,uuid,ops.obligation_clearance,text,ops.obligation_clearance,text)",
+    "ops.reverse_recognition(uuid,uuid,text)",
+    "ops.record_billing_application(uuid,uuid,date,text,uuid[],numeric)",
+    "ops.issue_billing_application(uuid,uuid,text)",
+    "ops.issue_billing_application(uuid,uuid,date,text,uuid[],numeric)",
+    "ops.discard_draft_billing_application(uuid,uuid)",
+    "ops.void_billing_application(uuid,uuid,text)",
+]
+
+
+def test_012_nine_fns_definer_owned_searchpath():
+    with _admin() as c:
+        for sig in SIGS:
+            row = c.execute(
+                "select p.prosecdef, p.proowner::regrole::text, p.proconfig"
+                " from pg_proc p where p.oid = to_regprocedure(%s)",
+                (sig,),
+            ).fetchone()
+            assert row is not None, sig + " missing"
+            assert row[0] is True, sig + " is not SECURITY DEFINER"
+            assert row[1] == "ops_fn_owner", sig + " owner is " + row[1]
+            assert row[2] is not None and any(
+                x.startswith("search_path=") and "ops" in x and "pg_temp" in x for x in row[2]
+            ), sig + " search_path not pinned to ops, pg_temp"
+
+
+def test_012_owner_grants_cover_fn_read_and_lock_surface():
+    with _admin() as c:
+        # SELECT surface (RV-1: the owner needs SELECT on every table its fn bodies read/join)
+        for t in ("apparatus", "scopes", "completion_attestation", "revenue_recognition_event",
+                  "scope_quote", "projects", "persons",
+                  "billing_application", "billing_application_line", "billing_application_draft"):
+            assert c.execute(
+                "select has_table_privilege('ops_fn_owner', %s, 'SELECT')", ("ops." + t,)
+            ).fetchone()[0] is True, "ops_fn_owner missing SELECT on ops." + t
+        # write/lock surface
+        for t, priv in (
+            ("apparatus", "UPDATE"),
+            ("completion_attestation", "INSERT"), ("completion_attestation", "UPDATE"),
+            ("revenue_recognition_event", "INSERT"), ("revenue_recognition_event", "UPDATE"),
+            ("projects", "UPDATE"),
+            ("billing_application", "INSERT"), ("billing_application", "UPDATE"), ("billing_application", "DELETE"),
+            ("billing_application_line", "INSERT"), ("billing_application_line", "UPDATE"), ("billing_application_line", "DELETE"),
+            ("billing_application_draft", "INSERT"), ("billing_application_draft", "UPDATE"), ("billing_application_draft", "DELETE"),
+        ):
+            assert c.execute(
+                "select has_table_privilege('ops_fn_owner', %s, %s)", ("ops." + t, priv)
+            ).fetchone()[0] is True, "ops_fn_owner missing " + priv + " on ops." + t
+        assert c.execute(
+            "select has_schema_privilege('ops_fn_owner', 'ops', 'USAGE')"
+        ).fetchone()[0] is True
