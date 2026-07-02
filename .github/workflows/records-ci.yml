@@ -37,6 +37,8 @@ jobs:
       NETA_DATA_DIR: ${{ github.workspace }}/neta-source/Development/NETA-Data
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
       - name: Checkout NETA source extracts (private repo, read-only token)
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -44,6 +46,9 @@ jobs:
           ref: 7f162df1150912d8bbe5024aa352939db5663fa4
           token: ${{ secrets.NETA_SOURCE_REPO_TOKEN }}
           path: neta-source
+          # Codex cross-engine P1: never persist the token into .git/config -
+          # job code must be able to read the extracts, never the credential.
+          persist-credentials: false
       - name: Verify required extract files by name (never content)
         run: |
           for f in NETA-Master-Equipment-Table-Enhanced.json NETA-ATS-2025-equipment-tests-v2.json NETA-ATS-2025-tables-extracted.json NETA-MTS-2023-tables-extracted.json; do
