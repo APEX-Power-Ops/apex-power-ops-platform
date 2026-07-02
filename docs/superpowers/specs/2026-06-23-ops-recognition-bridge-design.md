@@ -182,6 +182,8 @@ The §5.7 trigger + the `ops.completion_ctx` GUC are **defense-in-depth misuse g
 
 **RELEASE GATE (IRP-B6 — hard):** 009 may merge + apply to **`ops_dev`** on the interim posture. 009 (and any `ops.*` recognition path) **MUST NOT reach prod until the `ops_app` role boundary above is applied** — the ctx-guard is forgeable, so the role boundary is a *precondition of prod apply*, not a follow-up. **Scope:** the role boundary is a dedicated lane-wide hardening packet (the whole `ops.*` lane currently has no role boundary on any mutation path); this slice ships dev-only behind the gate.
 
+**S5.11 status (2026-07-02):** The target ops_app role boundary described above is BUILT and TESTED on ops_test (migration 012, branch ops/role-boundary-012, lane ops_app-role-boundary; see docs/superpowers/plans/2026-07-01-ops-app-role-boundary.md and docs/superpowers/specs/2026-07-01-ops-app-role-boundary-design-v3.md). Full migration ladder (test_001..test_012), package suite as-role, and ops route suites are green on ops_test with the boundary-denial roll-call (S9 proofs a-h) verified. The ops_dev apply leg and the RELEASE GATE below remain operator-gated; prod is untouched.
+
 ## 6. Package layer (`packages/ops-intake`)
 Reuse the existing `ops.*` sole-writer package. Thin wrappers: `attest_complete(apparatus_id, attested_by, reason)`, `recognize(apparatus_id, actor, datasheet_clearance, datasheet_ref, cx_clearance, cx_ref)`, `reverse(event_id, actor, reason)`, `revoke(attestation_id, actor, reason)`. Map DB exceptions to typed, **value-free** errors.
 **Cross-task (M3):** update `tests/test_approve_envelope.py:72` to reach `'Complete'` via `ops.attest_apparatus_complete` (the §5.7 guard would otherwise break the direct status set).

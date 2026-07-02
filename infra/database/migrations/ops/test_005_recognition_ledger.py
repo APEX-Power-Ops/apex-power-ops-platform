@@ -5,7 +5,7 @@ which holds the 5,344 Miner apparatus). The fixture chains 001->002->004->005 th
 
 Run (host):
   OPS_DEV_PGPASSWORD=<host pw> \
-  OPS_DEV_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=<pw> sslmode=disable" \
+  OPS_DEV_ADMIN_DSN="host=127.0.0.1 port=5432 dbname=ops_test user=postgres password=<pw> sslmode=disable" \
     uv run --with "psycopg[binary]" --with pytest pytest test_005_recognition_ledger.py -q
 """
 import os
@@ -15,12 +15,14 @@ from decimal import Decimal
 
 import psycopg
 import pytest
+from psycopg.conninfo import conninfo_to_dict
 
-DSN = os.environ.get("OPS_DEV_DSN") or (
+DSN = os.environ.get("OPS_DEV_ADMIN_DSN") or (
     "host=127.0.0.1 port=5432 dbname=ops_test user=postgres "
     f"password={os.environ.get('OPS_DEV_PGPASSWORD') or os.environ.get('PGPASSWORD','')} "
     "sslmode=disable"
 )
+assert conninfo_to_dict(DSN).get("dbname") == "ops_test", "005 migration tests run on ops_test ONLY"
 HERE = pathlib.Path(__file__).parent
 UP1, DOWN1 = HERE / "001_identity_skeleton.sql", HERE / "001_identity_skeleton_down.sql"
 UP2 = HERE / "002_quote_model.sql"

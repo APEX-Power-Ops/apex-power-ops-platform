@@ -23,9 +23,9 @@ def _person(dsn):
         ).fetchone()[0]
 
 
-def test_cli_intake(mini_workbook, clean_ops):
+def test_cli_intake(mini_workbook, clean_ops, admin_dsn):
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     rc = main(["intake", str(mini_workbook), "--dsn", dsn, "--uploaded-by", str(who)])
     assert rc == 0
     with psycopg.connect(dsn) as c:

@@ -2,10 +2,12 @@
 import os, pathlib, uuid
 from decimal import Decimal
 import psycopg, pytest
+from psycopg.conninfo import conninfo_to_dict
 
-DSN = os.environ.get("OPS_DEV_DSN") or (
+DSN = os.environ.get("OPS_DEV_ADMIN_DSN") or (
     "host=127.0.0.1 port=5432 dbname=ops_test user=postgres "
     f"password={os.environ.get('OPS_DEV_PGPASSWORD') or os.environ.get('PGPASSWORD','')} sslmode=disable")
+assert conninfo_to_dict(DSN).get("dbname") == "ops_test", "006 migration tests run on ops_test ONLY"
 HERE = pathlib.Path(__file__).parent
 UP1, DOWN1 = HERE/"001_identity_skeleton.sql", HERE/"001_identity_skeleton_down.sql"
 UP2, UP4, UP5 = HERE/"002_quote_model.sql", HERE/"004_person_anchor.sql", HERE/"005_recognition_ledger.sql"

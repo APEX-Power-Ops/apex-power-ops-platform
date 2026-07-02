@@ -306,21 +306,23 @@ async function main() {
   );
 
   // Step 4: DB persistence — assert metadata actually landed in ops.scope_quote_line
-  // Fails closed when OPS_DEV_DSN is unset, unless ALLOW_DB_CHECK_SKIP=1 (API-only runs).
+  // Fails closed when OPS_DEV_ADMIN_DSN is unset, unless ALLOW_DB_CHECK_SKIP=1 (API-only runs).
+  // Read-only admin-DSN check here; the HTTP intake/approve leg above is writer-scoped
+  // because the API process starts with OPS_INTAKE_WRITER_DSN (this script cannot select it).
   await runStep(
     `DB ops.scope_quote_line metadata persisted for line_uid='SC1:cap-1'`,
     failures,
     async () => {
-      const dsn = process.env.OPS_DEV_DSN;
+      const dsn = process.env.OPS_DEV_ADMIN_DSN;
       if (!dsn) {
         if (process.env.ALLOW_DB_CHECK_SKIP === '1') {
           console.warn(
-            '  ESTIMATOR_NATIVE_SMOKE_WARN OPS_DEV_DSN unset — DB persistence check skipped (ALLOW_DB_CHECK_SKIP=1)',
+            '  ESTIMATOR_NATIVE_SMOKE_WARN OPS_DEV_ADMIN_DSN unset - DB persistence check skipped (ALLOW_DB_CHECK_SKIP=1)',
           );
           return;
         }
         throw new Error(
-          'OPS_DEV_DSN is unset — DB persistence check cannot run. ' +
+          'OPS_DEV_ADMIN_DSN is unset - DB persistence check cannot run. ' +
           'Set ALLOW_DB_CHECK_SKIP=1 to intentionally skip (API-only run).',
         );
       }

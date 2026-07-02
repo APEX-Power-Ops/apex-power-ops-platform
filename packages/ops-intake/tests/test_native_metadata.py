@@ -10,9 +10,9 @@ def _person(dsn):
     with psycopg.connect(dsn, autocommit=True) as c:
         return c.execute("insert into ops.persons (display_name) values ('Lead') returning person_id").fetchone()[0]
 
-def test_native_metadata_lands_in_scope_quote_line(clean_ops):
+def test_native_metadata_lands_in_scope_quote_line(clean_ops, admin_dsn):
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     env = _catalog_env()
     line = env["scopes"][0]["lines"][0]
     line["equipment_model_ref"] = _MODEL_KEY

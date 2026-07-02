@@ -36,8 +36,8 @@ def _payload(pn, apparatus_type, unit_multiplier=1):
                         "lines": [{"apparatus_type": apparatus_type, "test_standard": "ATS", "qty": 1,
                                    "hrs_per_unit": 2.0, "section": "S1", "line_number": 1, "line_uid": "S:r1"}]}]}
 
-def test_unresolved_rejects_zero_writes_with_finding(clean_ops):
-    dsn = clean_ops; who = _person(dsn)
+def test_unresolved_rejects_zero_writes_with_finding(clean_ops, admin_dsn):
+    dsn = clean_ops; who = _person(admin_dsn)
     rid = _seed_run(dsn, _payload("UC-1", "Not In Catalog"), who)
     out = approve_run(dsn, rid, approved_by=who)
     assert out["outcome"] == "blocked_findings" and "Not In Catalog" in out["uncatalogued"]
@@ -48,16 +48,16 @@ def test_unresolved_rejects_zero_writes_with_finding(clean_ops):
                          " and code='uncatalogued_apparatus' and severity='blocking' and ok=false",
                          (rid,)).fetchone()[0] == 1                                          # durable finding
 
-def test_m4_not_one_rejects(clean_ops):
-    dsn = clean_ops; who = _person(dsn)
+def test_m4_not_one_rejects(clean_ops, admin_dsn):
+    dsn = clean_ops; who = _person(admin_dsn)
     rid = _seed_run(dsn, _payload("M4-1", "Capcitors - Per Unit", unit_multiplier=3), who)
     out = approve_run(dsn, rid, approved_by=who)
     assert out["outcome"] == "blocked_findings" and "S" in out["m4_unsupported"]
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0
 
-def test_approve_binds_every_apparatus(clean_ops):
-    dsn = clean_ops; who = _person(dsn)
+def test_approve_binds_every_apparatus(clean_ops, admin_dsn):
+    dsn = clean_ops; who = _person(admin_dsn)
     rid = _seed_run(dsn, _payload("OK-1", "Capcitors - Per Unit"), who)
     assert approve_run(dsn, rid, approved_by=who)["outcome"] == "approved"
     with psycopg.connect(dsn) as c:
@@ -66,10 +66,10 @@ def test_approve_binds_every_apparatus(clean_ops):
     assert n >= 1 and nulls == 0
 
 
-def test_falsey_apparatus_type_rejects_not_crashes(clean_ops):
+def test_falsey_apparatus_type_rejects_not_crashes(clean_ops, admin_dsn):
     # A line with an empty apparatus_type must REJECT cleanly (governed finding),
     # not raise KeyError inside materialize. (4b.1 review I-1 regression.)
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     rid = _seed_run(dsn, _payload("EMPTY-1", ""), who)
     out = approve_run(dsn, rid, approved_by=who)
     assert out["outcome"] == "blocked_findings"
@@ -79,10 +79,10 @@ def test_falsey_apparatus_type_rejects_not_crashes(clean_ops):
 
 
 
-def test_nonstring_apparatus_type_rejects_not_crashes(clean_ops):
+def test_nonstring_apparatus_type_rejects_not_crashes(clean_ops, admin_dsn):
     # A TRUTHY non-string apparatus_type (e.g. an int) must REJECT cleanly -- not crash
     # the resolver's "= any(%s)" lookup (text = int[]) or the sorted() set. (cross-engine.)
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     rid = _seed_run(dsn, _payload("BADTYPE-1", 123), who)
     out = approve_run(dsn, rid, approved_by=who)
     assert out["outcome"] == "blocked_findings"
@@ -90,12 +90,15 @@ def test_nonstring_apparatus_type_rejects_not_crashes(clean_ops):
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.apparatus").fetchone()[0] == 0
 
-def test_backfill_binds_only_target_frozen_resolvable(clean_ops):
-    dsn = clean_ops; who = _person(dsn)
+def test_backfill_binds_only_target_frozen_resolvable(clean_ops, admin_dsn):
+    dsn = clean_ops; who = _person(admin_dsn)
     # target project (resolvable + a bogus type) and a DIFFERENT project that must NOT be touched
     rid_t = _seed_run(dsn, _payload("TGT", "Capcitors - Per Unit"), who); approve_run(dsn, rid_t, approved_by=who)
     rid_o = _seed_run(dsn, _payload("OTHER", "Capcitors - Per Unit"), who); approve_run(dsn, rid_o, approved_by=who)
-    with psycopg.connect(dsn) as c:
+    # This simulates a legacy MAINTENANCE/backfill script, not the writer's load.py path: it writes
+    # apparatus.equipment_model_ref table-wide, outside the writer's column-scoped UPDATE grant
+    # (quoted_revenue, provenance_status, updated_at only) - runs on the admin connection.
+    with psycopg.connect(admin_dsn) as c:
         cur = c.cursor()
         cur.execute("update ops.apparatus set equipment_model_ref = null")  # legacy null state (both projects)
         assert cur.execute("select bool_and(is_frozen) from ops.scope_quote").fetchone()[0] is True

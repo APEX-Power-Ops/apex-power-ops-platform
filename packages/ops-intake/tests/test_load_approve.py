@@ -17,9 +17,9 @@ def _person(dsn):
         ).fetchone()[0]
 
 
-def test_approve_freezes(mini_workbook, clean_ops):
+def test_approve_freezes(mini_workbook, clean_ops, admin_dsn):
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     r = create_run(dsn, uploaded_by=who, filename="m.xlsm",
                    raw_bytes=mini_workbook.read_bytes(), content_type="xlsm")
     approve_run(dsn, r["run_id"], approved_by=who)
@@ -32,10 +32,10 @@ def test_approve_freezes(mini_workbook, clean_ops):
         assert nulls == 0
 
 
-def test_approve_is_scoped_to_its_project(mini_workbook, clean_ops):
+def test_approve_is_scoped_to_its_project(mini_workbook, clean_ops, admin_dsn):
     """A second, unrelated project in the same DB must be untouched by this project's approve."""
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     with psycopg.connect(dsn, autocommit=True) as c:
         pid = c.execute(
             "insert into ops.projects (project_number, project_name, source) "

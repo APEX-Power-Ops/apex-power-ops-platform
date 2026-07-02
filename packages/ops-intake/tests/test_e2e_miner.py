@@ -18,9 +18,9 @@ def _person(dsn):
         ).fetchone()[0]
 
 
-def test_e2e_miner_full_load(real_workbook, clean_ops):
+def test_e2e_miner_full_load(real_workbook, clean_ops, admin_dsn):
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     r = create_run(dsn, uploaded_by=who, filename="rev10.xlsm",
                    raw_bytes=real_workbook.read_bytes(), content_type="xlsm")
     out = approve_run(dsn, r["run_id"], approved_by=who)
@@ -31,8 +31,6 @@ def test_e2e_miner_full_load(real_workbook, clean_ops):
         napp = c.execute("select count(*) from ops.apparatus").fetchone()[0]
         assert nlines >= 100  # ~118 valid apparatus lines in Rev10
         assert napp >= 2 * nlines  # QTY-expansion happened
-        # NEGATIVE: intake never writes the standard-hours catalog (replaces the old `>= 20`).
-        assert c.execute("select count(*) from ops.standard_hours").fetchone()[0] == 0
         (cv,) = c.execute("select contract_value from ops.projects").fetchone()
         assert abs(float(cv) - 4692078.98) < 1.0
         # Sum apparatus quoted_revenue (frozen) == Sum MV-scope adjusted_total (P4); chillers excluded.
@@ -44,3 +42,8 @@ def test_e2e_miner_full_load(real_workbook, clean_ops):
             "select round(coalesce(sum(quoted_revenue), 0), 2) from ops.apparatus"
         ).fetchone()
         assert abs(float(app_rev) - float(mv_p4)) < 10.0, (app_rev, mv_p4)  # cumulative cent-rounding
+    # Codex-P2b: standard_hours - D4 "no catalog write" - the writer holds NO grant on this
+    # table at all (spec S5: dropped over-grant), so this verification read runs as admin,
+    # not the writer (mirrors test_approve_envelope.py's test_approve_materializes_tasks_and_freezes).
+    with psycopg.connect(admin_dsn) as c:
+        assert c.execute("select count(*) from ops.standard_hours").fetchone()[0] == 0  # D4: no catalog write
