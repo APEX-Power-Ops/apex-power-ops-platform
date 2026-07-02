@@ -1,9 +1,9 @@
-"""Chip 1 — ops identity skeleton: invariant + reversibility tests (TDD).
+"""Chip 1 - ops identity skeleton: invariant + reversibility tests (TDD).
 
 Run (from anywhere) with the local-PG password in env:
     $env:PGPASSWORD="..."; uv run --with "psycopg[binary]" --with pytest pytest <thisfile> -v
 
-Asserts the SSoT §4 laws against a fresh `ops_test`:
+Asserts the SSoT S4 laws against a fresh `ops_test`:
   - schema/tables/enums exist
   - apparatus.scope_id NOT NULL  (Law 1, FIXED binding)
   - cross-scope reassignment blocked by guard  (Law 1)

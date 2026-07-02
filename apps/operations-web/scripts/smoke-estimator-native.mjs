@@ -317,12 +317,12 @@ async function main() {
       if (!dsn) {
         if (process.env.ALLOW_DB_CHECK_SKIP === '1') {
           console.warn(
-            '  ESTIMATOR_NATIVE_SMOKE_WARN OPS_DEV_ADMIN_DSN unset — DB persistence check skipped (ALLOW_DB_CHECK_SKIP=1)',
+            '  ESTIMATOR_NATIVE_SMOKE_WARN OPS_DEV_ADMIN_DSN unset - DB persistence check skipped (ALLOW_DB_CHECK_SKIP=1)',
           );
           return;
         }
         throw new Error(
-          'OPS_DEV_ADMIN_DSN is unset — DB persistence check cannot run. ' +
+          'OPS_DEV_ADMIN_DSN is unset - DB persistence check cannot run. ' +
           'Set ALLOW_DB_CHECK_SKIP=1 to intentionally skip (API-only run).',
         );
       }

@@ -603,25 +603,37 @@ def test_012_reversible_round_trip():
 
 def test_012_down_preserves_cross_database_connect():
     """F-012-3 regression: DROP OWNED BY a login role would revoke CONNECT cluster-wide.
-    Grant the writer CONNECT on a sentinel database (postgres), run 012_down, and assert
-    the sentinel CONNECT SURVIVES (proves down is database-scoped, not a cluster-wide
-    DROP OWNED). Roles survive teardown here because DEV-7 preserves password-bearing roles."""
+    Grant each LOGIN role (ops_intake_writer, ops_api) CONNECT on a sentinel database
+    (postgres), run 012_down ONCE, and assert the sentinel CONNECT SURVIVES for BOTH roles
+    (proves down is database-scoped, not a cluster-wide DROP OWNED, for the writer's revoke
+    block AND the separate ops_api revoke block). Roles survive teardown here because DEV-7
+    preserves password-bearing roles."""
+    login_roles = ("ops_intake_writer", "ops_api")
+    present_roles = []
     with _admin() as c:
-        if not c.execute(
-            "select 1 from pg_roles where rolname='ops_intake_writer'"
-        ).fetchone():
-            pytest.skip("ops_intake_writer role absent")
-        c.execute("grant connect on database postgres to ops_intake_writer")
+        for role in login_roles:
+            if c.execute(
+                "select 1 from pg_roles where rolname=%s", (role,)
+            ).fetchone():
+                present_roles.append(role)
+        if not present_roles:
+            pytest.skip("neither ops_intake_writer nor ops_api role present")
+        for role in present_roles:
+            c.execute(f"grant connect on database postgres to {role}")
     try:
         _exec(DOWN012)
         with _admin() as c:
-            survived = c.execute(
-                "select has_database_privilege('ops_intake_writer', 'postgres', 'CONNECT')"
-            ).fetchone()[0]
-        assert survived is True, "012_down stripped cross-database CONNECT (F-012-3 regression)"
+            for role in present_roles:
+                survived = c.execute(
+                    "select has_database_privilege(%s, 'postgres', 'CONNECT')", (role,)
+                ).fetchone()[0]
+                assert survived is True, (
+                    f"012_down stripped cross-database CONNECT for {role} (F-012-3 regression)"
+                )
     finally:
         with _admin() as c:
-            c.execute("revoke connect on database postgres from ops_intake_writer")
+            for role in present_roles:
+                c.execute(f"revoke connect on database postgres from {role}")
         _exec(UP012)  # restore 012 for the remaining tests
 
 

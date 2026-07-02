@@ -1,5 +1,7 @@
 # ops_app Role-Boundary - Ratified Decisions (2026-07-01)
 
+> SUPERSEDED IN PART (2026-07-02): D1 was ratified A (single ops_app) in this record but was FLIPPED to B (two-role split: ops_intake_writer / ops_api + NOLOGIN ops_fn_owner) during the Deep IRP - see 2026-07-01-ops-app-role-boundary-design-v3.md section 2 / D1. The BUILD follows v3 (D1=B). This record remains authoritative for D2-D8; for D1, v3 governs.
+
 Operator ratification of the 8 decisions from the current-surface audit
 (`OPS_APP_ROLE_BOUNDARY_AUDIT_2026-07-01.md`). This is the AUTHORITATIVE decision
 record the spec must implement. No code, no writes, no prod touch yet - next step is spec.

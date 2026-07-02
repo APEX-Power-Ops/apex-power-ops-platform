@@ -100,8 +100,9 @@ end $$;
 -- NULL). Dropping it and letting the up-side recreate it password-less would break every
 -- scram login (Tasks 9/10/12). SECONDARY guard (DEV-4): DROP ROLE also fails with
 -- dependent_objects_still_exist if the role owns grants in ANOTHER database of this cluster.
--- Either way [d3] DROP OWNED already revoked THIS DB's grants, so posture is restored
--- whether or not the role object survives. ops_fn_owner (NOLOGIN, no password) drops cleanly.
+-- Either way [d3] already revoked this DB's grants (database-scoped revokes for the login
+-- roles; DROP OWNED for ops_fn_owner only), so posture is restored whether or not the role
+-- object survives. ops_fn_owner (NOLOGIN, no password) drops cleanly.
 -- Reading pg_authid requires superuser; the down runs as the admin identity.
 do $$
 declare r text;
