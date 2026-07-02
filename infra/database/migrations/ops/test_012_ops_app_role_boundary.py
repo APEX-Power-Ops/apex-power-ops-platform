@@ -570,3 +570,51 @@ def test_012_reversible_round_trip():
             "select p.prosecdef from pg_proc p"
             " where p.oid = to_regprocedure('ops.attest_apparatus_complete(uuid,uuid,text)')"
         ).fetchone()[0] is True, "re-up did not restore DEFINER"
+
+
+# ---------- Task 7: load.py D2 ----------
+
+def test_012_insert_apparatus_succeeds_as_writer():
+    """The live intake INSERT path must work under the column-scoped matrix (AC5 shape:
+    the writer creates apparatus through load.py's statement, status supplied by DEFAULT)."""
+    import sys
+    sys.path.insert(0, str(HERE.parents[3] / "packages/ops-intake/src"))
+    from ops_intake.load import insert_apparatus
+    with _admin() as c:
+        pid, _sid0, _aid0 = _seed_min(c)
+        with c.cursor() as cur:
+            # _seed_min's scope carries a FROZEN ops.scope_quote row (is_frozen=true,
+            # immutable by trg_scope_quote_freeze_guard - no admin bypass, even to unfreeze).
+            # Inserting a scope_quote_line fires the line-hours maintenance trigger, which
+            # UPDATEs total_quoted_hours on ops.scope_quote and would hit that guard. Use a
+            # second, fresh scope (own, unfrozen scope_quote) for the line/task/apparatus
+            # under test; _seed_min is still exercised for the pid/base-fixture shape.
+            cur.execute(
+                "insert into ops.scopes (project_id,scope_name,status,provenance_status,source)"
+                " values (%s,'S2','In Progress','draft','ops-intake') returning id", (pid,))
+            sid = cur.fetchone()[0]
+            cur.execute(
+                "insert into ops.scope_quote (scope_id,onsite_labor,unit_multiplier,pct_adjust,"
+                "total_quoted_hours) values (%s,0,1,1,0)", (sid,))
+            cur.execute(
+                "insert into ops.tasks (scope_id, task_name) values (%s,'T') returning id", (sid,))
+            tid = cur.fetchone()[0]
+            cur.execute(
+                "insert into ops.scope_quote_line (scope_id, apparatus_type, hrs_per_unit,"
+                " line_number) values (%s,'XFMR',1,1) returning id", (sid,))
+            qlid = cur.fetchone()[0]
+            cur.execute("select id from core.equipment_models limit 1")
+            em = cur.fetchone()
+    emid = em[0] if em else None
+    with _admin(autocommit=False) as c:
+        with c.cursor() as cur:
+            cur.execute("set local role ops_intake_writer")
+            insert_apparatus(
+                cur, sid, tid, qlid,
+                legacy_source_id="T012:A-1", designation="A-1", apparatus_type="XFMR",
+                drawing=None, quoted_hours=1, equipment_model_ref=emid,
+            )
+            cur.execute(
+                "select status from ops.apparatus where legacy_source_id='T012:A-1'")
+            assert cur.fetchone()[0] == "Not Started", "DEFAULT did not supply status"
+        c.rollback()

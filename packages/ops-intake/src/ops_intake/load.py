@@ -163,13 +163,15 @@ def insert_apparatus(cur, scope_id, task_id, quote_line_id, *, legacy_source_id:
                      equipment_model_ref: str) -> None:
     """Insert ONE apparatus unit (QTY-expansion). equipment_model_ref (required) =
     the resolved TERMINAL-ACTIVE core.equipment_models id (4b.1; never null on the
-    live path). legacy_source_id is PROJECT-QUALIFIED by the caller."""
+    live path). legacy_source_id is PROJECT-QUALIFIED by the caller.
+    status is NOT named - the ops.apparatus NOT NULL DEFAULT 'Not Started' supplies it
+    (D2: status is function-owned; the writer holds no status privilege)."""
     cur.execute(
         """
         insert into ops.apparatus (scope_id, task_id, apparatus_designation, apparatus_type,
-            equipment_model_ref, status, drawing_reference, quoted_hours, quote_line_id,
+            equipment_model_ref, drawing_reference, quoted_hours, quote_line_id,
             source, legacy_source_id, provenance_status)
-        values (%s,%s,%s,%s,%s,'Not Started',%s,%s,%s,%s,%s,'draft')
+        values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'draft')
         """,
         (
             scope_id,
