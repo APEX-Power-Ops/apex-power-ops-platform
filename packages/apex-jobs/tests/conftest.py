@@ -1,5 +1,9 @@
 """Pytest fixtures: apply the jobs migrations to orchestration_test once per
-session; truncate the tables before each test. Host-native psql, no Windows paths."""
+session; truncate the tables before each test. Host-native psql, no Windows paths.
+
+Credentials come from env only -- no in-code fallback (records-lane convention):
+APEX_JOBS_PGPASSWORD or DEV_PG_PASSWORD (host: set -a; . infra/.env; set +a).
+The whole suite skips with a clear hint when the env is absent."""
 import os
 import subprocess
 
@@ -11,9 +15,16 @@ REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 MIG = os.path.join(REPO, "infra", "database", "migrations", "jobs")
 PSQL = os.environ.get("PSQL_EXE", "psql")
 DBNAME = os.environ.get("APEX_JOBS_DB", "orchestration_test")
-PGPW = (os.environ.get("APEX_JOBS_PGPASSWORD")
-        or os.environ.get("DEV_PG_PASSWORD") or "TCC_v5_2025")
-DSN = f"host=127.0.0.1 port=5432 dbname={DBNAME} user=orchestration password={PGPW} sslmode=disable"
+PGPW = os.environ.get("APEX_JOBS_PGPASSWORD") or os.environ.get("DEV_PG_PASSWORD")
+DSN = (
+    f"host=127.0.0.1 port=5432 dbname={DBNAME} user=orchestration "
+    f"password={PGPW} sslmode=disable"
+) if PGPW else None
+
+ENV_HINT = (
+    "DB env absent: set APEX_JOBS_PGPASSWORD or DEV_PG_PASSWORD "
+    "(host: set -a; . infra/.env; set +a) -- no in-code fallback"
+)
 
 APPLY = ["001_jobs_enums.sql", "002_jobs_tables.sql", "003_jobs_indexes.sql",
          "004_jobs_views.sql", "005_durability_and_agents.sql"]
@@ -33,6 +44,8 @@ def _psql(fname):
 
 @pytest.fixture(scope="session", autouse=True)
 def _schema():
+    if not PGPW:
+        pytest.skip(ENV_HINT)
     for f in DOWN:
         try:
             _psql(f)

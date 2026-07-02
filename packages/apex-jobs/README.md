@@ -45,7 +45,11 @@ apex-jobs runs **alongside** the `ops/agents/inbox` file queue. No cutover yet �
 the inbox remains the live mechanism until apex-jobs is proven in routine use.
 
 ## Tests (54)
+Credentials come from env only -- no in-code fallback: source the governed
+infra/.env first (DEV_PG_PASSWORD) or set APEX_JOBS_PGPASSWORD; the suite
+skips with a hint otherwise.
 ```
+set -a; . ../../infra/.env; set +a
 APEX_JOBS_DB=orchestration_test PSQL_EXE=psql uv run --extra test pytest
 ```
 enqueue/idempotency · atomic SKIP-LOCKED claim · predecessor + env + human gates ·
