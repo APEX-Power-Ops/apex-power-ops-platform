@@ -40,7 +40,7 @@ VAL_RE = re.compile(r"^records_val_\d{8}T\d{6}_\d+$")
 # 009 seeds that tests 005/008 apply beyond their own number) do NOT move it.
 FINGERPRINT_SQL = """
 select md5(coalesce(string_agg(x, '|' order by x), 'empty')) from (
-  select 'tbl:' || c.relkind || ':' || n.nspname || '.' || c.relname as x
+  select 'tbl:' || c.relkind::text || ':' || n.nspname || '.' || c.relname as x
     from pg_class c join pg_namespace n on n.oid = c.relnamespace
    where n.nspname = 'records'
   union all
@@ -158,9 +158,202 @@ def summary(tiers):
     return "\n".join(lines)
 
 
-def main(argv=None):  # wired fully in the next task
-    raise SystemExit("run_validation: tiers are wired in Task 6")
+def _run(cmd, env=None, cwd=None):
+    """Run a child, stream nothing, return (rc, tail). Exit code is checked
+    directly by callers - never piped through anything that could mask it."""
+    r = subprocess.run(cmd, env=env, cwd=cwd, capture_output=True, text=True)
+    tail = "\n".join((r.stdout + "\n" + r.stderr).strip().splitlines()[-12:])
+    return r.returncode, tail
+
+
+def _pytest(paths, env, label):
+    rc, tail = _run([sys.executable, "-m", "pytest", "-q", *paths], env=env, cwd=REPO_ROOT)
+    print(f"--- {label} (rc={rc}) ---\n{tail}")
+    return rc
+
+
+def _connect(dsn_value):
+    import psycopg
+
+    print(f"[connect] dbname={_dbtest.dsn_params(dsn_value).get('dbname')}")
+    return psycopg.connect(dsn_value, autocommit=True)
+
+
+def _fingerprint(dsn_value):
+    with _connect(dsn_value) as c:
+        return c.execute(FINGERPRINT_SQL).fetchone()[0]
+
+
+def tier0_syntax_origin():
+    rc, tail = _run([sys.executable, "-m", "compileall", "-q",
+                     os.path.join(REPO_ROOT, "packages", "power-test-converters"),
+                     os.path.join(REPO_ROOT, "packages", "records-import"), HERE])
+    if rc != 0:
+        return Tier("0-syntax", "FAIL", tail)
+    for name in ("power_test_converters", "records_import"):
+        code = (f"import os,{name};p=os.path.abspath({name}.__file__);"
+                f"raise SystemExit(0 if p.startswith({REPO_ROOT!r}) else 'ORIGIN:'+p)")
+        rc, tail = _run([sys.executable, "-c", code])
+        if rc != 0:
+            return Tier("0-syntax", "FAIL",
+                        f"{name} does not resolve inside this repo (dependency-confusion tripwire): {tail}")
+    return Tier("0-syntax", "PASS", "compileall + origin asserts")
+
+
+def tier1_converters(env):
+    rc = _pytest([os.path.join("packages", "power-test-converters", "tests")], env, "tier1")
+    return Tier("1-converters", "PASS" if rc == 0 else "FAIL", f"pytest rc={rc}")
+
+
+PURE_IMPORT_TESTS = ["test_review_proposal.py", "test_ptm_transformer_mapping.py", "test_smoke.py"]
+DB_IMPORT_TESTS = ["test_db_write.py", "test_ingest_end_to_end.py", "test_ingest_dtax_end_to_end.py"]
+
+
+def tier2_import_pure(env):
+    paths = [os.path.join("packages", "records-import", "tests", f) for f in PURE_IMPORT_TESTS]
+    rc = _pytest(paths, env, "tier2")
+    return Tier("2-import-pure", "PASS" if rc == 0 else "FAIL", f"pytest rc={rc}")
+
+
+def _child_env(child_dsn):
+    env = dict(os.environ)
+    env["RECORDS_DEV_DSN"] = child_dsn
+    pw = _dbtest.dsn_params(child_dsn).get("password")
+    if pw:
+        env["RECORDS_DEV_PGPASSWORD"] = pw
+    env["NETA_DATA_DIR"] = _dbtest.neta_data_dir()
+    env["NETA_JSON"] = _dbtest.neta_json()
+    env["PSQL_EXE"] = _dbtest.psql_exe()
+    env.pop("RECORDS_ALLOW_SHARED_DB", None)
+    return env
+
+
+def tier3_walk(child_dsn, executed, migs, tests):
+    env = _child_env(child_dsn)
+    for num, sql in migs:
+        _dbtest.run_psql(sql, child_dsn)
+        tf = tests.get(num)
+        if not tf:
+            continue
+        pre = _fingerprint(child_dsn)
+        rc = _pytest([os.path.join("infra", "database", "migrations", "records", tf)], env, tf)
+        if rc != 0:
+            return Tier("3-migrations", "FAIL", f"{tf} failed (rc={rc}); walk stopped")
+        post = _fingerprint(child_dsn)
+        if pre != post:
+            return Tier("3-migrations", "FAIL",
+                        f"{tf} PASSED but did not restore its migration (schema fingerprint moved)")
+        executed.append(tf)
+    return Tier("3-migrations", "PASS", f"{len(migs)} applied, {len(executed)} tests executed, 0 skipped")
+
+
+def tier4_import_db(child_dsn, executed):
+    env = _child_env(child_dsn)
+    paths = [os.path.join("packages", "records-import", "tests", f) for f in DB_IMPORT_TESTS]
+    rc = _pytest(paths, env, "tier4")
+    if rc == 0:
+        executed.extend(DB_IMPORT_TESTS)
+    return Tier("4-import-db", "PASS" if rc == 0 else "FAIL",
+                f"{len(DB_IMPORT_TESTS)} DB test files, pytest rc={rc}")
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description="records validation gate")
+    ap.add_argument("--require-db", action="store_true",
+                    help="CI mode: any absence/skip on DB or source inputs is a failure")
+    ap.add_argument("--only", default="", help="comma list of tiers to run, e.g. 3,4")
+    ap.add_argument("--db-dsn", default="", help="explicit records_val_* DSN (required with --only 3/4)")
+    ap.add_argument("--keep-db", action="store_true", help="skip the drop; print the retained name")
+    args = ap.parse_args(argv)
+
+    try:
+        wanted = parse_tiers(args.only)
+    except HarnessError as e:
+        print(f"error: {e}")
+        return 2
+    tiers, executed = [], []
+    admin = os.environ.get("RECORDS_PG_ADMIN_DSN", "")
+    child_dsn, val_name, created = "", "", False
+
+    if args.db_dsn:
+        name = _dbtest.dsn_params(args.db_dsn).get("dbname", "")
+        assert_val_name(name)
+        child_dsn = args.db_dsn
+
+    if 0 in wanted:
+        tiers.append(tier0_syntax_origin())
+    if 1 in wanted:
+        tiers.append(tier1_converters(dict(os.environ)))
+    if 2 in wanted:
+        tiers.append(tier2_import_pure(dict(os.environ)))
+
+    db_wanted = wanted & {3, 4}
+    if db_wanted and not any(t.status == "FAIL" for t in tiers):
+        try:
+            # Source + completeness preflights run BEFORE any skip decision
+            # and BEFORE any CREATE (spec sec 3; red proof 1 depends on it).
+            migs, tests = None, None
+            if 3 in wanted:
+                _dbtest.neta_data_dir()
+                _dbtest.neta_json()
+                migs, tests = enumerate_stack(HERE)
+            if not child_dsn:
+                if wanted != {0, 1, 2, 3, 4}:
+                    raise HarnessError("--only with DB tiers requires --db-dsn (records_val_* only)")
+                if not admin:
+                    detail = "RECORDS_PG_ADMIN_DSN is not set"
+                    status = "FAIL" if args.require_db else "SKIP"
+                    for n in sorted(db_wanted):
+                        tiers.append(Tier(f"{n}-db", status, detail))
+                    db_wanted = set()
+                else:
+                    check_admin_dsn(admin)
+                    val_name = make_val_name()
+                    assert_val_name(val_name)
+                    with _connect(admin) as c:
+                        exists = c.execute(
+                            "select 1 from pg_database where datname = %s", (val_name,)
+                        ).fetchone()
+                        if exists:
+                            raise HarnessError(f"disposable name already exists: {val_name}")
+                        c.execute(f'create database "{val_name}"')
+                    created = True
+                    child_dsn = derive_child_dsn(admin, val_name)
+            try:
+                if 3 in db_wanted:
+                    tiers.append(tier3_walk(child_dsn, executed, migs, tests))
+                if 4 in db_wanted and not any(
+                    t.name == "3-migrations" and t.status == "FAIL" for t in tiers
+                ):
+                    if 3 in db_wanted or args.db_dsn:
+                        tiers.append(tier4_import_db(child_dsn, executed))
+                    else:
+                        tiers.append(Tier("4-import-db", "SKIP", "no migrated target (run tier 3 or pass --db-dsn)"))
+                elif 4 in db_wanted:
+                    tiers.append(Tier("4-import-db", "SKIP", "tier 3 failed"))
+            finally:
+                if created:
+                    if args.keep_db:
+                        print(f"[keep-db] retained database: {val_name} (drop it manually)")
+                    else:
+                        assert_val_name(val_name)
+                        with _connect(admin) as c:
+                            c.execute(f'drop database if exists "{val_name}" with (force)')
+                        print(f"[drop] {val_name}")
+        except (HarnessError, _dbtest.RecordsEnvError) as e:
+            tiers.append(Tier("3-migrations" if 3 in wanted else "4-import-db", "FAIL", str(e)))
+    elif db_wanted:
+        for n in sorted(db_wanted):
+            tiers.append(Tier(f"{n}-db", "SKIP", "earlier tier failed"))
+
+    print(summary(tiers))
+    print(f"executed test files: {len(executed)}")
+    failed = any(t.status == "FAIL" for t in tiers)
+    skipped = any(t.status == "SKIP" for t in tiers)
+    if failed or (args.require_db and skipped):
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
