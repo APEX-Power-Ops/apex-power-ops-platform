@@ -182,7 +182,7 @@ zero-parser-risk path:
 
 ---
 
-## 12. As-built — 10a (2026-06-17, on `records/chip10-import`; NOT merged — "nothing ships until it's all done")
+## 12. As-built - 10a (built 2026-06-17 on `records/chip10-import`; since merged to main)
 
 Built TDD (14/14 green on `records_dev`): a prerequisite migration + a new isolated package.
 
