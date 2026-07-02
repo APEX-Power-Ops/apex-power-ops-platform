@@ -7,7 +7,8 @@ ORCH_TEST_PGPASSWORD or DEV_PG_PASSWORD, or ORCH_TEST_DSN as a full override
 that drives BOTH the psycopg connection and the psql apply path (parsed via
 psycopg.conninfo; a DSN without a password still needs one of the password
 vars). On the host: set -a; . infra/.env; set +a. DB-backed tests skip with a
-clear hint when the env is absent."""
+clear hint when the env is absent. The destructive-target guard (resolved
+dbname must end in _test) lives in this directory's conftest.py."""
 import os
 import subprocess
 
@@ -37,6 +38,7 @@ def _params():
     dsn = os.environ.get("ORCH_TEST_DSN")
     if dsn:
         p = conninfo.conninfo_to_dict(dsn)
+        p.setdefault("dbname", DBNAME)
     else:
         p = {"host": "127.0.0.1", "port": "5432", "dbname": DBNAME,
              "user": "orchestration", "sslmode": "disable"}
@@ -51,7 +53,7 @@ def psql_file(fname):
            "PGSSLMODE": str(p.get("sslmode", "disable"))}
     r = subprocess.run(
         [PSQL, "-h", str(p.get("host", "127.0.0.1")), "-p", str(p.get("port", "5432")),
-         "-U", str(p.get("user", "orchestration")), "-d", str(p.get("dbname", DBNAME)),
+         "-U", str(p.get("user", "orchestration")), "-d", str(p["dbname"]),
          "-v", "ON_ERROR_STOP=1", "-q", "-f", os.path.join(HERE, fname)],
         env=env, capture_output=True, text=True,
     )
