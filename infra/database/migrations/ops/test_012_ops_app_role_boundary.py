@@ -461,3 +461,58 @@ def test_012_for_update_two_session_concurrency():
     finally:
         a.close()
         b.close()
+
+
+# ---------- Task 5: H2 guard ----------
+
+def _force_complete(aid):
+    """Admin setup: flip an apparatus to Complete via the sanctioned ctx (setup DML tier).
+    Uses its OWN autocommit=False connection so `set local` is inside a real transaction
+    (on an autocommit connection SET LOCAL is inert); commit persists status='Complete'."""
+    with _admin(autocommit=False) as c, c.cursor() as cur:
+        cur.execute("set local ops.completion_ctx='1'")
+        cur.execute("update ops.apparatus set status='Complete' where id=%s", (aid,))
+        c.commit()
+
+
+def test_012_h2_provenance_frozen_on_complete_regardless_of_guc():
+    with _admin() as c:
+        pid, sid, aid = _seed_min(c)
+    _force_complete(aid)
+    upd = "update ops.apparatus set provenance_status='draft', updated_at=now() where id=%s"
+    # proof (e): denied by the H2 guard even though the writer HOLDS the column privilege,
+    # and even with the ctx GUC set. RaiseException (the guard), not InsufficientPrivilege.
+    for pre in (None, "set local ops.completion_ctx='1'"):
+        with _admin(autocommit=False) as c:
+            with c.cursor() as cur:
+                cur.execute("set local role ops_intake_writer")
+                if pre:
+                    cur.execute(pre)
+                with pytest.raises(errors.RaiseException) as ei:
+                    cur.execute(upd, (aid,))
+                assert "provenance_status may not change while status" in str(ei.value)
+            c.rollback()
+
+
+def test_012_h2_breaks_no_sanctioned_path():
+    """Writer provenance UPDATE on a NON-Complete row still works (the approve path),
+    and attest/revoke (status-only writes) still work through the DEFINER fns."""
+    with _admin() as c:
+        pid, sid, aid = _seed_min(c)
+        with c.cursor() as cur:
+            cur.execute("insert into ops.persons (display_name) values ('PM') returning person_id")
+            who = cur.fetchone()[0]
+    with _admin(autocommit=False) as c:
+        with c.cursor() as cur:
+            cur.execute("set local role ops_intake_writer")
+            cur.execute(
+                "update ops.apparatus set provenance_status='approved', updated_at=now() where id=%s",
+                (aid,))
+        c.commit()
+    with _admin(autocommit=False) as c:
+        with c.cursor() as cur:
+            cur.execute("set local role ops_api")
+            cur.execute("select ops.attest_apparatus_complete(%s,%s,'ok')", (aid, who))
+            att = cur.fetchone()[0]
+            cur.execute("select ops.revoke_completion_attestation(%s,%s,'undo')", (att, who))
+        c.commit()

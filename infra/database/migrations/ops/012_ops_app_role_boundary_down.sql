@@ -32,6 +32,32 @@ begin
   end loop;
 end $$;
 
+-- [d2] restore the pre-012 completion guard (verbatim 009 body), guarded on schema presence
+do $$
+begin
+  if to_regnamespace('ops') is not null and to_regclass('ops.apparatus') is not null then
+    execute $guard$
+create or replace function ops.trg_apparatus_completion_guard() returns trigger language plpgsql as $fn$
+declare
+  new_g boolean := (new.status='Complete' and new.provenance_status='approved');
+  old_g boolean;
+begin
+  if tg_op = 'INSERT' then
+    if new_g and current_setting('ops.completion_ctx', true) is distinct from '1' then
+      raise exception 'apparatus %: governed-complete may be entered only via attest', new.id;
+    end if;
+  else  -- UPDATE
+    old_g := (old.status='Complete' and old.provenance_status='approved');
+    if (new_g is distinct from old_g) and current_setting('ops.completion_ctx', true) is distinct from '1' then
+      raise exception 'apparatus %: governed-complete may change only via attest/revoke', new.id;
+    end if;
+  end if;
+  return new;
+end; $fn$;
+$guard$;
+  end if;
+end $$;
+
 -- [d3] revoke everything granted TO the roles in THIS database
 do $$
 begin

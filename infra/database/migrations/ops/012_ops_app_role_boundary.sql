@@ -396,3 +396,32 @@ begin
     raise exception '012 posture: an ops view is not postgres-owned/non-invoker (R2)';
   end if;
 end $$;
+
+-- [6] H2: completion-guard tightening (required) -----------------------------------------
+-- Replaces the 009 guard. NEW: provenance_status may not change while status='Complete',
+-- REGARDLESS of ops.completion_ctx - this makes "the ctx GUC is inert to login roles" true
+-- by construction (D4). Grounded: no DEFINER fn legitimately changes provenance while
+-- status='Complete' (approve stamps provenance at status='Not Started'; attest/revoke
+-- change status, not provenance); recognized-then-reapprove is blocked earlier by the
+-- _conflict_kind frozen gate. The trigger itself (009:70-71) is untouched.
+create or replace function ops.trg_apparatus_completion_guard() returns trigger language plpgsql as $$
+declare
+  new_g boolean := (new.status='Complete' and new.provenance_status='approved');
+  old_g boolean;
+begin
+  if tg_op = 'INSERT' then
+    if new_g and current_setting('ops.completion_ctx', true) is distinct from '1' then
+      raise exception 'apparatus %: governed-complete may be entered only via attest', new.id;
+    end if;
+  else  -- UPDATE
+    -- H2 (012): ctx-independent.
+    if old.status = 'Complete' and new.provenance_status is distinct from old.provenance_status then
+      raise exception 'apparatus %: provenance_status may not change while status=Complete', new.id;
+    end if;
+    old_g := (old.status='Complete' and old.provenance_status='approved');
+    if (new_g is distinct from old_g) and current_setting('ops.completion_ctx', true) is distinct from '1' then
+      raise exception 'apparatus %: governed-complete may change only via attest/revoke', new.id;
+    end if;
+  end if;
+  return new;
+end; $$;
