@@ -14,7 +14,7 @@ CT-ratio xref 7.10 + master/phasing-relay calibration xref 7.9; NEVER tcc (a net
 has no integral trip curve -- protection is the external network-protector relay, 7.9).
 
 RED until gen_network_protector_template.py emits 042_network_protector_template.sql. Run PER-CHIP:
-  RECORDS_DEV_PGPASSWORD=TCC_v5_2025 uv run --no-project --with "psycopg[binary]" --with pytest \
+  RECORDS_DEV_PGPASSWORD=<records-dev-password> uv run --no-project --with "psycopg[binary]" --with pytest \
     pytest test_042_network_protector_template.py -q
 """
 import json
