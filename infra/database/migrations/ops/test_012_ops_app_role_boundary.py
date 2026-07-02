@@ -201,7 +201,7 @@ def test_012_owner_grants_cover_fn_read_and_lock_surface():
     with _admin() as c:
         # SELECT surface (RV-1: the owner needs SELECT on every table its fn bodies read/join)
         for t in ("apparatus", "scopes", "completion_attestation", "revenue_recognition_event",
-                  "scope_quote", "projects", "persons",
+                  "scope_quote", "projects", "persons", "tasks",
                   "billing_application", "billing_application_line", "billing_application_draft"):
             assert c.execute(
                 "select has_table_privilege('ops_fn_owner', %s, 'SELECT')", ("ops." + t,)
@@ -538,7 +538,11 @@ def test_012_reversible_round_trip():
     set out-of-band (rolpassword IS NOT NULL -> [d4] leaves it). During a test_012 run no
     password is set, so the role is dropped; after the Task-8 operator checkpoint it survives.
     Either way [d3] DROP OWNED revoked this DB's grants, which is what we assert. NEVER assert
-    the role object is gone."""
+    the role object is gone.
+
+    EXECUTE check: post-down PUBLIC EXECUTE is restored by [d5], and has_function_privilege
+    includes PUBLIC-derived privilege - so effective-privilege checks are meaningless for
+    surviving roles. The contract is NO DIRECT ACE for ops_api on the fn."""
     _exec(DOWN012)
     with _admin() as c:
         # fns reverted to INVOKER + postgres-owned
@@ -559,7 +563,9 @@ def test_012_reversible_round_trip():
         # DEV-7 posture contract: if a role object survives (password-bearing, or cross-DB
         # dependency), its grants in THIS db must be gone (DROP OWNED). If it was dropped,
         # there is nothing to check. Guard has_*_privilege on existence (it errors on a
-        # missing role). ops_api EXECUTE on the recognition fns must also be gone.
+        # missing role). ops_api must hold no DIRECT EXECUTE ACE on the recognition fns
+        # ([d5] restores PUBLIC EXECUTE, so has_function_privilege would see PUBLIC-derived
+        # privilege on a surviving role - check the proacl ACE directly instead).
         for role in ("ops_intake_writer", "ops_api"):
             if c.execute("select 1 from pg_roles where rolname=%s", (role,)).fetchone():
                 assert c.execute(
@@ -569,10 +575,13 @@ def test_012_reversible_round_trip():
                     " where ns.nspname='ops' and c.relkind in ('r','p')", (role, role, role)
                 ).fetchone()[0] in (False, None), "down left " + role + " grants behind"
         if c.execute("select 1 from pg_roles where rolname='ops_api'").fetchone():
-            assert c.execute(
-                "select has_function_privilege('ops_api',"
-                " to_regprocedure('ops.attest_apparatus_complete(uuid,uuid,text)'), 'EXECUTE')"
-            ).fetchone()[0] is False, "down left ops_api EXECUTE behind"
+            row = c.execute(
+                "select exists (select 1 from pg_proc p,"
+                " aclexplode(coalesce(p.proacl, '{}'::aclitem[])) a"
+                " where p.oid = to_regprocedure('ops.attest_apparatus_complete(uuid,uuid,text)')"
+                "   and a.grantee = 'ops_api'::regrole)"
+            ).fetchone()
+            assert row[0] is False, "down left a direct ops_api EXECUTE ACE behind"
     _exec(UP012)
     with _admin() as c:
         assert c.execute(

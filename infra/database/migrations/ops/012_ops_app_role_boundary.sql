@@ -173,8 +173,11 @@ grant usage on schema ops to ops_fn_owner;
 
 -- RV-1: SELECT on every table the fn bodies read/join. scopes is REQUIRED (attest,
 -- approve_and_recognize, and the revrec insert-integrity trigger all join ops.scopes).
+-- F-012-2 (operator-ratified 2026-07-02): ops.tasks is REQUIRED - the owner's apparatus
+-- UPDATEs (attest/revoke/approve) fire INVOKER trigger trg_apparatus_task_same_scope (007),
+-- which reads ops.tasks as the DML executor.
 grant select on ops.apparatus, ops.scopes, ops.completion_attestation,
-  ops.revenue_recognition_event, ops.scope_quote, ops.projects, ops.persons
+  ops.revenue_recognition_event, ops.scope_quote, ops.projects, ops.persons, ops.tasks
   to ops_fn_owner;
 
 -- Write/lock surface. Table-level UPDATE is acceptable HERE ONLY: NOLOGIN + fn-gated +
@@ -208,6 +211,9 @@ begin
   end if;
   if not has_table_privilege('ops_fn_owner', 'ops.scopes', 'SELECT') then
     raise exception '012 posture: ops_fn_owner missing SELECT on ops.scopes (RV-1)';
+  end if;
+  if not has_table_privilege('ops_fn_owner', 'ops.tasks', 'SELECT') then
+    raise exception '012 posture: ops_fn_owner missing SELECT on ops.tasks (F-012-2)';
   end if;
   if not has_table_privilege('ops_fn_owner', 'ops.revenue_recognition_event', 'UPDATE')
      or not has_table_privilege('ops_fn_owner', 'ops.projects', 'UPDATE') then
