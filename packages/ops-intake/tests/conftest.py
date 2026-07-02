@@ -24,30 +24,56 @@ def _require_ops_test(dsn):
     )
 
 
-def _dsn():
-    d = os.environ.get("OPS_DEV_DSN") or (
-        "host=127.0.0.1 port=5432 dbname=ops_dev user=postgres "
-        "password={} sslmode=disable".format(
-            os.environ.get("OPS_DEV_PGPASSWORD") or os.environ.get("PGPASSWORD", "")
-        )
-    )
+def _admin_dsn():
+    # Hard-require (C2/D7): the OPS_DEV_DSN fallback is deleted - no fallback, no superuser
+    # behavior tier. Admin is for the ladder, TRUNCATE, and setup DML ONLY.
+    d = os.environ["OPS_DEV_ADMIN_DSN"]
     _require_ops_test(d)
     return d
+
+
+def _writer_dsn():
+    d = os.environ["OPS_INTAKE_WRITER_DSN"]
+    _require_ops_test(d)
+    return d
+
+
+def _api_dsn():
+    d = os.environ["OPS_API_DSN"]
+    _require_ops_test(d)
+    return d
+
+
+@pytest.fixture
+def admin_dsn():
+    return _admin_dsn()
+
+
+@pytest.fixture
+def writer_dsn():
+    return _writer_dsn()
+
+
+@pytest.fixture
+def api_dsn():
+    return _api_dsn()
 
 
 @pytest.fixture
 def dsn():
-    return _dsn()
+    # Behavior default: the intake/approve pipeline runs AS THE WRITER (AC5 - the
+    # column-scoped matrix is exercised by the positive pipeline, not admin-seeded).
+    return _writer_dsn()
 
 
 @pytest.fixture
 def clean_ops():
+    # TRUNCATE is an admin-tier privilege; the returned DSN (what tests run behavior
+    # against) is the WRITER.
     import psycopg
-    d = _dsn()
-    _require_ops_test(d)
-    with psycopg.connect(d, autocommit=True) as c:
+    with psycopg.connect(_admin_dsn(), autocommit=True) as c:
         c.execute(_OPS_TRUNCATE)
-    return d
+    return _writer_dsn()
 
 
 def _ops_schema_exists(conn) -> bool:
@@ -60,21 +86,21 @@ def _ops_schema_exists(conn) -> bool:
 @pytest.fixture(scope="session", autouse=True)
 def apply_migrations(tmp_path_factory):
     import psycopg
-    d = _dsn()
-    _require_ops_test(d)
+    d = _admin_dsn()
 
     def _run_sql(conn, path):
         sql = path.read_text(encoding="utf-8")
         conn.execute(sql)
 
     mig_dir = _MIGRATIONS_DIR
-    # pre-up reset: drop 009 THEN 008 (core + FK) THEN 001 (ops) so a leaked schema from a prior
-    # session cannot make the up-migrations fail.
+    # pre-up reset: drop 012 THEN 009 THEN 008 (core + FK) THEN 001 (ops) so a leaked schema from
+    # a prior session cannot make the up-migrations fail.
     # 009 down contains a CREATE OR REPLACE FUNCTION ops.* so it requires the ops schema to exist;
     # guard with an existence check so a brand-new ops_test database is safe.
     with psycopg.connect(d, autocommit=True) as c:
         if _ops_schema_exists(c):
             c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010 down's data-loss guard passes
+            _run_sql(c, mig_dir / "012_ops_app_role_boundary_down.sql")
             _run_sql(c, mig_dir / "011_scope_quote_line_description_down.sql")
             _run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")
             _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
@@ -93,6 +119,7 @@ def apply_migrations(tmp_path_factory):
         "009_recognition_bridge.sql",
         "010_native_envelope_intake.sql",
         "011_scope_quote_line_description.sql",
+        "012_ops_app_role_boundary.sql",
     ]
     with psycopg.connect(d, autocommit=True) as c:
         for name in up_migrations:
@@ -103,6 +130,7 @@ def apply_migrations(tmp_path_factory):
     with psycopg.connect(d, autocommit=True) as c:
         if _ops_schema_exists(c):
             c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010 down's data-loss guard passes
+            _run_sql(c, mig_dir / "012_ops_app_role_boundary_down.sql")
             _run_sql(c, mig_dir / "011_scope_quote_line_description_down.sql")
             _run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")
             _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")

@@ -16,9 +16,9 @@ def _person(dsn):
         ).fetchone()[0]
 
 
-def test_create_run_persists_envelope_only(mini_workbook, clean_ops):
+def test_create_run_persists_envelope_only(mini_workbook, clean_ops, admin_dsn):
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     out = create_run(
         dsn,
         uploaded_by=who,
@@ -39,9 +39,9 @@ def test_create_run_persists_envelope_only(mini_workbook, clean_ops):
         assert sha == hashlib.sha256(_bytes(mini_workbook)).hexdigest()
 
 
-def test_second_active_upload_supersedes(mini_workbook, clean_ops):
+def test_second_active_upload_supersedes(mini_workbook, clean_ops, admin_dsn):
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     r1 = create_run(
         dsn,
         uploaded_by=who,
@@ -92,8 +92,8 @@ from ops_intake.envelope import (create_run, patch_review,
                                  _assert_no_cross_scope_move, _assert_review_within_allowlist)
 
 
-def test_patch_bumps_version_and_revalidates(mini_workbook, clean_ops):
-    dsn = clean_ops; who = _person(dsn)
+def test_patch_bumps_version_and_revalidates(mini_workbook, clean_ops, admin_dsn):
+    dsn = clean_ops; who = _person(admin_dsn)
     r = create_run(dsn, uploaded_by=who, filename="m.xlsm", raw_bytes=mini_workbook.read_bytes(), content_type="xlsm")
     rp = r["review_payload"]; rp["scopes"][0]["lines"][0]["hrs_per_unit"] = 3.0
     out = patch_review(dsn, r["run_id"], review_payload=rp)
@@ -182,15 +182,16 @@ def test_allowlist_blocks_identity_and_structural_tamper():
         _assert_review_within_allowlist(_canon(), deleted)
 
 
-def test_get_run_returns_only_current_version_findings(mini_workbook, clean_ops):
+def test_get_run_returns_only_current_version_findings(mini_workbook, clean_ops, admin_dsn):
     """get_run must return ONLY current-version findings; a stale prior-version blocker (one the PM
     resolved in a later revision) must NOT keep the UI Approve button disabled (operator defect I2)."""
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     r = create_run(dsn, uploaded_by=who, filename="m.xlsm",
                    raw_bytes=_bytes(mini_workbook), content_type="xlsm")
     rid = r["run_id"]
     # Inject a STALE v1 blocking finding directly (simulating a blocker resolved by a later patch).
+    # Writer holds INSERT on intake_validation_findings (load.py writes findings) - stays on dsn.
     with psycopg.connect(dsn, autocommit=True) as c:
         c.execute(
             "insert into ops.intake_validation_findings "
@@ -206,11 +207,11 @@ def test_get_run_returns_only_current_version_findings(mini_workbook, clean_ops)
     assert all(f["code"] != "stale_v1" for f in out["findings"]), out["findings"]
 
 
-def test_create_run_json_intake(clean_ops):
+def test_create_run_json_intake(clean_ops, admin_dsn):
     """JSON upload (DataverseExport shape) creates a GOVERNED envelope, envelope-only; a malformed
     JSON yields a rejected envelope rather than a 500 (operator I3 -- JSON must be allowed)."""
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     doc = {
         "project": {"name": "JSON Proj", "projectNumber": "JSON-001"},
         "client": {"name": "Acme"},
@@ -259,14 +260,14 @@ def test_allowlist_error_message_is_value_free():
     assert "99999" not in msg and "1000" not in msg  # neither the review nor the canonical dollar value
 
 
-def test_patch_review_on_inactive_run_raises_run_not_active(mini_workbook, clean_ops):
+def test_patch_review_on_inactive_run_raises_run_not_active(mini_workbook, clean_ops, admin_dsn):
     """patch_review on an approved (inactive) run raises RunNotActive (API maps to 409), re-checked
     under the run-row FOR UPDATE lock -- never a silent revert of an approved run. (Codex finding 2)"""
     import pytest
     from ops_intake.envelope import RunNotActive
     from ops_intake.approve import approve_run
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     r = create_run(dsn, uploaded_by=who, filename="m.xlsm",
                    raw_bytes=_bytes(mini_workbook), content_type="xlsm")
     approve_run(dsn, r["run_id"], approved_by=who)  # -> status 'approved' (inactive)

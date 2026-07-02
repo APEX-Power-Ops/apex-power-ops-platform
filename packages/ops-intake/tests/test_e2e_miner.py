@@ -18,9 +18,9 @@ def _person(dsn):
         ).fetchone()[0]
 
 
-def test_e2e_miner_full_load(real_workbook, clean_ops):
+def test_e2e_miner_full_load(real_workbook, clean_ops, admin_dsn):
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     r = create_run(dsn, uploaded_by=who, filename="rev10.xlsm",
                    raw_bytes=real_workbook.read_bytes(), content_type="xlsm")
     out = approve_run(dsn, r["run_id"], approved_by=who)

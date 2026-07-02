@@ -7,16 +7,19 @@ def _person(dsn):
     with psycopg.connect(dsn, autocommit=True) as c:
         return c.execute("insert into ops.persons (display_name) values ('Lead') returning person_id").fetchone()[0]
 
-def test_approve_materializes_tasks_and_freezes(mini_workbook, clean_ops):
-    dsn = clean_ops; who = _person(dsn)
+def test_approve_materializes_tasks_and_freezes(mini_workbook, clean_ops, admin_dsn):
+    dsn = clean_ops; who = _person(admin_dsn)
     r = create_run(dsn, uploaded_by=who, filename="m.xlsm", raw_bytes=mini_workbook.read_bytes(), content_type="xlsm")
     approve_run(dsn, r["run_id"], approved_by=who)
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.tasks where legacy_source_id is not null").fetchone()[0] >= 1
         assert c.execute("select count(*) from ops.apparatus where task_id is not null").fetchone()[0] >= 1
         assert c.execute("select bool_and(is_frozen) from ops.scope_quote").fetchone()[0] is True
-        assert c.execute("select count(*) from ops.standard_hours").fetchone()[0] == 0  # D4: no catalog write
         assert c.execute("select status from ops.intake_runs where id=%s",(r["run_id"],)).fetchone()[0]=="approved"
+    # standard_hours: D4 "no catalog write" - the writer holds NO grant on this table at all
+    # (spec S5: dropped over-grant), so this verification read runs as admin, not the writer.
+    with psycopg.connect(admin_dsn) as c:
+        assert c.execute("select count(*) from ops.standard_hours").fetchone()[0] == 0  # D4: no catalog write
 
 def test_materialize_full_replacement_removes_all_children_and_spares_foreign(clean_ops):
     """Full replacement removes ALL intake-owned children via the source='ops-intake' scope cascade; foreign rows survive."""
@@ -62,9 +65,9 @@ def test_null_section_lines_are_idempotent(clean_ops):
         t2 = c.execute("select count(*) from ops.tasks").fetchone()[0]
     assert t1 == 1 and t2 == 1   # exactly one __ungrouped__ task, not duplicated on re-approve
 
-def test_recognized_then_reversed_still_blocks(mini_workbook, clean_ops):
+def test_recognized_then_reversed_still_blocks(mini_workbook, clean_ops, admin_dsn, api_dsn):
     """recognized -> fully reversed (net 0) -> re-intake still revision_blocked/recognized (EXISTS, not net)."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     r = create_run(dsn, uploaded_by=who, filename="m.xlsm", raw_bytes=mini_workbook.read_bytes(), content_type="xlsm")
     approve_run(dsn, r["run_id"], approved_by=who)
     with psycopg.connect(dsn, autocommit=True) as c:
@@ -89,8 +92,14 @@ def test_recognized_then_reversed_still_blocks(mini_workbook, clean_ops):
             " from ops.apparatus a join ops.scope_quote sq on sq.scope_id=a.scope_id"
             " where a.id=%s", (aid,)).fetchone()
         assert prov == 'approved' and st not in ('Complete','Cancelled') and qh > 0 and qr > 0 and frozen
-        # `who` is the approve_run actor; ensure it is a known ops.persons row (attest gate 1).
+    # `who` is the approve_run actor; ensure it is a known ops.persons row (attest gate 1).
+    # ops.persons SELECT is a dropped over-grant for login roles (spec S5: RI + the DEFINER
+    # attest fn read persons AS OWNER; login roles never need it) - verify as admin.
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
         assert c.execute("select 1 from ops.persons where person_id=%s", (who,)).fetchone() is not None
+    # The 3 recognition fns are EXECUTE-granted to ops_api ONLY (writer is denied) - behavior
+    # runs on api_dsn (a fresh connection; aid/who/ev are plain Python values, not tied to `c`).
+    with psycopg.connect(api_dsn, autocommit=True) as c:
         c.execute("select ops.attest_apparatus_complete(%s,%s,'tested')", (aid, who))  # sanctioned status=Complete (T2 guard)
         ev = c.execute("select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",
                        (aid, who)).fetchone()[0]
@@ -99,7 +108,7 @@ def test_recognized_then_reversed_still_blocks(mini_workbook, clean_ops):
     assert out["conflict_kind"] == "recognized" and out["status"] == "revision_blocked"
 
 
-def test_approve_refuses_foreign_source_project(clean_ops):
+def test_approve_refuses_foreign_source_project(clean_ops, admin_dsn):
     """A project bearing a non-ops-intake scope (legacy Miner rows) must be REFUSED by approve
     (outcome 'foreign_source') with NO scopes deleted -- so delete-by-marker can never orphan
     foreign rows. (operator missing-coverage: foreign-source refusal)"""
@@ -109,7 +118,7 @@ def test_approve_refuses_foreign_source_project(clean_ops):
     from fixtures.build_fixture import build
 
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     # Seed a project "FS-1" carrying a FOREIGN (non-ops-intake) scope.
     with psycopg.connect(dsn, autocommit=True) as c:
         pid = c.execute(
@@ -135,7 +144,7 @@ def test_approve_refuses_foreign_source_project(clean_ops):
         ).fetchone()[0] == 0  # nothing materialized
 
 
-def test_two_projects_share_line_uid_no_apparatus_key_collision(clean_ops):
+def test_two_projects_share_line_uid_no_apparatus_key_collision(clean_ops, admin_dsn):
     """Two DIFFERENT projects whose lines share a line_uid must BOTH materialize -- apparatus
     legacy_source_id is project-qualified (f'{project_number}:{line_uid}:u{i}'), so the GLOBALLY
     unique uq_ops_apparatus_intake does not collide. (operator missing-coverage: two-project key)"""
@@ -145,7 +154,7 @@ def test_two_projects_share_line_uid_no_apparatus_key_collision(clean_ops):
     from fixtures.build_fixture import build
 
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     d = pathlib.Path(tempfile.mkdtemp())
     # Same default scope_name -> identical line_uids (e.g. "A1) MV - Test:row8") across both projects.
     a = build(d / "a.xlsx", job_number="P-AAA")

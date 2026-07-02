@@ -113,8 +113,8 @@ def _person(dsn):
     with psycopg.connect(dsn, autocommit=True) as c:
         return c.execute("insert into ops.persons (display_name) values ('N') returning person_id").fetchone()[0]
 
-def test_create_run_native_persists_columns(clean_ops):
-    dsn = clean_ops; who = _person(dsn)
+def test_create_run_native_persists_columns(clean_ops, admin_dsn):
+    dsn = clean_ops; who = _person(admin_dsn)
     out = create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())
     assert out["status"] == "parsed" and out["source_format"] == "native"
     with psycopg.connect(dsn) as c:
@@ -127,8 +127,8 @@ def test_create_run_native_persists_columns(clean_ops):
     assert row[8] is True            # canonical == review (C2: patch_review compatibility)
     assert row[9] is True            # raw envelope only in the sidecar
 
-def test_create_run_native_rejects_non_catalog_without_domain_writes(clean_ops):
-    dsn = clean_ops; who = _person(dsn)
+def test_create_run_native_rejects_non_catalog_without_domain_writes(clean_ops, admin_dsn):
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _catalog_env(); env["scopes"][0]["lines"][0]["line_kind"] = "service"
     out = create_run_native(dsn, uploaded_by=who, envelope=env)
     assert out["status"] == "rejected"
@@ -136,11 +136,11 @@ def test_create_run_native_rejects_non_catalog_without_domain_writes(clean_ops):
     with psycopg.connect(dsn) as c:
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0   # no domain writes
 
-def test_create_run_native_idempotent_on_project_quote_version(clean_ops):
+def test_create_run_native_idempotent_on_project_quote_version(clean_ops, admin_dsn):
     # Idempotency is anchored on (project_number, quote_version) — C6-RESOLVED.
     # Submitting the SAME envelope (same project_number + same quote_version=1) a second time
     # must raise ActiveRunExists (via uq_intake_runs_proj_quote_version_native).
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())
     import pytest
     from ops_intake.envelope import ActiveRunExists
@@ -148,13 +148,13 @@ def test_create_run_native_idempotent_on_project_quote_version(clean_ops):
         create_run_native(dsn, uploaded_by=who, envelope=_catalog_env())  # same (project_number, quote_version)
 
 
-def test_native_new_quote_version_same_economics_allowed(clean_ops):
+def test_native_new_quote_version_same_economics_allowed(clean_ops, admin_dsn):
     # C6 fix proof: two legitimate quote-versions with IDENTICAL economics must NOT collide.
     # v1 and v2 share the same economics (same content_hash) but have different quote_version
     # and different envelope_id. The second call must succeed and return a new parsed run.
     import pytest
     from ops_intake.envelope import ActiveRunExists
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env_v1 = _catalog_env()  # quote_version=1, envelope_id="env-1"
     out1 = create_run_native(dsn, uploaded_by=who, envelope=env_v1)
     assert out1["status"] == "parsed"
@@ -171,8 +171,8 @@ def _seeded_env(model_key="Capcitors - Per Unit"):
     env["scopes"][0]["lines"][0]["equipment_model_ref"] = model_key
     return env
 
-def test_native_approve_materializes_and_reconciles(clean_ops):
-    dsn = clean_ops; who = _person(dsn)
+def test_native_approve_materializes_and_reconciles(clean_ops, admin_dsn):
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _seeded_env()
     out = create_run_native(dsn, uploaded_by=who, envelope=env)
     assert out["status"] == "parsed", out["findings"]
@@ -189,9 +189,9 @@ def test_native_approve_materializes_and_reconciles(clean_ops):
     bid = Decimal(env["totals"]["bid_cents"]) / Decimal(100)
     assert abs(Decimal(str(adj)) - bid) <= Decimal("0.01"), (adj, bid)
 
-def test_native_patch_review_compatible(clean_ops):
+def test_native_patch_review_compatible(clean_ops, admin_dsn):
     """canonical==review flat shape -> patch_review's allowlist accepts an editable-field change."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     from ops_intake.envelope import get_run, patch_review
     out = create_run_native(dsn, uploaded_by=who, envelope=_seeded_env())
     run = get_run(dsn, out["run_id"])
@@ -260,9 +260,9 @@ def test_malformed_scope_total_adj_multiplier_rejects():
     assert "malformed_total" in _codes(validate_envelope(env))
 
 
-def test_create_run_native_rejects_malformed_without_crash(clean_ops):
+def test_create_run_native_rejects_malformed_without_crash(clean_ops, admin_dsn):
     """Pivot must NEVER be reached on a malformed envelope -- verify governed reject, no exception."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
 
     # Case 1: base_qty="abc" (non-numeric numeric field -> malformed_catalog_field)
     env1 = _deep_copy_env()
@@ -292,11 +292,11 @@ def test_create_run_native_rejects_malformed_without_crash(clean_ops):
 # ---------------------------------------------------------------------------
 
 
-def test_native_patch_then_approve_succeeds(clean_ops):
+def test_native_patch_then_approve_succeeds(clean_ops, admin_dsn):
     """P2a: a BENIGN edit (section) -> patch_review -> approve_run must yield 'approved',
     not 'blocked_findings'. After patch, findings must NOT contain unsupported_format."""
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
     from ops_intake.envelope import get_run, patch_review
 
     # create a clean native run using the seeded model key
@@ -323,13 +323,13 @@ def test_native_patch_then_approve_succeeds(clean_ops):
     assert res["outcome"] == "approved", res
 
 
-def test_native_inconsistent_economics_blocks_approval(clean_ops):
+def test_native_inconsistent_economics_blocks_approval(clean_ops, admin_dsn):
     """P1: bid_cents=200000 but Sigma adjusted=100000 (off by $1000 >> native ±1¢ tolerance).
     D3 fix-3: native_bid_mismatch is now caught at validate_envelope time -> status='rejected'
     (previously was 'parsed' + blocked at approve; the native ±1¢ check fires earlier).
     ops.apparatus count == 0 (nothing materialized, same safety outcome)."""
     dsn = clean_ops
-    who = _person(dsn)
+    who = _person(admin_dsn)
 
     # Build structurally-valid envelope with economic mismatch: bid_cents=$2000, scope adjusted=$1000
     env = _catalog_env()
@@ -530,9 +530,9 @@ def test_d1_quote_version_float_whole_passes():
 
 # --- create_run_native: null-version duplicate scenario (can't happen now) ---
 
-def test_d1_null_quote_version_rejected(clean_ops):
+def test_d1_null_quote_version_rejected(clean_ops, admin_dsn):
     """quote_version=None -> rejected run (the two-NULL-runs-accepted scenario can't happen)."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["quote_version"] = None
     out = create_run_native(dsn, uploaded_by=who, envelope=env)
@@ -540,11 +540,11 @@ def test_d1_null_quote_version_rejected(clean_ops):
     assert any(f["code"] == "missing_quote_version" for f in out["findings"])
 
 
-def test_d1_duplicate_rejected_submission_is_governed(clean_ops):
+def test_d1_duplicate_rejected_submission_is_governed(clean_ops, admin_dsn):
     """Submitting a malformed envelope (service_cents='abc') with quote_version=1 TWICE:
     both must return status='rejected', no UniqueViolation/500.
     Rejected rows store quote_version=NULL so they're excluded from the unique index."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
 
     def _bad_env(pn):
         env = _d1_env()
@@ -567,9 +567,9 @@ def test_d1_duplicate_rejected_submission_is_governed(clean_ops):
     assert all(r[0] is None for r in rows), f"Expected NULL quote_version for rejected rows, got {rows}"
 
 
-def test_d1_adjustment_multiplier_null_create_run_native_no_crash(clean_ops):
+def test_d1_adjustment_multiplier_null_create_run_native_no_crash(clean_ops, admin_dsn):
     """present-null adjustment_multiplier_n4 -> create_run_native returns rejected (no 500)."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["scopes"][0]["adjustment_multiplier_n4"] = None
     out = create_run_native(dsn, uploaded_by=who, envelope=env)
@@ -577,9 +577,9 @@ def test_d1_adjustment_multiplier_null_create_run_native_no_crash(clean_ops):
     assert any(f["code"] == "malformed_total" for f in out["findings"])
 
 
-def test_d1_quoted_app_hours_null_create_run_native_no_crash(clean_ops):
+def test_d1_quoted_app_hours_null_create_run_native_no_crash(clean_ops, admin_dsn):
     """present-null quoted_app_hours -> create_run_native returns rejected (no 500)."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["scopes"][0]["scope_totals"]["quoted_app_hours"] = None
     out = create_run_native(dsn, uploaded_by=who, envelope=env)
@@ -587,9 +587,9 @@ def test_d1_quoted_app_hours_null_create_run_native_no_crash(clean_ops):
     assert any(f["code"] == "malformed_total" for f in out["findings"])
 
 
-def test_d1_bid_cents_fractional_create_run_native_no_crash(clean_ops):
+def test_d1_bid_cents_fractional_create_run_native_no_crash(clean_ops, admin_dsn):
     """Fractional bid_cents string -> create_run_native returns rejected (no 500)."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-BID-FRAC"
     env["totals"]["bid_cents"] = "100000.5"
@@ -598,9 +598,9 @@ def test_d1_bid_cents_fractional_create_run_native_no_crash(clean_ops):
     assert any(f["code"] == "malformed_total" for f in out["findings"])
 
 
-def test_d1_base_qty_fractional_create_run_native_no_crash(clean_ops):
+def test_d1_base_qty_fractional_create_run_native_no_crash(clean_ops, admin_dsn):
     """Fractional base_qty -> create_run_native returns rejected (no 500)."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-QTY-FRAC"
     env["scopes"][0]["lines"][0]["base_qty"] = 1.5
@@ -614,10 +614,10 @@ def test_d1_base_qty_fractional_create_run_native_no_crash(clean_ops):
 # ---------------------------------------------------------------------------
 
 
-def test_d1_bid_cents_integer_string_accepted(clean_ops):
+def test_d1_bid_cents_integer_string_accepted(clean_ops, admin_dsn):
     """bid_cents='100000.0' (integer-valued string) -> create_run_native ACCEPTED (status='parsed'),
     NOT a 500 crash. The pivot must coerce via Decimal so int('100000.0') path is avoided."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-INT-STR-BID"
     env["envelope_id"] = "env-int-str-bid"
@@ -631,9 +631,9 @@ def test_d1_bid_cents_integer_string_accepted(clean_ops):
     assert _Decimal(str(contract_value)) == _Decimal("1000.00"), f"Expected 1000.00, got {contract_value}"
 
 
-def test_d1_bid_cents_scientific_notation_accepted(clean_ops):
+def test_d1_bid_cents_scientific_notation_accepted(clean_ops, admin_dsn):
     """bid_cents='1e5' (100000 in scientific notation, integer-valued string) -> ACCEPTED, $1000.00."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-INT-SCI-BID"
     env["envelope_id"] = "env-int-sci-bid"
@@ -645,9 +645,9 @@ def test_d1_bid_cents_scientific_notation_accepted(clean_ops):
     assert _Decimal(str(contract_value)) == _Decimal("1000.00"), f"Expected 1000.00, got {contract_value}"
 
 
-def test_d1_onsite_labor_cents_integer_string_accepted(clean_ops):
+def test_d1_onsite_labor_cents_integer_string_accepted(clean_ops, admin_dsn):
     """onsite_labor_cents='100000.0' -> ACCEPTED, materializes $1000.00."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-INT-STR-LABOR"
     env["envelope_id"] = "env-int-str-labor"
@@ -659,9 +659,9 @@ def test_d1_onsite_labor_cents_integer_string_accepted(clean_ops):
     assert _Decimal(str(onsite)) == _Decimal("1000.00"), f"Expected 1000.00, got {onsite}"
 
 
-def test_d1_onsite_labor_cents_sci_notation_accepted(clean_ops):
+def test_d1_onsite_labor_cents_sci_notation_accepted(clean_ops, admin_dsn):
     """onsite_labor_cents='1e5' (scientific notation) -> ACCEPTED, materializes $1000.00."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-SCI-LABOR"
     env["envelope_id"] = "env-sci-labor"
@@ -673,9 +673,9 @@ def test_d1_onsite_labor_cents_sci_notation_accepted(clean_ops):
     assert _Decimal(str(onsite)) == _Decimal("1000.00"), f"Expected 1000.00, got {onsite}"
 
 
-def test_d1_base_qty_integer_string_accepted(clean_ops):
+def test_d1_base_qty_integer_string_accepted(clean_ops, admin_dsn):
     """base_qty='3.0' + project_intake_qty='3.0' -> ACCEPTED, materializes 3 apparatus (not a crash)."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-QTY-STR"
     env["envelope_id"] = "env-qty-str"
@@ -687,10 +687,10 @@ def test_d1_base_qty_integer_string_accepted(clean_ops):
     assert qty == 3, f"Expected qty=3, got {qty}"
 
 
-def test_d1_quote_version_float_whole_create_run_native_accepted(clean_ops):
+def test_d1_quote_version_float_whole_create_run_native_accepted(clean_ops, admin_dsn):
     """quote_version=1.0 (float, integer-valued) -> create_run_native ACCEPTED (status='parsed'),
     NOT a 500 crash. The stored quote_version column must be the integer 1."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-QV-FLOAT"
     env["envelope_id"] = "env-qv-float"
@@ -704,10 +704,10 @@ def test_d1_quote_version_float_whole_create_run_native_accepted(clean_ops):
     assert qv == 1, f"Expected stored quote_version=1 (int), got {qv!r}"
 
 
-def test_d1_quote_version_integer_string_one_create_run_native_accepted(clean_ops):
+def test_d1_quote_version_integer_string_one_create_run_native_accepted(clean_ops, admin_dsn):
     """quote_version='1' -> wait: validate_envelope REJECTS string quote_version.
     So this must remain a governed reject (missing_quote_version)."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-QV-STR-1"
     env["envelope_id"] = "env-qv-str-1"
@@ -718,9 +718,9 @@ def test_d1_quote_version_integer_string_one_create_run_native_accepted(clean_op
     assert any(f["code"] == "missing_quote_version" for f in out["findings"])
 
 
-def test_d1_fractional_bid_cents_still_rejected(clean_ops):
+def test_d1_fractional_bid_cents_still_rejected(clean_ops, admin_dsn):
     """Regression guard: bid_cents='100000.5' is still malformed_total (fractional not accepted)."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-FRAC-GUARD"
     env["totals"]["bid_cents"] = "100000.5"
@@ -729,9 +729,9 @@ def test_d1_fractional_bid_cents_still_rejected(clean_ops):
     assert any(f["code"] == "malformed_total" for f in out["findings"])
 
 
-def test_d1_fractional_base_qty_still_rejected(clean_ops):
+def test_d1_fractional_base_qty_still_rejected(clean_ops, admin_dsn):
     """Regression guard: base_qty=1.5 still malformed_catalog_field."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-FRAC-QTY-GUARD"
     env["scopes"][0]["lines"][0]["base_qty"] = 1.5
@@ -741,9 +741,9 @@ def test_d1_fractional_base_qty_still_rejected(clean_ops):
     assert any(f["code"] == "malformed_catalog_field" for f in out["findings"])
 
 
-def test_d1_fractional_quote_version_still_rejected(clean_ops):
+def test_d1_fractional_quote_version_still_rejected(clean_ops, admin_dsn):
     """Regression guard: quote_version=1.5 still missing_quote_version."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d1_env()
     env["project_number"] = "D1-FRAC-QV-GUARD"
     env["quote_version"] = 1.5
@@ -783,10 +783,10 @@ def test_d2_within_tolerance_no_mismatch():
     assert "scope_adjusted_mismatch" not in codes, f"Unexpected mismatch within tolerance: {codes}"
 
 
-def test_d2_mismatch_create_run_native_rejects(clean_ops):
+def test_d2_mismatch_create_run_native_rejects(clean_ops, admin_dsn):
     """scope_adjusted_mismatch is a blocking finding: create_run_native -> status='rejected';
     ops.scopes count == 0 (no domain writes on reject)."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _copy.deepcopy(_catalog_env())
     env["project_number"] = "D2-MISMATCH"
     env["envelope_id"] = "env-d2-mismatch"
@@ -798,7 +798,7 @@ def test_d2_mismatch_create_run_native_rejects(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_d2_malformed_adjusted_cents_does_not_double_fire(clean_ops):
+def test_d2_malformed_adjusted_cents_does_not_double_fire(clean_ops, admin_dsn):
     """When adjusted_cents is absent/non-numeric (malformed), the mismatch guard
     must NOT double-fire. The existing typed finding fires first; no scope_adjusted_mismatch."""
     env = _copy.deepcopy(_catalog_env())
@@ -808,9 +808,9 @@ def test_d2_malformed_adjusted_cents_does_not_double_fire(clean_ops):
     assert "scope_adjusted_mismatch" not in codes, f"Double-fire on absent adjusted_cents: {codes}"
 
 
-def test_d2_e2e_approve_still_passes(clean_ops):
+def test_d2_e2e_approve_still_passes(clean_ops, admin_dsn):
     """Regression: the clean env + approve flow must still work after D2 guard is added."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _seeded_env()
     env["project_number"] = "D2-APPROVE"
     env["envelope_id"] = "env-d2-approve"
@@ -863,9 +863,9 @@ def test_d3_source_kind_wrong_rejects():
     assert "invalid_source_kind" in _codes(validate_envelope(env))
 
 
-def test_d3_schema_version_missing_create_run_rejected(clean_ops):
+def test_d3_schema_version_missing_create_run_rejected(clean_ops, admin_dsn):
     """schema_version absent -> create_run_native returns status='rejected', no domain writes."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d3_env()
     del env["schema_version"]
     env["project_number"] = "D3-SV-MISS"
@@ -876,9 +876,9 @@ def test_d3_schema_version_missing_create_run_rejected(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_d3_source_kind_wrong_create_run_rejected(clean_ops):
+def test_d3_source_kind_wrong_create_run_rejected(clean_ops, admin_dsn):
     """source_kind='workbook_intake' -> create_run_native returns status='rejected', no domain writes."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d3_env()
     env["source_kind"] = "workbook_intake"
     env["project_number"] = "D3-SK-WRONG"
@@ -905,9 +905,9 @@ def test_d3_service_hours_non_numeric_rejects():
     assert "malformed_total" in _codes(validate_envelope(env))
 
 
-def test_d3_service_hours_null_create_run_rejected(clean_ops):
+def test_d3_service_hours_null_create_run_rejected(clean_ops, admin_dsn):
     """service_hours=None -> create_run_native returns status='rejected', no domain writes."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d3_env()
     env["project_number"] = "D3-SH-NULL"
     env["scopes"][0]["scope_totals"]["service_hours"] = None
@@ -918,9 +918,9 @@ def test_d3_service_hours_null_create_run_rejected(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_d3_service_hours_non_numeric_create_run_rejected(clean_ops):
+def test_d3_service_hours_non_numeric_create_run_rejected(clean_ops, admin_dsn):
     """service_hours='abc' -> create_run_native returns status='rejected', no domain writes."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d3_env()
     env["project_number"] = "D3-SH-NAN"
     env["scopes"][0]["scope_totals"]["service_hours"] = "abc"
@@ -953,9 +953,9 @@ def test_d3_adjusted_cents_non_numeric_rejects():
     )
 
 
-def test_d3_adjusted_cents_absent_create_run_rejected(clean_ops):
+def test_d3_adjusted_cents_absent_create_run_rejected(clean_ops, admin_dsn):
     """adjusted_cents absent -> create_run_native returns status='rejected', no domain writes."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d3_env()
     env["project_number"] = "D3-ADJ-MISS"
     del env["scopes"][0]["scope_totals"]["adjusted_cents"]
@@ -965,9 +965,9 @@ def test_d3_adjusted_cents_absent_create_run_rejected(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_d3_adjusted_cents_non_numeric_create_run_rejected(clean_ops):
+def test_d3_adjusted_cents_non_numeric_create_run_rejected(clean_ops, admin_dsn):
     """adjusted_cents='abc' -> create_run_native returns status='rejected', no domain writes."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _d3_env()
     env["project_number"] = "D3-ADJ-NAN"
     env["scopes"][0]["scope_totals"]["adjusted_cents"] = "abc"
@@ -1015,10 +1015,10 @@ def test_d3_unique_line_uids_no_false_positive():
     assert "duplicate_line_uid" not in codes, f"False positive duplicate_line_uid; got {codes}"
 
 
-def test_d3_duplicate_line_uid_create_run_rejected(clean_ops):
+def test_d3_duplicate_line_uid_create_run_rejected(clean_ops, admin_dsn):
     """Duplicate line_uid -> create_run_native returns status='rejected', no domain writes (not a DB 500)."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "D3-DUP-UID"
     env["envelope_id"] = "env-d3-dup-uid"
@@ -1052,10 +1052,10 @@ def test_d3_resolved_ref_hours_negative_rejects():
     assert "malformed_catalog_field" in codes, f"Expected malformed_catalog_field; got {codes}"
 
 
-def test_d3_resolved_ref_hours_string_create_run_accepted(clean_ops):
+def test_d3_resolved_ref_hours_string_create_run_accepted(clean_ops, admin_dsn):
     """resolved_ref_hours='10.0' (string) -> create_run_native returns status='parsed' (NOT rejected, NOT crash)."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_seeded_env())
     env["project_number"] = "D3-RRH-STR"
     env["envelope_id"] = "env-d3-rrh-str"
@@ -1069,10 +1069,10 @@ def test_d3_resolved_ref_hours_string_create_run_accepted(clean_ops):
     assert _D(str(hrs)) == _D("10.0"), f"Expected hrs_per_unit=10.0, got {hrs!r}"
 
 
-def test_d3_resolved_ref_hours_negative_create_run_rejected(clean_ops):
+def test_d3_resolved_ref_hours_negative_create_run_rejected(clean_ops, admin_dsn):
     """resolved_ref_hours=-1 -> create_run_native returns status='rejected', no domain writes."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "D3-RRH-NEG"
     env["envelope_id"] = "env-d3-rrh-neg"
@@ -1102,11 +1102,11 @@ def test_native_zero_base_qty_rejects():
     )
 
 
-def test_native_zero_base_qty_create_run_rejected(clean_ops):
+def test_native_zero_base_qty_create_run_rejected(clean_ops, admin_dsn):
     """base_qty=0 / project_intake_qty=0 -> create_run_native returns status='rejected',
     ops.scopes count == 0 (zero-qty line never reaches materialize, no 1-apparatus mis-materialize)."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "D3-ZERO-QTY"
     env["envelope_id"] = "env-d3-zero-qty"
@@ -1125,13 +1125,13 @@ def test_native_zero_base_qty_create_run_rejected(clean_ops):
 # ---------------------------------------------------------------------------
 
 
-def test_native_quoted_app_hours_numeric_string_accepted(clean_ops):
+def test_native_quoted_app_hours_numeric_string_accepted(clean_ops, admin_dsn):
     """quoted_app_hours='18' (numeric string) must NOT cause a TypeError/500.
     The pivot must coerce it via _dec so J3 arithmetic is safe.
     Reconciling env: quoted_app_hours='18', resolved_ref_hours=6 * qty=3 = 18 hrs.
     Expect status='parsed' (no TypeError, no crash)."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "FIX2-QAH-STR"
     env["envelope_id"] = "env-fix2-qah-str"
@@ -1148,11 +1148,11 @@ def test_native_quoted_app_hours_numeric_string_accepted(clean_ops):
     )
 
 
-def test_native_nonobject_scope_is_governed_reject(clean_ops):
+def test_native_nonobject_scope_is_governed_reject(clean_ops, admin_dsn):
     """'scopes':[None] (non-object scope element) must be a governed reject, not AttributeError/500.
     Asserts: status='rejected', malformed_shape in findings, ops.scopes count == 0."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "FIX2-NULL-SCOPE"
     env["envelope_id"] = "env-fix2-null-scope"
@@ -1166,10 +1166,10 @@ def test_native_nonobject_scope_is_governed_reject(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_native_scope_totals_non_dict_is_governed_reject(clean_ops):
+def test_native_scope_totals_non_dict_is_governed_reject(clean_ops, admin_dsn):
     """scope_totals set to a string -> malformed_shape governed reject (not AttributeError/500)."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "FIX2-ST-STR"
     env["envelope_id"] = "env-fix2-st-str"
@@ -1183,10 +1183,10 @@ def test_native_scope_totals_non_dict_is_governed_reject(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_native_lines_non_list_is_governed_reject(clean_ops):
+def test_native_lines_non_list_is_governed_reject(clean_ops, admin_dsn):
     """lines set to a string -> malformed_shape governed reject (not AttributeError/500)."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "FIX2-LINES-STR"
     env["envelope_id"] = "env-fix2-lines-str"
@@ -1200,10 +1200,10 @@ def test_native_lines_non_list_is_governed_reject(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_native_line_element_none_is_governed_reject(clean_ops):
+def test_native_line_element_none_is_governed_reject(clean_ops, admin_dsn):
     """A line element set to None -> malformed_shape governed reject (not AttributeError/500)."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "FIX2-LN-NONE"
     env["envelope_id"] = "env-fix2-ln-none"
@@ -1217,10 +1217,10 @@ def test_native_line_element_none_is_governed_reject(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_native_totals_non_dict_is_governed_reject(clean_ops):
+def test_native_totals_non_dict_is_governed_reject(clean_ops, admin_dsn):
     """Top-level totals set to a string -> malformed_shape governed reject (not AttributeError/500)."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "FIX2-TOTALS-STR"
     env["envelope_id"] = "env-fix2-totals-str"
@@ -1315,11 +1315,11 @@ def test_d3fix3_dec_rejects_non_finite():
     assert _dec(100000.0) == Decimal("100000.0"), "_dec(100000.0) regression"
 
 
-def test_d3fix3_nan_bid_cents_no_crash(clean_ops):
+def test_d3fix3_nan_bid_cents_no_crash(clean_ops, admin_dsn):
     """bid_cents='NaN' -> create_run_native returns status='rejected' (NOT a raise/500),
     a malformed_total finding is present, and ops.scopes count == 0."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "D3FIX3-NAN-BID"
     env["envelope_id"] = "env-d3fix3-nan-bid"
@@ -1333,11 +1333,11 @@ def test_d3fix3_nan_bid_cents_no_crash(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_d3fix3_line_uid_array_no_crash(clean_ops):
+def test_d3fix3_line_uid_array_no_crash(clean_ops, admin_dsn):
     """line_uid=['x'] (array) -> create_run_native status='rejected' (NOT TypeError/500),
     missing_line_uid finding present, ops.scopes count == 0."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "D3FIX3-LUID-ARR"
     env["envelope_id"] = "env-d3fix3-luid-arr"
@@ -1351,11 +1351,11 @@ def test_d3fix3_line_uid_array_no_crash(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_d3fix3_line_uid_object_no_crash(clean_ops):
+def test_d3fix3_line_uid_object_no_crash(clean_ops, admin_dsn):
     """line_uid={'a': 1} (object) -> create_run_native status='rejected' (NOT TypeError/500),
     missing_line_uid finding present, ops.scopes count == 0."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "D3FIX3-LUID-OBJ"
     env["envelope_id"] = "env-d3fix3-luid-obj"
@@ -1369,12 +1369,12 @@ def test_d3fix3_line_uid_object_no_crash(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_d3fix3_bid_off_50c_rejects(clean_ops):
+def test_d3fix3_bid_off_50c_rejects(clean_ops, admin_dsn):
     """bid_cents=100050 with Sigma scope adjusted=100000 (off by 50¢ = inside shared ±$1 tolerance
     but outside native ±1¢) -> create_run_native status='rejected', native_bid_mismatch finding,
     ops.scopes count == 0. This is the exact gap the shared validator misses."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "D3FIX3-BID-50C"
     env["envelope_id"] = "env-d3fix3-bid-50c"
@@ -1388,11 +1388,11 @@ def test_d3fix3_bid_off_50c_rejects(clean_ops):
         assert c.execute("select count(*) from ops.scopes").fetchone()[0] == 0
 
 
-def test_d3fix3_bid_within_1c_accepted(clean_ops):
+def test_d3fix3_bid_within_1c_accepted(clean_ops, admin_dsn):
     """bid_cents=100001 (off by 1¢, at the tolerance boundary) -> create_run_native status='parsed'
     (accepted), NO native_bid_mismatch finding."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "D3FIX3-BID-1C"
     env["envelope_id"] = "env-d3fix3-bid-1c"
@@ -1404,11 +1404,11 @@ def test_d3fix3_bid_within_1c_accepted(clean_ops):
     assert "native_bid_mismatch" not in codes, f"native_bid_mismatch should not fire within 1-cent tolerance"
 
 
-def test_d3fix3_bid_exact_still_accepted(clean_ops):
+def test_d3fix3_bid_exact_still_accepted(clean_ops, admin_dsn):
     """Regression: clean _catalog_env (bid==Sigma adjusted==100000) must still be accepted,
     no native_bid_mismatch introduced by the new check."""
     import copy
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = copy.deepcopy(_catalog_env())
     env["project_number"] = "D3FIX3-BID-EXACT"
     env["envelope_id"] = "env-d3fix3-bid-exact"
@@ -1447,7 +1447,7 @@ def _two_scope_env(*, onsite_cents, offsite_cents, m4, n4, adjusted_cents_each,
     return env
 
 
-def test_d3fix3b_multiscope_accumulated_tolerance_rejects(clean_ops):
+def test_d3fix3b_multiscope_accumulated_tolerance_rejects(clean_ops, admin_dsn):
     """Failing-first (D3 fix-3b): 2 scopes, each derived=100000, each adjusted_cents=100001
     (1¢ over derived — within per-scope ±1¢ tolerance individually), bid_cents=200002.
 
@@ -1456,7 +1456,7 @@ def test_d3fix3b_multiscope_accumulated_tolerance_rejects(clean_ops):
 
     create_run_native must return status='rejected' with a native_bid_mismatch finding and
     ops.scopes count == 0."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _two_scope_env(
         onsite_cents=100000, offsite_cents=0, m4=1, n4=1,
         adjusted_cents_each=100001,   # each 1¢ over derived -> per-scope passes; project total off by 2¢
@@ -1479,10 +1479,10 @@ def test_d3fix3b_multiscope_accumulated_tolerance_rejects(clean_ops):
         )
 
 
-def test_d3fix3b_multiscope_reconciled_accepted(clean_ops):
+def test_d3fix3b_multiscope_reconciled_accepted(clean_ops, admin_dsn):
     """Regression (D3 fix-3b): 2 scopes, each adjusted_cents=100000 (== derived 100000),
     bid_cents=200000 -> Σ derived=200000 == bid -> no native_bid_mismatch, status='parsed'."""
-    dsn = clean_ops; who = _person(dsn)
+    dsn = clean_ops; who = _person(admin_dsn)
     env = _two_scope_env(
         onsite_cents=100000, offsite_cents=0, m4=1, n4=1,
         adjusted_cents_each=100000,   # stated == derived; Σ derived=200000 == bid_cents
