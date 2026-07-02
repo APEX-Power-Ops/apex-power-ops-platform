@@ -10,7 +10,8 @@ Covers:
   - reject (POST /api/v1/ops/intake/{run_id}/reject)
   - finance-redaction: no diagnostic_detail field anywhere, no $ in finding messages
 
-OPS_DEV_DSN must target ops_test (enforced by the migration fixture).
+OPS_DEV_ADMIN_DSN must target ops_test (enforced by the migration fixture). The app
+process itself runs on OPS_INTAKE_WRITER_DSN / OPS_API_DSN (the two login roles).
 """
 from __future__ import annotations
 
@@ -20,7 +21,8 @@ import sys
 import uuid
 
 # Set DATABASE_URL before config.py is imported so it doesn't raise at collection time.
-# The TestClient overrides the actual DB via OPS_DEV_DSN; this placeholder satisfies config.py.
+# The TestClient overrides the actual DB via the role DSNs (OPS_INTAKE_WRITER_DSN /
+# OPS_API_DSN); this placeholder satisfies config.py.
 os.environ.setdefault("DATABASE_URL", "postgresql://localhost/ops_test")
 
 import psycopg
@@ -60,8 +62,11 @@ def _require_ops_test(dsn: str) -> None:
     )
 
 
-def _dsn() -> str:
-    return os.environ["OPS_DEV_DSN"]  # set by the test runner command
+def _admin_dsn() -> str:
+    # Hard-require (C2/D7): no OPS_DEV_DSN fallback, no superuser behavior tier.
+    # Admin is for the ladder, TRUNCATE, and setup DML ONLY -- the app process itself
+    # runs on OPS_INTAKE_WRITER_DSN / OPS_API_DSN (see the client fixture below).
+    return os.environ["OPS_DEV_ADMIN_DSN"]
 
 
 def _ops_schema_exists(conn) -> bool:
@@ -74,10 +79,11 @@ def _ops_schema_exists(conn) -> bool:
 
 @pytest.fixture(scope="session", autouse=True)
 def apply_migrations():
-    """Apply full migration ladder 001→010 (incl. 009) to ops_test, yield, then teardown.
-    Reset blocks guard native+009 teardown with _ops_schema_exists so a fresh ops_test is safe.
-    Exercises 010_down and 009_down each session (matching the package conftest ladder)."""
-    d = _dsn()
+    """Apply full migration ladder 001->012 to ops_test, yield, then teardown.
+    Reset blocks guard native+009+011+012 teardown with _ops_schema_exists so a fresh
+    ops_test is safe. Mirrors packages/ops-intake/tests/conftest.py's ladder exactly
+    (DEV-6: role DSNs cannot work without 012 applied)."""
+    d = _admin_dsn()
     _require_ops_test(d)
 
     def _run_sql(conn, path):
@@ -85,11 +91,13 @@ def apply_migrations():
         conn.execute(sql)
 
     mig_dir = _MIGRATIONS_DIR
-    # pre-up reset: guarded native+009 teardown THEN 008+001 teardown.
-    # 009/010 down require the ops schema to exist; guard so a fresh ops_test is safe.
+    # pre-up reset: drop 012 THEN 011 THEN 010 (+native) THEN 009 THEN 008+001.
+    # 009/010/011/012 down require the ops schema to exist; guard so a fresh ops_test is safe.
     with psycopg.connect(d, autocommit=True) as c:
         if _ops_schema_exists(c):
             c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010_down's data-loss guard passes
+            _run_sql(c, mig_dir / "012_ops_app_role_boundary_down.sql")
+            _run_sql(c, mig_dir / "011_scope_quote_line_description_down.sql")
             _run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")
             _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
         _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
@@ -106,6 +114,8 @@ def apply_migrations():
         "008_core_equipment_models.sql",
         "009_recognition_bridge.sql",
         "010_native_envelope_intake.sql",
+        "011_scope_quote_line_description.sql",
+        "012_ops_app_role_boundary.sql",
     ]
     with psycopg.connect(d, autocommit=True) as c:
         for name in up_migrations:
@@ -116,6 +126,8 @@ def apply_migrations():
     with psycopg.connect(d, autocommit=True) as c:
         if _ops_schema_exists(c):
             c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010_down's data-loss guard passes
+            _run_sql(c, mig_dir / "012_ops_app_role_boundary_down.sql")
+            _run_sql(c, mig_dir / "011_scope_quote_line_description_down.sql")
             _run_sql(c, mig_dir / "010_native_envelope_intake_down.sql")
             _run_sql(c, mig_dir / "009_recognition_bridge_down.sql")
         _run_sql(c, mig_dir / "008_core_equipment_models_down.sql")
@@ -132,7 +144,7 @@ def mini_wb_bytes(tmp_path_factory) -> bytes:
 @pytest.fixture(scope="session")
 def person_id(apply_migrations) -> str:
     """Insert one ops.persons row; return the person_id UUID (as str)."""
-    d = _dsn()
+    d = _admin_dsn()
     with psycopg.connect(d, autocommit=True) as c:
         row = c.execute(
             "insert into ops.persons (display_name) values (%s) returning person_id",
@@ -144,7 +156,7 @@ def person_id(apply_migrations) -> str:
 @pytest.fixture(autouse=True)
 def clean_ops_between_tests(apply_migrations):
     """Truncate envelope tables before each test to keep tests independent."""
-    d = _dsn()
+    d = _admin_dsn()
     _require_ops_test(d)
     with psycopg.connect(d, autocommit=True) as c:
         c.execute(_OPS_TRUNCATE)
@@ -152,10 +164,14 @@ def clean_ops_between_tests(apply_migrations):
 
 
 # ---------------------------------------------------------------------------
-# App client -- OPS_DEV_DSN is already in os.environ from the shell command
+# App client -- the TestClient app process runs on the two role DSNs
+# (OPS_INTAKE_WRITER_DSN / OPS_API_DSN), already in os.environ from infra/.env.
 # ---------------------------------------------------------------------------
 @pytest.fixture(scope="session")
 def client(apply_migrations):
+    assert os.environ.get("OPS_INTAKE_WRITER_DSN") and os.environ.get("OPS_API_DSN"), (
+        "route tests require the two role DSNs (operator checkpoint)"
+    )
     from fastapi.testclient import TestClient
     from main import app
 
@@ -371,7 +387,7 @@ class TestApprove:
 
         # Seed a run in 'reviewing' status with an uncatalogued apparatus_type directly
         # via psycopg (mirrors packages/ops-intake/tests/test_catalog_binding._seed_run).
-        d = _dsn()
+        d = _admin_dsn()
         payload = {
             "project": {
                 "project_number": "UC-ROUTE-1",
@@ -829,3 +845,24 @@ class TestNativeIntakeFix3:
         assert body["status"] == "rejected", f"Expected rejected; got {body['status']}; body={body}"
         assert not _contains_substring(body, "$")
         assert not _contains_substring(body, "diagnostic_detail")
+
+
+# ---------------------------------------------------------------------------
+# V3-3c -- route-boundary non-superuser proof (Task 10, S9)
+# ---------------------------------------------------------------------------
+
+
+def test_app_process_role_dsns_are_not_superuser(apply_migrations):
+    """The decisive false-green guard: the DSNs the TestClient app process actually uses
+    (the routers' own _dsn()) must resolve to non-superuser roles. Fails loud if a
+    builder points API behavior at the admin/postgres identity."""
+    import psycopg
+    from services.ops.intake_router import _dsn as intake_dsn
+    from services.ops.recognition_router import _dsn as recognition_dsn
+    for d, want in ((intake_dsn(), "ops_intake_writer"), (recognition_dsn(), "ops_api")):
+        with psycopg.connect(d) as c:
+            user, is_super = c.execute(
+                "select current_user, (select rolsuper from pg_roles where rolname=current_user)"
+            ).fetchone()
+            assert user == want, "app-process DSN resolves to " + user + ", expected " + want
+            assert is_super is False, "app-process DSN is a superuser"

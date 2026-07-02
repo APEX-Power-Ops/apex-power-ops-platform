@@ -8,34 +8,57 @@ def _require_ops_test(dsn):
     from psycopg.conninfo import conninfo_to_dict
     assert conninfo_to_dict(dsn).get("dbname") == "ops_test", "must target ops_test"
 
-def _dsn(): return os.environ["OPS_DEV_DSN"]
+def _admin_dsn():
+    # Hard-require (C2/D7): no OPS_DEV_DSN fallback, no superuser behavior tier.
+    # Admin is for the ladder, TRUNCATE, and setup DML ONLY.
+    return os.environ["OPS_DEV_ADMIN_DSN"]
 
 _CHAIN = ["001_identity_skeleton.sql","002_quote_model.sql","003_intake_unique_keys.sql",
           "004_person_anchor.sql","005_recognition_ledger.sql","006_progress_billing.sql",
-          "007_intake_envelope.sql","008_core_equipment_models.sql","009_recognition_bridge.sql"]
+          "007_intake_envelope.sql","008_core_equipment_models.sql","009_recognition_bridge.sql",
+          "010_native_envelope_intake.sql","011_scope_quote_line_description.sql",
+          "012_ops_app_role_boundary.sql"]
+
+def _ops_schema_exists(conn):
+    row = conn.execute("select 1 from pg_catalog.pg_namespace where nspname='ops'").fetchone()
+    return row is not None
 
 @pytest.fixture(scope="session", autouse=True)
 def apply_migrations():
-    d=_dsn(); _require_ops_test(d)
+    d=_admin_dsn(); _require_ops_test(d)
     def run(c,p): c.execute(pathlib.Path(p).read_text(encoding="utf-8"))
+    # pre-up reset: drop 012 THEN 011 THEN 010 (+native) THEN 009 THEN 008+001 (mirrors the
+    # package conftest ladder; guarded so a fresh ops_test is safe).
     with psycopg.connect(d, autocommit=True) as c:
-        c.execute("drop schema if exists core cascade")
+        if _ops_schema_exists(c):
+            c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010_down's data-loss guard passes
+            run(c, _MIGRATIONS_DIR/"012_ops_app_role_boundary_down.sql")
+            run(c, _MIGRATIONS_DIR/"011_scope_quote_line_description_down.sql")
+            run(c, _MIGRATIONS_DIR/"010_native_envelope_intake_down.sql")
+            run(c, _MIGRATIONS_DIR/"009_recognition_bridge_down.sql")
+        run(c, _MIGRATIONS_DIR/"008_core_equipment_models_down.sql")
         run(c, _MIGRATIONS_DIR/"001_identity_skeleton_down.sql")
     with psycopg.connect(d, autocommit=True) as c:
         for n in _CHAIN: run(c, _MIGRATIONS_DIR/n)
     yield
     with psycopg.connect(d, autocommit=True) as c:
-        c.execute("drop schema if exists core cascade")
+        if _ops_schema_exists(c):
+            c.execute("delete from ops.intake_runs")  # R1-2: clear native rows so 010_down's data-loss guard passes
+            run(c, _MIGRATIONS_DIR/"012_ops_app_role_boundary_down.sql")
+            run(c, _MIGRATIONS_DIR/"011_scope_quote_line_description_down.sql")
+            run(c, _MIGRATIONS_DIR/"010_native_envelope_intake_down.sql")
+            run(c, _MIGRATIONS_DIR/"009_recognition_bridge_down.sql")
+        run(c, _MIGRATIONS_DIR/"008_core_equipment_models_down.sql")
         run(c, _MIGRATIONS_DIR/"001_identity_skeleton_down.sql")
 
 @pytest.fixture
 def person_id():
-    with psycopg.connect(_dsn(), autocommit=True) as c:
+    with psycopg.connect(_admin_dsn(), autocommit=True) as c:
         return str(c.execute("insert into ops.persons (display_name) values ('PM') returning person_id").fetchone()[0])
 
 @pytest.fixture
 def eligible(person_id):
-    with psycopg.connect(_dsn(), autocommit=True) as c, c.cursor() as cur:
+    with psycopg.connect(_admin_dsn(), autocommit=True) as c, c.cursor() as cur:
         cur.execute("insert into ops.projects (project_number,project_name,status,provenance_status)"
                     " values (%s,'P','Active','approved') returning id, project_number",(f"P-{uuid.uuid4().hex[:8]}",))
         pid, pnum=cur.fetchone()
@@ -51,6 +74,9 @@ def eligible(person_id):
 
 @pytest.fixture(scope="session")
 def client(apply_migrations):
+    assert os.environ.get("OPS_INTAKE_WRITER_DSN") and os.environ.get("OPS_API_DSN"), (
+        "route tests require the two role DSNs (operator checkpoint)"
+    )
     from fastapi.testclient import TestClient
     from main import app
     return TestClient(app)
