@@ -280,6 +280,12 @@ grant select on ops.v_apparatus_quote, ops.v_apparatus_recognition,
   ops.v_project_recognition, ops.v_recognition_review_queue, ops.v_scope_recognition,
   ops.v_unbilled_recognition to ops_intake_writer;
 
+-- F-012-1 (operator-ratified 2026-07-02): required by the
+-- uq_intake_runs_proj_quote_version_native partial-index predicate.
+-- INSERT/UPDATE on ops.intake_runs evaluates this helper as the DML executor.
+grant execute on function ops._intake_source_format_text(ops.intake_source_format)
+  to ops_intake_writer;
+
 -- ops_api: recognition read surface only
 grant select on ops.v_completion_recognition_worklist, ops.v_completion_recognition_rollup
   to ops_api;
@@ -362,6 +368,21 @@ begin
     where has_function_privilege('ops_api', to_regprocedure(s.sig), 'EXECUTE')
   ) then
     raise exception '012 posture: ops_api can EXECUTE a deferred billing fn';
+  end if;
+  -- F-012-1: writer needs the index-predicate helper; ops_api must NOT hold it.
+  if not has_function_privilege(
+    'ops_intake_writer',
+    'ops._intake_source_format_text(ops.intake_source_format)'::regprocedure,
+    'EXECUTE'
+  ) then
+    raise exception '012 posture: writer missing EXECUTE on intake source-format helper';
+  end if;
+  if has_function_privilege(
+    'ops_api',
+    'ops._intake_source_format_text(ops.intake_source_format)'::regprocedure,
+    'EXECUTE'
+  ) then
+    raise exception '012 posture: ops_api unexpectedly holds EXECUTE on intake source-format helper';
   end if;
   -- M2 (S7.7 positive): ops_api MUST hold EXECUTE on the 4 recognition fns. This is the
   -- ONLY guard on ops_dev/prod applies (pytest does not run there); a dropped GRANT EXECUTE

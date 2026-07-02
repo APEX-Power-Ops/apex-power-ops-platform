@@ -318,6 +318,15 @@ def test_012_writer_positive_matrix():
             assert c.execute(
                 "select has_table_privilege('ops_intake_writer', %s, 'SELECT')", (t,)
             ).fetchone()[0] is True
+        # F-012-1: the 010 partial-index predicate helper - writer holds EXECUTE, api does not
+        assert c.execute(
+            "select has_function_privilege('ops_intake_writer',"
+            " 'ops._intake_source_format_text(ops.intake_source_format)'::regprocedure, 'EXECUTE')"
+        ).fetchone()[0] is True
+        assert c.execute(
+            "select has_function_privilege('ops_api',"
+            " 'ops._intake_source_format_text(ops.intake_source_format)'::regprocedure, 'EXECUTE')"
+        ).fetchone()[0] is False
 
 
 def test_012_negative_matrix_the_boundary():
