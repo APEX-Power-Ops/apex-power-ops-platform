@@ -95,6 +95,10 @@ def enumerate_stack(d):
     dupes = [n for n, c in collections.Counter(nums).items() if c > 1]
     if dupes:
         raise HarnessError(f"duplicate migration numbers: {dupes}")
+    if nums[0] != 1:
+        raise HarnessError(
+            f"migration sequence must start at 001 (schema foundation); found {nums[0]:03d} first"
+        )
     expected = list(range(nums[0], nums[-1] + 1))
     if nums != expected:
         missing = sorted(set(expected) - set(nums))
@@ -106,9 +110,12 @@ def enumerate_stack(d):
 
 
 def derive_child_dsn(admin_dsn, dbname):
-    if "dbname=" not in admin_dsn:
-        raise HarnessError("admin DSN has no dbname= component")
-    return re.sub(r"dbname=[^\s]+", f"dbname={dbname}", admin_dsn)
+    toks = admin_dsn.split()
+    hits = [i for i, t in enumerate(toks) if t.startswith("dbname=")]
+    if len(hits) != 1:
+        raise HarnessError("admin DSN must contain exactly one dbname= component")
+    toks[hits[0]] = f"dbname={dbname}"
+    return " ".join(toks)
 
 
 def check_admin_dsn(admin_dsn):

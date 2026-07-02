@@ -46,6 +46,20 @@ def test_derive_child_dsn_swaps_only_dbname():
     assert "password=x" in child and "dbname=postgres" not in child
 
 
+def test_enumerate_stack_missing_first_fails(tmp_path):
+    d = _mk(tmp_path, ["002_b.sql", "003_c.sql"])
+    with pytest.raises(rv.HarnessError, match="start at 001"):
+        rv.enumerate_stack(d)
+
+
+def test_derive_child_dsn_ignores_dbname_inside_password():
+    child = rv.derive_child_dsn(
+        "host=h port=1 dbname=postgres user=u password=xdbname=evil", "records_val_x"
+    )
+    assert "dbname=records_val_x" in child
+    assert "password=xdbname=evil" in child
+
+
 def test_check_admin_dsn_requires_postgres_db():
     rv.check_admin_dsn("host=h port=1 dbname=postgres user=u")
     with pytest.raises(rv.HarnessError, match="maintenance"):
