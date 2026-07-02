@@ -97,6 +97,22 @@ Chip 2b motor-starter datasheets by `test_019_motor_starter_template.py` (14 tes
 LV-14 / MV-29 coverage invariants + the IR→neta_table 100.1 binding + the MV-only vacuum /
 contact-resistance / associated-devices battery) — all on local `records_dev`.
 
+## Validation
+
+The records gate is `run_validation.py` in this directory - the PRIMARY way to
+validate this stack. It builds a disposable `records_val_*` database (never
+shared `records_dev`), applies 001-044 forward-incrementally, runs each
+migration test at the exact stack state it was developed for, verifies each
+test restored its migration (schema fingerprint), then runs the records-import
+DB tests against the migrated result. Env contract: `RECORDS_PG_ADMIN_DSN`
+(maintenance DB `postgres`), NETA extracts resolved and validated via
+`_dbtest.py` (`REQUIRED_NETA_FILES`). See `.env.dev.template` and
+`docs/superpowers/specs/2026-07-02-records-validation-harness-design.md`.
+CI: `.github/workflows/records-ci.yml`.
+
+The per-chip guidance below remains for LEGACY manual runs only; targeting
+`records_dev` now requires the explicit `RECORDS_ALLOW_SHARED_DB=1` opt-in.
+
 > **Run the records tests per-chip, not as one `pytest .` pass.** Each test file's
 > fixture does a destructive down→up of its own migration. Once cross-chip FKs exist
 > (`008`→`neta_procedures`, `010`-`014`→`asset_classes`), an in-file-order combined run tears

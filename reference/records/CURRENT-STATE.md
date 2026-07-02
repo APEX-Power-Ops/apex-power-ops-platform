@@ -140,9 +140,9 @@ Before approving new records-lane work:
 2. Update the lane charter and records punch list to match reality (this cleanup).
 3. Add a records validation runner: converter unit tests, records-import pure tests,
    records-import DB tests when a DSN is present, and migration tests against a disposable
-   Postgres database - never shared records_dev.
+   Postgres database - never shared records_dev. (DONE 2026-07)
 4. Replace hardcoded DB password fallbacks with the RECORDS_DEV_DSN /
-   RECORDS_DEV_PGPASSWORD contract.
+   RECORDS_DEV_PGPASSWORD contract. (DONE 2026-07)
 5. Formalize the power-test-converters dependency or move shared test helpers into a
    package/fixture location that does not import sibling tests.
 6. Plan serving/security before any API/UI surface: review gate, operator identity, audit
@@ -156,7 +156,9 @@ real records work is a validation-harness lane, not feature work:
 1. Current State - reconcile docs/punchlist to reality (this cleanup).
 2. Validation Harness - records runner/CI; explicit RECORDS_DEV_DSN /
    RECORDS_DEV_PGPASSWORD contract; migration tests only against a disposable database,
-   never shared records_dev.
+   never shared records_dev. **DONE 2026-07 (this lane): runner +
+   CI live; see infra/database/migrations/records/run_validation.py and the
+   evidence record in docs/operations/.**
 3. Security/RLS - design, implement, and test the records security posture.
 4. Value Model V2 - support or reject every field kind used by templates.
 5. Import Sessions - source-file hashes, reviewer accept/reject/edit decisions, reimport

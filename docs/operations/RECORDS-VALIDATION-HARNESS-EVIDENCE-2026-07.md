@@ -262,4 +262,14 @@ present: NETA-Master-Equipment-Table-Enhanced.json
 
 ## AC4 - fallback removal grep
 
-<appended in the docs task>
+Transcript (2026-07-02, from the validation-harness worktree, unmasked exit code):
+
+```
+$ grep -rn "TCC_v5_2025" infra/database/migrations/records/ packages/records-import/
+$ echo "AC4 rc=$? (1 = clean)"
+AC4 rc=1 (1 = clean)
+```
+
+grep produced zero output lines (rc=1, no matches) across both the records
+migrations directory and the records-import package. The burned literal is
+confirmed absent from the harness and import code.
