@@ -1,12 +1,12 @@
 # Chip 10 — Capture-Mode Import (instrument file → records datasheet)
 
-> **Status: IMPLEMENTED PARTIAL / NOT AUDIT-GRADE — snapshot 2026-06-24.** This began as the Chip 10
+> **Status: IMPLEMENTED PARTIAL / NOT AUDIT-GRADE - snapshot 2026-06-24.** This began as the Chip 10
 > design blueprint. Since then, 10a PTM proposal/write scaffolding and partial 10c DTAX-read/propose
 > plumbing have landed in the platform history, but the lane still lacks review-gate UI, import sessions,
 > source-file hashes, reviewer decision history, source-file reimport semantics, full DTAX mapping, and
 > an audit-grade commit model. Cite `CURRENT-STATE.md`, `00-MASTER-INDEX.md`,
-> `01-OFFLINE-SYNC-ARCHITECTURE.md`, the `field_schema` contract (`04-LV-CB-DATASHEET-SPEC.md` §2 +
-> the capture-mode block in `09-IT-DATASHEET-SPEC.md` §4), and the banked converters
+> `01-OFFLINE-SYNC-ARCHITECTURE.md`, the `field_schema` contract (`04-LV-CB-DATASHEET-SPEC.md` sec. 2 +
+> the capture-mode block in `09-IT-DATASHEET-SPEC.md` sec. 4), and the banked converters
 > (`packages/power-test-converters/`).
 
 ---
@@ -219,7 +219,7 @@ Built TDD (14/14 green on `records_dev`): a prerequisite migration + a new isola
 
 ---
 
-## 13. As-built delta — 10c partial (snapshot 2026-06-24)
+## 13. As-built delta - 10c partial (snapshot 2026-06-24)
 
 Observed in the consolidated platform checkout:
 
