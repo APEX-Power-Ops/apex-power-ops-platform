@@ -294,7 +294,7 @@ def run_psql(fname, dsn_value):
 
 - [ ] **Step 4: Run unit tests to verify pass**
 
-Same command as Step 2. Expected: `11 passed`.
+Same command as Step 2. Expected: `10 passed`.
 
 - [ ] **Step 5: Commit**
 
@@ -1224,7 +1224,7 @@ cd /home/olares/code/apex/apex-records-validation/infra/database/migrations/reco
 export PATH=$HOME/.local/bin:$PATH
 uv run --with 'psycopg[binary]' --with pytest python -m pytest test_run_validation_unit.py test__dbtest_helper.py -q
 ```
-Expected: `20 passed`.
+Expected: `19 passed`.
 
 - [ ] **Step 3: Compose the admin DSN (values stay in the shell, never in output)**
 
