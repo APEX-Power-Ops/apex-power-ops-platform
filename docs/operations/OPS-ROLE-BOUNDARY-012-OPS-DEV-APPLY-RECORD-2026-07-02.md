@@ -53,11 +53,17 @@ and the 2 ledger events FK-pin their full ancestry; triggers were NOT bypassed):
 - ops.persons 1 (RB012-SMOKE PM, c289d01f)
 - ops.completion_attestation 1 (5fb70a23, revoked=t)
 - ops.revenue_recognition_event 2 (dae5f361 +1500.00; 19ac18f0 reversal -1500.00) -- NET 0.00
-All rows carry the RB012-SMOKE label; ledger is net-zero; no financial or operational effect.
+All rows carry the RB012-SMOKE label; the ledger is net-zero and financially INERT. OPERATIONAL VISIBILITY (operator finding 2026-07-02): the labeled smoke rows REMAIN VISIBLE in dev
+operational/read-model surfaces - the recognition worklist and rollup views each show 1 smoke row
+(project Active/approved) - unless filtered by RB012-SMOKE-*. Not zero-footprint; dev-visible by design.
 
 ## 7. Soak watch (open)
 Watch for permission-denied errors, route mount issues, or DSN drift. NEVER run test_012 against
 ops_dev (fixture rebuilds schemas). Prod (D8) = separate Supabase re-grounding packet; do NOT apply.
+Dev dashboards / log review during soak: IGNORE or FILTER RB012-SMOKE-* rows (visible in the
+recognition worklist/rollup views by design). Optional follow-up ONLY if the dev UI noise matters:
+evaluate a sanctioned no-trigger-bypass soft-retire path for the smoke project/apparatus.
+Never bypass the immutability triggers.
 
 ## 8. HTTP product-path smoke (mounted app process, 2026-07-02, post-apply)
 Ephemeral uvicorn via the documented app-env contract (`cd apps/control-plane-api && uv run
