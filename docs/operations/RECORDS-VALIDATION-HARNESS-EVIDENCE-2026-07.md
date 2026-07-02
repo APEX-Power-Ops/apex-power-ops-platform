@@ -238,7 +238,27 @@ rc=1
 
 ## AC2 - CI run
 
-<appended in the CI task: link to the green Actions run + the executed-counts lines>
+Green GitHub Actions run on ephemeral infrastructure (postgres:17 service +
+SHA-pinned private neta-ett-study-material checkout via the read-only
+NETA_SOURCE_REPO_TOKEN secret):
+https://github.com/APEX-Power-Ops/apex-power-ops-platform/actions/runs/28625391223
+(head c612c598 - includes the operator's NGR coverage fix: the private repo's
+master JSON carries ats_data: null for NGR 7.20.4, so test_034 falls back to the
+ATS equipment v2 extract, now a REQUIRED_NETA_FILES member. The initial CI runs
+failed loudly at the private-checkout step while the repo secret's stored value
+was empty - the fail-closed source gate working as designed - and never reached
+the validation tiers.)
+
+Source-backed tests EXECUTED in CI (0 skipped) - extracted from the run log:
+
+```
+  3-migrations     PASS  44 applied, 38 tests executed, 0 skipped
+executed test files: 41
+present: NETA-ATS-2025-equipment-tests-v2.json
+present: NETA-ATS-2025-tables-extracted.json
+present: NETA-MTS-2023-tables-extracted.json
+present: NETA-Master-Equipment-Table-Enhanced.json
+```
 
 ## AC4 - fallback removal grep
 

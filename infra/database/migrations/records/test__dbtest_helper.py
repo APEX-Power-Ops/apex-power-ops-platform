@@ -74,6 +74,7 @@ def test_neta_data_dir_ok_and_neta_json_default(monkeypatch, tmp_path):
 def test_required_neta_files_exact_set():
     assert _dbtest.REQUIRED_NETA_FILES == (
         "NETA-Master-Equipment-Table-Enhanced.json",
+        "NETA-ATS-2025-equipment-tests-v2.json",
         "NETA-ATS-2025-tables-extracted.json",
         "NETA-MTS-2023-tables-extracted.json",
     )
