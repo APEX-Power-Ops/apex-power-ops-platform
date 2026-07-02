@@ -32,7 +32,9 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 
 ### Lane: records (PowerDB-replacement / NETA records)
 - **Scope:** the in-house records forms engine + NETA reference/datasheet data — DEV ONLY.
-- **Branch:** `records/chip10-import`   **Worktree:** `/home/olares/code/apex/apex-records-lane`
+- **Branch:** `records/chip10-import` (HISTORICAL - merged; b6980b28 is an ancestor of main)
+  **Worktree:** `/home/olares/code/apex/apex-records-lane` (STALE - refresh onto main or
+  retire after the 2026-07-02 cleanup lands; do not build from it)
 - **Dev DB / schema:** `records_dev` → `records.*` (+ `neta.*` reference)
 - **Write-boundary (OWNS):** `infra/database/migrations/records/**`, `packages/records-*/**`,
   the datasheet/import tooling under `tools/powerdb/**`.
@@ -40,7 +42,12 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
   prod Supabase.
 - **Gates:** `schema` (every migration), `business_state`.
 - **Escalation / owner:** CC (technical authority). Abort = leave branch unpushed-of-the-bad-commit; never force-push shared history.
-- **Status:** **held** — "nothing ships until it's all done" (Chip 10c DTAX-read still pending). Stays unmerged.
+- **Status:** **foundation merged, prototype-grade** - Chip 10a + partial 10c import plumbing
+  and records migrations through `044` are in main (`b6980b28` is an ancestor of main); NOT
+  production-governed. Next = validation-harness lane, then security/RLS.
+- **Resume guard:** read `reference/records/CURRENT-STATE.md` (the single records resume
+  landing page, updated 2026-07-02) before any new records work. The detached
+  `apex-records-lane` checkout is stale - do not build from it.
 
 ### Lane: ops (PM revenue / recognition)
 - **Scope:** the Operations PM lane — Estimator intake → per-apparatus revenue → progress billing — DEV ONLY.

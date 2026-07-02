@@ -8,6 +8,11 @@
 
 - **Status:** LIVING — created 2026-06-12
 - **Method:** each chip is a bounded, reversible, independently-reviewable landing.
+- **Resume guard (2026-07-02):** `CURRENT-STATE.md` is the SINGLE records resume landing page
+  and now carries the 2026-07-02 resume audit (stale lane accounting, no records CI, brittle
+  records_dev env wiring, non-suite-safe migration tests, library-only import seam). Read it
+  before starting the next records chip.
+- **Current-state note (2026-06-24):** see `CURRENT-STATE.md`. The consolidated platform checkout contains records migrations through `044` and partial Chip 10c DTAX proposal plumbing. Chips 3/4 remain the offline proof; Chip 10 remains prototype/foundation until review-gate UI, import sessions, source hashes, and audit-grade commit history exist.
 
 ---
 
@@ -27,7 +32,7 @@
 | **7 — Reporting / export** | Render a completed data sheet to a report (PDF/Word); batch job report. | 1, 4, D-FORMS | **HELD** — blocked on the forms/report-domain restructuring decision (`00` §6 D-FORMS); do not wire to `forms-engine` or any variant until ruled |
 | **8 — FK activation** | Promote the deferred soft UUID links (`records`→`org.sites`/`org.clients`, `records`→`work.projects`/`work_packages`) to hard FKs once seed ordering is settled. | 1, 5 | TODO |
 | **9 — Legacy-data migration** | One-time import from the legacy datastore into `records.*` (`source = legacy_import`, `legacy_source_id` preserved; keyed by `job_number`). Mapping derived from the operator-held export at this chip — not committed (`02` §6). | 1, 8, converters | TODO |
-| **10 — Instrument / format import** | Pull readings off field test sets (serial/USB/Bluetooth) into `form_field_values`, and convert legacy test-data formats (PTM/DTAX/CTA) via `packages/power-test-converters` (now lane-owned). A capability of the incumbent to match; isolated lane. | 4 | **DESIGNED + APPROVED** 2026-06-17 — spec `14-CAPTURE-MODE-IMPORT-SPEC.md` (file-import first; office-side connected ingest; source-agnostic mapping core so live-connect plugs in later; mandatory review + provenance/trust stamp; **first slice = PTM transformer → xfmr datasheet**, zero parser risk via the validated `read_ptm`). **Build: 10a DONE** 2026-06-17 (TDD **14/14** on `records_dev`; branch `records/chip10-import`, **NOT merged** per "nothing ships until it's all done") — migration `020` (xfmr capture-mode wiring) + new isolated `packages/records-import/` (mapping `PtmModel→ProposedValue` / review mapped-unmapped-pending / db idempotent upsert / ingest propose+commit); reuses banked `read_ptm`; as-built = spec `14` §12. **Next:** 10b review-gate UI → 10c DTAX-read (invert the writer) → 10d CTA port → 10e batch identity-match → (later) live test-set adapter. |
+| **10 - Instrument / format import** | Pull readings off field test sets (serial/USB/Bluetooth) into `form_field_values`, and convert legacy test-data formats (PTM/DTAX/CTA) via `packages/power-test-converters` (now lane-owned). A capability of the incumbent to match; isolated lane. | 4 | **DESIGNED + APPROVED** 2026-06-17 - spec `14-CAPTURE-MODE-IMPORT-SPEC.md` (file-import first; office-side connected ingest; source-agnostic mapping core so live-connect plugs in later; mandatory review + provenance/trust stamp; **first slice = PTM transformer -> xfmr datasheet**, zero parser risk via the validated `read_ptm`). **Build: 10a DONE** 2026-06-17 (TDD **14/14** on `records_dev`; branch `records/chip10-import`, **since MERGED to main** (b6980b28 is an ancestor of main; see `CURRENT-STATE.md`)) - migration `020` (xfmr capture-mode wiring) + new isolated `packages/records-import/` (mapping `PtmModel->ProposedValue` / review mapped-unmapped-pending / db idempotent upsert / ingest propose+commit); reuses banked `read_ptm`; as-built = spec `14` sec. 12. **Current 2026-06-24:** partial 10c DTAX-read/propose plumbing exists and focused parser/import tests pass, but only overall PF mapping is proven end-to-end; TTR/WR/excitation mapping, review-gate UI, import sessions/source hashes, audit-grade commit history, CTA port, batch identity-match, and live test-set adapter remain open. |
 
 ---
 
