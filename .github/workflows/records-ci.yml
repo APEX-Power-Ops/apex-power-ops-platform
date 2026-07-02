@@ -37,15 +37,6 @@ jobs:
       NETA_DATA_DIR: ${{ github.workspace }}/neta-source/Development/NETA-Data
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - name: Diagnose source token presence (length only, never value)
-        env:
-          NETA_SOURCE_REPO_TOKEN: ${{ secrets.NETA_SOURCE_REPO_TOKEN }}
-        run: |
-          if [ -z "$NETA_SOURCE_REPO_TOKEN" ]; then
-            echo "diag: NETA_SOURCE_REPO_TOKEN is EMPTY at runtime"
-          else
-            echo "diag: NETA_SOURCE_REPO_TOKEN is present, length ${#NETA_SOURCE_REPO_TOKEN}"
-          fi
       - name: Checkout NETA source extracts (private repo, read-only token)
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
