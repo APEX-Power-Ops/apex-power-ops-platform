@@ -26,8 +26,12 @@ drops the schema CASCADE (removing enums + tables in one shot).
 - `test_005_durability_schema.py` — 005 new job/run columns (additive) + `job_kind_enum` + `awaiting_promotion` + down (3 tests)
 - Engine / CLI / worker tests: `packages/apex-jobs/tests/` (11 more; run against `orchestration_test`).
 
-Run (host) per the records convention:
+Run (host) per the records convention. Credentials come from env only --
+no in-code fallback: source the governed infra/.env first (DEV_PG_PASSWORD),
+or set ORCH_TEST_PGPASSWORD / ORCH_TEST_DSN; the tests skip with a hint
+otherwise:
 ```
+set -a; . ../../../.env; set +a
 uv run --with "psycopg[binary]" --with pytest pytest test_001_jobs_schema.py
 ```
 The harness pins `orchestration_test` explicitly and uses the host `/usr/bin/psql`
