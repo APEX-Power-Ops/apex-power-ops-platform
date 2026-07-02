@@ -1,6 +1,7 @@
 node_modules/
 .pnpm-store/
 .venv/
+.venv-control-plane/
 __pycache__/
 .pytest_cache/
 pytest-cache-files-*/
