@@ -138,6 +138,31 @@ def apply_migrations(tmp_path_factory):
         _run_sql(c, mig_dir / "001_identity_skeleton_down.sql")
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _assert_role_dsn_identity(apply_migrations):
+    """F-012-6: the route tier asserts current_user identity on the role DSNs (see
+    test_ops_intake_routes.py's client fixture); the package tier only asserted
+    dbname==ops_test. Close the gap here so a DSN that happens to target ops_test but
+    connects as the wrong role (or a superuser) fails loud instead of silently running
+    package tests with the wrong privilege posture. Skips gracefully if a role DSN env
+    var is unset (some package tests run without the app-role DSNs configured)."""
+    import psycopg
+
+    for env_var, expected_user in (
+        ("OPS_INTAKE_WRITER_DSN", "ops_intake_writer"),
+        ("OPS_API_DSN", "ops_api"),
+    ):
+        d = os.environ.get(env_var)
+        if not d:
+            continue
+        with psycopg.connect(d, autocommit=True) as c:
+            row = c.execute("select current_user, current_setting('is_superuser')").fetchone()
+        assert row[0] == expected_user, (
+            env_var + " connects as " + repr(row[0]) + ", expected " + repr(expected_user)
+        )
+        assert row[1] == "off", env_var + " (" + expected_user + ") is a superuser"
+
+
 @pytest.fixture(scope="session")
 def mini_workbook(tmp_path_factory):
     return build(tmp_path_factory.mktemp("wb") / "mini_estimator.xlsx")

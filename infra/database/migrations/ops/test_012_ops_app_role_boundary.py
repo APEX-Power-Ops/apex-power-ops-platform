@@ -372,6 +372,17 @@ def test_012_negative_matrix_the_boundary():
             assert c.execute(
                 "select has_function_privilege('ops_api', to_regprocedure(%s), 'EXECUTE')", (sig,)
             ).fetchone()[0] is False, "api can EXECUTE deferred billing fn " + sig
+        # F-012-5: defense-in-depth mirror of the migration's [5a] negative asserts -- ops_api
+        # holds no provenance_status UPDATE, and no INSERT/UPDATE on the scope/quote/task
+        # tables (DELETE on these is already covered above).
+        assert c.execute(
+            "select has_column_privilege('ops_api','ops.apparatus','provenance_status','UPDATE')"
+        ).fetchone()[0] is False, "ops_api holds apparatus UPDATE(provenance_status)"
+        for t in ("scopes", "scope_quote", "scope_quote_line", "tasks", "projects"):
+            for p in ("INSERT", "UPDATE"):
+                assert c.execute(
+                    "select has_table_privilege('ops_api', %s, %s)", ("ops." + t, p)
+                ).fetchone()[0] is False, "ops_api holds " + p + " on ops." + t
 
 
 def test_012_denial_a_forged_complete_insert():

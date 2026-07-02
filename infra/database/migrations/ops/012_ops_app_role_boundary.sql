@@ -346,6 +346,20 @@ begin
      or has_table_privilege('ops_api', 'ops.scopes', 'INSERT') then
     raise exception '012 posture: ops_api can fabricate (INSERT on apparatus/scopes)';
   end if;
+  -- F-012-5: defense-in-depth negative asserts for ops_api, mirroring the status asserts
+  -- above (clean today per the grant matrix; guards against future drift adding an
+  -- accidental ops_api grant on the provenance column or the scope/quote/task tables).
+  if has_column_privilege('ops_api', 'ops.apparatus', 'provenance_status', 'UPDATE') then
+    raise exception '012 posture: ops_api holds apparatus UPDATE(provenance_status)';
+  end if;
+  foreach t in array array['ops.scopes', 'ops.scope_quote', 'ops.scope_quote_line',
+    'ops.tasks', 'ops.projects'] loop
+    foreach p in array array['INSERT', 'UPDATE', 'DELETE'] loop
+      if has_table_privilege('ops_api', t, p) then
+        raise exception '012 posture: ops_api holds % on %', p, t;
+      end if;
+    end loop;
+  end loop;
   -- writer must NOT execute any of the 9; api must execute EXACTLY the 4 recognition fns
   if exists (
     select 1 from unnest(array[

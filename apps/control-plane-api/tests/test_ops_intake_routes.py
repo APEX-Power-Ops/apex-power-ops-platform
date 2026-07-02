@@ -172,6 +172,12 @@ def client(apply_migrations):
     assert os.environ.get("OPS_INTAKE_WRITER_DSN") and os.environ.get("OPS_API_DSN"), (
         "route tests require the two role DSNs (operator checkpoint)"
     )
+    # Codex-P1: pin BOTH role DSNs to ops_test before importing main / constructing the
+    # TestClient -- otherwise a mis-sourced host-env DSN (e.g. pointing at ops_dev) would
+    # have the app process write to ops_dev while this file's admin fixtures/truncates
+    # still target ops_test, a silent wrong-DB false-green.
+    _require_ops_test(os.environ["OPS_INTAKE_WRITER_DSN"])
+    _require_ops_test(os.environ["OPS_API_DSN"])
     from fastapi.testclient import TestClient
     from main import app
 

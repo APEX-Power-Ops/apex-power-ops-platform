@@ -108,6 +108,84 @@ def test_recognized_then_reversed_still_blocks(mini_workbook, clean_ops, admin_d
     assert out["conflict_kind"] == "recognized" and out["status"] == "revision_blocked"
 
 
+def test_reapprove_after_recognition_hits_approve_time_toctou(mini_workbook, clean_ops, admin_dsn, api_dsn):
+    """F-012-4: the approve-time conflict re-check at approve.py:241 is a LIVE re-check
+    (ops._conflict_kind under the held project/apparatus locks), independent of the
+    conflict_kind stored on the run row at create_run time. test_recognized_then_reversed_
+    still_blocks (above) only proves envelope-time (create_run) blocking -- create_run's own
+    _classify_conflict pre-marks a NEW run status='revision_blocked' the moment a conflict
+    already exists, so approve_run never reaches its OWN re-check in that flow.
+
+    To genuinely exercise approve.py:241 this seeds round 2's intake_run directly (admin
+    INSERT, status='parsed', conflict_kind='none') -- bypassing create_run's own
+    classification -- so approve_run's line-209/212 gates pass and its LIVE re-check at
+    line 241 is what fires. Reuses round 1's own stored payload JSON (valid by construction:
+    it already materialized once) since the TOCTOU return happens before the payload is
+    read for materialization.
+    """
+    dsn = clean_ops
+    who = _person(admin_dsn)
+    r1 = create_run(dsn, uploaded_by=who, filename="m.xlsm",
+                     raw_bytes=mini_workbook.read_bytes(), content_type="xlsm")
+    out1 = approve_run(dsn, r1["run_id"], approved_by=who)
+    assert out1["outcome"] == "approved"
+
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        project_number, canonical_json, review_json, review_version = c.execute(
+            "select project_number, canonical_payload_json, review_payload_json,"
+            " review_payload_version from ops.intake_runs where id=%s",
+            (r1["run_id"],),
+        ).fetchone()
+        # eligible apparatus for attest (same gates as test_recognized_then_reversed_still_blocks)
+        aid = c.execute(
+            "select a.id from ops.apparatus a"
+            " join ops.scopes s   on s.id = a.scope_id"
+            " join ops.projects p on p.id = s.project_id"
+            " join ops.scope_quote sq on sq.scope_id = a.scope_id"
+            " where a.provenance_status='approved' and a.is_active"
+            "   and a.status not in ('Complete','Cancelled')"
+            "   and a.quoted_hours > 0 and a.quoted_revenue > 0"
+            "   and s.is_active and s.status <> 'Cancelled'"
+            "   and p.is_active and p.status <> 'Cancelled'"
+            "   and sq.is_frozen and sq.frozen_at is not null"
+            " limit 1"
+        ).fetchone()[0]
+
+    # attest + recognize as api_dsn (the 3 recognition fns are EXECUTE-granted to ops_api
+    # only) -- this creates the live ops.revenue_recognition_event row that _conflict_kind
+    # will see. Do NOT reverse it this time (must still conflict when approve_run re-checks).
+    with psycopg.connect(api_dsn, autocommit=True) as c:
+        c.execute("select ops.attest_apparatus_complete(%s,%s,'tested')", (aid, who))
+        c.execute(
+            "select ops.approve_and_recognize(%s,%s,'not_applicable',null,'not_applicable',null)",
+            (aid, who),
+        )
+
+    # Seed round 2's intake_run directly (admin), status='parsed'/conflict_kind='none' --
+    # bypassing create_run's own _classify_conflict so approve_run's line-209/212 gates let
+    # it through to the live re-check at line 241.
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        run2_id = c.execute(
+            "insert into ops.intake_runs (project_number, project_id, source_format, status,"
+            " conflict_kind, payload_schema_version, parser_version, canonical_payload_json,"
+            " review_payload_json, review_payload_version, uploaded_by)"
+            " select project_number, project_id, source_format, 'parsed'::ops.intake_run_status,"
+            " 'none'::ops.intake_conflict_kind, payload_schema_version, parser_version,"
+            " canonical_payload_json, review_payload_json, review_payload_version, uploaded_by"
+            " from ops.intake_runs where id=%s returning id",
+            (r1["run_id"],),
+        ).fetchone()[0]
+
+    out2 = approve_run(dsn, run2_id, approved_by=who)
+    assert out2["outcome"] == "revision_blocked", out2
+    assert out2["conflict_kind"] == "recognized", out2
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        status = c.execute(
+            "select status from ops.intake_runs where id=%s", (run2_id,)
+        ).fetchone()[0]
+        assert status == "revision_blocked"  # the TOCTOU re-check persisted the block
+
+
 def test_approve_refuses_foreign_source_project(clean_ops, admin_dsn):
     """A project bearing a non-ops-intake scope (legacy Miner rows) must be REFUSED by approve
     (outcome 'foreign_source') with NO scopes deleted -- so delete-by-marker can never orphan
