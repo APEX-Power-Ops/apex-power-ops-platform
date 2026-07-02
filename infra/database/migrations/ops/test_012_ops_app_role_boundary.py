@@ -222,3 +222,242 @@ def test_012_owner_grants_cover_fn_read_and_lock_surface():
         assert c.execute(
             "select has_schema_privilege('ops_fn_owner', 'ops', 'USAGE')"
         ).fetchone()[0] is True
+
+
+# ---------- Task 4: grant matrix + denial proofs ----------
+
+PROJECTS_UPDATE_COLS = [
+    "project_name", "status", "quote_revision", "contract_value", "description",
+    "source_client_name", "source_site_name", "source_site_address", "source_site_city",
+    "source_site_state", "source_site_zip", "source", "provenance_status", "updated_at",
+]
+
+APPARATUS_INSERT_COLS = [  # the 11 load.py columns, EXCLUDING status (D2)
+    "scope_id", "task_id", "apparatus_designation", "apparatus_type", "equipment_model_ref",
+    "drawing_reference", "quoted_hours", "quote_line_id", "source", "legacy_source_id",
+    "provenance_status",
+]
+
+OPS_VIEWS = [
+    "v_apparatus_quote", "v_apparatus_recognition", "v_billing_application_sov",
+    "v_completion_recognition_rollup", "v_completion_recognition_worklist", "v_draft_preview",
+    "v_project_billing", "v_project_recognition", "v_recognition_review_queue",
+    "v_scope_recognition", "v_unbilled_recognition",
+]
+
+
+def _seed_min(c, project_number=None):
+    """Admin setup DML: minimal project -> scope -> scope_quote -> apparatus('In Progress').
+    Mirrors the eligible fixture in test_ops_recognition_routes.py."""
+    pn = project_number or ("T012-" + uuid.uuid4().hex[:8])
+    with c.cursor() as cur:
+        cur.execute(
+            "insert into ops.projects (project_number,project_name,status,provenance_status)"
+            " values (%s,'P','Active','approved') returning id", (pn,))
+        pid = cur.fetchone()[0]
+        cur.execute(
+            "insert into ops.scopes (project_id,scope_name,status,provenance_status,source)"
+            " values (%s,'S','In Progress','approved','ops-intake') returning id", (pid,))
+        sid = cur.fetchone()[0]
+        cur.execute(
+            "insert into ops.scope_quote (scope_id,onsite_labor,unit_multiplier,pct_adjust,"
+            "total_quoted_hours,is_frozen,frozen_at) values (%s,1500,1,1,10,true,now())", (sid,))
+        cur.execute(
+            "insert into ops.apparatus (scope_id,apparatus_designation,status,provenance_status,"
+            "quoted_hours,quoted_revenue,source) values (%s,'A','In Progress','approved',10,1500,'ops-intake')"
+            " returning id", (sid,))
+        aid = cur.fetchone()[0]
+    return pid, sid, aid
+
+
+def _denied(sql, role, params=None, pre_sql=None):
+    """Run sql AS role (SET ROLE from the admin session) inside a rolled-back txn;
+    assert InsufficientPrivilege. Object-privilege checks use current_user, and
+    superuser bypass is OFF after SET ROLE to a non-super role."""
+    with _admin(autocommit=False) as c:
+        with c.cursor() as cur:
+            cur.execute("set local role " + role)
+            if pre_sql:
+                cur.execute(pre_sql)
+            with pytest.raises(errors.InsufficientPrivilege):
+                cur.execute(sql, params)
+        c.rollback()
+
+
+def test_012_writer_positive_matrix():
+    with _admin() as c:
+        for col in PROJECTS_UPDATE_COLS:
+            assert c.execute(
+                "select has_column_privilege('ops_intake_writer','ops.projects',%s,'UPDATE')", (col,)
+            ).fetchone()[0] is True, "writer missing projects UPDATE(" + col + ")"
+        for col in APPARATUS_INSERT_COLS:
+            assert c.execute(
+                "select has_column_privilege('ops_intake_writer','ops.apparatus',%s,'INSERT')", (col,)
+            ).fetchone()[0] is True, "writer missing apparatus INSERT(" + col + ")"
+        for col in ("quoted_revenue", "provenance_status", "updated_at"):
+            assert c.execute(
+                "select has_column_privilege('ops_intake_writer','ops.apparatus',%s,'UPDATE')", (col,)
+            ).fetchone()[0] is True, "writer missing apparatus UPDATE(" + col + ")"
+        for t, p in (("intake_runs", "INSERT"), ("intake_runs", "UPDATE"), ("intake_runs", "SELECT"),
+                     ("intake_source_files", "INSERT"), ("intake_validation_findings", "INSERT"),
+                     ("scopes", "INSERT"), ("scopes", "DELETE"), ("scope_quote", "INSERT"),
+                     ("scope_quote_line", "INSERT"), ("tasks", "INSERT"), ("tasks", "UPDATE"),
+                     ("revenue_recognition_event", "SELECT"), ("billing_application", "SELECT")):
+            assert c.execute(
+                "select has_table_privilege('ops_intake_writer', %s, %s)", ("ops." + t, p)
+            ).fetchone()[0] is True, "writer missing " + p + " on ops." + t
+        for col in ("total_quoted_hours", "is_frozen", "frozen_at"):
+            assert c.execute(
+                "select has_column_privilege('ops_intake_writer','ops.scope_quote',%s,'UPDATE')", (col,)
+            ).fetchone()[0] is True
+        for v in OPS_VIEWS:
+            assert c.execute(
+                "select has_table_privilege('ops_intake_writer', %s, 'SELECT')", ("ops." + v,)
+            ).fetchone()[0] is True, "writer missing SELECT on ops." + v
+        for t in ("core.v_equipment_models_resolved", "core.equipment_models"):
+            assert c.execute(
+                "select has_table_privilege('ops_intake_writer', %s, 'SELECT')", (t,)
+            ).fetchone()[0] is True
+
+
+def test_012_negative_matrix_the_boundary():
+    with _admin() as c:
+        # D2: no status privilege anywhere on a login role
+        for role in ("ops_intake_writer", "ops_api"):
+            for priv in ("INSERT", "UPDATE"):
+                assert c.execute(
+                    "select has_column_privilege(%s,'ops.apparatus','status',%s)", (role, priv)
+                ).fetchone()[0] is False, role + " holds apparatus.status " + priv
+        # writer: no source/scope_id UPDATE on apparatus, no DELETE on apparatus
+        for col in ("source", "scope_id"):
+            assert c.execute(
+                "select has_column_privilege('ops_intake_writer','ops.apparatus',%s,'UPDATE')", (col,)
+            ).fetchone()[0] is False
+        # forge-closure: api has NO table DML; writer has NO ledger/attestation/billing DML
+        for t in ("apparatus", "scopes", "projects", "intake_runs"):
+            for p in ("INSERT", "UPDATE", "DELETE"):
+                assert c.execute(
+                    "select has_table_privilege('ops_api', %s, %s)", ("ops." + t, p)
+                ).fetchone()[0] is False, "ops_api holds " + p + " on ops." + t
+        for role in ("ops_intake_writer", "ops_api"):
+            for t in ("revenue_recognition_event", "completion_attestation",
+                      "billing_application", "billing_application_line", "billing_application_draft"):
+                for p in ("INSERT", "UPDATE", "DELETE"):
+                    assert c.execute(
+                        "select has_table_privilege(%s, %s, %s)", (role, "ops." + t, p)
+                    ).fetchone()[0] is False, role + " holds " + p + " on ops." + t
+            for t in ("projects", "apparatus", "tasks", "scope_quote", "scope_quote_line"):
+                assert c.execute(
+                    "select has_table_privilege(%s, %s, 'DELETE')", (role, "ops." + t)
+                ).fetchone()[0] is False, role + " holds DELETE on ops." + t
+        # writer: no EXECUTE on any of the 9; api: EXECUTE on exactly the 4 recognition fns
+        for sig in SIGS:
+            assert c.execute(
+                "select has_function_privilege('ops_intake_writer', to_regprocedure(%s), 'EXECUTE')", (sig,)
+            ).fetchone()[0] is False, "writer can EXECUTE " + sig
+        for sig in SIGS[:4]:
+            assert c.execute(
+                "select has_function_privilege('ops_api', to_regprocedure(%s), 'EXECUTE')", (sig,)
+            ).fetchone()[0] is True, "api missing EXECUTE on " + sig
+        for sig in SIGS[4:]:
+            assert c.execute(
+                "select has_function_privilege('ops_api', to_regprocedure(%s), 'EXECUTE')", (sig,)
+            ).fetchone()[0] is False, "api can EXECUTE deferred billing fn " + sig
+
+
+def test_012_denial_a_forged_complete_insert():
+    with _admin() as c:
+        pid, sid, aid = _seed_min(c)
+    # M6: every column here EXCEPT status is in the writer's 11-column INSERT grant, so
+    # `status` is the SOLE unauthorized column - the denial proves the D2 boundary itself,
+    # not an incidental grant gap (quoted_revenue was masking it: it is UPDATE-only).
+    forged = ("insert into ops.apparatus (scope_id,apparatus_designation,status,provenance_status,source)"
+              " values (%s,'F','Complete','approved','ops-intake')")
+    _denied(forged, "ops_intake_writer", params=(sid,))
+    # MANDATORY (D2): STILL denied after SET ops.completion_ctx='1' (the column-privilege
+    # check fires BEFORE the completion guard, so the GUC cannot help).
+    _denied(forged, "ops_intake_writer", params=(sid,), pre_sql="set local ops.completion_ctx='1'")
+
+
+def test_012_denial_b_writer_status_update():
+    with _admin() as c:
+        pid, sid, aid = _seed_min(c)
+    _denied("update ops.apparatus set status='Complete' where id=%s", "ops_intake_writer", params=(aid,))
+
+
+def test_012_denial_c_writer_cannot_execute_recognition():
+    x = str(uuid.uuid4())
+    _denied("select ops.attest_apparatus_complete(%s::uuid,%s::uuid,'x')", "ops_intake_writer", params=(x, x))
+    _denied(
+        "select ops.approve_and_recognize(%s::uuid,%s::uuid,"
+        "'not_applicable'::ops.obligation_clearance,null,'not_applicable'::ops.obligation_clearance,null)",
+        "ops_intake_writer", params=(x, x))
+
+
+def test_012_denial_d_api_cannot_fabricate():
+    with _admin() as c:
+        pid, sid, aid = _seed_min(c)
+    _denied("insert into ops.scopes (project_id,scope_name,status,provenance_status,source)"
+            " values (%s,'F','In Progress','approved','ops-intake')", "ops_api", params=(pid,))
+    _denied("insert into ops.apparatus (scope_id,apparatus_designation) values (%s,'F')",
+            "ops_api", params=(sid,))
+
+
+def test_012_denial_f_ledger_inserts():
+    x = str(uuid.uuid4())
+    for role in ("ops_intake_writer", "ops_api"):
+        _denied("insert into ops.revenue_recognition_event (apparatus_id) values (%s::uuid)",
+                role, params=(x,))
+        _denied("insert into ops.completion_attestation (apparatus_id) values (%s::uuid)",
+                role, params=(x,))
+        _denied("insert into ops.billing_application (project_id) values (%s::uuid)",
+                role, params=(x,), pre_sql="set local ops.billing_ctx='1'")
+
+
+def test_012_denial_g_delete_projects():
+    _denied("delete from ops.projects", "ops_intake_writer")
+    _denied("delete from ops.projects", "ops_api")
+
+
+def test_012_for_update_probe_regression():
+    """Task 0 probe as a permanent regression: column-scoped UPDATE satisfies the
+    approve.py:237 apparatus lock and the approve.py:233 projects lock as the writer."""
+    with _admin() as c:
+        pid, sid, aid = _seed_min(c)
+    with _admin(autocommit=False) as c:
+        with c.cursor() as cur:
+            cur.execute("set local role ops_intake_writer")
+            cur.execute(
+                "select a.id from ops.apparatus a join ops.scopes s on s.id=a.scope_id"
+                " where s.project_id = %s for update of a", (pid,))
+            assert cur.fetchone() is not None
+            cur.execute("select id from ops.projects where id = %s for update", (pid,))
+            assert cur.fetchone() is not None
+        c.rollback()
+
+
+def test_012_for_update_two_session_concurrency():
+    """Two-session interleave: writer A holds the apparatus row lock; writer B's NOWAIT
+    lock attempt fails loud (proves the lock is really taken under column-scoped grants)."""
+    with _admin() as c:
+        pid, sid, aid = _seed_min(c)
+    a = psycopg.connect(DSN, autocommit=False)
+    b = psycopg.connect(DSN, autocommit=False)
+    try:
+        with a.cursor() as ca:
+            ca.execute("set local role ops_intake_writer")
+            ca.execute(
+                "select a.id from ops.apparatus a join ops.scopes s on s.id=a.scope_id"
+                " where s.project_id = %s for update of a", (pid,))
+            assert ca.fetchone() is not None
+            with b.cursor() as cb:
+                cb.execute("set local role ops_intake_writer")
+                with pytest.raises(errors.LockNotAvailable):
+                    cb.execute(
+                        "select a.id from ops.apparatus a join ops.scopes s on s.id=a.scope_id"
+                        " where s.project_id = %s for update of a nowait", (pid,))
+            b.rollback()
+        a.rollback()
+    finally:
+        a.close()
+        b.close()

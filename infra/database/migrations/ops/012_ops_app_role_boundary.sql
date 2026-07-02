@@ -217,3 +217,182 @@ begin
     raise exception '012 posture: ops_fn_owner missing billing SELECT (RV-2)';
   end if;
 end $$;
+
+-- [4] USAGE + EXECUTE (D3) --------------------------------------------------------------
+
+grant usage on schema ops to ops_intake_writer;
+grant usage on schema core to ops_intake_writer;
+grant usage on schema ops to ops_api;
+
+grant execute on function
+  ops.attest_apparatus_complete(uuid,uuid,text),
+  ops.revoke_completion_attestation(uuid,uuid,text),
+  ops.approve_and_recognize(uuid,uuid,ops.obligation_clearance,text,ops.obligation_clearance,text),
+  ops.reverse_recognition(uuid,uuid,text)
+  to ops_api;
+-- Billing EXECUTE deferred (GATE-12): the 5 billing fns get NO EXECUTE grant here.
+
+-- [5] Login-role grant matrix (S5; FINAL per Task 0 PASS) --------------------------------
+
+-- ops_intake_writer: intake surface
+grant insert, update, select on ops.intake_runs to ops_intake_writer;
+grant insert, select on ops.intake_source_files to ops_intake_writer;
+grant insert, select on ops.intake_validation_findings to ops_intake_writer;
+
+-- projects: column-scoped INSERT (load.py upsert_project) + column-scoped UPDATE
+-- (upsert DO-UPDATE cols + approve.py _freeze provenance stamp). NOT retainage_pct /
+-- lifecycle / is_active; NO DELETE.
+grant insert (project_number, project_name, status, quote_revision, contract_value,
+  description, source_client_name, source_site_name, source_site_address, source_site_city,
+  source_site_state, source_site_zip, source, legacy_source_id, provenance_status),
+  update (project_name, status, quote_revision, contract_value, description,
+  source_client_name, source_site_name, source_site_address, source_site_city,
+  source_site_state, source_site_zip, source, provenance_status, updated_at),
+  select on ops.projects to ops_intake_writer;
+
+-- scopes: DELETE = sanctioned full-replacement; RI cascade runs as table owner.
+grant insert, delete, select on ops.scopes to ops_intake_writer;
+grant insert, select, update (total_quoted_hours, is_frozen, frozen_at)
+  on ops.scope_quote to ops_intake_writer;
+grant insert, select on ops.scope_quote_line to ops_intake_writer;
+grant insert, update, select on ops.tasks to ops_intake_writer;
+
+-- apparatus (D2): INSERT on the 11 load.py columns EXCLUDING status; UPDATE on exactly
+-- the approve.py _freeze columns. NO status, NO source/scope_id UPDATE, NO DELETE.
+grant insert (scope_id, task_id, apparatus_designation, apparatus_type, equipment_model_ref,
+  drawing_reference, quoted_hours, quote_line_id, source, legacy_source_id, provenance_status),
+  select,
+  update (quoted_revenue, provenance_status, updated_at)
+  on ops.apparatus to ops_intake_writer;
+
+-- read-only conflict checks
+grant select on ops.revenue_recognition_event to ops_intake_writer;
+grant select on ops.billing_application to ops_intake_writer;
+
+-- catalog resolve
+grant select on core.v_equipment_models_resolved to ops_intake_writer;
+grant select on core.equipment_models to ops_intake_writer;
+
+-- the 11 ops views (postgres-owned, non-security_invoker - asserted in [5a])
+grant select on ops.v_apparatus_quote, ops.v_apparatus_recognition,
+  ops.v_billing_application_sov, ops.v_completion_recognition_rollup,
+  ops.v_completion_recognition_worklist, ops.v_draft_preview, ops.v_project_billing,
+  ops.v_project_recognition, ops.v_recognition_review_queue, ops.v_scope_recognition,
+  ops.v_unbilled_recognition to ops_intake_writer;
+
+-- ops_api: recognition read surface only
+grant select on ops.v_completion_recognition_worklist, ops.v_completion_recognition_rollup
+  to ops_api;
+
+-- [5a] posture asserts: the boundary, positively and negatively
+do $$
+declare
+  col text;
+  r text;
+  t text;
+  p text;
+  n int;
+begin
+  -- positive: writer intake INSERT + the pinned projects UPDATE columns (V3-9)
+  if not has_table_privilege('ops_intake_writer', 'ops.intake_runs', 'INSERT') then
+    raise exception '012 posture: writer missing INSERT on intake_runs';
+  end if;
+  if not has_column_privilege('ops_intake_writer', 'ops.apparatus', 'quoted_revenue', 'UPDATE') then
+    raise exception '012 posture: writer missing apparatus UPDATE(quoted_revenue)';
+  end if;
+  foreach col in array array['project_name','status','quote_revision','contract_value',
+    'description','source_client_name','source_site_name','source_site_address',
+    'source_site_city','source_site_state','source_site_zip','source','provenance_status',
+    'updated_at'] loop
+    if not has_column_privilege('ops_intake_writer', 'ops.projects', col, 'UPDATE') then
+      raise exception '012 posture: writer missing projects UPDATE(%)', col;
+    end if;
+  end loop;
+  -- negative: D2 - status leaves every login role (H3: has_column_privilege for column scope)
+  foreach r in array array['ops_intake_writer', 'ops_api'] loop
+    if has_column_privilege(r, 'ops.apparatus', 'status', 'INSERT')
+       or has_column_privilege(r, 'ops.apparatus', 'status', 'UPDATE') then
+      raise exception '012 posture: % holds apparatus.status privilege', r;
+    end if;
+    foreach t in array array['ops.revenue_recognition_event', 'ops.completion_attestation',
+      'ops.billing_application', 'ops.billing_application_line', 'ops.billing_application_draft'] loop
+      foreach p in array array['INSERT', 'UPDATE', 'DELETE'] loop
+        if has_table_privilege(r, t, p) then
+          raise exception '012 posture: % holds % on %', r, p, t;
+        end if;
+      end loop;
+    end loop;
+    if has_table_privilege(r, 'ops.projects', 'DELETE')
+       or has_table_privilege(r, 'ops.apparatus', 'DELETE')
+       or has_table_privilege(r, 'ops.tasks', 'DELETE')
+       or has_table_privilege(r, 'ops.scope_quote', 'DELETE')
+       or has_table_privilege(r, 'ops.scope_quote_line', 'DELETE') then
+      raise exception '012 posture: % holds a forbidden DELETE', r;
+    end if;
+  end loop;
+  if has_table_privilege('ops_api', 'ops.apparatus', 'INSERT')
+     or has_table_privilege('ops_api', 'ops.scopes', 'INSERT') then
+    raise exception '012 posture: ops_api can fabricate (INSERT on apparatus/scopes)';
+  end if;
+  -- writer must NOT execute any of the 9; api must execute EXACTLY the 4 recognition fns
+  if exists (
+    select 1 from unnest(array[
+      'ops.attest_apparatus_complete(uuid,uuid,text)',
+      'ops.revoke_completion_attestation(uuid,uuid,text)',
+      'ops.approve_and_recognize(uuid,uuid,ops.obligation_clearance,text,ops.obligation_clearance,text)',
+      'ops.reverse_recognition(uuid,uuid,text)',
+      'ops.record_billing_application(uuid,uuid,date,text,uuid[],numeric)',
+      'ops.issue_billing_application(uuid,uuid,text)',
+      'ops.issue_billing_application(uuid,uuid,date,text,uuid[],numeric)',
+      'ops.discard_draft_billing_application(uuid,uuid)',
+      'ops.void_billing_application(uuid,uuid,text)'
+    ]) s(sig)
+    where has_function_privilege('ops_intake_writer', to_regprocedure(s.sig), 'EXECUTE')
+  ) then
+    raise exception '012 posture: ops_intake_writer can EXECUTE a mutation fn';
+  end if;
+  if exists (
+    select 1 from unnest(array[
+      'ops.record_billing_application(uuid,uuid,date,text,uuid[],numeric)',
+      'ops.issue_billing_application(uuid,uuid,text)',
+      'ops.issue_billing_application(uuid,uuid,date,text,uuid[],numeric)',
+      'ops.discard_draft_billing_application(uuid,uuid)',
+      'ops.void_billing_application(uuid,uuid,text)'
+    ]) s(sig)
+    where has_function_privilege('ops_api', to_regprocedure(s.sig), 'EXECUTE')
+  ) then
+    raise exception '012 posture: ops_api can EXECUTE a deferred billing fn';
+  end if;
+  -- M2 (S7.7 positive): ops_api MUST hold EXECUTE on the 4 recognition fns. This is the
+  -- ONLY guard on ops_dev/prod applies (pytest does not run there); a dropped GRANT EXECUTE
+  -- fails LOUD here instead of silently breaking the recognition API.
+  if exists (
+    select 1 from unnest(array[
+      'ops.attest_apparatus_complete(uuid,uuid,text)',
+      'ops.revoke_completion_attestation(uuid,uuid,text)',
+      'ops.approve_and_recognize(uuid,uuid,ops.obligation_clearance,text,ops.obligation_clearance,text)',
+      'ops.reverse_recognition(uuid,uuid,text)'
+    ]) s(sig)
+    where not has_function_privilege('ops_api', to_regprocedure(s.sig), 'EXECUTE')
+  ) then
+    raise exception '012 posture: ops_api is MISSING EXECUTE on a recognition fn';
+  end if;
+  -- R2: the 11 ops views are postgres-owned and NOT security_invoker
+  select count(*) into n
+  from pg_class c join pg_namespace ns on ns.oid = c.relnamespace
+  where ns.nspname = 'ops' and c.relkind = 'v';
+  if n <> 11 then
+    raise exception '012 posture: expected 11 ops views, found % (view drift - re-ground R2)', n;
+  end if;
+  if exists (
+    select 1
+    from pg_class c join pg_namespace ns on ns.oid = c.relnamespace
+    where ns.nspname = 'ops' and c.relkind = 'v'
+      and (c.relowner <> 'postgres'::regrole
+        or exists (select 1 from pg_options_to_table(c.reloptions) o
+                   where o.option_name = 'security_invoker'
+                     and lower(o.option_value) in ('true', 'on', '1')))
+  ) then
+    raise exception '012 posture: an ops view is not postgres-owned/non-invoker (R2)';
+  end if;
+end $$;
