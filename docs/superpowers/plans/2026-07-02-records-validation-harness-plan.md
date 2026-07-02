@@ -269,6 +269,9 @@ def run_psql(fname, dsn_value):
     """
     p = dsn_params(guard_target(dsn_value))
     env = {**os.environ, "PGSSLMODE": "disable"}
+    # Never let ambient PGPASSWORD leak through (it may belong to another
+    # cluster): clear it, then set only the contract-provided value.
+    env.pop("PGPASSWORD", None)
     pw = os.environ.get("RECORDS_DEV_PGPASSWORD") or p.get("password")
     if pw:
         env["PGPASSWORD"] = pw
@@ -716,6 +719,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
   `derive_child_dsn(admin_dsn: str, dbname: str) -> str`,
   `check_admin_dsn(admin_dsn: str) -> None` (dbname must equal `postgres`),
   `make_val_name() -> str` (`records_val_<UTCSTAMP>_<PID>`),
+  `parse_tiers(only: str) -> set[int]` (REFUSES unknown tiers),
   `assert_val_name(name: str) -> None`,
   `FINGERPRINT_SQL: str`, `HarnessError(RuntimeError)`,
   `class Tier` / `summary(tiers) -> str` (name, status in {PASS, FAIL, SKIP}, detail).
@@ -787,6 +791,18 @@ def test_val_name_shape_and_assert():
     for bad in ("records_dev", "postgres", "records_val", "x_records_val_1"):
         with pytest.raises(rv.HarnessError):
             rv.assert_val_name(bad)
+
+
+def test_parse_tiers_default_and_valid():
+    assert rv.parse_tiers("") == {0, 1, 2, 3, 4}
+    assert rv.parse_tiers("3,4") == {3, 4}
+
+
+def test_parse_tiers_rejects_unknown():
+    with pytest.raises(rv.HarnessError, match="unknown tier"):
+        rv.parse_tiers("9")
+    with pytest.raises(rv.HarnessError, match="tiers 0-4"):
+        rv.parse_tiers("x")
 
 
 def test_summary_formats_all_statuses():
@@ -940,6 +956,21 @@ def assert_val_name(name):
         raise HarnessError(f"refusing CREATE/DROP: {name!r} is not a run-generated records_val_* name")
 
 
+def parse_tiers(only):
+    """Validate --only. Unknown tiers must REFUSE - a typo like --only 9
+    running zero tiers and exiting 0 would be a false-green gate."""
+    if not only:
+        return {0, 1, 2, 3, 4}
+    try:
+        wanted = {int(x) for x in only.split(",") if x.strip()}
+    except ValueError:
+        raise HarnessError(f"--only takes a comma list of tiers 0-4, got {only!r}")
+    unknown = wanted - {0, 1, 2, 3, 4}
+    if not wanted or unknown:
+        raise HarnessError(f"unknown tier(s) in --only: {sorted(unknown)} (valid: 0-4)")
+    return wanted
+
+
 def summary(tiers):
     lines = ["", "=== records validation summary ==="]
     for t in tiers:
@@ -957,7 +988,7 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: Run unit tests to verify pass**
 
-Same command as Step 2. Expected: `7 passed`.
+Same command as Step 2. Expected: `9 passed`.
 
 - [ ] **Step 5: Commit**
 
@@ -1055,8 +1086,7 @@ def _child_env(child_dsn):
     return env
 
 
-def tier3_walk(child_dsn, executed):
-    migs, tests = enumerate_stack(HERE)
+def tier3_walk(child_dsn, executed, migs, tests):
     env = _child_env(child_dsn)
     for num, sql in migs:
         _dbtest.run_psql(sql, child_dsn)
@@ -1094,7 +1124,11 @@ def main(argv=None):
     ap.add_argument("--keep-db", action="store_true", help="skip the drop; print the retained name")
     args = ap.parse_args(argv)
 
-    wanted = {int(x) for x in args.only.split(",") if x} or {0, 1, 2, 3, 4}
+    try:
+        wanted = parse_tiers(args.only)
+    except HarnessError as e:
+        print(f"error: {e}")
+        return 2
     tiers, executed = [], []
     admin = os.environ.get("RECORDS_PG_ADMIN_DSN", "")
     child_dsn, val_name, created = "", "", False
@@ -1114,10 +1148,13 @@ def main(argv=None):
     db_wanted = wanted & {3, 4}
     if db_wanted and not any(t.status == "FAIL" for t in tiers):
         try:
-            # Source preflight runs BEFORE any skip decision (spec sec 3).
+            # Source + completeness preflights run BEFORE any skip decision
+            # and BEFORE any CREATE (spec sec 3; red proof 1 depends on it).
+            migs, tests = None, None
             if 3 in wanted:
                 _dbtest.neta_data_dir()
                 _dbtest.neta_json()
+                migs, tests = enumerate_stack(HERE)
             if not child_dsn:
                 if wanted != {0, 1, 2, 3, 4}:
                     raise HarnessError("--only with DB tiers requires --db-dsn (records_val_* only)")
@@ -1142,7 +1179,7 @@ def main(argv=None):
                     child_dsn = derive_child_dsn(admin, val_name)
             try:
                 if 3 in db_wanted:
-                    tiers.append(tier3_walk(child_dsn, executed))
+                    tiers.append(tier3_walk(child_dsn, executed, migs, tests))
                 if 4 in db_wanted and not any(
                     t.name == "3-migrations" and t.status == "FAIL" for t in tiers
                 ):
@@ -1187,7 +1224,7 @@ cd /home/olares/code/apex/apex-records-validation/infra/database/migrations/reco
 export PATH=$HOME/.local/bin:$PATH
 uv run --with 'psycopg[binary]' --with pytest python -m pytest test_run_validation_unit.py test__dbtest_helper.py -q
 ```
-Expected: `18 passed`.
+Expected: `20 passed`.
 
 - [ ] **Step 3: Compose the admin DSN (values stay in the shell, never in output)**
 
