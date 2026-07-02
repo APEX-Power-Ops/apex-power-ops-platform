@@ -17,12 +17,11 @@ import os
 
 import psycopg
 
+import _dbtest
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "021_xfmr_pf_readings.sql")
-PGPW = os.environ.get("RECORDS_DEV_PGPASSWORD") or "TCC_v5_2025"
-DSN = os.environ.get("RECORDS_DEV_DSN") or (
-    f"host=127.0.0.1 port=5432 dbname=records_dev user=postgres password={PGPW} sslmode=disable"
-)
+DSN = _dbtest.require_dsn()
 CODES = ["ats_liquid_xfmr_v1", "ats_dry_xfmr_v1"]
 
 # Doble raw readings, inserted around the existing pf_pct column (Prime 56900: KV_/mA_/WATTS_/CORR_).

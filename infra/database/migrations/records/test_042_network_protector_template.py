@@ -24,12 +24,10 @@ import subprocess
 import psycopg
 import pytest
 
+import _dbtest
+
 HERE = os.path.dirname(os.path.abspath(__file__))
-PSQL = os.environ.get("PSQL_EXE", r"C:\Program Files\PostgreSQL\18\bin\psql.exe")
-PGPW = os.environ.get("RECORDS_DEV_PGPASSWORD") or "TCC_v5_2025"
-DSN = os.environ.get("RECORDS_DEV_DSN") or (
-    f"host=127.0.0.1 port=5432 dbname=records_dev user=postgres password={PGPW} sslmode=disable"
-)
+DSN = _dbtest.dsn()
 CODE = "ats_network_protector_v1"
 LEAF = "network_protector"
 PARENT = "network_protectors"
@@ -39,14 +37,7 @@ DOWN = "042_network_protector_template_down.sql"
 
 
 def _psql(fname):
-    env = {**os.environ, "PGPASSWORD": PGPW, "PGSSLMODE": "disable"}
-    r = subprocess.run(
-        [PSQL, "-h", "127.0.0.1", "-p", "5432", "-U", "postgres", "-d", "records_dev",
-         "-v", "ON_ERROR_STOP=1", "-q", "-f", os.path.join(HERE, fname)],
-        env=env, capture_output=True, text=True,
-    )
-    if r.returncode != 0:
-        raise RuntimeError(f"psql {fname} failed (rc={r.returncode}):\n{r.stderr}\n{r.stdout}")
+    _dbtest.run_psql(fname, DSN)
 
 
 @pytest.fixture(scope="module")
