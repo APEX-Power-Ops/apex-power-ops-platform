@@ -58,15 +58,38 @@ $guard$;
   end if;
 end $$;
 
--- [d3] revoke everything granted TO the roles in THIS database
+-- [d3] revoke THIS database's grants from the roles. F-012-3 (operator-ratified 2026-07-02):
+-- DROP OWNED BY a LOGIN role also revokes DATABASE CONNECT, which is a SHARED-object ACL on
+-- pg_database - so DROP OWNED strips the role's CONNECT on EVERY database in the cluster, not
+-- just this one. Once 012 is applied on ops_dev (removing PUBLIC CONNECT), a routine ops_test
+-- teardown running this down would lock ops_intake_writer/ops_api out of live ops_dev. So the
+-- two LOGIN roles get DATABASE-SCOPED revokes here (mirroring the up [2] pattern); DROP OWNED
+-- remains ONLY for ops_fn_owner (NOLOGIN, never granted CONNECT).
 do $$
 begin
   if exists (select 1 from pg_roles where rolname = 'ops_intake_writer') then
-    drop owned by ops_intake_writer;
+    if to_regnamespace('ops') is not null then
+      execute 'revoke all privileges on all tables in schema ops from ops_intake_writer';
+      execute 'revoke all privileges on all routines in schema ops from ops_intake_writer';
+      execute 'revoke usage on schema ops from ops_intake_writer';
+    end if;
+    if to_regnamespace('core') is not null then
+      execute 'revoke all privileges on all tables in schema core from ops_intake_writer';
+      execute 'revoke all privileges on all routines in schema core from ops_intake_writer';
+      execute 'revoke usage on schema core from ops_intake_writer';
+    end if;
+    execute format('revoke connect on database %I from ops_intake_writer', current_database());
   end if;
   if exists (select 1 from pg_roles where rolname = 'ops_api') then
-    drop owned by ops_api;
+    if to_regnamespace('ops') is not null then
+      execute 'revoke all privileges on all tables in schema ops from ops_api';
+      execute 'revoke all privileges on all routines in schema ops from ops_api';
+      execute 'revoke usage on schema ops from ops_api';
+    end if;
+    execute format('revoke connect on database %I from ops_api', current_database());
   end if;
+  -- ops_fn_owner: NOLOGIN, never granted CONNECT; DROP OWNED is safe + database-scoped
+  -- ([d1] already reassigned its functions to postgres).
   if exists (select 1 from pg_roles where rolname = 'ops_fn_owner') then
     drop owned by ops_fn_owner;
   end if;

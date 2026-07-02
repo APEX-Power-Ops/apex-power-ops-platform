@@ -590,6 +590,30 @@ def test_012_reversible_round_trip():
         ).fetchone()[0] is True, "re-up did not restore DEFINER"
 
 
+def test_012_down_preserves_cross_database_connect():
+    """F-012-3 regression: DROP OWNED BY a login role would revoke CONNECT cluster-wide.
+    Grant the writer CONNECT on a sentinel database (postgres), run 012_down, and assert
+    the sentinel CONNECT SURVIVES (proves down is database-scoped, not a cluster-wide
+    DROP OWNED). Roles survive teardown here because DEV-7 preserves password-bearing roles."""
+    with _admin() as c:
+        if not c.execute(
+            "select 1 from pg_roles where rolname='ops_intake_writer'"
+        ).fetchone():
+            pytest.skip("ops_intake_writer role absent")
+        c.execute("grant connect on database postgres to ops_intake_writer")
+    try:
+        _exec(DOWN012)
+        with _admin() as c:
+            survived = c.execute(
+                "select has_database_privilege('ops_intake_writer', 'postgres', 'CONNECT')"
+            ).fetchone()[0]
+        assert survived is True, "012_down stripped cross-database CONNECT (F-012-3 regression)"
+    finally:
+        with _admin() as c:
+            c.execute("revoke connect on database postgres from ops_intake_writer")
+        _exec(UP012)  # restore 012 for the remaining tests
+
+
 # ---------- Task 7: load.py D2 ----------
 
 def test_012_insert_apparatus_succeeds_as_writer():
