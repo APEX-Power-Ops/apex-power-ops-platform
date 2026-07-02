@@ -3,14 +3,17 @@ Applies .sql via the host psql over TCP; pins orchestration_test explicitly
 because ambient PG env may point elsewhere. No Windows-path assumptions.
 
 Credentials come from env only -- no in-code fallback (records-lane convention):
-ORCH_TEST_PGPASSWORD or DEV_PG_PASSWORD for psql apply + the default DSN, or
-ORCH_TEST_DSN as a full psycopg override. On the host: set -a; . infra/.env;
-set +a. DB-backed tests skip with a clear hint when the env is absent."""
+ORCH_TEST_PGPASSWORD or DEV_PG_PASSWORD, or ORCH_TEST_DSN as a full override
+that drives BOTH the psycopg connection and the psql apply path (parsed via
+psycopg.conninfo; a DSN without a password still needs one of the password
+vars). On the host: set -a; . infra/.env; set +a. DB-backed tests skip with a
+clear hint when the env is absent."""
 import os
 import subprocess
 
 import psycopg
 import pytest
+from psycopg import conninfo
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PSQL = os.environ.get("PSQL_EXE", "psql")
@@ -29,10 +32,26 @@ def _password():
     return pw
 
 
+def _params():
+    """One connection target for both paths; ORCH_TEST_DSN wins whole."""
+    dsn = os.environ.get("ORCH_TEST_DSN")
+    if dsn:
+        p = conninfo.conninfo_to_dict(dsn)
+    else:
+        p = {"host": "127.0.0.1", "port": "5432", "dbname": DBNAME,
+             "user": "orchestration", "sslmode": "disable"}
+    if not p.get("password"):
+        p["password"] = _password()
+    return p
+
+
 def psql_file(fname):
-    env = {**os.environ, "PGPASSWORD": _password(), "PGSSLMODE": "disable"}
+    p = _params()
+    env = {**os.environ, "PGPASSWORD": str(p["password"]),
+           "PGSSLMODE": str(p.get("sslmode", "disable"))}
     r = subprocess.run(
-        [PSQL, "-h", "127.0.0.1", "-p", "5432", "-U", "orchestration", "-d", DBNAME,
+        [PSQL, "-h", str(p.get("host", "127.0.0.1")), "-p", str(p.get("port", "5432")),
+         "-U", str(p.get("user", "orchestration")), "-d", str(p.get("dbname", DBNAME)),
          "-v", "ON_ERROR_STOP=1", "-q", "-f", os.path.join(HERE, fname)],
         env=env, capture_output=True, text=True,
     )
@@ -41,8 +60,4 @@ def psql_file(fname):
 
 
 def connect():
-    dsn = os.environ.get("ORCH_TEST_DSN") or (
-        f"host=127.0.0.1 port=5432 dbname={DBNAME} user=orchestration "
-        f"password={_password()} sslmode=disable"
-    )
-    return psycopg.connect(dsn, autocommit=True)
+    return psycopg.connect(conninfo.make_conninfo(**_params()), autocommit=True)

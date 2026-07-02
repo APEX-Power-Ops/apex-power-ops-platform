@@ -34,6 +34,9 @@ otherwise:
 set -a; . ../../../.env; set +a
 uv run --with "psycopg[binary]" --with pytest pytest test_001_jobs_schema.py
 ```
+`ORCH_TEST_DSN` drives BOTH the psycopg connection and the psql apply path.
+This suite and `packages/apex-jobs/tests/` share `orchestration_test` and
+down/up the same schema -- run them SEQUENTIALLY, never in parallel.
 The harness pins `orchestration_test` explicitly and uses the host `/usr/bin/psql`
 for apply (client 16.x is fine vs the PG17 server for `-f`; only `\l`/`\du`-style
 describe meta-commands hit the renamed-catalog skew). No Windows-path assumptions.

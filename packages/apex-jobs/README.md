@@ -52,6 +52,11 @@ skips with a hint otherwise.
 set -a; . ../../infra/.env; set +a
 APEX_JOBS_DB=orchestration_test PSQL_EXE=psql uv run --extra test pytest
 ```
+The conftest PINS the engine runtime to the fixture target (APEX_JOBS_DB,
+default `orchestration_test`, at 127.0.0.1:5432 as `orchestration`) so app
+writes can never land in `orchestration_dev`; it refuses `APEX_JOBS_DSN`
+and `APEX_JOBS_DB=orchestration_dev` outright. This suite and the
+migration tests share `orchestration_test` -- run them sequentially.
 enqueue/idempotency · atomic SKIP-LOCKED claim · predecessor + env + human gates ·
 run-ledger finalize · CLI smoke · worker end-to-end. Migration tests live in
 `infra/database/migrations/jobs/`. See `ops/orchestration/e2e_proof.md` for the
