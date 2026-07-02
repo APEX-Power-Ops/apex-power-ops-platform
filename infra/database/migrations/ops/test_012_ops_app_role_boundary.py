@@ -516,3 +516,57 @@ def test_012_h2_breaks_no_sanctioned_path():
             att = cur.fetchone()[0]
             cur.execute("select ops.revoke_completion_attestation(%s,%s,'undo')", (att, who))
         c.commit()
+
+
+# ---------- Task 6: reversibility ----------
+
+def test_012_reversible_round_trip():
+    """down -> posture reverted; up -> posture restored. Leaves 012 APPLIED (chain teardown
+    expects to run 012_down first via _clean_slate).
+
+    DEV-7: the contract asserted here is POSTURE-RESTORED (grants revoked in this DB), NOT
+    role-absence. Whether the login role OBJECT survives depends on whether a password was
+    set out-of-band (rolpassword IS NOT NULL -> [d4] leaves it). During a test_012 run no
+    password is set, so the role is dropped; after the Task-8 operator checkpoint it survives.
+    Either way [d3] DROP OWNED revoked this DB's grants, which is what we assert. NEVER assert
+    the role object is gone."""
+    _exec(DOWN012)
+    with _admin() as c:
+        # fns reverted to INVOKER + postgres-owned
+        row = c.execute(
+            "select p.prosecdef, p.proowner::regrole::text from pg_proc p"
+            " where p.oid = to_regprocedure('ops.attest_apparatus_complete(uuid,uuid,text)')"
+        ).fetchone()
+        assert row == (False, "postgres"), "down did not revert DEFINER/owner"
+        # PUBLIC EXECUTE restored on ops fns (pre-012 posture)
+        n = c.execute(
+            "select count(*) from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace"
+            " where ns.nspname = 'ops'"
+            "   and not (p.proacl is null"
+            "        or exists (select 1 from aclexplode(p.proacl) a"
+            "                   where a.grantee = 0 and a.privilege_type = 'EXECUTE'))"
+        ).fetchone()[0]
+        assert n == 0, "down did not restore PUBLIC EXECUTE"
+        # DEV-7 posture contract: if a role object survives (password-bearing, or cross-DB
+        # dependency), its grants in THIS db must be gone (DROP OWNED). If it was dropped,
+        # there is nothing to check. Guard has_*_privilege on existence (it errors on a
+        # missing role). ops_api EXECUTE on the recognition fns must also be gone.
+        for role in ("ops_intake_writer", "ops_api"):
+            if c.execute("select 1 from pg_roles where rolname=%s", (role,)).fetchone():
+                assert c.execute(
+                    "select bool_or(has_table_privilege(%s, c.oid, 'SELECT') or"
+                    " has_table_privilege(%s, c.oid, 'INSERT') or has_table_privilege(%s, c.oid, 'UPDATE'))"
+                    " from pg_class c join pg_namespace ns on ns.oid=c.relnamespace"
+                    " where ns.nspname='ops' and c.relkind in ('r','p')", (role, role, role)
+                ).fetchone()[0] in (False, None), "down left " + role + " grants behind"
+        if c.execute("select 1 from pg_roles where rolname='ops_api'").fetchone():
+            assert c.execute(
+                "select has_function_privilege('ops_api',"
+                " to_regprocedure('ops.attest_apparatus_complete(uuid,uuid,text)'), 'EXECUTE')"
+            ).fetchone()[0] is False, "down left ops_api EXECUTE behind"
+    _exec(UP012)
+    with _admin() as c:
+        assert c.execute(
+            "select p.prosecdef from pg_proc p"
+            " where p.oid = to_regprocedure('ops.attest_apparatus_complete(uuid,uuid,text)')"
+        ).fetchone()[0] is True, "re-up did not restore DEFINER"
