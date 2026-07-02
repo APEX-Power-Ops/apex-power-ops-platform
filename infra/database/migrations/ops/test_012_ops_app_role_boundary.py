@@ -122,3 +122,45 @@ def test_012_no_login_role_is_member_of_fn_owner():
             "   and pg_has_role(rolname, 'ops_fn_owner', 'member')"
         ).fetchall()
         assert bad == [], "login role(s) are members of ops_fn_owner: " + repr(bad)
+
+
+# ---------- Task 2: PUBLIC hygiene ----------
+
+def test_012_public_has_no_execute_on_ops_core_functions():
+    with _admin() as c:
+        n = c.execute(
+            "select count(*) from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace"
+            " where ns.nspname in ('ops','core')"
+            "   and (p.proacl is null"
+            "        or exists (select 1 from aclexplode(p.proacl) a"
+            "                   where a.grantee = 0 and a.privilege_type = 'EXECUTE'))"
+        ).fetchone()[0]
+        assert n == 0, str(n) + " ops/core function(s) retain PUBLIC EXECUTE"
+
+
+def test_012_public_connect_revoked_and_login_roles_connect():
+    with _admin() as c:
+        row = c.execute(
+            "select datacl is null, exists (select 1 from aclexplode(coalesce(datacl,'{}'::aclitem[])) a"
+            " where a.grantee = 0 and a.privilege_type = 'CONNECT')"
+            " from pg_database where datname = current_database()"
+        ).fetchone()
+        assert row[0] is False, "datacl is NULL (default ACL includes PUBLIC CONNECT)"
+        assert row[1] is False, "PUBLIC retains CONNECT"
+        for role in ("ops_intake_writer", "ops_api"):
+            assert c.execute(
+                "select has_database_privilege(%s, current_database(), 'CONNECT')", (role,)
+            ).fetchone()[0] is True, role + " lost CONNECT"
+        assert c.execute(
+            "select has_database_privilege('postgres', current_database(), 'CONNECT')"
+        ).fetchone()[0] is True
+
+
+def test_012_public_create_on_schema_public_revoked():
+    with _admin() as c:
+        row = c.execute(
+            "select exists (select 1 from pg_namespace n,"
+            " aclexplode(coalesce(n.nspacl,'{}'::aclitem[])) a"
+            " where n.nspname='public' and a.grantee = 0 and a.privilege_type='CREATE')"
+        ).fetchone()
+        assert row[0] is False, "PUBLIC retains CREATE on schema public"

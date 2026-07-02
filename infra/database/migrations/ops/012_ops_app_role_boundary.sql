@@ -67,3 +67,75 @@ begin
     raise exception '012 posture: login role % is a member of ops_fn_owner', bad;
   end if;
 end $$;
+
+-- [2] PUBLIC hygiene (D5, C3, H1) ------------------------------------------------------
+-- H1: PUBLIC EXECUTE on functions is a hard-wired creation default that ALTER DEFAULT
+-- PRIVILEGES cannot displace for already-existing functions: the explicit REVOKE below is
+-- the load-bearing statement, and it MUST precede the DEFINER conversion in section [3].
+-- CI convention: any future migration creating a function must re-run this REVOKE or
+-- grant explicitly; the [2a] assert loop closes drift at every ladder apply.
+-- L3: ALL ROUTINES (not ALL FUNCTIONS) so the revoke also covers procedures - the [2a]
+-- assert sweeps every prokind, so ALL FUNCTIONS would false-fail the day a procedure lands.
+
+revoke execute on all routines in schema ops from public;
+revoke execute on all routines in schema core from public;
+
+-- C3: current_database() is invalid in REVOKE grammar and a bare name would break the
+-- one-ladder-two-DBs invariant -> dynamic SQL.
+do $$
+begin
+  execute format('revoke connect on database %I from public', current_database());
+  execute format('grant connect on database %I to ops_intake_writer, ops_api', current_database());
+end $$;
+
+revoke create on schema public from public;
+
+-- D6/C1: work.* zero grants, presence-gated (work exists on ops_dev, absent on ops_test).
+do $$
+begin
+  if to_regnamespace('work') is not null then
+    execute 'revoke execute on all routines in schema work from public';
+    execute 'revoke all on all tables in schema work from ops_intake_writer, ops_api, ops_fn_owner';
+    execute 'revoke usage on schema work from ops_intake_writer, ops_api, ops_fn_owner';
+  end if;
+end $$;
+
+-- [2a] posture asserts
+do $$
+declare n int;
+begin
+  select count(*) into n
+  from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace
+  where ns.nspname in ('ops','core')
+    and (p.proacl is null
+         or exists (select 1 from aclexplode(p.proacl) a
+                    where a.grantee = 0 and a.privilege_type = 'EXECUTE'));
+  if n > 0 then
+    raise exception '012 posture: % ops/core function(s) retain PUBLIC EXECUTE', n;
+  end if;
+  if exists (select 1 from pg_database where datname = current_database() and datacl is null) then
+    raise exception '012 posture: datacl is NULL (default ACL includes PUBLIC CONNECT)';
+  end if;
+  if exists (select 1 from pg_database d, aclexplode(d.datacl) a
+             where d.datname = current_database()
+               and a.grantee = 0 and a.privilege_type = 'CONNECT') then
+    raise exception '012 posture: PUBLIC retains CONNECT on %', current_database();
+  end if;
+  if not has_database_privilege('postgres', current_database(), 'CONNECT') then
+    raise exception '012 posture: admin lost CONNECT';
+  end if;
+  if to_regnamespace('work') is not null then
+    if exists (
+      select 1
+      from pg_class c join pg_namespace ns on ns.oid = c.relnamespace,
+           lateral (values ('ops_intake_writer'), ('ops_api')) roles(r)
+      where ns.nspname = 'work' and c.relkind in ('r','v','m','p')
+        and (has_table_privilege(roles.r, c.oid, 'SELECT')
+          or has_table_privilege(roles.r, c.oid, 'INSERT')
+          or has_table_privilege(roles.r, c.oid, 'UPDATE')
+          or has_table_privilege(roles.r, c.oid, 'DELETE'))
+    ) then
+      raise exception '012 posture: a login role holds a work.* privilege';
+    end if;
+  end if;
+end $$;
