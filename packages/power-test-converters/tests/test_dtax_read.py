@@ -13,19 +13,17 @@ import pytest
 from power_test_converters.dtax import write_dtax
 from power_test_converters.dtax_read import read_dtax
 from power_test_converters.ptm import read_ptm
-
-# Reuse the proven sample .ptm builder from the sibling writer test (same tests dir, on sys.path).
-from test_ptm_to_dtax import _write_sample_ptm
+from power_test_converters.testing import write_sample_ptm
 
 
 def _roundtrip(tmp_path: Path):
-    model = read_ptm(_write_sample_ptm(tmp_path))
+    model = read_ptm(write_sample_ptm(tmp_path))
     dtax_path = write_dtax(model, tmp_path / "out.dtax")
     return model, read_dtax(dtax_path)
 
 
 def test_read_dtax_roundtrips_transformer_nameplate(tmp_path: Path) -> None:
-    model = read_ptm(_write_sample_ptm(tmp_path))
+    model = read_ptm(write_sample_ptm(tmp_path))
     dtax_path = write_dtax(model, tmp_path / "out.dtax")
 
     result = read_dtax(dtax_path)

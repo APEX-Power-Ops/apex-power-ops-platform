@@ -17,12 +17,11 @@ import os
 
 import psycopg
 
+import _dbtest
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "022_it_pf_readings.sql")
-PGPW = os.environ.get("RECORDS_DEV_PGPASSWORD") or "TCC_v5_2025"
-DSN = os.environ.get("RECORDS_DEV_DSN") or (
-    f"host=127.0.0.1 port=5432 dbname=records_dev user=postgres password={PGPW} sslmode=disable"
-)
+DSN = _dbtest.require_dsn()
 
 CURRENT_MA = {"tag": "current_ma", "label": "Charging current", "value_kind": "numeric",
               "data_source": "data", "unit": "mA"}

@@ -7,9 +7,11 @@ name = "records-import"
 version = "0.1.0"
 description = "Capture-mode import: instrument file -> records datasheet (Chip 10)"
 requires-python = ">=3.11"
-# power-test-converters is a sibling lane package (read_ptm); it is provided at test/run time via
-# `uv ... --with-editable packages/power-test-converters` (matches the lane's standalone-package
-# convention - no PyPI index entry). psycopg is the only external dependency.
+# power-test-converters is a sibling monorepo package (unpublished on PyPI - do
+# NOT add it to [project.optional-dependencies]: a bare name there would resolve
+# against PyPI, a dependency-confusion vector on this public repo). uv resolves
+# it via [tool.uv.sources]; pip users install it explicitly first:
+#   pip install -e packages/power-test-converters && pip install -e "packages/records-import[test]"
 dependencies = ["psycopg[binary]>=3.1"]
 
 [project.optional-dependencies]
@@ -20,3 +22,9 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[dependency-groups]
+dev = ["power-test-converters"]
+
+[tool.uv.sources]
+power-test-converters = { path = "../power-test-converters", editable = true }

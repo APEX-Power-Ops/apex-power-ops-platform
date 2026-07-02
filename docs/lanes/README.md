@@ -44,7 +44,8 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 - **Escalation / owner:** CC (technical authority). Abort = leave branch unpushed-of-the-bad-commit; never force-push shared history.
 - **Status:** **foundation merged, prototype-grade** - Chip 10a + partial 10c import plumbing
   and records migrations through `044` are in main (`b6980b28` is an ancestor of main); NOT
-  production-governed. Next = validation-harness lane, then security/RLS.
+  production-governed. Next = validation-harness lane, then security/RLS. Validation harness (Gate 2)
+  landed 2026-07: run_validation.py + records-ci.yml; next = security/RLS (Gate 3).
 - **Resume guard:** read `reference/records/CURRENT-STATE.md` (the single records resume
   landing page, updated 2026-07-02) before any new records work. The detached
   `apex-records-lane` checkout is stale - do not build from it.

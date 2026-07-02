@@ -20,27 +20,18 @@ import pytest
 
 from power_test_converters.dtax import write_dtax
 from power_test_converters.ptm import read_ptm
+from power_test_converters.testing import write_sample_ptm
 
 from records_import import db, ingest
 
-# Reuse the proven sample .ptm builder from the converter's writer test (added to sys.path below).
-import sys
+from conftest import require_records_dsn
 
-_PTC_TESTS = (
-    Path(__file__).resolve().parents[2] / "power-test-converters" / "tests"
-)
-sys.path.insert(0, str(_PTC_TESTS))
-from test_ptm_to_dtax import _write_sample_ptm  # noqa: E402
-
-PGPW = os.environ.get("RECORDS_DEV_PGPASSWORD") or "TCC_v5_2025"
-DSN = os.environ.get("RECORDS_DEV_DSN") or (
-    f"host=127.0.0.1 port=5432 dbname=records_dev user=postgres password={PGPW} sslmode=disable"
-)
+DSN = require_records_dsn()
 
 
 def _build_dtax(tmp_path: Path) -> Path:
     """A real Doble .dtax = write_dtax(read_ptm(sample)). read_dtax inverts this in propose_dtax."""
-    model = read_ptm(_write_sample_ptm(tmp_path))
+    model = read_ptm(write_sample_ptm(tmp_path))
     return write_dtax(model, tmp_path / "sample.dtax")
 
 

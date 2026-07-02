@@ -13,29 +13,20 @@ import subprocess
 import psycopg
 import pytest
 
+import _dbtest
+
 HERE = os.path.dirname(os.path.abspath(__file__))
-PSQL = os.environ.get("PSQL_EXE", r"C:\Program Files\PostgreSQL\18\bin\psql.exe")
-PGPW = os.environ.get("RECORDS_DEV_PGPASSWORD") or "TCC_v5_2025"
-DSN = os.environ.get("RECORDS_DEV_DSN") or (
-    f"host=127.0.0.1 port=5432 dbname=records_dev user=postgres password={PGPW} sslmode=disable"
-)
-JSON = os.environ.get("NETA_JSON") or (
-    r"C:\Users\jjswe\OneDrive\Documents\GitHub\neta-ett-study-material"
-    r"\Development\NETA-Data\NETA-Master-Equipment-Table-Enhanced.json"
+DSN = _dbtest.dsn()
+JSON = _dbtest.neta_json()
+ATS_EQUIPMENT_JSON = os.path.join(
+    os.path.dirname(JSON), "NETA-ATS-2025-equipment-tests-v2.json"
 )
 CODE = "ats_ngr_v1"
 SEC = "7.20.4"
 
 
 def _psql(fname):
-    env = {**os.environ, "PGPASSWORD": PGPW, "PGSSLMODE": "disable"}
-    r = subprocess.run(
-        [PSQL, "-h", "127.0.0.1", "-p", "5432", "-U", "postgres", "-d", "records_dev",
-         "-v", "ON_ERROR_STOP=1", "-q", "-f", os.path.join(HERE, fname)],
-        env=env, capture_output=True, text=True,
-    )
-    if r.returncode != 0:
-        raise RuntimeError(f"psql {fname} failed (rc={r.returncode}):\n{r.stderr}\n{r.stdout}")
+    _dbtest.run_psql(fname, DSN)
 
 
 @pytest.fixture(scope="module")
@@ -60,11 +51,27 @@ def _schema(conn):
 def _required():
     d = json.load(open(JSON, encoding="utf-8"))
     e = next(x for x in d["equipment"] if x.get("section") == SEC)
-    ats = e.get("ats_data") or {}
-    vm = ats.get("visual_mechanical") or []
-    el = ats.get("electrical_tests") or []
-    return ({f"{SEC}.A.{i + 1}" for i in range(len(vm))}
-            | {f"{SEC}.B.{i + 1}" for i in range(len(el))})
+    ats = e.get("ats_data")
+    if ats:
+        vm = ats.get("visual_mechanical") or []
+        el = ats.get("electrical_tests") or []
+        return ({f"{SEC}.A.{i + 1}" for i in range(len(vm))}
+                | {f"{SEC}.B.{i + 1}" for i in range(len(el))})
+
+    d = json.load(open(ATS_EQUIPMENT_JSON, encoding="utf-8"))
+    e = next(x for x in d if x.get("section") == SEC)
+
+    def nums(group):
+        out = []
+        for bucket in ("required", "optional"):
+            for item in (group or {}).get(bucket) or []:
+                n = item.get("num") or item.get("number")
+                assert n, f"{SEC} missing source item number"
+                out.append(str(n))
+        return out
+
+    return ({f"{SEC}.A.{n}" for n in nums(e.get("visual_mechanical"))}
+            | {f"{SEC}.B.{n}" for n in nums(e.get("electrical_tests"))})
 
 
 def test_template_bound(conn):

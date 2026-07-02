@@ -27,13 +27,12 @@ import re
 
 import psycopg
 
+import _dbtest
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "040_neta_standards_scaleout.sql")
 OUT_DOWN = os.path.join(HERE, "040_neta_standards_scaleout_down.sql")
-PGPW = os.environ.get("RECORDS_DEV_PGPASSWORD") or "TCC_v5_2025"
-DSN = os.environ.get("RECORDS_DEV_DSN") or (
-    f"host=127.0.0.1 port=5432 dbname=records_dev user=postgres password={PGPW} sslmode=disable"
-)
+DSN = _dbtest.require_dsn()
 EXCLUDE = {"ats_liquid_xfmr_v1"}  # already standard-aware (039 pilot)
 
 _STOP = {"the", "of", "a", "an", "and", "or", "to", "in", "on", "for", "with", "at", "by",
