@@ -1,7 +1,9 @@
 # Records Validation Harness - Design Spec
 
-- **Date:** 2026-07-02 (rev 2 - 17 confirmed findings from the 3-lens adversarial
-  spec audit folded in)
+- **Date:** 2026-07-02 (rev 3 - rev 2 folded 17 confirmed findings from the 3-lens
+  adversarial spec audit; rev 3 folds the operator's four review edits: post-test
+  restoration assert, exact-filename source preflight, install-path precision,
+  branch pushed as durable review target)
 - **Lane:** `records/validation-harness` (worktree `/home/olares/code/apex/apex-records-validation`, off main `80388a18`)
 - **Status:** design approved by operator 2026-07-02 (approach A, with the source-data
   provisioning amendment folded in as a first-class gate); spec pending operator review
@@ -107,8 +109,14 @@ runner validates is provably the path the tests read):
 - `run_psql(args...)` - psql subprocess invocation with explicit env
   (`PGPASSWORD` from `RECORDS_DEV_PGPASSWORD` when set, `PGSSLMODE=disable`).
 - `psql_exe()` / `neta_data_dir()` / `neta_json()` - own the default-resolution
-  chains currently in conftest; VALIDATE existence (dir for `NETA_DATA_DIR`, file
-  for `NETA_JSON`); clear error naming the variable when absent.
+  chains currently in conftest; VALIDATE existence; clear error naming the variable
+  when absent. `neta_data_dir()` validates against an explicit `REQUIRED_NETA_FILES`
+  tuple checked into `_dbtest.py` - every extract FILENAME the 023-038 tests
+  actually read, enumerated from the test sources at build time - so preflight
+  asserts the exact required files by name, never directory existence or counts.
+  Layout note: the host mirror is FLAT (`~/neta-source/NETA-Data`) while the
+  private repo nests `Development/NETA-Data`; both are just `NETA_DATA_DIR`
+  values - the required-files assert makes layout differences irrelevant.
 
 `conftest.py` becomes a thin shim that calls `_dbtest` for its setdefaults (kept so
 standalone per-file pytest stays portable). The 38 test files and the generators are
@@ -178,6 +186,16 @@ dbname of EVERY connection it opens or hands to a child (AC1's verification hook
      failure:** a failed apply or failed test ends Tier 3 immediately (a failed
      test may have left its own migration downed - continuing would cascade
      misleading secondary failures), skips Tier 4, and proceeds to the drop.
+     **Restoration assert (do not trust self-restore):** before each test_NNN the
+     runner fingerprints the disposable DB (schema-only dump hash); after a
+     SUCCESSFUL test it asserts the fingerprint round-trips - a PASSING test that
+     failed to restore its migration is itself a Tier 3 FAILURE ("test did not
+     restore its migration"). All 38 current tests self-restore (operator-swept
+     2026-07-02, incl. 030/040/042/043); this closes the future class. If the
+     schema-dump hash proves nondeterministic in practice, the documented
+     fallback contract is an explicit reapply of migration N after each
+     successful test - either implementation satisfies "the runner verifies
+     restoration rather than trusting it".
   6. Ordering note: execution order derives from the filename numeric prefix. The
      MANIFEST declares strict sequential order; the runner does not parse MANIFEST
      prose - the completeness preflight is the machine-checkable stand-in.
@@ -214,8 +232,10 @@ the name against PyPI, where anyone can squat it. Therefore:
 - `[tool.uv.sources] power-test-converters = { path = "../power-test-converters", editable = true }`
   serves uv users (per-package source pin, consistent with the repo's documented
   no-uv-workspace rule).
-- The pip path (CI and docs) is the explicit ordered pair:
-  `pip install -e ../power-test-converters && pip install -e .[test]`.
+- The pip path (CI and docs) is the explicit ordered pair, from REPO ROOT:
+  `pip install -e packages/power-test-converters && pip install -e "packages/records-import[test]"`.
+  (The `../power-test-converters` relative form is valid only when run from
+  `packages/records-import`; docs state both, CI uses the repo-root form.)
 - Tier 0's origin assert (4.3) is the runtime tripwire: even a wrongly-installed
   PyPI package fails the gate before any test imports it.
 - Registering the name on PyPI as a defensive squat is noted as an operator option,
@@ -240,9 +260,12 @@ On the calc-engine-ci pattern: pinned action SHAs, python 3.11, `ubuntu-latest`.
   the credential-custody model (the AI never sees the value); set to no-expiry or
   operator-calendared rotation so the gate has no silent time bomb.
   `NETA_DATA_DIR` is set to `$GITHUB_WORKSPACE/neta-source/Development/NETA-Data` -
-  verified 2026-07-02 to carry the identical 13-file extract set as the host
-  mirror. The extracts never enter the public repo; the workflow prints only file
-  COUNTS.
+  verified 2026-07-02 to carry the identical extract set as the (flat) host
+  mirror. CI runs the SAME Tier 3 preflight as the host - the
+  `REQUIRED_NETA_FILES` exact-filename assert (4.1) - before any migration work,
+  so a wrong checkout path or missing file fails by NAME, not by count. The
+  extracts never enter the public repo; the workflow logs the required-file check
+  results by filename only, never extract content.
 - **Run:** the ordered editable installs (4.5), then
   `python infra/database/migrations/records/run_validation.py --require-db` with
   `RECORDS_PG_ADMIN_DSN` pointed at the service container's `postgres` DB.
@@ -340,8 +363,9 @@ lane task, AFTER the harness is merged and green:
 | D1 | CI workflow ships with the runner in this lane (not local-first) | RATIFIED 2026-07-02 |
 | D2 | Rotate the burned credential at lane close, operator-only | RATIFIED 2026-07-02 |
 | D3 | Scope = records only; jobs helper is a spawned chip; frozen docs untouched | RATIFIED 2026-07-02 |
-| D4 | Source-data provisioning = CI checkout of private `neta-ett-study-material` (SHA-pinned) via read-only fine-grained PAT secret | PROPOSED (this spec) |
-| D5 | Default chains (`NETA_DATA_DIR`/`NETA_JSON`/`PSQL_EXE`) live in `_dbtest.py` as the single implementation; conftest is a shim; existence always validated | PROPOSED (this spec) |
-| D6 | Records-import DB tests = Tier 4, run against the disposable DB after the Tier 3 walk | PROPOSED (this spec) |
-| D7 | Single-role model: disposable DSN derived from the admin DSN (same role); per-lane records roles deferred to Gate 3 | PROPOSED (this spec) |
-| D8 | Converter dependency via dependency-groups + uv source + ordered pip installs + Tier 0 origin assert; NOT a bare name in the pip-visible test extra | PROPOSED (this spec) |
+| D4 | Source-data provisioning = CI checkout of private `neta-ett-study-material` (SHA-pinned) via read-only fine-grained PAT secret, gated by the exact-filename `REQUIRED_NETA_FILES` preflight | RATIFIED 2026-07-02 (conditional on the exact-file preflight - folded this rev) |
+| D5 | Default chains (`NETA_DATA_DIR`/`NETA_JSON`/`PSQL_EXE`) live in `_dbtest.py` as the single implementation; conftest is a shim; existence always validated | RATIFIED 2026-07-02 |
+| D6 | Records-import DB tests = Tier 4, run against the disposable DB after the Tier 3 walk | RATIFIED 2026-07-02 |
+| D7 | Single-role model: disposable DSN derived from the admin DSN (same role); per-lane records roles deferred to Gate 3 | RATIFIED 2026-07-02 |
+| D8 | Converter dependency via dependency-groups + uv source + ordered pip installs (repo-root form in CI) + Tier 0 origin assert; NOT a bare name in the pip-visible test extra | RATIFIED 2026-07-02 (with install-path clarification) |
+| D9 | Post-test restoration assert: runner verifies each passing migration test restored its migration (schema fingerprint round-trip; explicit-reapply fallback) | RATIFIED 2026-07-02 (operator review edit) |
