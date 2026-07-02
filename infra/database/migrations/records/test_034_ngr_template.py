@@ -18,6 +18,9 @@ import _dbtest
 HERE = os.path.dirname(os.path.abspath(__file__))
 DSN = _dbtest.dsn()
 JSON = _dbtest.neta_json()
+ATS_EQUIPMENT_JSON = os.path.join(
+    os.path.dirname(JSON), "NETA-ATS-2025-equipment-tests-v2.json"
+)
 CODE = "ats_ngr_v1"
 SEC = "7.20.4"
 
@@ -48,11 +51,27 @@ def _schema(conn):
 def _required():
     d = json.load(open(JSON, encoding="utf-8"))
     e = next(x for x in d["equipment"] if x.get("section") == SEC)
-    ats = e.get("ats_data") or {}
-    vm = ats.get("visual_mechanical") or []
-    el = ats.get("electrical_tests") or []
-    return ({f"{SEC}.A.{i + 1}" for i in range(len(vm))}
-            | {f"{SEC}.B.{i + 1}" for i in range(len(el))})
+    ats = e.get("ats_data")
+    if ats:
+        vm = ats.get("visual_mechanical") or []
+        el = ats.get("electrical_tests") or []
+        return ({f"{SEC}.A.{i + 1}" for i in range(len(vm))}
+                | {f"{SEC}.B.{i + 1}" for i in range(len(el))})
+
+    d = json.load(open(ATS_EQUIPMENT_JSON, encoding="utf-8"))
+    e = next(x for x in d if x.get("section") == SEC)
+
+    def nums(group):
+        out = []
+        for bucket in ("required", "optional"):
+            for item in (group or {}).get(bucket) or []:
+                n = item.get("num") or item.get("number")
+                assert n, f"{SEC} missing source item number"
+                out.append(str(n))
+        return out
+
+    return ({f"{SEC}.A.{n}" for n in nums(e.get("visual_mechanical"))}
+            | {f"{SEC}.B.{n}" for n in nums(e.get("electrical_tests"))})
 
 
 def test_template_bound(conn):

@@ -18,6 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # The validation preflight asserts these EXACT filenames, never counts.
 REQUIRED_NETA_FILES = (
     "NETA-Master-Equipment-Table-Enhanced.json",
+    "NETA-ATS-2025-equipment-tests-v2.json",
     "NETA-ATS-2025-tables-extracted.json",
     "NETA-MTS-2023-tables-extracted.json",
 )
