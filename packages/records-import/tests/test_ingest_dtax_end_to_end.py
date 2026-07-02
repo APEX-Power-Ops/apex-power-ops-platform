@@ -32,10 +32,9 @@ _PTC_TESTS = (
 sys.path.insert(0, str(_PTC_TESTS))
 from test_ptm_to_dtax import _write_sample_ptm  # noqa: E402
 
-PGPW = os.environ.get("RECORDS_DEV_PGPASSWORD") or "TCC_v5_2025"
-DSN = os.environ.get("RECORDS_DEV_DSN") or (
-    f"host=127.0.0.1 port=5432 dbname=records_dev user=postgres password={PGPW} sslmode=disable"
-)
+from conftest import require_records_dsn
+
+DSN = require_records_dsn()
 
 
 def _build_dtax(tmp_path: Path) -> Path:
