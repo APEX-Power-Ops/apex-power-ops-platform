@@ -3,7 +3,7 @@ import os, pathlib, uuid
 import psycopg, pytest
 from psycopg.conninfo import conninfo_to_dict
 HERE = pathlib.Path(__file__).parent
-DSN = os.environ.get("OPS_DEV_DSN") or (
+DSN = os.environ.get("OPS_DEV_ADMIN_DSN") or (
     "host=127.0.0.1 port=5432 dbname=ops_test user=postgres "
     f"password={os.environ.get('OPS_DEV_PGPASSWORD') or os.environ.get('PGPASSWORD','')} sslmode=disable")
 assert conninfo_to_dict(DSN).get("dbname") == "ops_test", "009 migration tests run on ops_test ONLY"

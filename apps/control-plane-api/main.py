@@ -108,7 +108,8 @@ if _learning_routes_enabled():
 
 def _ops_intake_enabled() -> bool:
     # ops intake is host-only (mesh PG17); mount only when BOTH role DSNs are present.
-    # OPS_DEV_DSN is retired as an app identity (012 role boundary) and must stay inert here.
+    # The legacy single-superuser DSN is retired as an app identity (012 role boundary)
+    # and must stay inert here.
     return bool(os.environ.get("OPS_INTAKE_WRITER_DSN")) and bool(os.environ.get("OPS_API_DSN"))
 
 

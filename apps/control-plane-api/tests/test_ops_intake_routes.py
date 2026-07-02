@@ -63,7 +63,7 @@ def _require_ops_test(dsn: str) -> None:
 
 
 def _admin_dsn() -> str:
-    # Hard-require (C2/D7): no OPS_DEV_DSN fallback, no superuser behavior tier.
+    # Hard-require (C2/D7): no legacy-DSN fallback, no superuser behavior tier.
     # Admin is for the ladder, TRUNCATE, and setup DML ONLY -- the app process itself
     # runs on OPS_INTAKE_WRITER_DSN / OPS_API_DSN (see the client fixture below).
     return os.environ["OPS_DEV_ADMIN_DSN"]

@@ -9,7 +9,7 @@ def _require_ops_test(dsn):
     assert conninfo_to_dict(dsn).get("dbname") == "ops_test", "must target ops_test"
 
 def _admin_dsn():
-    # Hard-require (C2/D7): no OPS_DEV_DSN fallback, no superuser behavior tier.
+    # Hard-require (C2/D7): no legacy-DSN fallback, no superuser behavior tier.
     # Admin is for the ladder, TRUNCATE, and setup DML ONLY.
     return os.environ["OPS_DEV_ADMIN_DSN"]
 

@@ -3,7 +3,7 @@
 Run (from anywhere) with the local-PG password in env:
     $env:PGPASSWORD="..."; uv run --with "psycopg[binary]" --with pytest pytest <thisfile> -v
 
-Asserts the SSoT §4 laws against a fresh `ops_dev`:
+Asserts the SSoT §4 laws against a fresh `ops_test`:
   - schema/tables/enums exist
   - apparatus.scope_id NOT NULL  (Law 1, FIXED binding)
   - cross-scope reassignment blocked by guard  (Law 1)
@@ -18,16 +18,18 @@ import uuid
 
 import psycopg
 import pytest
+from psycopg.conninfo import conninfo_to_dict
 
 # NOTE: this environment's shell profile exports ambient PGHOST/PGUSER/PGDATABASE that
-# point at the Supabase prod pooler. We therefore PIN the local ops_dev connection
+# point at the Supabase prod pooler. We therefore PIN the local ops_test connection
 # explicitly (so those env vars can't redirect us) and read only the password from env.
-# Override the whole DSN with OPS_DEV_DSN if your local setup differs.
-DSN = os.environ.get("OPS_DEV_DSN") or (
-    "host=127.0.0.1 port=5432 dbname=ops_dev user=postgres "
+# Override the whole DSN with OPS_DEV_ADMIN_DSN if your local setup differs.
+DSN = os.environ.get("OPS_DEV_ADMIN_DSN") or (
+    "host=127.0.0.1 port=5432 dbname=ops_test user=postgres "
     f"password={os.environ.get('OPS_DEV_PGPASSWORD') or os.environ.get('PGPASSWORD', '')} "
     "sslmode=disable"
 )
+assert conninfo_to_dict(DSN).get("dbname") == "ops_test", "001 migration tests run on ops_test ONLY"
 
 HERE = pathlib.Path(__file__).parent
 UP = HERE / "001_identity_skeleton.sql"

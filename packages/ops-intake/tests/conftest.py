@@ -25,7 +25,7 @@ def _require_ops_test(dsn):
 
 
 def _admin_dsn():
-    # Hard-require (C2/D7): the OPS_DEV_DSN fallback is deleted - no fallback, no superuser
+    # Hard-require (C2/D7): the legacy-DSN fallback is deleted - no fallback, no superuser
     # behavior tier. Admin is for the ladder, TRUNCATE, and setup DML ONLY.
     d = os.environ["OPS_DEV_ADMIN_DSN"]
     _require_ops_test(d)
