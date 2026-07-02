@@ -1,8 +1,9 @@
-"""Ops Recognition Router — host-gated ops_dev bridge (Slice 1).
+"""Ops Recognition Router -- host-gated ops_dev bridge (Slice 1).
 
 6 routes under /api/v1/ops/recognition, distinct from the prod derive-on-read
-/api/v1/ops/revenue-recognition. Mounted only when OPS_DEV_DSN is set (main.py
-_ops_intake_enabled). All mutations flow through the ops_intake.recognition
+/api/v1/ops/revenue-recognition. Mounted only when both OPS_INTAKE_WRITER_DSN
+and OPS_API_DSN are set (main.py _ops_intake_enabled); reads/writes here use
+OPS_API_DSN (ops_api role). All mutations flow through the ops_intake.recognition
 wrappers (sole-writer); errors are VALUE-FREE generic 400/409.
 """
 from __future__ import annotations
@@ -21,7 +22,7 @@ router = APIRouter(prefix="/api/v1/ops/recognition", tags=["ops-recognition"])
 _CLEARANCE_ENUM = {"provided", "not_applicable"}
 
 def _dsn() -> str:
-    return os.environ["OPS_DEV_DSN"]
+    return os.environ["OPS_API_DSN"]
 
 def _map(exc: rec.RecognitionError) -> HTTPException:
     if isinstance(exc, rec.RecognitionInputError):

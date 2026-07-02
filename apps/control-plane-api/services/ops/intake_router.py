@@ -16,9 +16,9 @@ The _pm_finding() helper enforces the contract for every findings list in
 every route handler.  Adding it centrally ensures it cannot be forgotten on
 one route.
 
-DB connection: os.environ["OPS_DEV_DSN"] -- set by the caller (not prod
+DB connection: os.environ["OPS_INTAKE_WRITER_DSN"] -- set by the caller (not prod
 resolve_database_url(); this router is import-gated by _ops_intake_enabled
-in main.py which requires OPS_DEV_DSN to be set).
+in main.py which requires both OPS_INTAKE_WRITER_DSN and OPS_API_DSN to be set).
 """
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ _MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB
 
 
 def _dsn() -> str:
-    return os.environ["OPS_DEV_DSN"]
+    return os.environ["OPS_INTAKE_WRITER_DSN"]
 
 
 def _pm_finding(f: dict) -> dict:

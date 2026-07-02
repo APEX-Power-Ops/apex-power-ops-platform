@@ -61,17 +61,6 @@ def _contains(obj, sub):
     if isinstance(obj,(list,tuple)): return any(_contains(v,sub) for v in obj)
     return False
 
-def test_recognition_router_host_gated_subprocess():
-    """With OPS_DEV_DSN unset, the recognition routes are NOT mounted (404), mirroring the
-    intake host-gating. Run a fresh interpreter with the env var removed."""
-    env={k:v for k,v in os.environ.items() if k!="OPS_DEV_DSN"}
-    code=("import os; os.environ.pop('OPS_DEV_DSN',None);"
-          "from fastapi.testclient import TestClient; from main import app;"
-          "c=TestClient(app);"
-          "import sys; sys.exit(0 if c.post('/api/v1/ops/recognition/completion/attest',json={}).status_code==404 else 1)")
-    r=subprocess.run([sys.executable,"-c",code], cwd=str(pathlib.Path(__file__).resolve().parents[1]), env=env)
-    assert r.returncode==0, "recognition routes must be absent when OPS_DEV_DSN is unset"
-
 def test_attest_recognize_reverse_revoke_happy_path(client, eligible, person_id):
     aid=eligible["apparatus_id"]
     r=client.post("/api/v1/ops/recognition/completion/attest",

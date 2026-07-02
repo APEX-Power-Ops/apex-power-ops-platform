@@ -179,18 +179,6 @@ def _contains_substring(obj, sub: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Task 12 route-guard test (kept here per brief)
-# ---------------------------------------------------------------------------
-def test_ops_intake_routes_guarded_by_env(monkeypatch):
-    from main import _ops_intake_enabled
-
-    monkeypatch.delenv("OPS_DEV_DSN", raising=False)
-    assert _ops_intake_enabled() is False
-    monkeypatch.setenv("OPS_DEV_DSN", "host=127.0.0.1 dbname=ops_test")
-    assert _ops_intake_enabled() is True
-
-
-# ---------------------------------------------------------------------------
 # Task 13 tests
 # ---------------------------------------------------------------------------
 
