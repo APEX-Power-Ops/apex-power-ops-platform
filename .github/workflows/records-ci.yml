@@ -8,12 +8,6 @@ on:
       - packages/records-import/**
       - infra/database/migrations/records/**
       - .github/workflows/records-ci.yml
-  pull_request:
-    paths:
-      - packages/power-test-converters/**
-      - packages/records-import/**
-      - infra/database/migrations/records/**
-      - .github/workflows/records-ci.yml
 
 jobs:
   validate:
