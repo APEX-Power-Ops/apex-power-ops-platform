@@ -4,7 +4,7 @@
 
 **Goal:** Move all `records.*` objects off the superuser `postgres` owner onto a non-superuser `records_owner` + FORCE RLS (5A), and add a metadata-minimal, DB-trigger audit trail with correct actor attribution feeding an append-only `records.audit_log` owned by a non-superuser `records_fn_owner` and readable only by `records_auditor` (5B), plus a machine-readable serving contract for Gate 9.
 
-**Architecture:** Authoritative migrations `046-049` (each reversible), a `run_validation.py` **Tier 6** posture proof, and a `reference/records/SERVING_CONTRACT.{yaml,md}` doc. Spec: `docs/superpowers/specs/2026-07-03-records-gate5-serving-security-design.md` (rev 3). Nothing is applied to prod Supabase.
+**Architecture:** Authoritative migrations `046-049` (each reversible), a `run_validation.py` **Tier 6** posture proof, and a `reference/records/SERVING_CONTRACT.{yaml,md}` doc. Spec: `docs/superpowers/specs/2026-07-03-records-gate5-serving-security-design.md` (rev 5). Nothing is applied to prod Supabase.
 
 **Tech Stack:** PostgreSQL 17 (disposable dev DB), Python 3 + psycopg (`run_validation.py` harness, `_dbtest.py` helpers), pytest, bash.
 
@@ -98,7 +98,7 @@ Created under `docs/operations/`:
 - [ ] **Step 1: Confirm mesh + worktree + env.**
 
 Run (host): `ssh olares-mesh 'cd /home/olares/code/apex/apex-records-gate5 && git log --oneline -1 && ls .env.dev 2>&1 && test -x .venv/bin/python && echo VENV_OK'`
-Expected: HEAD at the current Gate-5 plan commit (rev 4+ on `records/gate5-serving-security`, i.e. `49030e79` or later); `.env.dev` present (operator-provisioned admin DSN, chmod 600); `VENV_OK`. If `.env.dev` is absent, STOP and request the operator provision it (out-of-band, Vault-first; or `cp` the 0600 gate3-worktree cache value-silent + chmod 600) - do not proceed.
+Expected: HEAD at the latest Gate-5 plan commit on `records/gate5-serving-security` (rev 5 or later); BOTH `.env.dev` present (admin DSN, chmod 600) AND `.venv/bin/python` present (uv-built); `VENV_OK`. If `.env.dev` OR `.venv` is absent, run the value-silent T0 setup before proceeding: `install -m 600 ../apex-records-gate3/.env.dev .env.dev` (copies the 0600 cache without reading it), then `uv venv .venv --python 3.12` and `uv pip install --python .venv/bin/python -e packages/power-test-converters -e 'packages/records-import[test]'` (do NOT copy the gate3 `.venv`; it is path-bound). Never provision a password in-migration.
 
 - [ ] **Step 2: Baseline the existing ladder (Tiers 0-5 green on a disposable DB).**
 
@@ -610,10 +610,9 @@ alter function records.fn_audit_capture() owner to records_fn_owner;
 -- records routines, so revoke it (both a hardening + keeps Tier 5 green).
 revoke execute on function records.fn_audit_capture() from public;
 
--- asserts: definer safety (three load-bearing checks) + FORCE-RLS + no-PUBLIC-execute
--- + records_fn_owner exact-allowlist (schema USAGE only).
+-- asserts: definer safety (three load-bearing checks) + FORCE-RLS + no-PUBLIC-execute.
 do $$
-declare owner text; secdef bool; cfg text[]; forced bool; pub int; gcnt int;
+declare owner text; secdef bool; cfg text[]; forced bool; pub int;
 begin
   select pg_get_userbyid(proowner), prosecdef, proconfig into owner, secdef, cfg
     from pg_proc where oid = 'records.fn_audit_capture()'::regprocedure;
@@ -630,20 +629,52 @@ begin
     from pg_proc p, lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
    where p.oid='records.fn_audit_capture()'::regprocedure and a.grantee=0 and a.privilege_type='EXECUTE';
   if pub>0 then raise exception '048: fn_audit_capture still has PUBLIC EXECUTE'; end if;
-  -- records_fn_owner exact-allowlist: it MUST hold USAGE on schema records (the
-  -- definer needs it to reach audit_log) and NOTHING else - ownership conveys
-  -- table privileges implicitly, so there must be no explicit table/function ACL
-  -- grant to it (the owner's own materialized self-entry is excluded via owner<>grantee).
-  if not has_schema_privilege('records_fn_owner','records','USAGE') then
-    raise exception '048: records_fn_owner lacks USAGE on schema records (definer cannot reach audit_log)'; end if;
-  select count(*) into gcnt from pg_class c join pg_namespace ns on ns.oid=c.relnamespace,
-    lateral aclexplode(c.relacl) a join pg_roles g on g.oid=a.grantee
-   where ns.nspname='records' and g.rolname='records_fn_owner' and c.relowner <> a.grantee;
-  if gcnt>0 then raise exception '048: records_fn_owner has % explicit table grant(s); ownership only', gcnt; end if;
-  select count(*) into gcnt from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace,
-    lateral aclexplode(p.proacl) a join pg_roles g on g.oid=a.grantee
-   where ns.nspname='records' and g.rolname='records_fn_owner' and p.proowner <> a.grantee;
-  if gcnt>0 then raise exception '048: records_fn_owner has % explicit function grant(s); ownership only', gcnt; end if;
+end $$;
+
+-- records_fn_owner EXACT ALLOWLIST (rev 5; adversarial-audit-hardened). The prior
+-- per-object relacl/proacl scans were structurally blind to cross-schema grants,
+-- column grants (attacl), type/domain grants (typacl), DATABASE-level grants
+-- (datacl), default privileges (pg_default_acl - incl. the schema-agnostic
+-- defaclnamespace=0 case), and shared (dbid=0) grants. A single pg_shdepend
+-- deptype='a' exclusivity assert closes them ALL: the ONLY permitted ACL edge is
+-- USAGE on schema records in THIS database. Ownership is deptype='o' (excluded), and
+-- a self-GRANT on the owned audit_log produces NO 'a' row, so there is no false-fail
+-- (validated on PG17). USAGE-present/CREATE-deny/PUBLIC-deny/owner/existence are kept
+-- as complementary positive/negative gates the exclusivity count alone cannot isolate.
+do $$
+declare
+  gcnt int;
+  v_schema  text := 'records';
+  v_owner   text := 'records_owner';
+  v_fnowner text := 'records_fn_owner';
+  v_schema_oid oid;
+begin
+  -- (0) existence + ownership FIRST (well-defined schema oid; fail-closed).
+  select oid into v_schema_oid from pg_namespace where nspname = v_schema;
+  if v_schema_oid is null then
+    raise exception '048: schema % does not exist (run after 045/048 GRANT)', v_schema; end if;
+  if (select nspowner from pg_namespace where oid = v_schema_oid) <> (select oid from pg_roles where rolname = v_owner)
+    then raise exception '048: schema % owner drifted (expected %); ownership confers implicit USAGE+CREATE', v_schema, v_owner; end if;
+  -- (1) positive reachability: the definer must effectively hold USAGE.
+  if not has_schema_privilege(v_fnowner, v_schema, 'USAGE')
+    then raise exception '048: % lacks USAGE on schema % (definer cannot reach audit_log)', v_fnowner, v_schema; end if;
+  -- (1b) the USAGE must be an EXPLICIT grant, not effective-via-PUBLIC/membership.
+  if not exists (select 1 from pg_namespace ns, lateral aclexplode(ns.nspacl) a join pg_roles g on g.oid = a.grantee
+                 where ns.oid = v_schema_oid and g.rolname = v_fnowner and a.privilege_type = 'USAGE')
+    then raise exception '048: % lacks an EXPLICIT USAGE ACL grant on schema % (effective USAGE may leak via PUBLIC/membership)', v_fnowner, v_schema; end if;
+  -- (2) deny CREATE (an ACL bit on the same namespace row exclusivity cannot isolate).
+  if has_schema_privilege(v_fnowner, v_schema, 'CREATE')
+    then raise exception '048: % must NOT hold CREATE on schema %', v_fnowner, v_schema; end if;
+  -- (3) 045 regression guard: PUBLIC holds no schema privilege.
+  if has_schema_privilege('public', v_schema, 'USAGE') or has_schema_privilege('public', v_schema, 'CREATE')
+    then raise exception '048: PUBLIC holds USAGE/CREATE on schema % (migration 045 REVOKE reverted)', v_schema; end if;
+  -- (4) exact allowlist: the ONLY permitted ACL edge is USAGE on records in this DB.
+  select count(*) into gcnt from pg_shdepend s join pg_roles r on r.oid = s.refobjid
+   where r.rolname = v_fnowner and s.deptype = 'a'
+     and not (s.classid = 'pg_namespace'::regclass
+              and s.dbid  = (select oid from pg_database where datname = current_database())
+              and s.objid = v_schema_oid);
+  if gcnt > 0 then raise exception '048: % holds % ACL grant edge(s) beyond USAGE on schema % (cross-schema/column/type/default-priv/database/shared-object escalation)', v_fnowner, gcnt, v_schema; end if;
 end $$;
 
 COMMIT;
@@ -759,7 +790,7 @@ COMMIT;
 
 - [ ] **Step 1: Extend `parse_tiers` to `{0..6}`** (default set, error strings "0-6", full-set guard `{0,1,2,3,4,5,6}`). Mirror the existing Tier-5 addition.
 
-- [ ] **Step 2: Add `tier6_posture(child_dsn)`** proving, on the migrated DB: (a) no `records.*` object owned by a `rolsuper`/`rolbypassrls` role, counted across ALL THREE catalogs (pg_class relkind r/v/m/S + pg_proc + pg_namespace) - the same union `test_046` uses; (b) `records_owner`/`records_fn_owner`/`records_auditor` non-super/non-bypassrls with correct login flags (owners NOLOGIN, auditor LOGIN) and no createdb/createrole/replication; (c) `fn_audit_capture` proowner=records_fn_owner + prosecdef + search_path pinned + no PUBLIC EXECUTE (durable re-check), and `records_fn_owner` holds the EXACT allowlist - `USAGE` on schema `records` (`has_schema_privilege` true, needed by the definer to reach `audit_log`) and NO explicit table/function ACL grant beyond ownership; (d) `SET ROLE records_owner`/`records_fn_owner` denied from `records_api` + a rogue role; (e) the `trg_audit` table set equals the writer-grant set; (f) audit isolation (`records_auditor` reads `audit_log` via SET ROLE; `records_api`/`records_intake_writer` cannot); (g) `records_auditor` has no grant/policy on `source_links` or any operational/reference table; (h) the FORCE-RLS negative-control: inside a rolled-back `savepoint`, `drop policy p_audit_log_ins`, fire the definer path, assert the capture RAISES the RLS violation, then `rollback to savepoint` (restores the policy). At Tier 6 the definer path may be fired via a real writer-table insert (as `records_intake_writer` via `SET SESSION AUTHORIZATION`, FK-valid fixture) or the same temp-table + scratch-trigger `test_048` uses - either is executable here. Use `SET SESSION AUTHORIZATION` for all mutating-identity checks. Return a `Tier`.
+- [ ] **Step 2: Add `tier6_posture(child_dsn)`** proving, on the migrated DB: (a) no `records.*` object owned by a `rolsuper`/`rolbypassrls` role, counted across ALL THREE catalogs (pg_class relkind r/v/m/S + pg_proc + pg_namespace) - the same union `test_046` uses; (b) `records_owner`/`records_fn_owner`/`records_auditor` non-super/non-bypassrls with correct login flags (owners NOLOGIN, auditor LOGIN) and no createdb/createrole/replication; (c) `fn_audit_capture` proowner=records_fn_owner + prosecdef + search_path pinned + no PUBLIC EXECUTE (durable re-check), and `records_fn_owner` passes the SAME exact-allowlist block as 048 (resolving the schema oid in Tier 6's own DB) - schema exists + owner is `records_owner`, explicit `USAGE` present (not PUBLIC-derived), `CREATE` denied, PUBLIC holds no schema privilege, and the single `pg_shdepend` `deptype='a'` exclusivity edge (USAGE on `records` in this DB) with ZERO cross-schema/column/type/default-priv/database/shared-object grant; (d) **zero `pg_auth_members` edges (either direction) touching `records_owner`, `records_fn_owner`, or `records_auditor`** - a DURABLE no-membership-drift proof (046/047 assert this in-migration, but that is point-in-time; a login role granted membership AFTER the migrations would escape a `SET ROLE`-from-`records_api` sample), AND `SET ROLE records_owner`/`records_fn_owner` denied from `records_api` + a rogue role; (e) the `trg_audit` table set equals the writer-grant set; (f) audit isolation (`records_auditor` reads `audit_log` via SET ROLE; `records_api`/`records_intake_writer` cannot); (g) `records_auditor` has no grant/policy on `source_links` or any operational/reference table; (h) the FORCE-RLS negative-control: inside a rolled-back `savepoint`, `drop policy p_audit_log_ins`, fire the definer path, assert the capture RAISES the RLS violation, then `rollback to savepoint` (restores the policy). At Tier 6 the definer path may be fired via a real writer-table insert (as `records_intake_writer` via `SET SESSION AUTHORIZATION`, FK-valid fixture) or the same temp-table + scratch-trigger `test_048` uses - either is executable here. Use `SET SESSION AUTHORIZATION` for all mutating-identity checks. Return a `Tier`.
 
 - [ ] **Step 3: Wire `tier6_posture` into `main`** after Tier 5 when `6 in db_wanted` and Tier 3 did not fail.
 
@@ -817,7 +848,7 @@ dsn_form_inventory: [keyword_user, url_userinfo, url_driver_qualified, pg_env_va
 
 ---
 
-## Self-Review (author, against spec rev 3)
+## Self-Review (author, against spec rev 5)
 
 1. **Spec coverage:** AC1 (T1), AC2 (T1 FORCE teeth), AC3 (T5 Tier-6 (a)), AC4 (T4 trigger set + I/U + superuser DELETE), AC5 (T3 column-set + T4), AC6 (T3 negative control + three-assert), AC7 (T3 + T5 (f)/(g)), AC8 (T5 (b)/(c)/(d)), AC9 (T6), AC10 (every task's down + ASCII), AC11 (T4 actor attribution). G5-D1..D12 all land in T1-T5. Serving contract G5-D11 in T6. No gap found.
 2. **Placeholder scan:** the only intentional glob is `p_<t>_*` policy-name shorthand (expanded in T6 Step 1/`.md`). Test DB connection is the confirmed repo pattern `psycopg.connect(_dbtest.dsn(), autocommit=True)` (verified against `_dbtest.py`: it exposes `dsn()`/`guard_target()`/`run_psql()`, and there is NO `_dbtest.connect`; the walk passes the disposable DB as `RECORDS_DEV_DSN`). No TODO/TBD.
