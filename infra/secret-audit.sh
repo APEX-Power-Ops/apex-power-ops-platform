@@ -136,6 +136,7 @@ declare -A RULES=(
   ["openai-key"]='sk-[A-Za-z0-9]{20,}'
   ["jwt"]='eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}'
   ["inline-url-password"]='://[A-Za-z0-9._-]+:[^@/[:space:]"]{6,}@'
+  ["supabase-secret-key"]='sb_secret_[A-Za-z0-9_-]{16,}'
 )
 hits=0; suppressed=0
 for name in "${!RULES[@]}"; do
@@ -150,6 +151,24 @@ for name in "${!RULES[@]}"; do
 done
 if [[ "$hits" == "0" ]]; then say "  PASS  no leaked credentials in tracked files"; fi
 [[ "$suppressed" -gt 0 ]] && say "  note  $suppressed match(es) suppressed by infra/.secret-audit-allow"
+
+# ---- Check 3: records serving config -- only sanctioned app roles (AC8) --
+say ""; say "[3] records serving config: only records_api/records_intake_writer, no bypass creds (AC8)"
+if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
+  while IFS= read -r loc; do
+    [[ -z "$loc" ]] && continue
+    say "  FIND  ${loc}  [rule: records-serving-non-app-role]"; rc=1
+  done < <(grep -rInoE '(user|role)=[A-Za-z0-9_]+' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+             | grep -vE ':(user|role)=(records_api|records_intake_writer)$' \
+             | sed -E 's/:[^:]*$//')
+  while IFS= read -r loc; do
+    [[ -z "$loc" ]] && continue
+    say "  FIND  ${loc}  [rule: records-serving-bypass-credential]"; rc=1
+  done < <(grep -rInEi -e 'sb_secret_|service_role|bypassrls' ${RECORDS_SERVING_GLOBS} 2>/dev/null | cut -d: -f1,2)
+  say "  PASS  records serving scan ran (globs: ${RECORDS_SERVING_GLOBS})"
+else
+  say "  SKIP  no RECORDS_SERVING_GLOBS set (serving config not built yet)"
+fi
 
 say ""
 say "========================================"
