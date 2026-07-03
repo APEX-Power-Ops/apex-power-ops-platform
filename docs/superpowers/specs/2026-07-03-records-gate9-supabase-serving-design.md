@@ -4,18 +4,23 @@
 > Supersedes the "rebind" framing.
 > Scope note: docs/superpowers/specs/2026-07-03-records-gate9-supabase-rebind-scope.md
 
-Status: DESIGN rev 3. D1 ratified = Option B (2026-07-03). Grounded against prod
+Status: DESIGN rev 4. D1 ratified = Option B (2026-07-03). Grounded against prod
 (read-only), Gate 5 migrations 045-048, and current Supabase docs.
 
 Rev 2 folded the first operator review (2026-07-03): P1 session_user-based startup
 assertion (SET ROLE cannot false-green); Supavisor qualified-user parser form;
 records_api security-invoker view scope corrected.
 
-Rev 3 folds the second operator review: clarified that contract v2 is a build-phase
+Rev 3 folded the second operator review: clarified that contract v2 is a build-phase
 deliverable NOT yet landed (the on-branch contract is still v1, test still passes);
 added service_role to the Data-API grant-layer negative (AC2 / harness / apply
 packet), proving grants precede RLS so a BYPASSRLS stub is blocked absent a grant;
 the scope note's decisions + ACs are marked superseded by this spec.
+
+Rev 4 folds the third operator review (P3, non-blocking): the Data-API grant-layer
+negative now reads uniformly as no effective records privilege via anon,
+authenticated, service_role, or PUBLIC - patched into the global constraints and
+section 3.3 (which bind every task) so they match AC2 / the harness / the packet.
 
 **Goal:** Define how the Gate 5 records security boundary is SERVED from Supabase
 without weakening it - by connecting server-side as the three custom
@@ -45,8 +50,9 @@ infra/secret-audit.sh Check 3, Vault (Padloc) for out-of-band password custody.
 - Serving credentials = exactly {records_api, records_intake_writer,
   records_auditor}. Never service_role, postgres, records_owner, records_fn_owner,
   a BYPASSRLS role, or an sb_secret_* key.
-- records is NOT added to Data API exposed-schemas and gets no anon/authenticated
-  grant on any object.
+- records is NOT added to Data API exposed-schemas, and no effective records
+  privilege is reachable via anon, authenticated, service_role, or PUBLIC (no
+  schema USAGE, no table/view grant to any of them).
 - Honest scope: this closes the non-superuser-owner RLS bypass only.
   postgres-superuser and Supabase service_role bypass remain custody + detector +
   deferred startup assertion. Never "safe by enforcement" unqualified.
@@ -142,8 +148,10 @@ current_user = session_user = the role for every statement.
 
 - Platform config: records is NOT added to the Data API exposed-schemas list
   (apply-packet checklist item; not locally testable).
-- Grants: no USAGE on schema records and no table grant to anon or authenticated
-  (locally provable negative). This pair is AC2.
+- Grants: no USAGE on schema records and no table/view grant to anon,
+  authenticated, service_role, or PUBLIC (locally provable negative; grants are
+  checked before RLS, so a BYPASSRLS role without a grant is still blocked). This
+  pair is AC2.
 
 ### 3.4 DSN custody
 
@@ -214,11 +222,11 @@ passwords are irrelevant to SET SESSION AUTHORIZATION):
 - records_auditor: can SELECT audit_log only; cannot read the 14, the 2 views, or
   source_links; cannot INSERT/UPDATE/DELETE audit_log.
 - anon, authenticated, AND service_role: reach NOTHING in records - no schema
-  USAGE and no table/view grant to any of them. Because grants are checked before
-  RLS, even a BYPASSRLS stub (service_role) is blocked at the grant layer absent a
-  grant - prove this explicitly (a BYPASSRLS role with no records grant still gets
-  permission-denied). This is the Data-API-exclusion negative across all three
-  Data API grant roles, AC2.
+  USAGE and no table/view grant to any of them, nor to PUBLIC. Because grants are
+  checked before RLS, even a BYPASSRLS stub (service_role) is blocked at the grant
+  layer absent a grant - prove this explicitly (a BYPASSRLS role with no records
+  grant still gets permission-denied). This is the Data-API-exclusion negative
+  across all three Data API grant roles + PUBLIC, AC2.
 - audit_log stays append-only: no role can UPDATE or DELETE it.
 - Role cleanup: drop all created stub roles AFTER the DB drop (Gate 5 [drop-role]
   discipline) so the shared cluster stays clean.
@@ -255,7 +263,7 @@ Scope of the packet a later, separate operator apply consumes:
   altering any the migrations created NOLOGIN; no password appears in any migration.
 - Confirm FORCE RLS on all records tables and that the three roles are non-owners.
 - Confirm records is NOT added to exposed-schemas and holds no anon/authenticated/
-  service_role grant on any object.
+  service_role/PUBLIC grant on any object.
 - SCRAM-SHA-256 prefix check on the freshly created roles (docs-ambiguous; verify
   empirically that fresh roles are SCRAM, not md5).
 - Run Supabase security advisors; review before accept (AC11).
@@ -277,10 +285,10 @@ describe records serving as "safe by enforcement" without this qualification.
 - AC1: Serving credentials are exactly the three contract roles; no
   owner/superuser/service_role/BYPASSRLS/sb_secret_* credential appears in any
   serving config.
-- AC2: records is not exposed to the Data API; no anon, authenticated, OR
-  service_role grant on any records object; and a BYPASSRLS stub with no grant is
-  still blocked at the grant layer (grants precede RLS). Proven negative in the
-  harness + apply-packet checklist.
+- AC2: records is not exposed to the Data API; no anon, authenticated,
+  service_role, or PUBLIC grant on any records object; and a BYPASSRLS stub with no
+  grant is still blocked at the grant layer (grants precede RLS). Proven negative in
+  the harness + apply-packet checklist.
 - AC3: Only the sanctioned role DSNs reach the allowed objects; each role reaches
   exactly its contract scope and no more.
 - AC4: records_api reads exactly the 14 app-served tables and the 2 security-
