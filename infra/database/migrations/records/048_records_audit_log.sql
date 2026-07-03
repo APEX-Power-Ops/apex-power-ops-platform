@@ -54,9 +54,13 @@ declare
 begin
   if TG_OP = 'DELETE' then rec := OLD; else rec := NEW; end if;
   if TG_OP = 'UPDATE' then
-    select array_agg(o.key) into changed
+    -- changed_columns is the caller-intent signal. Exclude updated_at: the BEFORE
+    -- trigger fn_set_updated_at sets NEW.updated_at := now() on EVERY update, so it
+    -- always differs from OLD and would pollute the diff. ORDER BY for determinism.
+    select array_agg(o.key order by o.key) into changed
       from jsonb_each(to_jsonb(OLD)) o join jsonb_each(to_jsonb(NEW)) n on n.key=o.key
-     where o.value is distinct from n.value;
+     where o.value is distinct from n.value
+       and o.key <> 'updated_at';
   end if;
   select rolsuper into is_su from pg_roles where rolname = session_user;
   -- app_actor is untrusted caller free-text: bound length + charset.

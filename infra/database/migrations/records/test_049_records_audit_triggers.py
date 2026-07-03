@@ -55,6 +55,11 @@ def _q(dsn, sql):
         return c.execute(sql).fetchall()
 
 
+def _qp(dsn, sql, params):
+    with psycopg.connect(dsn, autocommit=True) as c:
+        return c.execute(sql, params).fetchall()
+
+
 def test_049_applied_then_down_up():
     # Runner contract: 049 is ALREADY applied by the walk. Assert the applied
     # posture, exercise the actor-attribution capture, run DOWN then UP, and
@@ -112,57 +117,152 @@ def test_049_applied_then_down_up():
         assert txid is not None
         pc.rollback()
 
-    # (3) SUPERUSER / DIRECT-SQL UPDATE + DELETE (no SET) -------------------
+    # (3) SUPERUSER / DIRECT-SQL UPDATE + DELETE (CROSS-TRANSACTION) --------
     # As the admin superuser the walk connects as, direct DML also fires the
     # trigger. actor_role is that admin login (captured dynamically, never
     # hardcoded); actor_is_superuser is TRUE. This proves direct-SQL writes are
     # NOT invisible to the audit trail (the whole point of a trigger, not a
-    # policy). Seed + mutate inside ONE txn, roll it all back.
+    # policy).
+    #
+    # The changed_columns proof MUST be cross-transaction. Within a single txn
+    # now() is frozen, so records.persons.updated_at (maintained by the BEFORE
+    # trigger fn_set_updated_at: NEW.updated_at := now()) never moves and the
+    # updated_at exclusion is untestable -- the old single-txn proof passed
+    # vacuously, WITH OR WITHOUT the FIX-2 filter. Here we (a) insert + COMMIT,
+    # (b) BACKDATE updated_at by an hour + COMMIT so it is demonstrably old, then
+    # (c) UPDATE display_name in a SEPARATE txn so the BEFORE trigger bumps
+    # updated_at to a much newer now(). We assert BOTH that updated_at ACTUALLY
+    # MOVED and that changed_columns == ['display_name'] with updated_at EXCLUDED.
+    # Without FIX 2 the second assertion would be ['display_name','updated_at'],
+    # so this proof is load-bearing. Cross-txn commits cannot rely on rollback,
+    # so we clean up explicitly at the end (the admin superuser bypasses RLS +
+    # the audit_log append-only policy and can DELETE from records.audit_log).
+    admin_login = _q(dsn, "select session_user")[0][0]
+    admin_is_su = _q(dsn, "select rolsuper from pg_roles where rolname=session_user")[0][0]
+    assert admin_is_su is True, "walk admin must be a superuser for this proof"
+
+    # txn 1: insert the fixture row and COMMIT.
     with psycopg.connect(dsn) as pc:
         with pc.cursor() as cur:
-            admin_login = cur.execute("select session_user").fetchone()[0]
-            admin_is_su = cur.execute(
-                "select rolsuper from pg_roles where rolname=session_user"
-            ).fetchone()[0]
-            assert admin_is_su is True, "walk admin must be a superuser for this proof"
-            # seed a row to mutate (as the admin; this INSERT also audits).
             cur.execute(
                 "insert into records.persons (display_name) values ('audit-su-fixture') "
                 "returning person_id"
             )
             pk = cur.fetchone()[0]
-            # UPDATE a single column -> changed_columns must be exactly that set.
-            cur.execute(
-                "update records.persons set display_name='audit-su-updated' where person_id=%s",
-                (pk,),
-            )
-            # DELETE -> one delete row, row_pk non-null (from OLD).
-            cur.execute("delete from records.persons where person_id=%s", (pk,))
+        pc.commit()
+    try:
+        # BACKDATE updated_at by an hour and COMMIT so the stored value is
+        # demonstrably old. The BEFORE trigger fn_set_updated_at would clobber any
+        # explicit updated_at back to now(), so disable ONLY that trigger for this
+        # one setup statement (trg_audit stays live -> the backdate still audits,
+        # which we prove below is filtered to NULL). Superuser can DISABLE TRIGGER.
+        with psycopg.connect(dsn) as pc:
+            with pc.cursor() as cur:
+                cur.execute(
+                    "alter table records.persons disable trigger trg_persons_updated_at"
+                )
+                cur.execute(
+                    "update records.persons set updated_at = now() - interval '1 hour' "
+                    "where person_id=%s",
+                    (pk,),
+                )
+                cur.execute(
+                    "alter table records.persons enable trigger trg_persons_updated_at"
+                )
+                cur.execute(
+                    "select updated_at from records.persons where person_id=%s", (pk,)
+                )
+                backdated_at = cur.fetchone()[0]
+            pc.commit()
 
-            cur.execute(
-                "select action, actor_role, actor_is_superuser, row_pk, changed_columns "
-                "from records.audit_log where table_name='persons' and row_pk=%s "
-                "order by audit_id",
-                (str(pk),),
-            )
-            rows = cur.fetchall()
-        # three rows for this pk: insert (seed), update, delete.
-        by_action = {r[0]: r for r in rows}
-        assert set(by_action) == {"insert", "update", "delete"}, (
-            f"expected insert/update/delete rows, got {sorted(by_action)}"
+        # txn 2 (SEPARATE): UPDATE a single caller-intent column. The BEFORE
+        # trigger now fires and sets updated_at := now() (much newer than the
+        # backdated value), so updated_at genuinely moves within this update.
+        with psycopg.connect(dsn) as pc:
+            with pc.cursor() as cur:
+                cur.execute(
+                    "update records.persons set display_name='audit-su-updated' "
+                    "where person_id=%s",
+                    (pk,),
+                )
+                cur.execute(
+                    "select updated_at from records.persons where person_id=%s", (pk,)
+                )
+                new_updated_at = cur.fetchone()[0]
+            pc.commit()
+
+        # (a) updated_at ACTUALLY MOVED (~1 hour) -> the BEFORE trigger fired on
+        # the display_name update, so a naive OLD/NEW diff WOULD include updated_at
+        # absent the FIX-2 exclusion. This is what makes assertion (b) load-bearing.
+        assert new_updated_at > backdated_at, (
+            "updated_at must move on the cross-txn update (BEFORE trigger)"
         )
-        # UPDATE row: admin login, superuser, changed_columns == the changed set.
-        u_action, u_actor, u_is_su, u_pk, u_changed = by_action["update"]
-        assert u_actor == admin_login          # direct-SQL actor = the admin login
-        assert u_is_su is True                 # captured as superuser
-        assert u_pk == str(pk)
-        assert u_changed == ["display_name"]   # exactly the one column that changed
-        # DELETE row: admin login, superuser, row_pk non-null (from OLD).
-        d_action, d_actor, d_is_su, d_pk, d_changed = by_action["delete"]
+
+        # (b) the UPDATE audit rows, oldest first. There are TWO: the backdate
+        # (updated_at-only) and the display_name update. Both attribute to the
+        # admin superuser. FIX 2 excludes the trigger-maintained updated_at, so:
+        #   - the backdate row's changed_columns is NULL (updated_at was its ONLY
+        #     changed column, now filtered out -> empty agg -> NULL), and
+        #   - the display_name row's changed_columns is exactly ['display_name'].
+        # Without FIX 2 the backdate row would be ['updated_at'] and the
+        # display_name row ['display_name','updated_at'] -- so both are proof.
+        urows = _qp(
+            dsn,
+            "select actor_role, actor_is_superuser, row_pk, changed_columns "
+            "from records.audit_log where table_name='persons' and action='update' "
+            "  and row_pk=%s order by audit_id",
+            (str(pk),),
+        )
+        assert len(urows) == 2, (
+            f"expected two UPDATE audit rows (backdate + display_name), got {len(urows)}"
+        )
+        for u_actor, u_is_su, u_pk, _ in urows:
+            assert u_actor == admin_login      # direct-SQL actor = the admin login
+            assert u_is_su is True             # captured as superuser
+            assert u_pk == str(pk)
+        # backdate row (oldest): updated_at was the only change -> filtered -> NULL.
+        assert urows[0][3] is None, (
+            f"backdate update (updated_at-only) must yield NULL changed_columns after "
+            f"the FIX-2 filter, got {urows[0][3]}"
+        )
+        # THE load-bearing assertion: the display_name update excludes updated_at.
+        # Without the filter this would be ['display_name','updated_at'].
+        assert urows[1][3] == ["display_name"], (
+            f"changed_columns must exclude trigger-maintained updated_at, got {urows[1][3]}"
+        )
+
+        # txn 3 (SEPARATE): DELETE the fixture row and COMMIT -> one delete audit
+        # row, row_pk non-null (from OLD), admin/superuser attribution.
+        with psycopg.connect(dsn) as pc:
+            with pc.cursor() as cur:
+                cur.execute("delete from records.persons where person_id=%s", (pk,))
+            pc.commit()
+
+        drow = _qp(
+            dsn,
+            "select actor_role, actor_is_superuser, row_pk "
+            "from records.audit_log where table_name='persons' and action='delete' "
+            "  and row_pk=%s",
+            (str(pk),),
+        )
+        assert len(drow) == 1, "exactly one DELETE audit row for the fixture pk"
+        d_actor, d_is_su, d_pk = drow[0]
         assert d_actor == admin_login
         assert d_is_su is True
         assert d_pk == str(pk)                 # row_pk non-null on delete
-        pc.rollback()
+    finally:
+        # EXPLICIT cleanup: the committed persons row is already gone (deleted
+        # above; if an assertion aborted before the delete, remove it now), then
+        # delete ALL audit_log rows for this pk (insert+update+delete). The admin
+        # superuser bypasses RLS + the append-only policy. Leave zero residue.
+        with psycopg.connect(dsn) as pc:
+            with pc.cursor() as cur:
+                cur.execute("delete from records.persons where person_id=%s", (pk,))
+                cur.execute(
+                    "delete from records.audit_log where table_name='persons' and row_pk=%s",
+                    (str(pk),),
+                )
+            pc.commit()
 
     # (4) app_actor (untrusted, bounded) -----------------------------------
     # records.app_actor='tech.42' -> captured verbatim. An over-long value
@@ -212,8 +312,9 @@ def test_049_applied_then_down_up():
             assert got[str(pk_bad)] == "INVALID_APP_ACTOR"    # bad charset -> sentinel
         pc.rollback()
 
-    # residue check: every fixture ran inside a rolled-back txn, so audit_log
-    # holds no persons rows from this test.
+    # residue check: sections 2 and 4 ran inside rolled-back txns; the
+    # cross-txn section 3 committed but cleaned up explicitly in its finally
+    # block. So audit_log holds no persons rows from this test.
     assert _q(
         dsn, "select count(*) from records.audit_log where table_name='persons'"
     )[0][0] == 0
