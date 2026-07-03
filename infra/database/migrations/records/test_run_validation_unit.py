@@ -101,3 +101,62 @@ def test_summary_formats_all_statuses():
              rv.Tier("4-import-db", "SKIP", "tier 3 failed")]
     out = rv.summary(tiers)
     assert "0-syntax" in out and "PASS" in out and "FAIL" in out and "SKIP" in out
+
+
+# snapshot_roles default set must track ALL FIVE cluster-level Gate-5 roles, not
+# just the two app roles: dropping the disposable DB leaves the walk-created
+# records_owner/records_fn_owner/records_auditor behind unless the finally-block
+# knows to drop them (Codex P2-1).
+GATE5_ROLES = (
+    "records_api", "records_intake_writer",
+    "records_owner", "records_fn_owner", "records_auditor",
+)
+
+
+def test_snapshot_roles_default_tracks_all_five():
+    import inspect
+    default = inspect.signature(rv.snapshot_roles).parameters["names"].default
+    assert tuple(default) == GATE5_ROLES
+
+
+class _FakeConn:
+    """Minimal _connect() stand-in: a context manager whose execute() returns an
+    object with .fetchall(), echoing the pg_roles rows we seed. No database."""
+
+    def __init__(self, present):
+        self._present = present  # role names that already exist pre-run
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def execute(self, sql, params):
+        names = params[0]
+        rows = [(n,) for n in names if n in self._present]
+        return _FakeResult(rows)
+
+
+class _FakeResult:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def fetchall(self):
+        return self._rows
+
+
+def test_snapshot_roles_returns_absent_gate5_roles(monkeypatch):
+    # Only the two app roles pre-exist; the three Gate-5 owner/auditor roles are
+    # absent -> snapshot_roles must return exactly those three (the ones the walk
+    # will create and the finally-block must drop).
+    present = {"records_api", "records_intake_writer"}
+    monkeypatch.setattr(rv, "_connect", lambda admin: _FakeConn(present))
+    created = rv.snapshot_roles("host=h port=1 dbname=postgres user=u")
+    assert created == ["records_owner", "records_fn_owner", "records_auditor"]
+
+
+def test_snapshot_roles_none_absent_returns_empty(monkeypatch):
+    # All five already exist pre-run -> nothing was created this run -> drop nothing.
+    monkeypatch.setattr(rv, "_connect", lambda admin: _FakeConn(set(GATE5_ROLES)))
+    assert rv.snapshot_roles("host=h port=1 dbname=postgres user=u") == []

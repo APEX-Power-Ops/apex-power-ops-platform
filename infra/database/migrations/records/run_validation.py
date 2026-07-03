@@ -258,11 +258,18 @@ def tier4_import_db(child_dsn, executed):
                 f"{len(DB_IMPORT_TESTS)} DB test files, pytest rc={rc}")
 
 
-def snapshot_roles(admin, names=("records_api", "records_intake_writer")):
+def snapshot_roles(admin, names=("records_api", "records_intake_writer",
+                                 "records_owner", "records_fn_owner", "records_auditor")):
+    # Roles are CLUSTER-level, so dropping the disposable records_val_* DB leaves
+    # any walk-created role behind. Track all five Gate-5 roles (both app roles +
+    # records_owner/records_fn_owner/records_auditor from 046/047) so the finally-
+    # block drops exactly the roles that did NOT exist before this run. The
+    # object-owning roles (records_owner, records_fn_owner) are dropped only AFTER
+    # the disposable DB is dropped, so at drop time they own nothing.
     with _connect(admin) as c:
         existing = {r[0] for r in c.execute(
             "select rolname from pg_roles where rolname = any(%s)", (list(names),)).fetchall()}
-    return [n for n in names if n not in existing]   # roles 045 will create THIS run
+    return [n for n in names if n not in existing]   # roles the walk will create THIS run
 
 
 WRITE_PATH = ["assets", "form_submissions", "form_field_values", "pm_schedules", "pm_events", "persons"]
