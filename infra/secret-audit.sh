@@ -158,13 +158,13 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-non-app-role]"; rc=1
-  done < <(grep -rInoE '(user|role)=[A-Za-z0-9_]+' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+  done < <(grep -rHInoE '(user|role)=[A-Za-z0-9_]+' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
              | grep -vE ':(user|role)=(records_api|records_intake_writer)$' \
              | sed -E 's/:[^:]*$//')
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-bypass-credential]"; rc=1
-  done < <(grep -rInEi -e 'sb_secret_|service_role|bypassrls' ${RECORDS_SERVING_GLOBS} 2>/dev/null | cut -d: -f1,2)
+  done < <(grep -rHInEi -e 'sb_secret_|service_role|bypassrls' ${RECORDS_SERVING_GLOBS} 2>/dev/null | cut -d: -f1,2)
   say "  PASS  records serving scan ran (globs: ${RECORDS_SERVING_GLOBS})"
 else
   say "  SKIP  no RECORDS_SERVING_GLOBS set (serving config not built yet)"

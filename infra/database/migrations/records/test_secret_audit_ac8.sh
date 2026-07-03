@@ -83,6 +83,43 @@ else
   say "PASS  sanctioned fixture did not trip bypass-credential rule"
 fi
 
+# ---- single-file regression: grep must stay value-silent with ONE match ---
+# GNU grep omits the filename prefix when exactly one file matches, which
+# previously (a) dropped the path from rule (a)'s FIND line and (b) shifted
+# cut's fields in rule (b) so the matched line - including the secret VALUE -
+# was printed instead of file:line. -H on both grep calls fixes this; this
+# case proves it stays fixed.
+rm -f "$tmp"/*.conf
+svc2="service""_role"
+printf 'key=%s\n' "$svc2" > "$tmp/single.conf"
+
+out3="$(RECORDS_SERVING_GLOBS="$tmp/single.conf" bash "$AUDIT" 2>&1)"
+rc3=$?
+
+if [[ "$rc3" == "1" ]]; then
+  say "PASS  single-file fixture: exit 1 as expected"
+else
+  say "FAIL  single-file fixture: expected exit 1, got $rc3"; fail=1
+fi
+
+if printf '%s' "$out3" | grep -qF '[rule: records-serving-bypass-credential]'; then
+  say "PASS  single-file fixture: rule fired"
+else
+  say "FAIL  single-file fixture: rule did not fire"; fail=1
+fi
+
+if printf '%s' "$out3" | grep -qF "$tmp/single.conf"; then
+  say "PASS  single-file fixture: file path present in FIND line"
+else
+  say "FAIL  single-file fixture: file path missing from FIND line"; fail=1
+fi
+
+if printf '%s' "$out3" | grep -qF -- "$svc2"; then
+  say "FAIL  single-file fixture: value-silent violation - planted value leaked"; fail=1
+else
+  say "PASS  single-file fixture: planted value absent from captured output"
+fi
+
 if [[ "$fail" == "0" ]]; then
   say "RESULT: AC8 fixture test PASSED"
   exit 0
