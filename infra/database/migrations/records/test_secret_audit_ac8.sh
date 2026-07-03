@@ -63,6 +63,21 @@ for rule in records-serving-non-app-role records-serving-bypass-credential recor
   fi
 done
 
+# ---- URL rule FIND line is bare file:line (like rules a/b), not
+# file:line:postgresql://postgres - the tighten strips the matched
+# scheme://user token instead of leaving it stuck to the location. ----
+urlline="$(printf '%s\n' "$out" | grep -F '[rule: records-serving-url-non-app-role]')"
+if printf '%s' "$urlline" | grep -qF "fixture_6.conf:1"; then
+  say "PASS  URL rule FIND line carries file:line"
+else
+  say "FAIL  URL rule FIND line missing file:line"; fail=1
+fi
+if printf '%s' "$urlline" | grep -qE ':(postgresql|postgres)://'; then
+  say "FAIL  URL rule FIND line still carries scheme://user token (not bare file:line)"; fail=1
+else
+  say "PASS  URL rule FIND line is bare file:line (no scheme://user token)"
+fi
+
 # ---- value-silent check: none of the planted VALUES may appear in output --
 for val in "$owner" "$admin" "$sk" "$svc" "$urlowner" "$urlpw"; do
   if printf '%s' "$out" | grep -qF -- "$val"; then

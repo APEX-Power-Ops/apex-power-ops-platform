@@ -170,13 +170,17 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   # "user=" keyword token (misses rule a) and is not itself a bypass literal
   # (misses rule b) even when it names an owner/superuser role. -o with -H/-n
   # keeps this VALUE-SILENT: the match stops at the ":" or "@" delimiter, so
-  # the password half of the userinfo is never captured or printed.
+  # the password half of the userinfo is never captured or printed. The
+  # matched token itself contains a "://" colon, so the trailing-strip sed
+  # rules (a)/(b) use would leave it stuck to the FIND line; cut to the first
+  # two colon-delimited fields instead (same normalization Check 2 uses) so
+  # this rule also emits bare file:line.
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-url-non-app-role]"; rc=1
   done < <(grep -rHInoE '(postgresql|postgres)://[A-Za-z0-9._%+-]+[:@]' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
              | grep -vE ':(postgresql|postgres)://(records_api|records_intake_writer)[:@]$' \
-             | sed -E 's/:[^:]*$//')
+             | cut -d: -f1,2)
   say "  PASS  records serving scan ran (globs: ${RECORDS_SERVING_GLOBS})"
 else
   say "  SKIP  no RECORDS_SERVING_GLOBS set (serving config not built yet)"
