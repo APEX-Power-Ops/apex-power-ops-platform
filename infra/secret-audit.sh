@@ -136,6 +136,7 @@ declare -A RULES=(
   ["openai-key"]='sk-[A-Za-z0-9]{20,}'
   ["jwt"]='eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}'
   ["inline-url-password"]='://[A-Za-z0-9._-]+:[^@/[:space:]"]{6,}@'
+  ["supabase-secret-key"]='sb_secret_[A-Za-z0-9_-]{16,}'
 )
 hits=0; suppressed=0
 for name in "${!RULES[@]}"; do
@@ -150,6 +151,48 @@ for name in "${!RULES[@]}"; do
 done
 if [[ "$hits" == "0" ]]; then say "  PASS  no leaked credentials in tracked files"; fi
 [[ "$suppressed" -gt 0 ]] && say "  note  $suppressed match(es) suppressed by infra/.secret-audit-allow"
+
+# ---- Check 3: records serving config -- only sanctioned app roles (AC8) --
+say ""; say "[3] records serving config: only records_api/records_intake_writer, no bypass creds (AC8)"
+if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
+  glob_hit=0
+  for _g in ${RECORDS_SERVING_GLOBS}; do
+    [[ -r "$_g" ]] && glob_hit=1
+  done
+  while IFS= read -r loc; do
+    [[ -z "$loc" ]] && continue
+    say "  FIND  ${loc}  [rule: records-serving-non-app-role]"; rc=1
+  done < <(grep -rHInoE "(user|role)[[:space:]]*=[[:space:]]*['\"]?[A-Za-z0-9_]+['\"]?" ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+             | grep -vE ":(user|role)[[:space:]]*=[[:space:]]*['\"]?(records_api|records_intake_writer)['\"]?\$" \
+             | sed -E 's/:[^:]*$//')
+  while IFS= read -r loc; do
+    [[ -z "$loc" ]] && continue
+    say "  FIND  ${loc}  [rule: records-serving-bypass-credential]"; rc=1
+  done < <(grep -rHInEi -e 'sb_secret_|service_role|bypassrls' ${RECORDS_SERVING_GLOBS} 2>/dev/null | cut -d: -f1,2)
+  # rule (c): URL-form DSN userinfo, e.g. postgresql://<user>:<pw>@host/db.
+  # Rules (a)/(b) miss this shape: the username in a URL's userinfo is not a
+  # "user=" keyword token (misses rule a) and is not itself a bypass literal
+  # (misses rule b) even when it names an owner/superuser role. -o with -H/-n
+  # keeps this VALUE-SILENT: the match stops at the ":" or "@" delimiter, so
+  # the password half of the userinfo is never captured or printed. The
+  # matched token itself contains a "://" colon, so the trailing-strip sed
+  # rules (a)/(b) use would leave it stuck to the FIND line; cut to the first
+  # two colon-delimited fields instead (same normalization Check 2 uses) so
+  # this rule also emits bare file:line.
+  while IFS= read -r loc; do
+    [[ -z "$loc" ]] && continue
+    say "  FIND  ${loc}  [rule: records-serving-url-non-app-role]"; rc=1
+  done < <(grep -rHInoE '(postgresql|postgres)://[A-Za-z0-9._%+-]+[:@]' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+             | grep -vE ':(postgresql|postgres)://(records_api|records_intake_writer)[:@]$' \
+             | cut -d: -f1,2)
+  if [[ "$glob_hit" == "1" ]]; then
+    say "  PASS  records serving scan ran (globs: ${RECORDS_SERVING_GLOBS})"
+  else
+    say "  FAIL  RECORDS_SERVING_GLOBS matched no readable files  [rule: records-serving-empty-glob]"; rc=1
+  fi
+else
+  say "  SKIP  no RECORDS_SERVING_GLOBS set (serving config not built yet)"
+fi
 
 say ""
 say "========================================"

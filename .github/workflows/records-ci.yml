@@ -58,5 +58,7 @@ jobs:
           pip install -e "packages/records-import[test]"
       - name: Harness unit tests (the gate's own tests)
         run: python -m pytest infra/database/migrations/records/test__dbtest_helper.py infra/database/migrations/records/test_run_validation_unit.py -q
+      - name: AC8 secret-audit fixture test (records serving config)
+        run: bash infra/database/migrations/records/test_secret_audit_ac8.sh
       - name: Run the records validation gate
         run: python infra/database/migrations/records/run_validation.py --require-db

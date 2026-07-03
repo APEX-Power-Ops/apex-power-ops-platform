@@ -112,6 +112,7 @@ def test_no_bespoke_enums(conn):
     assert n == 0, "Amendment 2: bespoke vocab must be CHECK-constrained text, not enum types"
 
 
+# Stack-position assertion (mig 043/044): valid through mig 044; migration 045 (Gate 3) enables RLS by design. Run via the incremental runner, not standalone against a post-045 records_dev.
 def test_rls_disabled(conn):
     rls = conn.execute(f"select relrowsecurity from pg_class where oid='{TBL}'::regclass").fetchone()[0]
     assert rls is False, "Amendment 1: records lane uses no RLS; this table must not enable it"
