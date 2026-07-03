@@ -165,6 +165,18 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-bypass-credential]"; rc=1
   done < <(grep -rHInEi -e 'sb_secret_|service_role|bypassrls' ${RECORDS_SERVING_GLOBS} 2>/dev/null | cut -d: -f1,2)
+  # rule (c): URL-form DSN userinfo, e.g. postgresql://<user>:<pw>@host/db.
+  # Rules (a)/(b) miss this shape: the username in a URL's userinfo is not a
+  # "user=" keyword token (misses rule a) and is not itself a bypass literal
+  # (misses rule b) even when it names an owner/superuser role. -o with -H/-n
+  # keeps this VALUE-SILENT: the match stops at the ":" or "@" delimiter, so
+  # the password half of the userinfo is never captured or printed.
+  while IFS= read -r loc; do
+    [[ -z "$loc" ]] && continue
+    say "  FIND  ${loc}  [rule: records-serving-url-non-app-role]"; rc=1
+  done < <(grep -rHInoE '(postgresql|postgres)://[A-Za-z0-9._%+-]+[:@]' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+             | grep -vE ':(postgresql|postgres)://(records_api|records_intake_writer)[:@]$' \
+             | sed -E 's/:[^:]*$//')
   say "  PASS  records serving scan ran (globs: ${RECORDS_SERVING_GLOBS})"
 else
   say "  SKIP  no RECORDS_SERVING_GLOBS set (serving config not built yet)"
