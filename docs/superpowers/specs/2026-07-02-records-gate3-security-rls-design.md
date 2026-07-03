@@ -1,6 +1,6 @@
 # Records Gate 3 — Security / RLS Design
 
-**Date:** 2026-07-02  ·  **Rev 3** (folds the Claude+Codex IRP: membership hardening all-directions, savepoint discipline, CI full-ladder, serving-identity AC, full writer-column enumeration, multi-base-table view proof, factual fixes)
+**Date:** 2026-07-02  ·  **Rev 4** (rev 3 IRP folds + AC8 tightened to ban Supabase `service_role`/secret/`BYPASSRLS` credentials from records serving config)
 **Lane:** `records/gate3-security-rls` (worktree `/home/olares/code/apex/apex-records-gate3`)
 **Dev DB:** `records_dev` (local PG17 cluster over mesh); disposable `records_val_*` for validation
 **Prod target:** governed Supabase `fxoyniqnrlkxfligbxmg` — reviewable SQL first, NOT applied in this lane
@@ -201,7 +201,7 @@ Gate-2 invariants preserved: `guard_target` records_dev refusal; admin-dbname=`p
 - **AC5** Non-superuser execution proven under `SET SESSION AUTHORIZATION` (PP1–PP2), never superuser-masked.
 - **AC6** Tier 5 on a disposable `records_val_*` DB only; `records_dev` in no connection; roles dropped only if harness-created; Gate-2 invariants intact; Records CI green on the **full ladder with `--require-db`**.
 - **AC7** `045` + `_down` reversible + reviewed; **not** applied to prod Supabase in this lane.
-- **AC8 (F6 — serving-identity control).** The owner/superuser path is not RLS-guarded under D2-A, so it is closed by **custody, not by the migration**: the serving credential for `records_dev`/prod is provisioned **only** for the non-owner app roles (`records_api`/`records_intake_writer`); the owner/superuser DSN is **never** placed in the serving secret store — verified by the L6 secret-audit tripwire, not by 045. **Recorded serving-layer requirement** (implemented when the serving runtime is built, not in this gate): a startup assertion that `current_user` is one of the app roles and is `NOT rolsuper` / not the table owner. This makes the untested owner-path an *acknowledged, controlled* gap, not a silent assumption.
+- **AC8 (F6 — serving-identity control).** The owner/superuser path is not RLS-guarded under D2-A, so it is closed by **custody, not by the migration**: the serving credential for `records_dev`/prod is provisioned **only** for the non-owner app roles (`records_api`/`records_intake_writer`). The records serving secret store must contain **no owner/superuser DSN, and no Supabase `service_role` / secret (service) key / any `BYPASSRLS` credential** — Supabase's `service_role` and secret keys **bypass RLS by design** (per Supabase RLS + API-key docs), so any of them in serving config would silently defeat the entire backstop. Verified by the L6 secret-audit tripwire, not by 045. **Recorded serving-layer requirement** (implemented when the serving runtime is built, not in this gate): a startup assertion that `current_user` is one of the app roles and is `NOT rolsuper` **AND `NOT rolbypassrls`** / not the table owner. This makes the untested owner/bypass path an *acknowledged, controlled* gap, not a silent assumption.
 
 ---
 
