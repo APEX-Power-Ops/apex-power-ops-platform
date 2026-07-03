@@ -60,7 +60,7 @@ Policy names follow `p_<table>_<verb>` where `<verb>` is `read`, `ins`, or
 
 `p_<t>_read`, `p_<t>_ins`, `p_<t>_upd` on: `assets`, `form_submissions`,
 `form_field_values`, `pm_schedules`, `pm_events`, `persons`. No DELETE policy
-exists for either app role on any of these 15 tables - the writer never
+exists for either app role on any of these 14 tables - the writer never
 deletes (045 posture assert enforces this).
 
 ### Owner-only tables (2) - no app-role policy or grant
