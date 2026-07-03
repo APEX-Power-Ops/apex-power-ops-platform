@@ -1,0 +1,49 @@
+# reference/records/SERVING_CONTRACT.yaml - Gate 9 consumes this for a
+# mechanical records-role -> Supabase-boundary rebind. Not consumed by any
+# runtime in Gate 5.
+#
+# Source of truth for the fields below: infra/database/migrations/records/
+#   045_records_security_rls.sql (records_api, records_intake_writer policies)
+#   048_records_audit_log.sql    (records_auditor, records_fn_owner)
+#   046_records_ownership.sql    (records_owner)
+# If those migrations change, this file must be re-derived from them, not
+# hand-edited out of sync. See SERVING_CONTRACT.md for the human-readable
+# per-table policy listing and the Gate-9 rebind recipe.
+version: 1
+roles:
+  records_api:
+    connects: true
+    supabase_target: authenticated
+    write_scope: none
+    tables_reachable: [ref_tables, wp_tables]
+    policy_names: [p_<t>_read]
+  records_intake_writer:
+    connects: true
+    supabase_target: authenticated
+    write_scope: column_scoped
+    tables_reachable: [ref_tables, wp_tables]
+    policy_names: [p_<t>_read, p_<t>_ins, p_<t>_upd]
+  records_auditor:
+    connects: true
+    supabase_target: authenticated
+    write_scope: none
+    tables_reachable: [audit_log]
+    policy_names: [p_audit_log_sel]
+  records_owner:
+    connects: false
+    owner_only: true
+    dsn: none
+  records_fn_owner:
+    connects: false
+    owner_only: true
+    dsn: none
+ref_tables: [asset_classes, form_templates, pm_programs, neta_procedures, neta_test_items, neta_tables, asset_class_neta_procedure, neta_procedure_xref]
+wp_tables: [assets, form_submissions, form_field_values, pm_schedules, pm_events, persons]
+# owner_only_tables: RLS-enabled, no app-role policy, no app-role grant.
+#   neta_table_source_links - D10 (lineage/provenance boundary; see drm_boundary below)
+#   audit_log               - append-only; records_fn_owner INSERT-only via p_audit_log_ins
+owner_only_tables: [neta_table_source_links, audit_log]
+drm_boundary:
+  source_links_protects: lineage_provenance   # NOT the tolerance numeric values
+  tolerance_values: first_class_record_content # in form_field_values; intentionally auditable
+dsn_form_inventory: [keyword_user, url_userinfo, url_driver_qualified, pg_env_vars]
