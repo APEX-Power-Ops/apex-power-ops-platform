@@ -1,48 +1,50 @@
 # Records Gate 3 — Security / RLS Design
 
-**Date:** 2026-07-02  ·  **Rev 4** (rev 3 IRP folds + AC8 tightened to ban Supabase `service_role`/secret/`BYPASSRLS` credentials from records serving config)
+**Date:** 2026-07-02  ·  **Rev 5** (folds the focused clean IRP: DP9 joined-seed + polroles assert, down-migration build checklist, Supabase-not-apply-ready, concrete secret-audit, CONNECT-hygiene note; surfaces two governance decisions D9/D10)
 **Lane:** `records/gate3-security-rls` (worktree `/home/olares/code/apex/apex-records-gate3`)
 **Dev DB:** `records_dev` (local PG17 cluster over mesh); disposable `records_val_*` for validation
 **Prod target:** governed Supabase `fxoyniqnrlkxfligbxmg` — reviewable SQL first, NOT applied in this lane
 **Migration:** `045_records_security_rls.sql` (+ `_down`)
-**Authority / precedents:** `reference/records/CURRENT-STATE.md` "Next Gates" #3; the merged ops role-boundary lane `infra/database/migrations/ops/012_ops_app_role_boundary.sql` (PR #55/#56); the Gate-2 harness (`run_validation.py`, `_dbtest.py`); the identity contract; Supabase RLS / function-privilege / view-security docs (D3).
-**Status:** DRAFT (post-IRP rev 3) for operator ratification. No code built; no DB state touched.
+**Authority / precedents:** ops role-boundary `infra/database/migrations/ops/012_ops_app_role_boundary.sql` (PR #55/#56); Gate-2 harness (`run_validation.py`, `_dbtest.py`); the identity contract; Supabase RLS / function-privilege / API-key docs.
+**Status:** DRAFT (post-2-round IRP). **Build-ready once D9 + D10 are ratified.** No code built; no DB state touched.
 
-> **Reviewer note (grounding).** The canonical tree is the **host** at `/home/olares/code/apex/apex-power-ops-platform`, `main 90ccf864` — where migrations 043/044, ops-012, `run_validation.py`, `_dbtest.py`, and `records-ci.yml` all live and were verified. The **local Windows checkouts are divergent** (`records/chip10-import`, tops out at mig 042) and must not be used to audit this spec. All §0 posture claims were checked against **live `records_dev` (PG 17.10)** and the host repo.
+> **Reviewer note (grounding).** Canonical = **host** `/home/olares/code/apex/apex-power-ops-platform` `main 90ccf864`. **Local Windows checkouts are divergent** (top out at mig 042) — do not audit against them. §0 posture verified against **live `records_dev` (PG 17.10)** + the host repo.
 
 ---
 
-## 0. Context & grounding (verified 2026-07-02 against live records_dev + host repo)
+## 0. Context & grounding (verified 2026-07-02)
 
-- `records` schema: **15 tables + 2 views**, all owned by `postgres` (superuser). **RLS 0%** (0 enabled, 0 forced, 0 policies). Grants **owner-only** (zero to PUBLIC/anon/any login role). Schema ACL `NULL`.
-- Views `v_asset_test_history`, `v_pm_due` are **not** `security_invoker` (would bypass base-table RLS once exposed). Each has **three** base tables (below).
-- One function only: `records.fn_set_updated_at()` (trigger helper, SECURITY INVOKER, owner `postgres`, `proacl IS NULL` → carries the **default PUBLIC EXECUTE**).
-- Only plausible scoping columns (`form_submissions.project_ref`, `pm_events.project_ref`, `assets.site_ref`/`client_ref`) are **nullable soft UUIDs, no FK**. **No tenant/org/customer/created_by/reviewer/approver column anywhere.** Person identity is a cross-DB contract-FK (`persons.employee_ref → public.employees.id`, never a DB FK).
+- `records`: **15 tables + 2 views**, all owned by `postgres` (superuser). **RLS 0%**. Grants owner-only. Schema ACL `NULL`. **PUBLIC holds default CONNECT on `records_dev`** (`datacl IS NULL`) and default EXECUTE on the one function.
+- Views not `security_invoker`; each is a **3-table JOIN**: `v_asset_test_history` = `assets`⋈`form_submissions`⋈`form_templates`; `v_pm_due` = `pm_schedules`⋈`assets`⋈`pm_programs`.
+- One function: `records.fn_set_updated_at()` (INVOKER, owner `postgres`, `proacl IS NULL` → default PUBLIC EXECUTE).
+- No tenant/org/customer scoping column; person identity is a cross-DB contract-FK. Only soft nullable `project_ref`/`site_ref`/`client_ref` (no FK).
 
-**Core problem.** Fail-closed today only by grant-absence, not by design; the instant serving is granted anything, that role sees every row. Gate 3 removes that cliff, reusing the ops-012 pattern and adding the RLS backstop ops chose not to build.
+**Core problem.** Fail-closed only by grant-absence, not design; first grant to any serving role exposes every row. Gate 3 installs the least-privilege + RLS backstop, mirroring ops-012.
 
 ---
 
 ## 1. Goal & non-goals
 
-**Goal.** (a) least-privilege app roles with an explicit, fully-enumerated column-scoped grant matrix and **no membership-escalation path in either direction**; (b) RLS `ENABLE`d on every `records.*` table (deny-by-default backstop), `USING (true)` reads for reference/catalog, **role-scoped** policies for write-path; (c) `security_invoker` on both views; (d) PUBLIC hygiene over tables **and routines**; all self-asserted in-migration and independently proven by a new harness tier under a **faithful non-superuser identity** (`SET SESSION AUTHORIZATION`), on a disposable DB, reversibly, not applied to prod.
+**Goal.** (a) least-privilege app roles, fully-enumerated column-scoped grants, no membership-escalation in either direction; (b) RLS on every table (deny-by-default), `USING(true)` reads for reference, role-scoped write-path policies; (c) `security_invoker` views; (d) PUBLIC hygiene over tables + routines; self-asserted in-migration and independently proven under a faithful non-superuser identity, on a disposable DB, reversibly, not applied to prod.
 
-**Non-goals.** Row-level tenant isolation (role/operation backstop only; row predicates deferred); audit-log table + review/approval workflow (Gate 5 — Gate 3 establishes only the identity hook + the reserved-column boundary); SECURITY DEFINER function layer / reviewer role (Gate 5); Value Model V2; source-content policy (Gate 9); offline/PowerSync (Gate 6); API/UI; prod Supabase apply; soft-FK activation (Chip 8).
+**Non-goals.** Row-level tenant isolation; audit-log + review/approval workflow (Gate 5); SECURITY DEFINER function layer / reviewer role (Gate 5); **source-content serving policy (Gate 9)**; Value Model V2; offline/PowerSync (Gate 6); API/UI; prod Supabase apply; soft-FK activation (Chip 8).
 
 ---
 
-## 2. Ratified decisions
+## 2. Decisions
 
 | # | Decision | Resolution |
 |---|---|---|
-| **D1** | RLS depth | **A (amended).** RLS on all tables; `USING(true)` reads for reference/catalog; write-path role-scoped policies (`TO <role>`); row predicates deferred. "Role/operation backstop," not row isolation. |
-| **D2** | Object ownership | **A — keep `postgres` ownership. RATIFIED.** Caveat + F6 residual: `FORCE` inert on superuser owner; the owner/superuser path is not RLS-guarded — closed by the **serving invariant** + **AC8** custody control (§7), not by in-DB enforcement. |
-| **D3** | Supabase | **A.** Generic PG roles now; documented mapping to `anon`/`authenticated`/`service_role`; predicates bindable to `auth.uid()`/`auth.jwt()` at the seam. |
-| **D4** | Gate 3/5 boundary | **Confirmed.** Enforcement substrate + identity hook + non-superuser proof here; audit-log + review workflow = Gate 5. |
-| **D5** | Role set | `records_api` (reader) + `records_intake_writer` (writer, column-scoped). `records_fn_owner` + reviewer/approver deferred to Gate 5. |
-| **D6** | Reference writes | Owner/seed only; both roles SELECT. |
-| **D7** | FORCE RLS | Inert under D2-A; not relied on. |
-| **D8** | Harness + CI | Non-superuser Tier 5; CI runs the **full ladder with `--require-db`** (not `--only 5`). |
+| D1 | RLS depth | **A (amended).** RLS on all; `USING(true)` reference reads; write-path role-scoped policies; row predicates deferred. Role/operation backstop, not row isolation. |
+| D2 | Object ownership | **A — keep `postgres` ownership. RATIFIED.** Owner/superuser-bypass residual closed by the serving invariant + AC8 (custody), not in-DB. |
+| D3 | Supabase | **A.** Generic PG roles now; mapping to `anon`/`authenticated`/`service_role` deferred; **045 is NOT Supabase-apply-ready as written** (see §11.4). |
+| D4 | Gate 3/5 boundary | **Confirmed.** Substrate + identity hook + non-superuser proof here; audit-log + review workflow = Gate 5. |
+| D5 | Role set | `records_api` (reader) + `records_intake_writer` (writer, column-scoped). `records_fn_owner` + reviewer/approver = Gate 5. |
+| D6 | Reference writes | Owner/seed only; both roles SELECT (except the D10 restriction). |
+| D7 | FORCE RLS | Inert under D2-A; not relied on. |
+| D8 | Harness + CI | Non-superuser Tier 5; CI full ladder `--require-db`. |
+| **D9** | **Reserved-column governance (F1) — PENDING** | Which lifecycle/assessment/classification columns are reviewer-gated vs writer-writable. **Lean: reserve `pm_events.status`, `form_field_values.assessment`, `persons.worker_class`** (twins of already-reserved cols). Safe because bulk/historical import runs on the maintenance/owner path (as Gate-2 Tier 4), not the app writer — see §3.3 + §13. |
+| **D10** | **`neta_table_source_links` exposure (F2) — PENDING** | Provenance metadata, not catalog. **Lean: RESTRICT** — neither app role gets SELECT in Gate 3; serving exposure deferred to Gate 9 (§13). |
 
 ---
 
@@ -50,190 +52,155 @@
 
 ### 3.1 Roles + membership hardening (both directions)
 
-| Role | Login | Flags | Purpose | Supabase (D3) |
-|---|---|---|---|---|
-| `records_api` | LOGIN | NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION | read-only serving | `authenticated` (read) |
-| `records_intake_writer` | LOGIN | (same) | import/data-entry, column-scoped | `authenticated` (write)/service |
+Two LOGIN roles: `records_api` (reader), `records_intake_writer` (writer), each NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS NOREPLICATION. Passwords out-of-band (Vault); never in the migration; password-less + `SET SESSION AUTHORIZATION` in the disposable DB.
 
-Passwords set **out-of-band by the operator** (Vault-first) on `records_dev`/prod; never in the migration. In the disposable validation DB the roles are password-less and exercised via `SET SESSION AUTHORIZATION`.
-
-```sql
-do $$
-begin
-  if not exists (select 1 from pg_roles where rolname='records_api') then create role records_api; end if;
-  if not exists (select 1 from pg_roles where rolname='records_intake_writer') then create role records_intake_writer; end if;
-end $$;
-alter role records_api           with login nosuperuser nocreatedb nocreaterole nobypassrls noreplication;
-alter role records_intake_writer with login nosuperuser nocreatedb nocreaterole nobypassrls noreplication;
-
--- HIGH-1 + Codex-C1: NOSUPERUSER/NOBYPASSRLS does NOT stop a preexisting MEMBER from SET ROLE
--- escalation. On the shared cluster, dynamically revoke EVERY membership in BOTH directions for
--- the two app roles (outbound: our role is a member of X; inbound: X is a member of our role).
-do $$
-declare m record;
-begin
-  for m in
-    select granted.rolname as granted_role, member.rolname as member_role
-    from pg_auth_members am
-    join pg_roles granted on granted.oid = am.roleid
-    join pg_roles member  on member.oid  = am.member
-    where granted.rolname in ('records_api','records_intake_writer')
-       or member.rolname  in ('records_api','records_intake_writer')
-  loop
-    execute format('revoke %I from %I', m.granted_role, m.member_role);
-  end loop;
-end $$;
-```
-Posture assert (FAILS the migration on drift): no privileged flags; both LOGIN; **zero `pg_auth_members` rows where either app role is `roleid` OR `member`** (no inbound, no outbound membership).
+Guarded create → unconditional flag correction → **dynamic revoke of every membership in BOTH directions** (any `pg_auth_members` row where an app role is `roleid` OR `member`) → posture assert (flags; LOGIN; zero memberships either way). **Ordering (F7): the membership-revoke DO block MUST run AFTER the guarded create** (else first apply errors on a missing role).
 
 ### 3.2 Table classes
 
-- **Reference / catalog (9):** `asset_classes`, `form_templates`, `pm_programs`, `neta_procedures`, `neta_test_items`, `neta_tables`, `asset_class_neta_procedure`, `neta_procedure_xref`, `neta_table_source_links`. Both roles SELECT; writes owner/seed-only.
+- **Reference / catalog — SELECT to both roles (8):** `asset_classes`, `form_templates`, `pm_programs`, `neta_procedures`, `neta_test_items`, `neta_tables`, `asset_class_neta_procedure`, `neta_procedure_xref`.
+- **Restricted — owner-only in Gate 3 (D10, F2):** `neta_table_source_links` — carries `source_owner`/`source_path`/`source_file`/`source_repo_*`/`review_notes`/`restricted_review_required` (default `true`); it is **source-provenance metadata, not catalog reference data**, and §12 defers source-content policy to Gate 9. RLS-enabled with no app-role SELECT policy; serving exposure decided at Gate 9.
 - **Write-path (6):** `assets`, `form_submissions`, `form_field_values`, `pm_schedules`, `pm_events`, `persons`. Writer column-scoped INSERT/UPDATE; reader SELECT.
 
-### 3.3 Grant matrix (fully enumerated — closes the NOT-NULL INSERT-break risk)
+### 3.3 Grant matrix (fully enumerated)
 
-`records_api` = **SELECT on every table + both views**, nothing else.
+`records_api` = **SELECT on the 8 reference tables + the 6 write-path tables + both views**, nothing else. **Not** `neta_table_source_links` (D10).
 
-`records_intake_writer` = `USAGE` on schema `records` + SELECT on all tables, plus a column-scoped INSERT/UPDATE per write-path table governed by this **RULE**:
+`records_intake_writer` = `USAGE` on `records` + SELECT on all tables (except `neta_table_source_links`, D10), plus column-scoped INSERT/UPDATE per write-path table by this **RULE**:
 
-> **Writer column set = (all columns of the table) − (reserved columns below) − (auto-populated columns: the `gen_random_uuid()` PK, `created_at`, `updated_at`).**
-> All reserved columns carry a DEFAULT (or are nullable), so an INSERT that omits them succeeds; every NOT-NULL/no-default column is non-reserved and therefore **in** the writer grant.
+> **Writer column set = (all columns) − (reserved below) − (auto-populated: `gen_random_uuid()` PK, `created_at`, `updated_at`).**
 
-**Reserved (NOT writer — future reviewer/adjudicator/Gate-5), per table:**
+**Reserved (NOT writer):**
 
-| Table | Reserved columns | Why |
+| Table | Reserved | Status |
 |---|---|---|
-| `assets` | `status`, `condition` | asset lifecycle/assessment; both **NOT NULL with sentinel defaults** (`status`→`'unknown'`, `condition`→`'not_assessed'`) — they never become NULL, they default to the sentinel |
-| `form_submissions` | `status`, `reviewed_by` | review lifecycle (see enum note) + review attribution |
-| `persons` | `employee_ref`, `match_adjudicated_by`, `match_adjudicated_at`, `match_confidence` | human-adjudication only (contract C3); these **are** nullable and stay NULL until adjudication |
-| `form_field_values` | — | none |
-| `pm_schedules` | — | none |
-| `pm_events` | — | none |
+| `assets` | `status`, `condition` | ratified (D8) — NOT NULL sentinel defaults (`'unknown'`/`'not_assessed'`), never NULL |
+| `form_submissions` | `status`, `reviewed_by` | ratified |
+| `persons` | `employee_ref`, `match_adjudicated_by`, `match_adjudicated_at`, `match_confidence` | ratified (nullable; stay NULL until adjudication) |
+| `pm_events` | **`status`** | **PENDING D9** (lean: reserve) — twin of `form_submissions.status` |
+| `form_field_values` | **`assessment`** | **PENDING D9** (lean: reserve) — twin of `assets.condition` |
+| `persons` | **`worker_class`** | **PENDING D9** (lean: reserve) — HR classification; has a default so the RULE would otherwise grant it |
 
-**Build-time invariant (F7).** These **11 NOT-NULL/no-default columns** MUST appear in the writer INSERT grant (an in-migration `has_column_privilege` assert enforces it, so a missing grant fails loud instead of breaking a real import): `assets.asset_tag`, `assets.name`; `form_submissions.template_id`, `form_submissions.asset_id`; `form_field_values.form_submission_id`, `form_field_values.field_key`; `pm_schedules.pm_program_id`, `pm_schedules.asset_id`; `pm_events.pm_schedule_id`, `pm_events.asset_id`; `persons.display_name`. (None are reserved → all covered by the RULE.)
+**Writer-dual-purpose resolution (why reserving is safe).** `records_intake_writer` is the **forward serving-write role** (creates drafts / new field data). **Bulk & historical import** (legacy PowerDB, Miner) that must preserve original `status`/lifecycle runs on the **maintenance/owner path** — as it does today in Gate-2 Tier 4 (superuser) — **not** the app writer. So reserving lifecycle/status columns from the writer preserves the review boundary without breaking historical-fidelity import. (D9 ratifies this framing.)
 
-**`form_submissions.status` enum note (F11).** The reserved `status` is `records.form_status_enum` = `draft, in_progress, complete, reviewed, approved, superseded, voided` (**7 states**, not "draft→reviewed→approved"). The writer is denied the **whole column**; on INSERT it defaults to `'draft'` (writer creates drafts only). Gate 5's reviewer role will govern the `reviewed`/`approved`/`superseded`/`voided` transitions; this boundary is what reserves them.
+**Build-time invariant (F7).** The 11 NOT-NULL/no-default columns MUST be in the writer INSERT grant (`has_column_privilege` assert): `assets.asset_tag`/`name`; `form_submissions.template_id`/`asset_id`; `form_field_values.form_submission_id`/`field_key`; `pm_schedules.pm_program_id`/`asset_id`; `pm_events.pm_schedule_id`/`asset_id`; `persons.display_name`. (`worker_class` has a default → not in this list; its reservation is D9.)
 
-Notes: `updated_at` is trigger-maintained (INVOKER, mutates NEW only) — no writer grant needed (a BEFORE-trigger NEW write is not privilege-checked; verified). The plan enumerates the exact per-column lists table-by-table; the RULE + the 11-column invariant guarantee no INSERT can fail on a missing grant.
+**`form_submissions.status` enum** = `draft, in_progress, complete, reviewed, approved, superseded, voided` (7 states); writer denied the whole column → INSERT defaults to `'draft'`. Gate-5 reviewer governs the later transitions.
 
-### 3.4 PUBLIC hygiene (tables **and routines**)
-- `revoke create on schema public from public;` (database-scoped — affects only `records_dev`'s `public`, safe vs other lanes on the shared cluster).
-- No `PUBLIC` `USAGE` on `records`; grant `USAGE` to the two roles.
-- **`revoke execute on all routines in schema records from public;`** — `records.fn_set_updated_at()` has `proacl IS NULL` = implicit default PUBLIC EXECUTE, invisible to `aclexplode(proacl)` (false-green class).
-- **Assert with the materialized default ACL** (a genuine strength — do NOT "simplify" this away): PUBLIC (grantee `0`) holds no EXECUTE on any `records` routine via `aclexplode(coalesce(p.proacl, acldefault('f', p.proowner)))` → zero rows; zero PUBLIC grants on any `records` table.
-- Database-CONNECT hygiene is **Supabase-caveated** (Supabase manages it) — optional in bare-PG dev; not encoded.
+`updated_at` is trigger-maintained (no writer grant needed). The plan enumerates exact per-column lists; the RULE + 11-column invariant guarantee no INSERT fails on a missing grant.
+
+### 3.4 PUBLIC hygiene (tables + routines)
+- `revoke create on schema public from public;` — database-scoped (only `records_dev`'s `public`), safe on the shared cluster. **NO-OP vs the real starting state** (PG15+ default already lacks PUBLIC CREATE; `nspacl` shows PUBLIC holds only USAGE) — harmless; leaves no residue, so `_down` need not restore it (F7).
+- Grant `USAGE on schema records` to both roles; no PUBLIC USAGE on `records`.
+- **`revoke execute on all routines in schema records from public;`** — closes the `proacl IS NULL` implicit-PUBLIC-EXECUTE false-green.
+- **Assert with the materialized default ACL** (a strength — do not "simplify" away): `aclexplode(coalesce(p.proacl, acldefault('f', p.proowner)))`, grantee `0` → zero EXECUTE; zero PUBLIC grants on any `records` table.
+- **PUBLIC CONNECT is left in place** (records `datacl IS NULL`). This is **weaker CONNECT hygiene than ops-012** (which revokes PUBLIC CONNECT); records leans on the RLS default-deny as the sole gate for a PUBLIC-connected rogue. Accepted for Gate 3 (consistent with the Supabase model where CONNECT is managed out-of-DB); revisit if a non-Supabase shared-cluster serving path appears (§11.7).
 
 ---
 
 ## 4. RLS model
 
-1. **`ENABLE ROW LEVEL SECURITY` on all 15 tables** (AC1). `FORCE` inert under D2-A (D7).
-2. **Reference/catalog:** `FOR SELECT TO records_api, records_intake_writer USING (true)`; no write policy for app roles.
-3. **Write-path (interim, role-scoped):** `FOR SELECT TO ... USING (true)`; `FOR INSERT TO records_intake_writer WITH CHECK (true)`; `FOR UPDATE TO records_intake_writer USING (true) WITH CHECK (true)` (column boundary enforced by the grant). **No policy names any other role → an unnamed role gets default-deny (0 rows)** even if mistakenly granted SELECT. When row predicates land, `USING (true)` → `USING (<predicate>)`, bindable to `auth.uid()` at the seam, without touching role wiring.
-4. **Views (`security_invoker = true` on both):** `v_asset_test_history` (base tables **`assets`, `form_submissions`, `form_templates`**) and `v_pm_due` (base tables **`pm_schedules`, `assets`, `pm_programs`**). With `security_invoker`, the view applies the caller's RLS on all base tables. Grant SELECT on both views to `records_api`.
+1. **`ENABLE ROW LEVEL SECURITY` on all 15 tables** (AC1). `FORCE` inert (D7).
+2. **Reference/catalog (8):** `FOR SELECT TO records_api, records_intake_writer USING (true)`. **`neta_table_source_links`:** RLS enabled, **no app-role SELECT policy** (D10). No write policy for app roles anywhere in reference.
+3. **Write-path (6, interim role-scoped):** `FOR SELECT TO records_api, records_intake_writer USING(true)`; `FOR INSERT TO records_intake_writer WITH CHECK(true)`; `FOR UPDATE TO records_intake_writer USING(true) WITH CHECK(true)` (column boundary via the grant). **Every policy names explicit roles via `TO` — never `TO PUBLIC`.** An unnamed role → default-deny (0 rows). Row predicates later swap `USING(true)` for `USING(<predicate>)`.
+4. **Views (`security_invoker=true` on both):** applies the caller's RLS across all base tables. Grant SELECT on both views to `records_api`. **Invariant (F6):** a rogue absent from ANY base-table policy sees 0 rows (JOIN collapses) — sound only because the reference policy is role-scoped, so an in-migration assert enforces **every records policy has a non-PUBLIC `polroles`**.
 
 ---
 
 ## 5. Migration `045_records_security_rls.sql`
 
-Sectioned, guarded, self-asserting, reversible (mirrors ops-012):
-1. **[1] Roles + flag + membership hardening** — guarded create; unconditional flags; **both-direction dynamic membership revoke** (§3.1); posture assert (flags; LOGIN; zero memberships either direction).
-2. **[2] PUBLIC hygiene** — revoke CREATE on `public`; grant USAGE on `records`; **`revoke execute on all routines in schema records from public`**; `acldefault`-materialized assert.
-3. **[3] Grant matrix** — `records_api` SELECT-all; `records_intake_writer` column-scoped per §3.3; positive `has_column_privilege` asserts for the 11 NOT-NULL columns; negative asserts for every reserved column + `records_api` no-write.
-4. **[4] RLS** — enable on all 15; reference + write-path policies; assert `relrowsecurity` on all.
-5. **[5] Views** — `security_invoker`; assert; grant SELECT to `records_api`.
-6. **[6] Final consolidated posture assert** — re-verifies the whole boundary; RAISEs on drift (the only guard on `records_dev`/prod).
+Sectioned/guarded/self-asserting/reversible (mirrors ops-012): [1] roles + flags + both-direction membership hardening (create BEFORE revoke) → [2] PUBLIC hygiene (revoke CREATE on public; USAGE on records; **revoke EXECUTE on all routines** from public; `acldefault` assert) → [3] grant matrix (column-scoped; positive 11-NOT-NULL + negative reserved-column asserts) → [4] RLS enable-all + policies (**assert every policy `polroles` is non-PUBLIC**, F6) → [5] `security_invoker` on both views → [6] consolidated posture assert (RAISEs on drift — the only guard on `records_dev`/prod).
 
-Idempotent (guarded create; `drop policy if exists` then create). **`045_..._down.sql`** (symmetric, guarded, ordered): drop policies → disable RLS → revert views → re-grant PUBLIC EXECUTE on routines → **database-scoped** grant revokes for the LOGIN roles (NOT `DROP OWNED` — ops-012 F-012-3: `DROP OWNED` strips shared-object CONNECT cluster-wide) → guarded `DROP ROLE` refusing any role with an out-of-band password (`pg_authid.rolpassword IS NOT NULL`, DEV-7) or cross-DB deps.
+Idempotent (guarded create; `drop policy if exists`).
+
+**`045_..._down.sql` — build checklist (F3, mandatory at build-review):**
+- **(a)** ZERO `DROP OWNED` statements — records has no NOLOGIN owner this gate; both app roles are LOGIN, and `DROP OWNED` on a LOGIN role strips shared `pg_database` CONNECT **cluster-wide** (ops-012 F-012-3). A `records_val_*` teardown running `_down` after 045 is applied on `records_dev` would otherwise strip live `records_api`/`records_intake_writer` CONNECT.
+- **(b)** Database-scoped `revoke … on all tables/routines in schema records` + `revoke usage on schema records` for BOTH LOGIN roles, run **unconditionally** (posture restored even when the DEV-7 password guard retains the role object).
+- **(c)** `all routines` (not `all functions`) in the PUBLIC-EXECUTE re-grant (future-procedure drift; ops-012 L3).
+- **(d)** Guarded `DROP ROLE` refusing any role with an out-of-band password (`pg_authid.rolpassword IS NOT NULL`, DEV-7) or cross-DB deps.
+- Consequence: `_down` is object-symmetric only on the password-less disposable DB; on `records_dev`/prod it revokes grants but retains the (password-carrying) role objects — intended.
 
 ### 5.1 Post-045 lane-invariant flip
-045 intentionally breaks the "records 001–044 = no RLS/grants" invariant. `test_043`/`test_044` assert RLS-disabled at *their* stack position (green under the Tier-3 incremental walk, which runs them pre-045); a **standalone** run against post-045 `records_dev` fails by design. Fix: comment-rescope in `test_043_*`/`test_044_*` + MANIFEST to "through mig 044; 045 enables RLS by design — use the incremental runner." (Verify the exact assertion lines on the host, not the stale local tree.)
+045 breaks the "records 001–044 = no RLS/grants" invariant. Comment-rescope `test_043_*`/`test_044_*` + MANIFEST to "through mig 044; 045 enables RLS by design — use the incremental runner." **Verify the exact assertion lines on the host** (not the stale local tree).
 
 ### 5.2 Three verification layers
-In-migration posture asserts (apply-time, the only prod guard) · `test_045` (Tier-3 static schema-shape introspection) · Tier 5 (dynamic SET-SESSION-AUTHORIZATION proofs, §6).
+In-migration posture asserts (apply-time, the only prod guard) · `test_045` (Tier-3 static introspection) · Tier 5 (dynamic proofs, §6).
+
+### 5.3 Built-file re-audit gate (F3/F5 — mandatory before merge)
+Every down-reversibility/portability judgment here is made against spec prose + the ops-012 precedent; **the actual SQL does not exist yet.** The SDD whole-branch review MUST re-audit the built `045_up`/`_down`/Tier-5 against: the F3(a–d) checklist; the F6 `polroles`-non-PUBLIC preservation; and it MUST read `infra/secret-audit.sh` to confirm the AC8 tripwire actually detects `service_role`/secret-key/`BYPASSRLS` DSNs. This is the verification, not a formality.
 
 ---
 
-## 6. Harness — Tier 5 (roles / grants / denial)
+## 6. Harness — Tier 5
 
-Extends `run_validation.py`; runs on the disposable `records_val_*` DB after Tier 3 walks through 045, before the `finally` drop.
+Runs on the disposable DB after Tier 3 walks through 045, before the `finally` drop. Proofs use `SET SESSION AUTHORIZATION <role>` … `RESET SESSION AUTHORIZATION` (faithful; not superuser-masked). **Savepoint discipline (C2):** any expected-raise inside an explicit transaction is bracketed `SAVEPOINT p; …; ROLLBACK TO SAVEPOINT p; RESET SESSION AUTHORIZATION;` then outer `ROLLBACK`.
 
-**Faithful identity.** Proofs use `SET SESSION AUTHORIZATION <role>` … `RESET SESSION AUTHORIZATION` (not `SET ROLE` from the superuser session — a superuser can `SET ROLE` to anything and cannot prove a membership-gated escalation is blocked).
+Seam edits: `parse_tiers` valid `{0..5}` (×3); `db_wanted = wanted & {3,4,5}`; `tier5_roles()` gated on Tier 3; return `Tier("5-roles", …)`.
 
-**Savepoint discipline (Codex-C2 — mandatory).** After a permission error Postgres marks the transaction aborted until rolled back, so any expected-raise that runs inside an explicit transaction MUST be bracketed:
-```
-SAVEPOINT p; <expected-failing statement>;   -- on the caught error:
-ROLLBACK TO SAVEPOINT p; RESET SESSION AUTHORIZATION;   -- then continue; outer ROLLBACK at the end
-```
-Without it, the `RESET`/cleanup after the caught error itself errors and turns a real denial into a harness failure.
+**Proofs (hard FAIL if unmet):** PP1 reader SELECT ok; PP2 writer INSERT draft ok (`status='draft'`). DP1 reader no-write → raises. DP2 writer `status`/`reviewed_by` → raises (+ D9 columns once ratified). DP3 writer persons adjudication cols → raises. DP4 writer DDL → raises. DP-ESC (a) reader `set role writer` → raises + mirror; (b) rogue `set session authorization rogue; set role records_api/records_intake_writer` → raises. DP5 accidental-grant (rolled-back, savepoint): rogue SELECT on `form_submissions` → count 0; write → raises. DP6 no-PUBLIC via `acldefault`-materialized ACL → 0. DP7 RLS-enabled on all. DP8 both views `security_invoker`. **DP9 (F9+Codex-D1+F6, hardened):** for each view — (1) seed a **JOIN-satisfying** row set (matching `asset`+`submission`+`template`, resp. `schedule`+`asset`+`program`); (2) **positive control:** `set session authorization records_api; select count(*) from <view>` → **>0** (proves the join is non-empty); (3) grant a rogue SELECT on the view + all three base tables; `set session authorization rogue; select count(*)` → **0** (base-table RLS denies); (4) **assert every records policy has a non-PUBLIC `polroles`** so a future `TO PUBLIC` "simplification" can't silently leak. Rolled-back.
 
-**Seam edits:** `parse_tiers` valid set `{0,1,2,3,4,5}` (×3); `db_wanted = wanted & {3,4,5}`; `tier5_roles(child_dsn, executed)` next to `tier4_import_db`, gated on Tier 3; return `Tier("5-roles", PASS/FAIL, detail)`.
+**Teardown (`finally`, in order):** reset auth + close → `drop database … with (force)` → drop the two app roles **only if this run created them** (snapshot before the walk) **and** they hold no out-of-band password. Never drops a real serving role.
 
-**Seed first (anti-false-green).** Before any "expect 0 rows" proof, seed ≥1 row in **each** target table (for a view, in **every** base table) so 0 rows proves RLS denial, not an empty table.
-
-**Proofs (hard FAIL if unmet):**
-- PP1 `set session authorization records_api;` SELECT a write-path table + both views → succeeds.
-- PP2 `set session authorization records_intake_writer;` INSERT a submission (omit `status`) → succeeds, lands `status='draft'`.
-- DP1 reader INSERT/UPDATE/DELETE on any write-path table → `insufficient_privilege`.
-- DP2 writer `update form_submissions set status='approved'` → raises; `set reviewed_by=…` → raises.
-- DP3 writer `update persons set employee_ref=…` / `set match_adjudicated_by=…` → raises.
-- DP4 writer DDL (`drop`/`alter table`) → raises.
-- **DP-ESC (C1):** (a) `set session authorization records_api; set role records_intake_writer;` → raises; mirror writer→reader. (b) **rogue-role proof:** create a run-scoped rogue role (member of nothing), `set session authorization rogue; set role records_api;` → raises, and `set role records_intake_writer;` → raises — no arbitrary role can assume the app roles.
-- DP5 **accidental-grant** (rolled-back txn, savepoint-bracketed): create rogue; grant it USAGE + SELECT on `records.form_submissions`; `set session authorization rogue; select count(*) from records.form_submissions` → **0** (default-deny); attempted write (savepoint) → raises; rollback removes rogue.
-- DP6 **no-PUBLIC:** `aclexplode(coalesce(proacl, acldefault('f', proowner)))` over routines + table ACLs, grantee `0` → zero rows.
-- DP7 **RLS-enabled:** every `records.*` table `relrowsecurity = true`.
-- DP8 **security_invoker:** both views set.
-- DP9 **view-RLS proof (F9 — multi-base-table).** For `v_asset_test_history`, grant the rogue SELECT on the **view AND all three base tables** (`assets`, `form_submissions`, `form_templates`), seed a row in **each**, `set session authorization rogue; select count(*) from records.v_asset_test_history` → **0** (base-table RLS denies rogue on every base table incl. the reference table's `USING(true)`-but-role-scoped policy). Rolled-back. (Mirror for `v_pm_due` over `pm_schedules`/`assets`/`pm_programs`.) A 0-row result now proves invoker+RLS, not a missing grant.
-
-**Teardown (`finally`, in order):** `reset session authorization` + close conn → `drop database … with (force)` → drop the two app roles **only if this run created them** (snapshot before the walk) **and** they hold no out-of-band password (`pg_authid.rolpassword IS NULL`), so a validation run can never drop a real serving role. Run-scoped allowlist guards any dropped name.
-
-Gate-2 invariants preserved: `guard_target` records_dev refusal; admin-dbname=`postgres`; `records_val_*` allowlist; no hardcoded creds; `_child_env`; unmasked exit codes; `--require-db` turns SKIP into failure. **Concurrency:** validation runs serialized per cluster (fixed-name roles created idempotently, dropped only if this run created them) — documented.
+Gate-2 invariants preserved (`guard_target`, admin-dbname=`postgres`, `records_val_*` allowlist, no hardcoded creds, `_child_env`, unmasked exit codes). Concurrency: validation runs serialized per cluster.
 
 ---
 
 ## 7. Acceptance criteria
 
-- **AC1** Every `records.*` table RLS-`ENABLE`d.
-- **AC2** Zero PUBLIC/anon grants on any `records` table **or routine** (materialized-ACL assert, DP6); no PUBLIC `USAGE` on `records`.
-- **AC3** Least-privilege matrix: `records_api` cannot write; `records_intake_writer` holds the §3.3 columns (incl. all 11 NOT-NULL) and none reserved; **no membership-escalation in either direction, and no arbitrary role can assume the app roles** (DP-ESC). In-migration asserts + DP1–DP4, DP-ESC.
-- **AC4** Both views `security_invoker` (DP8); a rogue reading through each view is denied by **all** its base tables' RLS (DP9).
-- **AC5** Non-superuser execution proven under `SET SESSION AUTHORIZATION` (PP1–PP2), never superuser-masked.
-- **AC6** Tier 5 on a disposable `records_val_*` DB only; `records_dev` in no connection; roles dropped only if harness-created; Gate-2 invariants intact; Records CI green on the **full ladder with `--require-db`**.
-- **AC7** `045` + `_down` reversible + reviewed; **not** applied to prod Supabase in this lane.
-- **AC8 (F6 — serving-identity control).** The owner/superuser path is not RLS-guarded under D2-A, so it is closed by **custody, not by the migration**: the serving credential for `records_dev`/prod is provisioned **only** for the non-owner app roles (`records_api`/`records_intake_writer`). The records serving secret store must contain **no owner/superuser DSN, and no Supabase `service_role` / secret (service) key / any `BYPASSRLS` credential** — Supabase's `service_role` and secret keys **bypass RLS by design** (per Supabase RLS + API-key docs), so any of them in serving config would silently defeat the entire backstop. Verified by the L6 secret-audit tripwire, not by 045. **Recorded serving-layer requirement** (implemented when the serving runtime is built, not in this gate): a startup assertion that `current_user` is one of the app roles and is `NOT rolsuper` **AND `NOT rolbypassrls`** / not the table owner. This makes the untested owner/bypass path an *acknowledged, controlled* gap, not a silent assumption.
+- **AC1** every table RLS-`ENABLE`d.
+- **AC2** zero PUBLIC/anon grants on any `records` table or routine (materialized-ACL assert); no PUBLIC USAGE on `records`.
+- **AC3** matrix: `records_api` cannot write; `records_intake_writer` holds the §3.3 columns (incl. 11 NOT-NULL) and none reserved; no membership-escalation either direction; no arbitrary role can assume the app roles (DP-ESC).
+- **AC4** both views `security_invoker`; a rogue is denied through each view by base-table RLS (DP9 with positive control); every records policy is role-scoped (`polroles` non-PUBLIC).
+- **AC5** non-superuser execution proven under `SET SESSION AUTHORIZATION` (PP1–PP2).
+- **AC6** Tier 5 on a disposable `records_val_*` DB only; `records_dev` in no connection; roles dropped only if harness-created; Gate-2 invariants intact; Records CI green on the full ladder `--require-db`.
+- **AC7** `045` + `_down` reversible + reviewed (per the §5.3 re-audit gate); **not** applied to prod Supabase in this lane.
+- **AC8 (serving-identity control).** Under D2-A the owner/superuser/BYPASSRLS path is closed by **custody, not the migration**: the records serving secret store contains **no owner/superuser DSN and no Supabase `service_role` / secret (service) key / any `BYPASSRLS` credential** (these bypass RLS by design → would defeat the backstop). **Concrete control:** `infra/secret-audit.sh` MUST detect any such credential in records serving config (the §5.3 gate verifies it does). Recorded serving-layer requirement: a startup assertion that `current_user` is an app role and is `NOT rolsuper AND NOT rolbypassrls` / not the table owner.
 
 ---
 
 ## 8. Proofs (summary)
 
-Positive: PP1, PP2. Denial/escalation: DP1–DP4, **DP-ESC** (cross-pair + rogue-assumes-app-role), DP5 (accidental-grant), DP6 (no-PUBLIC incl. routines), DP7 (RLS-on-all), DP8 (invoker), DP9 (multi-base rogue-through-view). Mandatory red proofs (Gate-2 analog): **DP2** (column boundary), **DP5** (accidental-grant backstop), **DP-ESC** (escalation).
+PP1–PP2; DP1–DP4, DP-ESC, DP5, DP6, DP7, DP8, DP9. Mandatory red proofs: **DP2** (column boundary), **DP5** (accidental-grant), **DP-ESC** (escalation), **DP9** (view-through-RLS with positive control).
 
 ---
 
 ## 9. CI
 
-**Codex-C3:** a fresh CI job cannot run `--only 5` — DB tiers require an explicit `--db-dsn` and Tier 5 is gated on Tier 3 building the disposable DB through 045. So Records CI runs the **full ladder with `--require-db`** (Tiers 0→5 in one invocation; Tier 3 builds the DB, Tier 5 proves the boundary) in the existing postgres-17 service job. `--only 5` is retained **only** as a pre-migrated `--db-dsn` debugging path. Push-only trigger + `persist-credentials: false` (already current on `main`). No new CI secret — roles are created by 045 and exercised via `SET SESSION AUTHORIZATION`.
+Records CI runs the **full ladder with `--require-db`** (Tiers 0→5; Tier 3 builds the disposable DB, Tier 5 proves the boundary) in the postgres-17 service job. `--only 5` retained only as a pre-migrated `--db-dsn` debug path. Push-only + `persist-credentials: false` (current on `main`). No new CI secret.
 
 ---
 
 ## 10. Security & credential custody
 
-App-role passwords operator-provisioned out-of-band, Vault-first; never in the migration; never echoed. No test/script/runner connects to `records_dev` (`guard_target`). **Four independent controls (defense-in-depth):** reserved-column grant boundary (DP2), RLS default-deny (DP5), no-membership-escalation both directions (DP-ESC), and serving-identity custody (AC8). A mistaken grant is caught by RLS; a mistaken policy by the grant; a mistaken membership by the escalation proof; a mistaken serving credential by the secret-audit.
+Passwords out-of-band, Vault-first; never in the migration/logs. No test/runner connects to `records_dev`. **Five independent controls:** reserved-column grant boundary (DP2), RLS default-deny (DP5), no-membership-escalation both directions (DP-ESC), serving-identity custody (AC8/secret-audit), and role-scoped-policy invariant (DP9 `polroles`).
 
 ---
 
 ## 11. Risks / open questions
 
-1. **F6 owner-bypass residual (D2-A)** — the single path that breaks the model (connect as owner/superuser) is not RLS-guarded in-DB; closed by AC8 custody + the recorded serving-startup assertion. **If the operator wants an in-DB backstop instead, that is D2-B** (re-own tables to a non-super owner + `FORCE`) — a bounded delta, deferred unless ratified.
-2. **No row isolation** — until tenancy + soft-FK activation, any granted app role sees all firm rows (correct for the single-firm model; stated so the spec does not imply row scoping).
-3. **Fixed-name cluster roles vs disposable-per-run DBs** — snapshot-and-drop-only-if-created + password guard; assumes serialized validation runs per cluster.
-4. **Supabase drift (D3)** — bare-PG proofs vs Supabase RLS (`auth.uid()`); mitigated by `USING(true)` interim policies swappable to `auth`-bound predicates. Full Supabase role/CONNECT mapping is a separate reconciliation (AC7 keeps it out of this lane).
-5. **Tier-4 import tests run as superuser** — adding RLS must not break them (superuser bypasses); verify the records-import DB tests assume no specific owner / non-RLS table.
-6. **`proacl IS NULL` false-green class** — closed by the `acldefault`-materialized assert; any future records function must re-run the routine REVOKE or [2] catches it.
+1. **F6 owner/BYPASSRLS residual (D2-A)** — closed by AC8 custody + the concrete `secret-audit.sh` control + the recorded serving-startup assertion; in-DB backstop (D2-B) deferred unless ratified.
+2. **No row isolation** — any granted app role sees all firm rows (single-firm model).
+3. **Fixed-name cluster roles vs disposable-per-run DBs** — snapshot-and-drop-only-if-created + password guard; serialized runs assumed.
+4. **Supabase: 045 is NOT apply-ready as written.** Its policies bind `TO records_api`/`records_intake_writer` (LOGIN roles), but Supabase traffic runs as `authenticated`/`anon`/`service_role` (NOLOGIN group roles PostgREST SET-ROLEs into). A prod apply requires a **role-rebinding** (app roles → `authenticated`, or GRANT INTO), **not just a `USING(true)`→predicate swap** — a heavier delta, kept out of lane by AC7 and reconciled at the serving-layer/Gate-9 stage.
+5. **Tier-4 import tests run as superuser** — adding RLS must not break them (superuser bypasses); verify no test assumes a specific owner / non-RLS table.
+6. **`proacl IS NULL` false-green class** — closed by the `acldefault` assert.
+7. **Weaker PUBLIC-CONNECT hygiene than ops-012** — accepted (§3.4), leaning on RLS default-deny; revisit for any non-Supabase shared-cluster serving path.
 
 ---
 
 ## 12. Out of scope
 
-Row-scoping backfill; soft-FK activation (Chip 8); audit-log + review/approval workflow + reviewer/`records_fn_owner` roles (Gate 5); SECURITY DEFINER function layer; Supabase prod apply; source-content policy (Gate 9); offline/PowerSync (Gate 6); Value Model V2; API/UI.
+Row-scoping backfill; soft-FK activation (Chip 8); audit-log + review/approval workflow + reviewer/`records_fn_owner` roles (Gate 5); SECURITY DEFINER layer; Supabase prod apply; source-content policy (Gate 9); offline/PowerSync (Gate 6); Value Model V2; API/UI.
+
+---
+
+## 13. Open governance decisions (operator ratification before writing-plans)
+
+**D9 — Reserved-column governance (F1).** Reserve `pm_events.status`, `form_field_values.assessment`, and `persons.worker_class` from `records_intake_writer`?
+- *Diagnosis:* these are lifecycle/assessment/classification fields structurally identical to columns already reserved (`form_submissions.status`, `assets.condition`, the persons adjudication cols). Leaving them writer-writable lets the intake writer set PM-completion, per-field pass/fail, and W2/1099 classification with no reviewer boundary — the boundary this gate exists to build. `worker_class` has a default, so it slips past the F7 NOT-NULL enumeration into the writer grant unless explicitly reserved.
+- *Framing:* reserving them is **safe** because bulk/historical import (which must preserve original status) runs on the **maintenance/owner path** (as Gate-2 Tier 4), not the app writer; `records_intake_writer` is the forward serving-write role.
+- *My lean:* **RESERVE all three**, extend DP2 to cover them, and confirm the "historical import = owner path, app writer = forward draft-only" framing. If any must be writer-set for a real forward-capture reason, name it and I'll keep it writer + add explicit DP2 coverage asserting the boundary is intentional.
+
+**D10 — `neta_table_source_links` serving exposure (F2).** Restrict it from the app roles in Gate 3?
+- *Diagnosis:* it is source-provenance metadata (`source_path`, `review_notes`, `restricted_review_required` default `true`), not catalog reference data; granting `records_api` (→ Supabase `authenticated`) SELECT now pre-empts the §12-deferred Gate-9 source-content policy.
+- *My lean:* **RESTRICT** — RLS-enabled, no app-role SELECT policy in Gate 3; its serving exposure is decided at Gate 9. (Intake populates it via the owner/seed path, so the writer doesn't need it either.) If the serving reader genuinely needs it before Gate 9, say so and I'll grant `records_api` a scoped SELECT with an explicit note.
