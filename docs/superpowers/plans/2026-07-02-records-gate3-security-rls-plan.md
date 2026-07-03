@@ -751,31 +751,39 @@ for role in created_roles:   # from snapshot_roles(), only roles this run create
 
 **Interfaces:** Consumes tracked repo files (+ an optional serving-config glob); produces a value-silent (location-only) tripwire that flags an RLS-bypass credential in records serving config. `secret-audit.sh` already prints `file:line + rule name` and never the value — the AC8 rules inherit that contract.
 
-- [ ] **Step 1: Add two AC8 signatures to Check 2's `RULES`** (value-silent; low false-positive):
+- [ ] **Step 1: Add ONE global AC8 signature to Check 2's `RULES`** (value-bearing, low false-positive — a real Supabase secret-key VALUE is a leak anywhere):
 
 ```bash
   ["supabase-secret-key"]='sb_secret_[A-Za-z0-9_-]{16,}'
-  ["supabase-service-role-key"]='SERVICE_ROLE_KEY[[:space:]]*[:=]'
 ```
-`sb_secret_` is a real Supabase secret (service) key signature anywhere; `SERVICE_ROLE_KEY=` names a service-role key assignment (the generic `jwt` rule still catches its JWT value, but this makes the AC8 finding explicit). Both bypass RLS by design.
+Do **not** add a bare `SERVICE_ROLE_KEY[:=]` name rule to Check 2: legitimate CI workflows declare that secret **by name** (e.g. `.github/workflows/deployed-control-plane-smoke.yml`), so a name rule would false-positive on the clean tree. A service-role *JWT value* is already caught by the existing `jwt` rule; service-role/BYPASSRLS **serving** detection is records-serving-scoped in Check 3.
 
-- [ ] **Step 2: Add Check 3 — records-serving owner/bypass DSN** (armed, silent until a serving path exists). Scan files matching `${RECORDS_SERVING_GLOBS:-}` (default empty — records serving config does not exist until Gate 5+) for a DSN whose `user=`/`role=` is NOT a sanctioned app role — `user=postgres`, `user=records_fn_owner`, or `role=service_role`. Emit `file:line  [rule: records-serving-non-app-role-dsn]`, value-silent, `rc=1`. Sketch:
+- [ ] **Step 2: Add Check 3 — records serving config uses ONLY sanctioned app roles (AC8, allowlist)**. Scan files matching `${RECORDS_SERVING_GLOBS:-}` (default empty — serving config does not exist until Gate 5+; dormant until wired). Filesystem grep over the scoped glob (bounded path set, exercisable by a temp-dir test). Two value-silent rules (`file:line + rule name`, never the matched value):
+  - **(a) allowlist** — any `user=<X>` or `role=<X>` where `<X>` is NOT `records_api` or `records_intake_writer` -> FAIL. Catches `postgres`, `records_fn_owner`, a future `records_admin`, `service_role`, or any other bypass-capable role; a denylist would miss the unknown ones.
+  - **(b) bypass-credential literals** — any `sb_secret_`, `service_role`, or `bypassrls` (case-insensitive) -> FAIL.
 ```bash
-say ""; say "[3] records serving config uses only non-owner app roles (AC8)"
+say ""; say "[3] records serving config: only records_api/records_intake_writer, no bypass creds (AC8)"
 if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
-  while IFS= read -r m; do
-    [[ -z "$m" ]] && continue
-    say "  FIND  ${m}  [rule: records-serving-non-app-role-dsn]"; rc=1
-  done < <(git -C "$ROOT" grep -nIE -e '(user|role)=(postgres|records_fn_owner|service_role)' -- ${RECORDS_SERVING_GLOBS} 2>/dev/null | cut -d: -f1,2)
-  say "  PASS  records serving DSN scan ran (globs: ${RECORDS_SERVING_GLOBS})"
+  while IFS= read -r loc; do
+    [[ -z "$loc" ]] && continue
+    say "  FIND  ${loc}  [rule: records-serving-non-app-role]"; rc=1
+  done < <(grep -rInoE '(user|role)=[A-Za-z0-9_]+' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+             | grep -vE ':(user|role)=(records_api|records_intake_writer)$' \
+             | sed -E 's/:[^:]*$//')
+  while IFS= read -r loc; do
+    [[ -z "$loc" ]] && continue
+    say "  FIND  ${loc}  [rule: records-serving-bypass-credential]"; rc=1
+  done < <(grep -rInEi -e 'sb_secret_|service_role|bypassrls' ${RECORDS_SERVING_GLOBS} 2>/dev/null | cut -d: -f1,2)
+  say "  PASS  records serving scan ran (globs: ${RECORDS_SERVING_GLOBS})"
 else
   say "  SKIP  no RECORDS_SERVING_GLOBS set (serving config not built yet)"
 fi
 ```
+(The implementer finalizes the exact `sed`/`cut` so output is `file:line` value-silently; the contract is location + rule name, never the credential.)
 
-- [ ] **Step 3: Write the positive/negative test** `test_secret_audit_ac8.sh`. In a temp dir tracked by a throwaway git repo (or a temp path under `RECORDS_SERVING_GLOBS`), plant (a) `sb_secret_FAKEFAKEFAKEFAKEFAKE00`, (b) `SUPABASE_SERVICE_ROLE_KEY=eyJhbGciFAKE.FAKE.FAKE`, (c) a serving DSN `host=h user=postgres dbname=records` → assert `secret-audit.sh` exits 1 and prints each rule name and NEVER the planted value (grep the output for the value → must be absent). Then plant the sanctioned `RECORDS_API_DSN="host=h user=records_api dbname=records"` under the same glob → assert it is NOT flagged. Clean up the fixtures.
+- [ ] **Step 3: Write the positive/negative test** `test_secret_audit_ac8.sh`. Create a temp dir; point `RECORDS_SERVING_GLOBS` at it. Build every planted signature by **runtime string concatenation** so the test's own tracked source holds no live signature that Check 2 would flag — e.g. `owner='user=''postgres'`, `admin='user=''records_admin'`, `sk='sb''_secret_''FAKE0000000000000000'`, `svc='service''_role'`. Plant separate files: (a) `host=h ${owner} dbname=records`, (b) `host=h ${admin} dbname=records`, (c) `${sk}`, (d) `${svc}`. Run `RECORDS_SERVING_GLOBS="$tmp/*" bash infra/secret-audit.sh`; assert exit 1, each rule name printed, and the output contains **none** of the planted values (grep the captured output for each value -> absent). Then replace with the sanctioned `host=h user=records_api dbname=records` -> assert Check 3 does NOT flag it. Remove the temp dir. (The `sb_secret_` fixture also exercises the global Check-2 signature via Check 3's rule (b), since Check 2's `git grep` only sees tracked files.)
 
-- [ ] **Step 4: Run** `bash infra/secret-audit.sh` (expect clean on the real tree — no serving config yet, and no planted keys) and `bash infra/database/migrations/records/test_secret_audit_ac8.sh` (expect the fixtures flagged/not-flagged as designed).
+- [ ] **Step 4: Run** `bash infra/secret-audit.sh` — expect **clean on the real tree**: the only Check-2 addition is `sb_secret_` (matches nothing tracked), and Check 3 is dormant with `RECORDS_SERVING_GLOBS` unset, so the CI `SERVICE_ROLE_KEY` declaration is untouched. Then run `bash infra/database/migrations/records/test_secret_audit_ac8.sh` (fixtures flagged/not-flagged + value-silent).
 
 - [ ] **Step 5: Commit** `feat(infra): AC8 secret-audit detectors (service_role/secret-key/bypass-DSN, value-silent)`.
 
