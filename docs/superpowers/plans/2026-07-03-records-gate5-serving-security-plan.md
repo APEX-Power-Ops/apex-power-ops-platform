@@ -59,6 +59,8 @@ Rev 2 stated corrections 1-3 in prose but did NOT fold them into the concrete SQ
 
 7. **Test DB connection uses the repo's real helper API.** `_dbtest` exposes `dsn()` / `guard_target()` / `run_psql()` - there is NO `_dbtest.connect`. The Tier-3 walk passes the disposable DB as `RECORDS_DEV_DSN` (see `_child_env`), so tests connect exactly like `test_045`: `psycopg.connect(_dbtest.dsn(), autocommit=True)` (skips loudly if the DSN is absent; refuses `records_dev`).
 
+**Rev 4 (operator plan review 3rd pass):** `records_fn_owner` is NOT a zero-grant pure owner. Its `SECURITY DEFINER` function inserts into `records.audit_log`, and although it OWNS that table (INSERT implicit), it still needs `USAGE ON SCHEMA records` to REACH it - ownership does not convey schema USAGE, and 045 revoked PUBLIC usage on `records`. Without the grant the definer fails `permission denied for schema records` before RLS is even evaluated (the ops-012 precedent grants schema USAGE to its own `ops_fn_owner`). Fix (folded into 048 + Tier 6): `grant usage on schema records to records_fn_owner` (revoked in 048_down); the "pure owner / zero grants" claim is replaced by an EXACT ALLOWLIST - schema `USAGE` only, no explicit table/function grant beyond ownership, plus the existing no-membership / no-login/super/bypass flags. 047's zero-grant assert stays (true at 047, before 048 adds the one grant). The dropped-policy negative control still proves the INSERT policy is load-bearing.
+
 ---
 
 ## File Structure
@@ -82,7 +84,7 @@ Created under `docs/operations/`:
 - `RECORDS-GATE5-EVIDENCE-2026-07.md` - AC1-AC11 mapping + transcripts (final task).
 
 **Interfaces the whole plan shares** (names later tasks rely on):
-- Roles: `records_owner` (NOLOGIN, owns all `records.*`), `records_fn_owner` (NOLOGIN, owns `audit_log` + `fn_audit_capture`), `records_auditor` (LOGIN, reads `audit_log` only). Pre-existing (045): `records_api`, `records_intake_writer`.
+- Roles: `records_owner` (NOLOGIN, owns all `records.*`; schema owner), `records_fn_owner` (NOLOGIN, owns `audit_log` + `fn_audit_capture`, holds `USAGE` on schema `records` so the definer can reach `audit_log` - exact allowlist, no other grants), `records_auditor` (LOGIN, `USAGE` on `records` + SELECT on `audit_log` only). Pre-existing (045): `records_api`, `records_intake_writer`.
 - `records.audit_log(audit_id bigint PK, event_at timestamptz, action text, table_name text, row_pk text, actor_role text, definer_role text, actor_is_superuser boolean, txid bigint, application_name text, client_addr inet, changed_columns text[], app_actor text)`.
 - `records.fn_audit_capture()` - SECURITY DEFINER, owner `records_fn_owner`, `SET search_path=pg_catalog,records`; trigger arg `TG_ARGV[0]` = the table's PK column name.
 - Harness `SET SESSION AUTHORIZATION <role>` proof helpers already exist in Tier 5 (`run_validation.py`); Tier 6 reuses them.
@@ -96,7 +98,7 @@ Created under `docs/operations/`:
 - [ ] **Step 1: Confirm mesh + worktree + env.**
 
 Run (host): `ssh olares-mesh 'cd /home/olares/code/apex/apex-records-gate5 && git log --oneline -1 && ls .env.dev 2>&1 && test -x .venv/bin/python && echo VENV_OK'`
-Expected: HEAD at the rev-3 spec commit; `.env.dev` present (operator-provisioned admin DSN, chmod 600); `VENV_OK`. If `.env.dev` is absent, STOP and request the operator provision it (out-of-band, Vault-first) - do not proceed.
+Expected: HEAD at the current Gate-5 plan commit (rev 4+ on `records/gate5-serving-security`, i.e. `49030e79` or later); `.env.dev` present (operator-provisioned admin DSN, chmod 600); `VENV_OK`. If `.env.dev` is absent, STOP and request the operator provision it (out-of-band, Vault-first; or `cp` the 0600 gate3-worktree cache value-silent + chmod 600) - do not proceed.
 
 - [ ] **Step 2: Baseline the existing ladder (Tiers 0-5 green on a disposable DB).**
 
@@ -440,9 +442,12 @@ begin
     if rec.rolname='records_auditor' and not rec.rolcanlogin then
       raise exception '047: records_auditor must be LOGIN'; end if;
   end loop;
+  -- At 047 the role is BARE (zero grants). 048 adds EXACTLY one grant - USAGE on
+  -- schema records - so the SECURITY DEFINER can reach records.audit_log; 048 +
+  -- Tier 6 assert that exact allowlist. Here we only prove 047 itself grants nothing.
   select count(*) into n from pg_shdepend sd join pg_roles ro on ro.oid=sd.refobjid
    where ro.rolname='records_fn_owner' and sd.deptype='a';
-  if n>0 then raise exception '047: records_fn_owner holds ACL grants; must be a pure owner'; end if;
+  if n>0 then raise exception '047: records_fn_owner holds ACL grants at 047 (must be bare; schema USAGE is added in 048)'; end if;
   -- zero membership edges (either direction) for EITHER audit role - proves the
   -- both-direction revoke above actually landed (not just a LOGIN-member check).
   select count(*) into n from pg_auth_members am
@@ -561,6 +566,11 @@ create policy p_audit_log_ins on records.audit_log for insert to records_fn_owne
 drop policy if exists p_audit_log_sel on records.audit_log;
 create policy p_audit_log_sel on records.audit_log for select to records_auditor using (true);
 -- append-only: no UPDATE/DELETE policy for anyone. No app-role grant/policy.
+-- The SECURITY DEFINER capture function runs as its owner records_fn_owner; it
+-- OWNS audit_log (INSERT is implicit) but still needs schema USAGE to REACH it
+-- (045 revoked PUBLIC usage on records; ownership != schema usage). Exact
+-- allowlist: USAGE only, no table grants beyond ownership (ops-012 precedent).
+grant usage on schema records to records_fn_owner;
 grant usage on schema records to records_auditor;   -- required or SELECT is unreachable
 grant select on records.audit_log to records_auditor;
 
@@ -600,9 +610,10 @@ alter function records.fn_audit_capture() owner to records_fn_owner;
 -- records routines, so revoke it (both a hardening + keeps Tier 5 green).
 revoke execute on function records.fn_audit_capture() from public;
 
--- asserts: definer safety (three load-bearing checks) + FORCE-RLS + no-PUBLIC-execute.
+-- asserts: definer safety (three load-bearing checks) + FORCE-RLS + no-PUBLIC-execute
+-- + records_fn_owner exact-allowlist (schema USAGE only).
 do $$
-declare owner text; secdef bool; cfg text[]; forced bool; pub int;
+declare owner text; secdef bool; cfg text[]; forced bool; pub int; gcnt int;
 begin
   select pg_get_userbyid(proowner), prosecdef, proconfig into owner, secdef, cfg
     from pg_proc where oid = 'records.fn_audit_capture()'::regprocedure;
@@ -619,12 +630,26 @@ begin
     from pg_proc p, lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
    where p.oid='records.fn_audit_capture()'::regprocedure and a.grantee=0 and a.privilege_type='EXECUTE';
   if pub>0 then raise exception '048: fn_audit_capture still has PUBLIC EXECUTE'; end if;
+  -- records_fn_owner exact-allowlist: it MUST hold USAGE on schema records (the
+  -- definer needs it to reach audit_log) and NOTHING else - ownership conveys
+  -- table privileges implicitly, so there must be no explicit table/function ACL
+  -- grant to it (the owner's own materialized self-entry is excluded via owner<>grantee).
+  if not has_schema_privilege('records_fn_owner','records','USAGE') then
+    raise exception '048: records_fn_owner lacks USAGE on schema records (definer cannot reach audit_log)'; end if;
+  select count(*) into gcnt from pg_class c join pg_namespace ns on ns.oid=c.relnamespace,
+    lateral aclexplode(c.relacl) a join pg_roles g on g.oid=a.grantee
+   where ns.nspname='records' and g.rolname='records_fn_owner' and c.relowner <> a.grantee;
+  if gcnt>0 then raise exception '048: records_fn_owner has % explicit table grant(s); ownership only', gcnt; end if;
+  select count(*) into gcnt from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace,
+    lateral aclexplode(p.proacl) a join pg_roles g on g.oid=a.grantee
+   where ns.nspname='records' and g.rolname='records_fn_owner' and p.proowner <> a.grantee;
+  if gcnt>0 then raise exception '048: records_fn_owner has % explicit function grant(s); ownership only', gcnt; end if;
 end $$;
 
 COMMIT;
 ```
 
-- [ ] **Step 2: Write `048_records_audit_log_down.sql`** - wrapped `BEGIN; SET client_encoding TO 'UTF8'; ... COMMIT;` (matching 045); body: `revoke usage on schema records from records_auditor;` (048 granted it), then `drop function if exists records.fn_audit_capture();` and `drop table if exists records.audit_log;` (policies + the audit_log SELECT grant drop with the table). ASCII.
+- [ ] **Step 2: Write `048_records_audit_log_down.sql`** - wrapped `BEGIN; SET client_encoding TO 'UTF8'; ... COMMIT;` (matching 045); body: `revoke usage on schema records from records_auditor;` AND `revoke usage on schema records from records_fn_owner;` (048 granted both), then `drop function if exists records.fn_audit_capture();` and `drop table if exists records.audit_log;` (policies + the audit_log SELECT grant drop with the table). ASCII. (047_down's `DROP OWNED BY records_fn_owner` also clears the USAGE, but 048 owns the grant, so 048_down revokes it for symmetry.)
 
 - [ ] **Step 3: Write `test_048_records_audit_log.py`** (connect via `psycopg.connect(_dbtest.dsn(), autocommit=True)`) - the false-green guard is the centerpiece. `fn_audit_capture` is a TRIGGER function (uses `TG_OP`/`TG_ARGV`/`NEW`/`OLD`) so it CANNOT be invoked directly; every capture proof fires it through a real trigger:
   - assert `audit_log` is `relforcerowsecurity`; the function is `prosecdef`, owner `records_fn_owner`, search_path pinned; no PUBLIC EXECUTE.
@@ -734,7 +759,7 @@ COMMIT;
 
 - [ ] **Step 1: Extend `parse_tiers` to `{0..6}`** (default set, error strings "0-6", full-set guard `{0,1,2,3,4,5,6}`). Mirror the existing Tier-5 addition.
 
-- [ ] **Step 2: Add `tier6_posture(child_dsn)`** proving, on the migrated DB: (a) no `records.*` object owned by a `rolsuper`/`rolbypassrls` role, counted across ALL THREE catalogs (pg_class relkind r/v/m/S + pg_proc + pg_namespace) - the same union `test_046` uses; (b) `records_owner`/`records_fn_owner`/`records_auditor` non-super/non-bypassrls with correct login flags (owners NOLOGIN, auditor LOGIN) and no createdb/createrole/replication; (c) `fn_audit_capture` proowner=records_fn_owner + prosecdef + search_path pinned + no PUBLIC EXECUTE (durable re-check); (d) `SET ROLE records_owner`/`records_fn_owner` denied from `records_api` + a rogue role; (e) the `trg_audit` table set equals the writer-grant set; (f) audit isolation (`records_auditor` reads `audit_log` via SET ROLE; `records_api`/`records_intake_writer` cannot); (g) `records_auditor` has no grant/policy on `source_links` or any operational/reference table; (h) the FORCE-RLS negative-control: inside a rolled-back `savepoint`, `drop policy p_audit_log_ins`, fire the definer path, assert the capture RAISES the RLS violation, then `rollback to savepoint` (restores the policy). At Tier 6 the definer path may be fired via a real writer-table insert (as `records_intake_writer` via `SET SESSION AUTHORIZATION`, FK-valid fixture) or the same temp-table + scratch-trigger `test_048` uses - either is executable here. Use `SET SESSION AUTHORIZATION` for all mutating-identity checks. Return a `Tier`.
+- [ ] **Step 2: Add `tier6_posture(child_dsn)`** proving, on the migrated DB: (a) no `records.*` object owned by a `rolsuper`/`rolbypassrls` role, counted across ALL THREE catalogs (pg_class relkind r/v/m/S + pg_proc + pg_namespace) - the same union `test_046` uses; (b) `records_owner`/`records_fn_owner`/`records_auditor` non-super/non-bypassrls with correct login flags (owners NOLOGIN, auditor LOGIN) and no createdb/createrole/replication; (c) `fn_audit_capture` proowner=records_fn_owner + prosecdef + search_path pinned + no PUBLIC EXECUTE (durable re-check), and `records_fn_owner` holds the EXACT allowlist - `USAGE` on schema `records` (`has_schema_privilege` true, needed by the definer to reach `audit_log`) and NO explicit table/function ACL grant beyond ownership; (d) `SET ROLE records_owner`/`records_fn_owner` denied from `records_api` + a rogue role; (e) the `trg_audit` table set equals the writer-grant set; (f) audit isolation (`records_auditor` reads `audit_log` via SET ROLE; `records_api`/`records_intake_writer` cannot); (g) `records_auditor` has no grant/policy on `source_links` or any operational/reference table; (h) the FORCE-RLS negative-control: inside a rolled-back `savepoint`, `drop policy p_audit_log_ins`, fire the definer path, assert the capture RAISES the RLS violation, then `rollback to savepoint` (restores the policy). At Tier 6 the definer path may be fired via a real writer-table insert (as `records_intake_writer` via `SET SESSION AUTHORIZATION`, FK-valid fixture) or the same temp-table + scratch-trigger `test_048` uses - either is executable here. Use `SET SESSION AUTHORIZATION` for all mutating-identity checks. Return a `Tier`.
 
 - [ ] **Step 3: Wire `tier6_posture` into `main`** after Tier 5 when `6 in db_wanted` and Tier 3 did not fail.
 
