@@ -31,6 +31,11 @@ NOT_NULL_INVARIANT = [
     ("persons", "display_name"),
 ]
 WRITE_PATH = ["assets", "form_submissions", "form_field_values", "pm_schedules", "pm_events", "persons"]
+REFERENCE = ["asset_classes", "form_templates", "pm_programs", "neta_procedures",
+             "neta_test_items", "neta_tables", "asset_class_neta_procedure", "neta_procedure_xref"]
+# The 15 records tables the migration's grant matrix is authoritative over
+# (8 reference + 6 write-path + source_links). Same list the migration uses.
+ALL_TABLES = REFERENCE + WRITE_PATH + ["neta_table_source_links"]
 
 
 @pytest.fixture(scope="module")
@@ -125,8 +130,34 @@ def test_views_are_security_invoker(conn):
 
 
 def test_source_links_restricted(conn):
+    # D10 owner-only: NEITHER app role holds ANY privilege on source_links,
+    # not just SELECT (a stale INSERT/UPDATE/DELETE grant must not survive 045).
     for role in ("records_api", "records_intake_writer"):
+        for priv in ("SELECT", "INSERT", "UPDATE", "DELETE"):
+            has = conn.execute(
+                "select has_table_privilege(%s, 'records.neta_table_source_links', %s)",
+                (role, priv),
+            ).fetchone()[0]
+            assert not has, f"{role} holds {priv} on neta_table_source_links (D10 restricts it)"
+
+
+def test_writer_no_delete_anywhere(conn):
+    # Authoritative matrix: records_intake_writer never holds DELETE on any records
+    # table (a stale DELETE grant must be cleared by 045's revoke-first).
+    for tbl in ALL_TABLES:
         has = conn.execute(
-            "select has_table_privilege(%s, 'records.neta_table_source_links', 'SELECT')", (role,)
+            "select has_table_privilege('records_intake_writer', %s, 'DELETE')",
+            (f"records.{tbl}",),
         ).fetchone()[0]
-        assert not has, f"{role} holds SELECT on neta_table_source_links (D10 restricts it)"
+        assert not has, f"records_intake_writer unexpectedly holds DELETE on {tbl}"
+
+
+def test_reader_no_write_anywhere(conn):
+    # records_api is read-only across ALL 15 records tables (broad reader-no-write;
+    # extends test_reader_has_no_write from the 6 write-path tables to all 15).
+    for tbl in ALL_TABLES:
+        for priv in ("INSERT", "UPDATE", "DELETE"):
+            has = conn.execute(
+                "select has_table_privilege('records_api', %s, %s)", (f"records.{tbl}", priv)
+            ).fetchone()[0]
+            assert not has, f"records_api unexpectedly holds {priv} on {tbl}"

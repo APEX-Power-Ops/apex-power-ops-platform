@@ -84,6 +84,12 @@ begin
 end $$;
 
 -- [3] Grant matrix -----------------------------------------------------------------------
+-- Authoritative, not additive: REVOKE ALL first so any pre-existing/stale grant on either
+-- app role is cleared, then the exact grants below become the whole truth. (all tables also
+-- covers views.) Mirrors the down's [d4] authoritative revoke-all. Roles exist from [1].
+revoke all privileges on all tables in schema records from records_api, records_intake_writer;
+revoke all privileges on all routines in schema records from records_api, records_intake_writer;
+
 -- records_api: SELECT on the 8 reference + 6 write-path tables + 2 views. NOT source_links (D10).
 grant select on
   records.asset_classes, records.form_templates, records.pm_programs,
@@ -147,7 +153,9 @@ grant insert (pm_schedule_id, asset_id, scheduled_for, performed_at, form_submis
 grant insert (display_name), update (display_name)
   on records.persons to records_intake_writer;
 
--- [3a] posture asserts: 11 NOT-NULL columns present; reserved cols absent; reader no-write.
+-- [3a] posture asserts: 11 NOT-NULL columns present; reserved cols absent; reader no-write;
+-- writer no-DELETE anywhere; neither role holds ANY privilege on source_links (exactness -
+-- these fail-closed on a stale/extra grant that the [3] revoke-first should have cleared).
 do $$
 declare
   nn  text[][] := array[['assets','asset_tag'],['assets','name'],
@@ -160,7 +168,12 @@ declare
     ['pm_events','status'],['form_field_values','assessment'],
     ['persons','worker_class'],['persons','employee_ref'],['persons','match_adjudicated_by'],
     ['persons','match_adjudicated_at'],['persons','match_confidence']];
-  i int; wp text;
+  -- the 15 records tables (8 ref + 6 write-path + source_links)
+  all15 text[] := array['asset_classes','form_templates','pm_programs','neta_procedures',
+    'neta_test_items','neta_tables','asset_class_neta_procedure','neta_procedure_xref',
+    'assets','form_submissions','form_field_values','pm_schedules','pm_events','persons',
+    'neta_table_source_links'];
+  i int; wp text; t2 text; pv text;
 begin
   for i in 1 .. array_length(nn,1) loop
     if not has_column_privilege('records_intake_writer', format('records.%I', nn[i][1]), nn[i][2], 'INSERT') then
@@ -180,10 +193,28 @@ begin
       raise exception '045 posture: records_api holds a write on %', wp;
     end if;
   end loop;
-  if has_table_privilege('records_api', 'records.neta_table_source_links', 'SELECT')
-     or has_table_privilege('records_intake_writer', 'records.neta_table_source_links', 'SELECT') then
-    raise exception '045 posture: an app role holds SELECT on neta_table_source_links (D10)';
-  end if;
+  -- reader (records_api) holds NO write anywhere across all 15 records tables
+  foreach t2 in array all15 loop
+    if has_table_privilege('records_api', format('records.%I', t2), 'INSERT')
+       or has_table_privilege('records_api', format('records.%I', t2), 'UPDATE')
+       or has_table_privilege('records_api', format('records.%I', t2), 'DELETE') then
+      raise exception '045 posture: records_api holds a write on % (reader must be read-only)', t2;
+    end if;
+  end loop;
+  -- writer (records_intake_writer) holds NO DELETE anywhere across all 15 records tables
+  foreach t2 in array all15 loop
+    if has_table_privilege('records_intake_writer', format('records.%I', t2), 'DELETE') then
+      raise exception '045 posture: records_intake_writer holds DELETE on % (writer never deletes)', t2;
+    end if;
+  end loop;
+  -- neither app role holds ANY privilege on neta_table_source_links (D10 owner-only)
+  foreach t2 in array array['records_api','records_intake_writer'] loop
+    foreach pv in array array['SELECT','INSERT','UPDATE','DELETE'] loop
+      if has_table_privilege(t2, 'records.neta_table_source_links', pv) then
+        raise exception '045 posture: % holds % on neta_table_source_links (D10 owner-only)', t2, pv;
+      end if;
+    end loop;
+  end loop;
 end $$;
 
 -- [4] RLS: enable on all 15 tables; reference USING(true); write-path role-scoped; restrict source_links.
