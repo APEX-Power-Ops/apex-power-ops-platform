@@ -9,8 +9,9 @@ This document maps each acceptance criterion (AC1-AC11) to the real, committed a
 that satisfies it, and reproduces the specific transcripts an adversarial reviewer would
 ask for: the false-green negative controls, the actor-attribution proof, the
 down/up-reversibility evidence, the honest-scope callout, and the DEV-7 auditor-retain
-behavior. All evidence below is drawn from the actual files on `main` at the commits
-listed, plus one live harness run captured on 2026-07-03.
+behavior. All evidence below is drawn from the actual files on the `records/gate5-serving-security`
+branch (off `main` `03f6c339`, NOT yet merged) at the commits listed, plus a live harness
+run captured on 2026-07-03.
 
 ## Commit inventory
 
@@ -23,9 +24,13 @@ listed, plus one live harness run captured on 2026-07-03.
 | Tier 6 + MANIFEST | `2eff8c30` | feat(records): Tier 6 ownership+audit posture proofs + parse_tiers {0..6} + MANIFEST (Gate 5) |
 | Serving contract | `62f682d6` | docs(records): serving contract for Gate 9 (Gate 5) |
 | Serving contract fixup | `94aea7d2` | docs(records): serving contract - fix app-served table count 15->14 (T6 review Minor) |
+| Evidence doc | `df52044e` | docs(records): Gate 5 evidence + CI wiring confirmation |
+| P2-1 harness role cleanup | `71da7988` | fix(records): harness drops walk-created Gate-5 cluster roles (Codex P2-1) |
+| P2-2 changed_columns fix | `ab78f9b0` | fix(records): changed_columns excludes trigger-maintained updated_at + cross-txn proof (Codex P2-2) |
 
-All seven commits are on `main` (`ee163d14`..`94aea7d2` covers the full Gate 5 spec+plan+build
-arc); `git log --oneline main..HEAD` on the build worktree shows zero unmerged Gate 5 work.
+All Gate 5 build commits are on the `records/gate5-serving-security` branch (off `main` `03f6c339`),
+**NOT yet merged**; `git log --oneline main..HEAD` on the build worktree shows the full Gate 5 arc
+(spec+plan+build+P2 remediation) as unmerged work, pending the operator's merge decision.
 
 ## AC1-AC11 -> satisfying artifact
 
@@ -35,12 +40,12 @@ arc); `git log --oneline main..HEAD` on the build worktree shows zero unmerged G
 | AC2 | FORCE teeth: all 15 tables `FORCE ROW LEVEL SECURITY`; non-superuser owner sees 0 rows on a seeded table with no owner policy; app roles see their rows; owner-path INSERT is RLS-blocked. | `046_records_ownership.sql` / `test_046` | `test_046` asserts `relforcerowsecurity` count of non-FORCE tables is 0, then proves the teeth live: `SET SESSION AUTHORIZATION records_owner` on `records.neta_tables` returns 0 rows while `records_api` returns the full `base` count via the same connection. Tier 6(a) re-proves zero-stragglers on every CI run (see below). |
 | AC3 | Ownership-drift: Tier-6 assert FAILS when any `records.*` object is owned by a `rolsuper` OR `rolbypassrls` role. | Tier 6(a), `run_validation.py` `OWNED_BY_SUPER_OR_BYPASS` | The query unions `pg_class` (relkind r/v/m/S) + `pg_proc` + `pg_namespace`, each joined to `pg_roles` and filtered on `rolsuper OR rolbypassrls`; Tier 6 fails with `"6a: a records object is owned by a super/bypassrls role"` if the union is non-zero. This is the identical three-catalog union used in 046's own asserts (see "three-catalog" note under AC1/AC4 mapping). |
 | AC4 | Audit capture: triggers on exactly the writer-grant table set (derived, not hardcoded); not on `audit_log`/`source_links`; writer INSERT+UPDATE each yield one row; DELETE coverage exercised via superuser DELETE (writer has no DELETE per Gate 3), row_pk non-null. | `049_records_audit_triggers.sql` / `test_049_records_audit_triggers.py` / Tier 6(e) | `test_049` derives `WANT_TRIGGER_COUNT` from `information_schema.role_column_grants` for `records_intake_writer` INSERT/UPDATE (not a hardcoded list) == 6 (`assets, form_submissions, form_field_values, pm_schedules, pm_events, persons`), asserts `GOT_TRIGGER_COUNT` (real `trg_audit` triggers) matches, and asserts `FORBIDDEN_TRIGGER` (audit_log, neta_table_source_links) == 0. The superuser UPDATE+DELETE block (`by_action["delete"]`) asserts `d_pk == str(pk)` (row_pk non-null on DELETE) and `d_actor == admin_login`, `d_is_su is True`. Tier 6(e) re-derives the same want/got pair on the final migrated DB every CI run. |
-| AC5 | Metadata-minimal: `audit_log` has NO before/after value-image column AND NO content `row_hash`; `actor_role` = mutating session identity; no audit row contains an operational data value. | `048_records_audit_log.sql` (table DDL) / `test_048_records_audit_log.py` | 048's `audit_log` DDL carries only `audit_id, table_name, pk_name, row_pk, action, actor_role, definer_role, actor_is_superuser, changed_columns (name array), txid, occurred_at, app_actor` - no `old_row`/`new_row`/`row_hash` column exists in the DDL. `test_049`'s UPDATE proof asserts `u_changed == ["display_name"]` (column NAMES, not values), and no assertion anywhere reads a captured value payload, because none is stored. |
+| AC5 | Metadata-minimal: `audit_log` has NO before/after value-image column AND NO content `row_hash`; `actor_role` = mutating session identity; no audit row contains an operational data value. | `048_records_audit_log.sql` (table DDL) / `test_048_records_audit_log.py` | 048's `audit_log` DDL carries only `audit_id, event_at, action, table_name, row_pk, actor_role, definer_role, actor_is_superuser, txid, application_name, client_addr, changed_columns (name array), app_actor` - no `old_row`/`new_row`/`row_hash` column exists in the DDL (there is no `pk_name` column, and the timestamp column is `event_at`). `test_049`'s cross-transaction UPDATE proof asserts `changed_columns == ["display_name"]` (column NAMES, not values, and EXCLUDING the trigger-maintained `updated_at` per Codex P2-2 - see the "P2 remediation" section below), and no assertion anywhere reads a captured value payload, because none is stored. |
 | AC6 | Definer false-green guard: `fn_audit_capture` is SECURITY DEFINER owned by `records_fn_owner`; three asserts (proowner, owner non-bypass/non-super, insert-as-writer lands) in one path; negative control (drop INSERT policy -> capture RAISES); function not `postgres`-owned. | `048_records_audit_log.sql` / `test_048_records_audit_log.py` / Tier 6(c)/(h) | See "False-green negative-control evidence" below - reproduced in full from the actual test and Tier 6 code. |
 | AC7 | Audit isolation: `records_auditor` (via SET ROLE) reads `audit_log`; `records_api`/`records_intake_writer` can neither read nor write it; `records_auditor` has no grant/policy on `neta_table_source_links` or any operational/reference table. | `047_records_audit_roles.sql` / `048_records_audit_log.sql` / Tier 6(f)/(g) | Tier 6(f): `SET ROLE records_auditor` then `SELECT count(*) FROM records.audit_log` succeeds; the same statement under `SET SESSION AUTHORIZATION records_api` and `records_intake_writer` raises and is caught (denial confirmed for both). Tier 6(g): zero rows from `information_schema.role_table_grants` / `role_column_grants` for `records_auditor` outside `audit_log`, and zero `pg_policies` rows naming `records_auditor` outside `audit_log`. |
 | AC8 | Tier-6 posture: three roles non-super/non-bypassrls; `fn_audit_capture` prosecdef+proconfig durable re-check; `SET ROLE` into owner roles denied from app/rogue roles. | Tier 6(b)/(c)/(d) | Tier 6(b) checks `rolsuper`, `rolbypassrls`, `rolcanlogin` (against an explicit `want_login` map), `rolcreatedb`, `rolcreaterole`, `rolreplication` for all three of `records_owner`/`records_fn_owner`/`records_auditor`. Tier 6(c) re-checks `FN_CAPTURE_META` (owner, `prosecdef`, `search_path` pinned via `proconfig`, zero PUBLIC EXECUTE via `aclexplode`) plus the full 048 exact-allowlist DO block. Tier 6(d) denies `SET ROLE records_owner`/`records_fn_owner` from `records_api` and from a freshly created rogue login role (`expect_raise` savepoint pattern), and separately asserts zero `pg_auth_members` edges touching any of the three roles in either direction (membership-drift durability, item AC8 "no membership"). |
 | AC9 | Serving contract: `SERVING_CONTRACT.{yaml,md}` present + machine-readable; every connecting role has a `supabase_target`; every NOLOGIN owner flagged `connects:false`/owner-only/no-DSN; Check-3 stays a dormant, honest SKIP (not armed). | `reference/records/SERVING_CONTRACT.yaml` / `reference/records/SERVING_CONTRACT.md` (commit `62f682d6`, fixed up in `94aea7d2`) | The YAML classifies `records_api`/`records_intake_writer`/`records_auditor` as `connects: true` with a `supabase_target`, and `records_owner`/`records_fn_owner` as `connects: false` (owner-only, no DSN). `RECORDS_SERVING_GLOBS` is unset by design, so Check-3 records an honest SKIP rather than a false PASS with nothing armed - the fixup commit corrected the app-served table count (15->14) caught in T6 review. |
-| AC10 | Discipline: every migration has a reversible `_down` (symmetry proven, fail-loud on role survival); ASCII-only added lines; all tests on disposable DBs; nothing applied to prod Supabase. | 046-049 `*_down.sql` / `test_046`-`test_049` / this doc's ASCII check | See "Down-reversibility evidence" and the ASCII-check section below. All four migrations were validated exclusively against `records_val_20260703T200558_7343`, a harness-created disposable DB dropped at the end of the run (see captured transcript below); `RECORDS_PG_ADMIN_DSN` in `.env.dev` never points at `records_dev` or a Supabase project, and the harness's `guard_target()`/`assert_val_name()` refuse `records_dev` and any non-`records_val_*` name by construction. |
+| AC10 | Discipline: every migration has a reversible `_down` (symmetry proven, fail-loud on role survival); ASCII-only added lines; all tests on disposable DBs; nothing applied to prod Supabase. | 046-049 `*_down.sql` / `test_046`-`test_049` / this doc's ASCII check | See "Down-reversibility evidence" and the ASCII-check section below. All four migrations were validated exclusively against a harness-created disposable `records_val_*` DB dropped at the end of the run (see captured transcript below); `RECORDS_PG_ADMIN_DSN` in `.env.dev` never points at `records_dev` or a Supabase project, and the harness's `guard_target()`/`assert_val_name()` refuse `records_dev` and any non-`records_val_*` name by construction. |
 | AC11 | Actor attribution: writer INSERT records `actor_role=records_intake_writer` + `definer_role=records_fn_owner` (not the definer as actor); superuser/direct-SQL mutation records `actor_role`=session login + `actor_is_superuser=true`; writer path exercised via `SET SESSION AUTHORIZATION` (not `SET ROLE`). | `test_049_records_audit_triggers.py` | See "Actor-attribution evidence" below - reproduced verbatim from the test. |
 
 ## False-green negative-control evidence (AC6)
@@ -247,26 +252,22 @@ Command: `set -a; . ./.env.dev; set +a; export PATH=$HOME/.local/bin:$PATH; .ven
 infra/database/migrations/records/run_validation.py --require-db`
 
 ```
-[connect] dbname=records_val_20260703T200558_7343
+[connect] dbname=records_val_20260703T211056_44435
 --- test_046_records_ownership.py (rc=0) ---
 .                                                                        [100%]
-[connect] dbname=records_val_20260703T200558_7343
-[connect] dbname=records_val_20260703T200558_7343
 --- test_047_records_audit_roles.py (rc=0) ---
 .                                                                        [100%]
-[connect] dbname=records_val_20260703T200558_7343
-[connect] dbname=records_val_20260703T200558_7343
 --- test_048_records_audit_log.py (rc=0) ---
 .                                                                        [100%]
-[connect] dbname=records_val_20260703T200558_7343
-[connect] dbname=records_val_20260703T200558_7343
 --- test_049_records_audit_triggers.py (rc=0) ---
 .                                                                        [100%]
-[connect] dbname=records_val_20260703T200558_7343
 --- tier4 (rc=0) ---
 .......                                                                  [100%]
 [connect] dbname=postgres
-[drop] records_val_20260703T200558_7343
+[drop] records_val_20260703T211056_44435
+[drop-role] records_owner
+[drop-role] records_fn_owner
+[drop-role] records_auditor
 
 === records validation summary ===
   0-syntax         PASS  compileall + origin asserts
@@ -279,10 +280,14 @@ infra/database/migrations/records/run_validation.py --require-db`
 executed test files: 46
 ```
 
-The disposable database `records_val_20260703T200558_7343` was created by the harness
-(`make_val_name()` / `assert_val_name()`), used exclusively for this run, and dropped at
-the end (`[drop] records_val_20260703T200558_7343`) - no shared or persistent database
-(`records_dev` or otherwise) was touched.
+The disposable database `records_val_20260703T211056_44435` was created by the harness
+(`make_val_name()` / `assert_val_name()`), used exclusively for this run, and dropped at the
+end (`[drop] records_val_20260703T211056_44435`). The P2-1 fix then drops the three
+walk-created cluster roles (`[drop-role] records_owner` / `records_fn_owner` /
+`records_auditor`) AFTER the DB drop (since `records_owner` owns the DB's objects), so the
+shared cluster is left clean. Post-run residue re-check (value-silent): Gate-5 role count 0,
+`records_val_*` DB count 0, ownership edges 0. No shared or persistent database (`records_dev`
+or otherwise) was touched.
 
 ## CI wiring confirmation (Step 2)
 
@@ -314,9 +319,52 @@ this workflow**, with no yaml edit required. The AC8 secret-audit fixture step
 (`test_secret_audit_ac8.sh`) is untouched and remains a separate, preceding step in the
 same job. No change was needed or made to `.github/workflows/records-ci.yml` for this task.
 
+## P2 remediation (Codex cross-engine re-audit, 2026-07-03)
+
+After the full build, the mandatory re-audit gate ran both engines against the whole branch
+(`--base-ref main`). The Claude whole-branch review returned READY-TO-MERGE; the Codex
+cross-engine pass surfaced **two P2 findings that all eight Claude reviews (7 per-task + 1
+whole-branch) missed** - the exact value of engine diversity:
+
+- **P2-1 (harness leaked the Gate-5 cluster roles).** Roles are cluster-level, so dropping
+  the disposable `records_val_*` DB did not remove the walk-created `records_owner`,
+  `records_fn_owner`, and `records_auditor`; `snapshot_roles` only tracked the two app roles.
+  The build-validation runs had leaked all three onto the shared dev cluster. Remediation
+  (commit `71da7988`): `snapshot_roles` now tracks all five Gate-5 roles (the "drop only
+  roles absent before this run" rule is preserved, so a pre-existing legit role is never
+  dropped), and the cleanup emits a `[drop-role] <name>` line per dropped role (AFTER the DB
+  drop, since `records_owner` owns the DB's objects). The live leak was cleaned out-of-band
+  and re-verified: Gate-5 role count 0, `records_val_*` DB count 0, ownership edges 0. A unit
+  test pins the expanded snapshot set.
+
+- **P2-2 (`changed_columns` recorded trigger-maintained `updated_at`).** The BEFORE trigger
+  `fn_set_updated_at` (`NEW.updated_at := now()`) fires before the AFTER audit trigger diffs
+  OLD/NEW, so every production UPDATE logged `updated_at` regardless of caller intent.
+  `test_049`'s original proof hid this because its insert+update shared one transaction
+  (stable `now()` -> `updated_at` unchanged). Remediation (commit `ab78f9b0`,
+  operator-ratified design ruling): `fn_audit_capture` now excludes `updated_at` from the
+  diff (`and o.key <> 'updated_at'`, with deterministic `array_agg(o.key order by o.key)`),
+  so `changed_columns` reflects caller intent. `test_049`'s UPDATE proof is now a genuine
+  cross-transaction proof asserting BOTH that `updated_at` actually moved AND that
+  `changed_columns == ['display_name']` (updated_at excluded) - so it fails if the filter is
+  removed. Spec G5-D6 amended to match.
+
+**Surface-scope reconciliation.** The AC10 "validated exclusively against a disposable
+`records_val_*` DB" claim holds for schema objects, but cluster-level ROLES are a distinct
+part of the surface that the disposable-DB drop does not cover. P2-1's fix makes the harness
+leave the shared cluster clean; this record no longer treats "disposable DB only" as if roles
+were never part of the surface.
+
+Both fixes were re-audited clean by an opus targeted review (trigger re-enable proven safe by
+transaction atomicity; zero-residue cleanup; load-bearing cross-txn proof) AND a Codex
+targeted re-check (`--base-ref df52044e`: "no discrete correctness, security, or
+maintainability issue introduced by this patch").
+
 ## Scope note
 
-This document covers Tasks 1-6 (migrations 046-049, Tier 6, serving contract) as already
-committed on `main`. No new migration, test, or CI change was introduced by this task -
-this is a documentation-only evidence record plus a CI-wiring confirmation, per the Task 7
-brief.
+This document covers Tasks 1-6 (migrations 046-049, Tier 6, serving contract) plus the
+Codex-P2 remediation (see the "P2 remediation" section), as committed on the
+`records/gate5-serving-security` branch (off `main` `03f6c339`), **NOT yet merged**. The
+Task 7 evidence record itself introduced no new migration/test/CI change (it is a
+documentation-only record plus a CI-wiring confirmation, per the Task 7 brief); the P2
+remediation (commits `71da7988`, `ab78f9b0`) did amend the harness + `048` + `test_049`.
