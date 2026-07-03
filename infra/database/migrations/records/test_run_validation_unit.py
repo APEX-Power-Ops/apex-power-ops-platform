@@ -78,14 +78,16 @@ def test_val_name_shape_and_assert():
 
 
 def test_parse_tiers_default_and_valid():
-    assert rv.parse_tiers("") == {0, 1, 2, 3, 4}
+    assert rv.parse_tiers("") == {0, 1, 2, 3, 4, 5}
     assert rv.parse_tiers("3,4") == {3, 4}
+    assert rv.parse_tiers("5") == {5}
+    assert rv.parse_tiers("3,5") == {3, 5}
 
 
 def test_parse_tiers_rejects_unknown():
-    with pytest.raises(rv.HarnessError, match="unknown tier"):
+    with pytest.raises(rv.HarnessError, match="valid: 0-5"):
         rv.parse_tiers("9")
-    with pytest.raises(rv.HarnessError, match="tiers 0-4"):
+    with pytest.raises(rv.HarnessError, match="tiers 0-5"):
         rv.parse_tiers("x")
 
 
