@@ -25,31 +25,39 @@ Copied verbatim from the spec (every task's requirements implicitly include thes
 
 ---
 
-## Plan rev 2 corrections (BINDING - apply to every task below)
+## Plan rev 3 corrections (BINDING - now INLINED in every task below)
 
-These fold the operator's plan review (2026-07-03). They OVERRIDE the task code where they conflict; apply them uniformly:
+Rev 2 stated corrections 1-3 in prose but did NOT fold them into the concrete SQL/test blocks; rev 3 inlines all of the following directly into the task code (operator plan review 2026-07-03, second pass). They OVERRIDE any residual conflict; the concrete blocks below already reflect them.
 
-1. **Transaction-wrap every migration file** (up and down), matching the established 045 shape - NOT bare `SET LOCAL`:
+1. **Transaction-wrap every migration file** (up and down), matching the established 045 shape verbatim - NOT bare `SET LOCAL`. Every `046-049.sql` and `*_down.sql` opens with and closes with:
    ```sql
-   begin;
-   set client_encoding to 'UTF8';
-   set local client_min_messages = warning;
+   -- <header comment>
+   BEGIN;
+   SET client_encoding TO 'UTF8';
    -- ... migration body ...
-   commit;
+   COMMIT;
    ```
-   `SET LOCAL` is only meaningful inside a transaction; a mid-file failure then rolls back atomically (no partial security state). All of 046-049 + their `_down` files use `CREATE/ALTER ROLE`, `ALTER ... OWNER`, `CREATE TABLE/FUNCTION/TRIGGER`, `CREATE POLICY` - all transactional.
+   (045 carries no `set local client_min_messages`; neither do these - exact parity.) A mid-file failure under the harness's `psql -v ON_ERROR_STOP=1` then rolls back atomically (no partial security state). All of 046-049 + their `_down` files use `CREATE/ALTER ROLE`, `ALTER ... OWNER`, `CREATE TABLE/FUNCTION/TRIGGER`, `CREATE POLICY`, `DROP OWNED`, `DROP ROLE` - all transactional.
 
-2. **Role normalization (guarded create is not enough).** A role may pre-exist on a persistent cluster in a wrong state. After each guarded `create role ... if not exists`, add an UNCONDITIONAL `ALTER ROLE` to pin the exact state, then assert it:
+2. **Role normalization (guarded create is not enough).** A role may pre-exist on a persistent cluster in a wrong state. After each guarded `create role ... if not exists`, an UNCONDITIONAL `ALTER ROLE` pins the exact state, then the asserts prove EVERY flag (not just super/bypassrls):
    ```sql
    alter role records_owner    nologin nosuperuser nobypassrls nocreatedb nocreaterole noreplication;
    alter role records_fn_owner nologin nosuperuser nobypassrls nocreatedb nocreaterole noreplication;
    alter role records_auditor  login   nosuperuser nobypassrls nocreatedb nocreaterole noreplication;  -- NO password
-   -- assert: for each of the three roles, rolcanlogin matches, and
+   -- assert per role: rolcanlogin == expected AND
    -- rolsuper/rolbypassrls/rolcreatedb/rolcreaterole/rolreplication are all false.
    ```
-   (This replaces the bare guarded-create in Tasks 1 and 2.)
+   Inlined into Task 1 (046, `records_owner`) and Task 2 (047, `records_fn_owner` + `records_auditor`).
 
-3. **Per-migration test contract (the runner applies NNN, THEN runs `test_NNN`, THEN fingerprints to confirm the test LEFT the DB at the applied-NNN state).** Therefore every `test_NNN` must: (a) assert the applied-NNN posture (the runner already applied it - do NOT re-apply NNN first); (b) run `NNN_down`; (c) assert the reversed/pre-state; (d) run `NNN` (up) again; (e) leave the DB at applied-NNN. NEVER start a test by re-applying NNN, and NEVER leave it reversed (both move the fingerprint or trip a pre-state assert). This corrects the `test_046` code in Task 1.
+3. **Per-migration test contract (the runner applies NNN, THEN runs `test_NNN`, THEN fingerprints to confirm the test LEFT the DB at the applied-NNN state).** Every `test_NNN` must: (a) assert the applied-NNN posture (the runner already applied it - do NOT re-apply NNN first); (b) run `NNN_down`; (c) assert the reversed/pre-state; (d) run `NNN` (up) again; (e) leave the DB at applied-NNN. NEVER start by re-applying NNN, NEVER leave it reversed. Inlined into `test_046`.
+
+4. **Ownership proofs span ALL THREE catalogs (`pg_class` + `pg_proc` + `pg_namespace`), not `pg_class` alone.** 046 also re-owns `fn_set_updated_at` (a function) and the `records` schema itself. The identical three-catalog union is used in 046 up pre-state, 046 up post-assert, 046 down guard, `test_046`, and Tier 6(a). (The fingerprint does NOT capture ownership/RLS-flags, so these asserts - not the walk fingerprint - are what prove 046.)
+
+5. **047 membership assert is broadened** to zero `pg_auth_members` edges touching EITHER audit role in EITHER direction (the SQL revokes both directions for both roles; the assert must prove it for both). Tier 6's `SET ROLE` denial stays.
+
+6. **Negative controls use an EXECUTABLE trigger path** (a trigger function cannot be called directly - it needs `TG_OP`/`TG_ARGV`/`NEW`/`OLD`). `test_048` fires the definer path via a temp table + scratch trigger inside a savepoint; Tier 6(h) fires it via a real writer-table insert (049 triggers exist by then). The dropped-policy red proof runs inside a `SAVEPOINT` and rolls back (which un-drops the policy).
+
+7. **Test DB connection uses the repo's real helper API.** `_dbtest` exposes `dsn()` / `guard_target()` / `run_psql()` - there is NO `_dbtest.connect`. The Tier-3 walk passes the disposable DB as `RECORDS_DEV_DSN` (see `_child_env`), so tests connect exactly like `test_045`: `psycopg.connect(_dbtest.dsn(), autocommit=True)` (skips loudly if the DSN is absent; refuses `records_dev`).
 
 ---
 
@@ -118,28 +126,38 @@ Expected: Tiers 0-5 PASS (21/21 units + AC8 fixture + full ladder), proving the 
 -- non-superuser records_owner, then FORCE ROW LEVEL SECURITY so RLS binds the
 -- owner. Authoritative + reversible. Runs as the superuser admin; superuser
 -- bypasses FORCE, so this migration's own DDL is unaffected.
-set local client_min_messages = warning;
+BEGIN;
+SET client_encoding TO 'UTF8';
 
--- [0] pre-state: every records object + schema must be owned by postgres.
+-- [0] pre-state: every records object (tables/views/matviews/sequences +
+-- FUNCTIONS) AND the records schema itself must be owned by postgres. Counts
+-- span pg_class + pg_proc + pg_namespace (fn_set_updated_at is a function; a
+-- pg_class-only check would miss it and the schema).
 do $$
 declare n int;
 begin
-  select count(*) into n
-    from pg_class c join pg_namespace ns on ns.oid = c.relnamespace
-   where ns.nspname = 'records' and c.relkind in ('r','v','m','S')
-     and pg_get_userbyid(c.relowner) <> 'postgres';
-  if n > 0 then raise exception '046 pre-state: % records object(s) not owned by postgres', n; end if;
-  if (select pg_get_userbyid(nspowner) from pg_namespace where nspname='records') <> 'postgres'
-    then raise exception '046 pre-state: records schema not owned by postgres'; end if;
+  select
+    (select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace
+      where ns.nspname='records' and c.relkind in ('r','v','m','S')
+        and pg_get_userbyid(c.relowner) <> 'postgres')
+  + (select count(*) from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace
+      where ns.nspname='records' and pg_get_userbyid(p.proowner) <> 'postgres')
+  + (select case when pg_get_userbyid(nspowner) <> 'postgres' then 1 else 0 end
+      from pg_namespace where nspname='records')
+    into n;
+  if n > 0 then raise exception '046 pre-state: % records object(s)/schema not owned by postgres', n; end if;
 end $$;
 
--- [1] non-superuser owner role (guarded) + both-direction membership hardening.
+-- [1] non-superuser owner role (guarded + UNCONDITIONAL normalize) + both-
+-- direction membership hardening.
 do $$
 begin
   if not exists (select 1 from pg_roles where rolname='records_owner') then
     create role records_owner nologin nosuperuser nobypassrls;
   end if;
 end $$;
+-- normalize UNCONDITIONALLY: a pre-existing role may be in a wrong state.
+alter role records_owner nologin nosuperuser nobypassrls nocreatedb nocreaterole noreplication;
 do $$
 declare r record;
 begin
@@ -181,16 +199,25 @@ begin
   loop execute format('alter table records.%I force row level security', r.relname); end loop;
 end $$;
 
--- [4] posture asserts (authoritative).
+-- [4] posture asserts (authoritative) - three-catalog ownership + ALL role flags.
 do $$
-declare n int; su bool; brls bool;
+declare n int; su bool; brls bool; canlogin bool; cdb bool; crole bool; crepl bool;
 begin
-  select count(*) into n from pg_class c join pg_namespace ns on ns.oid=c.relnamespace
-   where ns.nspname='records' and c.relkind in ('r','v','m','S')
-     and pg_get_userbyid(c.relowner) <> 'records_owner';
-  if n>0 then raise exception '046: % records object(s) not owned by records_owner', n; end if;
-  select rolsuper, rolbypassrls into su, brls from pg_roles where rolname='records_owner';
+  select
+    (select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace
+      where ns.nspname='records' and c.relkind in ('r','v','m','S')
+        and pg_get_userbyid(c.relowner) <> 'records_owner')
+  + (select count(*) from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace
+      where ns.nspname='records' and pg_get_userbyid(p.proowner) <> 'records_owner')
+  + (select case when pg_get_userbyid(nspowner) <> 'records_owner' then 1 else 0 end
+      from pg_namespace where nspname='records')
+    into n;
+  if n>0 then raise exception '046: % records object(s)/schema not owned by records_owner', n; end if;
+  select rolsuper, rolbypassrls, rolcanlogin, rolcreatedb, rolcreaterole, rolreplication
+    into su, brls, canlogin, cdb, crole, crepl from pg_roles where rolname='records_owner';
   if su or brls then raise exception '046: records_owner must be NOSUPERUSER + NOBYPASSRLS'; end if;
+  if canlogin then raise exception '046: records_owner must be NOLOGIN'; end if;
+  if cdb or crole or crepl then raise exception '046: records_owner must be NOCREATEDB/NOCREATEROLE/NOREPLICATION'; end if;
   select count(*) into n from pg_class c join pg_namespace ns on ns.oid=c.relnamespace
    where ns.nspname='records' and c.relkind='r' and not c.relforcerowsecurity;
   if n>0 then raise exception '046: % records table(s) not FORCE-RLS', n; end if;
@@ -202,13 +229,16 @@ begin
      join pg_roles m on m.oid=am.member where m.rolcanlogin;
   if n>0 then raise exception '046: % LOGIN role(s) are members of records_owner', n; end if;
 end $$;
+
+COMMIT;
 ```
 
 - [ ] **Step 2: Write `046_records_ownership_down.sql`.**
 
 ```sql
 -- 046_records_ownership_down.sql - reverse 046 to the postgres pre-state.
-set local client_min_messages = warning;
+BEGIN;
+SET client_encoding TO 'UTF8';
 
 -- [d1] NO FORCE on all base tables.
 do $$
@@ -266,68 +296,79 @@ begin
   if exists (select 1 from pg_roles where rolname='records_owner')
     then raise exception '046_down: records_owner survived drop'; end if;
 end $$;
+
+COMMIT;
 ```
 
 - [ ] **Step 3: Write `test_046_records_ownership.py`** (destructive down->up self-validator; per-chip rule).
 
 ```python
 import os
-import pytest
-import _dbtest
+import sys
+
+import psycopg
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import _dbtest  # noqa: E402
 
 MIG = "046_records_ownership.sql"
 DOWN = "046_records_ownership_down.sql"
 
-def _dsn():
-    v = os.environ.get("RECORDS_DEV_DSN") or os.environ.get("RECORDS_VAL_DSN")
-    if not v:
-        pytest.skip("no disposable DSN (harness sets RECORDS_VAL_DSN for tier 3)")
-    return _dbtest.guard_target(v)
+# Ownership counted across ALL THREE catalogs (pg_class + pg_proc + pg_namespace)
+# so functions (fn_set_updated_at) and the records schema itself are covered,
+# not tables alone. The three %s slots are the expected owner role name.
+OWNED_NE = (
+    "select "
+    "(select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace "
+    " where ns.nspname='records' and c.relkind in ('r','v','m','S') "
+    "   and pg_get_userbyid(c.relowner) <> '%s') "
+    "+ (select count(*) from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace "
+    "   where ns.nspname='records' and pg_get_userbyid(p.proowner) <> '%s') "
+    "+ (select case when pg_get_userbyid(nspowner) <> '%s' then 1 else 0 end "
+    "   from pg_namespace where nspname='records')"
+)
 
 def _q(dsn, sql):
-    with _dbtest.connect(dsn) as c, c.cursor() as cur:
-        cur.execute(sql)
-        return cur.fetchall()
-
-OWNED_NE = ("select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace "
-            "where ns.nspname='records' and c.relkind in ('r','v','m','S') "
-            "and pg_get_userbyid(c.relowner) <> '%s'")
+    with psycopg.connect(dsn, autocommit=True) as c:
+        return c.execute(sql).fetchall()
 
 def test_046_applied_then_down_up():
     # Runner contract: 046 is ALREADY applied by the walk. Assert the applied
     # posture, exercise DOWN then UP, and LEAVE 046 applied (do NOT re-apply
-    # first, do NOT leave reversed - either moves the fingerprint / trips the
-    # 046 pre-state assert).
-    dsn = _dsn()
-    # (1) applied posture
-    assert _q(dsn, OWNED_NE % "records_owner")[0][0] == 0
-    assert _q(dsn, "select rolsuper, rolbypassrls from pg_roles where rolname='records_owner'")[0] == (False, False)
+    # first, do NOT leave reversed).
+    # _dbtest.dsn() reads RECORDS_DEV_DSN (the walk's disposable child DB via
+    # _child_env), skips the module loudly if absent, and refuses records_dev.
+    dsn = _dbtest.dsn()
+    # (1) applied posture: everything records_owner-owned across all catalogs
+    assert _q(dsn, OWNED_NE % ("records_owner", "records_owner", "records_owner"))[0][0] == 0
+    assert _q(dsn, "select rolsuper, rolbypassrls, rolcanlogin "
+                   "from pg_roles where rolname='records_owner'")[0] == (False, False, False)
     assert _q(dsn, "select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace "
                    "where ns.nspname='records' and c.relkind='r' and not c.relforcerowsecurity")[0][0] == 0
-    # FORCE teeth (SET SESSION AUTHORIZATION so session_user IS the role)
-    with _dbtest.connect(dsn) as c, c.cursor() as cur:
-        cur.execute("select count(*) from records.neta_tables"); base = cur.fetchone()[0]
+    # FORCE teeth: the owner is bound by RLS. SET SESSION AUTHORIZATION makes
+    # session_user the role (SET ROLE would leave session_user=postgres).
+    with psycopg.connect(dsn, autocommit=True) as c:
+        base = c.execute("select count(*) from records.neta_tables").fetchone()[0]
         assert base > 0
-        cur.execute("set session authorization records_owner")
-        cur.execute("select count(*) from records.neta_tables"); assert cur.fetchone()[0] == 0
-        cur.execute("reset session authorization")
-        cur.execute("set session authorization records_api")
-        cur.execute("select count(*) from records.neta_tables"); assert cur.fetchone()[0] == base
-        cur.execute("reset session authorization")
-    # (2) DOWN -> reversed to the postgres pre-state + role dropped (fail-loud)
+        c.execute("set session authorization records_owner")
+        assert c.execute("select count(*) from records.neta_tables").fetchone()[0] == 0
+        c.execute("reset session authorization")
+        c.execute("set session authorization records_api")
+        assert c.execute("select count(*) from records.neta_tables").fetchone()[0] == base
+        c.execute("reset session authorization")
+    # (2) DOWN -> reversed to the postgres pre-state (all catalogs) + role dropped
     _dbtest.run_psql(DOWN, dsn)
-    assert _q(dsn, OWNED_NE % "postgres")[0][0] == 0
+    assert _q(dsn, OWNED_NE % ("postgres", "postgres", "postgres"))[0][0] == 0
     assert _q(dsn, "select count(*) from pg_roles where rolname='records_owner'")[0][0] == 0
-    # (3) UP -> re-apply 046 (its pre-state assert now passes) and LEAVE it applied
+    # (3) UP -> re-apply 046 and LEAVE it applied
     _dbtest.run_psql(MIG, dsn)
-    assert _q(dsn, OWNED_NE % "records_owner")[0][0] == 0  # role actually dropped (fail-loud would have raised)
+    assert _q(dsn, OWNED_NE % ("records_owner", "records_owner", "records_owner"))[0][0] == 0
 ```
-(Note: `_dbtest.connect` / `guard_target` / `run_psql` already exist; if `connect` is named differently in `_dbtest.py`, the implementer uses the existing helper - confirm the name during Step 4.)
 
 - [ ] **Step 4: Apply + run the test on a disposable DB.**
 
-Run (host, worktree; build a disposable DB first via the harness Tier-3 walk or a scratch `records_val_*` created with the admin DSN, set `RECORDS_VAL_DSN`): apply 001-045 then `pytest infra/database/migrations/records/test_046_records_ownership.py -v`.
-Expected: PASS (ownership moved, FORCE teeth proven, reversed clean, role dropped).
+Run (host, worktree; build a disposable DB first via the harness Tier-3 walk or a scratch `records_val_*` created with the admin DSN, exported as `RECORDS_DEV_DSN` - what `_dbtest.dsn()` reads): apply 001-046 (the runner contract requires 046 ALREADY applied; the test does NOT self-apply it), then `pytest infra/database/migrations/records/test_046_records_ownership.py -v`.
+Expected: PASS (ownership moved, FORCE teeth proven, reversed clean, role dropped). In the normal `run_validation.py` Tier-3 walk this happens automatically (the walk applies 046 then runs the test).
 
 - [ ] **Step 5: Commit.**
 
@@ -353,7 +394,8 @@ git commit -m "feat(records): 046 ownership posture - records_owner + FORCE RLS 
 ```sql
 -- 047_records_audit_roles.sql - the two audit roles. No grants to operational
 -- tables (auditor reads audit_log only, granted via policy in 048). No password.
-set local client_min_messages = warning;
+BEGIN;
+SET client_encoding TO 'UTF8';
 do $$
 begin
   if not exists (select 1 from pg_roles where rolname='records_fn_owner') then
@@ -363,6 +405,9 @@ begin
     create role records_auditor login nosuperuser nobypassrls;  -- NO password (out-of-band)
   end if;
 end $$;
+-- normalize UNCONDITIONALLY (pre-existing roles may be in a wrong state).
+alter role records_fn_owner nologin nosuperuser nobypassrls nocreatedb nocreaterole noreplication;
+alter role records_auditor  login   nosuperuser nobypassrls nocreatedb nocreaterole noreplication;  -- NO password
 -- both-direction membership hardening for both roles.
 do $$
 declare r record; owner text;
@@ -378,29 +423,43 @@ begin
     loop execute format('revoke %I from %I', r.who, owner); end loop;
   end loop;
 end $$;
--- asserts.
+-- asserts: ALL role flags per role (canlogin differs) + pure-owner + zero
+-- membership edges touching EITHER audit role in EITHER direction.
 do $$
-declare su bool; brls bool; n int;
+declare n int; rec record;
 begin
-  for su, brls in select rolsuper, rolbypassrls from pg_roles
-                   where rolname in ('records_fn_owner','records_auditor') loop
-    if su or brls then raise exception '047: an audit role is super/bypassrls'; end if;
+  for rec in select rolname, rolsuper, rolbypassrls, rolcanlogin,
+                    rolcreatedb, rolcreaterole, rolreplication
+               from pg_roles where rolname in ('records_fn_owner','records_auditor') loop
+    if rec.rolsuper or rec.rolbypassrls then
+      raise exception '047: % is super/bypassrls', rec.rolname; end if;
+    if rec.rolcreatedb or rec.rolcreaterole or rec.rolreplication then
+      raise exception '047: % has createdb/createrole/replication', rec.rolname; end if;
+    if rec.rolname='records_fn_owner' and rec.rolcanlogin then
+      raise exception '047: records_fn_owner must be NOLOGIN'; end if;
+    if rec.rolname='records_auditor' and not rec.rolcanlogin then
+      raise exception '047: records_auditor must be LOGIN'; end if;
   end loop;
   select count(*) into n from pg_shdepend sd join pg_roles ro on ro.oid=sd.refobjid
    where ro.rolname='records_fn_owner' and sd.deptype='a';
   if n>0 then raise exception '047: records_fn_owner holds ACL grants; must be a pure owner'; end if;
+  -- zero membership edges (either direction) for EITHER audit role - proves the
+  -- both-direction revoke above actually landed (not just a LOGIN-member check).
   select count(*) into n from pg_auth_members am
-     join pg_roles ow on ow.oid=am.roleid and ow.rolname='records_fn_owner'
-     join pg_roles m on m.oid=am.member where m.rolcanlogin;
-  if n>0 then raise exception '047: a LOGIN role is a member of records_fn_owner'; end if;
+   where am.roleid in (select oid from pg_roles where rolname in ('records_fn_owner','records_auditor'))
+      or am.member in (select oid from pg_roles where rolname in ('records_fn_owner','records_auditor'));
+  if n>0 then raise exception '047: % membership edge(s) touch an audit role; must be zero', n; end if;
 end $$;
+
+COMMIT;
 ```
 
 - [ ] **Step 2: Write `047_records_audit_roles_down.sql`** (asymmetric drop discipline).
 
 ```sql
 -- 047_records_audit_roles_down.sql
-set local client_min_messages = warning;
+BEGIN;
+SET client_encoding TO 'UTF8';
 -- records_fn_owner: NOLOGIN pure owner -> zero-owned guard (class+proc+schema) +
 -- DROP OWNED + fail-loud.
 do $$
@@ -441,6 +500,8 @@ begin
     drop role records_auditor;
   end if;
 end $$;
+
+COMMIT;
 ```
 (Reading `pg_authid.rolpassword` requires superuser; the harness/admin DSN is superuser. If unreadable in some env, treat as password-bearing and RETAIN - fail-safe.)
 
@@ -469,7 +530,8 @@ end $$;
 -- SECURITY DEFINER capture function. audit_log is FORCE-RLS so its owner
 -- (records_fn_owner) is itself subject to the INSERT policy: the definer runs
 -- as that owner, so without FORCE the policy would be a no-op (false-green).
-set local client_min_messages = warning;
+BEGIN;
+SET client_encoding TO 'UTF8';
 
 create table if not exists records.audit_log (
   audit_id          bigint generated always as identity primary key,
@@ -558,17 +620,19 @@ begin
    where p.oid='records.fn_audit_capture()'::regprocedure and a.grantee=0 and a.privilege_type='EXECUTE';
   if pub>0 then raise exception '048: fn_audit_capture still has PUBLIC EXECUTE'; end if;
 end $$;
+
+COMMIT;
 ```
 
-- [ ] **Step 2: Write `048_records_audit_log_down.sql`** - transaction-wrapped: `revoke usage on schema records from records_auditor;` (048 granted it), then `drop function if exists records.fn_audit_capture();` and `drop table if exists records.audit_log;` (policies + the audit_log SELECT grant drop with the table). ASCII.
+- [ ] **Step 2: Write `048_records_audit_log_down.sql`** - wrapped `BEGIN; SET client_encoding TO 'UTF8'; ... COMMIT;` (matching 045); body: `revoke usage on schema records from records_auditor;` (048 granted it), then `drop function if exists records.fn_audit_capture();` and `drop table if exists records.audit_log;` (policies + the audit_log SELECT grant drop with the table). ASCII.
 
-- [ ] **Step 3: Write `test_048_records_audit_log.py`** - the false-green guard is the centerpiece:
-  - assert `audit_log` is `relforcerowsecurity`; the function is `prosecdef`, owner `records_fn_owner`, search_path pinned.
-  - **positive:** manually invoke a capture path as the definer owner and assert a row lands (the INSERT policy TO `records_fn_owner` is exercised because FORCE RLS binds the owner).
-  - **negative control:** `drop policy p_audit_log_ins`; repeat the definer insert; assert it RAISES (`new row violates row-level security policy`); recreate the policy. This proves the landing is due to the policy, not owner bypass.
+- [ ] **Step 3: Write `test_048_records_audit_log.py`** (connect via `psycopg.connect(_dbtest.dsn(), autocommit=True)`) - the false-green guard is the centerpiece. `fn_audit_capture` is a TRIGGER function (uses `TG_OP`/`TG_ARGV`/`NEW`/`OLD`) so it CANNOT be invoked directly; every capture proof fires it through a real trigger:
+  - assert `audit_log` is `relforcerowsecurity`; the function is `prosecdef`, owner `records_fn_owner`, search_path pinned; no PUBLIC EXECUTE.
+  - **positive (executable path):** open a NON-autocommit connection; `create temp table _g5probe(id int primary key) on commit drop`; `create trigger _t after insert on _g5probe for each row execute function records.fn_audit_capture('id')`; `insert into _g5probe values (1)`; assert exactly one `records.audit_log` row with `table_name='_g5probe'`, `action='insert'`, `definer_role='records_fn_owner'`, `row_pk='1'`; then `rollback` (drops the temp table + its audit rows). The definer runs as `records_fn_owner`, so FORCE RLS binds it and the INSERT policy TO `records_fn_owner` is what admits the row.
+  - **negative control (savepoint discipline):** in a fresh transaction with the same temp table + trigger, `savepoint s`; `drop policy p_audit_log_ins on records.audit_log`; re-fire the insert; assert it RAISES `new row violates row-level security policy` (SQLSTATE 42501); `rollback to savepoint s` (which un-drops the policy). This proves the landing is the policy, not owner bypass.
   - assert no `before_row`/`after_row`/`row_hash` column exists (metadata-minimal column-set check).
-  - `records_api`/`records_intake_writer` cannot SELECT `audit_log` (SET SESSION AUTHORIZATION -> 0 rows or permission error); `records_auditor` (SET ROLE) can SELECT.
-  - down drops function + table; re-up restores.
+  - `records_api`/`records_intake_writer` cannot SELECT `audit_log` (SET SESSION AUTHORIZATION -> permission error / 0 rows); `records_auditor` (SET ROLE) can SELECT.
+  - down drops function + table; re-up restores (the walk fingerprint DOES capture the table + function def, so pre==post is the reversibility teeth here).
 
 - [ ] **Step 4: Apply + test on a disposable DB.** Expected PASS incl. the negative control.
 
@@ -593,7 +657,8 @@ end $$;
 -- tables records_intake_writer may INSERT/UPDATE (the writer-grant set),
 -- passing each table's single-column PK name. Excludes audit_log (recursion)
 -- and neta_table_source_links (owner-only, D7).
-set local client_min_messages = warning;
+BEGIN;
+SET client_encoding TO 'UTF8';
 do $$
 declare t record; pk_col text; npk int;
 begin
@@ -637,9 +702,11 @@ begin
                and tg.tgname='trg_audit')
     then raise exception '049: trg_audit present on audit_log or source_links'; end if;
 end $$;
+
+COMMIT;
 ```
 
-- [ ] **Step 2: Write `049_records_audit_triggers_down.sql`** - drop `trg_audit` from every table that has it (do-block over `pg_trigger`).
+- [ ] **Step 2: Write `049_records_audit_triggers_down.sql`** - wrapped `BEGIN; SET client_encoding TO 'UTF8'; ... COMMIT;`; drop `trg_audit` from every table that has it (do-block over `pg_trigger`).
 
 - [ ] **Step 3: Write `test_049_records_audit_triggers.py`** - the actor-attribution centerpiece:
   - trigger set equals the writer-grant set; none on `audit_log`/`source_links`.
@@ -667,7 +734,7 @@ end $$;
 
 - [ ] **Step 1: Extend `parse_tiers` to `{0..6}`** (default set, error strings "0-6", full-set guard `{0,1,2,3,4,5,6}`). Mirror the existing Tier-5 addition.
 
-- [ ] **Step 2: Add `tier6_posture(child_dsn)`** proving, on the migrated DB: (a) no `records.*` object (relkind r/v/m/S + pg_proc) owned by a `rolsuper`/`rolbypassrls` role; (b) `records_owner`/`records_fn_owner`/`records_auditor` non-super/non-bypassrls; (c) `fn_audit_capture` proowner=records_fn_owner + prosecdef + search_path pinned (durable re-check); (d) `SET ROLE records_owner`/`records_fn_owner` denied from `records_api` + a rogue role; (e) the `trg_audit` table set equals the writer-grant set; (f) audit isolation (`records_auditor` reads `audit_log` via SET ROLE; `records_api`/`records_intake_writer` cannot); (g) `records_auditor` has no grant/policy on `source_links` or any operational/reference table; (h) the FORCE-RLS negative-control (drop+recreate `p_audit_log_ins` inside a rolled-back savepoint, asserting the definer insert RAISES without it). Use `SET SESSION AUTHORIZATION` for mutating-identity checks. Return a `Tier`.
+- [ ] **Step 2: Add `tier6_posture(child_dsn)`** proving, on the migrated DB: (a) no `records.*` object owned by a `rolsuper`/`rolbypassrls` role, counted across ALL THREE catalogs (pg_class relkind r/v/m/S + pg_proc + pg_namespace) - the same union `test_046` uses; (b) `records_owner`/`records_fn_owner`/`records_auditor` non-super/non-bypassrls with correct login flags (owners NOLOGIN, auditor LOGIN) and no createdb/createrole/replication; (c) `fn_audit_capture` proowner=records_fn_owner + prosecdef + search_path pinned + no PUBLIC EXECUTE (durable re-check); (d) `SET ROLE records_owner`/`records_fn_owner` denied from `records_api` + a rogue role; (e) the `trg_audit` table set equals the writer-grant set; (f) audit isolation (`records_auditor` reads `audit_log` via SET ROLE; `records_api`/`records_intake_writer` cannot); (g) `records_auditor` has no grant/policy on `source_links` or any operational/reference table; (h) the FORCE-RLS negative-control: inside a rolled-back `savepoint`, `drop policy p_audit_log_ins`, fire the definer path, assert the capture RAISES the RLS violation, then `rollback to savepoint` (restores the policy). At Tier 6 the definer path may be fired via a real writer-table insert (as `records_intake_writer` via `SET SESSION AUTHORIZATION`, FK-valid fixture) or the same temp-table + scratch-trigger `test_048` uses - either is executable here. Use `SET SESSION AUTHORIZATION` for all mutating-identity checks. Return a `Tier`.
 
 - [ ] **Step 3: Wire `tier6_posture` into `main`** after Tier 5 when `6 in db_wanted` and Tier 3 did not fail.
 
@@ -728,7 +795,7 @@ dsn_form_inventory: [keyword_user, url_userinfo, url_driver_qualified, pg_env_va
 ## Self-Review (author, against spec rev 3)
 
 1. **Spec coverage:** AC1 (T1), AC2 (T1 FORCE teeth), AC3 (T5 Tier-6 (a)), AC4 (T4 trigger set + I/U + superuser DELETE), AC5 (T3 column-set + T4), AC6 (T3 negative control + three-assert), AC7 (T3 + T5 (f)/(g)), AC8 (T5 (b)/(c)/(d)), AC9 (T6), AC10 (every task's down + ASCII), AC11 (T4 actor attribution). G5-D1..D12 all land in T1-T5. Serving contract G5-D11 in T6. No gap found.
-2. **Placeholder scan:** the only intentional glob is `p_<t>_*` policy-name shorthand (expanded in T6 Step 1/`.md`); `_dbtest.connect` helper name to be confirmed against `_dbtest.py` at T1 Step 4 (flagged inline). No TODO/TBD.
+2. **Placeholder scan:** the only intentional glob is `p_<t>_*` policy-name shorthand (expanded in T6 Step 1/`.md`). Test DB connection is the confirmed repo pattern `psycopg.connect(_dbtest.dsn(), autocommit=True)` (verified against `_dbtest.py`: it exposes `dsn()`/`guard_target()`/`run_psql()`, and there is NO `_dbtest.connect`; the walk passes the disposable DB as `RECORDS_DEV_DSN`). No TODO/TBD.
 3. **Type consistency:** `fn_audit_capture()` no-arg function taking `TG_ARGV[0]` (trigger arg, not a function parameter) - consistent across 048 (definition) and 049 (CREATE TRIGGER ... EXECUTE FUNCTION records.fn_audit_capture('<pk>')). `actor_role`=`session_user`, `definer_role`=`current_user`, `actor_is_superuser` from `session_user` - consistent D6/AC11/T4. `records_auditor` LOGIN no-password + DEV-7 down - consistent 047/AC7/constraints.
 
 ## Execution Handoff
