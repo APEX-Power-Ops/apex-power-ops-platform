@@ -1,12 +1,12 @@
 # Records Gate 3 — Security / RLS Design
 
-**Date:** 2026-07-02  ·  **Rev 5** (folds the focused clean IRP: DP9 joined-seed + polroles assert, down-migration build checklist, Supabase-not-apply-ready, concrete secret-audit, CONNECT-hygiene note; surfaces two governance decisions D9/D10)
+**Date:** 2026-07-02  ·  **Rev 6** (D9 + D10 RATIFIED; DP9 rogue `USAGE ON SCHEMA records` grant [P2]; AC2 narrowed to PUBLIC for this gate [P3])
 **Lane:** `records/gate3-security-rls` (worktree `/home/olares/code/apex/apex-records-gate3`)
 **Dev DB:** `records_dev` (local PG17 cluster over mesh); disposable `records_val_*` for validation
 **Prod target:** governed Supabase `fxoyniqnrlkxfligbxmg` — reviewable SQL first, NOT applied in this lane
 **Migration:** `045_records_security_rls.sql` (+ `_down`)
 **Authority / precedents:** ops role-boundary `infra/database/migrations/ops/012_ops_app_role_boundary.sql` (PR #55/#56); Gate-2 harness (`run_validation.py`, `_dbtest.py`); the identity contract; Supabase RLS / function-privilege / API-key docs.
-**Status:** DRAFT (post-2-round IRP). **Build-ready once D9 + D10 are ratified.** No code built; no DB state touched.
+**Status:** APPROVED for writing-plans (2-round IRP + operator ratification of D9/D10, 2026-07-02). No code built; no DB state touched.
 
 > **Reviewer note (grounding).** Canonical = **host** `/home/olares/code/apex/apex-power-ops-platform` `main 90ccf864`. **Local Windows checkouts are divergent** (top out at mig 042) — do not audit against them. §0 posture verified against **live `records_dev` (PG 17.10)** + the host repo.
 
@@ -43,8 +43,8 @@
 | D6 | Reference writes | Owner/seed only; both roles SELECT (except the D10 restriction). |
 | D7 | FORCE RLS | Inert under D2-A; not relied on. |
 | D8 | Harness + CI | Non-superuser Tier 5; CI full ladder `--require-db`. |
-| **D9** | **Reserved-column governance (F1) — PENDING** | Which lifecycle/assessment/classification columns are reviewer-gated vs writer-writable. **Lean: reserve `pm_events.status`, `form_field_values.assessment`, `persons.worker_class`** (twins of already-reserved cols). Safe because bulk/historical import runs on the maintenance/owner path (as Gate-2 Tier 4), not the app writer — see §3.3 + §13. |
-| **D10** | **`neta_table_source_links` exposure (F2) — PENDING** | Provenance metadata, not catalog. **Lean: RESTRICT** — neither app role gets SELECT in Gate 3; serving exposure deferred to Gate 9 (§13). |
+| **D9** | **Reserved-column governance (F1) — RATIFIED** | Reserve `pm_events.status`, `form_field_values.assessment`, `persons.worker_class` from the writer (twins of already-reserved cols). Safe: bulk/historical import runs on the maintenance/owner path (Gate-2 Tier 4), not the app writer; `records_intake_writer` is forward serving-write only. DP2 covers all three. |
+| **D10** | **`neta_table_source_links` exposure (F2) — RATIFIED** | RESTRICT — neither app role gets SELECT in Gate 3; RLS-enabled, owner-only; serving exposure deferred to Gate 9. |
 
 ---
 
@@ -77,9 +77,9 @@ Guarded create → unconditional flag correction → **dynamic revoke of every m
 | `assets` | `status`, `condition` | ratified (D8) — NOT NULL sentinel defaults (`'unknown'`/`'not_assessed'`), never NULL |
 | `form_submissions` | `status`, `reviewed_by` | ratified |
 | `persons` | `employee_ref`, `match_adjudicated_by`, `match_adjudicated_at`, `match_confidence` | ratified (nullable; stay NULL until adjudication) |
-| `pm_events` | **`status`** | **PENDING D9** (lean: reserve) — twin of `form_submissions.status` |
-| `form_field_values` | **`assessment`** | **PENDING D9** (lean: reserve) — twin of `assets.condition` |
-| `persons` | **`worker_class`** | **PENDING D9** (lean: reserve) — HR classification; has a default so the RULE would otherwise grant it |
+| `pm_events` | **`status`** | ratified (D9) — twin of `form_submissions.status` |
+| `form_field_values` | **`assessment`** | ratified (D9) — twin of `assets.condition` |
+| `persons` | **`worker_class`** | ratified (D9) — HR classification; has a default, so explicitly reserved (outside the F7 NOT-NULL list) |
 
 **Writer-dual-purpose resolution (why reserving is safe).** `records_intake_writer` is the **forward serving-write role** (creates drafts / new field data). **Bulk & historical import** (legacy PowerDB, Miner) that must preserve original `status`/lifecycle runs on the **maintenance/owner path** — as it does today in Gate-2 Tier 4 (superuser) — **not** the app writer. So reserving lifecycle/status columns from the writer preserves the review boundary without breaking historical-fidelity import. (D9 ratifies this framing.)
 
@@ -137,7 +137,7 @@ Runs on the disposable DB after Tier 3 walks through 045, before the `finally` d
 
 Seam edits: `parse_tiers` valid `{0..5}` (×3); `db_wanted = wanted & {3,4,5}`; `tier5_roles()` gated on Tier 3; return `Tier("5-roles", …)`.
 
-**Proofs (hard FAIL if unmet):** PP1 reader SELECT ok; PP2 writer INSERT draft ok (`status='draft'`). DP1 reader no-write → raises. DP2 writer `status`/`reviewed_by` → raises (+ D9 columns once ratified). DP3 writer persons adjudication cols → raises. DP4 writer DDL → raises. DP-ESC (a) reader `set role writer` → raises + mirror; (b) rogue `set session authorization rogue; set role records_api/records_intake_writer` → raises. DP5 accidental-grant (rolled-back, savepoint): rogue SELECT on `form_submissions` → count 0; write → raises. DP6 no-PUBLIC via `acldefault`-materialized ACL → 0. DP7 RLS-enabled on all. DP8 both views `security_invoker`. **DP9 (F9+Codex-D1+F6, hardened):** for each view — (1) seed a **JOIN-satisfying** row set (matching `asset`+`submission`+`template`, resp. `schedule`+`asset`+`program`); (2) **positive control:** `set session authorization records_api; select count(*) from <view>` → **>0** (proves the join is non-empty); (3) grant a rogue SELECT on the view + all three base tables; `set session authorization rogue; select count(*)` → **0** (base-table RLS denies); (4) **assert every records policy has a non-PUBLIC `polroles`** so a future `TO PUBLIC` "simplification" can't silently leak. Rolled-back.
+**Proofs (hard FAIL if unmet):** PP1 reader SELECT ok; PP2 writer INSERT draft ok (`status='draft'`). DP1 reader no-write → raises. DP2 writer `form_submissions.status`/`reviewed_by`, **`pm_events.status`, `form_field_values.assessment`, `persons.worker_class`** (D9) → each raises. DP3 writer persons adjudication cols → raises. DP4 writer DDL → raises. DP-ESC (a) reader `set role writer` → raises + mirror; (b) rogue `set session authorization rogue; set role records_api/records_intake_writer` → raises. DP5 accidental-grant (rolled-back, savepoint): rogue SELECT on `form_submissions` → count 0; write → raises. DP6 no-PUBLIC via `acldefault`-materialized ACL → 0. DP7 RLS-enabled on all. DP8 both views `security_invoker`. **DP9 (F9+Codex-D1+F6, hardened):** for each view — (1) seed a **JOIN-satisfying** row set (matching `asset`+`submission`+`template`, resp. `schedule`+`asset`+`program`); (2) **positive control:** `set session authorization records_api; select count(*) from <view>` → **>0** (proves the join is non-empty); (3) grant the rogue **`USAGE ON SCHEMA records`** + SELECT on the view + all three base tables (mirror DP5 — there is no PUBLIC USAGE on `records`, so without the schema grant the query fails at schema access, not RLS, a false result); `set session authorization rogue; select count(*)` → **0** (base-table RLS denies); (4) **assert every records policy has a non-PUBLIC `polroles`** so a future `TO PUBLIC` "simplification" can't silently leak. Rolled-back.
 
 **Teardown (`finally`, in order):** reset auth + close → `drop database … with (force)` → drop the two app roles **only if this run created them** (snapshot before the walk) **and** they hold no out-of-band password. Never drops a real serving role.
 
@@ -148,7 +148,7 @@ Gate-2 invariants preserved (`guard_target`, admin-dbname=`postgres`, `records_v
 ## 7. Acceptance criteria
 
 - **AC1** every table RLS-`ENABLE`d.
-- **AC2** zero PUBLIC/anon grants on any `records` table or routine (materialized-ACL assert); no PUBLIC USAGE on `records`.
+- **AC2** zero **PUBLIC** (grantee `0`) grants on any `records` table or routine (materialized-ACL assert); no PUBLIC USAGE on `records`. (No-direct-grant assertions for Supabase `anon`/`authenticated`/`service_role` — which do not exist on the dev cluster, and whose API reachability is grant-driven while `service_role`/secret keys bypass RLS — belong to the Supabase role-rebinding stage, §11.4, not this gate.)
 - **AC3** matrix: `records_api` cannot write; `records_intake_writer` holds the §3.3 columns (incl. 11 NOT-NULL) and none reserved; no membership-escalation either direction; no arbitrary role can assume the app roles (DP-ESC).
 - **AC4** both views `security_invoker`; a rogue is denied through each view by base-table RLS (DP9 with positive control); every records policy is role-scoped (`polroles` non-PUBLIC).
 - **AC5** non-superuser execution proven under `SET SESSION AUTHORIZATION` (PP1–PP2).
@@ -194,13 +194,13 @@ Row-scoping backfill; soft-FK activation (Chip 8); audit-log + review/approval w
 
 ---
 
-## 13. Open governance decisions (operator ratification before writing-plans)
+## 13. Governance decisions — RATIFIED 2026-07-02
 
 **D9 — Reserved-column governance (F1).** Reserve `pm_events.status`, `form_field_values.assessment`, and `persons.worker_class` from `records_intake_writer`?
 - *Diagnosis:* these are lifecycle/assessment/classification fields structurally identical to columns already reserved (`form_submissions.status`, `assets.condition`, the persons adjudication cols). Leaving them writer-writable lets the intake writer set PM-completion, per-field pass/fail, and W2/1099 classification with no reviewer boundary — the boundary this gate exists to build. `worker_class` has a default, so it slips past the F7 NOT-NULL enumeration into the writer grant unless explicitly reserved.
 - *Framing:* reserving them is **safe** because bulk/historical import (which must preserve original status) runs on the **maintenance/owner path** (as Gate-2 Tier 4), not the app writer; `records_intake_writer` is the forward serving-write role.
-- *My lean:* **RESERVE all three**, extend DP2 to cover them, and confirm the "historical import = owner path, app writer = forward draft-only" framing. If any must be writer-set for a real forward-capture reason, name it and I'll keep it writer + add explicit DP2 coverage asserting the boundary is intentional.
+- *Resolution (ratified):* **RESERVE all three**; DP2 covers them; the "historical import = owner path, app writer = forward draft-only" framing is confirmed.
 
 **D10 — `neta_table_source_links` serving exposure (F2).** Restrict it from the app roles in Gate 3?
 - *Diagnosis:* it is source-provenance metadata (`source_path`, `review_notes`, `restricted_review_required` default `true`), not catalog reference data; granting `records_api` (→ Supabase `authenticated`) SELECT now pre-empts the §12-deferred Gate-9 source-content policy.
-- *My lean:* **RESTRICT** — RLS-enabled, no app-role SELECT policy in Gate 3; its serving exposure is decided at Gate 9. (Intake populates it via the owner/seed path, so the writer doesn't need it either.) If the serving reader genuinely needs it before Gate 9, say so and I'll grant `records_api` a scoped SELECT with an explicit note.
+- *Resolution (ratified):* **RESTRICT** — RLS-enabled, no app-role SELECT policy in Gate 3; serving exposure decided at Gate 9. Intake populates it via the owner/seed path.
