@@ -155,11 +155,15 @@ if [[ "$hits" == "0" ]]; then say "  PASS  no leaked credentials in tracked file
 # ---- Check 3: records serving config -- only sanctioned app roles (AC8) --
 say ""; say "[3] records serving config: only records_api/records_intake_writer, no bypass creds (AC8)"
 if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
+  glob_hit=0
+  for _g in ${RECORDS_SERVING_GLOBS}; do
+    [[ -r "$_g" ]] && glob_hit=1
+  done
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-non-app-role]"; rc=1
-  done < <(grep -rHInoE '(user|role)=[A-Za-z0-9_]+' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
-             | grep -vE ':(user|role)=(records_api|records_intake_writer)$' \
+  done < <(grep -rHInoE "(user|role)[[:space:]]*=[[:space:]]*['\"]?[A-Za-z0-9_]+['\"]?" ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+             | grep -vE ":(user|role)[[:space:]]*=[[:space:]]*['\"]?(records_api|records_intake_writer)['\"]?\$" \
              | sed -E 's/:[^:]*$//')
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
@@ -181,7 +185,11 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   done < <(grep -rHInoE '(postgresql|postgres)://[A-Za-z0-9._%+-]+[:@]' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
              | grep -vE ':(postgresql|postgres)://(records_api|records_intake_writer)[:@]$' \
              | cut -d: -f1,2)
-  say "  PASS  records serving scan ran (globs: ${RECORDS_SERVING_GLOBS})"
+  if [[ "$glob_hit" == "1" ]]; then
+    say "  PASS  records serving scan ran (globs: ${RECORDS_SERVING_GLOBS})"
+  else
+    say "  FAIL  RECORDS_SERVING_GLOBS matched no readable files  [rule: records-serving-empty-glob]"; rc=1
+  fi
 else
   say "  SKIP  no RECORDS_SERVING_GLOBS set (serving config not built yet)"
 fi

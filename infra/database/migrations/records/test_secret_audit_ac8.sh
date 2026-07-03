@@ -152,6 +152,78 @@ else
   say "PASS  single-file fixture: planted value absent from captured output"
 fi
 
+# ---- whitespace/quote-tolerant fixtures (Codex gap #1) -------------------
+# Owner/admin keyword DSNs with normal whitespace around "=" and/or quoted
+# values must still be flagged; a sanctioned role in the same forms must not.
+rm -f "$tmp"/*.conf
+ownersp="user"" = ""postgres"
+adminq="user='""records_admin""'"
+roleq='role = "'"postgres"'"'
+printf 'host=h %s dbname=records\n' "$ownersp" > "$tmp/fixture_8.conf"
+printf 'host=h %s dbname=records\n' "$adminq" > "$tmp/fixture_9.conf"
+printf 'host=h %s dbname=records\n' "$roleq" > "$tmp/fixture_10.conf"
+
+out4="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc4=$?
+
+if [[ "$rc4" == "1" ]]; then
+  say "PASS  whitespace/quoted owner fixtures: exit 1 as expected"
+else
+  say "FAIL  whitespace/quoted owner fixtures: expected exit 1, got $rc4"; fail=1
+fi
+
+for f in fixture_8.conf fixture_9.conf fixture_10.conf; do
+  if printf '%s' "$out4" | grep -qF "$f" && printf '%s' "$out4" | grep -qF '[rule: records-serving-non-app-role]'; then
+    say "PASS  whitespace/quoted owner form flagged: $f"
+  else
+    say "FAIL  whitespace/quoted owner form NOT flagged: $f"; fail=1
+  fi
+done
+
+for val in "$ownersp" "$adminq" "$roleq"; do
+  if printf '%s' "$out4" | grep -qF -- "$val"; then
+    say "FAIL  value-silent violation: whitespace/quoted planted value leaked into output"; fail=1
+  fi
+done
+say "PASS  value-silent: no whitespace/quoted planted value appeared in captured output"
+
+# ---- whitespace-tolerant SANCTIONED fixture must NOT be flagged ----------
+rm -f "$tmp"/*.conf
+apisp="user"" = ""records_api"
+printf 'host=h %s dbname=records\n' "$apisp" > "$tmp/fixture_11.conf"
+
+out5="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc5=$?
+
+if [[ "$rc5" == "0" ]]; then
+  say "PASS  whitespace sanctioned fixture: exit 0 as expected"
+else
+  say "FAIL  whitespace sanctioned fixture: expected exit 0, got $rc5"; fail=1
+fi
+
+if printf '%s' "$out5" | grep -qF '[rule: records-serving-non-app-role]'; then
+  say "FAIL  whitespace sanctioned role (records_api) was incorrectly flagged"; fail=1
+else
+  say "PASS  whitespace sanctioned role (records_api) not flagged"
+fi
+
+# ---- empty-glob must fail closed (Codex gap #2) --------------------------
+rm -f "$tmp"/*.conf
+out6="$(RECORDS_SERVING_GLOBS="$tmp/nonexistent-*.conf" bash "$AUDIT" 2>&1)"
+rc6=$?
+
+if [[ "$rc6" != "0" ]]; then
+  say "PASS  empty-glob: exit nonzero as expected"
+else
+  say "FAIL  empty-glob: expected nonzero exit, got $rc6"; fail=1
+fi
+
+if printf '%s' "$out6" | grep -qF '[rule: records-serving-empty-glob]'; then
+  say "PASS  empty-glob: records-serving-empty-glob rule name present"
+else
+  say "FAIL  empty-glob: records-serving-empty-glob rule name missing"; fail=1
+fi
+
 if [[ "$fail" == "0" ]]; then
   say "RESULT: AC8 fixture test PASSED"
   exit 0
