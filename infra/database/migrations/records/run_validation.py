@@ -1,8 +1,9 @@
-"""The records validation gate. One command, five tiers, honest exit code.
+"""The records validation gate. One command, seven tiers, honest exit code.
 
 Tiers: 0 syntax+origin, 1 converter tests, 2 records-import pure tests,
 3 forward-incremental migration walk on a disposable records_val_* database,
-4 records-import DB tests against that migrated database.
+4 records-import DB tests against that migrated database, 5 role/RLS binding
+proofs (Gate 3), 6 durable Gate-5 ownership + audit posture proofs.
 
 DB safety: only ever CREATEs/DROPs the exact records_val_* name generated this
 run; the admin DSN must point at the postgres maintenance DB; child processes
@@ -140,14 +141,14 @@ def parse_tiers(only):
     """Validate --only. Unknown tiers must REFUSE - a typo like --only 9
     running zero tiers and exiting 0 would be a false-green gate."""
     if not only:
-        return {0, 1, 2, 3, 4, 5}
+        return {0, 1, 2, 3, 4, 5, 6}
     try:
         wanted = {int(x) for x in only.split(",") if x.strip()}
     except ValueError:
-        raise HarnessError(f"--only takes a comma list of tiers 0-5, got {only!r}")
-    unknown = wanted - {0, 1, 2, 3, 4, 5}
+        raise HarnessError(f"--only takes a comma list of tiers 0-6, got {only!r}")
+    unknown = wanted - {0, 1, 2, 3, 4, 5, 6}
     if not wanted or unknown:
-        raise HarnessError(f"unknown tier(s) in --only: {sorted(unknown)} (valid: 0-5)")
+        raise HarnessError(f"unknown tier(s) in --only: {sorted(unknown)} (valid: 0-6)")
     return wanted
 
 
@@ -403,6 +404,268 @@ def tier5_roles(child_dsn, val_name):
                 "; ".join(fails) if fails else "PP1-2/DP1-9/DP-ESC/polroles green")
 
 
+# ---- Tier 6 (Gate-5 ownership + audit posture, durable every-CI-run) --------
+AUDIT_ROLES = ("records_owner", "records_fn_owner", "records_auditor")
+
+# Ownership across ALL THREE catalogs (pg_class relkind r/v/m/S + pg_proc +
+# pg_namespace) - the identical union 046/test_046 use - counting records objects
+# whose OWNER is a rolsuper OR rolbypassrls role. Zero is the durable invariant.
+OWNED_BY_SUPER_OR_BYPASS = """
+select
+  (select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace
+     join pg_roles r on r.oid=c.relowner
+    where ns.nspname='records' and c.relkind in ('r','v','m','S')
+      and (r.rolsuper or r.rolbypassrls))
++ (select count(*) from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace
+     join pg_roles r on r.oid=p.proowner
+    where ns.nspname='records' and (r.rolsuper or r.rolbypassrls))
++ (select case when exists (select 1 from pg_namespace ns join pg_roles r on r.oid=ns.nspowner
+                             where ns.nspname='records' and (r.rolsuper or r.rolbypassrls))
+          then 1 else 0 end)
+"""
+
+# fn_audit_capture durable re-check: owner, SECURITY DEFINER, search_path pinned,
+# no PUBLIC EXECUTE (materialized ACL, NULL-acl-safe). Mirrors 048's own asserts.
+FN_CAPTURE_META = (
+    "select pg_get_userbyid(proowner), prosecdef, "
+    "  exists (select 1 from unnest(coalesce(proconfig,'{}'::text[])) x "
+    "          where x like 'search_path=%'), "
+    "  (select count(*) from pg_proc p2, "
+    "     lateral aclexplode(coalesce(p2.proacl, acldefault('f', p2.proowner))) a "
+    "   where p2.oid='records.fn_audit_capture()'::regprocedure "
+    "     and a.grantee=0 and a.privilege_type='EXECUTE') "
+    "from pg_proc where oid='records.fn_audit_capture()'::regprocedure"
+)
+
+# records_fn_owner EXACT ALLOWLIST - copied VERBATIM from 048_records_audit_log.sql
+# (the '048:' error prefix retained so a Tier-6 failure names the same invariant),
+# resolving the schema oid in THIS database. USAGE-present / CREATE-deny / PUBLIC-
+# deny / owner / existence + the single pg_shdepend deptype='a' exclusivity edge.
+FN_OWNER_ALLOWLIST = """
+do $$
+declare
+  gcnt int;
+  v_schema  text := 'records';
+  v_owner   text := 'records_owner';
+  v_fnowner text := 'records_fn_owner';
+  v_schema_oid oid;
+begin
+  select oid into v_schema_oid from pg_namespace where nspname = v_schema;
+  if v_schema_oid is null then
+    raise exception '048: schema % does not exist (run after 045/048 GRANT)', v_schema; end if;
+  if (select nspowner from pg_namespace where oid = v_schema_oid) <> (select oid from pg_roles where rolname = v_owner)
+    then raise exception '048: schema % owner drifted (expected %); ownership confers implicit USAGE+CREATE', v_schema, v_owner; end if;
+  if not has_schema_privilege(v_fnowner, v_schema, 'USAGE')
+    then raise exception '048: % lacks USAGE on schema % (definer cannot reach audit_log)', v_fnowner, v_schema; end if;
+  if not exists (select 1 from pg_namespace ns, lateral aclexplode(ns.nspacl) a join pg_roles g on g.oid = a.grantee
+                 where ns.oid = v_schema_oid and g.rolname = v_fnowner and a.privilege_type = 'USAGE')
+    then raise exception '048: % lacks an EXPLICIT USAGE ACL grant on schema % (effective USAGE may leak via PUBLIC/membership)', v_fnowner, v_schema; end if;
+  if has_schema_privilege(v_fnowner, v_schema, 'CREATE')
+    then raise exception '048: % must NOT hold CREATE on schema %', v_fnowner, v_schema; end if;
+  if has_schema_privilege('public', v_schema, 'USAGE') or has_schema_privilege('public', v_schema, 'CREATE')
+    then raise exception '048: PUBLIC holds USAGE/CREATE on schema % (migration 045 REVOKE reverted)', v_schema; end if;
+  select count(*) into gcnt from pg_shdepend s join pg_roles r on r.oid = s.refobjid
+   where r.rolname = v_fnowner and s.deptype = 'a'
+     and not (s.classid = 'pg_namespace'::regclass
+              and s.dbid  = (select oid from pg_database where datname = current_database())
+              and s.objid = v_schema_oid);
+  if gcnt > 0 then raise exception '048: % holds % ACL grant edge(s) beyond USAGE on schema % (cross-schema/column/type/default-priv/database/shared-object escalation)', v_fnowner, gcnt, v_schema; end if;
+end $$;
+"""
+
+# zero pg_auth_members edges (either direction) touching ANY of the three Gate-5
+# roles - the identical query 047 asserts, generalized to all three. DURABLE: a
+# login role granted membership AFTER the migrations would escape a point-in-time
+# SET ROLE sample, but this count catches it on every CI run.
+MEMBERSHIP_EDGES = (
+    "select count(*) from pg_auth_members am "
+    "where am.roleid in (select oid from pg_roles where rolname = any(%s)) "
+    "   or am.member in (select oid from pg_roles where rolname = any(%s))"
+)
+
+# trg_audit set == writer-grant set (records_intake_writer INSERT/UPDATE), same
+# two counts 049/test_049 use.
+TRG_WANT = (
+    "select count(distinct table_name) from information_schema.role_column_grants "
+    "where grantee='records_intake_writer' and table_schema='records' "
+    "  and privilege_type in ('INSERT','UPDATE')"
+)
+TRG_GOT = (
+    "select count(*) from pg_trigger tg join pg_class c on c.oid=tg.tgrelid "
+    "  join pg_namespace ns on ns.oid=c.relnamespace "
+    "where ns.nspname='records' and tg.tgname='trg_audit' and not tg.tgisinternal"
+)
+
+
+def tier6_posture(child_dsn):
+    """Durable Gate-5 in-DB posture proof on the fully-migrated (001-049) DB.
+
+    Every clause is a standing invariant the per-migration tests assert only
+    point-in-time; Tier 6 re-proves them on the final migrated state on EVERY CI
+    run so post-migration drift (a membership grant, an ownership move, a dropped
+    grant) is caught. Mutating-identity checks use SET SESSION AUTHORIZATION
+    (session_user switch); the FORCE-RLS red proof runs inside a rolled-back
+    savepoint so the disposable DB is left pristine."""
+    import psycopg
+    fails = []
+    rogue = None
+    m = re.search(r"records_val_(\d{8}T\d{6}_\d+)$", _dbtest.dsn_params(child_dsn).get("dbname", ""))
+    if m:
+        rogue = f"records_val_t6rogue_{m.group(1)}"
+        if not re.fullmatch(r"records_val_t6rogue_\d{8}T\d{6}_\d+", rogue):
+            return Tier("6-posture", "FAIL", f"bad rogue name {rogue!r}")
+
+    def expect_raise(cur, sql, label, params=None):
+        cur.execute("savepoint p")
+        try:
+            cur.execute(sql, params)
+            cur.execute("rollback to savepoint p")
+            fails.append(f"{label}: DID NOT RAISE")
+        except psycopg.errors.Error:
+            cur.execute("rollback to savepoint p")
+
+    # --- (a)(b)(c)(d-count)(e) static introspection (read-only autocommit) ----
+    ro = psycopg.connect(child_dsn, autocommit=True)
+    try:
+        # (a) no records object owned by a super/bypassrls role (all 3 catalogs).
+        if ro.execute(OWNED_BY_SUPER_OR_BYPASS).fetchone()[0]:
+            fails.append("6a: a records object is owned by a super/bypassrls role")
+        # (b) the three Gate-5 roles: flags + login posture.
+        want_login = {"records_owner": False, "records_fn_owner": False, "records_auditor": True}
+        seen = set()
+        for name, su, brls, canlogin, cdb, crole, crepl in ro.execute(
+            "select rolname, rolsuper, rolbypassrls, rolcanlogin, rolcreatedb, "
+            "rolcreaterole, rolreplication from pg_roles where rolname = any(%s)",
+            (list(AUDIT_ROLES),)).fetchall():
+            seen.add(name)
+            if su or brls:
+                fails.append(f"6b: {name} is super/bypassrls")
+            if canlogin != want_login[name]:
+                fails.append(f"6b: {name} login flag {canlogin} != expected {want_login[name]}")
+            if cdb or crole or crepl:
+                fails.append(f"6b: {name} has createdb/createrole/replication")
+        missing = set(AUDIT_ROLES) - seen
+        if missing:
+            fails.append(f"6b: Gate-5 role(s) absent: {sorted(missing)}")
+        # (c) fn_audit_capture durable meta + the 048 exact allowlist.
+        owner, secdef, sp_pinned, pub_exec = ro.execute(FN_CAPTURE_META).fetchone()
+        if owner != "records_fn_owner":
+            fails.append(f"6c: fn_audit_capture owner {owner} != records_fn_owner")
+        if not secdef:
+            fails.append("6c: fn_audit_capture is not SECURITY DEFINER")
+        if not sp_pinned:
+            fails.append("6c: fn_audit_capture search_path not pinned")
+        if pub_exec:
+            fails.append("6c: fn_audit_capture still has PUBLIC EXECUTE")
+        try:
+            ro.execute(FN_OWNER_ALLOWLIST)   # RAISEs on any allowlist violation
+        except psycopg.errors.RaiseException as e:
+            fails.append(f"6c allowlist: {str(e).strip().splitlines()[0]}")
+        # (d) zero membership edges touching any Gate-5 role (durable no-drift).
+        if ro.execute(MEMBERSHIP_EDGES, (list(AUDIT_ROLES), list(AUDIT_ROLES))).fetchone()[0]:
+            fails.append("6d: a pg_auth_members edge touches a Gate-5 role (membership drift)")
+        # (e) trg_audit set == writer-grant set.
+        want = ro.execute(TRG_WANT).fetchone()[0]
+        got = ro.execute(TRG_GOT).fetchone()[0]
+        if got != want:
+            fails.append(f"6e: trg_audit count {got} != writer-grant table count {want}")
+        # (g) records_auditor holds NO table/column grant and NO policy outside
+        # audit_log (source_links + every operational/reference table).
+        if ro.execute(
+            "select count(*) from information_schema.role_table_grants "
+            "where grantee='records_auditor' and table_schema='records' "
+            "  and table_name <> 'audit_log'").fetchone()[0]:
+            fails.append("6g: records_auditor holds a table grant outside audit_log")
+        if ro.execute(
+            "select count(*) from information_schema.role_column_grants "
+            "where grantee='records_auditor' and table_schema='records' "
+            "  and table_name <> 'audit_log'").fetchone()[0]:
+            fails.append("6g: records_auditor holds a column grant outside audit_log")
+        if ro.execute(
+            "select count(*) from pg_policies where schemaname='records' "
+            "  and tablename <> 'audit_log' and 'records_auditor' = any(roles)").fetchone()[0]:
+            fails.append("6g: records_auditor is named in a policy outside audit_log")
+    finally:
+        ro.close()
+
+    # --- (d-SET ROLE)(f) identity-switch proofs (autocommit; no residue) -------
+    # (d) SET ROLE records_owner/records_fn_owner denied from records_api + rogue.
+    with psycopg.connect(child_dsn, autocommit=True) as c:
+        for src in ("records_api",):
+            c.execute(f"set session authorization {src}")
+            for tgt in ("records_owner", "records_fn_owner"):
+                try:
+                    c.execute(f"set role {tgt}")
+                    c.execute("reset role")
+                    fails.append(f"6d: {src} could SET ROLE {tgt} (must be denied)")
+                except psycopg.errors.Error:
+                    pass
+            c.execute("reset session authorization")
+    # (f) audit isolation: records_auditor reads audit_log; api/writer cannot.
+    with psycopg.connect(child_dsn, autocommit=True) as c:
+        c.execute("set role records_auditor")
+        try:
+            c.execute("select count(*) from records.audit_log").fetchone()
+        except psycopg.errors.Error as e:
+            fails.append(f"6f: records_auditor cannot read audit_log: {e}")
+        c.execute("reset role")
+        for role in ("records_api", "records_intake_writer"):
+            c.execute(f"set session authorization {role}")
+            try:
+                c.execute("select count(*) from records.audit_log").fetchone()
+                fails.append(f"6f: {role} could read audit_log (must be denied)")
+            except psycopg.errors.Error:
+                pass
+            c.execute("reset session authorization")
+
+    # --- (d-rogue)(h) dynamic proofs, ONE rolled-back transaction --------------
+    conn = psycopg.connect(child_dsn)  # autocommit=False
+    try:
+        cur = conn.cursor()
+        # (d) a freshly-created rogue login role can assume NEITHER owner role.
+        if rogue:
+            cur.execute(f'create role "{rogue}" nosuperuser login nobypassrls')
+            cur.execute(f'set session authorization "{rogue}"')
+            expect_raise(cur, "set role records_owner", "6d rogue->records_owner")
+            expect_raise(cur, "set role records_fn_owner", "6d rogue->records_fn_owner")
+            cur.execute("reset session authorization")
+        # (h) FORCE-RLS negative control: drop the INSERT policy inside a savepoint,
+        # fire the definer path via a REAL writer insert (persons carries trg_audit,
+        # and display_name is FK-independent), assert the capture RAISES the RLS
+        # violation, then rollback to the savepoint (which un-drops the policy). If
+        # the policy were a no-op (FORCE missing / owner bypass) the insert SUCCEEDS.
+        cur.execute("savepoint h")
+        cur.execute("drop policy p_audit_log_ins on records.audit_log")
+        cur.execute("set session authorization records_intake_writer")
+        raised = False
+        try:
+            cur.execute("insert into records.persons (display_name) values ('t6-forcerls-probe')")
+        except psycopg.errors.InsufficientPrivilege as e:
+            raised = True
+            if e.sqlstate != "42501" or "row-level security policy" not in str(e):
+                fails.append(f"6h: capture raised but not the expected RLS violation: {e}")
+        except psycopg.errors.Error as e:
+            raised = True
+            fails.append(f"6h: capture raised an unexpected error (not 42501 RLS): {e}")
+        if not raised:
+            fails.append("6h: writer insert SUCCEEDED with p_audit_log_ins dropped "
+                         "(FORCE-RLS no-op / owner bypass - audit_log admission is not policy-gated)")
+        cur.execute("rollback to savepoint h")   # aborts the txn + un-drops the policy
+        # the policy is back after the savepoint rollback.
+        cur.execute("reset session authorization")
+        if cur.execute(
+            "select count(*) from pg_policies where schemaname='records' "
+            "and tablename='audit_log' and policyname='p_audit_log_ins'").fetchone()[0] != 1:
+            fails.append("6h: p_audit_log_ins not restored by savepoint rollback")
+    finally:
+        conn.rollback()   # undoes the rogue role + everything above
+        conn.close()
+
+    return Tier("6-posture", "FAIL" if fails else "PASS",
+                "; ".join(fails) if fails
+                else "ownership/roles/definer-allowlist/no-membership/trigger-set/isolation/FORCE-RLS green")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="records validation gate")
     ap.add_argument("--require-db", action="store_true",
@@ -434,7 +697,7 @@ def main(argv=None):
     if 2 in wanted:
         tiers.append(tier2_import_pure(dict(os.environ)))
 
-    db_wanted = wanted & {3, 4, 5}
+    db_wanted = wanted & {3, 4, 5, 6}
     if db_wanted and not any(t.status == "FAIL" for t in tiers):
         try:
             # Source + completeness preflights run BEFORE any skip decision
@@ -445,7 +708,7 @@ def main(argv=None):
                 _dbtest.neta_json()
                 migs, tests = enumerate_stack(HERE)
             if not child_dsn:
-                if wanted != {0, 1, 2, 3, 4, 5}:
+                if wanted != {0, 1, 2, 3, 4, 5, 6}:
                     raise HarnessError("--only with DB tiers requires --db-dsn (records_val_* only)")
                 if not admin:
                     detail = "RECORDS_PG_ADMIN_DSN is not set"
@@ -486,6 +749,13 @@ def main(argv=None):
                         tiers.append(Tier("5-roles","SKIP","no migrated target"))
                 elif 5 in db_wanted:
                     tiers.append(Tier("5-roles","SKIP","tier 3 failed"))
+                if 6 in db_wanted and not any(t.name=="3-migrations" and t.status=="FAIL" for t in tiers):
+                    if 3 in db_wanted or args.db_dsn:
+                        tiers.append(tier6_posture(child_dsn))
+                    else:
+                        tiers.append(Tier("6-posture","SKIP","no migrated target"))
+                elif 6 in db_wanted:
+                    tiers.append(Tier("6-posture","SKIP","tier 3 failed"))
             finally:
                 if created:
                     if args.keep_db:
