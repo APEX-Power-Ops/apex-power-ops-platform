@@ -25,6 +25,34 @@ Copied verbatim from the spec (every task's requirements implicitly include thes
 
 ---
 
+## Plan rev 2 corrections (BINDING - apply to every task below)
+
+These fold the operator's plan review (2026-07-03). They OVERRIDE the task code where they conflict; apply them uniformly:
+
+1. **Transaction-wrap every migration file** (up and down), matching the established 045 shape - NOT bare `SET LOCAL`:
+   ```sql
+   begin;
+   set client_encoding to 'UTF8';
+   set local client_min_messages = warning;
+   -- ... migration body ...
+   commit;
+   ```
+   `SET LOCAL` is only meaningful inside a transaction; a mid-file failure then rolls back atomically (no partial security state). All of 046-049 + their `_down` files use `CREATE/ALTER ROLE`, `ALTER ... OWNER`, `CREATE TABLE/FUNCTION/TRIGGER`, `CREATE POLICY` - all transactional.
+
+2. **Role normalization (guarded create is not enough).** A role may pre-exist on a persistent cluster in a wrong state. After each guarded `create role ... if not exists`, add an UNCONDITIONAL `ALTER ROLE` to pin the exact state, then assert it:
+   ```sql
+   alter role records_owner    nologin nosuperuser nobypassrls nocreatedb nocreaterole noreplication;
+   alter role records_fn_owner nologin nosuperuser nobypassrls nocreatedb nocreaterole noreplication;
+   alter role records_auditor  login   nosuperuser nobypassrls nocreatedb nocreaterole noreplication;  -- NO password
+   -- assert: for each of the three roles, rolcanlogin matches, and
+   -- rolsuper/rolbypassrls/rolcreatedb/rolcreaterole/rolreplication are all false.
+   ```
+   (This replaces the bare guarded-create in Tasks 1 and 2.)
+
+3. **Per-migration test contract (the runner applies NNN, THEN runs `test_NNN`, THEN fingerprints to confirm the test LEFT the DB at the applied-NNN state).** Therefore every `test_NNN` must: (a) assert the applied-NNN posture (the runner already applied it - do NOT re-apply NNN first); (b) run `NNN_down`; (c) assert the reversed/pre-state; (d) run `NNN` (up) again; (e) leave the DB at applied-NNN. NEVER start a test by re-applying NNN, and NEVER leave it reversed (both move the fingerprint or trip a pre-state assert). This corrects the `test_046` code in Task 1.
+
+---
+
 ## File Structure
 
 Created under `infra/database/migrations/records/`:
@@ -210,15 +238,24 @@ begin
   execute 'alter schema records owner to postgres';
 end $$;
 
--- [d3] GUARD: refuse DROP OWNED unless records_owner owns ZERO records objects
--- (a DROP OWNED on an incomplete reassign would DELETE the missed object).
+-- [d3] GUARD: refuse DROP OWNED unless records_owner owns ZERO objects across
+-- ALL relevant catalogs (a DROP OWNED on an incomplete reassign would DELETE
+-- the missed object). MUST cover pg_class (tables/views/matviews/sequences),
+-- pg_proc (functions), AND pg_namespace (the records schema itself - a missed
+-- schema would be DROPped CASCADE).
 do $$
 declare n int;
 begin
-  select count(*) into n from pg_class c join pg_namespace ns on ns.oid=c.relnamespace
-   where ns.nspname='records' and c.relkind in ('r','v','m','S')
-     and pg_get_userbyid(c.relowner) = 'records_owner';
-  if n>0 then raise exception '046_down: % records object(s) still owned by records_owner; refusing DROP OWNED', n; end if;
+  select
+    (select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace
+      where ns.nspname='records' and c.relkind in ('r','v','m','S')
+        and pg_get_userbyid(c.relowner)='records_owner')
+  + (select count(*) from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace
+      where ns.nspname='records' and pg_get_userbyid(p.proowner)='records_owner')
+  + (select count(*) from pg_namespace where nspname='records'
+        and pg_get_userbyid(nspowner)='records_owner')
+    into n;
+  if n>0 then raise exception '046_down: % records object(s) still owned by records_owner (class/proc/schema); refusing DROP OWNED', n; end if;
 end $$;
 
 -- [d4] clear any ACL residue (provably none), drop the role, fail loud if it survives.
@@ -252,44 +289,38 @@ def _q(dsn, sql):
         cur.execute(sql)
         return cur.fetchall()
 
-def test_046_ownership_and_force_then_reverse():
+OWNED_NE = ("select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace "
+            "where ns.nspname='records' and c.relkind in ('r','v','m','S') "
+            "and pg_get_userbyid(c.relowner) <> '%s'")
+
+def test_046_applied_then_down_up():
+    # Runner contract: 046 is ALREADY applied by the walk. Assert the applied
+    # posture, exercise DOWN then UP, and LEAVE 046 applied (do NOT re-apply
+    # first, do NOT leave reversed - either moves the fingerprint / trips the
+    # 046 pre-state assert).
     dsn = _dsn()
-    # apply
-    _dbtest.run_psql(MIG, dsn)
-    # all records objects owned by records_owner
-    rows = _q(dsn, "select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace "
-                   "where ns.nspname='records' and c.relkind in ('r','v','m','S') "
-                   "and pg_get_userbyid(c.relowner) <> 'records_owner'")
-    assert rows[0][0] == 0
-    # owner is non-super/non-bypassrls
-    rows = _q(dsn, "select rolsuper, rolbypassrls from pg_roles where rolname='records_owner'")
-    assert rows[0] == (False, False)
-    # all 15 base tables FORCE-RLS
-    rows = _q(dsn, "select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace "
-                   "where ns.nspname='records' and c.relkind='r' and not c.relforcerowsecurity")
-    assert rows[0][0] == 0
-    # FORCE teeth: owner sees 0 on a seeded reference table without a policy;
-    # app role sees rows (SET SESSION AUTHORIZATION so session identity is the role).
+    # (1) applied posture
+    assert _q(dsn, OWNED_NE % "records_owner")[0][0] == 0
+    assert _q(dsn, "select rolsuper, rolbypassrls from pg_roles where rolname='records_owner'")[0] == (False, False)
+    assert _q(dsn, "select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace "
+                   "where ns.nspname='records' and c.relkind='r' and not c.relforcerowsecurity")[0][0] == 0
+    # FORCE teeth (SET SESSION AUTHORIZATION so session_user IS the role)
     with _dbtest.connect(dsn) as c, c.cursor() as cur:
-        cur.execute("select count(*) from records.neta_tables")
-        base = cur.fetchone()[0]
+        cur.execute("select count(*) from records.neta_tables"); base = cur.fetchone()[0]
         assert base > 0
         cur.execute("set session authorization records_owner")
-        cur.execute("select count(*) from records.neta_tables")
-        assert cur.fetchone()[0] == 0
+        cur.execute("select count(*) from records.neta_tables"); assert cur.fetchone()[0] == 0
         cur.execute("reset session authorization")
         cur.execute("set session authorization records_api")
-        cur.execute("select count(*) from records.neta_tables")
-        assert cur.fetchone()[0] == base
+        cur.execute("select count(*) from records.neta_tables"); assert cur.fetchone()[0] == base
         cur.execute("reset session authorization")
-    # reverse
+    # (2) DOWN -> reversed to the postgres pre-state + role dropped (fail-loud)
     _dbtest.run_psql(DOWN, dsn)
-    rows = _q(dsn, "select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace "
-                   "where ns.nspname='records' and c.relkind in ('r','v','m','S') "
-                   "and pg_get_userbyid(c.relowner) <> 'postgres'")
-    assert rows[0][0] == 0
-    rows = _q(dsn, "select count(*) from pg_roles where rolname='records_owner'")
-    assert rows[0][0] == 0  # role actually dropped (fail-loud would have raised)
+    assert _q(dsn, OWNED_NE % "postgres")[0][0] == 0
+    assert _q(dsn, "select count(*) from pg_roles where rolname='records_owner'")[0][0] == 0
+    # (3) UP -> re-apply 046 (its pre-state assert now passes) and LEAVE it applied
+    _dbtest.run_psql(MIG, dsn)
+    assert _q(dsn, OWNED_NE % "records_owner")[0][0] == 0  # role actually dropped (fail-loud would have raised)
 ```
 (Note: `_dbtest.connect` / `guard_target` / `run_psql` already exist; if `connect` is named differently in `_dbtest.py`, the implementer uses the existing helper - confirm the name during Step 4.)
 
@@ -370,13 +401,20 @@ end $$;
 ```sql
 -- 047_records_audit_roles_down.sql
 set local client_min_messages = warning;
--- records_fn_owner: NOLOGIN pure owner -> zero-owned guard + DROP OWNED + fail-loud.
+-- records_fn_owner: NOLOGIN pure owner -> zero-owned guard (class+proc+schema) +
+-- DROP OWNED + fail-loud.
 do $$
 declare n int;
 begin
-  select count(*) into n from pg_class c join pg_namespace ns on ns.oid=c.relnamespace
-   where ns.nspname='records' and pg_get_userbyid(c.relowner)='records_fn_owner';
-  if n>0 then raise exception '047_down: % records object(s) still owned by records_fn_owner; refusing DROP OWNED', n; end if;
+  select
+    (select count(*) from pg_class c join pg_namespace ns on ns.oid=c.relnamespace
+      where ns.nspname='records' and pg_get_userbyid(c.relowner)='records_fn_owner')
+  + (select count(*) from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace
+      where ns.nspname='records' and pg_get_userbyid(p.proowner)='records_fn_owner')
+  + (select count(*) from pg_namespace where nspname='records'
+        and pg_get_userbyid(nspowner)='records_fn_owner')
+    into n;
+  if n>0 then raise exception '047_down: % object(s) still owned by records_fn_owner; refusing DROP OWNED', n; end if;
 end $$;
 drop owned by records_fn_owner;
 drop role if exists records_fn_owner;
@@ -384,21 +422,23 @@ do $$ begin
   if exists (select 1 from pg_roles where rolname='records_fn_owner')
     then raise exception '047_down: records_fn_owner survived drop'; end if;
 end $$;
--- records_auditor: LOGIN, password provisioned out-of-band -> DEV-7 guard.
--- Revoke its DB-scoped grants, then drop ONLY if it has no password (harness /
--- disposable-DB case); RETAIN with a NOTICE if password-bearing (persistent cluster).
+-- records_auditor: LOGIN, password provisioned out-of-band -> DEV-7 guard,
+-- mirroring 045_down. NO `DROP OWNED` (the LOGIN-role hazard Gate 3 avoided):
+-- explicit DB-scoped revokes, then DROP ROLE ONLY if it is passwordless
+-- (harness / disposable-DB case); RETAIN with a NOTICE if password-bearing.
 do $$
 declare has_pw bool;
 begin
-  begin drop owned by records_auditor; exception when undefined_object then null; end;
+  if not exists (select 1 from pg_roles where rolname='records_auditor') then
+    return;
+  end if;
+  revoke usage on schema records from records_auditor;   -- safe if not granted
+  -- (048_down already revoked SELECT on audit_log / it drops with the table)
   select (rolpassword is not null) into has_pw from pg_authid where rolname='records_auditor';
-  if has_pw is null then
-    -- role already gone
-    null;
-  elsif has_pw then
+  if coalesce(has_pw, true) then   -- unreadable pw => assume present => fail-safe RETAIN
     raise notice '047_down: records_auditor is password-bearing; RETAINED (DEV-7 guard).';
   else
-    drop role if exists records_auditor;
+    drop role records_auditor;
   end if;
 end $$;
 ```
@@ -459,6 +499,7 @@ create policy p_audit_log_ins on records.audit_log for insert to records_fn_owne
 drop policy if exists p_audit_log_sel on records.audit_log;
 create policy p_audit_log_sel on records.audit_log for select to records_auditor using (true);
 -- append-only: no UPDATE/DELETE policy for anyone. No app-role grant/policy.
+grant usage on schema records to records_auditor;   -- required or SELECT is unreachable
 grant select on records.audit_log to records_auditor;
 
 -- the shared SECURITY DEFINER capture function.
@@ -493,10 +534,13 @@ begin
   return null;
 end $fn$;
 alter function records.fn_audit_capture() owner to records_fn_owner;
+-- new functions get default PUBLIC EXECUTE; Gate-3 Tier-5 asserts no PUBLIC on
+-- records routines, so revoke it (both a hardening + keeps Tier 5 green).
+revoke execute on function records.fn_audit_capture() from public;
 
--- asserts: definer safety (three load-bearing checks) + FORCE-RLS + policy coupling.
+-- asserts: definer safety (three load-bearing checks) + FORCE-RLS + no-PUBLIC-execute.
 do $$
-declare owner text; secdef bool; cfg text[]; forced bool;
+declare owner text; secdef bool; cfg text[]; forced bool; pub int;
 begin
   select pg_get_userbyid(proowner), prosecdef, proconfig into owner, secdef, cfg
     from pg_proc where oid = 'records.fn_audit_capture()'::regprocedure;
@@ -508,10 +552,15 @@ begin
     then raise exception '048: records_fn_owner must be non-super/non-bypassrls'; end if;
   select relforcerowsecurity into forced from pg_class where oid='records.audit_log'::regclass;
   if not forced then raise exception '048: audit_log is not FORCE-RLS'; end if;
+  -- no PUBLIC execute on the function (materialized ACL, NULL-acl-safe).
+  select count(*) into pub
+    from pg_proc p, lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+   where p.oid='records.fn_audit_capture()'::regprocedure and a.grantee=0 and a.privilege_type='EXECUTE';
+  if pub>0 then raise exception '048: fn_audit_capture still has PUBLIC EXECUTE'; end if;
 end $$;
 ```
 
-- [ ] **Step 2: Write `048_records_audit_log_down.sql`** - `drop function if exists records.fn_audit_capture(); drop table if exists records.audit_log;` (policies drop with the table). ASCII, `set local client_min_messages=warning`.
+- [ ] **Step 2: Write `048_records_audit_log_down.sql`** - transaction-wrapped: `revoke usage on schema records from records_auditor;` (048 granted it), then `drop function if exists records.fn_audit_capture();` and `drop table if exists records.audit_log;` (policies + the audit_log SELECT grant drop with the table). ASCII.
 
 - [ ] **Step 3: Write `test_048_records_audit_log.py`** - the false-green guard is the centerpiece:
   - assert `audit_log` is `relforcerowsecurity`; the function is `prosecdef`, owner `records_fn_owner`, search_path pinned.
