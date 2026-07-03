@@ -5,6 +5,11 @@ ratification. Transport decision D1 RATIFIED = Option B (server-side DSN as the
 real least-privilege roles). No database mutated. No prod Supabase apply
 authorized in this lane. Supersedes the earlier "rebind" draft.
 
+AUTHORITATIVE ARTIFACT: the design spec
+(docs/superpowers/specs/2026-07-03-records-gate9-supabase-serving-design.md) is the
+source of truth for the decision record and Acceptance Criteria. This note is kept
+for provenance; where they differ, the spec (AC1-AC12) governs.
+
 Repo state grounded: main @ 3a167a89. Lane branch: records/gate9-supabase-serving.
 Primary input: reference/records/SERVING_CONTRACT.yaml (Gate 5).
 
@@ -56,10 +61,10 @@ authorize() for auditability; never use raw user_metadata for authorization.
 (Softened per review finding 5: reading app_metadata via auth.jwt() in RLS is
 also documented; hook/table/authorize is the preferred, not the only, pattern.)
 
-OPEN spec-grounding item (in flight): confirm via Supabase docs that a custom
-LOGIN role can authenticate through Supavisor (session/transaction) + direct
-connection and that RLS applies as that role (no BYPASSRLS by default). Option B
-rests on this; verify before spec lock.
+RESOLVED spec-grounding item: confirmed via Supabase docs that a custom LOGIN role
+authenticates through Supavisor (session) + direct connection and RLS applies as
+that role (NOBYPASSRLS default). Verdict SUPPORTED-WITH-CAVEATS; see design spec
+sections 3.1 / 3.5 / 7.
 
 ## Remaining decisions
 
@@ -100,28 +105,22 @@ rests on this; verify before spec lock.
    + out-of-band password custody. Reviewed, NOT applied here.
 4. Operator apply later (separate, gated). Run Supabase advisors before accept.
 
-## Acceptance criteria draft (re-based on B)
+## Acceptance criteria - SUPERSEDED
 
-- AC1: Serving credentials are exactly the 3 contract roles; no owner/superuser/
-  service_role/BYPASSRLS/sb_secret_* credential in any serving config.
-- AC2: records schema is not exposed to the Data API; no anon or authenticated
-  grant on any records object (proven negative).
-- AC3: Only the sanctioned role DSNs can reach the allowed tables; each role
-  reaches exactly its contract scope and no more.
-- AC4: records_api reads exactly the 14 app-served tables, writes nothing.
-- AC5: records_intake_writer reads the 14, and inserts/updates only the Gate 3
-  column-scoped writer matrix on the 6 wp tables; no DELETE.
-- AC6: records_auditor reads audit_log only; cannot read operational/reference/
-  source-link tables.
-- AC7: audit_log stays append-only; no serving grant/policy opens UPDATE/DELETE.
-- AC8: neta_table_source_links remains closed to all 3 serving roles.
-- AC9: secret-audit Check 3, once armed, allows exactly records_api/
-  records_intake_writer/records_auditor and fails on postgres/owner/service_role/
-  sb_secret_*/BYPASSRLS across all contract DSN forms; value-silent.
-- AC10: A startup/path identity assertion proves current_user is one sanctioned
-  records role (not superuser/BYPASSRLS/owner) for a direct-DSN serving process.
-- AC11: Supabase advisors (security) run and reviewed before any prod apply
-  packet is accepted.
+The acceptance criteria in this scope note are SUPERSEDED by the design spec
+(2026-07-03-records-gate9-supabase-serving-design.md), AC1-AC12. Consume the
+spec's ACs, not this note's. The spec corrects this draft in three places that a
+downstream plan/harness must NOT regress:
+
+- AC4: records_api reads the 14 app-served tables AND the 2 security-invoker views
+  (v_asset_test_history, v_pm_due) - not "exactly 14 tables".
+- AC2: the Data-API negative covers anon, authenticated, AND service_role at the
+  grant layer (grants precede RLS; a BYPASSRLS stub with no grant is still blocked).
+- AC10: the startup assertion is session_user-based (session_user = current_user,
+  both a sanctioned non-super / non-bypassrls / non-owner role) - not current_user
+  only.
+
+See the design spec for the full, authoritative AC1-AC12.
 
 ## Check 3 update (finding 4)
 

@@ -4,13 +4,18 @@
 > Supersedes the "rebind" framing.
 > Scope note: docs/superpowers/specs/2026-07-03-records-gate9-supabase-rebind-scope.md
 
-Status: DESIGN rev 2. D1 ratified = Option B (2026-07-03). Grounded against prod
+Status: DESIGN rev 3. D1 ratified = Option B (2026-07-03). Grounded against prod
 (read-only), Gate 5 migrations 045-048, and current Supabase docs.
 
-Rev 2 folds the operator review (2026-07-03): P1 session_user-based startup
-assertion (SET ROLE cannot false-green); contract v2 to end the Option-A
-`supabase_target: authenticated` false-green; Supavisor qualified-user parser
-form; records_api security-invoker view scope corrected.
+Rev 2 folded the first operator review (2026-07-03): P1 session_user-based startup
+assertion (SET ROLE cannot false-green); Supavisor qualified-user parser form;
+records_api security-invoker view scope corrected.
+
+Rev 3 folds the second operator review: clarified that contract v2 is a build-phase
+deliverable NOT yet landed (the on-branch contract is still v1, test still passes);
+added service_role to the Data-API grant-layer negative (AC2 / harness / apply
+packet), proving grants precede RLS so a BYPASSRLS stub is blocked absent a grant;
+the scope note's decisions + ACs are marked superseded by this spec.
 
 **Goal:** Define how the Gate 5 records security boundary is SERVED from Supabase
 without weakening it - by connecting server-side as the three custom
@@ -83,12 +88,15 @@ LOGIN roles authenticate via direct connection or Supavisor session mode;
 NOBYPASSRLS is the default; the PostgREST authenticator / db_pre_request path is
 bypassed entirely. Caveats folded into sections 3.1, 3.4, 3.5, and 7.
 
-**Contract is stale under B.** The Gate 5 SERVING_CONTRACT maps all three
-connecting roles to `supabase_target: authenticated` - an Option-A-shaped
-placeholder - and test_serving_contract.py passes against it, so the Option-B
-drift is a false-green. Gate 9 revs the contract to v2 (section 4, deliverable 5)
-with an explicit direct-role/DSN serving identity and a test that fails on the
-drift.
+**Contract is stale under B (fix is build-phase deliverable 5, NOT yet landed).**
+The Gate 5 SERVING_CONTRACT still maps all three connecting roles to
+`supabase_target: authenticated` - an Option-A-shaped placeholder - and
+test_serving_contract.py still passes against it, so the Option-B drift is
+currently a false-green. The on-branch contract remains v1 through the design
+phase; Gate 9's BUILD (deliverable 5, writing-plans/SDD) revs it to v2 with an
+explicit direct-role/DSN serving identity and updates the test to FAIL on the
+drift. Until that build task lands, treat the on-branch contract as
+stale-pending-v2 - it is not yet updated.
 
 **Option A (Data API + claims) is DEFERRED** as a future additive gate, designed
 only when a real browser records consumer exists. If A is ever chosen, prefer a
@@ -205,8 +213,12 @@ passwords are irrelevant to SET SESSION AUTHORIZATION):
   source_links or audit_log; cannot read the 2 views (records_api-only).
 - records_auditor: can SELECT audit_log only; cannot read the 14, the 2 views, or
   source_links; cannot INSERT/UPDATE/DELETE audit_log.
-- anon and authenticated: reach NOTHING in records - no schema USAGE, no table or
-  view grant (the Data-API-exclusion negative, AC2).
+- anon, authenticated, AND service_role: reach NOTHING in records - no schema
+  USAGE and no table/view grant to any of them. Because grants are checked before
+  RLS, even a BYPASSRLS stub (service_role) is blocked at the grant layer absent a
+  grant - prove this explicitly (a BYPASSRLS role with no records grant still gets
+  permission-denied). This is the Data-API-exclusion negative across all three
+  Data API grant roles, AC2.
 - audit_log stays append-only: no role can UPDATE or DELETE it.
 - Role cleanup: drop all created stub roles AFTER the DB drop (Gate 5 [drop-role]
   discipline) so the shared cluster stays clean.
@@ -242,8 +254,8 @@ Scope of the packet a later, separate operator apply consumes:
 - Ensure the three serving roles have LOGIN and out-of-band passwords (Vault),
   altering any the migrations created NOLOGIN; no password appears in any migration.
 - Confirm FORCE RLS on all records tables and that the three roles are non-owners.
-- Confirm records is NOT added to exposed-schemas and holds no anon/authenticated
-  grant.
+- Confirm records is NOT added to exposed-schemas and holds no anon/authenticated/
+  service_role grant on any object.
 - SCRAM-SHA-256 prefix check on the freshly created roles (docs-ambiguous; verify
   empirically that fresh roles are SCRAM, not md5).
 - Run Supabase security advisors; review before accept (AC11).
@@ -265,8 +277,10 @@ describe records serving as "safe by enforcement" without this qualification.
 - AC1: Serving credentials are exactly the three contract roles; no
   owner/superuser/service_role/BYPASSRLS/sb_secret_* credential appears in any
   serving config.
-- AC2: records is not exposed to the Data API; no anon or authenticated grant on
-  any records object (proven negative in the harness + apply-packet checklist).
+- AC2: records is not exposed to the Data API; no anon, authenticated, OR
+  service_role grant on any records object; and a BYPASSRLS stub with no grant is
+  still blocked at the grant layer (grants precede RLS). Proven negative in the
+  harness + apply-packet checklist.
 - AC3: Only the sanctioned role DSNs reach the allowed objects; each role reaches
   exactly its contract scope and no more.
 - AC4: records_api reads exactly the 14 app-served tables and the 2 security-
