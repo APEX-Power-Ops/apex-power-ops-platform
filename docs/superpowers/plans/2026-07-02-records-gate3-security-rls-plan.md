@@ -32,8 +32,10 @@
 - **Modify** `infra/database/migrations/records/test_run_validation_unit.py` — update `parse_tiers` unit tests for the `{0..5}` set.
 - **Modify** `infra/database/migrations/records/test_043_neta_table_source_links.py` + `test_044_person_anchor.py` — comment-rescope the RLS-disabled assertions (stack-position-scoped; 045 flips the invariant by design).
 - **Modify** `infra/database/migrations/records/MANIFEST.md` — add the 045 entry + note the post-045 RLS flip.
+- **Modify** `infra/secret-audit.sh` — add the AC8 value-silent detectors (Supabase secret/service-role keys + records-serving owner/bypass DSN).
+- **Create** `infra/database/migrations/records/test_secret_audit_ac8.sh` — AC8 positive/negative fixtures.
 - **Create** `docs/operations/RECORDS-GATE3-EVIDENCE-2026-07.md` — AC verification transcript.
-- **No change** to `records-ci.yml` — its final step already runs `run_validation.py --require-db` (the full ladder), which will include Tier 5 once it is in the default set. Verify in Task 5.
+- **No change** to `records-ci.yml` — its final step already runs `run_validation.py --require-db` (the full ladder), which will include Tier 5 once it is in the default set. Verify in Task 6.
 
 ---
 
@@ -119,6 +121,22 @@ def test_no_public_execute_on_routines(conn):
         "where ns.nspname='records' and a.grantee=0 and a.privilege_type='EXECUTE'"
     ).fetchone()[0]
     assert n == 0, "a records routine retains PUBLIC EXECUTE"
+
+
+def test_no_public_on_tables_or_schema(conn):
+    # AC2: zero PUBLIC grants on any records table/view, and no PUBLIC privilege on the schema.
+    tv = conn.execute(
+        "select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace, "
+        "lateral aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) a "
+        "where n.nspname='records' and c.relkind in ('r','v') and a.grantee=0"
+    ).fetchone()[0]
+    assert tv == 0, "PUBLIC holds a grant on a records table/view"
+    sc = conn.execute(
+        "select count(*) from pg_namespace n, "
+        "lateral aclexplode(coalesce(n.nspacl, acldefault('n', n.nspowner))) a "
+        "where n.nspname='records' and a.grantee=0"
+    ).fetchone()[0]
+    assert sc == 0, "PUBLIC holds a privilege on schema records"
 
 
 def test_reader_has_no_write(conn):
@@ -232,19 +250,32 @@ begin
   end if;
 end $$;
 
--- [2] PUBLIC hygiene (tables + routines) -------------------------------------------------
+-- [2] PUBLIC hygiene (tables + routines + schema) ----------------------------------------
 revoke create on schema public from public;               -- database-scoped; no-op vs PG15+ default
+revoke all privileges on all tables in schema records from public;
 revoke execute on all routines in schema records from public;
+revoke usage on schema records from public;                -- no-op (records nspacl null); explicit
 grant usage on schema records to records_api, records_intake_writer;
 
+-- [2a] posture assert: PUBLIC holds NOTHING on records routines, tables/views, or the schema.
+-- Materialized default ACL so a NULL acl (the implicit default PUBLIC grant) is not a false-green.
 do $$
-declare n int;
 begin
-  select count(*) into n
-  from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace,
-       lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
-  where ns.nspname='records' and a.grantee=0 and a.privilege_type='EXECUTE';
-  if n > 0 then raise exception '045 posture: % records routine(s) retain PUBLIC EXECUTE', n; end if;
+  if exists (select 1 from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace,
+             lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+             where ns.nspname='records' and a.grantee=0 and a.privilege_type='EXECUTE') then
+    raise exception '045 posture: PUBLIC retains EXECUTE on a records routine';
+  end if;
+  if exists (select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace,
+             lateral aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) a
+             where n.nspname='records' and c.relkind in ('r','v') and a.grantee=0) then
+    raise exception '045 posture: PUBLIC holds a grant on a records table/view';
+  end if;
+  if exists (select 1 from pg_namespace n,
+             lateral aclexplode(coalesce(n.nspacl, acldefault('n', n.nspowner))) a
+             where n.nspname='records' and a.grantee=0) then
+    raise exception '045 posture: PUBLIC holds a privilege on schema records';
+  end if;
 end $$;
 
 -- [3] Grant matrix -----------------------------------------------------------------------
@@ -537,82 +568,142 @@ def snapshot_roles(admin, names=("records_api", "records_intake_writer")):
 ```
 `tier5_roles` (one non-autocommit connection; seed as superuser; SET SESSION AUTHORIZATION proofs with savepoint discipline; everything rolled back):
 ```python
-ROGUE = "records_val_rogue"  # run-scoped suffix appended from val_name's stamp
-
-def _expect_raise(cur, sql, label):
-    cur.execute("savepoint p")
-    try:
-        cur.execute(sql)
-        cur.execute("rollback to savepoint p")
-        return f"DID NOT RAISE: {label}"
-    except psycopg.errors.Error:
-        cur.execute("rollback to savepoint p")
-        return None
+WRITE_PATH = ["assets", "form_submissions", "form_field_values", "pm_schedules", "pm_events", "persons"]
+VIEWS = {
+    "v_asset_test_history": ["assets", "form_submissions", "form_templates"],
+    "v_pm_due": ["pm_schedules", "assets", "pm_programs"],
+}
 
 def tier5_roles(child_dsn, val_name):
+    """The complete binding proof set: PP1-2, DP1-9, DP-ESC. Every expected-raise is
+    savepoint-bracketed (aborted-txn discipline). All dynamic proofs run in ONE rolled-back
+    transaction so the disposable DB is left pristine; introspection asserts run read-only."""
     import psycopg
-    rogue = f"records_val_rogue_{val_name.split('records_val_')[1]}"
-    assert re.fullmatch(r"records_val_rogue_\d{8}T\d{6}_\d+", rogue), rogue
+    rogue = f"records_val_rogue_{val_name.split('records_val_', 1)[1]}"
+    if not re.fullmatch(r"records_val_rogue_\d{8}T\d{6}_\d+", rogue):
+        return Tier("5-roles", "FAIL", f"bad rogue name {rogue!r}")
     fails = []
-    conn = psycopg.connect(child_dsn, autocommit=True)
-    try:
-        # static asserts (DP7/DP8 + reader/writer boundary sampled; full matrix is test_045)
-        if conn.execute("select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace "
-                        "where n.nspname='records' and c.relkind='r' and not c.relrowsecurity").fetchone()[0]:
-            fails.append("DP7 a records table has RLS disabled")
-        # DP-ESC (a): reader cannot SET ROLE writer (faithful, not superuser-masked)
-        conn.execute("set session authorization records_api")
+
+    def expect_raise(cur, sql, label, params=None):
+        cur.execute("savepoint p")
         try:
-            conn.execute("set role records_intake_writer"); fails.append("DP-ESC reader escalated to writer")
+            cur.execute(sql, params)
+            cur.execute("rollback to savepoint p")
+            fails.append(f"{label}: DID NOT RAISE")
         except psycopg.errors.Error:
-            pass
-        conn.execute("reset session authorization")
+            cur.execute("rollback to savepoint p")
+
+    # --- introspection (read-only autocommit): DP6, DP7, DP8, polroles ---
+    ro = psycopg.connect(child_dsn, autocommit=True)
+    try:
+        if ro.execute("select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace "
+                      "where n.nspname='records' and c.relkind='r' and not c.relrowsecurity").fetchone()[0]:
+            fails.append("DP7: a records table has RLS disabled")
+        for v in VIEWS:
+            opts = ro.execute("select reloptions from pg_class c join pg_namespace n on n.oid=c.relnamespace "
+                              "where n.nspname='records' and c.relname=%s", (v,)).fetchone()[0]
+            if not (opts and any(o.startswith("security_invoker=") and o.split("=")[1] in ("true", "on", "1") for o in opts)):
+                fails.append(f"DP8: {v} not security_invoker")
+        if ro.execute("select count(*) from pg_proc p join pg_namespace ns on ns.oid=p.pronamespace, "
+                      "lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a "
+                      "where ns.nspname='records' and a.grantee=0 and a.privilege_type='EXECUTE'").fetchone()[0]:
+            fails.append("DP6: PUBLIC holds EXECUTE on a records routine")
+        if ro.execute("select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace, "
+                      "lateral aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) a "
+                      "where n.nspname='records' and c.relkind in ('r','v') and a.grantee=0").fetchone()[0]:
+            fails.append("DP6: PUBLIC holds a grant on a records table/view")
+        if ro.execute("select count(*) from pg_policies where schemaname='records' "
+                      "and (roles is null or 'public' = any(roles))").fetchone()[0]:
+            fails.append("polroles: a records policy is TO PUBLIC")
     finally:
-        conn.close()
-    # dynamic proofs in ONE rolled-back transaction (savepoint discipline)
-    conn = psycopg.connect(child_dsn)   # autocommit=False
+        ro.close()
+
+    # --- dynamic proofs, ONE rolled-back transaction ---
+    conn = psycopg.connect(child_dsn)  # autocommit=False
     try:
         cur = conn.cursor()
-        cur.execute(f"create role {rogue} nosuperuser nologin nobypassrls")
-        # seed a JOIN-satisfying set for the view positive-control (rolled back with the txn)
+        cur.execute(f'create role "{rogue}" nosuperuser nologin nobypassrls')
+        # seed a JOIN-satisfying set (as the maintenance role) for PP1/DP9 positive controls
         cur.execute("insert into records.asset_classes(class_code,name) values('t5','Tier5') returning asset_class_id")
         acid = cur.fetchone()[0]
         cur.execute("insert into records.assets(asset_tag,name,asset_class_id) values('T5','t5',%s) returning asset_id", (acid,))
         aid = cur.fetchone()[0]
         cur.execute("insert into records.form_templates(template_code,title,asset_class_id) values('t5','t5',%s) returning template_id", (acid,))
         tid = cur.fetchone()[0]
-        cur.execute("insert into records.form_submissions(template_id,asset_id) values(%s,%s)", (tid, aid))
-        # PP2: writer creates a draft (status defaults)
+        cur.execute("insert into records.form_submissions(template_id,asset_id) values(%s,%s) returning form_submission_id", (tid, aid))
+        sid = cur.fetchone()[0]
+        cur.execute("insert into records.pm_programs(program_code,name,interval_value) values('t5','t5',1) returning pm_program_id")
+        ppid = cur.fetchone()[0]
+        cur.execute("insert into records.pm_schedules(pm_program_id,asset_id) values(%s,%s)", (ppid, aid))
+
+        # PP1 + DP1 + DP-ESC(a) reader->writer, as records_api
+        cur.execute("set session authorization records_api")
+        cur.execute("select count(*) from records.form_submissions")            # PP1 read ok
+        cur.execute("select count(*) from records.v_asset_test_history")        # PP1 view ok
+        for t in WRITE_PATH:
+            expect_raise(cur, f"insert into records.{t} default values", f"DP1 reader INSERT {t}")
+            expect_raise(cur, f"update records.{t} set updated_at=now()", f"DP1 reader UPDATE {t}")
+            expect_raise(cur, f"delete from records.{t}", f"DP1 reader DELETE {t}")
+        expect_raise(cur, "set role records_intake_writer", "DP-ESC reader->writer")
+        cur.execute("reset session authorization")
+
+        # PP2 + DP2 + DP3 + DP4 + DP-ESC(a) writer->reader, as records_intake_writer
         cur.execute("set session authorization records_intake_writer")
         cur.execute("savepoint w")
-        cur.execute("insert into records.form_submissions(template_id,asset_id) values(%s,%s)", (tid, aid))
-        cur.execute("select status from records.form_submissions order by created_at desc limit 1")
+        cur.execute("insert into records.form_submissions(template_id,asset_id) values(%s,%s) returning status", (tid, aid))
         if cur.fetchone()[0] != "draft":
-            fails.append("PP2 writer insert did not default status to draft")
-        # DP2: writer cannot set status/reviewed_by
-        fails += list(filter(None, [
-            _expect_raise(cur, f"update records.form_submissions set status='approved' where form_submission_id in (select form_submission_id from records.form_submissions limit 1)", "DP2 status"),
-            _expect_raise(cur, "update records.persons set worker_class='1099' where false", "DP2/D9 worker_class"),
-        ]))
+            fails.append("PP2: writer INSERT did not default status to draft")
+        cur.execute("rollback to savepoint w")
+        expect_raise(cur, "update records.form_submissions set status='approved' where form_submission_id=%s", "DP2 form_submissions.status", (sid,))
+        expect_raise(cur, "update records.form_submissions set reviewed_by='x' where form_submission_id=%s", "DP2 form_submissions.reviewed_by", (sid,))
+        expect_raise(cur, "update records.pm_events set status='completed' where false", "DP2/D9 pm_events.status")
+        expect_raise(cur, "update records.form_field_values set assessment='pass' where false", "DP2/D9 form_field_values.assessment")
+        expect_raise(cur, "update records.persons set worker_class='1099' where false", "DP2/D9 persons.worker_class")
+        expect_raise(cur, "update records.persons set employee_ref=gen_random_uuid() where false", "DP3 persons.employee_ref")
+        expect_raise(cur, "update records.persons set match_adjudicated_by=gen_random_uuid() where false", "DP3 persons.match_adjudicated_by")
+        expect_raise(cur, "drop table records.form_submissions", "DP4 writer DROP")
+        expect_raise(cur, "alter table records.assets add column x int", "DP4 writer ALTER")
+        expect_raise(cur, "set role records_api", "DP-ESC writer->reader")
         cur.execute("reset session authorization")
-        # DP9 positive control + rogue denial through the view
-        cur.execute("set session authorization records_api")
-        cur.execute("select count(*) from records.v_asset_test_history")
-        if cur.fetchone()[0] < 1:
-            fails.append("DP9 positive control: records_api sees 0 rows through the view (join empty)")
+
+        # DP-ESC(b): a rogue role can assume NEITHER app role
+        cur.execute(f'set session authorization "{rogue}"')
+        expect_raise(cur, "set role records_api", "DP-ESC rogue->records_api")
+        expect_raise(cur, "set role records_intake_writer", "DP-ESC rogue->records_intake_writer")
         cur.execute("reset session authorization")
-        cur.execute(f"grant usage on schema records to {rogue}")
-        cur.execute(f"grant select on records.v_asset_test_history, records.assets, records.form_submissions, records.form_templates to {rogue}")
-        cur.execute(f"set session authorization {rogue}")
-        cur.execute("select count(*) from records.v_asset_test_history")
+
+        # DP5 accidental-grant: rogue with USAGE+SELECT on a write-path table -> default-deny + no write
+        cur.execute(f'grant usage on schema records to "{rogue}"')
+        cur.execute(f'grant select on records.form_submissions to "{rogue}"')
+        cur.execute(f'set session authorization "{rogue}"')
+        cur.execute("select count(*) from records.form_submissions")
         if cur.fetchone()[0] != 0:
-            fails.append("DP9 rogue saw rows through the security_invoker view (RLS leak)")
+            fails.append("DP5: rogue with SELECT saw rows (RLS default-deny failed)")
+        expect_raise(cur, "insert into records.form_submissions default values", "DP5 rogue write")
         cur.execute("reset session authorization")
+
+        # DP9 for EACH view: positive control (records_api sees rows) then rogue sees 0
+        for view, bases in VIEWS.items():
+            cur.execute("set session authorization records_api")
+            cur.execute(f"select count(*) from records.{view}")
+            if cur.fetchone()[0] < 1:
+                fails.append(f"DP9 {view}: positive control 0 rows (join empty - seed problem)")
+            cur.execute("reset session authorization")
+            cur.execute(f'grant usage on schema records to "{rogue}"')  # idempotent
+            cur.execute(f'grant select on records.{view} to "{rogue}"')
+            for b in bases:
+                cur.execute(f'grant select on records.{b} to "{rogue}"')
+            cur.execute(f'set session authorization "{rogue}"')
+            cur.execute(f"select count(*) from records.{view}")
+            if cur.fetchone()[0] != 0:
+                fails.append(f"DP9 {view}: rogue saw rows through the security_invoker view (RLS leak)")
+            cur.execute("reset session authorization")
     finally:
         conn.rollback()   # undoes rogue role + grants + seeds
         conn.close()
-    status = "FAIL" if fails else "PASS"
-    return Tier("5-roles", status, "; ".join(fails) if fails else "role/grant/denial proofs green")
+
+    return Tier("5-roles", "FAIL" if fails else "PASS",
+                "; ".join(fails) if fails else "PP1-2/DP1-9/DP-ESC/polroles green")
 ```
 Wire the call in `main()` inside the inner `try`, after the tier4 block, gated on tier 3 not FAILed:
 ```python
@@ -652,17 +743,55 @@ for role in created_roles:   # from snapshot_roles(), only roles this run create
 
 ---
 
-### Task 5: Evidence doc + CI confirmation + AC verification
+### Task 5: AC8 secret-audit detectors (`infra/secret-audit.sh`)
+
+**Files:**
+- Modify: `infra/secret-audit.sh`
+- Create: `infra/database/migrations/records/test_secret_audit_ac8.sh` (positive/negative fixtures)
+
+**Interfaces:** Consumes tracked repo files (+ an optional serving-config glob); produces a value-silent (location-only) tripwire that flags an RLS-bypass credential in records serving config. `secret-audit.sh` already prints `file:line + rule name` and never the value — the AC8 rules inherit that contract.
+
+- [ ] **Step 1: Add two AC8 signatures to Check 2's `RULES`** (value-silent; low false-positive):
+
+```bash
+  ["supabase-secret-key"]='sb_secret_[A-Za-z0-9_-]{16,}'
+  ["supabase-service-role-key"]='SERVICE_ROLE_KEY[[:space:]]*[:=]'
+```
+`sb_secret_` is a real Supabase secret (service) key signature anywhere; `SERVICE_ROLE_KEY=` names a service-role key assignment (the generic `jwt` rule still catches its JWT value, but this makes the AC8 finding explicit). Both bypass RLS by design.
+
+- [ ] **Step 2: Add Check 3 — records-serving owner/bypass DSN** (armed, silent until a serving path exists). Scan files matching `${RECORDS_SERVING_GLOBS:-}` (default empty — records serving config does not exist until Gate 5+) for a DSN whose `user=`/`role=` is NOT a sanctioned app role — `user=postgres`, `user=records_fn_owner`, or `role=service_role`. Emit `file:line  [rule: records-serving-non-app-role-dsn]`, value-silent, `rc=1`. Sketch:
+```bash
+say ""; say "[3] records serving config uses only non-owner app roles (AC8)"
+if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
+  while IFS= read -r m; do
+    [[ -z "$m" ]] && continue
+    say "  FIND  ${m}  [rule: records-serving-non-app-role-dsn]"; rc=1
+  done < <(git -C "$ROOT" grep -nIE -e '(user|role)=(postgres|records_fn_owner|service_role)' -- ${RECORDS_SERVING_GLOBS} 2>/dev/null | cut -d: -f1,2)
+  say "  PASS  records serving DSN scan ran (globs: ${RECORDS_SERVING_GLOBS})"
+else
+  say "  SKIP  no RECORDS_SERVING_GLOBS set (serving config not built yet)"
+fi
+```
+
+- [ ] **Step 3: Write the positive/negative test** `test_secret_audit_ac8.sh`. In a temp dir tracked by a throwaway git repo (or a temp path under `RECORDS_SERVING_GLOBS`), plant (a) `sb_secret_FAKEFAKEFAKEFAKEFAKE00`, (b) `SUPABASE_SERVICE_ROLE_KEY=eyJhbGciFAKE.FAKE.FAKE`, (c) a serving DSN `host=h user=postgres dbname=records` → assert `secret-audit.sh` exits 1 and prints each rule name and NEVER the planted value (grep the output for the value → must be absent). Then plant the sanctioned `RECORDS_API_DSN="host=h user=records_api dbname=records"` under the same glob → assert it is NOT flagged. Clean up the fixtures.
+
+- [ ] **Step 4: Run** `bash infra/secret-audit.sh` (expect clean on the real tree — no serving config yet, and no planted keys) and `bash infra/database/migrations/records/test_secret_audit_ac8.sh` (expect the fixtures flagged/not-flagged as designed).
+
+- [ ] **Step 5: Commit** `feat(infra): AC8 secret-audit detectors (service_role/secret-key/bypass-DSN, value-silent)`.
+
+---
+
+### Task 6: Evidence doc + CI confirmation + AC verification
 
 - [ ] Confirm `records-ci.yml` needs no change: its final step `python … run_validation.py --require-db` now runs Tiers 0→5 (Tier 5 is in the default set). Verify the CI harness-unit-test step still passes with the updated `parse_tiers`.
-- [ ] Create `docs/operations/RECORDS-GATE3-EVIDENCE-2026-07.md` — capture: the full-ladder transcript (Tiers 0–5 PASS on a disposable `records_val_*`), the `test_045` assertions, the down-symmetry check, and an AC1–AC8 checklist mapping each AC to its proof. Confirm `records_dev` appears in no connection line and the disposable DB + created roles were dropped.
+- [ ] Create `docs/operations/RECORDS-GATE3-EVIDENCE-2026-07.md` — capture: the full-ladder transcript (Tiers 0–5 PASS on a disposable `records_val_*`), the `test_045` assertions, the down-symmetry check, the **AC8 secret-audit run** (clean tree + the positive/negative fixture results), and an **AC1–AC8 checklist mapping each AC to its proof**. Confirm `records_dev` appears in no connection line and the disposable DB + created roles were dropped.
 - [ ] Commit `docs(records): Gate 3 AC evidence`.
 
 ---
 
 ## Self-Review (author checklist, run before execution)
 
-- **Spec coverage:** AC1 (Task 1 §[4]); AC2 (Task 1 §[2a] + test_045); AC3 (Task 1 §[3a] + test_045 + Tier 5 DP1–DP4/DP-ESC); AC4 (Task 1 §[5] + Tier 5 DP9); AC5 (Tier 5 PP1–PP2); AC6 (Task 3 + Task 5); AC7 (no prod apply — Global Constraints); AC8 (Global Constraints + Task 5 evidence names `secret-audit.sh`). D9/D10 encoded in RESERVED + the D10 restriction.
+- **Spec coverage:** AC1 (Task 1 §[4] + test_045 + Tier 5 DP7); AC2 (Task 1 §[2]/[2a] revokes+asserts over routines **and** tables/views **and** schema + test_045 `test_no_public_*` + Tier 5 DP6); AC3 (Task 1 §[3a] + test_045 + Tier 5 PP2/DP1–DP4/DP-ESC); AC4 (Task 1 §[5] + Tier 5 DP8/DP9 for **both** views + polroles); AC5 (Tier 5 PP1–PP2); AC6 (Task 3 + Task 6); AC7 (no prod apply — Global Constraints); AC8 (Task 5 real `secret-audit.sh` detectors + Task 6 evidence). **Tier 5 implements the COMPLETE binding set PP1–2 / DP1–9 / DP-ESC across both views** — no subset. D9/D10 encoded in RESERVED + the D10 restriction.
 - **Type/name consistency:** policy names `p_<table>_{read,ins,upd}` identical in up + down; role names `records_api`/`records_intake_writer` throughout; `created_roles` produced by `snapshot_roles` and consumed in `finally`.
 - **Build-review gate (spec §5.3):** the whole-branch review MUST re-audit the down checklist (a–d), the non-PUBLIC `polroles` preservation, and read `infra/secret-audit.sh` for the AC8 patterns.
 
