@@ -1,7 +1,7 @@
-# Records Supabase-Compat Adaptation - Design Spec (rev 3, IRP-folded)
+# Records Supabase-Compat Adaptation - Design Spec (rev 4, IRP-folded)
 
 *2026-07-04. Lane: records/supabase-compat. Off `origin/main @ 3f3ebe46`.*
-*rev 2 folded the dual-engine IRP (Claude 5-agent grounded audit + Codex cross-engine) + operator ratifications; rev 3 folds the Codex stability-pass P1s (046 in the NOSUPERUSER drop; SET ROLE under INHERIT FALSE; per-migration owner authority).*
+*rev 2 folded the dual-engine IRP (Claude 5-agent grounded audit + Codex cross-engine) + operator ratifications; rev 3 folds the Codex stability-pass P1s (046 in the NOSUPERUSER drop; SET ROLE under INHERIT FALSE; per-migration owner authority); rev 4 folds the operator plan-audits: the `ALTER ... OWNER TO` transfer runs AS the object's CURRENT owner (not while SET-ROLE'd into the target), with the 048 cross-role grant and the reverse/down transfers (046_down A->postgres, 048_down B->A) plus the `grant postgres to <custom>` permission probe; temp schema CREATE belongs to the NEW/receiving owner; the B3 applier-privilege probe is a scratch-WRITE needing its own scratch-write GO.*
 
 ## Goal
 
@@ -134,7 +134,11 @@ IF managed `postgres` REJECTS custom-role-bound policies:
 - **A3.** Ownership transfer, BOTH planes (046 -> `records_owner`, 048 -> `records_fn_owner`):
   temporary membership choreography, gated by Decision Gate A. Exact shape:
   - `GRANT <owner_role> TO postgres WITH SET TRUE, INHERIT FALSE, ADMIN FALSE` (or the branch-proven
-    equivalent) - and any temporary schema/DB `CREATE` the new owner needs to receive ownership;
+    equivalent) - and any temporary schema/DB `CREATE` the NEW/receiving owner (NOT `postgres`) needs to
+    receive ownership;
+  - the `ALTER ... OWNER TO <owner_role>` transfer itself runs AS the object's CURRENT owner (which holds
+    the `WITH SET` grant), NOT while `SET ROLE`d into `<owner_role>` - the target does not yet own the
+    object, so a set-role'd transfer is rejected;
   - **owner-only DDL runs under an explicit `SET ROLE <owner_role>` ... `RESET ROLE` bracket, NOT by
     holding membership alone.** Because the membership is `INHERIT FALSE`, `postgres` does not passively
     hold the owner's privileges - so 046's post-transfer `FORCE ROW LEVEL SECURITY` and 048's
@@ -149,7 +153,10 @@ IF managed `postgres` REJECTS custom-role-bound policies:
   - **temp authority is PER-MIGRATION** - each migration re-establishes what IT needs (046 revokes its
     own at its boundary, so 048/049 cannot rely on 046's grant): 048 creates `audit_log` IN the
     now-`records_owner`-owned `records` schema, so it needs temporary `records_owner` / schema-`CREATE`
-    authority (via `SET ROLE`) IN ADDITION to `records_fn_owner` for the audit objects' ownership; 049
+    authority (via `SET ROLE`) IN ADDITION to `records_fn_owner` for the audit objects' ownership - the
+    transfer of `audit_log` from its creator `records_owner` to `records_fn_owner` runs AS the current
+    owner `records_owner`, which must hold `WITH SET` membership in `records_fn_owner`
+    (`grant records_fn_owner to records_owner with set`); 049
     needs trigger/table/function authority on the `records_owner`-owned tables. NO temp authority is
     carried across a migration boundary; each migration asserts its temp authority + membership clean at
     its own end.
@@ -162,8 +169,12 @@ IF managed `postgres` REJECTS custom-role-bound policies:
 - **A5. Down-migration parity (`045_down` .. `049_down`).** The reversals that reassign ownership back
   to `postgres`, drop the owner/serving/audit roles, or reverse audit objects carry the SAME choreography
   (temp membership through all owner-only reverse-DDL, revoke before any terminal assert) and the SAME
-  residue asserts. Phase 0 probes the reverse transfer; Phase 2 adapts downs in lockstep; Phase 3
-  exercises down->up cycles on both surfaces.
+  residue asserts. The reverse runs AS the then-current owner: `048_down` (`records_fn_owner` ->
+  `records_owner`) and `046_down` (`records_owner` -> `postgres`); the reclaim-to-`postgres` direction
+  requires the current owner hold `WITH SET` membership in `postgres` (`grant postgres to <owner> with
+  set`). Phase 0 probes BOTH reverse directions AND whether managed Supabase permits granting the
+  `postgres` role to a custom role - if rejected, the down path escalates for an alternate design (see
+  Error handling). Phase 2 adapts downs in lockstep; Phase 3 exercises down->up cycles on both surfaces.
 - **A6. Policy binding (Gate B).** Keep `TO records_api, records_intake_writer` pending Gate B; the
   045 header "rebind to authenticated" note is reconciled per Gate B's outcome, never blindly followed.
 - Everything else (grants, RLS enable, triggers) unchanged, but Phase 0 confirms each op class applies
@@ -183,10 +194,12 @@ IF managed `postgres` REJECTS custom-role-bound policies:
   keys) + a `pg_default_acl` future-grant assertion - NOT via migration SQL alone.
 - **B3. Executable applier-privilege probe (reusable).** A single executable that, given a target DSN,
   tests the exact privilege classes that failed or may fail: role attribute sets, role creation,
-  membership grant/revoke WITH SET, ownership transfer (table/view/seq/function/schema), policy creation
-  `TO <custom role>`, RLS enable + FORCE RLS, trigger + function ownership, and clean teardown. Run on
-  the branch in Phase 0 (to design), AND as the Phase-4 prod-apply PRECONDITION (an executable go/no-go
-  gate, not prose).
+  membership grant/revoke WITH SET, ownership transfer (table/view/seq/function/schema; forward +
+  cross-role + reverse-to-postgres, the last probing whether `grant postgres to <custom>` is permitted),
+  policy creation `TO <custom role>`, RLS enable + FORCE RLS, trigger + function ownership, and clean
+  teardown. It performs scratch WRITES (savepoint/transaction-wrapped + value-silent). Run on the branch
+  in Phase 0 (to design), AND as the Phase-4 prod-apply PRECONDITION (an executable go/no-go gate, not
+  prose) - see its scratch-write GO caveat under Packet corrections.
 
 ## Phases (non-circular)
 
@@ -223,8 +236,10 @@ not migration SQL.
 ## Packet corrections (separate artifact: `RECORDS-GATE9-PROD-APPLY-PACKET.md`)
 
 Folded from IRP C2/M4/M5 - applied when Phase 4 is prepared (the packet is a committed doc, edited then):
-- Add an EXECUTABLE applier-privilege precondition (the B3 probe) to Section 1 - the packet must prove
-  the applier can run the privilege classes before any GO (the gate absent on 2026-07-04).
+- Add an EXECUTABLE applier-privilege precondition (the B3 probe) to Section 1 (the gate absent on
+  2026-07-04). Because the probe performs scratch WRITES (creates + tears down scratch roles/objects,
+  transactionally + value-silently), it requires its OWN operator-approved scratch-write GO, distinct
+  from and PRIOR TO the migration write GO - it is NOT run "before any GO".
 - Make transaction atomicity SOURCE-owned: wrap the six unwrapped up-migrations (`001-005`, `008`) in
   `BEGIN;/COMMIT;` at source, OR have the packet state exactly which layer owns wrapping per file - do
   not let a hand-added `-1` in operator memory be the safety mechanism.
@@ -238,6 +253,9 @@ Folded from IRP C2/M4/M5 - applied when Phase 4 is prepared (the packet is a com
 - Gate B custom-role-policy rejection -> operator design decision (never silent switch to `authenticated`).
 - If Phase 0 shows ownership transfer needs MORE than temp membership (e.g. temp CREATE, or a
   `supabase_admin`-owned object with no `postgres` transfer path), revise before Phase 2, or ESCALATE.
+- If the reclaim-to-`postgres` reverse transfer requires granting the `postgres` role to a custom role and
+  managed Supabase rejects it, the down migrations escalate for an alternate down design (drop-and-recreate,
+  or a dedicated reclaim owner) - never leave the down silently non-reversible.
 - Every branch is throwaway; nothing mutates prod in this lane; cleanup + residue proof mandatory;
   value-silent throughout (no DSN/password printed).
 
