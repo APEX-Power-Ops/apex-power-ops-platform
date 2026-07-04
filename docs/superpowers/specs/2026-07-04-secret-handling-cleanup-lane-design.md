@@ -37,9 +37,16 @@ of Infisical: it can be closed today by filtering the child environment.
 - `CODEX_HOME` / `CODEX_PATH` appear only in the unrelated TCC-breaker
   codex-harness scripts, never in `infra/.env` or the apex-jobs worker env, so
   codex resolves its default `~/.codex`. No agent-config env var is required.
+- The `APEX_JOB_ENV` marker cannot carry a secret: `engine.start` validates
+  `run_env in ("sandbox", "host")` and raises `ValueError` otherwise, so the only
+  reachable marker values are the two literals `sandbox` and `host`.
 - The existing tests (`tests/test_agent_runner.py:150`, `:160`) only assert the
   PATH prepend and the `APEX_JOB_ENV` marker. Both are preserved under an
   allowlist, so the change is behavior-compatible and cleanly test-drivable.
+- Allowlist completeness was verified against the live host worker env
+  (2026-07-04): a value-silent name enumeration (`printenv | cut -d= -f1 | sort`,
+  names only) returned 11 names, none in the TLS / proxy / `NODE_*` / `GIT_*` /
+  `npm_*` / `FNM_*` / `NVM_*` / `SSH_AUTH_SOCK` / `GPG*` risk families. See A.7.
 
 ## Scope and decomposition
 
@@ -120,10 +127,17 @@ day one; there is no denylist that could fall behind.
   - Rewrite `_agent_env` to build default-deny from the allowlist.
   - Correct the `_agent_env` docstring (currently "os.environ + the job-env
     marker") to describe the allowlisted subset.
-- `packages/apex-jobs/README.md` (line 41: "The subprocess runs with
-  `APEX_JOB_ENV` set to the worker's env.")
-  - Clarify that agent/review subprocesses receive a sanitized allowlisted env
-    (not the worker's full environment); the marker is set on top of that.
+- `packages/apex-jobs/README.md`
+  - The existing worker/command sentence (near line 41: "The subprocess runs with
+    `APEX_JOB_ENV` set to the worker's env.") documents the COMMAND-job path
+    (`run_once`/`run_forever`, `worker.py`), and it stays accurate -- command
+    subprocesses still inherit the worker env. Do NOT rewrite it to claim agent
+    sanitization; that would falsify the command-job docs. Optionally qualify it
+    to read "command subprocess" for clarity.
+  - Add a distinct statement where agent/review jobs are documented: agent and
+    review subprocesses receive only the `_agent_env` allowlisted env plus
+    `APEX_JOB_ENV`. (Cross-engine review, Codex 2026-07-04: line 41 is the wrong
+    target; the agent-section note is the correct fix.)
 - `packages/apex-jobs/tests/test_agent_runner.py`
   - Add the tests in A.5. The two existing `_agent_env` tests stay unchanged.
 
@@ -145,6 +159,13 @@ day one; there is no denylist that could fall behind.
 5. **Regression.** The existing `test_agent_env_prepends_agent_bins_to_path`
    (`:150`) and `test_agent_env_default_includes_codex_bin` (`:160`) still pass:
    PATH prepend and the `APEX_JOB_ENV` marker are preserved.
+6. **Review-path defense in depth.** `run_review_job` (`:178`) routes through the
+   same `_agent_env`, so the sanitized env reaches review subprocesses too. Prove
+   it end-to-end by capturing the `env=` passed to `subprocess.run` for a review
+   job (the harness already exists at
+   `test_review_job_never_passes_prompt_with_base`, `:257`, which monkeypatches
+   `subprocess.run`) and asserting a planted secret is absent while `HOME` and
+   `APEX_JOB_ENV` are present.
 
 ### A.6 Error handling and edge cases
 
@@ -154,6 +175,33 @@ day one; there is no denylist that could fall behind.
   consisting of just the agent bins (`env.get("PATH", "")` today; unchanged).
 - `job_env` is always written to `APEX_JOB_ENV`, matching current behavior; no
   gate, promotion, heartbeat, or worktree-plumbing behavior changes.
+
+### A.7 Allowlist completeness -- host env verification (2026-07-04)
+
+The strict default-deny allowlist is only safe if no non-secret runtime variable
+the agents rely on is silently dropped. Verified value-silent (names only) on the
+Olares host worker context:
+
+- A login-shell `printenv | cut -d= -f1 | sort` returned 11 names. None belong to
+  the risk families the audit flagged: no `NODE_OPTIONS` / `NODE_EXTRA_CA_CERTS` /
+  `NODE_PATH`, no `SSL_CERT_FILE` / `SSL_CERT_DIR` / CA-bundle var, no
+  `HTTP(S)_PROXY` / `NO_PROXY` (either case), no `GIT_*`, no `npm_*` / `FNM_*` /
+  `NVM_*`, no `SSH_AUTH_SOCK` / `GNUPGHOME` / `GPG_TTY`.
+- The only names present that are neither allowlisted nor a known secret are
+  shell-internal / session variables the agent does not need: `MAIL`, `PWD`,
+  `SHLVL`, `SSH_CLIENT`, `SSH_CONNECTION`, `_`.
+- Independent cross-engine confirmation (Codex 2026-07-04): `claude --version`,
+  `codex --version`, and `git status` all launched cleanly under a minimal env
+  shaped like this allowlist; the codex wrapper reads only
+  `npm_config_user_agent` / `npm_execpath` (package-manager detection) before
+  spawning the native binary.
+
+Decision: the allowlist requires no additions; TLS / proxy / `NODE_OPTIONS` /
+`GIT_*` are consciously omitted because they are not set in the worker context.
+Re-check trigger: if the worker launch context is ever changed to set a custom CA
+bundle, an egress proxy, or `NODE_OPTIONS`, re-run the name diff and allowlist the
+specific name (these are paths / routing config, not secrets) before shipping that
+change.
 
 ## Part B -- Infisical task-scoped adoption (design only, gated)
 
@@ -197,6 +245,26 @@ Substrate already built and verified: `infra/infisical/README.md`, `inject.sh`,
 `dev-psql.sh`, `.managed-secrets` (empty), `secret-audit.sh` Checks 1b/1c
 (project id `985aac34-9665-423b-b472-78ddbd707ca7`, mesh-only
 `http://100.64.0.1:8222`).
+
+## Review record (IRP audit, 2026-07-04)
+
+Adversarial audit run before the operator review gate: 4 independent Claude lenses
+(over-strictness, residual-leak, test-rigor, scope/doc) plus the mandatory Codex
+cross-engine pass reading the actual `agent_runner.py` / `worker.py` / tests.
+
+- Convergence: the sanitizer design is sound; the strip-battery and
+  read-as-config tests are genuinely red against the current `{**os.environ,...}`;
+  no residual env leak in the agent/review paths; the `worker.py` command-job
+  scope-out is honest; no gate/promotion/heartbeat interaction.
+- Cross-engine delta -- Codex caught (P2, folded into A.4): the original doc-fix
+  target (`README.md` line 41) is the command-worker section; rewriting it would
+  falsify command-job docs. Fix is an agent-section note instead.
+- Claude caught (P1, folded into A.7): allowlist completeness was unverified
+  against the live host env; the value-silent name diff now records it and turns
+  the TLS/proxy/NODE/GIT omissions into documented decisions.
+- Conditional P1/P2/P3 breakage risks (TLS, proxy, `NODE_OPTIONS`, `GIT_*`,
+  SSH/GPG): all resolved as not-present in the worker env (A.7); no allowlist
+  change. Verdict: approve-with-changes -> changes folded (this revision).
 
 ## Discipline (both parts)
 
