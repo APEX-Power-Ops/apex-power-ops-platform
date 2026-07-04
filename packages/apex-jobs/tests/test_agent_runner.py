@@ -257,3 +257,56 @@ def test_review_job_never_passes_prompt_with_base(agent_env, monkeypatch):
     monkeypatch.setattr(agent_runner.subprocess, "run", fake_run)
     agent_runner.run_review_job(job, env="host")
     assert captured["argv"] == ["codex", "exec", "review", "--base", base]   # NO prompt
+
+
+# --- agent-env sanitizer: default-deny allowlist (Part A) ---
+# VALUE-SILENT ON FAILURE: every assert references only plain locals (bools / name
+# lists) computed from env BEFORE the assert. No assert contains env, set(env),
+# env[...] or env.get(...), so pytest's assertion introspection can never expand
+# the env dict and print a secret value. Injected values are placeholders.
+
+_SECRET_BATTERY = [
+    "APEX_JOBS_PGPASSWORD", "DEV_PG_PASSWORD", "OPS_API_DSN", "OPS_INTAKE_WRITER_DSN",
+    "SUPABASE_PROD_DSN", "TCC_BREAKER_CODEX_PW", "TCC_BREAKER_RO_PW",
+    "PGPASSWORD", "X_TOKEN", "Y_KEY", "Z_DSN", "W_SECRET",
+]
+
+
+def test_agent_env_strips_secrets(monkeypatch):
+    for k in _SECRET_BATTERY:
+        monkeypatch.setenv(k, "PLACEHOLDER-TEST-VALUE")
+    env = agent_runner._agent_env("host")
+    leaked = sorted(set(_SECRET_BATTERY) & set(env))
+    assert leaked == [], f"secret names leaked into agent env: {leaked}"
+
+
+def test_agent_env_keeps_allowlisted(monkeypatch):
+    kept = {"HOME": "/home/olares", "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8",
+            "TERM": "xterm", "TMPDIR": "/tmp", "XDG_CONFIG_HOME": "/home/olares/.config"}
+    for k, v in kept.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.setenv("SUPABASE_PROD_DSN", "PLACEHOLDER-TEST-VALUE")
+    env = agent_runner._agent_env("host")
+    missing = sorted(k for k in kept if env.get(k) != kept[k])
+    secret_present = "SUPABASE_PROD_DSN" in env
+    marker = env.get("APEX_JOB_ENV")
+    assert missing == [], f"allowlisted names dropped or altered: {missing}"
+    assert secret_present is False, "SUPABASE_PROD_DSN present in agent env"
+    assert marker == "host"
+
+
+def test_agent_env_reads_agent_path_as_config_only(monkeypatch):
+    monkeypatch.setenv("APEX_JOBS_AGENT_PATH", "/opt/agent/bin")
+    env = agent_runner._agent_env("host")
+    on_path = "/opt/agent/bin" in env.get("PATH", "").split(os.pathsep)
+    exported = "APEX_JOBS_AGENT_PATH" in env
+    assert on_path, "agent bin not prepended to PATH"
+    assert exported is False, "APEX_JOBS_AGENT_PATH leaked into agent env"
+
+
+def test_agent_env_closure_no_unexpected_keys(monkeypatch):
+    monkeypatch.setenv("SOME_RANDOM_SECRET_DSN", "PLACEHOLDER-TEST-VALUE")
+    env = agent_runner._agent_env("host")
+    allowed = set(agent_runner._AGENT_ENV_ALLOW) | {"PATH", "APEX_JOB_ENV"}
+    extra = sorted(set(env) - allowed)
+    assert extra == [], f"unexpected keys in agent env: {extra}"
