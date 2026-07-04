@@ -22,6 +22,24 @@ reviewed prod-variant apply packet. No runtime code is added.
 Design spec (authoritative): `docs/superpowers/specs/2026-07-03-records-gate9-supabase-serving-design.md`
 (rev 4).
 
+## Rev 3 (plan-review fold #2, 2026-07-03)
+
+Folds the operator's rev-2 review (4 findings) + a Task-0 credential-parse pre-check
+learned from a live env-provisioning failure:
+- tier7 grant matrix is now a FULL role x object x op cross-product driven from the
+  contract expected-privilege matrix (every serving AND Data-API role, every object incl.
+  views/owner-only, all 4 ops) - not partial per-class checks.
+- Writer column scope is now a FULL per-column matrix on all 6 write-path tables (every
+  actual column: granted -> true, every other -> false), which also proves the grant is
+  column-scoped not table-wide.
+- Check 3: the KEY (user/role/pguser) is matched case-insensitively but the sanctioned-role
+  VALUE stays exact-lowercase, so an uppercase/mixed-case role value (PGUSER=RECORDS_API,
+  records_API.ref) is FLAGGED; no single global grep -i.
+- Residue check is a real snapshot-before / run / snapshot-after / compare-exact-sets.
+- Task 0 adds a credential-parse pre-check: verify the admin DSN parses cleanly via
+  dsn_params (all keys, password matches env, no surviving quotes, psql-path auth) BEFORE
+  the baseline, so a quoted/mangled DSN fails fast with a clear message.
+
 ## Rev 2 (plan-review fold, 2026-07-03)
 
 Folds the plan-review (operator + Codex + Claude IRP Workflow). Architecture
@@ -114,7 +132,37 @@ ssh olares-mesh 'install -m 600 /home/olares/code/apex/apex-records-gate5/.env.d
   /home/olares/code/apex/apex-records-gate9/.env.dev && echo ".env.dev in place (0600)"'
 ```
 
-- [ ] **Step 3: Baseline (must be green BEFORE any Gate 9 change).**
+- [ ] **Step 3: Credential-parse pre-check (fail fast on a quoted/mangled DSN).**
+
+The harness's `_child_env` re-derives the psql password from the admin DSN via the naive
+`_dbtest.dsn_params` regex, which does NOT strip quotes like libpq. A DSN value with
+surviving quotes (e.g. nested `'"..."'`) yields a wrong psql password and a confusing
+tier-3 failure while psycopg still connects. Verify the parse is clean BEFORE the baseline
+(value-silent - booleans only):
+
+```bash
+ssh olares-mesh 'cd /home/olares/code/apex/apex-records-gate9 && set -a; . ./.env.dev; set +a && \
+  ./.venv/bin/python - <<'"'"'PY'"'"'
+import os, sys, subprocess
+sys.path.insert(0, "infra/database/migrations/records"); import _dbtest
+p = _dbtest.dsn_params(os.environ["RECORDS_PG_ADMIN_DSN"])
+dp = p.get("password") or ""; ep = os.environ.get("RECORDS_DEV_PGPASSWORD") or ""
+env = {**os.environ, "PGSSLMODE": "disable"}; env.pop("PGPASSWORD", None); env["PGPASSWORD"] = dp
+rc = subprocess.run([_dbtest.psql_exe(), "-h", p.get("host","127.0.0.1"), "-p", p.get("port","5432"),
+                     "-U", p.get("user","postgres"), "-d", p["dbname"], "-tAc", "select 1"],
+                    capture_output=True, text=True, env=env).returncode
+ok = (rc == 0 and dp == ep and not any(c in dp for c in " \x27\x22")
+      and sorted(p.keys()) == ["dbname","host","password","port","sslmode","user"])
+print("cred_parse_clean:", ok)
+sys.exit(0 if ok else 1)
+PY'
+```
+Expected: `cred_parse_clean: True`. If False, the admin DSN in `.env.dev` has surviving
+quotes or a field mismatch - the operator fixes it to a single-layer-quoted keyword DSN
+(`RECORDS_PG_ADMIN_DSN="host=127.0.0.1 port=5432 dbname=postgres user=postgres password=<pw> sslmode=disable"`
+- one layer of quotes, no nesting) before proceeding. Never edit the credential value blindly.
+
+- [ ] **Step 4: Baseline (must be green BEFORE any Gate 9 change).**
 
 ```bash
 ssh olares-mesh 'cd /home/olares/code/apex/apex-records-gate9 && set -a; . ./.env.dev; set +a && \
@@ -126,7 +174,7 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-records-gate9 && set -a; . ./.en
 ```
 Expected: all green; tiers 0-6 PASS, 0 SKIP. Any SKIP under `--require-db` = stop and fix env.
 
-- [ ] **Step 4: Record the baseline SHA** (`git rev-parse HEAD`) - it is the review-package BASE for Task 1.
+- [ ] **Step 5: Record the baseline SHA** (`git rev-parse HEAD`) - it is the review-package BASE for Task 1.
 
 ---
 
@@ -273,6 +321,8 @@ supavisor_multidot="user=""records_api"".""evil"".""postgres"  # POSITIVE (multi
 supavisor_badbase="user=""postgres"".""abcdefghijklmnop"       # POSITIVE (non-sanctioned base - must FAIL)
 pguser_ok="PGUSER=""records_api"              # NEGATIVE (sanctioned, uppercase key - must NOT flag)
 pguser_bad="PGUSER=""records_owner"           # POSITIVE (owner via uppercase key - must FAIL)
+pguser_upper="PGUSER=""RECORDS_API"           # POSITIVE (uppercase role VALUE - must FAIL)
+supavisor_mixed="user=""records_API"".""abcdefgh"   # POSITIVE (mixed-case role value - must FAIL)
 ```
 Assert: the four NEGATIVE fixtures do NOT trip Check 3 (exit 0 for that group); the three
 POSITIVE fixtures exit 1 with `records-serving-non-app-role`. Keep the value-silent
@@ -292,17 +342,19 @@ uppercase `PGUSER=`.
      note: "Check 3 detects config-shape + literal bypass tokens; live BYPASSRLS on an
      otherwise-sanctioned role is proven separately by assert_serving_identity (Task 3),
      which Check 3 cannot see from static config."
-  2. Rule (a) match regex: (i) make the KEY match case-insensitive by adding `i` to the
-     `grep -...E` flags so uppercase `PGUSER=`/`PGROLE=` is captured; (ii) widen the value
-     capture class from `[A-Za-z0-9_]+` to `[A-Za-z0-9_.]+` so the FULL dotted username is
-     captured, not truncated at the first dot.
-  3. Rule (a) negative (allowlist) filter: also make the KEY match case-insensitive (add
-     `i`), and match the WHOLE username value against the sanctioned set:
-     `(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?` anchored to end of
+  2. Rule (a) match regex: (i) make ONLY the KEY case-insensitive via explicit character
+     classes - `[Uu][Ss][Ee][Rr]`, `[Rr][Oo][Ll][Ee]`, `[Pp][Gg][Uu][Ss][Ee][Rr]`,
+     `[Pp][Gg][Rr][Oo][Ll][Ee]` - NOT a global `grep -i` (a global `-i` case-folds the value
+     too and would wrongly sanction `PGUSER=RECORDS_API`); (ii) widen the value capture class
+     from `[A-Za-z0-9_]+` to `[A-Za-z0-9_.]+` so the FULL dotted username is captured, not
+     truncated at the first dot.
+  3. Rule (a) negative (allowlist) filter: same case-insensitive KEY classes, and match the
+     WHOLE username value with a LITERAL-LOWERCASE role alternation:
+     `(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?` anchored to the end of
      the value token. This sanctions a bare sanctioned role and a single `<role>.<ref>`
-     (ref = `[a-z0-9]+`, no further dots), while `records_api.evil.postgres`,
-     `postgres.<ref>`, and any non-sanctioned base fall through and are FLAGGED. Keep the
-     role VALUES exact-lowercase (do not case-fold the value).
+     (ref = `[a-z0-9]+`, no further dots) - while `records_api.evil.postgres`, `postgres.<ref>`,
+     any non-sanctioned base, AND any uppercase/mixed-case role value (`RECORDS_API`,
+     `records_API.ref`) fall through and are FLAGGED. Never case-fold the value.
   4. Rule (c) URL-form: same 3-role widening + same `<role>.<ref>` sanctioning; keep
      value-silent (stop before the password).
   5. Rule (b) (sb_secret_/service_role/bypassrls literals): unchanged.
@@ -501,62 +553,90 @@ def tier7_serving(child_dsn):
             if not cond:
                 fails.append(label)
 
-        # --- EXHAUSTIVE ACL EXACTNESS (catches leaked AND missing grants) ---
+        # --- EXHAUSTIVE ACL EXACTNESS: full role x object x op matrix ---
+        # Drive EVERY (role, object, op) from the contract's expected-privilege matrix and
+        # assert has_table_privilege == expected - catching BOTH leaked and missing grants on
+        # ANY object class (ref/wp/views/owner-only) for EVERY serving and Data-API role.
         allobjs = REF + WP + VIEWS + OWNER_ONLY
-        # anon/authenticated/service_role: no schema USAGE, no privilege on any object.
-        # has_*_privilege on a real role ALSO inherits any PUBLIC grant, so a PUBLIC leak
-        # trips these too; the explicit PUBLIC aclexplode check below names it directly.
-        for role in DATA_API_ROLES:
-            want(not has_schema(role), "7-usage-" + role)
+        SERVING = ["records_api", "records_intake_writer", "records_auditor"]
+        ALL_ROLES = SERVING + DATA_API_ROLES   # DATA_API_ROLES = anon/authenticated/service_role
+
+        def expected_ops(role, obj):
+            if role == "records_api":
+                return {"SELECT"} if obj in REF + WP + VIEWS else set()
+            if role == "records_intake_writer":
+                if obj in WP:
+                    return {"SELECT", "INSERT", "UPDATE"}   # column-scoped writes; never DELETE
+                if obj in REF:
+                    return {"SELECT"}
+                return set()                                 # views + owner-only: nothing
+            if role == "records_auditor":
+                return {"SELECT"} if obj == "audit_log" else set()
+            return set()                                     # anon/authenticated/service_role: nothing
+
+        for role in ALL_ROLES:
             for obj in allobjs:
-                for priv in ("SELECT", "INSERT", "UPDATE", "DELETE"):
-                    want(not hasp(role, obj, priv), "7-acl-%s-%s-%s" % (role, obj, priv))
-        # PUBLIC (pseudo-role, grantee OID 0): direct check on schema nspacl + every object relacl.
-        # (Do NOT call has_table_privilege('public', ...) - 'public' is not a role and errors.)
+                exp = expected_ops(role, obj)
+                for op in ("SELECT", "INSERT", "UPDATE", "DELETE"):
+                    want(hasp(role, obj, op) == (op in exp),
+                         "7-acl-%s-%s-%s-want-%s" % (role, obj, op, op in exp))
+
+        # Schema USAGE: serving roles need it; Data-API roles must NOT have it.
+        for role in SERVING:
+            want(has_schema(role), "7-usage-missing-" + role)
+        for role in DATA_API_ROLES:
+            want(not has_schema(role), "7-usage-leak-" + role)
+
+        # PUBLIC (pseudo-role, grantee OID 0): direct nspacl + relacl check.
+        # (has_*_privilege cannot take 'public'; role_table_grants omits PUBLIC by design.)
         cur.execute("select count(*) from pg_namespace n, lateral aclexplode(n.nspacl) a "
                     "where n.nspname='records' and a.grantee = 0")
         want(cur.fetchone()[0] == 0, "7-public-schema-usage")
         cur.execute("select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace, "
                     "lateral aclexplode(c.relacl) a where n.nspname='records' and a.grantee = 0")
         want(cur.fetchone()[0] == 0, "7-public-object-grant")
-        # records_api: SELECT on 14 tables + 2 views; NO write anywhere; NO source_links/audit_log.
-        for obj in REF + WP + VIEWS:
-            want(hasp("records_api", obj, "SELECT"), "7-api-missing-select-" + obj)
-        for obj in REF + WP:
-            for priv in ("INSERT", "UPDATE", "DELETE"):
-                want(not hasp("records_api", obj, priv), "7-api-write-" + obj + "-" + priv)
-        for obj in OWNER_ONLY:
-            want(not hasp("records_api", obj, "SELECT"), "7-api-owneronly-" + obj)
-        # records_intake_writer: SELECT 14; NO views/owner-only; INSERT/UPDATE (col-scoped) on WP; NO DELETE.
-        for obj in REF + WP:
-            want(hasp("records_intake_writer", obj, "SELECT"), "7-writer-missing-select-" + obj)
-        for obj in VIEWS + OWNER_ONLY:
-            want(not hasp("records_intake_writer", obj, "SELECT"), "7-writer-reach-" + obj)
-        for obj in WP:
-            want(not hasp("records_intake_writer", obj, "DELETE"), "7-writer-delete-" + obj)
-        # records_auditor: SELECT audit_log only.
-        want(hasp("records_auditor", "audit_log", "SELECT"), "7-auditor-missing-audit")
-        for obj in REF + WP + VIEWS + ["neta_table_source_links"]:
-            want(not hasp("records_auditor", obj, "SELECT"), "7-auditor-reach-" + obj)
-        for priv in ("INSERT", "UPDATE", "DELETE"):
-            want(not hasp("records_auditor", "audit_log", priv), "7-auditor-audit-write-" + priv)
 
-        # --- COLUMN-SCOPE EXACTNESS (AC5): every reserved column must be non-writable ---
-        # Reserved (NOT granted to records_intake_writer) per 045; implementer confirms
-        # the full set against 045's column-grant lists. Assert has_column_privilege == false
-        # for each reserved col and == true for a granted sample.
-        RESERVED = {"assets": ["status", "condition"],
-                    "form_submissions": ["status", "reviewed_by"],
-                    "form_field_values": ["assessment"],
-                    "pm_events": ["status"],
-                    "persons": ["worker_class", "employee_ref", "match_adjudicated_by",
-                                "match_adjudicated_at", "match_confidence"]}
-        for tbl, cols in RESERVED.items():
-            for col in cols:
-                for priv in ("INSERT", "UPDATE"):
+        # --- COLUMN-SCOPE EXACTNESS (AC5): FULL per-column matrix on the 6 write-path tables ---
+        # Build the expected granted-column set per WP table from 045's column grants (source of
+        # truth), then assert has_column_privilege for EVERY actual column of the table:
+        # granted -> True, every other column (reserved / trigger-maintained / owner) -> False.
+        # A table-wide grant would make a reserved column True and fail here, so this also proves
+        # the grant is column-scoped, not broad. GRANTED_COLS below is transcribed from 045 - the
+        # implementer MUST re-verify each list against 045_records_security_rls.sql.
+        GRANTED_COLS = {
+            "assets": ["asset_tag", "name", "asset_class_id", "parent_asset_id", "site_ref",
+                       "client_ref", "location_label", "region", "jobsite", "plant", "substation",
+                       "gps_lat", "gps_long", "manufacturer", "model", "serial_number",
+                       "rated_voltage", "rated_current", "year_manufactured", "last_tested_at",
+                       "apparatus_ref", "equipment_model_id", "source", "provenance_status",
+                       "legacy_source_id", "notes"],
+            "form_submissions": ["template_id", "asset_id", "project_ref", "work_package_ref",
+                       "pm_event_id", "overall_assessment", "as_found_as_left", "test_status_label",
+                       "job_number", "test_date", "technician", "ambient_temp_c", "relative_humidity",
+                       "test_equipment", "summary_notes", "source", "provenance_status",
+                       "legacy_source_id", "origin_device", "client_rev", "client_captured_at",
+                       "synced_at", "neta_standard", "technician_person_id"],
+            "form_field_values": ["form_submission_id", "field_key", "field_label", "test_group",
+                       "sequence_no", "value_kind", "value_numeric", "value_text", "value_boolean",
+                       "unit", "expected_value", "min_acceptable", "max_acceptable", "measured_at",
+                       "notes", "origin_device", "client_rev", "client_captured_at", "synced_at"],
+            "pm_schedules": ["pm_program_id", "asset_id", "last_performed_at", "next_due_at",
+                       "is_active", "notes"],
+            "pm_events": ["pm_schedule_id", "asset_id", "scheduled_for", "performed_at",
+                       "form_submission_id", "project_ref", "outcome", "notes", "origin_device",
+                       "client_rev", "client_captured_at", "synced_at"],
+            "persons": ["display_name"]}
+        for tbl in WP:
+            cur.execute("select column_name from information_schema.columns "
+                        "where table_schema='records' and table_name=%s", (tbl,))
+            actual_cols = [r[0] for r in cur.fetchall()]
+            granted = set(GRANTED_COLS[tbl])
+            for col in actual_cols:
+                for op in ("INSERT", "UPDATE"):
                     cur.execute("select has_column_privilege('records_intake_writer', %s, %s, %s)",
-                                ("records." + tbl, col, priv))
-                    want(not cur.fetchone()[0], "7-writer-reserved-col-%s.%s-%s" % (tbl, col, priv))
+                                ("records." + tbl, col, op))
+                    want(cur.fetchone()[0] == (col in granted),
+                         "7-col-%s.%s-%s-want-%s" % (tbl, col, op, col in granted))
 
         # --- LIVE BEHAVIORAL PROBES (prove the RLS+grant chain, not just the ACL) ---
         cur.execute("savepoint s")
@@ -633,24 +713,37 @@ the summary (guards against the "never dispatched" false-green). Do NOT accept a
 whose summary lacks a `7-serving` line. Sanity: temporarily break one tier7 assertion and
 confirm the gate FAILS (not a no-op), then revert.
 
-- [ ] **Step 6: Residue check - before/after role-set DELTA (not absolute zero).**
+- [ ] **Step 6: Residue check - snapshot before, run the gate, snapshot after, compare.**
+
+One command does the before-snapshot, the gate run, the after-snapshot, and the comparison
+(value-silent):
 
 ```bash
 ssh olares-mesh 'cd /home/olares/code/apex/apex-records-gate9 && set -a; . ./.env.dev; set +a && \
-  ./.venv/bin/python - <<PY
-import os, psycopg
+  ./.venv/bin/python - <<'"'"'PY'"'"'
+import os, subprocess, psycopg
 admin = os.environ["RECORDS_PG_ADMIN_DSN"]
 names = ("anon","authenticated","service_role","records_api","records_intake_writer",
          "records_auditor","records_owner","records_fn_owner")
+def snap():
+    with psycopg.connect(admin, autocommit=True) as c:
+        return {r[0] for r in c.execute("select rolname from pg_roles where rolname = any(%s)",
+                                        (list(names),)).fetchall()}
+before = snap()
+rc = subprocess.run(["./.venv/bin/python",
+                     "infra/database/migrations/records/run_validation.py", "--require-db"]).returncode
+after = snap()
 with psycopg.connect(admin, autocommit=True) as c:
-    before = {r[0] for r in c.execute("select rolname from pg_roles where rolname = any(%s)", (list(names),)).fetchall()}
-    dbs = c.execute("select count(*) from pg_database where datname like 'records_val_%'").fetchone()[0]
-print("pre_existing_gate9_roles=%d residue_val_dbs=%d" % (len(before), dbs))
+    vd = c.execute("select count(*) from pg_database where datname like 'records_val_%'").fetchone()[0]
+print("gate_rc:", rc)
+print("role_set_delta_empty:", before == after)
+print("leaked_roles:", sorted(after - before))
+print("residue_val_dbs:", vd)
 PY'
 ```
-Run this AFTER a full gate run: assert `residue_val_dbs=0` and that the pre-existing-role set
-is UNCHANGED from before the run (the harness drops only what it created; do not assert
-absolute zero on a shared cluster). Value-silent - no DSN echoed.
+Expected: `gate_rc: 0`, `role_set_delta_empty: True`, `leaked_roles: []`, `residue_val_dbs: 0`.
+The harness drops only the roles IT created, so the correct invariant is delta == 0 (the
+pre-existing set unchanged), NOT absolute zero on a shared cluster. Value-silent.
 
 - [ ] **Step 7: Commit** (`run_validation.py` + `test_run_validation_unit.py`; `records(gate9): tier7 exhaustive serving-matrix proof + full tier wiring`).
 
