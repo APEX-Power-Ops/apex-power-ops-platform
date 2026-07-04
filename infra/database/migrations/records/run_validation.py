@@ -1,9 +1,10 @@
-"""The records validation gate. One command, seven tiers, honest exit code.
+"""The records validation gate. One command, eight tiers, honest exit code.
 
 Tiers: 0 syntax+origin, 1 converter tests, 2 records-import pure tests,
 3 forward-incremental migration walk on a disposable records_val_* database,
 4 records-import DB tests against that migrated database, 5 role/RLS binding
-proofs (Gate 3), 6 durable Gate-5 ownership + audit posture proofs.
+proofs (Gate 3), 6 durable Gate-5 ownership + audit posture proofs, 7 Option-B
+serving-matrix proof (exhaustive ACL + Data-API PUBLIC/USAGE + serving identity).
 
 DB safety: only ever CREATEs/DROPs the exact records_val_* name generated this
 run; the admin DSN must point at the postgres maintenance DB; child processes
@@ -24,6 +25,7 @@ REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
 sys.path.insert(0, HERE)
 
 import _dbtest  # noqa: E402
+import serving_identity  # noqa: E402
 
 
 class HarnessError(RuntimeError):
@@ -141,14 +143,14 @@ def parse_tiers(only):
     """Validate --only. Unknown tiers must REFUSE - a typo like --only 9
     running zero tiers and exiting 0 would be a false-green gate."""
     if not only:
-        return {0, 1, 2, 3, 4, 5, 6}
+        return {0, 1, 2, 3, 4, 5, 6, 7}
     try:
         wanted = {int(x) for x in only.split(",") if x.strip()}
     except ValueError:
-        raise HarnessError(f"--only takes a comma list of tiers 0-6, got {only!r}")
-    unknown = wanted - {0, 1, 2, 3, 4, 5, 6}
+        raise HarnessError(f"--only takes a comma list of tiers 0-7, got {only!r}")
+    unknown = wanted - {0, 1, 2, 3, 4, 5, 6, 7}
     if not wanted or unknown:
-        raise HarnessError(f"unknown tier(s) in --only: {sorted(unknown)} (valid: 0-6)")
+        raise HarnessError(f"unknown tier(s) in --only: {sorted(unknown)} (valid: 0-7)")
     return wanted
 
 
@@ -259,11 +261,15 @@ def tier4_import_db(child_dsn, executed):
 
 
 def snapshot_roles(admin, names=("records_api", "records_intake_writer",
-                                 "records_owner", "records_fn_owner", "records_auditor")):
+                                 "records_owner", "records_fn_owner", "records_auditor",
+                                 "anon", "authenticated", "service_role")):
     # Roles are CLUSTER-level, so dropping the disposable records_val_* DB leaves
-    # any walk-created role behind. Track all five Gate-5 roles (both app roles +
-    # records_owner/records_fn_owner/records_auditor from 046/047) so the finally-
-    # block drops exactly the roles that did NOT exist before this run. The
+    # any walk-created role behind. Track all EIGHT roles the harness may create:
+    # the 5 Gate-5 roles (both app roles + records_owner/records_fn_owner/
+    # records_auditor from 046/047) PLUS the 3 Data-API stubs tier7 creates
+    # (anon/authenticated/service_role) so the finally-block drops exactly the
+    # roles that did NOT exist before this run. drop-if-exists no-ops on any stub
+    # tier7 did not create, so tracking all 8 is safe for tiers 0-6. The
     # object-owning roles (records_owner, records_fn_owner) are dropped only AFTER
     # the disposable DB is dropped, so at drop time they own nothing.
     with _connect(admin) as c:
@@ -673,6 +679,259 @@ def tier6_posture(child_dsn):
                 else "ownership/roles/definer-allowlist/no-membership/trigger-set/isolation/FORCE-RLS green")
 
 
+# ---- Tier 7 (Option-B serving matrix proof, exhaustive ACL + live probes) ----
+def _seed_view_fixture(cur):
+    # Insert (as the walk superuser) the minimal join-satisfying rows so BOTH
+    # security_invoker views return >= 1 row for a sanctioned reader:
+    #   v_asset_test_history: assets JOIN form_submissions JOIN form_templates
+    #   v_pm_due:             pm_schedules (is_active) JOIN assets JOIN pm_programs
+    # Mirrors tier5's proven positive-control seed. Unique t7 codes avoid collisions.
+    cur.execute("insert into records.asset_classes(class_code,name) "
+                "values('t7','Tier7') returning asset_class_id")
+    acid = cur.fetchone()[0]
+    cur.execute("insert into records.assets(asset_tag,name,asset_class_id) "
+                "values('T7','t7',%s) returning asset_id", (acid,))
+    aid = cur.fetchone()[0]
+    cur.execute("insert into records.form_templates(template_code,title,asset_class_id) "
+                "values('t7','t7',%s) returning template_id", (acid,))
+    tid = cur.fetchone()[0]
+    cur.execute("insert into records.form_submissions(template_id,asset_id) "
+                "values(%s,%s)", (tid, aid))                       # joins v_asset_test_history
+    cur.execute("insert into records.pm_programs(program_code,name,interval_value) "
+                "values('t7','t7',1) returning pm_program_id")
+    ppid = cur.fetchone()[0]
+    cur.execute("insert into records.pm_schedules(pm_program_id,asset_id) "
+                "values(%s,%s)", (ppid, aid))                      # is_active defaults true -> joins v_pm_due
+
+
+def _prove_serving_identity(cur, conn, fails):
+    # AC10 live: assert_serving_identity (Task 3) passes for a sanctioned login role
+    # reached via SET SESSION AUTHORIZATION, and RAISES for the four masking/owner/
+    # super modes. A ServingIdentityError is raised in Python (no DB abort), but each
+    # probe is savepoint-bracketed and identity is reset regardless.
+    import psycopg
+    # (1) PASS: SET SESSION AUTHORIZATION records_api -> must NOT raise.
+    cur.execute("savepoint si")
+    cur.execute("set session authorization records_api")
+    try:
+        serving_identity.assert_serving_identity(conn)
+    except serving_identity.ServingIdentityError as e:
+        fails.append("7-serving-identity-pass-raised: %s" % str(e).splitlines()[0])
+    except psycopg.errors.Error:
+        cur.execute("rollback to savepoint si")
+    cur.execute("reset session authorization")
+    cur.execute("rollback to savepoint si")
+
+    # (2)(3)(4) FAIL modes: each must RAISE ServingIdentityError.
+    def must_raise(setup_sql, teardown_sql, label):
+        cur.execute("savepoint si")
+        raised = False
+        try:
+            cur.execute(setup_sql)
+            try:
+                serving_identity.assert_serving_identity(conn)
+            except serving_identity.ServingIdentityError:
+                raised = True
+            if not raised:
+                fails.append(label)
+        except psycopg.errors.Error:
+            # setup itself failed unexpectedly (e.g. cannot SET ROLE) -> record it.
+            fails.append(label + "-setup-error")
+        finally:
+            try:
+                cur.execute(teardown_sql)
+            except psycopg.errors.Error:
+                pass
+            cur.execute("rollback to savepoint si")
+
+    # (2) SET ROLE records_api from the superuser session: session_user != current_user.
+    must_raise("set role records_api", "reset role", "7-serving-identity-set-role-not-caught")
+    # (3) plain superuser (the walk session): unsanctioned + superuser.
+    must_raise("select 1", "select 1", "7-serving-identity-superuser-not-caught")
+    # (4) SET SESSION AUTHORIZATION records_owner: unsanctioned owner role.
+    must_raise("set session authorization records_owner", "reset session authorization",
+               "7-serving-identity-owner-not-caught")
+
+
+REF = ["asset_classes", "form_templates", "pm_programs", "neta_procedures",
+       "neta_test_items", "neta_tables", "asset_class_neta_procedure", "neta_procedure_xref"]
+WP = ["assets", "form_submissions", "form_field_values", "pm_schedules", "pm_events", "persons"]
+V7_VIEWS = ["v_asset_test_history", "v_pm_due"]
+OWNER_ONLY = ["neta_table_source_links", "audit_log"]
+DATA_API_ROLES = ["anon", "authenticated", "service_role"]  # real roles; each INHERITS PUBLIC grants
+
+
+def tier7_serving(child_dsn):
+    import psycopg
+    fails = []
+    conn = psycopg.connect(child_dsn)   # autocommit=False, matches tier5/tier6
+
+    def expect_denied(cur, sql, label, fails):
+        # A denied op must RAISE with sqlstate 42501 (insufficient_privilege).
+        # Not-raising is a leak; raising the WRONG error is a different failure.
+        cur.execute("savepoint ed")
+        try:
+            cur.execute(sql)
+            cur.execute("rollback to savepoint ed")
+            fails.append(label)
+        except psycopg.errors.Error as e:
+            cur.execute("rollback to savepoint ed")
+            if getattr(e, "sqlstate", None) != "42501":
+                fails.append(label + "-wrong-sqlstate")
+
+    try:
+        cur = conn.cursor()
+        # stubs, guarded (no CREATE ROLE IF NOT EXISTS in Postgres); snapshot_roles cleans up.
+        cur.execute("""
+            do $$ begin
+              if not exists (select 1 from pg_roles where rolname='anon') then create role anon nologin; end if;
+              if not exists (select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
+              if not exists (select 1 from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if;
+            end $$;""")
+
+        def hasp(role, obj, priv):
+            cur.execute("select has_table_privilege(%s, %s, %s)", (role, "records." + obj, priv))
+            return cur.fetchone()[0]
+
+        def has_schema(role):
+            cur.execute("select has_schema_privilege(%s, 'records', 'USAGE')", (role,))
+            return cur.fetchone()[0]
+
+        def want(cond, label):
+            if not cond:
+                fails.append(label)
+
+        # --- EXHAUSTIVE ACL EXACTNESS: full role x object x op matrix ---
+        # Drive EVERY (role, object, op) from the contract's expected-privilege matrix and
+        # assert has_table_privilege == expected - catching BOTH leaked and missing grants on
+        # ANY object class (ref/wp/views/owner-only) for EVERY serving and Data-API role.
+        allobjs = REF + WP + V7_VIEWS + OWNER_ONLY
+        SERVING = ["records_api", "records_intake_writer", "records_auditor"]
+        ALL_ROLES = SERVING + DATA_API_ROLES   # DATA_API_ROLES = anon/authenticated/service_role
+
+        def expected_ops(role, obj):
+            # TABLE-LEVEL privileges only (has_table_privilege). The writer's INSERT/UPDATE
+            # are COLUMN-scoped in 045 (grant insert(cols)/update(cols)), so they are FALSE at
+            # the table level and are proven separately by the has_column_privilege matrix +
+            # has_any_column_privilege boundary below. 045's own posture block asserts writer
+            # writes via has_column_privilege and asserts NO table-level write for the writer.
+            if role == "records_api":
+                return {"SELECT"} if obj in REF + WP + V7_VIEWS else set()
+            if role == "records_intake_writer":
+                # table-level SELECT on the 14 tables (ref + wp); writes are column-scoped
+                # (not table-level), never DELETE, no view SELECT, nothing on owner-only.
+                return {"SELECT"} if obj in REF + WP else set()
+            if role == "records_auditor":
+                return {"SELECT"} if obj == "audit_log" else set()
+            return set()                                     # anon/authenticated/service_role: nothing
+
+        for role in ALL_ROLES:
+            for obj in allobjs:
+                exp = expected_ops(role, obj)
+                for op in ("SELECT", "INSERT", "UPDATE", "DELETE"):
+                    want(hasp(role, obj, op) == (op in exp),
+                         "7-acl-%s-%s-%s-want-%s" % (role, obj, op, op in exp))
+
+        # Schema USAGE: serving roles need it; Data-API roles must NOT have it.
+        for role in SERVING:
+            want(has_schema(role), "7-usage-missing-" + role)
+        for role in DATA_API_ROLES:
+            want(not has_schema(role), "7-usage-leak-" + role)
+
+        # PUBLIC (pseudo-role, grantee OID 0): direct nspacl + relacl check.
+        # (has_*_privilege cannot take 'public'; role_table_grants omits PUBLIC by design.)
+        cur.execute("select count(*) from pg_namespace n, lateral aclexplode(n.nspacl) a "
+                    "where n.nspname='records' and a.grantee = 0")
+        want(cur.fetchone()[0] == 0, "7-public-schema-usage")
+        cur.execute("select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace, "
+                    "lateral aclexplode(c.relacl) a where n.nspname='records' and a.grantee = 0")
+        want(cur.fetchone()[0] == 0, "7-public-object-grant")
+
+        # --- COLUMN-SCOPE EXACTNESS (AC5): FULL per-column matrix on the 6 write-path tables ---
+        # Build the expected granted-column set per WP table from 045's column grants (source of
+        # truth), then assert has_column_privilege for EVERY actual column of the table:
+        # granted -> True, every other column (reserved / trigger-maintained / owner) -> False.
+        # A table-wide grant would make a reserved column True and fail here, so this also proves
+        # the grant is column-scoped, not broad. GRANTED_COLS below is transcribed from 045.
+        GRANTED_COLS = {
+            "assets": ["asset_tag", "name", "asset_class_id", "parent_asset_id", "site_ref",
+                       "client_ref", "location_label", "region", "jobsite", "plant", "substation",
+                       "gps_lat", "gps_long", "manufacturer", "model", "serial_number",
+                       "rated_voltage", "rated_current", "year_manufactured", "last_tested_at",
+                       "apparatus_ref", "equipment_model_id", "source", "provenance_status",
+                       "legacy_source_id", "notes"],
+            "form_submissions": ["template_id", "asset_id", "project_ref", "work_package_ref",
+                       "pm_event_id", "overall_assessment", "as_found_as_left", "test_status_label",
+                       "job_number", "test_date", "technician", "ambient_temp_c", "relative_humidity",
+                       "test_equipment", "summary_notes", "source", "provenance_status",
+                       "legacy_source_id", "origin_device", "client_rev", "client_captured_at",
+                       "synced_at", "neta_standard", "technician_person_id"],
+            "form_field_values": ["form_submission_id", "field_key", "field_label", "test_group",
+                       "sequence_no", "value_kind", "value_numeric", "value_text", "value_boolean",
+                       "unit", "expected_value", "min_acceptable", "max_acceptable", "measured_at",
+                       "notes", "origin_device", "client_rev", "client_captured_at", "synced_at"],
+            "pm_schedules": ["pm_program_id", "asset_id", "last_performed_at", "next_due_at",
+                       "is_active", "notes"],
+            "pm_events": ["pm_schedule_id", "asset_id", "scheduled_for", "performed_at",
+                       "form_submission_id", "project_ref", "outcome", "notes", "origin_device",
+                       "client_rev", "client_captured_at", "synced_at"],
+            "persons": ["display_name"]}
+        for tbl in WP:
+            cur.execute("select column_name from information_schema.columns "
+                        "where table_schema='records' and table_name=%s", (tbl,))
+            actual_cols = [r[0] for r in cur.fetchall()]
+            granted = set(GRANTED_COLS[tbl])
+            for col in actual_cols:
+                for op in ("INSERT", "UPDATE"):
+                    cur.execute("select has_column_privilege('records_intake_writer', %s, %s, %s)",
+                                ("records." + tbl, col, op))
+                    want(cur.fetchone()[0] == (col in granted),
+                         "7-col-%s.%s-%s-want-%s" % (tbl, col, op, col in granted))
+
+        # --- COLUMN-WRITE BOUNDARY (has_any_column_privilege) ---
+        # The writer holds SOME column INSERT/UPDATE on every WP table (proving the column
+        # grants are live, complementing the table-level SELECT-only assertion in expected_ops);
+        # NO other role holds ANY column write anywhere. This is the has_any_column half of the
+        # fix for the table-vs-column confusion: table-level writer writes are asserted FALSE
+        # above, column-level writer writes asserted TRUE here + in the per-column matrix. DELETE
+        # is table-level only in Postgres and is already asserted False for the writer above.
+        def has_any_col(role, obj, priv):
+            cur.execute("select has_any_column_privilege(%s, %s, %s)", (role, "records." + obj, priv))
+            return cur.fetchone()[0]
+
+        for tbl in WP:
+            want(has_any_col("records_intake_writer", tbl, "INSERT"), "7-anycol-writer-missing-INSERT-" + tbl)
+            want(has_any_col("records_intake_writer", tbl, "UPDATE"), "7-anycol-writer-missing-UPDATE-" + tbl)
+            for role in ["records_api", "records_auditor"] + DATA_API_ROLES:
+                want(not has_any_col(role, tbl, "INSERT"), "7-anycol-write-leak-%s-%s-INSERT" % (role, tbl))
+                want(not has_any_col(role, tbl, "UPDATE"), "7-anycol-write-leak-%s-%s-UPDATE" % (role, tbl))
+
+        # --- LIVE BEHAVIORAL PROBES (prove the RLS+grant chain, not just the ACL) ---
+        cur.execute("savepoint s")
+        _seed_view_fixture(cur)   # one asset+template+submission and one active pm_schedule+program
+        cur.execute("set session authorization records_api")
+        for v in V7_VIEWS:
+            cur.execute("select count(*) from records." + v)
+            if cur.fetchone()[0] < 1:
+                fails.append("7-view-empty-" + v)   # reachability must return the seeded row
+        cur.execute("reset session authorization")
+        cur.execute("rollback to savepoint s")
+        # service_role (BYPASSRLS) is still blocked at the GRANT layer absent a grant.
+        cur.execute("savepoint s")
+        cur.execute("set session authorization service_role")
+        expect_denied(cur, "select 1 from records.assets limit 1", "7-service_role-grant-layer", fails)
+        cur.execute("reset session authorization")
+        cur.execute("rollback to savepoint s")
+        # AC10 live: assert_serving_identity passes as a sanctioned role and fails the 4 modes.
+        _prove_serving_identity(cur, conn, fails)   # SET SESSION AUTHORIZATION pass; SET ROLE / super / owner fail
+        conn.rollback()
+    finally:
+        conn.close()
+    if fails:
+        return Tier("7-serving", "FAIL", "; ".join(sorted(set(fails))))
+    return Tier("7-serving", "PASS", "Option-B serving matrix proven exhaustively (AC1-AC10)")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="records validation gate")
     ap.add_argument("--require-db", action="store_true",
@@ -704,7 +963,7 @@ def main(argv=None):
     if 2 in wanted:
         tiers.append(tier2_import_pure(dict(os.environ)))
 
-    db_wanted = wanted & {3, 4, 5, 6}
+    db_wanted = wanted & {3, 4, 5, 6, 7}
     if db_wanted and not any(t.status == "FAIL" for t in tiers):
         try:
             # Source + completeness preflights run BEFORE any skip decision
@@ -715,7 +974,7 @@ def main(argv=None):
                 _dbtest.neta_json()
                 migs, tests = enumerate_stack(HERE)
             if not child_dsn:
-                if wanted != {0, 1, 2, 3, 4, 5, 6}:
+                if wanted != {0, 1, 2, 3, 4, 5, 6, 7}:
                     raise HarnessError("--only with DB tiers requires --db-dsn (records_val_* only)")
                 if not admin:
                     detail = "RECORDS_PG_ADMIN_DSN is not set"
@@ -763,6 +1022,13 @@ def main(argv=None):
                         tiers.append(Tier("6-posture","SKIP","no migrated target"))
                 elif 6 in db_wanted:
                     tiers.append(Tier("6-posture","SKIP","tier 3 failed"))
+                if 7 in db_wanted and not any(t.name == "3-migrations" and t.status == "FAIL" for t in tiers):
+                    if 3 in db_wanted or args.db_dsn:
+                        tiers.append(tier7_serving(child_dsn))
+                    else:
+                        tiers.append(Tier("7-serving", "SKIP", "needs tier 3 or --db-dsn"))
+                elif 7 in db_wanted:
+                    tiers.append(Tier("7-serving", "SKIP", "tier 3 failed"))
             finally:
                 if created:
                     if args.keep_db:
