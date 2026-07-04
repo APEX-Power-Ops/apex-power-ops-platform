@@ -22,6 +22,20 @@ reviewed prod-variant apply packet. No runtime code is added.
 Design spec (authoritative): `docs/superpowers/specs/2026-07-03-records-gate9-supabase-serving-design.md`
 (rev 4).
 
+## Rev 5 (SDD Task-4 review fold, 2026-07-03)
+
+Folds the operator's post-build review of Task 4 (tier7), 2 P2 findings:
+- **P2-1 column-grant blind spot:** tier7's `has_table_privilege` matrix + the WP-only per-column
+  matrix could not catch a stray COLUMN-level grant on a ref/view/owner-only object, to another
+  role, or to PUBLIC (AC2/AC4/AC6 exactness gap). Closed by adding a tier7 column-ACL exactness
+  scan: enumerate every `pg_attribute.attacl` via `aclexplode` in the records schema and assert
+  the set == exactly the writer's INSERT/UPDATE on the granted WP columns (nothing else, no other
+  role, no PUBLIC). Shipped as its own commit on the tier7 file.
+- **P2-2 residue evidence:** Step 6's absolute `residue_val_dbs == 0` cannot be honestly green on a
+  shared cluster carrying a pre-existing `records_val_*` artifact. Reframed Step 6 to a before/after
+  DELTA (no NEW role, no NEW val-DB) + explicit `preexisting_val_dbs` disclosure - matching the
+  plan's own prose. A disclosed stale DB is the operator's to drop (naming guard blocks automated drops).
+
 ## Rev 4 (plan-review fold #3, 2026-07-03)
 
 Folds the operator's rev-3 review (3 findings + 2 recs), each grounded against the live
@@ -868,29 +882,34 @@ names = ("anon","authenticated","service_role","records_api","records_intake_wri
          "records_auditor","records_owner","records_fn_owner")
 def snap():
     with psycopg.connect(admin, autocommit=True) as c:
-        return {r[0] for r in c.execute("select rolname from pg_roles where rolname = any(%s)",
-                                        (list(names),)).fetchall()}
-before = snap()
+        roles = {r[0] for r in c.execute("select rolname from pg_roles where rolname = any(%s)",
+                                         (list(names),)).fetchall()}
+        vdbs = {r[0] for r in c.execute("select datname from pg_database where datname like %s",
+                                        ("records_val_%",)).fetchall()}
+    return roles, vdbs
+r0, v0 = snap()
 rc = subprocess.run(["./.venv/bin/python",
                      "infra/database/migrations/records/run_validation.py", "--require-db"]).returncode
-after = snap()
-with psycopg.connect(admin, autocommit=True) as c:
-    vd = c.execute("select count(*) from pg_database where datname like 'records_val_%'").fetchone()[0]
+r1, v1 = snap()
 print("gate_rc:", rc)
-print("role_set_delta_empty:", before == after)
-print("leaked_roles:", sorted(after - before))
-print("residue_val_dbs:", vd)
-ok = (rc == 0 and before == after and vd == 0)
+print("role_set_delta_empty:", r0 == r1)
+print("leaked_roles:", sorted(r1 - r0))
+print("new_val_dbs_this_run:", sorted(v1 - v0))
+print("preexisting_val_dbs (disclosed, NOT this run):", sorted(v0))
+ok = (rc == 0 and r0 == r1 and (v1 - v0) == set())
 print("RESIDUE_VERDICT:", "CLEAN" if ok else "DIRTY")
 sys.exit(0 if ok else 1)
 PY'
 ```
-Expected: `gate_rc: 0`, `role_set_delta_empty: True`, `leaked_roles: []`, `residue_val_dbs: 0`,
-`RESIDUE_VERDICT: CLEAN`, and the script exits 0. Any of gate-nonzero / role-set drift /
-leftover `records_val_*` DB makes it print `DIRTY` and exit 1 (the `ssh` call fails), so this
-step cannot false-green.
-The harness drops only the roles IT created, so the correct invariant is delta == 0 (the
-pre-existing set unchanged), NOT absolute zero on a shared cluster. Value-silent.
+Expected: `gate_rc: 0`, `role_set_delta_empty: True`, `leaked_roles: []`, `new_val_dbs_this_run: []`,
+`RESIDUE_VERDICT: CLEAN`, and the script exits 0. The residue invariant is a before/after DELTA
+(this run created NO new role and NO new `records_val_*` DB), NOT absolute zero on a shared
+cluster - the harness drops only what IT created, and a pre-existing `records_val_*` artifact
+from an earlier session is disclosed (`preexisting_val_dbs`) but does not fail the run. Any of
+gate-nonzero / role-set drift / a NEW leaked val-DB makes it print `DIRTY` and exit 1 (the `ssh`
+call fails), so this step cannot false-green. Value-silent. (Operator may drop a disclosed stale
+`records_val_*` DB separately - the naming guard intentionally blocks automated drops of
+non-run DBs.)
 
 - [ ] **Step 7: Commit** (`run_validation.py` + `test_run_validation_unit.py`; `records(gate9): tier7 exhaustive serving-matrix proof + full tier wiring`).
 
