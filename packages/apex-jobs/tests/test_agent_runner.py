@@ -310,3 +310,43 @@ def test_agent_env_closure_no_unexpected_keys(monkeypatch):
     allowed = set(agent_runner._AGENT_ENV_ALLOW) | {"PATH", "APEX_JOB_ENV"}
     extra = sorted(set(env) - allowed)
     assert extra == [], f"unexpected keys in agent env: {extra}"
+
+
+def test_review_job_env_is_sanitized(agent_env, monkeypatch):
+    # Defense in depth: the review path (run_review_job) must also receive the
+    # sanitized agent env. Both agent + review call sites route through _agent_env.
+    # VALUE-SILENT: assert only on plain locals (bools / marker), never on env.
+    base, created, runs = agent_env
+    monkeypatch.setenv("HOME", "/home/olares")
+    monkeypatch.setenv("SUPABASE_PROD_DSN", "PLACEHOLDER-TEST-VALUE")   # planted secret
+    created.append("rev-env")
+    jid = engine.enqueue(dispatch_id="rev-env", title="x", env_required="host",
+                         payload={"review_head": "HEAD"})
+    with engine._conn() as c:
+        with c.cursor() as cur:
+            cur.execute("update jobs.job set kind='agent', target='codex', base_ref=%s "
+                        "where id=%s", (base, jid))
+        c.commit()
+    job = engine.claim(as_="cc", env="host")
+
+    captured = {}
+    real_run = agent_runner.subprocess.run
+
+    def fake_run(argv, **kw):
+        if argv and argv[0] == "codex":
+            captured["env"] = kw.get("env")
+            return real_run(["true"], capture_output=True, text=True)
+        return real_run(argv, **kw)
+
+    monkeypatch.setattr(agent_runner.subprocess, "run", fake_run)
+    agent_runner.run_review_job(job, env="host")
+    got_env = captured.get("env")
+    have_env = got_env is not None
+    env_keys = set(got_env or {})
+    secret_present = "SUPABASE_PROD_DSN" in env_keys
+    home_present = "HOME" in env_keys
+    marker = (got_env or {}).get("APEX_JOB_ENV")
+    assert have_env, "review subprocess got no env"
+    assert secret_present is False, "SUPABASE_PROD_DSN present on the review path"
+    assert home_present is True, "HOME missing from review env"
+    assert marker == "host"
