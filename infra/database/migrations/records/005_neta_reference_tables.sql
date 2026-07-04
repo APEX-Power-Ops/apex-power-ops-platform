@@ -19,6 +19,8 @@
 -- matrix.
 -- =============================================================================
 
+BEGIN;
+
 -- The four parallel NETA structures published per procedure.
 CREATE TYPE records.neta_test_category_enum AS ENUM (
     'visual_mechanical',      -- A. Visual and Mechanical Inspection (numbered steps)
@@ -115,3 +117,5 @@ COMMENT ON TABLE records.neta_tables IS
 CREATE INDEX ix_neta_test_items_procedure ON records.neta_test_items (neta_procedure_id);
 CREATE INDEX ix_neta_test_items_lookup    ON records.neta_test_items (standard, category);
 CREATE INDEX ix_neta_tables_parent        ON records.neta_tables (parent_table_number);
+
+COMMIT;

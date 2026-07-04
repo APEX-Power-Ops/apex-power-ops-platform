@@ -23,6 +23,8 @@
 --     the work→org deferred-FK pattern (work/007). Activation is a later chip.
 -- =============================================================================
 
+BEGIN;
+
 CREATE SCHEMA IF NOT EXISTS records;
 
 COMMENT ON SCHEMA records IS
@@ -189,3 +191,5 @@ CREATE TYPE records.pm_event_status_enum AS ENUM (
 
 COMMENT ON TYPE records.pm_event_status_enum IS
     'Lifecycle of an individual preventive-maintenance occurrence.';
+
+COMMIT;

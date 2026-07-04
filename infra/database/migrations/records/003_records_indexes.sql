@@ -10,6 +10,8 @@
 -- "what's due / what failed" filters.
 -- =============================================================================
 
+BEGIN;
+
 -- Asset register --------------------------------------------------------------
 CREATE INDEX ix_assets_class       ON records.assets (asset_class_id);
 CREATE INDEX ix_assets_parent      ON records.assets (parent_asset_id);
@@ -48,3 +50,5 @@ CREATE INDEX ix_pm_events_schedule   ON records.pm_events (pm_schedule_id);
 CREATE INDEX ix_pm_events_asset      ON records.pm_events (asset_id);
 CREATE INDEX ix_pm_events_status     ON records.pm_events (status);
 CREATE INDEX ix_pm_events_form_submission  ON records.pm_events (form_submission_id);
+
+COMMIT;

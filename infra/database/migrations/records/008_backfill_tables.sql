@@ -12,6 +12,8 @@
 --     the procedure->procedure graph + the asset tree, exactly as NETA models them.
 -- =============================================================================
 
+BEGIN;
+
 -- Kind of inter-procedure reference.
 CREATE TYPE records.neta_xref_kind_enum AS ENUM (
     'crossref',       -- a crossref-only procedure points to its constituents (MCC -> bus/switches/breakers/starters)
@@ -73,3 +75,5 @@ COMMENT ON TABLE records.neta_procedure_xref IS
 CREATE INDEX ix_acnp_procedure ON records.asset_class_neta_procedure (neta_procedure_id);
 CREATE INDEX ix_npx_from       ON records.neta_procedure_xref (from_procedure_id);
 CREATE INDEX ix_npx_to         ON records.neta_procedure_xref (to_procedure_id);
+
+COMMIT;

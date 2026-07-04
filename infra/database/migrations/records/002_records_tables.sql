@@ -12,6 +12,8 @@
 -- list). Every row carries provenance so a one-time legacy migration is auditable.
 -- =============================================================================
 
+BEGIN;
+
 -- ===========================================================================
 -- PILLAR 1 — ASSET REGISTER
 -- ===========================================================================
@@ -376,3 +378,5 @@ COMMENT ON TABLE records.pm_events IS
 ALTER TABLE records.form_submissions
     ADD CONSTRAINT fk_form_submissions_pm_event
         FOREIGN KEY (pm_event_id) REFERENCES records.pm_events (pm_event_id);
+
+COMMIT;

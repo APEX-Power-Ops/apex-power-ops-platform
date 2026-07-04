@@ -10,6 +10,8 @@
 --   * v_pm_due             — PM schedules with a derived due/overdue bucket
 -- =============================================================================
 
+BEGIN;
+
 -- ---------------------------------------------------------------------------
 -- updated_at auto-maintenance (schema-local copy; mirrors work.fn_set_updated_at)
 -- ---------------------------------------------------------------------------
@@ -115,3 +117,5 @@ WHERE s.is_active;
 COMMENT ON VIEW records.v_pm_due IS
     'Active PM schedules with a derived overdue/due_soon/ok/unscheduled bucket '
     'for the maintenance-due dashboard.';
+
+COMMIT;
