@@ -906,6 +906,34 @@ def tier7_serving(child_dsn):
                 want(not has_any_col(role, tbl, "INSERT"), "7-anycol-write-leak-%s-%s-INSERT" % (role, tbl))
                 want(not has_any_col(role, tbl, "UPDATE"), "7-anycol-write-leak-%s-%s-UPDATE" % (role, tbl))
 
+        # --- COLUMN-ACL EXACTNESS (AC2/AC4/AC6): enumerate EVERY column-level grant in records
+        # via aclexplode(pg_attribute.attacl) and assert the set is EXACTLY the writer's
+        # INSERT/UPDATE on the granted WP columns. has_table_privilege cannot see column grants,
+        # and the per-column matrix above only scans WP tables - so a stray column grant on a
+        # ref/view/owner-only object, to any other role, or to PUBLIC (grantee 0) would slip
+        # past both. This scan is object/role/grantee-complete.
+        cur.execute("""
+            select c.relname, a.attname,
+                   case when acl.grantee = 0 then 'PUBLIC'
+                        else acl.grantee::regrole::text end as grantee,
+                   acl.privilege_type
+            from pg_attribute a
+            join pg_class c on c.oid = a.attrelid
+            join pg_namespace n on n.oid = c.relnamespace
+            cross join lateral aclexplode(a.attacl) acl
+            where n.nspname = 'records' and a.attnum > 0 and a.attacl is not null
+        """)
+        actual_col_grants = {(r[0], r[1], r[2], r[3]) for r in cur.fetchall()}
+        expected_col_grants = set()
+        for _tbl, _cols in GRANTED_COLS.items():
+            for _col in _cols:
+                expected_col_grants.add((_tbl, _col, "records_intake_writer", "INSERT"))
+                expected_col_grants.add((_tbl, _col, "records_intake_writer", "UPDATE"))
+        _extra = sorted(actual_col_grants - expected_col_grants)
+        _missing = sorted(expected_col_grants - actual_col_grants)
+        want(actual_col_grants == expected_col_grants,
+             "7-colacl-exactness extra=%r missing=%r" % (_extra[:6], _missing[:6]))
+
         # --- LIVE BEHAVIORAL PROBES (prove the RLS+grant chain, not just the ACL) ---
         cur.execute("savepoint s")
         _seed_view_fixture(cur)   # one asset+template+submission and one active pm_schedule+program
