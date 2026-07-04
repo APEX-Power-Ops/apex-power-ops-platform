@@ -672,6 +672,75 @@ else
   say "PASS  value-silent: driver-URL sanctioned negative value absent from output"
 fi
 
+# (T8) SCHEME-CASE fix: rule (c)'s URL scheme match was case-SENSITIVE, so a
+# mixed/upper-case scheme (POSTGRESQL://, PostgreSQL://) evaded detection even
+# though RFC 3986 schemes are case-insensitive and libpq/SQLAlchemy accept
+# them. Three POSITIVES (upper scheme + owner role, mixed scheme + owner role,
+# upper scheme + upper role value - must still flag) and one NEGATIVE (mixed
+# scheme + sanctioned role, lowercase - must still pass, proving the fix does
+# NOT case-fold the role alternation). Planted PW must be ABSENT throughout.
+rm -f "$tmp"/*.conf
+tf_urlpw_case="URLPWCASE0000000"
+tf_url_upper_owner="POSTGRESQL""://""records_owner"":""$tf_urlpw_case""@host/db"
+tf_url_mixed_owner="PostgreSQL""://""records_owner"":""$tf_urlpw_case""@host/db"
+tf_url_upper_role="POSTGRESQL""://""RECORDS_API"":""$tf_urlpw_case""@host/db"
+printf 'DATABASE_URL=%s\n' "$tf_url_upper_owner" > "$tmp/fixture_tf_url_upper_owner.conf"
+printf 'DATABASE_URL=%s\n' "$tf_url_mixed_owner" > "$tmp/fixture_tf_url_mixed_owner.conf"
+printf 'DATABASE_URL=%s\n' "$tf_url_upper_role" > "$tmp/fixture_tf_url_upper_role.conf"
+
+out_tf8="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc_tf8=$?
+
+if [[ "$rc_tf8" == "1" ]]; then
+  say "PASS  scheme-case positives: exit 1 as expected"
+else
+  say "FAIL  scheme-case positives: expected exit 1, got $rc_tf8"; fail=1
+fi
+
+for f in fixture_tf_url_upper_owner.conf fixture_tf_url_mixed_owner.conf fixture_tf_url_upper_role.conf; do
+  if printf '%s' "$out_tf8" | grep -qF "$f" && printf '%s' "$out_tf8" | grep -qF '[rule: records-serving-url-non-app-role]'; then
+    say "PASS  scheme-case positive flagged: $f"
+  else
+    say "FAIL  scheme-case positive NOT flagged (miss present or regression): $f"; fail=1
+  fi
+done
+
+for val in "$tf_url_upper_owner" "$tf_url_mixed_owner" "$tf_url_upper_role" "$tf_urlpw_case"; do
+  if printf '%s' "$out_tf8" | grep -qF -- "$val"; then
+    say "FAIL  value-silent violation: scheme-case positive fixture value leaked into output"; fail=1
+  fi
+done
+say "PASS  value-silent: no scheme-case positive fixture value appeared in captured output"
+
+# (T9) SCHEME-CASE NEGATIVE: mixed-case scheme with a sanctioned (lowercase)
+# role must still PASS - proves the scheme case-fold does not also case-fold
+# the role alternation (a naive global -i would wrongly sanction
+# POSTGRESQL://RECORDS_API too; that must stay flagged, per T8 above).
+rm -f "$tmp"/*.conf
+tf_url_mixed_ok="PostgreSQL""://""records_api"":""$tf_urlpw_case""@host/db"
+printf 'DATABASE_URL=%s\n' "$tf_url_mixed_ok" > "$tmp/fixture_tf_url_mixed_ok.conf"
+
+out_tf9="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc_tf9=$?
+
+if [[ "$rc_tf9" == "0" ]]; then
+  say "PASS  scheme-case sanctioned negative: exit 0 as expected"
+else
+  say "FAIL  scheme-case sanctioned negative: expected exit 0, got $rc_tf9"; fail=1
+fi
+
+if printf '%s' "$out_tf9" | grep -qF '[rule: records-serving-url-non-app-role]'; then
+  say "FAIL  mixed-scheme sanctioned URL (records_api) incorrectly flagged"; fail=1
+else
+  say "PASS  mixed-scheme sanctioned URL (records_api) not flagged"
+fi
+
+if printf '%s' "$out_tf9" | grep -qF -- "$tf_url_mixed_ok" || printf '%s' "$out_tf9" | grep -qF -- "$tf_urlpw_case"; then
+  say "FAIL  value-silent violation: scheme-case sanctioned negative value leaked into output"; fail=1
+else
+  say "PASS  value-silent: scheme-case sanctioned negative value absent from output"
+fi
+
 if [[ "$fail" == "0" ]]; then
   say "RESULT: AC8 fixture test PASSED"
   exit 0

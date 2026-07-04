@@ -220,11 +220,20 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   # never printed regardless of the match. The match class already includes
   # "." so a dotted Supavisor username is captured in full; the negative
   # filter below uses the same 3-role + single-dot-ref allowlist as rule (a).
+  #
+  # SCHEME-CASE: the scheme token is matched case-insensitively via explicit
+  # [Xx] character classes (NOT a global grep -i), so a mixed/upper-case
+  # scheme such as POSTGRESQL:// or PostgreSQL:// - both valid per RFC 3986
+  # and accepted as-is by libpq/SQLAlchemy - can no longer evade rule (c).
+  # The sanctioned-role alternation stays CASE-SENSITIVE (lowercase only) in
+  # both the match and the allowlist below, the same trap rule (a) already
+  # avoids for keys: a naive global -i would also case-fold the ROLE VALUE
+  # and wrongly sanction POSTGRESQL://RECORDS_API.
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-url-non-app-role]"; rc=1
-  done < <(grep -rHInoE '(postgresql|postgres)(\+[a-z0-9]+)?://[A-Za-z0-9._%+-]+[:@]' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
-             | grep -vE ':(postgresql|postgres)(\+[a-z0-9]+)?://(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?[:@]$' \
+  done < <(grep -rHInoE '[Pp][Oo][Ss][Tt][Gg][Rr][Ee][Ss]([Qq][Ll])?(\+[a-z0-9]+)?://[A-Za-z0-9._%+-]+[:@]' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+             | grep -vE ':[Pp][Oo][Ss][Tt][Gg][Rr][Ee][Ss]([Qq][Ll])?(\+[a-z0-9]+)?://(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?[:@]$' \
              | cut -d: -f1,2)
   if [[ "$glob_hit" == "1" ]]; then
     say "  PASS  records serving scan ran (globs: ${RECORDS_SERVING_GLOBS})"
