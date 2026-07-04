@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-04
 **Branch:** `secrets/agent-env-sanitizer` (host worktree `apex-secrets-agent-env`, off `main` 3f3ebe46)
-**Status:** Approved design (operator ratified allowlist 2026-07-04). Part A builds this pass; Part B is design-only and gated.
+**Status:** Rev 3. Spec-review gate passed 2026-07-04 -- Part A approved for implementation planning (not yet built). Part B is design-only and gated. Allowlist ratified 2026-07-04.
 
 ## Goal
 
@@ -43,10 +43,10 @@ of Infisical: it can be closed today by filtering the child environment.
 - The existing tests (`tests/test_agent_runner.py:150`, `:160`) only assert the
   PATH prepend and the `APEX_JOB_ENV` marker. Both are preserved under an
   allowlist, so the change is behavior-compatible and cleanly test-drivable.
-- Allowlist completeness was verified against the live host worker env
-  (2026-07-04): a value-silent name enumeration (`printenv | cut -d= -f1 | sort`,
-  names only) returned 11 names, none in the TLS / proxy / `NODE_*` / `GIT_*` /
-  `npm_*` / `FNM_*` / `NVM_*` / `SSH_AUTH_SOCK` / `GPG*` risk families. See A.7.
+- Allowlist completeness was checked against a host shell baseline (2026-07-04):
+  a value-silent name enumeration (`printenv | cut -d= -f1 | sort`, names only)
+  returned 11 names, none in the TLS / proxy / `NODE_*` / `GIT_*` / `npm_*` /
+  `FNM_*` / `NVM_*` / `SSH_AUTH_SOCK` / `GPG*` risk families. See A.7.
 
 ## Scope and decomposition
 
@@ -166,6 +166,12 @@ day one; there is no denylist that could fall behind.
    `test_review_job_never_passes_prompt_with_base`, `:257`, which monkeypatches
    `subprocess.run`) and asserting a planted secret is absent while `HOME` and
    `APEX_JOB_ENV` are present.
+7. **Post-build agent-env smoke (plan verification step, not a unit test).** After
+   the change lands, run `claude --version` and `codex --version` in a subprocess
+   whose env is the ACTUAL `_agent_env("host")` output (not a hand-shaped env),
+   confirming both CLIs still launch under the real sanitized env. This converts
+   the A.7 host baseline into an executed proof and belongs in the implementation
+   plan's final verification, not in the pytest suite.
 
 ### A.6 Error handling and edge cases
 
@@ -176,11 +182,12 @@ day one; there is no denylist that could fall behind.
 - `job_env` is always written to `APEX_JOB_ENV`, matching current behavior; no
   gate, promotion, heartbeat, or worktree-plumbing behavior changes.
 
-### A.7 Allowlist completeness -- host env verification (2026-07-04)
+### A.7 Allowlist completeness -- host shell baseline + agent-env smoke (2026-07-04)
 
 The strict default-deny allowlist is only safe if no non-secret runtime variable
-the agents rely on is silently dropped. Verified value-silent (names only) on the
-Olares host worker context:
+the agents rely on is silently dropped. Checked value-silent (names only) as a
+host shell baseline -- a proxy for the manually-launched worker env, which
+inherits from the launching shell:
 
 - A login-shell `printenv | cut -d= -f1 | sort` returned 11 names. None belong to
   the risk families the audit flagged: no `NODE_OPTIONS` / `NODE_EXTRA_CA_CERTS` /
@@ -197,11 +204,13 @@ Olares host worker context:
   spawning the native binary.
 
 Decision: the allowlist requires no additions; TLS / proxy / `NODE_OPTIONS` /
-`GIT_*` are consciously omitted because they are not set in the worker context.
-Re-check trigger: if the worker launch context is ever changed to set a custom CA
-bundle, an egress proxy, or `NODE_OPTIONS`, re-run the name diff and allowlist the
-specific name (these are paths / routing config, not secrets) before shipping that
-change.
+`GIT_*` are consciously omitted because they are not set in the host shell
+baseline. This baseline is turned into an executed proof by a post-build smoke
+(A.5 item 7): run `claude --version` and `codex --version` under the ACTUAL
+`_agent_env("host")` output (not a hand-shaped env). Re-check trigger: if the
+worker launch context is ever changed to set a custom CA bundle, an egress proxy,
+or `NODE_OPTIONS`, re-run the name diff and allowlist the specific name (these are
+paths / routing config, not secrets) before shipping that change.
 
 ## Part B -- Infisical task-scoped adoption (design only, gated)
 
