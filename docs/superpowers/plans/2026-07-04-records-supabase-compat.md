@@ -8,7 +8,7 @@
 
 **Tech Stack:** PostgreSQL 17 (Supabase managed), the authorized Supabase MCP (`create_branch`/`delete_branch`/`execute_sql` for read/probe only), value-silent host `psql` over the branch DSN (stack apply), `run_validation.py` + `_dbtest.py` (Python/psycopg/psql harness), host worktree `/home/olares/code/apex/apex-records-supabase-compat` (branch `records/supabase-compat`).
 
-**Revision:** rev 2 - folds the operator plan-audit (2026-07-04): P1 corrected ownership-transfer choreography (transfer AS the current owner, not while `SET ROLE`d into the target; 046 + 048 cross-role); P1 removed `apply_migration` (host `psql` only, no history rows); P2 per-probe unique scratch roles + teardown; P2 the applier-privilege probe is a scratch-write needing its own GO. Phase 0 is a single operator-gated run; Phase 2 does not fan out until Task 2.0 clears Gate A, Gate B, and the choreography. | rev 3 - folds the second operator plan-audit: reverse/down ownership probes (`B -> A` and `A -> postgres`, incl. probing whether managed Supabase permits `grant postgres to <custom>`); corrected temp schema `CREATE` to the NEW/receiving owner (not `postgres`); Task 0.7 self-proof that `supabase_probe.py` matches the manual Phase-0 matrix.
+**Revision:** rev 2 - folds the operator plan-audit (2026-07-04): P1 corrected ownership-transfer choreography (transfer AS the current owner, not while `SET ROLE`d into the target; 046 + 048 cross-role); P1 removed `apply_migration` (host `psql` only, no history rows); P2 per-probe unique scratch roles + teardown; P2 the applier-privilege probe is a scratch-write needing its own GO. Phase 0 is a single operator-gated run; Phase 2 does not fan out until Task 2.0 clears Gate A, Gate B, and the choreography. | rev 3 - folds the second operator plan-audit: reverse/down ownership probes (`B -> A` and `A -> postgres`, incl. probing whether managed Supabase permits `grant postgres to <custom>`); corrected temp schema `CREATE` to the NEW/receiving owner (not `postgres`); Task 0.7 self-proof that `supabase_probe.py` matches the manual Phase-0 matrix. | rev 4 - Phase-4-prep EXECUTED early (commits `22cc22a2` + `bb2695c3`): retired the conditional-`-1` in Task 0.1 / 3.2 (all up-migrations source-wrapped -> plain `psql -f`); marked Phase-4-prep done; reconciled the gate9 serving-design spec's '198'.
 
 ## Global Constraints (verbatim from spec + lane discipline)
 
@@ -47,7 +47,7 @@
 - Produces: a branch `project_ref`, and an owner-inventory dict `{objkind: {owner: count}}` written to `PHASE0-FINDINGS.md`.
 
 - [ ] **Step 1** - Via the authorized Supabase MCP, `create_branch` on project `fxoyniqnrlkxfligbxmg` (confirm cost first with `get_cost`/`confirm_cost`). Record the branch `project_ref`. Value-silent: never print the branch DSN.
-- [ ] **Step 2** - Apply records `001-044` to the branch via value-silent host `psql` over the branch DSN ONLY. Obtain the branch DSN into a `0600` host env var, never echoed. NO MCP `apply_migration` (it writes a `supabase_migrations` history row). Use the conditional-`-1` rule proven 2026-07-04: `psql -v ON_ERROR_STOP=1 -q -f` per file, adding `-1` only for the six unwrapped files `001-005,008`. Stop-on-first-error.
+- [ ] **Step 2** - Apply records `001-044` to the branch via value-silent host `psql` over the branch DSN ONLY. Obtain the branch DSN into a `0600` host env var, never echoed. NO MCP `apply_migration` (it writes a `supabase_migrations` history row). Apply each file with plain `psql -v ON_ERROR_STOP=1 -q -f`, stop-on-first-error. Every up-migration is source-wrapped in `BEGIN;`/`COMMIT;` as of `22cc22a2` (001-005/008 completed the set), so NO `-1` is used - a `-1` would double-wrap.
 - [ ] **Step 3** - Inventory ACTUAL owners: `select relkind, relowner::regrole, count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='records' group by 1,2` + the schema owner (`select nspowner::regrole from pg_namespace where nspname='records'`) + sequences/functions. **If any owner is `supabase_admin` (not `postgres`), FLAG it** - 046 assumes `postgres` ownership; record whether a `postgres -> records_owner` transfer path exists from a `supabase_admin`-owned object, or STOP (escalate per spec error-handling).
 - [ ] **Step 4** - Write the owner inventory + `server_version` to `PHASE0-FINDINGS.md`. Commit `supabase_probe.py` + findings.
   Expected: `001-044` apply green on the branch; inventory recorded; if `supabase_admin` ownership appears, it is explicitly flagged (do not proceed silently).
@@ -197,7 +197,7 @@
 
 ### Task 3.2: Branch green - adapted 001-049 + down->up on a real Supabase branch
 
-- [ ] **Step 1** - `create_branch`; apply adapted `001-049` via value-silent host `psql` over the branch DSN (conditional-`-1` rule; NO `apply_migration`); expect green end-to-end (the authoritative proof). Then run `045_down..049_down` -> re-apply cycle on the branch; expect clean.
+- [ ] **Step 1** - `create_branch`; apply adapted `001-049` via value-silent host `psql` over the branch DSN (plain `psql -v ON_ERROR_STOP=1 -f` per file - all up-migrations source-wrapped, no `-1`; NO `apply_migration`); expect green end-to-end (the authoritative proof). Then run `045_down..049_down` -> re-apply cycle on the branch; expect clean.
 - [ ] **Step 2** - Record the branch apply transcript to `RECORDS-SUPABASE-COMPAT-EVIDENCE-2026-07.md` (value-silent).
   Expected: acceptance (3) + (9-branch).
 
@@ -216,12 +216,14 @@
 
 ## PHASE 4-prep - Packet corrections (staged; applied when Phase 4 is scheduled)
 
+**STATUS: EXECUTED EARLY 2026-07-04** (operator-directed, local-only) - commit `22cc22a2` (packet 198-reconcile + applier-privilege precondition + Section-2 source-owned + ups 001-005/008 source-wrapped) and `bb2695c3` (downs 005_down/008_down source-wrapped). All 49 up-migrations AND all 47 downs are now self-wrapped; the branch apply (Task 0.1 / 3.2) uses plain `psql -f`, no `-1`. The three tasks below are DONE - kept for provenance, do NOT redo. The '0 of 198' figure was also reconciled in the gate9 serving-design spec (the packet's authority); the rebind-scope provenance note keeps its distinct total-prod '198' framing.
+
 ### Task 4.1: Add the executable applier-privilege precondition to the packet
 
 **Files:** Modify `docs/operations/RECORDS-GATE9-PROD-APPLY-PACKET.md` Section 1.
 
 - [ ] **Step 1** - Add a Section-1 precondition that is HONEST that `supabase_probe.py` is a scratch-WRITE probe (it creates and tears down scratch roles/objects, transactionally and value-silently). Wording: "Applier-privilege precondition: `supabase_probe.py` MUST exit 0 (all privilege classes green) on the target BEFORE the migration write GO. Because it performs scratch writes, it requires its OWN operator-approved scratch-write GO, distinct from and PRIOR TO the migration write GO - it is NOT run 'before any GO'." Reference the Phase-0 probe. Commit.
-  Note: the spec's B3 clause carries the same "before any GO" phrasing; flag to the operator that the spec line should mirror this scratch-write-GO correction (spec edit is out of scope for this plan-rev commit).
+  Note: the compat spec's B3 "before any GO" phrasing was reconciled to the scratch-write-GO wording in spec rev 4 (`5cda114f`).
 
 ### Task 4.2: Source-own transaction atomicity for the six unwrapped up-migrations
 

@@ -61,7 +61,7 @@ infra/secret-audit.sh Check 3, Vault (Padloc) for out-of-band password custody.
 ## 1. Context: greenfield, not a rebind
 
 Read-only prod check (governed fxoyniqnrlkxfligbxmg, 2026-07-03): records schema
-absent, 0 records_* roles, 0 of 198 migrations from the records lane, records not
+absent, 0 records_* roles, 0 of 49 records up-migrations (96 files incl. downs) from the records lane, records not
 in the Data API exposed-schemas. So Gate 9 is not a live-policy rebind; there are
 no prod records objects to rebind. It is a serving strategy/design lane.
 
