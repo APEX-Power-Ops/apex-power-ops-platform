@@ -1,7 +1,7 @@
-# Records Supabase-Compat Adaptation - Design Spec (rev 2, IRP-folded)
+# Records Supabase-Compat Adaptation - Design Spec (rev 3, IRP-folded)
 
 *2026-07-04. Lane: records/supabase-compat. Off `origin/main @ 3f3ebe46`.*
-*rev 2 folds the dual-engine IRP (Claude 5-agent grounded audit + Codex cross-engine) + operator ratifications.*
+*rev 2 folded the dual-engine IRP (Claude 5-agent grounded audit + Codex cross-engine) + operator ratifications; rev 3 folds the Codex stability-pass P1s (046 in the NOSUPERUSER drop; SET ROLE under INHERIT FALSE; per-migration owner authority).*
 
 ## Goal
 
