@@ -166,49 +166,65 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   done
   # Key is matched case-insensitively via explicit [Xx] classes (NOT a global
   # grep -i, which would also case-fold the VALUE and wrongly sanction
-  # PGUSER=RECORDS_API). The value sub-pattern captures the WHOLE value
-  # token - either a full quoted string (everything between a pair of
-  # quotes) or a run of non-space/non-quote/non-";"/non-","  chars - so the
-  # allowlist's "$" anchor sits at the TRUE end of the value. A narrower
-  # class here (e.g. [A-Za-z0-9_.]+) would truncate at the first
-  # out-of-class char (a sanctioned-role PREFIX like "records_api" followed
-  # by "-super", "%owner", "@evil", or a space inside quotes) and the
-  # allowlist would then wrongly sanction just the prefix - "-" is a legal
-  # Postgres role-name char, so "records_api-super" is a real distinct,
-  # non-sanctioned role. The value still stops before a following
-  # " password=..." / ";password=..." / ",password=..." field, so this stays
-  # value-silent. The quoted alternative also still captures "." so a full
-  # Supavisor dotted username (role.projectref) is captured, not truncated
-  # at the first dot.
+  # PGUSER=RECORDS_API). The key is anchored with a leading \b word boundary
+  # so a sanctioned key (user/role/pguser/pgrole) is matched only at a true
+  # token boundary and NEVER as a substring inside a larger key name. Keys
+  # like DB_USER, SUPER_USER, CLUSTER_ROLE are intentionally OUT of the
+  # sanctioned key set: because "_" is a word char, \b does not match between
+  # "DB_" and "USER", so such keys are neither scanned nor leaked. \b is
+  # zero-width, so the colon-field layout of the grep -o capture is unchanged
+  # and the allowlist ":KEYPAT..." filter still lands on the real key.
+  #
+  # VALUE-SILENCE is guaranteed by the EMIT, not by narrowing the value class:
+  # the FIND line carries only bare file:line (cut -d: -f1,2, same as rule (c)
+  # and Check 2), so the captured value's content can never reach output no
+  # matter what it contains (a colon-joined "role:secret:port", a password
+  # field, anything). Because emit is value-silent, the value class can safely
+  # capture the WHOLE whitespace-delimited token - either a full quoted string
+  # (everything between a pair of quotes) or an unbroken run of non-space
+  # chars. Capturing the whole token makes the allowlist's "$" anchor sit at
+  # the TRUE end of the value, closing every truncation bypass at once: a
+  # sanctioned-role PREFIX ("records_api") followed by "-super", "%owner",
+  # "@evil", ";super", ",super", or an embedded quote is captured whole and
+  # correctly fails the sanctioned-only allowlist ("-" ";" "," are all legal
+  # or role-distinguishing chars, so these are real non-sanctioned roles that
+  # must be flagged). The quoted alternative also captures "." so a full
+  # Supavisor dotted username (role.projectref) is captured, not truncated.
+  #
+  # Evidence split: this is best-effort STATIC config-shape detection. The
+  # authoritative identity gate is the runtime assert_serving_identity (Task
+  # 3), which proves live BYPASSRLS/role at connect time; Check 3 cannot see
+  # that from static config and does not try to.
   KEYPAT="([Uu][Ss][Ee][Rr]|[Rr][Oo][Ll][Ee]|[Pp][Gg][Uu][Ss][Ee][Rr]|[Pp][Gg][Rr][Oo][Ll][Ee])"
-  VALPAT="(['\"][^'\"]*['\"]|[^[:space:]'\";,]+)"
+  VALPAT="(['\"][^'\"]*['\"]|[^[:space:]]+)"
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-non-app-role]"; rc=1
-  done < <(grep -rHInoE "${KEYPAT}[[:space:]]*=[[:space:]]*${VALPAT}" ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+  done < <(grep -rHInoE "\b${KEYPAT}[[:space:]]*=[[:space:]]*${VALPAT}" ${RECORDS_SERVING_GLOBS} 2>/dev/null \
              | grep -vE ":${KEYPAT}[[:space:]]*=[[:space:]]*['\"]?(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?['\"]?\$" \
-             | sed -E 's/:[^:]*$//')
+             | cut -d: -f1,2)
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-bypass-credential]"; rc=1
   done < <(grep -rHInEi -e 'sb_secret_|service_role|bypassrls' ${RECORDS_SERVING_GLOBS} 2>/dev/null | cut -d: -f1,2)
-  # rule (c): URL-form DSN userinfo, e.g. postgresql://<user>:<pw>@host/db.
-  # Rules (a)/(b) miss this shape: the username in a URL's userinfo is not a
-  # "user=" keyword token (misses rule a) and is not itself a bypass literal
-  # (misses rule b) even when it names an owner/superuser role. -o with -H/-n
-  # keeps this VALUE-SILENT: the match stops at the ":" or "@" delimiter, so
-  # the password half of the userinfo is never captured or printed. The
-  # matched token itself contains a "://" colon, so the trailing-strip sed
-  # rules (a)/(b) use would leave it stuck to the FIND line; cut to the first
-  # two colon-delimited fields instead (same normalization Check 2 uses) so
-  # this rule also emits bare file:line. The match class already includes
+  # rule (c): URL-form DSN userinfo, e.g. postgresql://<user>:<pw>@host/db and
+  # driver-qualified variants postgresql+asyncpg://, postgresql+psycopg://,
+  # etc. (SERVING_CONTRACT recognizes the optional "+<driver>" scheme suffix in
+  # BOTH the match and the allowlist). Rules (a)/(b) miss this shape: the
+  # username in a URL's userinfo is not a "user=" keyword token (misses rule a)
+  # and is not itself a bypass literal (misses rule b) even when it names an
+  # owner/superuser role. Emit is VALUE-SILENT the same way rule (a) is now:
+  # the matched token contains a "://" colon, so instead of a trailing-strip
+  # sed we cut to the first two colon-delimited fields (same normalization
+  # Check 2 uses) to emit bare file:line - the password half of the userinfo is
+  # never printed regardless of the match. The match class already includes
   # "." so a dotted Supavisor username is captured in full; the negative
   # filter below uses the same 3-role + single-dot-ref allowlist as rule (a).
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-url-non-app-role]"; rc=1
-  done < <(grep -rHInoE '(postgresql|postgres)://[A-Za-z0-9._%+-]+[:@]' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
-             | grep -vE ':(postgresql|postgres)://(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?[:@]$' \
+  done < <(grep -rHInoE '(postgresql|postgres)(\+[a-z0-9]+)?://[A-Za-z0-9._%+-]+[:@]' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+             | grep -vE ':(postgresql|postgres)(\+[a-z0-9]+)?://(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?[:@]$' \
              | cut -d: -f1,2)
   if [[ "$glob_hit" == "1" ]]; then
     say "  PASS  records serving scan ran (globs: ${RECORDS_SERVING_GLOBS})"

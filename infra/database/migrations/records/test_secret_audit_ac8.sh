@@ -467,6 +467,211 @@ for val in "$url_auditor" "$url_ref_ok" "$url_pw"; do
 done
 say "PASS  value-silent: no URL-form negative fixture value (incl. password) appeared in captured output"
 
+# ---- TERMINAL FIX: residual truncation + colon-leak + substring-key + driver URLs --
+# The prior widening left three holes and one CRITICAL leak, all closed here.
+# Every planted signature is built by runtime concatenation (no live literal).
+
+# (T1) Rule (a) residual truncation POSITIVES: ";" and "," in the value were
+# excluded by the old class and silently dropped the non-sanctioned suffix, so
+# these bypassed the allowlist. The whole-token value class now captures them.
+rm -f "$tmp"/*.conf
+tf_semi="user=""records_api"";""super"
+tf_comma="user=""records_api"",""super"
+tf_quotejunk="user=""${dq}""records_api""${dq}""evil""${dq}"
+printf 'host=h %s dbname=records\n' "$tf_semi" > "$tmp/fixture_tf_semi.conf"
+printf 'host=h %s dbname=records\n' "$tf_comma" > "$tmp/fixture_tf_comma.conf"
+printf 'host=h %s dbname=records\n' "$tf_quotejunk" > "$tmp/fixture_tf_quotejunk.conf"
+
+out_tf1="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc_tf1=$?
+
+if [[ "$rc_tf1" == "1" ]]; then
+  say "PASS  terminal residual-truncation positives: exit 1 as expected"
+else
+  say "FAIL  terminal residual-truncation positives: expected exit 1, got $rc_tf1"; fail=1
+fi
+
+for f in fixture_tf_semi.conf fixture_tf_comma.conf fixture_tf_quotejunk.conf; do
+  if printf '%s' "$out_tf1" | grep -qF "$f" && printf '%s' "$out_tf1" | grep -qF '[rule: records-serving-non-app-role]'; then
+    say "PASS  terminal residual-truncation flagged: $f"
+  else
+    say "FAIL  terminal residual-truncation NOT flagged (bug present or regression): $f"; fail=1
+  fi
+done
+
+for val in "$tf_semi" "$tf_comma" "$tf_quotejunk"; do
+  if printf '%s' "$out_tf1" | grep -qF -- "$val"; then
+    say "FAIL  value-silent violation: residual-truncation fixture value leaked into output"; fail=1
+  fi
+done
+say "PASS  value-silent: no residual-truncation fixture value appeared in captured output"
+
+# (T2) CRITICAL colon-leak guard: a colon-joined "role:secret:port" value must
+# FLAG and the planted SENTINEL must be ABSENT (the old sed left the sentinel
+# stuck to the FIND line; the bare file:line emit closes this content-blind).
+rm -f "$tmp"/*.conf
+tf_sentinel="SENTINELCOLON000"
+tf_colon="user=""records_api""-""super"":""$tf_sentinel"":""5432"
+printf '%s\n' "$tf_colon" > "$tmp/fixture_tf_colon.conf"
+
+out_tf2="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc_tf2=$?
+
+if [[ "$rc_tf2" == "1" ]]; then
+  say "PASS  terminal colon-leak guard: exit 1 as expected"
+else
+  say "FAIL  terminal colon-leak guard: expected exit 1, got $rc_tf2"; fail=1
+fi
+
+if printf '%s' "$out_tf2" | grep -qF "fixture_tf_colon.conf" && printf '%s' "$out_tf2" | grep -qF '[rule: records-serving-non-app-role]'; then
+  say "PASS  terminal colon-leak guard flagged"
+else
+  say "FAIL  terminal colon-leak guard NOT flagged"; fail=1
+fi
+
+if printf '%s' "$out_tf2" | grep -qF -- "$tf_sentinel"; then
+  say "FAIL  value-silent violation (CRITICAL): colon-joined SENTINEL leaked into Check 3 output"; fail=1
+else
+  say "PASS  value-silent: colon-joined SENTINEL absent from Check 3 output"
+fi
+
+# (T3) SUBSTRING-KEY negatives: DB_USER / SUPER_USER must NOT be scanned (the
+# \b anchor does not match inside a larger key) AND must NOT leak, even though
+# their value is a non-sanctioned role joined with a sentinel.
+rm -f "$tmp"/*.conf
+tf_sentdb="SENTINELDB00000"
+tf_dbuser="DB_USER=""records_owner"":""$tf_sentdb"":""5432"
+tf_superuser="SUPER_USER=""records_api""-""super"":""$tf_sentdb"":""5432"
+printf '%s\n' "$tf_dbuser" > "$tmp/fixture_tf_dbuser.conf"
+printf '%s\n' "$tf_superuser" > "$tmp/fixture_tf_superuser.conf"
+
+out_tf3="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc_tf3=$?
+
+if [[ "$rc_tf3" == "0" ]]; then
+  say "PASS  terminal substring-key negatives: exit 0 as expected"
+else
+  say "FAIL  terminal substring-key negatives: expected exit 0, got $rc_tf3"; fail=1
+fi
+
+if printf '%s' "$out_tf3" | grep -qF '[rule: records-serving-non-app-role]'; then
+  say "FAIL  substring-key (DB_USER/SUPER_USER) was incorrectly scanned/flagged"; fail=1
+else
+  say "PASS  substring-key (DB_USER/SUPER_USER) not scanned/flagged"
+fi
+
+if printf '%s' "$out_tf3" | grep -qF -- "$tf_sentdb"; then
+  say "FAIL  value-silent violation: substring-key SENTINEL leaked into output"; fail=1
+else
+  say "PASS  value-silent: substring-key SENTINEL absent from output"
+fi
+
+# (T4) PGUSER positive (owner) - keyword-form uppercase key, non-sanctioned role.
+rm -f "$tmp"/*.conf
+tf_pguser_owner="PGUSER=""records_owner"
+printf '%s\n' "$tf_pguser_owner" > "$tmp/fixture_tf_pguser_owner.conf"
+
+out_tf4="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc_tf4=$?
+
+if [[ "$rc_tf4" == "1" ]] && printf '%s' "$out_tf4" | grep -qF "fixture_tf_pguser_owner.conf" && printf '%s' "$out_tf4" | grep -qF '[rule: records-serving-non-app-role]'; then
+  say "PASS  terminal PGUSER=records_owner flagged"
+else
+  say "FAIL  terminal PGUSER=records_owner NOT flagged (rc=$rc_tf4)"; fail=1
+fi
+
+# (T5) Keyword-form NEGATIVES that must still PASS after the widening: bare
+# sanctioned role, quoted sanctioned role, and a dotted sanctioned ref.
+rm -f "$tmp"/*.conf
+tf_neg_bare="user=""records_api"
+tf_neg_quoted="user=""${dq}""records_api""${dq}"
+tf_neg_dot="user=""records_api"".""abcdefghijklmnop"
+printf 'host=h %s dbname=records\n' "$tf_neg_bare" > "$tmp/fixture_tf_neg_bare.conf"
+printf 'host=h %s dbname=records\n' "$tf_neg_quoted" > "$tmp/fixture_tf_neg_quoted.conf"
+printf 'host=h %s dbname=records\n' "$tf_neg_dot" > "$tmp/fixture_tf_neg_dot.conf"
+
+out_tf5="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc_tf5=$?
+
+if [[ "$rc_tf5" == "0" ]]; then
+  say "PASS  terminal keyword-form negatives: exit 0 as expected"
+else
+  say "FAIL  terminal keyword-form negatives: expected exit 0, got $rc_tf5"; fail=1
+fi
+
+if printf '%s' "$out_tf5" | grep -qF '[rule: records-serving-non-app-role]'; then
+  say "FAIL  terminal keyword-form sanctioned role incorrectly flagged"; fail=1
+else
+  say "PASS  terminal keyword-form sanctioned roles not flagged"
+fi
+
+# (T6) Rule (c) driver-qualified POSITIVES: postgresql+asyncpg:// and
+# postgresql+psycopg:// with non-sanctioned userinfo roles must FLAG (P2), and
+# an unqualified evil-dotted role too. Planted PW must be ABSENT.
+rm -f "$tmp"/*.conf
+tf_urlpw="URLPWTERM000000"
+tf_url_asyncpg="postgresql""+asyncpg""://""records_owner"":""$tf_urlpw""@host/db"
+tf_url_psycopg="postgresql""+psycopg""://""service_role"":""$tf_urlpw""@host/db"
+tf_url_plain="postgresql""://""postgres"":""$tf_urlpw""@host/db"
+tf_url_dotevil="postgresql""://""records_api"".""evil"".""postgres"":""$tf_urlpw""@host/db"
+printf 'DATABASE_URL=%s\n' "$tf_url_asyncpg" > "$tmp/fixture_tf_url_asyncpg.conf"
+printf 'DATABASE_URL=%s\n' "$tf_url_psycopg" > "$tmp/fixture_tf_url_psycopg.conf"
+printf 'DATABASE_URL=%s\n' "$tf_url_plain" > "$tmp/fixture_tf_url_plain.conf"
+printf 'DATABASE_URL=%s\n' "$tf_url_dotevil" > "$tmp/fixture_tf_url_dotevil.conf"
+
+out_tf6="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc_tf6=$?
+
+if [[ "$rc_tf6" == "1" ]]; then
+  say "PASS  terminal driver-URL positives: exit 1 as expected"
+else
+  say "FAIL  terminal driver-URL positives: expected exit 1, got $rc_tf6"; fail=1
+fi
+
+for f in fixture_tf_url_asyncpg.conf fixture_tf_url_psycopg.conf fixture_tf_url_plain.conf fixture_tf_url_dotevil.conf; do
+  if printf '%s' "$out_tf6" | grep -qF "$f" && printf '%s' "$out_tf6" | grep -qF '[rule: records-serving-url-non-app-role]'; then
+    say "PASS  terminal driver-URL positive flagged: $f"
+  else
+    say "FAIL  terminal driver-URL positive NOT flagged (bug present or regression): $f"; fail=1
+  fi
+done
+
+# bypass-credential rule also fires on service_role fixture; that is expected
+# and does not affect the url-non-app-role assertions above.
+for val in "$tf_url_asyncpg" "$tf_url_psycopg" "$tf_url_plain" "$tf_url_dotevil" "$tf_urlpw"; do
+  if printf '%s' "$out_tf6" | grep -qF -- "$val"; then
+    say "FAIL  value-silent violation: driver-URL positive fixture value (incl. PW) leaked into output"; fail=1
+  fi
+done
+say "PASS  value-silent: no driver-URL positive fixture value (incl. PW) appeared in captured output"
+
+# (T7) Rule (c) driver-qualified NEGATIVE: postgresql+asyncpg:// with a
+# sanctioned role must NOT flag. Planted PW must be ABSENT.
+rm -f "$tmp"/*.conf
+tf_url_ok="postgresql""+asyncpg""://""records_api"":""$tf_urlpw""@host/db"
+printf 'DATABASE_URL=%s\n' "$tf_url_ok" > "$tmp/fixture_tf_url_ok.conf"
+
+out_tf7="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc_tf7=$?
+
+if [[ "$rc_tf7" == "0" ]]; then
+  say "PASS  terminal driver-URL sanctioned negative: exit 0 as expected"
+else
+  say "FAIL  terminal driver-URL sanctioned negative: expected exit 0, got $rc_tf7"; fail=1
+fi
+
+if printf '%s' "$out_tf7" | grep -qF '[rule: records-serving-url-non-app-role]'; then
+  say "FAIL  driver-qualified sanctioned URL (records_api) incorrectly flagged"; fail=1
+else
+  say "PASS  driver-qualified sanctioned URL (records_api) not flagged"
+fi
+
+if printf '%s' "$out_tf7" | grep -qF -- "$tf_url_ok" || printf '%s' "$out_tf7" | grep -qF -- "$tf_urlpw"; then
+  say "FAIL  value-silent violation: driver-URL sanctioned negative value leaked into output"; fail=1
+else
+  say "PASS  value-silent: driver-URL sanctioned negative value absent from output"
+fi
+
 if [[ "$fail" == "0" ]]; then
   say "RESULT: AC8 fixture test PASSED"
   exit 0
