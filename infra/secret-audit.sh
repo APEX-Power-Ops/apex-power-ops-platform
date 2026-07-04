@@ -166,14 +166,26 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   done
   # Key is matched case-insensitively via explicit [Xx] classes (NOT a global
   # grep -i, which would also case-fold the VALUE and wrongly sanction
-  # PGUSER=RECORDS_API). The value class includes "." so a full Supavisor
-  # dotted username (role.projectref) is captured, not truncated at the
-  # first dot.
+  # PGUSER=RECORDS_API). The value sub-pattern captures the WHOLE value
+  # token - either a full quoted string (everything between a pair of
+  # quotes) or a run of non-space/non-quote/non-";"/non-","  chars - so the
+  # allowlist's "$" anchor sits at the TRUE end of the value. A narrower
+  # class here (e.g. [A-Za-z0-9_.]+) would truncate at the first
+  # out-of-class char (a sanctioned-role PREFIX like "records_api" followed
+  # by "-super", "%owner", "@evil", or a space inside quotes) and the
+  # allowlist would then wrongly sanction just the prefix - "-" is a legal
+  # Postgres role-name char, so "records_api-super" is a real distinct,
+  # non-sanctioned role. The value still stops before a following
+  # " password=..." / ";password=..." / ",password=..." field, so this stays
+  # value-silent. The quoted alternative also still captures "." so a full
+  # Supavisor dotted username (role.projectref) is captured, not truncated
+  # at the first dot.
   KEYPAT="([Uu][Ss][Ee][Rr]|[Rr][Oo][Ll][Ee]|[Pp][Gg][Uu][Ss][Ee][Rr]|[Pp][Gg][Rr][Oo][Ll][Ee])"
+  VALPAT="(['\"][^'\"]*['\"]|[^[:space:]'\";,]+)"
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-non-app-role]"; rc=1
-  done < <(grep -rHInoE "${KEYPAT}[[:space:]]*=[[:space:]]*['\"]?[A-Za-z0-9_.]+['\"]?" ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+  done < <(grep -rHInoE "${KEYPAT}[[:space:]]*=[[:space:]]*${VALPAT}" ${RECORDS_SERVING_GLOBS} 2>/dev/null \
              | grep -vE ":${KEYPAT}[[:space:]]*=[[:space:]]*['\"]?(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?['\"]?\$" \
              | sed -E 's/:[^:]*$//')
   while IFS= read -r loc; do

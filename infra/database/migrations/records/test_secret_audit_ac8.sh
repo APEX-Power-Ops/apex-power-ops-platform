@@ -295,6 +295,178 @@ for val in "$supavisor_multidot" "$supavisor_badbase" "$pguser_bad" "$pguser_upp
 done
 say "PASS  value-silent: no positive-fixture value appeared in captured output"
 
+# ---- Finding 1 fix: rule (a) value-capture truncation bypass -------------
+# grep -o with a value class of [A-Za-z0-9_.]+ truncates at the first
+# out-of-class char, so a sanctioned-role PREFIX followed by an out-of-class
+# suffix (-, %, @, a space inside quotes) was silently truncated to the
+# sanctioned prefix and then wrongly sanctioned by the allowlist's "$"
+# anchor. "-" is a legal Postgres role-name char, so these are distinct,
+# non-sanctioned roles that must be flagged. Five POSITIVE + a value-silence
+# guard fixture + two quoted NEGATIVE fixtures.
+rm -f "$tmp"/*.conf
+dq='"'
+bypass_dash="user=""records_api""-""super"
+bypass_dash2="user=""records_api""-""owner"
+bypass_pct="user=""records_api""%""owner"
+bypass_at="user=""records_api""@""evil"
+bypass_quoted="user=""${dq}""records_api evil""${dq}"
+
+printf 'host=h %s dbname=records\n' "$bypass_dash" > "$tmp/fixture_bypass_dash.conf"
+printf 'host=h %s dbname=records\n' "$bypass_dash2" > "$tmp/fixture_bypass_dash2.conf"
+printf 'host=h %s dbname=records\n' "$bypass_pct" > "$tmp/fixture_bypass_pct.conf"
+printf 'host=h %s dbname=records\n' "$bypass_at" > "$tmp/fixture_bypass_at.conf"
+printf 'host=h %s dbname=records\n' "$bypass_quoted" > "$tmp/fixture_bypass_quoted.conf"
+
+out9="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc9=$?
+
+if [[ "$rc9" == "1" ]]; then
+  say "PASS  value-truncation bypass fixtures: exit 1 as expected"
+else
+  say "FAIL  value-truncation bypass fixtures: expected exit 1, got $rc9"; fail=1
+fi
+
+for f in fixture_bypass_dash.conf fixture_bypass_dash2.conf fixture_bypass_pct.conf fixture_bypass_at.conf fixture_bypass_quoted.conf; do
+  if printf '%s' "$out9" | grep -qF "$f" && printf '%s' "$out9" | grep -qF '[rule: records-serving-non-app-role]'; then
+    say "PASS  value-truncation bypass flagged: $f"
+  else
+    say "FAIL  value-truncation bypass NOT flagged (bug present or regression): $f"; fail=1
+  fi
+done
+
+for val in "$bypass_dash" "$bypass_dash2" "$bypass_pct" "$bypass_at" "$bypass_quoted"; do
+  if printf '%s' "$out9" | grep -qF -- "$val"; then
+    say "FAIL  value-silent violation: bypass fixture value leaked into output"; fail=1
+  fi
+done
+say "PASS  value-silent: no value-truncation bypass fixture value appeared in captured output"
+
+# ---- Finding 1 value-silence guard: flagged bypass row + trailing password --
+# The fixed value-capture must consume the WHOLE value token and then STOP
+# before a following password field, so the planted password is still never
+# printed even though the row is (correctly) flagged.
+rm -f "$tmp"/*.conf
+guard_pw="GUARDPW0000000000"
+guard_line="user=""records_api""-""super"" password=""$guard_pw"
+printf 'host=h %s dbname=records\n' "$guard_line" > "$tmp/fixture_guard.conf"
+
+out10="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc10=$?
+
+if [[ "$rc10" == "1" ]]; then
+  say "PASS  value-silence guard fixture: exit 1 as expected"
+else
+  say "FAIL  value-silence guard fixture: expected exit 1, got $rc10"; fail=1
+fi
+
+if printf '%s' "$out10" | grep -qF "fixture_guard.conf" && printf '%s' "$out10" | grep -qF '[rule: records-serving-non-app-role]'; then
+  say "PASS  value-silence guard fixture flagged"
+else
+  say "FAIL  value-silence guard fixture NOT flagged"; fail=1
+fi
+
+if printf '%s' "$out10" | grep -qF -- "$guard_pw"; then
+  say "FAIL  value-silent violation: planted password leaked into Check 3 output"; fail=1
+else
+  say "PASS  value-silent: planted password absent from Check 3 output"
+fi
+
+# ---- Finding 1 NEGATIVE: legit quoted sanctioned forms still pass ---------
+rm -f "$tmp"/*.conf
+quoted_api="user=""${dq}""records_api""${dq}"
+quoted_ref="user=""${dq}""records_api"".""abcdefghijklmnop""${dq}"
+printf 'host=h %s dbname=records\n' "$quoted_api" > "$tmp/fixture_quoted_api.conf"
+printf 'host=h %s dbname=records\n' "$quoted_ref" > "$tmp/fixture_quoted_ref.conf"
+
+out11="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc11=$?
+
+if [[ "$rc11" == "0" ]]; then
+  say "PASS  quoted sanctioned negative fixtures: exit 0 as expected"
+else
+  say "FAIL  quoted sanctioned negative fixtures: expected exit 0, got $rc11"; fail=1
+fi
+
+if printf '%s' "$out11" | grep -qF '[rule: records-serving-non-app-role]'; then
+  say "FAIL  quoted sanctioned form incorrectly flagged"; fail=1
+else
+  say "PASS  quoted sanctioned forms (records_api, records_api.ref) not flagged"
+fi
+
+for val in "$quoted_api" "$quoted_ref"; do
+  if printf '%s' "$out11" | grep -qF -- "$val"; then
+    say "FAIL  value-silent violation: quoted negative fixture value leaked into output"; fail=1
+  fi
+done
+say "PASS  value-silent: no quoted negative fixture value appeared in captured output"
+
+# ---- Finding 2: rule (c) URL-form has no fixtures -------------------------
+# The rule (c) allowlist was widened to the 3-role form but had zero
+# URL-form fixtures, so a regression there would go uncaught. Three
+# POSITIVE + two NEGATIVE URL-form fixtures, all value-silent.
+rm -f "$tmp"/*.conf
+url_dotted_evil="postgresql""://""records_api"".""evil"".""postgres"":""URLPW0000000000""@host:5432/db"
+url_owner="postgresql""://""postgres"":""URLPW0000000000""@host:5432/db"
+url_upper="postgresql""://""RECORDS_API"":""URLPW0000000000""@host:5432/db"
+url_pw="URLPW0000000000"
+
+printf 'DATABASE_URL=%s\n' "$url_dotted_evil" > "$tmp/fixture_url_dotted_evil.conf"
+printf 'DATABASE_URL=%s\n' "$url_owner" > "$tmp/fixture_url_owner.conf"
+printf 'DATABASE_URL=%s\n' "$url_upper" > "$tmp/fixture_url_upper.conf"
+
+out12="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc12=$?
+
+if [[ "$rc12" == "1" ]]; then
+  say "PASS  URL-form positive fixtures: exit 1 as expected"
+else
+  say "FAIL  URL-form positive fixtures: expected exit 1, got $rc12"; fail=1
+fi
+
+for f in fixture_url_dotted_evil.conf fixture_url_owner.conf fixture_url_upper.conf; do
+  if printf '%s' "$out12" | grep -qF "$f" && printf '%s' "$out12" | grep -qF '[rule: records-serving-url-non-app-role]'; then
+    say "PASS  URL-form positive fixture flagged: $f"
+  else
+    say "FAIL  URL-form positive fixture NOT flagged: $f"; fail=1
+  fi
+done
+
+for val in "$url_dotted_evil" "$url_owner" "$url_upper" "$url_pw"; do
+  if printf '%s' "$out12" | grep -qF -- "$val"; then
+    say "FAIL  value-silent violation: URL-form positive fixture value leaked into output"; fail=1
+  fi
+done
+say "PASS  value-silent: no URL-form positive fixture value (incl. password) appeared in captured output"
+
+rm -f "$tmp"/*.conf
+url_auditor="postgresql""://""records_auditor"":""URLPW0000000000""@host:5432/db"
+url_ref_ok="postgresql""://""records_api"".""abcdefghijklmnop"":""URLPW0000000000""@host:5432/db"
+
+printf 'DATABASE_URL=%s\n' "$url_auditor" > "$tmp/fixture_url_auditor.conf"
+printf 'DATABASE_URL=%s\n' "$url_ref_ok" > "$tmp/fixture_url_ref_ok.conf"
+
+out13="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc13=$?
+
+if [[ "$rc13" == "0" ]]; then
+  say "PASS  URL-form negative fixtures: exit 0 as expected"
+else
+  say "FAIL  URL-form negative fixtures: expected exit 0, got $rc13"; fail=1
+fi
+
+if printf '%s' "$out13" | grep -qF '[rule: records-serving-url-non-app-role]'; then
+  say "FAIL  URL-form negative fixture incorrectly flagged"; fail=1
+else
+  say "PASS  URL-form negative fixtures (records_auditor, records_api.ref) not flagged"
+fi
+
+for val in "$url_auditor" "$url_ref_ok" "$url_pw"; do
+  if printf '%s' "$out13" | grep -qF -- "$val"; then
+    say "FAIL  value-silent violation: URL-form negative fixture value leaked into output"; fail=1
+  fi
+done
+say "PASS  value-silent: no URL-form negative fixture value (incl. password) appeared in captured output"
+
 if [[ "$fail" == "0" ]]; then
   say "RESULT: AC8 fixture test PASSED"
   exit 0
