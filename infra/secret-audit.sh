@@ -153,17 +153,28 @@ if [[ "$hits" == "0" ]]; then say "  PASS  no leaked credentials in tracked file
 [[ "$suppressed" -gt 0 ]] && say "  note  $suppressed match(es) suppressed by infra/.secret-audit-allow"
 
 # ---- Check 3: records serving config -- only sanctioned app roles (AC8) --
-say ""; say "[3] records serving config: only records_api/records_intake_writer, no bypass creds (AC8)"
+# Sanctioned roles: records_api, records_intake_writer, records_auditor.
+# Evidence split: Check 3 detects config-shape + literal bypass tokens; live
+# BYPASSRLS on an otherwise-sanctioned role is proven separately by
+# assert_serving_identity (Task 3), which Check 3 cannot see from static
+# config.
+say ""; say "[3] records serving config: only records_api/records_intake_writer/records_auditor, no bypass creds (AC8)"
 if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   glob_hit=0
   for _g in ${RECORDS_SERVING_GLOBS}; do
     [[ -r "$_g" ]] && glob_hit=1
   done
+  # Key is matched case-insensitively via explicit [Xx] classes (NOT a global
+  # grep -i, which would also case-fold the VALUE and wrongly sanction
+  # PGUSER=RECORDS_API). The value class includes "." so a full Supavisor
+  # dotted username (role.projectref) is captured, not truncated at the
+  # first dot.
+  KEYPAT="([Uu][Ss][Ee][Rr]|[Rr][Oo][Ll][Ee]|[Pp][Gg][Uu][Ss][Ee][Rr]|[Pp][Gg][Rr][Oo][Ll][Ee])"
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-non-app-role]"; rc=1
-  done < <(grep -rHInoE "(user|role)[[:space:]]*=[[:space:]]*['\"]?[A-Za-z0-9_]+['\"]?" ${RECORDS_SERVING_GLOBS} 2>/dev/null \
-             | grep -vE ":(user|role)[[:space:]]*=[[:space:]]*['\"]?(records_api|records_intake_writer)['\"]?\$" \
+  done < <(grep -rHInoE "${KEYPAT}[[:space:]]*=[[:space:]]*['\"]?[A-Za-z0-9_.]+['\"]?" ${RECORDS_SERVING_GLOBS} 2>/dev/null \
+             | grep -vE ":${KEYPAT}[[:space:]]*=[[:space:]]*['\"]?(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?['\"]?\$" \
              | sed -E 's/:[^:]*$//')
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
@@ -178,12 +189,14 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   # matched token itself contains a "://" colon, so the trailing-strip sed
   # rules (a)/(b) use would leave it stuck to the FIND line; cut to the first
   # two colon-delimited fields instead (same normalization Check 2 uses) so
-  # this rule also emits bare file:line.
+  # this rule also emits bare file:line. The match class already includes
+  # "." so a dotted Supavisor username is captured in full; the negative
+  # filter below uses the same 3-role + single-dot-ref allowlist as rule (a).
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-url-non-app-role]"; rc=1
   done < <(grep -rHInoE '(postgresql|postgres)://[A-Za-z0-9._%+-]+[:@]' ${RECORDS_SERVING_GLOBS} 2>/dev/null \
-             | grep -vE ':(postgresql|postgres)://(records_api|records_intake_writer)[:@]$' \
+             | grep -vE ':(postgresql|postgres)://(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?[:@]$' \
              | cut -d: -f1,2)
   if [[ "$glob_hit" == "1" ]]; then
     say "  PASS  records serving scan ran (globs: ${RECORDS_SERVING_GLOBS})"

@@ -224,6 +224,77 @@ else
   say "FAIL  empty-glob: records-serving-empty-glob rule name missing"; fail=1
 fi
 
+# ---- 3-role allowlist + Supavisor dotted-user + uppercase PGUSER (AC8+) --
+# Every signature below is built by runtime concatenation (never a live
+# literal in this tracked file). Three NEGATIVE (must not flag) and five
+# POSITIVE (must flag records-serving-non-app-role) fixtures.
+rm -f "$tmp"/*.conf
+auditor="user=""records_auditor"
+supavisor_ok="user=""records_api"".""abcdefghijklmnop"
+supavisor_multidot="user=""records_api"".""evil"".""postgres"
+supavisor_badbase="user=""postgres"".""abcdefghijklmnop"
+pguser_ok="PGUSER=""records_api"
+pguser_bad="PGUSER=""records_owner"
+pguser_upper="PGUSER=""RECORDS_API"
+supavisor_mixed="user=""records_API"".""abcdefgh"
+
+printf 'host=h %s dbname=records\n' "$auditor" > "$tmp/fixture_neg_auditor.conf"
+printf 'host=h %s dbname=records\n' "$supavisor_ok" > "$tmp/fixture_neg_supavisor_ok.conf"
+printf '%s\n' "$pguser_ok" > "$tmp/fixture_neg_pguser_ok.conf"
+
+out7="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc7=$?
+
+if [[ "$rc7" == "0" ]]; then
+  say "PASS  3-role/dotted-user negative fixtures: exit 0 as expected"
+else
+  say "FAIL  3-role/dotted-user negative fixtures: expected exit 0, got $rc7"; fail=1
+fi
+
+if printf '%s' "$out7" | grep -qF '[rule: records-serving-non-app-role]'; then
+  say "FAIL  negative fixture incorrectly flagged records-serving-non-app-role"; fail=1
+else
+  say "PASS  negative fixtures (auditor, supavisor_ok, pguser_ok) not flagged"
+fi
+
+for val in "$auditor" "$supavisor_ok" "$pguser_ok"; do
+  if printf '%s' "$out7" | grep -qF -- "$val"; then
+    say "FAIL  value-silent violation: negative fixture value leaked into output"; fail=1
+  fi
+done
+say "PASS  value-silent: no negative-fixture value appeared in captured output"
+
+rm -f "$tmp"/*.conf
+printf 'host=h %s dbname=records\n' "$supavisor_multidot" > "$tmp/fixture_pos_multidot.conf"
+printf 'host=h %s dbname=records\n' "$supavisor_badbase" > "$tmp/fixture_pos_badbase.conf"
+printf '%s\n' "$pguser_bad" > "$tmp/fixture_pos_pguser_bad.conf"
+printf '%s\n' "$pguser_upper" > "$tmp/fixture_pos_pguser_upper.conf"
+printf 'host=h %s dbname=records\n' "$supavisor_mixed" > "$tmp/fixture_pos_mixed.conf"
+
+out8="$(RECORDS_SERVING_GLOBS="$tmp/*" bash "$AUDIT" 2>&1)"
+rc8=$?
+
+if [[ "$rc8" == "1" ]]; then
+  say "PASS  3-role/dotted-user positive fixtures: exit 1 as expected"
+else
+  say "FAIL  3-role/dotted-user positive fixtures: expected exit 1, got $rc8"; fail=1
+fi
+
+for f in fixture_pos_multidot.conf fixture_pos_badbase.conf fixture_pos_pguser_bad.conf fixture_pos_pguser_upper.conf fixture_pos_mixed.conf; do
+  if printf '%s' "$out8" | grep -qF "$f" && printf '%s' "$out8" | grep -qF '[rule: records-serving-non-app-role]'; then
+    say "PASS  positive fixture flagged: $f"
+  else
+    say "FAIL  positive fixture NOT flagged: $f"; fail=1
+  fi
+done
+
+for val in "$supavisor_multidot" "$supavisor_badbase" "$pguser_bad" "$pguser_upper" "$supavisor_mixed"; do
+  if printf '%s' "$out8" | grep -qF -- "$val"; then
+    say "FAIL  value-silent violation: positive fixture value leaked into output"; fail=1
+  fi
+done
+say "PASS  value-silent: no positive-fixture value appeared in captured output"
+
 if [[ "$fail" == "0" ]]; then
   say "RESULT: AC8 fixture test PASSED"
   exit 0
