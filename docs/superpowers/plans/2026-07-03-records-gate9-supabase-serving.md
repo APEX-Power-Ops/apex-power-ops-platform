@@ -22,6 +22,27 @@ reviewed prod-variant apply packet. No runtime code is added.
 Design spec (authoritative): `docs/superpowers/specs/2026-07-03-records-gate9-supabase-serving-design.md`
 (rev 4).
 
+## Rev 4 (plan-review fold #3, 2026-07-03)
+
+Folds the operator's rev-3 review (3 findings + 2 recs), each grounded against the live
+045/047/048 grants + the unit test:
+- **F1 (table-vs-column):** tier7 `expected_ops` wrongly put the writer's `INSERT/UPDATE`
+  in the TABLE-level `has_table_privilege` set. 045 grants those writes COLUMN-scoped, so
+  `has_table_privilege(writer, wp, 'INSERT')` is FALSE (045's own posture asserts writer
+  writes via `has_column_privilege`). Fixed: writer table-level = `{SELECT}` only; the
+  writes are proven by the existing full per-column matrix PLUS new `has_any_column_privilege`
+  boundary asserts (writer holds SOME col INSERT/UPDATE on every WP table; no other role
+  holds ANY column write anywhere).
+- **F2 (snapshot unit tests):** extending `snapshot_roles`' default to 8 breaks the unit
+  tests that pin it to the 5 Gate-5 roles. Added a step to update them
+  (`ALL_TRACKED_ROLES`, default-tracks-all-eight, the absent/none-absent fixtures). Confirmed
+  safe for tiers 0-6: the finally-block `drop role if exists` no-ops on never-created stubs.
+- **F3 (false-green gate):** Step 5 piped through `tee` (exit = tee's 0) and only grepped
+  `PASS`; Step 6 printed residue but never exited nonzero. Fixed: `pipefail` + gate on the
+  real run exit + assert 0 SKIP/FAIL; residue script `sys.exit(0 if ok else 1)`.
+- **Rec A:** T2 fixture counts corrected (3 negatives / 5 positives).
+- **Rec B:** the stale-v1 commit gate now also greps `SERVING_CONTRACT.md`, not just YAML.
+
 ## Rev 3 (plan-review fold #2, 2026-07-03)
 
 Folds the operator's rev-2 review (4 findings) + a Task-0 credential-parse pre-check
@@ -101,8 +122,8 @@ Modified:
 - `infra/database/migrations/records/test_secret_audit_ac8.sh` - extend fixtures (Task 2).
 - `infra/database/migrations/records/run_validation.py` - `snapshot_roles` +3 stub roles;
   new `tier7_serving`; ALL tier-set sites + dispatch (Task 4).
-- `infra/database/migrations/records/test_run_validation_unit.py` - update the parse_tiers
-  assertions for tier 7 (Task 4).
+- `infra/database/migrations/records/test_run_validation_unit.py` - update the parse_tiers +
+  snapshot_roles unit assertions for tier 7 and 8-role tracking (Task 4).
 
 Provisioned (not committed): `apex-records-gate9/.venv` + `.env.dev` (Task 0).
 
@@ -292,6 +313,7 @@ ssh olares-mesh 'cd /home/olares/code/apex/apex-records-gate9 && \
   for f in reference/records/SERVING_CONTRACT.yaml reference/records/SERVING_CONTRACT.md reference/records/test_serving_contract.py; do \
     if LC_ALL=C grep -nP "[^\x00-\x7F]" "$f"; then echo "NON-ASCII $f"; exit 1; fi; done && \
   ! grep -nE "supabase_target|: authenticated" reference/records/SERVING_CONTRACT.yaml && \
+  ! grep -nE "supabase_target|records_capabilities|app_metadata" reference/records/SERVING_CONTRACT.md && \
   git add reference/records/SERVING_CONTRACT.yaml reference/records/SERVING_CONTRACT.md reference/records/test_serving_contract.py && \
   git diff --cached --check && \
   git commit -m "records(gate9): serving contract v2 - direct-role identity (kills supabase_target false-green)
@@ -324,8 +346,10 @@ pguser_bad="PGUSER=""records_owner"           # POSITIVE (owner via uppercase ke
 pguser_upper="PGUSER=""RECORDS_API"           # POSITIVE (uppercase role VALUE - must FAIL)
 supavisor_mixed="user=""records_API"".""abcdefgh"   # POSITIVE (mixed-case role value - must FAIL)
 ```
-Assert: the four NEGATIVE fixtures do NOT trip Check 3 (exit 0 for that group); the three
-POSITIVE fixtures exit 1 with `records-serving-non-app-role`. Keep the value-silent
+Assert: the three NEGATIVE fixtures (auditor, supavisor_ok, pguser_ok) do NOT trip Check 3
+(exit 0 for that group); the five POSITIVE fixtures (supavisor_multidot, supavisor_badbase,
+pguser_bad, pguser_upper, supavisor_mixed) exit 1 with `records-serving-non-app-role`. Keep
+the value-silent
 assertion (no planted VALUE in captured output) for each.
 
 - [ ] **Step 2: Run ac8 - verify FAIL against current Check 3.**
@@ -562,14 +586,17 @@ def tier7_serving(child_dsn):
         ALL_ROLES = SERVING + DATA_API_ROLES   # DATA_API_ROLES = anon/authenticated/service_role
 
         def expected_ops(role, obj):
+            # TABLE-LEVEL privileges only (has_table_privilege). The writer's INSERT/UPDATE
+            # are COLUMN-scoped in 045 (grant insert(cols)/update(cols)), so they are FALSE at
+            # the table level and are proven separately by the has_column_privilege matrix +
+            # has_any_column_privilege boundary below. 045's own posture block asserts writer
+            # writes via has_column_privilege and asserts NO table-level write for the writer.
             if role == "records_api":
                 return {"SELECT"} if obj in REF + WP + VIEWS else set()
             if role == "records_intake_writer":
-                if obj in WP:
-                    return {"SELECT", "INSERT", "UPDATE"}   # column-scoped writes; never DELETE
-                if obj in REF:
-                    return {"SELECT"}
-                return set()                                 # views + owner-only: nothing
+                # table-level SELECT on the 14 tables (ref + wp); writes are column-scoped
+                # (not table-level), never DELETE, no view SELECT, nothing on owner-only.
+                return {"SELECT"} if obj in REF + WP else set()
             if role == "records_auditor":
                 return {"SELECT"} if obj == "audit_log" else set()
             return set()                                     # anon/authenticated/service_role: nothing
@@ -638,6 +665,24 @@ def tier7_serving(child_dsn):
                     want(cur.fetchone()[0] == (col in granted),
                          "7-col-%s.%s-%s-want-%s" % (tbl, col, op, col in granted))
 
+        # --- COLUMN-WRITE BOUNDARY (has_any_column_privilege) ---
+        # The writer holds SOME column INSERT/UPDATE on every WP table (proving the column
+        # grants are live, complementing the table-level SELECT-only assertion in expected_ops);
+        # NO other role holds ANY column write anywhere. This is the has_any_column half of the
+        # fix for the table-vs-column confusion: table-level writer writes are asserted FALSE
+        # above, column-level writer writes asserted TRUE here + in the per-column matrix. DELETE
+        # is table-level only in Postgres and is already asserted False for the writer above.
+        def has_any_col(role, obj, priv):
+            cur.execute("select has_any_column_privilege(%s, %s, %s)", (role, "records." + obj, priv))
+            return cur.fetchone()[0]
+
+        for tbl in WP:
+            want(has_any_col("records_intake_writer", tbl, "INSERT"), "7-anycol-writer-missing-INSERT-" + tbl)
+            want(has_any_col("records_intake_writer", tbl, "UPDATE"), "7-anycol-writer-missing-UPDATE-" + tbl)
+            for role in ["records_api", "records_auditor"] + DATA_API_ROLES:
+                want(not has_any_col(role, tbl, "INSERT"), "7-anycol-write-leak-%s-%s-INSERT" % (role, tbl))
+                want(not has_any_col(role, tbl, "UPDATE"), "7-anycol-write-leak-%s-%s-UPDATE" % (role, tbl))
+
         # --- LIVE BEHAVIORAL PROBES (prove the RLS+grant chain, not just the ACL) ---
         cur.execute("savepoint s")
         _seed_view_fixture(cur)   # one asset+template+submission and one active pm_schedule+program
@@ -700,18 +745,114 @@ returns >= 1 row; consult migration 004 (view defs) + the base-table NOT NULL co
     (or `"8"`) still raises; update the `match=` text from `tiers 0-6` to `0-7`.
   - Add: `assert rv.parse_tiers("7") == {7}` and confirm `parse_tiers("")` includes 7.
 
+- [ ] **Step 4b: Update the `snapshot_roles` unit assertions** in `test_run_validation_unit.py`
+(rev-3 expanded the default `names` to 8 roles, so the tests that pin it to the 5 Gate-5
+roles now fail). Replace the `GATE5_ROLES` const + default-tracks test:
+
+Before:
+```python
+# snapshot_roles default set must track ALL FIVE cluster-level Gate-5 roles, not
+# just the two app roles: dropping the disposable DB leaves the walk-created
+# records_owner/records_fn_owner/records_auditor behind unless the finally-block
+# knows to drop them (Codex P2-1).
+GATE5_ROLES = (
+    "records_api", "records_intake_writer",
+    "records_owner", "records_fn_owner", "records_auditor",
+)
+
+
+def test_snapshot_roles_default_tracks_all_five():
+    import inspect
+    default = inspect.signature(rv.snapshot_roles).parameters["names"].default
+    assert tuple(default) == GATE5_ROLES
+```
+
+After:
+```python
+# snapshot_roles default must track all EIGHT cluster-level roles the harness may
+# create: the 5 Gate-5 roles (walk-created records_owner/records_fn_owner/records_auditor
+# leak past a disposable-DB drop) PLUS the 3 Data-API stubs tier7 creates
+# (anon/authenticated/service_role). The finally-block drops exactly the roles absent
+# pre-run; drop-if-exists no-ops on any stub tier7 did not create, so tracking all 8 is
+# safe for tiers 0-6 (Codex P2-1; Gate 9 F2).
+GATE5_ROLES = (
+    "records_api", "records_intake_writer",
+    "records_owner", "records_fn_owner", "records_auditor",
+)
+DATA_API_STUBS = ("anon", "authenticated", "service_role")
+ALL_TRACKED_ROLES = GATE5_ROLES + DATA_API_STUBS
+
+
+def test_snapshot_roles_default_tracks_all_eight():
+    import inspect
+    default = inspect.signature(rv.snapshot_roles).parameters["names"].default
+    assert tuple(default) == ALL_TRACKED_ROLES
+```
+
+Then fix the two behavioral fixtures (the `present` set must mark the 3 stubs present so only
+the owner/auditor trio is returned; and the none-absent case seeds all 8):
+
+Before:
+```python
+def test_snapshot_roles_returns_absent_gate5_roles(monkeypatch):
+    # Only the two app roles pre-exist; the three Gate-5 owner/auditor roles are
+    # absent -> snapshot_roles must return exactly those three (the ones the walk
+    # will create and the finally-block must drop).
+    present = {"records_api", "records_intake_writer"}
+    monkeypatch.setattr(rv, "_connect", lambda admin: _FakeConn(present))
+    created = rv.snapshot_roles("host=h port=1 dbname=postgres user=u")
+    assert created == ["records_owner", "records_fn_owner", "records_auditor"]
+
+
+def test_snapshot_roles_none_absent_returns_empty(monkeypatch):
+    # All five already exist pre-run -> nothing was created this run -> drop nothing.
+    monkeypatch.setattr(rv, "_connect", lambda admin: _FakeConn(set(GATE5_ROLES)))
+    assert rv.snapshot_roles("host=h port=1 dbname=postgres user=u") == []
+```
+
+After:
+```python
+def test_snapshot_roles_returns_absent_owner_auditor(monkeypatch):
+    # The 2 app roles + 3 Data-API stubs pre-exist; only the 3 owner/auditor roles are
+    # absent -> snapshot_roles must return exactly those three, in names order (the ones
+    # the walk creates and the finally-block must drop).
+    present = {"records_api", "records_intake_writer", "anon", "authenticated", "service_role"}
+    monkeypatch.setattr(rv, "_connect", lambda admin: _FakeConn(present))
+    created = rv.snapshot_roles("host=h port=1 dbname=postgres user=u")
+    assert created == ["records_owner", "records_fn_owner", "records_auditor"]
+
+
+def test_snapshot_roles_none_absent_returns_empty(monkeypatch):
+    # All eight already exist pre-run -> nothing was created this run -> drop nothing.
+    monkeypatch.setattr(rv, "_connect", lambda admin: _FakeConn(set(ALL_TRACKED_ROLES)))
+    assert rv.snapshot_roles("host=h port=1 dbname=postgres user=u") == []
+```
+
+Grep-check no lingering 5-role pin remains:
+```bash
+ssh olares-mesh 'cd /home/olares/code/apex/apex-records-gate9 && \
+  ! grep -nE "tracks_all_five|== GATE5_ROLES\b" infra/database/migrations/records/test_run_validation_unit.py \
+  && echo "5-ROLE PIN GONE" || { echo "STALE 5-ROLE PIN"; exit 1; }'
+```
+
 - [ ] **Step 5: Run the full gate - tier 7 PASS, 0 SKIP, and prove it dispatched.**
 
 ```bash
 ssh olares-mesh 'cd /home/olares/code/apex/apex-records-gate9 && set -a; . ./.env.dev; set +a && \
   ./.venv/bin/python -m pytest infra/database/migrations/records/test_run_validation_unit.py -q && \
-  ./.venv/bin/python infra/database/migrations/records/run_validation.py --require-db 2>&1 | tee /tmp/g9gate.txt; \
-  grep -qE "7-serving.*PASS" /tmp/g9gate.txt && echo "TIER7 RAN + PASSED" || { echo "TIER7 MISSING/FAILED"; exit 1; }'
+  { ./.venv/bin/python infra/database/migrations/records/run_validation.py --require-db > /tmp/g9gate.txt 2>&1; rc=$?; cat /tmp/g9gate.txt; \
+    [ "$rc" -eq 0 ] && grep -qE "7-serving.*PASS" /tmp/g9gate.txt && ! grep -qE "SKIP|FAIL" /tmp/g9gate.txt \
+    && echo "TIER7 RAN + PASSED, gate rc=0, 0 SKIP/FAIL" \
+    || { echo "GATE FAIL: rc=$rc, or tier7 missing, or a SKIP/FAIL is present"; exit 1; }; }'
 ```
-Expected: unit PASS; gate tiers 0-7 PASS, 0 SKIP; the grep proves tier 7 actually appears in
-the summary (guards against the "never dispatched" false-green). Do NOT accept a green gate
-whose summary lacks a `7-serving` line. Sanity: temporarily break one tier7 assertion and
-confirm the gate FAILS (not a no-op), then revert.
+Expected: unit PASS; gate tiers 0-7 PASS, 0 SKIP; the explicit `rc=$?` capture (NOT a
+`| tee` whose exit is tee's 0) is the authoritative signal that no tier FAILed; the
+`7-serving.*PASS` grep proves tier 7 dispatched AND passed (a SKIP line would read
+`7-serving SKIP`); the negative `! grep SKIP|FAIL` asserts 0 SKIP and 0 FAIL across ALL
+tiers. Status tokens are UPPERCASE (`PASS`/`FAIL`/`SKIP`); tier descriptions use lowercase
+prose (e.g. `0 skipped`), so the case-sensitive grep matches only status columns. Do NOT
+accept a green gate whose summary lacks a `7-serving` line. Sanity: temporarily break one
+tier7 assertion and confirm the gate FAILS (not a no-op), then revert.
 
 - [ ] **Step 6: Residue check - snapshot before, run the gate, snapshot after, compare.**
 
@@ -721,7 +862,7 @@ One command does the before-snapshot, the gate run, the after-snapshot, and the 
 ```bash
 ssh olares-mesh 'cd /home/olares/code/apex/apex-records-gate9 && set -a; . ./.env.dev; set +a && \
   ./.venv/bin/python - <<'"'"'PY'"'"'
-import os, subprocess, psycopg
+import os, subprocess, sys, psycopg
 admin = os.environ["RECORDS_PG_ADMIN_DSN"]
 names = ("anon","authenticated","service_role","records_api","records_intake_writer",
          "records_auditor","records_owner","records_fn_owner")
@@ -739,9 +880,15 @@ print("gate_rc:", rc)
 print("role_set_delta_empty:", before == after)
 print("leaked_roles:", sorted(after - before))
 print("residue_val_dbs:", vd)
+ok = (rc == 0 and before == after and vd == 0)
+print("RESIDUE_VERDICT:", "CLEAN" if ok else "DIRTY")
+sys.exit(0 if ok else 1)
 PY'
 ```
-Expected: `gate_rc: 0`, `role_set_delta_empty: True`, `leaked_roles: []`, `residue_val_dbs: 0`.
+Expected: `gate_rc: 0`, `role_set_delta_empty: True`, `leaked_roles: []`, `residue_val_dbs: 0`,
+`RESIDUE_VERDICT: CLEAN`, and the script exits 0. Any of gate-nonzero / role-set drift /
+leftover `records_val_*` DB makes it print `DIRTY` and exit 1 (the `ssh` call fails), so this
+step cannot false-green.
 The harness drops only the roles IT created, so the correct invariant is delta == 0 (the
 pre-existing set unchanged), NOT absolute zero on a shared cluster. Value-silent.
 
