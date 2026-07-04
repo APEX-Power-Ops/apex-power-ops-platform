@@ -53,7 +53,11 @@ step, partial completion) requires a fresh operator decision before continuing.
       migration as a clean create, not an alter-in-place against live rows.
 - [ ] Confirm each migration's `_down` counterpart exists and was exercised in
       the disposable-DB harness (reversibility already proven pre-apply; this
-      step is a re-confirmation, not a new proof).
+      step is a re-confirmation, not a new proof). This applies to the 47
+      non-seed migrations; `006_neta_reference_seed.sql` and
+      `009_backfill_seed.sql` are idempotent reference/backfill seeds with no
+      `_down` by design - confirm they are the ONLY 2 down-less migrations
+      (i.e. 47 of 49 migrations have exercised downs).
 - [ ] After the full range lands, capture post-apply object counts (see
       Section 8).
 - [ ] Do NOT run this step, or any step below, until Section 1's operator GO
@@ -75,9 +79,12 @@ step, partial completion) requires a fresh operator decision before continuing.
       unless the operator explicitly opts in to pre-minting (record that
       choice explicitly if made - it is a deviation from the default, not the
       default).
-- [ ] A role with no real consumer at apply time stays exactly as the
-      migrations left it (NOLOGIN, no password) - do not "get ahead" of the
-      real consumer.
+- [ ] The migrations leave all three serving roles (records_api,
+      records_intake_writer, records_auditor) LOGIN without a password
+      (045/047) - the migrations do NOT leave them NOLOGIN. A role with no
+      real consumer at apply time therefore MUST be ALTERed to NOLOGIN (per
+      the ALTER-to-NOLOGIN item below); a dormant passwordless LOGIN role is
+      not acceptable - do not "get ahead" of the real consumer.
 - [ ] For each role that DOES get a credential: set the password out-of-band
       (Vault/Padloc canonical custody, per the platform's secret custody
       model), never in-band in this packet, a migration, a chat transcript,

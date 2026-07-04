@@ -946,6 +946,12 @@ def tier7_serving(child_dsn):
         cur.execute("rollback to savepoint s")
         # service_role (BYPASSRLS) is still blocked at the GRANT layer absent a grant.
         cur.execute("savepoint s")
+        # AC2 premise (Codex P2): the stub MUST actually be BYPASSRLS, else the grant-layer
+        # probe below would pass trivially (a non-privileged role blocked by no-grant) without
+        # ever exercising a BYPASSRLS role. Fail closed if service_role is not bypassrls.
+        cur.execute("select rolbypassrls from pg_roles where rolname='service_role'")
+        _srb = cur.fetchone()
+        want(_srb is not None and _srb[0] is True, "7-service_role-stub-not-bypassrls")
         cur.execute("set session authorization service_role")
         expect_denied(cur, "select 1 from records.assets limit 1", "7-service_role-grant-layer", fails)
         cur.execute("reset session authorization")
