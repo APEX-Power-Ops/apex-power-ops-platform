@@ -86,22 +86,31 @@ def load_simple_yaml(path):
 
 def test_yaml_parses_and_has_top_level_shape():
     doc = load_simple_yaml(YAML_PATH)
-    assert doc.get("version") == "1" or doc.get("version") == 1
+    assert doc.get("version") == "2" or doc.get("version") == 2
     assert "roles" in doc and isinstance(doc["roles"], dict)
     assert "drm_boundary" in doc and isinstance(doc["drm_boundary"], dict)
     assert "dsn_form_inventory" in doc
+    assert doc.get("data_api_exposed") is False
+    assert "api_views" in doc
 
 
-def test_every_connecting_role_has_supabase_target():
+def test_every_connecting_role_has_direct_role_identity():
     doc = load_simple_yaml(YAML_PATH)
-    roles = doc["roles"]
-    assert roles, "roles map must not be empty"
-    for name, spec in roles.items():
+    for name, spec in doc["roles"].items():
         if spec.get("connects") is True:
-            target = spec.get("supabase_target")
-            assert target not in (None, ""), (
-                "role %s has connects: true but no supabase_target" % name
-            )
+            assert spec.get("serving_transport") == "direct_role_dsn", name
+            assert spec.get("connect_as") == name, (name, spec.get("connect_as"))
+            assert "supabase_target" not in spec, name
+
+
+def test_no_role_serves_via_authenticated_service_role_or_owner():
+    doc = load_simple_yaml(YAML_PATH)
+    forbidden = {"records_owner", "records_fn_owner", "postgres", "anon",
+                 "authenticated", "service_role"}
+    for name, spec in doc["roles"].items():
+        assert spec.get("supabase_target") is None, name
+        if spec.get("connects") is True:
+            assert spec.get("connect_as") not in forbidden, (name, spec.get("connect_as"))
 
 
 def test_every_non_connecting_role_is_owner_only_with_no_dsn():
@@ -157,6 +166,7 @@ def test_dsn_form_inventory_has_expected_shapes():
         "url_userinfo",
         "url_driver_qualified",
         "pg_env_vars",
+        "supavisor_qualified_user",
     }
     assert expected.issubset(set(inventory)), (
         "dsn_form_inventory missing expected shapes: %s"

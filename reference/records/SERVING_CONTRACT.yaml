@@ -9,23 +9,31 @@
 # If those migrations change, this file must be re-derived from them, not
 # hand-edited out of sync. See SERVING_CONTRACT.md for the human-readable
 # per-table policy listing and the Gate-9 rebind recipe.
-version: 1
+#
+# v2 (Option B): records is off the Supabase Data API. Every connecting role
+# serves over a direct role DSN (connect_as == the Postgres role itself), not
+# a Supabase Data API JWT claim. See SERVING_CONTRACT.md for the full v1 to
+# v2 rationale.
+version: 2
 roles:
   records_api:
     connects: true
-    supabase_target: authenticated
+    serving_transport: direct_role_dsn
+    connect_as: records_api
     write_scope: none
-    tables_reachable: [ref_tables, wp_tables]
+    tables_reachable: [ref_tables, wp_tables, api_views]
     policy_names: [p_<t>_read]
   records_intake_writer:
     connects: true
-    supabase_target: authenticated
+    serving_transport: direct_role_dsn
+    connect_as: records_intake_writer
     write_scope: column_scoped
     tables_reachable: [ref_tables, wp_tables]
     policy_names: [p_<t>_read, p_<t>_ins, p_<t>_upd]
   records_auditor:
     connects: true
-    supabase_target: authenticated
+    serving_transport: direct_role_dsn
+    connect_as: records_auditor
     write_scope: none
     tables_reachable: [audit_log]
     policy_names: [p_audit_log_sel]
@@ -37,8 +45,10 @@ roles:
     connects: false
     owner_only: true
     dsn: none
+data_api_exposed: false
 ref_tables: [asset_classes, form_templates, pm_programs, neta_procedures, neta_test_items, neta_tables, asset_class_neta_procedure, neta_procedure_xref]
 wp_tables: [assets, form_submissions, form_field_values, pm_schedules, pm_events, persons]
+api_views: [v_asset_test_history, v_pm_due]
 # owner_only_tables: RLS-enabled, no app-role policy, no app-role grant.
 #   neta_table_source_links - D10 (lineage/provenance boundary; see drm_boundary below)
 #   audit_log               - append-only; records_fn_owner INSERT-only via p_audit_log_ins
@@ -46,4 +56,4 @@ owner_only_tables: [neta_table_source_links, audit_log]
 drm_boundary:
   source_links_protects: lineage_provenance   # NOT the tolerance numeric values
   tolerance_values: first_class_record_content # in form_field_values; intentionally auditable
-dsn_form_inventory: [keyword_user, url_userinfo, url_driver_qualified, pg_env_vars]
+dsn_form_inventory: [keyword_user, url_userinfo, url_driver_qualified, pg_env_vars, supavisor_qualified_user]
