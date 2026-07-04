@@ -122,8 +122,10 @@ IF managed `postgres` REJECTS custom-role-bound policies:
 ### A. Adaptation of 045-049 (Phase-0-conditional, all five roles, up + down)
 
 - **A1.** Drop explicit `NOSUPERUSER` immediately (certain: you cannot set an attribute you lack;
-  `CREATE ROLE` defaults non-super). Applies to 045 (records_api, records_intake_writer) and 047
-  (records_fn_owner, records_auditor).
+  `CREATE ROLE` defaults non-super). Applies to ALL THREE role-defining migrations: 045 (records_api,
+  records_intake_writer), **046 (records_owner - `046:33/37`)**, and 047 (records_fn_owner,
+  records_auditor). A2's attribute gating covers the same three files - NOT 045/047 only (omitting 046
+  would re-create the 045-only-patch failure at 046's own `alter role records_owner ... nosuperuser`).
 - **A2.** Keep `NOBYPASSRLS` / `NOREPLICATION` / `NOCREATEDB` / `NOCREATEROLE` ONLY IF Phase 0 proves
   managed `postgres` can set those negative/default attributes. If any is rejected, REMOVE the clause
   and preserve the guarantee via post-create/post-alter ASSERTIONS that fail loudly on forbidden state
@@ -133,14 +135,24 @@ IF managed `postgres` REJECTS custom-role-bound policies:
   temporary membership choreography, gated by Decision Gate A. Exact shape:
   - `GRANT <owner_role> TO postgres WITH SET TRUE, INHERIT FALSE, ADMIN FALSE` (or the branch-proven
     equivalent) - and any temporary schema/DB `CREATE` the new owner needs to receive ownership;
-  - the temp authority remains live through **ALL owner-only DDL in that migration**, INCLUDING the
-    post-transfer `FORCE ROW LEVEL SECURITY` (046 does it AFTER the owner-to loop) and 048's owner-only
-    audit DDL;
-  - the `REVOKE` fires **AFTER** all owner-only DDL and **BEFORE** the migration's own terminal
-    self-check (046 ends its `BEGIN...COMMIT` with `raise exception '... LOGIN role(s) are members of
-    records_owner'`; `postgres` is LOGIN, so a still-live temp grant self-aborts the migration). The
-    splice point is stated exactly in each migration, not abstractly;
-  - NO temp authority is carried across a migration boundary unless explicitly proven AND asserted clean.
+  - **owner-only DDL runs under an explicit `SET ROLE <owner_role>` ... `RESET ROLE` bracket, NOT by
+    holding membership alone.** Because the membership is `INHERIT FALSE`, `postgres` does not passively
+    hold the owner's privileges - so 046's post-transfer `FORCE ROW LEVEL SECURITY` and 048's
+    audit-object RLS/policy/grant work must execute AS the owner (the `SET TRUE` membership is precisely
+    what enables the `SET ROLE`). `INHERIT FALSE` is deliberate - passive inheritance would hand
+    `postgres` the owner's privileges standing, the opposite of the invariant;
+  - the temp authority remains live through **ALL owner-only DDL in that migration**, and the `REVOKE`
+    (with a matching `RESET ROLE`) fires **AFTER** all owner-only DDL and **BEFORE** the migration's own
+    terminal self-check (046 ends its `BEGIN...COMMIT` with `raise exception '... LOGIN role(s) are
+    members of records_owner'`; `postgres` is LOGIN, so a still-live temp grant self-aborts the
+    migration). The splice point is stated exactly in each migration, not abstractly;
+  - **temp authority is PER-MIGRATION** - each migration re-establishes what IT needs (046 revokes its
+    own at its boundary, so 048/049 cannot rely on 046's grant): 048 creates `audit_log` IN the
+    now-`records_owner`-owned `records` schema, so it needs temporary `records_owner` / schema-`CREATE`
+    authority (via `SET ROLE`) IN ADDITION to `records_fn_owner` for the audit objects' ownership; 049
+    needs trigger/table/function authority on the `records_owner`-owned tables. NO temp authority is
+    carried across a migration boundary; each migration asserts its temp authority + membership clean at
+    its own end.
 - **A4. Effective-membership + temp-authority residue asserts.** After each migration: assert invariant
   8 (no direct/indirect SET/INHERIT path to a bypass/Data-API role; no usable membership into the owner
   roles), AND assert every temporary `CREATE`/`TRIGGER`/`EXECUTE`/schema/database/membership authority
