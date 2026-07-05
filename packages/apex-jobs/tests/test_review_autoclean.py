@@ -369,3 +369,15 @@ def test_keep_merge_preserves_other_payload_keys(prune_env):
     assert p.get("keep_worktree") is True
     assert p.get("extra") == "x"              # unrelated key preserved by the JSONB merge
     assert p.get("review_head") == "HEAD"
+
+
+def test_enqueue_review_payload_keep_honored_on_reused_dispatch(prune_env):
+    # keep requested via --payload (NOT the flag) must survive dispatch-id reuse too
+    a1 = _parse(["enqueue-review", "--dispatch-id", "review-f0000005", "--review-head", "HEAD",
+                 "--base-ref", "HEAD~1"])
+    a1.fn(a1)
+    assert bool(engine.get_job("review-f0000005")["payload"].get("keep_worktree")) is False
+    a2 = _parse(["enqueue-review", "--dispatch-id", "review-f0000005", "--review-head", "HEAD",
+                 "--base-ref", "HEAD~1", "--payload", '{"keep_worktree": true}'])
+    a2.fn(a2)
+    assert engine.get_job("review-f0000005")["payload"].get("keep_worktree") is True

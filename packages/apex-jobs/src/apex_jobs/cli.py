@@ -167,7 +167,7 @@ def cmd_enqueue_review(a):
         dispatch_id=a.dispatch_id, title=title, payload=payload,
         target="codex", kind="agent", base_ref=a.base_ref,
         env_required=a.env_required, priority=a.priority, created_by=a.by)
-    if a.keep_worktree:   # monotonic: honor keep even when enqueue hit the dispatch conflict path
+    if payload["keep_worktree"]:   # effective keep (flag OR --payload); honor even on the conflict path
         engine.set_job_keep_worktree(jid)
     print(jid)
     return 0
