@@ -1,7 +1,8 @@
 # Secret-handling cleanup -- Part B: apex-jobs command-job env sanitizer
 
-**Status:** Rev 2 (post-IRP-audit; OPS_* Infisical cutover DESCOPED to its own
-follow-up lane per operator 2026-07-05). Pending operator spec review.
+**Status:** Rev 3 (operator spec-review exactness edits folded: pinned worker
+test file, recipe cwd, DB-mutation wording). Sanitizer-only; OPS_* cutover
+deferred to its own lane (B.8). Ready for the implementation plan.
 
 **Goal:** Close the apex-jobs kind='command' worker path's full-parent-environment
 inheritance with a default-deny sanitized env, so a command job's subprocess no
@@ -146,7 +147,7 @@ New `packages/apex-jobs/tests/test_env.py` -- helper unit tests:
    `prepended = env.get("PATH", "").startswith(extra_path + os.pathsep)`; assert
    the boolean.
 
-Command-job guard (worker path) -- in the worker test module: the guard proves
+Command-job guard (worker path) -- in `tests/test_worker.py`: the guard proves
 `worker.py` is WIRED to `sanitized_env`, and its red-first must be INTRINSIC
 (not borrowed from ambient `infra/.env`, per the audit).
 - Setup: `monkeypatch.setenv("PROBE_LEAK_DSN", "PLACEHOLDER-TEST-VALUE")` INTO
@@ -176,11 +177,14 @@ SKIPS a test file without DB creds, so even these pure unit tests need
 would leave pytest exiting 0 with everything SKIPPED -- a false green on the
 lane's only security proof ([[feedback_false_green_gate_pipe_masks_exit]] covers
 a masked FAIL, NOT an all-skipped exit 0). So:
-`set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a; \
+`cd /home/olares/code/apex/apex-secrets-command-env/packages/apex-jobs; \
+set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a; \
 export PATH=$HOME/.local/bin:$PATH; \
 APEX_JOBS_DB=orchestration_test PSQL_EXE=psql uv run --extra test pytest \
-tests/test_env.py tests/<worker-test-file> -rN -q > /tmp/partb-pytest.out 2>&1; \
-echo "rc=$?"`. Acceptance requires ALL of: `rc == 0`; the summary shows the
+tests/test_env.py tests/test_worker.py -rN -q > /tmp/partb-pytest.out 2>&1; \
+echo "rc=$?"`. The `cd` into `packages/apex-jobs` is required: apex-jobs has its
+own `pyproject.toml` and the repo root is not a uv workspace. Acceptance requires
+ALL of: `rc == 0`; the summary shows the
 expected PASSED count (>= 8) for these files; and ZERO `skipped` for them.
 State explicitly: **exit 0 with any test skipped is a FAIL for this lane.**
 Check the exit code UNMASKED (redirect + `$?`, never a `| tail` pipe).
@@ -225,7 +229,9 @@ is a separate concern.
   requires the expected PASSED count and ZERO skipped (all-skipped exit 0 = FAIL).
 - The worker guard test IS the wiring proof: a self-seeded probe is absent from
   the command-job child env, HOME present, marker correct.
-- No live DB mutation anywhere in the lane.
+- No prod/dev data mutation; the tests touch only the disposable
+  `orchestration_test` DB (the autouse `_schema` fixture applies downs/ups +
+  truncates it).
 
 ## B.8 Deferred: OPS_* Infisical cutover (its own follow-up lane)
 
@@ -286,8 +292,8 @@ Codex cross-engine pass reading the real `worker.py` / `agent_runner.py` /
 
 ## Self-review notes
 
-- Placeholder scan: none (`tests/<worker-test-file>` is pinned in the plan after
-  checking the existing worker test layout; every other path/name is concrete).
+- Placeholder scan: none (the worker guard lives in `tests/test_worker.py`;
+  every path/name is concrete).
 - Consistency: B.2 allowlist matches B.4 expectations; the "no agent_runner.py
   edit" non-goal matches the B.6 reconcile-as-follow-up note; no "last leak"
   claim survives anywhere.
