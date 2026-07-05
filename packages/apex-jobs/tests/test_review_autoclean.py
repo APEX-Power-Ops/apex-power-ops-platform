@@ -9,6 +9,7 @@ statuses/labels/counts/booleans only -- never file contents or env.
 import json
 import os
 import subprocess
+import uuid
 
 import pytest
 
@@ -36,6 +37,15 @@ def _current_run(dispatch_id, review_head="HEAD"):
     return job, run_id
 
 
+def _spy_git(monkeypatch):
+    """Record positional args of every agent_runner._git call; passthrough to the real impl."""
+    calls = []
+    real_git = agent_runner._git
+    monkeypatch.setattr(agent_runner, "_git",
+                        lambda *a, **k: (calls.append(a), real_git(*a, **k))[1])
+    return calls
+
+
 # =============================== Task 1: engine ================================
 
 def test_run_is_current_true_for_only_attempt(prune_env):
@@ -53,7 +63,6 @@ def test_run_is_current_false_when_superseded(prune_env):
 
 
 def test_run_is_current_false_for_unknown(prune_env):
-    import uuid
     assert engine.run_is_current(uuid.uuid4()) is False
 
 
@@ -74,3 +83,92 @@ def test_set_run_cleanup_null_result_safe(prune_env):
     engine.set_run_cleanup(run_id, "not_attempted")
     res = engine.runs_for("review-aaaa0004")[-1]["result"]
     assert res["cleanup_status"] == "not_attempted"
+
+
+# =========================== Task 2: cleanup helper ===========================
+
+def test_cleanup_pristine_current_returns_cleaned(prune_env):
+    conn, runs, created = prune_env
+    job, run_id = _current_run("review-b0000001")
+    wt = _add_wt(runs, created, "review-b0000001")
+    assert agent_runner._cleanup_review_worktree(REPO, wt, run_id) == "cleaned"
+    assert not os.path.isdir(wt)
+
+
+def test_cleanup_ignored_dirt_returns_dirty_preserved(prune_env):
+    conn, runs, created = prune_env
+    job, run_id = _current_run("review-b0000002")
+    wt = _add_wt(runs, created, "review-b0000002")
+    os.makedirs(os.path.join(wt, "__pycache__"), exist_ok=True)
+    with open(os.path.join(wt, "__pycache__", "x.pyc"), "w") as f:
+        f.write("x")
+    assert agent_runner._cleanup_review_worktree(REPO, wt, run_id) == "dirty_preserved"
+    assert os.path.isdir(wt)
+
+
+def test_cleanup_untracked_dirt_returns_dirty_preserved(prune_env):
+    conn, runs, created = prune_env
+    job, run_id = _current_run("review-b0000003")
+    wt = _add_wt(runs, created, "review-b0000003")
+    with open(os.path.join(wt, "untracked.txt"), "w") as f:
+        f.write("x")
+    assert agent_runner._cleanup_review_worktree(REPO, wt, run_id) == "dirty_preserved"
+    assert os.path.isdir(wt)
+
+
+def test_cleanup_absent_returns_already_absent(prune_env):
+    conn, runs, created = prune_env
+    wt = os.path.join(runs, "review-b0000004")   # never created on disk
+    assert agent_runner._cleanup_review_worktree(REPO, wt, uuid.uuid4()) == "already_absent"
+
+
+def test_cleanup_superseded_returns_superseded_and_does_not_touch(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    job, run_id = _current_run("review-b0000005")
+    wt = _add_wt(runs, created, "review-b0000005")
+    monkeypatch.setattr(engine, "run_is_current", lambda rid: False)
+    calls = _spy_git(monkeypatch)
+    assert agent_runner._cleanup_review_worktree(REPO, wt, run_id) == "superseded_preserved"
+    assert os.path.isdir(wt)
+    assert not any(a[:1] == ("status",) for a in calls)
+    assert not any(a[:2] == ("worktree", "remove") for a in calls)
+
+
+def test_cleanup_absent_beats_superseded(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    wt = os.path.join(runs, "review-b0000006")   # absent
+    monkeypatch.setattr(engine, "run_is_current", lambda rid: False)
+    assert agent_runner._cleanup_review_worktree(REPO, wt, uuid.uuid4()) == "already_absent"
+
+
+def test_cleanup_remove_failure_returns_failed_preserved(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    job, run_id = _current_run("review-b0000007")
+    wt = _add_wt(runs, created, "review-b0000007")
+
+    real_git = agent_runner._git
+
+    class _R:
+        returncode = 1
+        stdout = ""
+        stderr = ""
+
+    def fake_git(*a, **k):
+        if a[:2] == ("worktree", "remove"):
+            return _R()
+        return real_git(*a, **k)
+
+    monkeypatch.setattr(agent_runner, "_git", fake_git)
+    assert agent_runner._cleanup_review_worktree(REPO, wt, run_id) == "failed_preserved"
+    assert os.path.isdir(wt)
+
+
+def test_cleanup_never_passes_force(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    job, run_id = _current_run("review-b0000008")
+    wt = _add_wt(runs, created, "review-b0000008")
+    seen = _spy_git(monkeypatch)
+    agent_runner._cleanup_review_worktree(REPO, wt, run_id)
+    removes = [a for a in seen if a[:2] == ("worktree", "remove")]
+    assert removes, "expected a worktree remove on a clean tree"
+    assert not any("--force" in a for a in removes)
