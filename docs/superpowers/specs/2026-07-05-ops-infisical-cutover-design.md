@@ -188,28 +188,37 @@ Algorithm:
 2. Discover candidate caches as the union of:
    (a) every `CACHES` path (covers registered caches wherever they live, incl. the
        out-of-`$ROOT` offsite-backup cache), and
-   (b) a RECURSIVE sweep `find -L "$ROOT" -name '.env*'` (all depths; `find -L`
-       follows symlinks so a symlinked cache is emitted, not skipped), and
-   (c) a DEPTH-1 `find -L <dir> -maxdepth 1 -name '.env*'` over the containing
-       directory of every registered `CACHES` entry that lies OUTSIDE `$ROOT`
-       (depth-1, NOT recursive: the offsite-backup cache's dir is the parent of
-       ALL worktrees, so a recursive sweep there would be catastrophic) -- this
-       catches a stray sibling like `~/code/apex/.env` without descending.
+   (b) a RECURSIVE sweep of the PHYSICAL tree under `$ROOT` for `.env*` files AND
+       `.env*` symlinks -- `find -P "$ROOT" -name '.env*' \( -type f -o -type l \)`.
+       `-P` (physical, no symlink-follow during TRAVERSAL) keeps the walk inside
+       `$ROOT`: a symlinked DIRECTORY is not descended (so the sweep cannot escape
+       the bound into a sibling worktree or external tree), while a symlinked
+       `.env*` FILE is still matched by name (`-type l`) and resolved below. This
+       bounds discovery to `$ROOT`'s physical subtree exactly as section 10 claims.
+   (c) a DEPTH-1 `find -P <dir> -maxdepth 1 -name '.env*' \( -type f -o -type l \)`
+       over the containing directory of every registered `CACHES` entry that lies
+       OUTSIDE `$ROOT` (depth-1, NOT recursive: the offsite-backup cache's dir is
+       the parent of ALL worktrees, so a recursive sweep there would be
+       catastrophic) -- catches a stray sibling like `~/code/apex/.env`.
    Exclusions use a PURPOSE-BUILT set -- `node_modules` and the literal basenames
    `*.example` / `*.sample` / `*.template` -- NOT `infra/.secret-audit-allow`
    (whose `*/tests/*` and `.vscode/*` globs would wrongly suppress a real runtime
-   cache). For each discovered existing file compute `stat -L -c '%d:%i'`; symlinks
-   and hardlinks to a registered target collapse onto its device+inode.
+   cache). For each discovered candidate compute `stat -L -c '%d:%i'` (resolving a
+   symlink candidate to its target); symlinks and hardlinks to a registered target
+   collapse onto its device+inode.
 3. For each discovered cache whose device+inode is NOT in `REGISTERED_DEVINO`, scan
    it for each managed name using the SAME anchored assignment regex Check 1c uses
    -- `^[[:space:]]*(export[[:space:]]+)?<name>[[:space:]]*=` -- so a commented
    `# OPS_API_DSN=` does not FAIL and a superset name (`OPS_API_DSN_BACKUP`) does
    not misfire. Any match -> `FAIL  uncovered cache holds managed name: <name> in
    <path>` and set rc=1.
-4. Emit a summary line `PASS  cache-coverage check ran (<n> managed name(s),
-   <d> caches discovered, <r> registered)` when no uncovered hit is found. The
-   `<d>` discovered count (names/paths/counts only) lets the fixture assert a
-   planted cache was actually enumerated (not silently skipped).
+4. ALWAYS emit the summary line `cache-coverage check ran (<n> managed name(s),
+   <d> caches discovered, <r> registered)` -- on BOTH the pass and the fail path
+   (the step-3 uncovered-cache FAIL lines set rc=1 independently). Prefix it `PASS`
+   only when no uncovered hit was found. Emitting the summary unconditionally keeps
+   the `<d>` discovered count available even on a FAIL run, so the fixture's Case 2
+   (a FAIL case) can assert the planted cache was actually enumerated (not silently
+   skipped). Value-silent: names/paths/counts only.
 
 Properties: the two worktree symlinks collapse onto the registered `infra/.env`
 device+inode (no double-scan, no spurious uncovered-FAIL); a copy in any `.env*`
@@ -240,10 +249,11 @@ targets by NAME/path; the operator removes the two lines and confirms:
 - Remove the `OPS_API_DSN=` and `OPS_INTAKE_WRITER_DSN=` lines from
   `apex-power-ops-platform/apps/control-plane-api/.env`.
 - If a Windows-local checkout of the repo exists (a separate machine, OUTSIDE the
-  mesh audit's reach), check its `apps/control-plane-api/.env` for `OPS_API_DSN` /
-  `OPS_INTAKE_WRITER_DSN`; if present, the operator purges those two names there
-  too; if absent, record "not present." No Windows Infisical credential cache is
-  created and the `.ps1` stays non-ops (section 3.2).
+  mesh audit's reach), check BOTH its `apps/control-plane-api/.env` AND its
+  `infra/.env` (the two-physical-cache host model, section 2) for `OPS_API_DSN` /
+  `OPS_INTAKE_WRITER_DSN` by NAME (value-silent); if present, the operator purges
+  those two names there too; if absent, record "not present." No Windows Infisical
+  credential cache is created and the `.ps1` stays non-ops (section 3.2).
 Then the agent verifies value-silent (name-count 0 in every discovered cache),
 running the authoritative audit from the canonical `apex-power-ops-platform`
 checkout (see section 9), not the lane worktree.
@@ -263,10 +273,11 @@ checkout (see section 9), not the lane worktree.
    NEITHER -- together proving the routers now come from Infisical and the caches
    are truly gone.
 5. Verify no lingering OPS_* in any discovered cache (value-silent).
-6. THEN arm the two NAMES (section 5); run `secret-audit.sh` FROM THE CANONICAL
-   `apex-power-ops-platform` checkout (a worktree has no gitignored caches and
-   would false-green) and confirm no OPS_* drift/coverage FAIL and no OPS_* in
-   Check 1b for `infra/.env`.
+6. THEN arm the two NAMES (section 5); run the audit by invoking the CANONICAL
+   checkout's own script path `apex-power-ops-platform/infra/secret-audit.sh` (ROOT
+   is derived from the script location, NOT cwd -- a worktree copy has no gitignored
+   caches and would false-green) and confirm no OPS_* drift/coverage FAIL and no
+   OPS_* in Check 1b for `infra/.env`.
 
 Arm-before-purge = correct FAIL, so the order is load-bearing.
 
@@ -334,15 +345,18 @@ OPS_* regardless of Infisical). After the purge (section 6):
   the OpenAPI surface advertises BOTH ops routes (intake AND recognition) -- FAIL
   the smoke if either is missing (do not eyeball a generic "mounted"). This proves
   OPS_* arrived via Infisical, since the caches no longer hold them.
-- NEGATIVE control: run raw `uvicorn main:app --app-dir apps/control-plane-api`
-  WITHOUT `inject.sh`; assert NEITHER ops route is advertised -- proving the caches
-  are truly purged (not silently re-supplying OPS_*).
-- AUDIT (authoritative): run `infra/secret-audit.sh` FROM THE CANONICAL
-  `apex-power-ops-platform` checkout (a worktree has no gitignored caches and would
-  false-green); confirm (a) no `OPS_*` under Check 1b for `infra/.env`, (b) no OPS_*
-  drift/coverage FAIL under Check 1c/1d. Audit stays rc=1 on the three deferred keys
-  -- expected. (The lane-worktree audit run exercises only the fixture, not the real
-  caches.)
+- NEGATIVE control: run raw `uvicorn` with OPS_* explicitly UNSET --
+  `env -u OPS_API_DSN -u OPS_INTAKE_WRITER_DSN uvicorn main:app --app-dir
+  apps/control-plane-api` (no `inject.sh`); assert NEITHER ops route is advertised.
+  Unsetting OPS_* removes any inherited parent-shell copy, so the ONLY remaining
+  source is a dotenv cache -- routers absent therefore proves the caches are truly
+  purged (routers PRESENT would prove a cache still supplies OPS_*).
+- AUDIT (authoritative): invoke the CANONICAL checkout's own script path
+  `apex-power-ops-platform/infra/secret-audit.sh` (ROOT is script-location-derived,
+  NOT cwd; a worktree copy has no gitignored caches and would false-green); confirm
+  (a) no `OPS_*` under Check 1b for `infra/.env`, (b) no OPS_* drift/coverage FAIL
+  under Check 1c/1d. Audit stays rc=1 on the three deferred keys -- expected. (The
+  lane-worktree audit run exercises only the fixture, not the real caches.)
 - No prod/dev data mutation; nothing connects as a privileged role; the smoke only
   starts the API and reads route metadata.
 
@@ -353,11 +367,15 @@ app `.env` if one exists, section 6) AND armed in `.managed-secrets` AND guarded
 Check 1c/1d, AND the post-purge smoke proves the launcher mounts BOTH ops routes via
 Infisical (with the raw-uvicorn negative control mounting neither).
 
-Coverage of Check 1d is HONESTLY BOUNDED, not universal: it covers every `.env*`
-file recursively under `$ROOT` PLUS every registered `CACHES` entry (wherever it
-lives). A cache entirely OUTSIDE `$ROOT` that is not registered is a documented
-residual -- it must be added via `APEX_EXTRA_CACHES` to be covered. The
-authoritative audit runs from the canonical `apex-power-ops-platform` checkout.
+Coverage of Check 1d is HONESTLY BOUNDED, not universal. It covers exactly: every
+`.env*` file (regular or symlink) in the PHYSICAL tree under `$ROOT` -- excluding
+`node_modules` and `*.example`/`*.sample`/`*.template` -- PLUS every registered
+`CACHES` entry (wherever it lives) PLUS depth-1 `.env*` siblings of each
+out-of-`$ROOT` registered cache's directory. A cache entirely OUTSIDE `$ROOT` that
+is neither a registered entry nor such a depth-1 sibling is a documented residual
+-- it must be added via `APEX_EXTRA_CACHES` to be covered. The authoritative audit
+invokes the canonical `apex-power-ops-platform/infra/secret-audit.sh` by its path
+(ROOT is script-location-derived).
 
 Explicitly NOT "secret-audit exits 0": `TCC_BREAKER_RO_PW`, `TCC_BREAKER_CODEX_PW`,
 `SUPABASE_PROD_DSN` remain deferred and keep the audit rc=1 on the host by design.
@@ -433,3 +451,21 @@ trailer `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
   the DATABASE_URL note. F6 (both) -- Windows checkout app `.env` is an
   operator-purge target if present. F8 (Codex, LOW) -- noted `inject.sh` argv
   exposure as an out-of-scope follow-up.
+- rev 3.1 (2026-07-05, self-review): bounded Check 1d step 2c to `-maxdepth 1`
+  (the offsite cache's dir is the parent of all worktrees; a recursive sweep there
+  would be catastrophic).
+- rev 4 (2026-07-05): folded the lean IRP + Codex STABILITY pass of rev 3 (both
+  engines confirmed F1/F2/F3/F5/F6 closed; Claude empirically ran `find -L` on the
+  real tree -- exit 0, no loops, value-silence intact). Fixes: (a, Codex HIGH)
+  Check 1d discovery uses `find -P ... ( -type f -o -type l )` + `stat -L` so
+  traversal cannot escape `$ROOT` through a symlinked directory while a symlinked
+  `.env*` file is still caught; (b, BOTH engines) the coverage summary is emitted
+  UNCONDITIONALLY so the FAIL-case fixture (Case 2) can assert the discovered
+  count; (c, Codex MED) the raw-uvicorn negative control runs with OPS_* `env -u`
+  unset so it cannot inherit a parent-shell copy; (d, Claude LOW) section-10 bound
+  reworded to exactly mirror the section-4.2 discovery set; (e, Claude LOW) the
+  Windows purge covers BOTH `apps/control-plane-api/.env` and `infra/.env`;
+  (f, Claude LOW) the authoritative audit is invoked by the canonical script PATH
+  (ROOT is script-location-derived, not cwd). The "Check 1d not yet in
+  secret-audit.sh" note is expected -- this is the design spec; implementation is
+  the plan phase.
