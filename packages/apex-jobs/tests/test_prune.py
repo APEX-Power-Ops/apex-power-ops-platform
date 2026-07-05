@@ -268,3 +268,111 @@ def test_db_unreachable_raises(prune_env, monkeypatch):
     monkeypatch.setattr(engine, "review_dispatch_statuses", raise_op)
     with pytest.raises(prune.DbUnreachable):
         prune.classify_review_worktrees()
+
+
+# ------------------------- Task 3: apply / removal ----------------------------
+
+
+def test_dry_run_is_noop(prune_env):
+    conn, runs, created = prune_env
+    d = "review-abcd0001"
+    jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1)
+    p = _add_wt(runs, created, d)
+    res = prune.prune_review_worktrees(apply=False)
+    assert res["applied"] is False
+    assert os.path.isdir(p)                          # nothing removed
+    item = [i for i in res["items"] if i["dispatch_id"] == d][0]
+    assert item["action"] == "would-remove"
+
+
+def test_apply_removes_succeeded_clean(prune_env):
+    conn, runs, created = prune_env
+    d = "review-abcd0002"
+    jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1)
+    p = _add_wt(runs, created, d)
+    res = prune.prune_review_worktrees(apply=True)
+    assert res["applied"] is True and res["remove_failed"] == 0
+    assert not os.path.isdir(p)                      # removed
+    item = [i for i in res["items"] if i["dispatch_id"] == d][0]
+    assert item["action"] == "removed"
+
+
+def test_apply_preserves_unrelated_lane_worktrees(prune_env):
+    """Only review-* under the runs dir are candidates; the canonical repo and
+    lane worktrees are never enumerated."""
+    conn, runs, created = prune_env
+    d = "review-abcd0003"
+    jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1)
+    _add_wt(runs, created, d)
+    before = subprocess.run(["git", "-C", REPO, "worktree", "list"],
+                            capture_output=True, text=True).stdout
+    assert REPO in before
+    prune.prune_review_worktrees(apply=True)
+    after = subprocess.run(["git", "-C", REPO, "worktree", "list"],
+                           capture_output=True, text=True).stdout
+    assert d not in after                            # only the runs/review-* line went away
+    assert REPO in after                             # canonical repo survives
+
+
+def test_recheck_before_remove_skips_now_active(prune_env, monkeypatch):
+    """Classified prunable, but the per-item recheck reports running -> skipped."""
+    conn, runs, created = prune_env
+    d = "review-abcd0004"
+    jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1)
+    p = _add_wt(runs, created, d)
+    real = engine.review_dispatch_statuses
+    calls = {"n": 0}
+    def flip(ids):
+        calls["n"] += 1
+        out = real(ids)
+        # call 1 = the frozen-snapshot classify (sees prunable); call 2+ = the
+        # per-item recheck (flip to running so remove is skipped).
+        if calls["n"] >= 2 and d in out:
+            out[d] = {**out[d], "any_running": True}
+        return out
+    monkeypatch.setattr(engine, "review_dispatch_statuses", flip)
+    res = prune.prune_review_worktrees(apply=True)
+    assert os.path.isdir(p)                          # NOT removed
+    item = [i for i in res["items"] if i["dispatch_id"] == d][0]
+    assert item["action"] == "preserved" and item["classification"] == "active"
+
+
+def test_remove_failed_sets_count(prune_env, monkeypatch):
+    """A prunable candidate whose `git worktree remove` refuses -> remove-failed."""
+    conn, runs, created = prune_env
+    d = "review-abcd0005"
+    jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1)
+    p = _add_wt(runs, created, d)
+    real_git = agent_runner._git
+    def refuse(*args, cwd, check=True):
+        if args[:2] == ("worktree", "remove"):
+            class R:
+                returncode = 128
+                stdout = ""
+                stderr = "fatal: ..."
+            return R()
+        return real_git(*args, cwd=cwd, check=check)
+    monkeypatch.setattr(agent_runner, "_git", refuse)
+    res = prune.prune_review_worktrees(apply=True)
+    assert res["remove_failed"] == 1
+    item = [i for i in res["items"] if i["dispatch_id"] == d][0]
+    assert item["classification"] == "remove-failed" and item["action"] == "preserved"
+    assert os.path.isdir(p)                          # still there
+
+
+def test_prune_refusal_summary_on_db_unreachable(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    d = "review-abcd0006"
+    _enqueue_review(d)
+    _add_wt(runs, created, d)
+    def raise_op(_ids):
+        raise psycopg.OperationalError("nope")
+    monkeypatch.setattr(engine, "review_dispatch_statuses", raise_op)
+    res = prune.prune_review_worktrees(apply=True)
+    assert res["refused"] is True and res["applied"] is False
+    assert all(i["action"] == "refused" for i in res["items"]) or res["items"] == []

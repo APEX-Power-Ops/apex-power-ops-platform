@@ -132,3 +132,67 @@ def classify_review_worktrees(include_failed=False):
             action=action, status=status, claimed_at=claimed_at,
             finished_at=finished_at, active=active))
     return result
+
+
+def _counts(items):
+    c = {}
+    for i in items:
+        c[i.classification] = c.get(i.classification, 0) + 1
+    return c
+
+
+def _item_dict(w):
+    return {"basename": w.dispatch_id, "dispatch_id": w.dispatch_id,
+            "classification": w.classification, "action": w.action,
+            "status": w.status,
+            "claimed_at": w.claimed_at.isoformat() if w.claimed_at else None,
+            "finished_at": w.finished_at.isoformat() if w.finished_at else None,
+            "active": w.active}
+
+
+def prune_review_worktrees(apply=False, include_failed=False):
+    """Classify (frozen snapshot); under apply, remove each prunable with a
+    per-item recheck-before-remove (the ONLY DB call in the loop) and plain
+    `git worktree remove` (no --force). Returns a value-silent summary. On
+    DbUnreachable, returns a refusal summary (caller maps to exit 3)."""
+    repo = agent_runner._repo()
+    try:
+        items = classify_review_worktrees(include_failed=include_failed)
+    except DbUnreachable:
+        return {"items": [], "counts": {}, "applied": False,
+                "remove_failed": 0, "refused": True}
+    remove_failed = 0
+    if apply:
+        for w in items:
+            if w.classification != "prunable":
+                continue
+            with agent_runner._WORKTREE_LOCK:
+                # recheck-before-remove: re-query THIS dispatch + re-check git flags
+                try:
+                    snap = engine.review_dispatch_statuses([w.dispatch_id])
+                except (psycopg.OperationalError, psycopg.InterfaceError):
+                    return {"items": [_item_dict(x) for x in items],
+                            "counts": _counts(items), "applied": False,
+                            "remove_failed": remove_failed, "refused": True}
+                db = snap.get(w.dispatch_id)
+                flags = _worktree_flags(w.path, w.classification == "locked")
+                if db and db["any_running"]:
+                    w.classification, w.action, w.active = "active", "preserved", True
+                    continue
+                if (not flags["exists"]) or (not flags["git_ok"]):
+                    w.classification, w.action = "unknown", "preserved"
+                    continue
+                if flags["dirty"]:
+                    w.classification, w.action = "dirty", "preserved"
+                    continue
+                if flags["locked"]:
+                    w.classification, w.action = "locked", "preserved"
+                    continue
+                r = agent_runner._git("worktree", "remove", w.path, cwd=repo, check=False)
+                if r.returncode == 0:
+                    w.action = "removed"
+                else:
+                    w.classification, w.action = "remove-failed", "preserved"
+                    remove_failed += 1
+    return {"items": [_item_dict(w) for w in items], "counts": _counts(items),
+            "applied": apply, "remove_failed": remove_failed, "refused": False}
