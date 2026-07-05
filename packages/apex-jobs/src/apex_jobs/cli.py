@@ -217,12 +217,14 @@ def cmd_prune_review_worktrees(a):
             print(f"{i['basename']}  {i['classification']:<12}  {i['action']:<12}  "
                   f"status={i['status']}  active={i['active']}  "
                   f"claimed={i['claimed_at']}  finished={i['finished_at']}")
-        c = res["counts"]
-        prunable = c.get("prunable", 0)
-        preserved = sum(v for k, v in c.items() if k != "prunable")
-        verb = "removed" if res["applied"] else "would-remove"
-        print(f"{len(res['items'])} candidates: {prunable} {verb}, {preserved} preserved  "
-              f"[{', '.join(f'{k}={v}' for k, v in sorted(c.items()))}]")
+        acts = {}
+        for i in res["items"]:
+            acts[i["action"]] = acts.get(i["action"], 0) + 1
+        parts = [f"{acts[k]} {k}"
+                 for k in ("removed", "would-remove", "preserved", "refused")
+                 if acts.get(k)]
+        print(f"{len(res['items'])} candidates: {', '.join(parts) or 'none'}  "
+              f"[{', '.join(f'{k}={v}' for k, v in sorted(res['counts'].items()))}]")
     if res["refused"]:
         return 3
     if res["remove_failed"] > 0:

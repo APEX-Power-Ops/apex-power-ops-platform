@@ -436,6 +436,9 @@ def test_partial_apply_refusal_marks_applied(prune_env, monkeypatch):
     assert res["refused"] is True and res["applied"] is True    # partial apply, not dry-run
     removed = [i for i in res["items"] if i["action"] == "removed"]
     assert len(removed) == 1                                    # one removed before the refusal
+    # unreached prunable candidate is relabeled 'refused' -- never reported removed/would-remove
+    assert not any(i["action"] == "would-remove" for i in res["items"])
+    assert any(i["action"] == "refused" for i in res["items"])
 
 
 def test_cli_git_unavailable_exit3(prune_env, tmp_path, monkeypatch, capsys):

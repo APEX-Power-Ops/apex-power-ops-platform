@@ -181,8 +181,14 @@ def _item_dict(w):
 
 def _refusal(items, reason, applied, remove_failed=0):
     """Value-silent refusal summary. `applied` is True when apply mode already
-    mutated worktrees before the refusal (a PARTIAL apply -- not a dry-run)."""
+    mutated worktrees before the refusal (a PARTIAL apply -- not a dry-run). Any
+    still-'would-remove' candidate (prunable but NOT reached before the abort) is
+    relabeled action='refused', so an unprocessed worktree is never reported as
+    removed."""
     src = items or []
+    for w in src:
+        if w.action == "would-remove":
+            w.action = "refused"
     return {"items": [_item_dict(x) for x in src], "counts": _counts(src),
             "applied": applied, "remove_failed": remove_failed,
             "refused": True, "refused_reason": reason}
