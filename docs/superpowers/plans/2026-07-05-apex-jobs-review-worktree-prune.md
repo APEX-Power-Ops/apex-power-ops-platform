@@ -24,16 +24,19 @@
 
 ## Working directory & commands (host)
 
-All commands run over `ssh olares-mesh` inside the worktree:
+All commands run over `ssh olares-mesh` inside the worktree. **Canonical run
+recipe** (verified): `uv` lives at `~/.local/bin` (not on the non-interactive
+PATH); the DB env comes from the **canonical** repo's `infra/.env` (the
+worktree's `infra/.env` is gitignored / not checked out); test deps come from
+uv's ephemeral env via `--with` (there is no synced dev venv). Every
+`uv run ... pytest` in this plan means exactly this form:
 ```
+export PATH=$HOME/.local/bin:$PATH
 cd /home/olares/code/apex/apex-review-prune/packages/apex-jobs
+set -a; . /home/olares/code/apex/apex-power-ops-platform/infra/.env; set +a
+APEX_JOBS_DB=orchestration_test uv run --with 'psycopg[binary]' --with pytest --with-editable . pytest tests/test_prune.py -v
 ```
-Run the suite with the DB env loaded and the test DB pinned:
-```
-set -a; . /home/olares/code/apex/apex-review-prune/infra/.env; set +a
-APEX_JOBS_DB=orchestration_test uv run pytest tests/test_prune.py -v
-```
-The full suite: `APEX_JOBS_DB=orchestration_test uv run pytest -q`.
+The full suite: same, ending `pytest -q`. Baseline (pre-change) is green.
 
 ## File Structure
 
