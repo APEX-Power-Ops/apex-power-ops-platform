@@ -169,6 +169,7 @@ if [[ -f "$ALLOWFILE" ]]; then
 fi
 allowed_file() {
   local f="$1" p
+  # shellcheck disable=SC2053  # $p is an allowlist glob pattern; RHS glob match is intentional
   for p in "${ALLOW[@]:-}"; do [[ -n "$p" && "$f" == $p ]] && return 0; done
   return 1
 }
@@ -248,12 +249,14 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   # that from static config and does not try to.
   KEYPAT="([Uu][Ss][Ee][Rr]|[Rr][Oo][Ll][Ee]|[Pp][Gg][Uu][Ss][Ee][Rr]|[Pp][Gg][Rr][Oo][Ll][Ee])"
   VALPAT="(['\"][^'\"]*['\"]|[^[:space:]]+)"
+  # shellcheck disable=SC2086  # RECORDS_SERVING_GLOBS is a space-separated glob list; word-splitting into grep path args is intentional
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-non-app-role]"; rc=1
   done < <(grep -rHInoE "\b${KEYPAT}[[:space:]]*=[[:space:]]*${VALPAT}" ${RECORDS_SERVING_GLOBS} 2>/dev/null \
              | grep -vE ":${KEYPAT}[[:space:]]*=[[:space:]]*['\"]?(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?['\"]?\$" \
              | cut -d: -f1,2)
+  # shellcheck disable=SC2086  # RECORDS_SERVING_GLOBS is a space-separated glob list; word-splitting into grep path args is intentional
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-bypass-credential]"; rc=1
@@ -280,6 +283,7 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   # both the match and the allowlist below, the same trap rule (a) already
   # avoids for keys: a naive global -i would also case-fold the ROLE VALUE
   # and wrongly sanction POSTGRESQL://RECORDS_API.
+  # shellcheck disable=SC2086  # RECORDS_SERVING_GLOBS is a space-separated glob list; word-splitting into grep path args is intentional
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-url-non-app-role]"; rc=1

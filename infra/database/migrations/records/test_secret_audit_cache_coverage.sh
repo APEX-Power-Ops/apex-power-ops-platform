@@ -44,7 +44,7 @@ mkdir -p "$r2/apps/control-plane-api/scripts"
 printf '%s=%s\n' "$MNAME" "$PLACEHOLDER" > "$r2/apps/control-plane-api/scripts/.env"
 out="$(run_audit "$r2")"; rc2=$?
 if printf '%s' "$out" | grep -qF "uncovered cache holds managed name: $MNAME"; then say "PASS  case2 uncovered-cache FAIL line"; else say "FAIL  case2 missing uncovered FAIL"; fail=1; fi
-[[ "$rc2" == "1" ]] && say "PASS  case2 rc=1" || { say "FAIL  case2 rc=$rc2 (want 1)"; fail=1; }
+if [[ "$rc2" == "1" ]]; then say "PASS  case2 rc=1"; else say "FAIL  case2 rc=$rc2 (want 1)"; fail=1; fi
 # name-armed guard: the drift/coverage machinery ran (managed-name count in summary >= 1)
 if printf '%s' "$out" | grep -qE "cache-coverage check ran \([1-9][0-9]* managed name"; then say "PASS  case2 name-armed (managed>=1)"; else say "FAIL  case2 not armed"; fail=1; fi
 # discovered-count proves enumeration (the planted nested cache was swept)
@@ -75,7 +75,7 @@ r5="$tmp/c5"; make_repo "$r5"; arm "$r5"
 printf 'DEV_PG_PASSWORD=%s\n' "$PLACEHOLDER" > "$r5/infra/.env"; chmod 600 "$r5/infra/.env"
 out="$(run_audit "$r5")"; rc5=$?
 if printf '%s' "$out" | grep -qE "PASS  cache-coverage check ran \([0-9]+ managed name\(s\), [1-9][0-9]* caches discovered"; then say "PASS  case5 clean PASS summary w/ discovered>=1"; else say "FAIL  case5 no clean PASS summary"; fail=1; fi
-[[ "$rc5" == "0" ]] && say "PASS  case5 rc=0" || { say "FAIL  case5 rc=$rc5 (want 0)"; fail=1; }
+if [[ "$rc5" == "0" ]]; then say "PASS  case5 rc=0"; else say "FAIL  case5 rc=$rc5 (want 0)"; fi
 
 # --- Value-silence: the PLACEHOLDER must never appear in any output ------------
 for r in "$r1" "$r2" "$r3" "$r4" "$r5"; do
