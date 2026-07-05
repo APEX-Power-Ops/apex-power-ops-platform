@@ -38,20 +38,19 @@ from apex_jobs.worker import run_once, run_forever
 run_once(as_="cc", env="host")          # claim→gates→subprocess(payload.command)→report
 run_forever(as_="cc", env="host", poll_s=5.0)
 ```
-The command subprocess runs with `APEX_JOB_ENV` set to the worker's env.
-
-The command subprocess runs with a **sanitized, default-deny environment**
-(`_env.sanitized_env`): only an allowlist of non-secret names (HOME, PATH,
-locale/XDG) plus the `APEX_JOB_ENV` marker passes through, so a command job does
-not inherit the worker's secrets. A command job that needs a secret must wrap its
-own command, e.g. `infra/infisical/inject.sh dev -- <db command>` (or
-`dev-psql.sh`), so the secret reaches the child process only.
+The command subprocess runs with `APEX_JOB_ENV` set to the worker's env, and with
+a **sanitized, default-deny environment** (`_env.sanitized_env`): only an
+allowlist of non-secret names (HOME, PATH, locale/XDG) plus the `APEX_JOB_ENV`
+marker passes through, so a command job does not inherit the worker's secrets. A
+command job that needs a secret must wrap its own command, e.g.
+`infra/infisical/inject.sh dev -- <db command>` (or `dev-psql.sh`), so the secret
+reaches the child process only.
 
 ## Coexistence
 apex-jobs runs **alongside** the `ops/agents/inbox` file queue. No cutover yet —
 the inbox remains the live mechanism until apex-jobs is proven in routine use.
 
-## Tests (70)
+## Tests (75)
 Credentials come from env only -- no in-code fallback: source the governed
 infra/.env first (DEV_PG_PASSWORD) or set APEX_JOBS_PGPASSWORD; the suite
 skips with a hint otherwise.
