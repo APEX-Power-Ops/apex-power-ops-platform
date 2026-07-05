@@ -6,11 +6,11 @@ env_required doesn't match this worker's env is parked 'blocked' (GateError),
 and a job with open approval gates is never eligible to claim in the first place.
 """
 import logging
-import os
 import subprocess
 import time
 
 from . import engine
+from . import _env
 
 _log = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ def _run_command_job(job, env, as_):
     command = (job.get("payload") or {}).get("command", "true")
     proc = subprocess.run(
         command, shell=True, capture_output=True, text=True,
-        env={**os.environ, "APEX_JOB_ENV": env},
+        env=_env.sanitized_env(env),
     )
     status = engine.report(
         run_id, exit_code=proc.returncode,
