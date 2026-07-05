@@ -40,7 +40,8 @@ Infisical via `infra/infisical/inject.sh` (mesh-only), FastAPI/uvicorn
   `CACHES`; add Check 1d (cache-coverage completeness, device+inode-aware).
 - New `infra/database/migrations/records/test_secret_audit_cache_coverage.sh`
   fixture test, wired into `.github/workflows/records-ci.yml`.
-- A launcher argv test (mock `inject.sh` on PATH) + `shellcheck`.
+- A launcher argv test (temp repo fixture with a stub `infra/infisical/inject.sh`
+  at the real relative path) + `shellcheck`.
 - Arm `OPS_API_DSN` and `OPS_INTAKE_WRITER_DSN` in
   `infra/infisical/.managed-secrets` -- LAST, only after purge is verified.
 
@@ -74,7 +75,7 @@ Infisical via `infra/infisical/inject.sh` (mesh-only), FastAPI/uvicorn
   OPS_* are `apps/control-plane-api/main.py` and
   `apps/control-plane-api/services/ops/{intake_router,recognition_router}.py`.
   `main.py` mounts the ops routers only when BOTH OPS_* are present in the
-  process env (the `_ops_enabled()` gate). No other host process reads them.
+  process env (the `_ops_intake_enabled()` gate). No other host process reads them.
 - **Deploy topology.** control-plane-api runs (a) local dev via uvicorn on port
   8010, (b) production on Render. Infisical (`http://100.64.0.1:8222`) is
   mesh-only, so `inject.sh` applies only to the local-dev launch.
@@ -125,27 +126,38 @@ routers; because it also injects `DEV_PG_PASSWORD`, dev-DB access needs no cache
 `run_platform_api_local.ps1` is a Windows, task-backed (`.vscode/tasks.json`
 "Run platform API local") raw-uvicorn launcher. Routing it through Infisical on
 Windows would require a Windows Infisical credential cache -- a secret-surface
-regression contrary to this lane. Chosen resolution (does NOT expand the secret
-surface; flagged for operator ratification at the spec-review gate):
+regression contrary to this lane. Chosen resolution (operator-ratified; does NOT
+expand the secret surface):
 
 - Add a startup notice to the `.ps1` (a `Write-Host`/comment banner, no logic
   change to the launch) stating it runs control-plane-api WITHOUT
   Infisical-sourced OPS_*, so the ops routers will not mount unless OPS_* are
   otherwise present in the Windows environment; for ops-router work use the host
-  Infisical-backed launcher `scripts/run_platform_api_local.sh` under the
+  Infisical-backed launcher
+  `apps/control-plane-api/scripts/run_platform_api_local.sh` under the
   dev-residency workspace.
 - The surgical purge removes only OPS_* (not the main `DATABASE_URL` vars), so
   the `.ps1` remains valid for general (non-ops) local work.
 
 ### 3.3 README + workspace guidance
 Update `apps/control-plane-api/README.md` local-development section: present
-`scripts/run_platform_api_local.sh` (Infisical-backed, host) as the recommended
-launch for ops-router work; keep the `.ps1` documented for general Windows local
-work with the same non-ops caveat; add the boundary note -- OPS_* come from
-Infisical dev (mesh) locally and Render dashboard env in production. Update the
-`.vscode/tasks.json` "Run platform API local" task description (or add a
-sibling note) so the ops-router recommendation points at the host launcher. Do
-NOT rewrite the accurate port-8010 restart guidance.
+`apps/control-plane-api/scripts/run_platform_api_local.sh` (host, Infisical-backed)
+as the recommended launch for ops-router work; keep the `.ps1` documented for
+general Windows local work with the same non-ops caveat; add the boundary note --
+OPS_* come from Infisical dev (mesh) locally and Render dashboard env in
+production.
+
+Reconcile `.vscode/tasks.json` unambiguously -- a note is NOT sufficient, because
+the existing "Run platform API local" and "Restart platform API local" tasks
+literally invoke the raw `run_platform_api_local.ps1` via pwsh. Required: (a)
+relabel BOTH tasks NON-OPS (label + `detail` stating they run without Infisical
+OPS_*, so the ops routers do not mount), and (b) add a distinct ops-host launcher
+instruction routing ops-router work to
+`apps/control-plane-api/scripts/run_platform_api_local.sh` (run in the
+dev-residency / Remote-SSH host terminal, where the integrated shell is host
+bash). A committed cross-platform VS Code bash task is OPTIONAL (it only works in
+the Remote-SSH context); the relabel + the ops instruction are MANDATORY. Do NOT
+rewrite the accurate port-8010 restart guidance.
 
 ## 4. secret-audit.sh changes
 
@@ -245,14 +257,20 @@ step to `.github/workflows/records-ci.yml` beside the existing two audit fixture
 steps (the workflow already triggers on `infra/secret-audit.sh`).
 
 ### 8.3 Launcher argv test + shellcheck
-A deterministic test: put a mock `inject.sh` on PATH that echoes its argv, run
-`run_platform_api_local.sh`, assert it invokes
-`inject.sh dev -- uvicorn main:app --app-dir apps/control-plane-api --host
-127.0.0.1 --port 8010` (defaults). No network/secret needed. Run `shellcheck` on
-both new/edited bash files.
+The launcher calls `infra/infisical/inject.sh` by RELATIVE path (after `cd
+"$ROOT"`), so a mock on `PATH` would NOT intercept it. Instead build a temp repo
+fixture that exercises the real path contract: a temp `ROOT` containing
+`apps/control-plane-api/scripts/run_platform_api_local.sh` (a copy of the real
+launcher) and a stub `infra/infisical/inject.sh` at that relative path which
+echoes its argv. Run the copied launcher; its `$ROOT` resolves to the temp
+fixture, so it invokes the stub. Assert the stub captured
+`dev -- uvicorn main:app --app-dir apps/control-plane-api --host 127.0.0.1 --port
+8010` (defaults). No network/secret, and no test-only hook in the production
+launcher. Run `shellcheck` on both new/edited bash files.
 
 ## 9. Verification / smoke (host, manual, value-silent)
-- Run `scripts/run_platform_api_local.sh`; confirm the ops routers are mounted
+- Run `apps/control-plane-api/scripts/run_platform_api_local.sh`; confirm the ops
+  routers are mounted
   (the FastAPI OpenAPI/health surface advertises the ops intake/recognition
   routes) -- proves OPS_* arrived via Infisical, not a cache.
 - After purge: run `infra/secret-audit.sh`; confirm (a) no `OPS_*` line under
@@ -281,8 +299,10 @@ trailer `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 ## 12. Decisions (ratified 2026-07-05)
 1. Prod boundary: local-dev only; Render remains dashboard-env owned and out of
    scope (no Render step, no cloud sync).
-2. Dev launch: committed Infisical-backed launcher artifact
-   (`run_platform_api_local.sh`), testable, README/tasks repointed.
+2. Dev launch: committed Infisical-backed host launcher artifact
+   (`apps/control-plane-api/scripts/run_platform_api_local.sh`), testable; README
+   updated and the two Windows VS Code tasks relabeled NON-OPS + a distinct
+   ops-host launcher instruction added.
 3. Check 1d: registration + realpath device+inode (`%d:%i`) equality/coverage
    guard (not inode alone -- avoids cross-filesystem false dedup).
 4. Register `apps/control-plane-api/.env` in `CACHES`.
@@ -293,6 +313,19 @@ trailer `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 8. Success scoped: OPS_* gone from every real host cache and guarded by
    `.managed-secrets`/Check 1d, not full `secret-audit` rc=0 while TCC_* and
    SUPABASE_PROD_DSN remain deferred.
-9. PowerShell launcher reconciliation: annotate `.ps1` + repoint README/tasks so
-   it is not a silent stale raw-uvicorn path, WITHOUT minting a Windows Infisical
-   credential cache (operator to ratify at spec review).
+9. PowerShell launcher reconciliation (operator-ratified): annotate the `.ps1`
+   startup as NON-OPS, relabel the two Windows VS Code tasks NON-OPS, add a
+   distinct ops-host launcher instruction, and update the README -- so it is not a
+   silent stale raw-uvicorn path -- WITHOUT minting a Windows Infisical credential
+   cache.
+
+## 13. Revisions
+- rev 2 (2026-07-05): folded operator spec-review findings P1-P3 before the IRP
+  pass. P1 -- `.vscode/tasks.json` reconciliation made mandatory and unambiguous
+  (relabel both Windows tasks NON-OPS + a distinct ops-host instruction; a note
+  is not sufficient, since the tasks literally run the raw `.ps1`). P2 -- the
+  launcher argv test uses a temp repo fixture with a stub
+  `infra/infisical/inject.sh` at the real relative path (a `PATH` mock cannot
+  intercept a relative-path call). P3 -- exactness: real gate is
+  `_ops_intake_enabled()` (main.py:109); the launcher is referenced by full
+  repo-root path `apps/control-plane-api/scripts/run_platform_api_local.sh`.
