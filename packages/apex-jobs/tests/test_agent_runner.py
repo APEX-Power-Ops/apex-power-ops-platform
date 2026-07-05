@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from apex_jobs import engine, agent_runner
+from apex_jobs import engine, agent_runner, _env
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FAKE = [sys.executable, os.path.join(HERE, "fake_agent.py")]
@@ -304,11 +304,25 @@ def test_agent_env_reads_agent_path_as_config_only(monkeypatch):
     assert exported is False, "APEX_JOBS_AGENT_PATH leaked into agent env"
 
 
+def test_agent_env_keeps_novel_locale_xdg_by_prefix(monkeypatch):
+    # Post-reconcile: the agent path routes through _env.sanitized_env, whose
+    # ("LC_","XDG_") prefixes admit novel members the old exact-29 list dropped.
+    monkeypatch.setenv("LC_FOO", "bar")
+    monkeypatch.setenv("XDG_WHATEVER", "/x")
+    env = agent_runner._agent_env("host")
+    lc_present = "LC_FOO" in env
+    xdg_present = "XDG_WHATEVER" in env
+    assert lc_present is True
+    assert xdg_present is True
+
+
 def test_agent_env_closure_no_unexpected_keys(monkeypatch):
     monkeypatch.setenv("SOME_RANDOM_SECRET_DSN", "PLACEHOLDER-TEST-VALUE")
     env = agent_runner._agent_env("host")
-    allowed = set(agent_runner._AGENT_ENV_ALLOW) | {"PATH", "APEX_JOB_ENV"}
-    extra = sorted(set(env) - allowed)
+    # Every key is the marker/PATH or passes the shared allowlist predicate
+    # (exact names or the LC_/XDG_ prefixes).
+    extra = sorted(k for k in env
+                   if k not in {"PATH", "APEX_JOB_ENV"} and not _env._allowed(k))
     assert extra == [], f"unexpected keys in agent env: {extra}"
 
 

@@ -50,7 +50,7 @@ reaches the child process only.
 apex-jobs runs **alongside** the `ops/agents/inbox` file queue. No cutover yet —
 the inbox remains the live mechanism until apex-jobs is proven in routine use.
 
-## Tests (75)
+## Tests (76)
 Credentials come from env only -- no in-code fallback: source the governed
 infra/.env first (DEV_PG_PASSWORD) or set APEX_JOBS_PGPASSWORD; the suite
 skips with a hint otherwise.
