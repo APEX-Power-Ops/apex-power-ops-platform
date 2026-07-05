@@ -322,6 +322,31 @@ def set_run_artifacts(run_id, worktree_path=None, branch=None, diff_stat=None):
         conn.commit()
 
 
+def run_is_current(run_id):
+    """True if run_id is the highest-attempt run for its job (not superseded by a newer
+    attempt). False if not found. Backs the same-process auto-clean currency guard."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "select (r.attempt = (select max(attempt) from jobs.run r2 "
+                "where r2.job_id = r.job_id)) as is_current "
+                "from jobs.run r where r.id = %s", (run_id,))
+            row = cur.fetchone()
+    return bool(row and row["is_current"])
+
+
+def set_run_cleanup(run_id, cleanup_status):
+    """Merge cleanup_status into the run's result JSONB (no schema change). ORTHOGONAL to
+    run status: never changes status, finished_at, exit_code, or the process exit."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "update jobs.run set result = coalesce(result, '{}'::jsonb) "
+                "|| jsonb_build_object('cleanup_status', %s::text) where id=%s",
+                (cleanup_status, run_id))
+        conn.commit()
+
+
 def open_promotion(job_id):
     """Create a pending promotion gate + move the job to awaiting_promotion. Returns gate id."""
     with _conn() as conn:
