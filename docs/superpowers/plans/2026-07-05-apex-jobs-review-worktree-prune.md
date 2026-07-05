@@ -303,6 +303,7 @@ def test_latest_terminal_by_claimed_at(prune_env):
               claimed_at="2026-07-05T00:00:00+00:00")
     _seed_run(conn, jid, status="succeeded", attempt=2,
               claimed_at="2026-07-05T03:00:00+00:00")
+    _add_wt(runs, created, d)
     assert _classify_map()[d] == "prunable"
 
 
