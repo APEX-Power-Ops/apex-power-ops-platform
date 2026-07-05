@@ -1,6 +1,6 @@
 # apex-jobs Review-Worktree Auto-Clean Design
 
-**Status:** rev 5 (four Codex re-review rounds folded; forks A1 + B1 + C2 operator-ratified 2026-07-05). Rev 1 → rev 2 fixed a convergent fatal (no-force remove semantics) + a stale-attempt race; rev 2 → rev 3 folded label-truth + narrowed exception isolation + `already_absent` + C2; rev 3 → rev 4 reordered the guard (`already_absent` before `superseded`) + corrected reachability wording; rev 4 → rev 5 corrects the same-process safety decomposition (both `_WORKTREE_LOCK` **and** the currency-check-under-lock are load-bearing), the `superseded_preserved` label wording, and adds test spies. Codex rev-4 verdict: no fatal helper-order defect; design logic confirmed sound. Not final until the rev-5 Codex pass is clean and the operator approves.
+**Status:** rev 6 — **CONVERGED** (five Codex re-review rounds; forks A1 + B1 + C2 operator-ratified 2026-07-05). Rev 1 → rev 2 fixed a convergent fatal (no-force remove semantics) + a stale-attempt race; rev 2 → rev 3 folded label-truth + narrowed exception isolation + `already_absent` + C2; rev 3 → rev 4 reordered the guard (`already_absent` before `superseded`) + corrected reachability wording; rev 4 → rev 5 corrected the same-process safety decomposition (both `_WORKTREE_LOCK` **and** the currency-check-under-lock are load-bearing) + label wording + test spies; rev 5 → rev 6 folds two LOW wording nits (helper-comment/table consistency; value-silence scoped to this lane's additions). **Codex rev-5 verdict: core design logic sound, holistic consistency pass clean, no regressions** — only those two LOW wording items remained, now fixed. Convergence bounded at 5 Codex rounds (severity trajectory fatal → fatal → blocking → important → low). Awaiting operator approval to write the plan.
 
 **Goal:** Stop `apex-jobs` review-runs from leaking detached worktrees at the source, by having `run_review_job` remove its own disposable worktree after a **pristine, succeeded, still-current** review — never demoting a good review because housekeeping hiccuped, never deleting anything `prune-review-worktrees` would preserve, and leaving that verb as the durable backstop.
 
@@ -118,7 +118,7 @@ def _cleanup_review_worktree(repo, wt, run_id):
     mutation and returns the TRUE disposition label. Value-silent: returns a bare label, never a
     path or git stderr. Guard order is load-bearing (filesystem truth first):
       1. absent    -> dir already gone (raced by prune / a newer attempt's teardown) -> 'already_absent'
-      2. currency  -> dir present but a newer attempt owns it -> 'superseded_preserved' (touch nothing)
+      2. currency  -> dir present but this run is not the current attempt -> 'superseded_preserved' (touch nothing)
       3. dirtiness -> git status --porcelain --ignored non-empty -> 'dirty_preserved' (never remove)
       4. remove    -> plain `git worktree remove` (NEVER --force): rc 0 -> 'cleaned', else 'failed_preserved'
     """
@@ -126,7 +126,7 @@ def _cleanup_review_worktree(repo, wt, run_id):
         if not os.path.isdir(wt):
             return "already_absent"                    # fs truth first: nothing to clean or preserve
         if not engine.run_is_current(run_id):
-            return "superseded_preserved"              # present, but a newer attempt owns it -> touch nothing
+            return "superseded_preserved"              # present, but not the current attempt -> touch nothing
         st = _git("status", "--porcelain", "--ignored", cwd=wt, check=False)
         if st.returncode != 0:
             return "failed_preserved"                 # git error -> preserve, do not guess
@@ -231,12 +231,12 @@ Tests use `APEX_JOBS_AGENT_CMD` against real `orchestration_test` with throwaway
 | 12 | CLI flag on both entrypoints | argparse parses `--keep-worktree` for `review-run` and `enqueue-review`; `review-run --json` includes `cleanup_status` |
 | 13 | concurrent/pool path | two reviews cleaning under `_WORKTREE_LOCK` via `run_pool` → both terminate with valid labels; no `index.lock`/registry race |
 | 13b | same-dispatch-id concurrency (labels) | seed a second run for the same job (simulates concurrent same-`--dispatch-id` review-run) → `run_is_current`/`already_absent` labels correct; **note in the test** that the true cross-process delete race is the deferred lifecycle-lock lane, not unit-testable here |
-| 14 | value-silence | printed/JSON/stored output is basenames/labels/counts only — no worktree paths beyond the pre-existing `worktree_path`, no file contents, no git stderr; swallowed-exception logs carry class names only |
+| 14 | value-silence (lane additions) | the `cleanup_status` additions emit labels/counts only — no worktree paths beyond the pre-existing `worktree_path`, no git stderr, no file contents; swallowed-exception logs carry class names only. (Pre-existing review `findings` output is unchanged and out of scope.) |
 | 15 | existing prune tests still pass | `test_prune.py` unchanged and green (regression) |
 
 ## Value-silence
 
-`cleanup_status` is one of seven fixed labels. The helper inspects only `returncode`/emptiness and discards git stdout/stderr. Swallowed exceptions log `type(e).__name__` only. `set_run_cleanup` binds a bare label. `review-run`/`enqueue-review` emit labels/counts/basenames only.
+Scoped to **this lane's additions** (the review `findings` output — the review's intended product, stored in `result.findings` and printed by `review-run` — is pre-existing and unchanged; this lane introduces no new value output). `cleanup_status` is one of seven fixed labels. The helper inspects only `returncode`/emptiness and discards git stdout/stderr. Swallowed exceptions log `type(e).__name__` only. `set_run_cleanup` binds a bare label. The new `cleanup_status` surfaces (summary, `--json`, `result`) carry labels only — no paths, git stderr, DSN, env, or file contents.
 
 ## Backstop relationship to prune-review-worktrees
 
@@ -286,4 +286,4 @@ Auto-clean removes only the pristine-success case; prune remains the durable bac
 
 ## Verification
 
-Host-only suite: `export PATH=$HOME/.local/bin:$PATH`; source canonical `infra/.env`; `APEX_JOBS_DB=orchestration_test uv run --with 'psycopg[binary]' --with pytest --with-editable . pytest`. Whole suite green (prune tests included) + new `test_review_autoclean.py`. **Rerun the Codex cross-engine review on rev 5 before writing the plan** (operator-required).
+Host-only suite: `export PATH=$HOME/.local/bin:$PATH`; source canonical `infra/.env`; `APEX_JOBS_DB=orchestration_test uv run --with 'psycopg[binary]' --with pytest --with-editable . pytest`. Whole suite green (prune tests included) + new `test_review_autoclean.py`. The **spec-level Codex cross-engine gate is satisfied** (5 rounds, converged; rev-5 verdict: logic sound + holistic-clean). A fresh whole-branch Codex review runs on the **implementation** after the SDD build, per the prune-lane pattern.
