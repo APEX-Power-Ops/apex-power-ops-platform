@@ -84,6 +84,24 @@ def list_review_worktrees(repo, runs_dir):
     return out
 
 
+def _fresh_candidate(repo, runs_dir, dispatch_id):
+    """Re-enumerate ONE review worktree with fresh git/fs facts (for the per-item
+    recheck-before-remove). Returns the candidate dict, or None if it is no longer
+    a candidate (registration/dir gone, basename or parent-dir no longer matches)."""
+    runs_real = _norm(runs_dir)
+    for e in _porcelain_worktrees(repo):
+        path = e["path"]
+        base = os.path.basename(path.rstrip("/"))
+        if base != dispatch_id:
+            continue
+        if not RE_REVIEW.match(base):
+            return None
+        if _norm(os.path.dirname(path.rstrip("/"))) != runs_real:
+            return None
+        return {"path": path, "dispatch_id": base, **_worktree_flags(path, e["locked"])}
+    return None
+
+
 def _classify_one(c, db, include_failed):
     """c = candidate dict from list_review_worktrees; db = its status dict or None.
     Returns (classification, action, status, claimed_at, finished_at, active)."""
@@ -155,7 +173,7 @@ def prune_review_worktrees(apply=False, include_failed=False):
     per-item recheck-before-remove (the ONLY DB call in the loop) and plain
     `git worktree remove` (no --force). Returns a value-silent summary. On
     DbUnreachable, returns a refusal summary (caller maps to exit 3)."""
-    repo = agent_runner._repo()
+    repo, runs = agent_runner._repo(), agent_runner._runs_dir()
     try:
         items = classify_review_worktrees(include_failed=include_failed)
     except DbUnreachable:
@@ -167,7 +185,10 @@ def prune_review_worktrees(apply=False, include_failed=False):
             if w.classification != "prunable":
                 continue
             with agent_runner._WORKTREE_LOCK:
-                # recheck-before-remove: re-query THIS dispatch + re-check git flags
+                # recheck-before-remove: re-query THIS dispatch and re-enumerate its
+                # git/fs facts, then FULLY re-classify -- remove only if it is STILL
+                # prunable (still a review, allowed terminal status, not-active,
+                # clean, not-locked, exists). This is the only DB call in the loop.
                 try:
                     snap = engine.review_dispatch_statuses([w.dispatch_id])
                 except (psycopg.OperationalError, psycopg.InterfaceError):
@@ -175,18 +196,16 @@ def prune_review_worktrees(apply=False, include_failed=False):
                             "counts": _counts(items), "applied": False,
                             "remove_failed": remove_failed, "refused": True}
                 db = snap.get(w.dispatch_id)
-                flags = _worktree_flags(w.path, w.classification == "locked")
-                if db and db["any_running"]:
-                    w.classification, w.action, w.active = "active", "preserved", True
-                    continue
-                if (not flags["exists"]) or (not flags["git_ok"]):
+                cand = _fresh_candidate(repo, runs, w.dispatch_id)
+                if cand is None:
                     w.classification, w.action = "unknown", "preserved"
                     continue
-                if flags["dirty"]:
-                    w.classification, w.action = "dirty", "preserved"
-                    continue
-                if flags["locked"]:
-                    w.classification, w.action = "locked", "preserved"
+                cls, _act, status, claimed_at, finished_at, active = _classify_one(
+                    cand, db, include_failed)
+                if cls != "prunable":
+                    w.classification, w.action = cls, "preserved"
+                    w.status, w.claimed_at, w.finished_at, w.active = (
+                        status, claimed_at, finished_at, active)
                     continue
                 r = agent_runner._git("worktree", "remove", w.path, cwd=repo, check=False)
                 if r.returncode == 0:

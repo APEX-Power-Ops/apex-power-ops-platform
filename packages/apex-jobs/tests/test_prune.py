@@ -378,6 +378,30 @@ def test_prune_refusal_summary_on_db_unreachable(prune_env, monkeypatch):
     assert all(i["action"] == "refused" for i in res["items"]) or res["items"] == []
 
 
+def test_recheck_status_flip_to_failed_preserves(prune_env, monkeypatch):
+    """Codex P2: prunable at the frozen snapshot, but the per-item recheck sees the
+    latest status flipped to failed (requeue+reap) with --include-failed unset ->
+    the recheck must re-classify as failed and preserve, NOT remove."""
+    conn, runs, created = prune_env
+    d = "review-abcd0007"
+    jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1)
+    p = _add_wt(runs, created, d)
+    real = engine.review_dispatch_statuses
+    calls = {"n": 0}
+    def flip(ids):
+        calls["n"] += 1
+        out = real(ids)
+        if calls["n"] >= 2 and d in out:      # recheck: latest terminal now failed
+            out[d] = {**out[d], "status": "failed", "any_running": False}
+        return out
+    monkeypatch.setattr(engine, "review_dispatch_statuses", flip)
+    res = prune.prune_review_worktrees(apply=True)
+    assert os.path.isdir(p)                    # NOT removed
+    item = [i for i in res["items"] if i["dispatch_id"] == d][0]
+    assert item["action"] == "preserved" and item["classification"] == "failed"
+
+
 # ------------------------- Task 4: CLI verb + exit codes ----------------------
 
 from apex_jobs import cli
