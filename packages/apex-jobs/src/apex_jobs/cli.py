@@ -167,6 +167,8 @@ def cmd_enqueue_review(a):
         dispatch_id=a.dispatch_id, title=title, payload=payload,
         target="codex", kind="agent", base_ref=a.base_ref,
         env_required=a.env_required, priority=a.priority, created_by=a.by)
+    if a.keep_worktree:   # monotonic: honor keep even when enqueue hit the dispatch conflict path
+        engine.set_job_keep_worktree(jid)
     print(jid)
     return 0
 
@@ -184,6 +186,9 @@ def cmd_review_run(a):
                    payload=payload, target="codex", kind="agent", base_ref=a.base_ref,
                    env_required="host", created_by=a.by)
     job = engine.get_job(disp)
+    if a.keep_worktree:   # honor the explicit flag even on a reused dispatch id
+        engine.set_job_keep_worktree(job["id"])
+        job = engine.get_job(disp)
     seam = os.environ.get("APEX_JOBS_AGENT_CMD")
     agent_cmd = json.loads(seam) if seam else None
     summary = agent_runner.run_review_job(job, env="host", agent_cmd=agent_cmd)

@@ -315,3 +315,57 @@ def test_review_run_keep_flag_preserves(prune_env, capsys, monkeypatch):
     out = json.loads(capsys.readouterr().out)
     assert out["cleanup_status"] == "kept"
     assert os.path.isdir(os.path.join(runs, "review-e0000005"))
+
+
+# ================= Task 4b: keep is monotonic on dispatch-id reuse (P2) ========
+
+def _parse(argv):
+    return cli.build_parser().parse_args(argv)
+
+
+def test_enqueue_review_keep_honored_on_reused_dispatch(prune_env):
+    # existing job WITHOUT keep, then re-enqueue same dispatch WITH --keep-worktree -> keep persisted
+    a1 = _parse(["enqueue-review", "--dispatch-id", "review-f0000001", "--review-head", "HEAD",
+                 "--base-ref", "HEAD~1"])
+    a1.fn(a1)
+    assert bool(engine.get_job("review-f0000001")["payload"].get("keep_worktree")) is False
+    a2 = _parse(["enqueue-review", "--dispatch-id", "review-f0000001", "--review-head", "HEAD",
+                 "--base-ref", "HEAD~1", "--keep-worktree"])
+    a2.fn(a2)
+    assert engine.get_job("review-f0000001")["payload"].get("keep_worktree") is True
+
+
+def test_review_run_keep_honored_on_reused_dispatch(prune_env, capsys, monkeypatch):
+    conn, runs, created = prune_env
+    created.append("review-f0000002")
+    _job("review-f0000002")   # pre-existing job at this dispatch, WITHOUT keep
+    monkeypatch.setenv("APEX_JOBS_AGENT_CMD", json.dumps(FINDINGS_OK))
+    a = _parse(["review-run", "--review-head", "HEAD", "--base-ref", "HEAD~1",
+                "--dispatch-id", "review-f0000002", "--json", "--keep-worktree"])
+    a.fn(a)
+    out = json.loads(capsys.readouterr().out)
+    assert out["cleanup_status"] == "kept"                       # flag honored despite reuse
+    assert os.path.isdir(os.path.join(runs, "review-f0000002"))  # worktree preserved
+
+
+def test_keep_not_cleared_by_later_call_without_flag(prune_env):
+    a1 = _parse(["enqueue-review", "--dispatch-id", "review-f0000003", "--review-head", "HEAD",
+                 "--base-ref", "HEAD~1", "--keep-worktree"])
+    a1.fn(a1)
+    a2 = _parse(["enqueue-review", "--dispatch-id", "review-f0000003", "--review-head", "HEAD",
+                 "--base-ref", "HEAD~1"])   # no flag
+    a2.fn(a2)
+    assert engine.get_job("review-f0000003")["payload"].get("keep_worktree") is True  # not cleared
+
+
+def test_keep_merge_preserves_other_payload_keys(prune_env):
+    a1 = _parse(["enqueue-review", "--dispatch-id", "review-f0000004", "--review-head", "HEAD",
+                 "--base-ref", "HEAD~1", "--payload", '{"extra": "x"}'])
+    a1.fn(a1)
+    a2 = _parse(["enqueue-review", "--dispatch-id", "review-f0000004", "--review-head", "HEAD",
+                 "--base-ref", "HEAD~1", "--keep-worktree"])
+    a2.fn(a2)
+    p = engine.get_job("review-f0000004")["payload"]
+    assert p.get("keep_worktree") is True
+    assert p.get("extra") == "x"              # unrelated key preserved by the JSONB merge
+    assert p.get("review_head") == "HEAD"

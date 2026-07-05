@@ -347,6 +347,20 @@ def set_run_cleanup(run_id, cleanup_status):
         conn.commit()
 
 
+def set_job_keep_worktree(job_id):
+    """Monotonically set payload.keep_worktree=true on a job: OR-merges the flag into the
+    existing payload JSONB (never clears it, never clobbers other payload keys). Called only
+    when an explicit --keep-worktree is passed, so a keep request is honored even when
+    enqueue() took the existing-dispatch conflict path (which updates title only)."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "update jobs.job set payload = coalesce(payload, '{}'::jsonb) "
+                "|| jsonb_build_object('keep_worktree', true), updated_at=now() where id=%s",
+                (job_id,))
+        conn.commit()
+
+
 def open_promotion(job_id):
     """Create a pending promotion gate + move the job to awaiting_promotion. Returns gate id."""
     with _conn() as conn:
