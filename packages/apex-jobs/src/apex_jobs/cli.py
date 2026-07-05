@@ -161,11 +161,14 @@ def cmd_enqueue_review(a):
     misconfigure them; the job runs on the host (where codex lives)."""
     payload = json.loads(a.payload) if a.payload else {}
     payload["review_head"] = a.review_head
+    payload["keep_worktree"] = bool(a.keep_worktree) or bool(payload.get("keep_worktree"))
     title = a.title or f"codex review: {a.review_head} vs {a.base_ref}"
     jid = engine.enqueue(
         dispatch_id=a.dispatch_id, title=title, payload=payload,
         target="codex", kind="agent", base_ref=a.base_ref,
         env_required=a.env_required, priority=a.priority, created_by=a.by)
+    if payload["keep_worktree"]:   # effective keep (flag OR --payload); honor even on the conflict path
+        engine.set_job_keep_worktree(jid)
     print(jid)
     return 0
 
@@ -177,12 +180,15 @@ def cmd_review_run(a):
     failed. No promotion gate -- a review only reports."""
     from . import agent_runner
     disp = a.dispatch_id or f"review-{uuid.uuid4().hex[:8]}"
-    payload = {"review_head": a.review_head}
+    payload = {"review_head": a.review_head, "keep_worktree": bool(a.keep_worktree)}
     engine.enqueue(dispatch_id=disp,
                    title=a.title or f"codex review: {a.review_head} vs {a.base_ref}",
                    payload=payload, target="codex", kind="agent", base_ref=a.base_ref,
                    env_required="host", created_by=a.by)
     job = engine.get_job(disp)
+    if a.keep_worktree:   # honor the explicit flag even on a reused dispatch id
+        engine.set_job_keep_worktree(job["id"])
+        job = engine.get_job(disp)
     seam = os.environ.get("APEX_JOBS_AGENT_CMD")
     agent_cmd = json.loads(seam) if seam else None
     summary = agent_runner.run_review_job(job, env="host", agent_cmd=agent_cmd)
@@ -190,6 +196,7 @@ def cmd_review_run(a):
     if a.json:
         print(json.dumps({"dispatch_id": disp, "status": summary["status"],
                           "review_head": a.review_head, "base_ref": a.base_ref,
+                          "cleanup_status": summary["cleanup_status"],
                           "findings": res.get("findings", "")}, indent=2))
     else:
         print(f"dispatch_id={disp} status={summary['status']}")
@@ -264,6 +271,9 @@ def build_parser():
     er.add_argument("--env-required", default="host", dest="env_required")
     er.add_argument("--priority", type=int, default=100)
     er.add_argument("--by", default=None)
+    er.add_argument("--keep-worktree", action="store_true", dest="keep_worktree",
+                    help="opt out of auto-cleanup at review completion (not a permanent hold; "
+                         "a later explicit prune may still reclaim a clean worktree)")
     er.set_defaults(fn=cmd_enqueue_review)
 
     rr = sub.add_parser("review-run")
@@ -273,6 +283,9 @@ def build_parser():
     rr.add_argument("--title", default=None)
     rr.add_argument("--json", action="store_true")
     rr.add_argument("--by", default=None)
+    rr.add_argument("--keep-worktree", action="store_true", dest="keep_worktree",
+                    help="opt out of auto-cleanup at review completion (not a permanent hold; "
+                         "a later explicit prune may still reclaim a clean worktree)")
     rr.set_defaults(fn=cmd_review_run)
 
     q = sub.add_parser("queue")

@@ -6,6 +6,7 @@ fake agent), so the whole runner is exercised without claude / tokens / OAuth.
 REPO + RUNS_DIR are resolved at call time from the env so tests can redirect them.
 run_pool() fans execution out across threads, bounded by `concurrency`.
 """
+import logging
 import os
 import subprocess
 import threading
@@ -25,6 +26,7 @@ TIMEOUT_S = int(os.environ.get("APEX_JOBS_AGENT_TIMEOUT_S", "3600"))
 # lock, as do per-worktree `add`/`commit` (distinct index + distinct ref) and the
 # read-only diff.
 _WORKTREE_LOCK = threading.Lock()
+log = logging.getLogger(__name__)
 
 # Per-target headless agent command templates; {prompt} is substituted. Exact
 # claude flags are pinned in Task 0 Step 4 before the live path is trusted.
@@ -142,6 +144,29 @@ def run_agent_job(job, env, as_="cc", agent_cmd=None):
             "no_changes": result["no_changes"]}
 
 
+def _cleanup_review_worktree(repo, wt, run_id):
+    """Decide + apply cleanup for a SUCCEEDED, non-kept review worktree. Caller has
+    already confirmed status=='succeeded' and keep is false. Runs under _WORKTREE_LOCK.
+    OWNS the fs mutation and returns the TRUE disposition label. Value-silent: returns a
+    bare label, never a path or git stderr. Guard order is load-bearing (fs truth first):
+      1. absent    -> dir already gone -> 'already_absent'
+      2. currency  -> present but not the current attempt -> 'superseded_preserved' (touch nothing)
+      3. dirtiness -> git status --porcelain --ignored non-empty -> 'dirty_preserved' (never remove)
+      4. remove    -> plain `git worktree remove` (NEVER --force): rc 0 -> 'cleaned', else 'failed_preserved'
+    """
+    with _WORKTREE_LOCK:
+        if not os.path.isdir(wt):
+            return "already_absent"
+        if not engine.run_is_current(run_id):
+            return "superseded_preserved"
+        st = _git("status", "--porcelain", "--ignored", cwd=wt, check=False)
+        if st.returncode != 0:
+            return "failed_preserved"
+        if st.stdout.strip():
+            return "dirty_preserved"
+        r = _git("worktree", "remove", wt, cwd=repo, check=False)   # plain, NEVER --force
+        return "cleaned" if r.returncode == 0 else "failed_preserved"
+
 def run_review_job(job, env, as_="cc", agent_cmd=None):
     """Run a kind='agent' REVIEW job: check out the ref under review
     (payload.review_head, DETACHED) in an isolated worktree, run
@@ -187,10 +212,35 @@ def run_review_job(job, env, as_="cc", agent_cmd=None):
     result = {"findings": out[-8000:], "stderr": err[-4000:],
               "review_head": review_head, "base_ref": base_ref, "is_review": True}
     status = engine.report(run_id, exit_code=rc, result=result)
-    engine.set_run_artifacts(run_id, worktree_path=wt, branch=review_head)
+    # (a) record where the run ran -- best-effort; prune keys on dispatch_id, a miss is harmless
+    try:
+        engine.set_run_artifacts(run_id, worktree_path=wt, branch=review_head)
+    except Exception as e:
+        log.warning("review set_run_artifacts error: %s", type(e).__name__)
+
+    # (b) decide + apply the worktree disposition; the helper OWNS the fs mutation + true label
+    try:
+        keep = bool((job.get("payload") or {}).get("keep_worktree"))
+        if status != "succeeded":
+            cleanup_status = "not_attempted"
+        elif keep:
+            cleanup_status = "kept"
+        else:
+            cleanup_status = _cleanup_review_worktree(repo, wt, run_id)
+    except Exception as e:
+        log.warning("review cleanup error: %s", type(e).__name__)
+        cleanup_status = "failed_preserved"
+
+    # (c) record the disposition -- best-effort; a record failure NEVER relabels the (b) outcome
+    try:
+        engine.set_run_cleanup(run_id, cleanup_status)
+    except Exception as e:
+        log.warning("review set_run_cleanup error: %s", type(e).__name__)
+
     # NO open_promotion: a review reports findings; there is nothing to merge.
     return {"job": job["dispatch_id"], "run": str(run_id), "status": status,
-            "review_head": review_head, "findings_len": len(out)}
+            "review_head": review_head, "findings_len": len(out),
+            "cleanup_status": cleanup_status}
 
 
 def _run_one(job, env, as_, agent_cmd):
