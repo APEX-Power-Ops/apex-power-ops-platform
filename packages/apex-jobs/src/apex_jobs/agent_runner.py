@@ -212,10 +212,35 @@ def run_review_job(job, env, as_="cc", agent_cmd=None):
     result = {"findings": out[-8000:], "stderr": err[-4000:],
               "review_head": review_head, "base_ref": base_ref, "is_review": True}
     status = engine.report(run_id, exit_code=rc, result=result)
-    engine.set_run_artifacts(run_id, worktree_path=wt, branch=review_head)
+    # (a) record where the run ran -- best-effort; prune keys on dispatch_id, a miss is harmless
+    try:
+        engine.set_run_artifacts(run_id, worktree_path=wt, branch=review_head)
+    except Exception as e:
+        log.warning("review set_run_artifacts error: %s", type(e).__name__)
+
+    # (b) decide + apply the worktree disposition; the helper OWNS the fs mutation + true label
+    try:
+        keep = bool((job.get("payload") or {}).get("keep_worktree"))
+        if status != "succeeded":
+            cleanup_status = "not_attempted"
+        elif keep:
+            cleanup_status = "kept"
+        else:
+            cleanup_status = _cleanup_review_worktree(repo, wt, run_id)
+    except Exception as e:
+        log.warning("review cleanup error: %s", type(e).__name__)
+        cleanup_status = "failed_preserved"
+
+    # (c) record the disposition -- best-effort; a record failure NEVER relabels the (b) outcome
+    try:
+        engine.set_run_cleanup(run_id, cleanup_status)
+    except Exception as e:
+        log.warning("review set_run_cleanup error: %s", type(e).__name__)
+
     # NO open_promotion: a review reports findings; there is nothing to merge.
     return {"job": job["dispatch_id"], "run": str(run_id), "status": status,
-            "review_head": review_head, "findings_len": len(out)}
+            "review_head": review_head, "findings_len": len(out),
+            "cleanup_status": cleanup_status}
 
 
 def _run_one(job, env, as_, agent_cmd):

@@ -46,6 +46,30 @@ def _spy_git(monkeypatch):
     return calls
 
 
+def _raise(exc):
+    """A side-effecting callable that raises `exc` when invoked (monkeypatch helper)."""
+    def _f(*a, **k):
+        raise exc
+    return _f
+
+
+# Fake review agents (argv lists run in cwd=wt by run_review_job).
+FINDINGS_OK = ["sh", "-c", "echo FINDINGS; exit 0"]
+DIRTY_UNTRACKED = ["sh", "-c", "echo x > untracked.txt; echo FINDINGS; exit 0"]
+DIRTY_IGNORED = ["sh", "-c", "mkdir -p __pycache__; echo x > __pycache__/x.pyc; echo F; exit 0"]
+FAIL = ["sh", "-c", "exit 1"]
+
+
+def _run_review(prune_env, dispatch_id, fake, keep=False):
+    """Enqueue a review job then run it in-process with a fake agent_cmd; return the summary.
+    Registers the dispatch_id for teardown cleanup of whatever run_review_job leaves."""
+    conn, runs, created = prune_env
+    created.append(dispatch_id)
+    extra = {"keep_worktree": True} if keep else {}
+    job = _job(dispatch_id, "HEAD", **extra)
+    return agent_runner.run_review_job(job, env="host", agent_cmd=fake)
+
+
 # =============================== Task 1: engine ================================
 
 def test_run_is_current_true_for_only_attempt(prune_env):
@@ -172,3 +196,69 @@ def test_cleanup_never_passes_force(prune_env, monkeypatch):
     removes = [a for a in seen if a[:2] == ("worktree", "remove")]
     assert removes, "expected a worktree remove on a clean tree"
     assert not any("--force" in a for a in removes)
+
+
+# ========================= Task 3: run_review_job tail ========================
+
+def test_tail_pristine_success_cleaned(prune_env):
+    conn, runs, created = prune_env
+    s = _run_review(prune_env, "review-c0000001", FINDINGS_OK)
+    assert s["status"] == "succeeded" and s["cleanup_status"] == "cleaned"
+    assert not os.path.isdir(os.path.join(runs, "review-c0000001"))
+
+
+def test_tail_ignored_dirty_preserved(prune_env):
+    conn, runs, created = prune_env
+    s = _run_review(prune_env, "review-c0000002", DIRTY_IGNORED)
+    assert s["status"] == "succeeded" and s["cleanup_status"] == "dirty_preserved"
+    assert os.path.isdir(os.path.join(runs, "review-c0000002"))
+
+
+def test_tail_untracked_dirty_preserved(prune_env):
+    conn, runs, created = prune_env
+    s = _run_review(prune_env, "review-c0000003", DIRTY_UNTRACKED)
+    assert s["cleanup_status"] == "dirty_preserved"
+
+
+def test_tail_failed_review_not_attempted(prune_env):
+    conn, runs, created = prune_env
+    s = _run_review(prune_env, "review-c0000004", FAIL)
+    assert s["status"] == "failed" and s["cleanup_status"] == "not_attempted"
+    assert os.path.isdir(os.path.join(runs, "review-c0000004"))
+
+
+def test_tail_keep_worktree_kept(prune_env):
+    conn, runs, created = prune_env
+    s = _run_review(prune_env, "review-c0000005", FINDINGS_OK, keep=True)
+    assert s["cleanup_status"] == "kept"
+    assert os.path.isdir(os.path.join(runs, "review-c0000005"))
+
+
+def test_tail_record_failure_does_not_relabel_or_demote(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    monkeypatch.setattr(engine, "set_run_cleanup", _raise(RuntimeError("db")))
+    s = _run_review(prune_env, "review-c0000006", FINDINGS_OK)
+    assert s["status"] == "succeeded"            # not demoted
+    assert s["cleanup_status"] == "cleaned"      # true fs outcome, not relabelled by record failure
+    assert not os.path.isdir(os.path.join(runs, "review-c0000006"))
+
+
+def test_tail_decision_failure_is_failed_preserved_not_demoted(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    monkeypatch.setattr(engine, "run_is_current", _raise(RuntimeError("db")))
+    s = _run_review(prune_env, "review-c0000007", FINDINGS_OK)
+    assert s["status"] == "succeeded"
+    assert s["cleanup_status"] == "failed_preserved"
+
+
+def test_tail_artifacts_failure_distinct_and_still_cleans(prune_env, monkeypatch, caplog):
+    conn, runs, created = prune_env
+    monkeypatch.setattr(engine, "set_run_artifacts", _raise(RuntimeError("db")))
+    with caplog.at_level("WARNING"):
+        s = _run_review(prune_env, "review-c0000008", DIRTY_IGNORED)   # dirty -> preserved candidate
+    assert s["status"] == "succeeded" and s["cleanup_status"] == "dirty_preserved"
+    # distinguishable: the artifacts failure logs its OWN message, not a cleanup/record message
+    msgs = [r.getMessage() for r in caplog.records]
+    assert any("set_run_artifacts error" in m for m in msgs)
+    assert not any("review cleanup error" in m for m in msgs)
+    assert not any("set_run_cleanup error" in m for m in msgs)
