@@ -12,6 +12,7 @@ import threading
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 
 from . import engine
+from . import _env
 
 DEFAULT_REPO = os.path.expanduser("~/code/apex/apex-orch-lane")
 DEFAULT_RUNS_DIR = os.path.expanduser("~/.apex-jobs/runs")
@@ -70,37 +71,16 @@ _DEFAULT_AGENT_PATH = os.pathsep.join([
 ])
 
 
-# Exact-name allowlist for the agent/review subprocess env (default-deny). A flat
-# set with NO prefix matching, so any new secret-shaped variable is dropped
-# automatically -- there is no denylist to keep current.
-_AGENT_ENV_ALLOW = frozenset({
-    # base runtime
-    "HOME", "PATH", "USER", "LOGNAME", "SHELL", "TERM",
-    "TMPDIR", "TMP", "TEMP", "TZ", "LANG",
-    # locale (exact keys, not an LC_ prefix)
-    "LC_ALL", "LC_COLLATE", "LC_CTYPE", "LC_MESSAGES", "LC_MONETARY", "LC_NUMERIC",
-    "LC_TIME", "LC_ADDRESS", "LC_IDENTIFICATION", "LC_MEASUREMENT", "LC_NAME",
-    "LC_PAPER", "LC_TELEPHONE",
-    # XDG base dirs (exact keys, not an XDG_ prefix)
-    "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME",
-    "XDG_RUNTIME_DIR",
-})
-
-
 def _agent_env(job_env):
-    """Subprocess env for the agent/review CLI: a default-deny allowlisted subset of
-    os.environ (see _AGENT_ENV_ALLOW) plus the APEX_JOB_ENV marker, with the agent
-    bin dir(s) prepended to PATH so `claude` / `codex` (and their node) resolve under
-    the non-interactive worker (neither is on the login PATH). The worker's ambient
-    secrets (DB passwords, DSNs, tokens) are NOT inherited. APEX_JOBS_AGENT_PATH is
-    read only to compute the PATH prepend; it is not exported. Override the bins via
-    APEX_JOBS_AGENT_PATH."""
-    env = {k: v for k, v in os.environ.items() if k in _AGENT_ENV_ALLOW}
-    env["APEX_JOB_ENV"] = job_env
+    """Subprocess env for the agent/review CLI: the shared default-deny allowlist
+    (_env.sanitized_env -- exact names plus the LC_/XDG_ prefixes) plus the
+    APEX_JOB_ENV marker, with the agent bin dir(s) prepended to PATH so `claude` /
+    `codex` (and their node) resolve under the non-interactive worker (neither is on
+    the login PATH). The worker's ambient secrets (DB passwords, DSNs, tokens) are
+    NOT inherited. APEX_JOBS_AGENT_PATH is read only to compute the PATH prepend; it
+    is not exported. Override the bins via APEX_JOBS_AGENT_PATH."""
     extra = os.environ.get("APEX_JOBS_AGENT_PATH", _DEFAULT_AGENT_PATH)
-    if extra:
-        env["PATH"] = extra + os.pathsep + env.get("PATH", "")
-    return env
+    return _env.sanitized_env(job_env, extra_path=extra)
 
 
 def run_agent_job(job, env, as_="cc", agent_cmd=None):
