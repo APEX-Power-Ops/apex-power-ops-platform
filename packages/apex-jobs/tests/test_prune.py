@@ -450,6 +450,27 @@ def test_cli_git_unavailable_exit3(prune_env, tmp_path, monkeypatch, capsys):
     assert "git-unavailable" in capsys.readouterr().out
 
 
+def test_falsey_review_head_not_review(conn_test):
+    """Codex P2: a review-* agent job with a FALSEY review_head ('') is routed by
+    the runner (_run_one, truthiness) as a NORMAL agent job -> is_review must be
+    False, else prune could delete an agent/promotion worktree."""
+    d = "review-fa15e000"
+    jid = _enqueue_review(d, review_head="")           # empty string -> falsey
+    _seed_run(conn_test, jid, status="succeeded", attempt=1)
+    assert engine.review_dispatch_statuses([d])[d]["is_review"] is False
+
+
+def test_falsey_review_head_worktree_is_unknown_not_prunable(prune_env):
+    """End-to-end: the falsey-review_head agent worktree is preserved (unknown),
+    NOT prunable."""
+    conn, runs, created = prune_env
+    d = "review-fa15e001"
+    jid = _enqueue_review(d, review_head="")
+    _seed_run(conn, jid, status="succeeded", attempt=1)
+    _add_wt(runs, created, d)
+    assert _classify_map()[d] == "unknown"             # preserved, not deleted
+
+
 # ------------------------- Task 4: CLI verb + exit codes ----------------------
 
 from apex_jobs import cli

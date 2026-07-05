@@ -649,7 +649,8 @@ def review_dispatch_statuses(dispatch_ids):
     (UNIQUE in jobs.job). Returns {dispatch_id: {is_review, any_running, status,
     claimed_at, finished_at}} for every input id that HAS a jobs.job row; ids
     with no job row are absent (-> orphan). is_review = codex-review job
-    (kind='agent' AND payload.review_head set). any_running = any run for the job
+    (kind='agent' AND payload.review_head is a non-empty JSON string, matching
+    the runner's truthiness routing). any_running = any run for the job
     is status='running' (regardless of lease). status/claimed_at/finished_at come
     from the LATEST run by (claimed_at DESC, attempt DESC). One query. Raises
     psycopg.OperationalError/InterfaceError on connection failure."""
@@ -658,7 +659,8 @@ def review_dispatch_statuses(dispatch_ids):
     with _conn() as conn, conn.cursor() as cur:
         cur.execute(
             "select j.dispatch_id, "
-            "       (j.kind = 'agent' and (j.payload ->> 'review_head') is not null) as is_review, "
+            "       coalesce(j.kind = 'agent' and jsonb_typeof(j.payload -> 'review_head') = 'string' "
+            "                and (j.payload ->> 'review_head') <> '', false) as is_review, "
             "       exists (select 1 from jobs.run r "
             "               where r.job_id = j.id and r.status = 'running') as any_running, "
             "       lr.status, lr.claimed_at, lr.finished_at "
