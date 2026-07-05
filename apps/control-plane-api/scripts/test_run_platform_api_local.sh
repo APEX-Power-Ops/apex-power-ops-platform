@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Argv-contract test for run_platform_api_local.sh. Proves the launcher invokes
-# inject.sh with the exact `dev -- uvicorn ...` argv. This is NOT a cutover proof:
+# inject.sh with the exact `dev -- .venv/bin/python -m uvicorn ...` argv. NOT a cutover proof:
 # it does not run uvicorn, import main.py, or touch Infisical. Value-silent (no
 # secret values are involved).
 set -uo pipefail
@@ -25,9 +25,9 @@ printf '%s\n' "$*" > "$CAPTURE"
 STUB
 chmod +x "$tmp/infra/infisical/inject.sh"
 
-CAPTURE="$tmp/argv.txt" bash "$tmp/apps/control-plane-api/scripts/run_platform_api_local.sh"
+env -u HOST -u PORT CAPTURE="$tmp/argv.txt" bash "$tmp/apps/control-plane-api/scripts/run_platform_api_local.sh"
 got="$(cat "$tmp/argv.txt" 2>/dev/null || echo '<none>')"
-expected='dev -- uvicorn main:app --app-dir apps/control-plane-api --host 127.0.0.1 --port 8010'
+expected='dev -- .venv/bin/python -m uvicorn main:app --app-dir apps/control-plane-api --host 127.0.0.1 --port 8010'
 if [[ "$got" == "$expected" ]]; then
   say "PASS  launcher argv contract"
 else

@@ -79,7 +79,10 @@ if printf '%s' "$out" | grep -qE "PASS  cache-coverage check ran \([0-9]+ manage
 
 # --- Value-silence: the PLACEHOLDER must never appear in any output ------------
 for r in "$r1" "$r2" "$r3" "$r4" "$r5"; do
-  if run_audit "$r" | grep -qF -- "$PLACEHOLDER"; then say "FAIL  value-silent violation: placeholder leaked"; fail=1; fi
+  # capture first: under set -o pipefail a failing audit (rc=1) would mask a
+  # grep match (rc=0), hiding a leak in exactly the failing-audit output.
+  vout="$(run_audit "$r")"
+  if printf '%s' "$vout" | grep -qF -- "$PLACEHOLDER"; then say "FAIL  value-silent violation: placeholder leaked"; fail=1; fi
 done
 say "PASS  value-silent: placeholder absent from all output"
 

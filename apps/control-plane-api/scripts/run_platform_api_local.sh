@@ -8,5 +8,5 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$ROOT"
 exec infra/infisical/inject.sh dev -- \
-  uvicorn main:app --app-dir apps/control-plane-api \
+  .venv/bin/python -m uvicorn main:app --app-dir apps/control-plane-api \
   --host "${HOST:-127.0.0.1}" --port "${PORT:-8010}"
