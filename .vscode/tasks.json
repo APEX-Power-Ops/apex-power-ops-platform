@@ -2,7 +2,8 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run platform API local",
+      "label": "Run platform API local (non-ops, Windows)",
+      "detail": "Runs WITHOUT Infisical OPS_*; the ops routers do NOT mount. For ops-router work use apps/control-plane-api/scripts/run_platform_api_local.sh on the dev-residency host.",
       "type": "shell",
       "command": "pwsh",
       "args": [
@@ -22,7 +23,8 @@
       "group": "build"
     },
     {
-      "label": "Restart platform API local",
+      "label": "Restart platform API local (non-ops, Windows)",
+      "detail": "Runs WITHOUT Infisical OPS_*; the ops routers do NOT mount. For ops-router work use apps/control-plane-api/scripts/run_platform_api_local.sh on the dev-residency host.",
       "type": "shell",
       "command": "pwsh",
       "args": [
