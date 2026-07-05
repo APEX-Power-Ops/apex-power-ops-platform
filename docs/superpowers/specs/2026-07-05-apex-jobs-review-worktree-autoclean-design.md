@@ -1,6 +1,6 @@
 # apex-jobs Review-Worktree Auto-Clean Design
 
-**Status:** rev 3 (two dual-engine audit rounds folded; forks A1 + B1 + C2 operator-ratified 2026-07-05). Rev 1 → rev 2 fixed a convergent fatal (no-force remove semantics) + a stale-attempt race; rev 2 → rev 3 folds the cross-engine re-review (label-truth, narrowed exception isolation, `already_absent`, no-force wording, and the C2 cross-process decision). Not final until the rev-3 Codex pass is clean and the operator approves.
+**Status:** rev 4 (three dual-engine audit rounds folded; forks A1 + B1 + C2 operator-ratified 2026-07-05). Rev 1 → rev 2 fixed a convergent fatal (no-force remove semantics) + a stale-attempt race; rev 2 → rev 3 folded label-truth + narrowed exception isolation + `already_absent` + C2; rev 3 → rev 4 folds the third Codex pass (guard reorder for `already_absent`-before-`superseded`, corrected cross-process reachability wording, same-process guarantee attributed to the lock not the currency check, added tests). Not final until the rev-4 Codex pass is clean and the operator approves.
 
 **Goal:** Stop `apex-jobs` review-runs from leaking detached worktrees at the source, by having `run_review_job` remove its own disposable worktree after a **pristine, succeeded, still-current** review — never demoting a good review because housekeeping hiccuped, never deleting anything `prune-review-worktrees` would preserve, and leaving that verb as the durable backstop.
 
@@ -40,14 +40,14 @@
 
 ## Concurrency posture (guardrail wording)
 
-This design is **safe for the current single-worker deployment; cross-process stale-attempt hardening is deferred.** It is *not* claimed safe under arbitrary multi-process concurrency. Precisely:
+This design is **safe for normal single-worker, unique-dispatch-id operation; cross-process stale-attempt hardening is deferred.** It is *not* claimed safe under arbitrary multi-process concurrency. Precisely:
 
-- **Same-process (one `run_pool` worker, N threads):** fully safe. All worktree mutations share the module `_WORKTREE_LOCK`; the currency guard (`run_is_current`) + the lock serialize a stale attempt's cleanup against a newer attempt's setup.
-- **Cross-process (two worker processes on the same job):** a residual stale-attempt race remains — process A's committed-DB currency check can pass microseconds before process B commits attempt-2 and re-creates the shared `runs/<dispatch_id>` path, after which A's plain remove could delete B's live worktree. `_WORKTREE_LOCK` is a `threading.Lock` (in-process only) and cannot serialize this. **This is not reachable in the current dev-only, single-worker deployment** (a job only gets a second attempt via lease-expiry requeue, and both attempts run in the same pool process). It is accepted as deferred hardening.
+- **Same-process (one `run_pool` worker, N threads):** filesystem-safe. All worktree mutations — every attempt's setup `worktree add` **and** the cleanup `worktree remove` — share the module `_WORKTREE_LOCK`. Because a newer attempt's `worktree add` and a stale attempt's cleanup `remove` are mutually exclusive under that lock, **a stale cleanup can never delete a newer attempt's live worktree**: the newer worktree either does not exist yet (blocked on the lock) or the stale cleanup has already completed on its own tree. The `run_is_current` currency check is a **best-effort early-out** (it avoids an unnecessary remove when a newer attempt is already committed), *not* the safety barrier — the lock is. A stale run may still label its own tree `cleaned` even though a newer attempt has committed by recording time; that is honest (it cleaned its own pristine tree) and harmless.
+- **Cross-process (two processes creating attempts for the same job):** a residual stale-attempt race remains — process A's committed-DB currency check can pass microseconds before process B commits a new attempt and re-creates the shared `runs/<dispatch_id>` path, after which A's plain remove could delete B's live worktree. `_WORKTREE_LOCK` is a `threading.Lock` (in-process only) and cannot serialize this. Reachable only when two processes create attempts for the **same job** concurrently: (i) multiple queue-draining worker processes (not the current dev-only single-worker deployment), or (ii) deliberate concurrent reuse of the **same explicit `--dispatch-id`** across two `review-run`/`enqueue-review` invocations. Normal `review-run` auto-generates a unique `review-<hex8>` per call, so normal single-invocation use never hits this. Accepted as deferred hardening.
 
 ## Deferred hardening
 
-A future **dispatch/worktree-lifecycle advisory-lock lane** is the correct home for the cross-process fix: a Postgres advisory lock keyed on `dispatch_id`, held around **both** the start-time worktree create/remove (in `run_review_job` *and* `run_agent_job`) **and** the cleanup remove. That lane also owns the **pre-existing** cross-process hazard this lane does not touch: the start-time `git worktree remove --force` can already delete a concurrent attempt's live tree across processes today, independent of auto-clean. Bundling both into one lifecycle-lock spec keeps the fix coherent; splitting a partial advisory lock into this lane would half-solve it and leave the startup race open.
+A future **dispatch/worktree-lifecycle advisory-lock lane** is the correct home for the cross-process fix: a Postgres advisory lock keyed on `dispatch_id`, held around **both** the start-time worktree create/remove (in `run_review_job` *and* `run_agent_job`) **and** the cleanup remove. That lane closes all cross-process cases at once: (i) multiple queue-draining workers, and (ii) concurrent same-`--dispatch-id` reuse. It also owns the **pre-existing** cross-process hazard this lane does not touch: the start-time `git worktree remove --force` can already delete a concurrent attempt's live tree across processes today, independent of auto-clean. Bundling both into one lifecycle-lock spec keeps the fix coherent; splitting a partial advisory lock into this lane would half-solve it and leave the startup race open.
 
 ## Design
 
@@ -59,9 +59,9 @@ Recorded on **every** review run, merged into `jobs.run.result`. Exactly one of:
 |---|---|---|---|
 | `not_attempted` | review not `succeeded` (failed / timeout / error) — cleanup never attempted | preserved | `failed` |
 | `kept` | succeeded + `payload.keep_worktree` true (opt-out) | preserved | `succeeded` |
-| `superseded_preserved` | succeeded, not kept, but a **newer attempt** owns the shared path (currency guard) | preserved | `succeeded` |
+| `already_absent` | succeeded, not kept, but the worktree dir was **already gone** at cleanup time (raced by an explicit prune or a newer attempt's teardown) — benign, no action | already gone | `succeeded` |
+| `superseded_preserved` | succeeded, not kept, dir **present**, but a **newer attempt** owns the path — cleanup took no action (did not remove) | untouched | `succeeded` |
 | `dirty_preserved` | succeeded, not kept, current, but `git status --porcelain --ignored` **non-empty** | preserved | `succeeded` |
-| `already_absent` | succeeded, not kept, current, but the worktree dir was **already gone** before removal (e.g. raced by an explicit prune) — benign, no action | already gone | `succeeded` |
 | `cleaned` | succeeded, not kept, current, **pristine**, plain `git worktree remove` returned 0 | removed | `succeeded` |
 | `failed_preserved` | succeeded, not kept, current, pristine attempt, but `git worktree remove` returned non-zero, **or** `git status` errored, **or** the decision block raised | preserved | `succeeded` |
 
@@ -116,17 +116,17 @@ def _cleanup_review_worktree(repo, wt, run_id):
     """Decide + apply cleanup for a SUCCEEDED, non-kept review worktree. Caller has already
     confirmed status=='succeeded' and keep is false. Runs under _WORKTREE_LOCK. OWNS the fs
     mutation and returns the TRUE disposition label. Value-silent: returns a bare label, never a
-    path or git stderr. Guard order is load-bearing:
-      1. currency  -> newer attempt owns this shared path -> 'superseded_preserved' (touch nothing)
-      2. absent    -> dir already gone (raced by explicit prune) -> 'already_absent' (benign)
+    path or git stderr. Guard order is load-bearing (filesystem truth first):
+      1. absent    -> dir already gone (raced by prune / a newer attempt's teardown) -> 'already_absent'
+      2. currency  -> dir present but a newer attempt owns it -> 'superseded_preserved' (touch nothing)
       3. dirtiness -> git status --porcelain --ignored non-empty -> 'dirty_preserved' (never remove)
       4. remove    -> plain `git worktree remove` (NEVER --force): rc 0 -> 'cleaned', else 'failed_preserved'
     """
     with _WORKTREE_LOCK:
-        if not engine.run_is_current(run_id):
-            return "superseded_preserved"
         if not os.path.isdir(wt):
-            return "already_absent"
+            return "already_absent"                    # fs truth first: nothing to clean or preserve
+        if not engine.run_is_current(run_id):
+            return "superseded_preserved"              # present, but a newer attempt owns it -> touch nothing
         st = _git("status", "--porcelain", "--ignored", cwd=wt, check=False)
         if st.returncode != 0:
             return "failed_preserved"                 # git error -> preserve, do not guess
@@ -136,7 +136,7 @@ def _cleanup_review_worktree(repo, wt, run_id):
         return "cleaned" if r.returncode == 0 else "failed_preserved"
 ```
 
-- **Currency guard first** (same-process guarantee): if superseded, the path hosts a newer attempt's checkout — touch nothing. `run_is_current` is a committed-DB read; combined with `_WORKTREE_LOCK` it serializes stale-vs-new within one process. The cross-process residual is deferred (see Concurrency posture).
+- **Filesystem truth first, then currency:** `already_absent` (dir gone) takes priority over `superseded_preserved`, so the label is always the true fs disposition. If the dir is present but superseded, it hosts a newer attempt's checkout — touch nothing. The same-process safety comes from `_WORKTREE_LOCK` (a stale cleanup `remove` and a newer attempt's `worktree add` are mutually exclusive), **not** from the currency check, which is a best-effort early-out. The cross-process residual is deferred (see Concurrency posture).
 - **Dirtiness = prune's definition** (Fork A1): `git status --porcelain --ignored`, identical to `prune._worktree_flags`. Non-empty (including ignored caches like `.pytest_cache/`, `__pycache__/`) → `dirty_preserved`; the code path never reaches `remove` on a dirty tree, so git's `--force`-off ignored-file deletion can never fire.
 - Only `returncode`/emptiness drive labels; git stdout/stderr are never surfaced.
 
@@ -221,13 +221,16 @@ Tests use `APEX_JOBS_AGENT_CMD` against real `orchestration_test` with throwaway
 | 4 | dirty pre-check prevents the remove call | spy on `agent_runner._git`: when `status --porcelain --ignored` non-empty, no `("worktree","remove",...)` call; the cleanup remove never contains `"--force"` |
 | 5 | superseded attempt → preserved | seed a newer run (higher attempt) for the job → `run_is_current` False → `superseded_preserved`; dir present |
 | 6 | already-gone → already_absent | remove the dir after report but before cleanup → `already_absent`; status `succeeded` |
+| 6b | already-gone **+ newer attempt** → already_absent | dir gone AND a newer attempt exists (seed higher-attempt run) → helper returns `already_absent` (fs-truth-first ordering, **not** `superseded_preserved`) |
 | 7 | record failure never relabels | monkeypatch `engine.set_run_cleanup` to raise on a pristine success → summary `cleaned` (dir gone), run `succeeded`, `review-run` exits 0 |
 | 8 | decision-block failure → failed_preserved + not demoted | monkeypatch `engine.run_is_current` to raise → `failed_preserved`; run `succeeded`; exit 0 |
+| 8b | set_run_artifacts raises → cleanup still runs | monkeypatch `engine.set_run_artifacts` to raise → cleanup proceeds, `worktree_path` unset, run `succeeded`; prune still classifies by dispatch_id (worktree_path NULL) |
 | 9 | `--keep-worktree` → preserved | succeeded + keep → `kept`; dir present |
 | 10 | keep OR-merge (enqueue-review) | `--payload '{"keep_worktree":true}'` **without** the flag → `payload.keep_worktree==True` → `kept`; flag-without-payload also `kept`; neither → cleanup runs |
 | 11 | failed review → not_attempted | `not_attempted`; dir present; run `failed` |
 | 12 | CLI flag on both entrypoints | argparse parses `--keep-worktree` for `review-run` and `enqueue-review`; `review-run --json` includes `cleanup_status` |
 | 13 | concurrent/pool path | two reviews cleaning under `_WORKTREE_LOCK` via `run_pool` → both terminate with valid labels; no `index.lock`/registry race |
+| 13b | same-dispatch-id concurrency (labels) | seed a second run for the same job (simulates concurrent same-`--dispatch-id` review-run) → `run_is_current`/`already_absent` labels correct; **note in the test** that the true cross-process delete race is the deferred lifecycle-lock lane, not unit-testable here |
 | 14 | value-silence | printed/JSON/stored output is basenames/labels/counts only — no worktree paths beyond the pre-existing `worktree_path`, no file contents, no git stderr; swallowed-exception logs carry class names only |
 | 15 | existing prune tests still pass | `test_prune.py` unchanged and green (regression) |
 
@@ -264,6 +267,15 @@ Auto-clean removes only the pristine-success case; prune remains the durable bac
 | `--keep-worktree` won't retrofit an existing dispatch row | Documented caveat (enqueue conflict updates title only) |
 | currency-guard DB read inside `_WORKTREE_LOCK` | Considered; not a defect (sub-second independent read, no deadlock) |
 
+**Round 3 (rev 3 → rev 4):**
+| Finding (sev) | Resolution |
+|---|---|
+| `already_absent + superseded` mislabeled by currency-before-isdir order (label-truth) | Reordered helper: `isdir`→`already_absent` **before** currency→`superseded_preserved`; fs truth first |
+| "not reachable in single-worker" overclaims — reachable via concurrent same-`--dispatch-id` `review-run` reuse | Corrected Concurrency posture wording; reachable only via multi-worker **or** deliberate same-explicit-id reuse (normal review-run uses unique ids); both closed by the deferred lane |
+| same-process guarantee mis-attributed to the currency check | Reworded: the safety barrier is `_WORKTREE_LOCK`; the currency check is a best-effort early-out |
+| test matrix not exhaustive (set_run_artifacts-raise, already_absent+superseded, same-dispatch-id) | Added cases 6b, 8b, 13b |
+| no-force wording; value-silence of class-name logging | **Confirmed closed** — cleanup remove is plain, test 4 scoped to cleanup; logs carry `type(e).__name__` only |
+
 ## Verification
 
-Host-only suite: `export PATH=$HOME/.local/bin:$PATH`; source canonical `infra/.env`; `APEX_JOBS_DB=orchestration_test uv run --with 'psycopg[binary]' --with pytest --with-editable . pytest`. Whole suite green (prune tests included) + new `test_review_autoclean.py`. **Rerun the Codex cross-engine review on rev 3 before writing the plan** (operator-required).
+Host-only suite: `export PATH=$HOME/.local/bin:$PATH`; source canonical `infra/.env`; `APEX_JOBS_DB=orchestration_test uv run --with 'psycopg[binary]' --with pytest --with-editable . pytest`. Whole suite green (prune tests included) + new `test_review_autoclean.py`. **Rerun the Codex cross-engine review on rev 4 before writing the plan** (operator-required).
