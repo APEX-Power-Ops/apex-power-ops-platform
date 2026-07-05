@@ -190,9 +190,11 @@ Algorithm:
        out-of-`$ROOT` offsite-backup cache), and
    (b) a RECURSIVE sweep `find -L "$ROOT" -name '.env*'` (all depths; `find -L`
        follows symlinks so a symlinked cache is emitted, not skipped), and
-   (c) a recursive `find -L` over the containing directory of every registered
-       `CACHES` entry that lies OUTSIDE `$ROOT`, so an out-of-`$ROOT` registered
-       dir is still swept for siblings.
+   (c) a DEPTH-1 `find -L <dir> -maxdepth 1 -name '.env*'` over the containing
+       directory of every registered `CACHES` entry that lies OUTSIDE `$ROOT`
+       (depth-1, NOT recursive: the offsite-backup cache's dir is the parent of
+       ALL worktrees, so a recursive sweep there would be catastrophic) -- this
+       catches a stray sibling like `~/code/apex/.env` without descending.
    Exclusions use a PURPOSE-BUILT set -- `node_modules` and the literal basenames
    `*.example` / `*.sample` / `*.template` -- NOT `infra/.secret-audit-allow`
    (whose `*/tests/*` and `.vscode/*` globs would wrongly suppress a real runtime
@@ -392,9 +394,10 @@ trailer `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
    silent stale raw-uvicorn path -- WITHOUT minting a Windows Infisical credential
    cache.
 10. Check 1d coverage (IRP F1): widen discovery to recursive `find -L "$ROOT"
-    -name '.env*'` + every registered cache dir, `%d:%i` dedup, Check 1c's anchored
-    regex, purpose-built excludes; scope section 10 honestly (under-`$ROOT` +
-    registered; out-of-`$ROOT` unregistered must use `APEX_EXTRA_CACHES`).
+    -name '.env*'` + registered cache paths (depth-1 sibling scan for out-of-`$ROOT`
+    ones), `%d:%i` dedup, Check 1c's anchored regex, purpose-built excludes; scope
+    section 10 honestly (under-`$ROOT` + registered; out-of-`$ROOT` unregistered
+    must use `APEX_EXTRA_CACHES`).
 11. Windows checkout (IRP F6): operator purges OPS_* from a Windows-local
     `apps/control-plane-api/.env` if present, records "not present" if absent; no
     Windows Infisical cache; `.ps1` stays non-ops.
