@@ -8,6 +8,8 @@ on:
       - packages/records-import/**
       - infra/secret-audit.sh
       - infra/database/migrations/records/**
+      - apps/control-plane-api/scripts/run_platform_api_local.sh
+      - apps/control-plane-api/scripts/test_run_platform_api_local.sh
       - .github/workflows/records-ci.yml
 
 jobs:
@@ -63,5 +65,7 @@ jobs:
         run: bash infra/database/migrations/records/test_secret_audit_ac8.sh
       - name: Secret-audit env allowlist fixture test
         run: bash infra/database/migrations/records/test_secret_audit_env_allowlist.sh
+      - name: Control-plane launcher argv contract test
+        run: bash apps/control-plane-api/scripts/test_run_platform_api_local.sh
       - name: Run the records validation gate
         run: python infra/database/migrations/records/run_validation.py --require-db
