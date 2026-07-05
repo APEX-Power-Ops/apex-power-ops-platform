@@ -402,6 +402,51 @@ def test_recheck_status_flip_to_failed_preserves(prune_env, monkeypatch):
     assert item["action"] == "preserved" and item["classification"] == "failed"
 
 
+def test_git_enumeration_failure_refuses(prune_env, tmp_path, monkeypatch):
+    """Codex P2: `git worktree list` failing (bad APEX_JOBS_REPO) must REFUSE, not
+    read empty stdout as 'no worktrees' and exit 0."""
+    conn, runs, created = prune_env
+    notgit = str(tmp_path / "notgit")
+    os.makedirs(notgit, exist_ok=True)
+    monkeypatch.setenv("APEX_JOBS_REPO", notgit)     # non-git path -> git exits non-zero
+    res = prune.prune_review_worktrees(apply=True)
+    assert res["refused"] is True and res["refused_reason"] == "git-unavailable"
+    assert res["applied"] is False                   # nothing enumerated, nothing done
+
+
+def test_partial_apply_refusal_marks_applied(prune_env, monkeypatch):
+    """Codex P2: a mid-loop DB refusal AFTER a removal must keep applied=True so the
+    summary is not mislabeled as a dry-run."""
+    conn, runs, created = prune_env
+    for name in ("review-dead0001", "review-dead0002"):
+        jid = _enqueue_review(name)
+        _seed_run(conn, jid, status="succeeded", attempt=1)
+        _add_wt(runs, created, name)
+    real = engine.review_dispatch_statuses
+    calls = {"n": 0}
+    def flaky(ids):
+        calls["n"] += 1
+        # call 1 = classify (full list); call 2 = first recheck (ok, removes);
+        # call 3 = second recheck -> drop the connection.
+        if calls["n"] >= 3:
+            raise psycopg.OperationalError("dropped")
+        return real(ids)
+    monkeypatch.setattr(engine, "review_dispatch_statuses", flaky)
+    res = prune.prune_review_worktrees(apply=True)
+    assert res["refused"] is True and res["applied"] is True    # partial apply, not dry-run
+    removed = [i for i in res["items"] if i["action"] == "removed"]
+    assert len(removed) == 1                                    # one removed before the refusal
+
+
+def test_cli_git_unavailable_exit3(prune_env, tmp_path, monkeypatch, capsys):
+    conn, runs, created = prune_env
+    notgit = str(tmp_path / "notgit")
+    os.makedirs(notgit, exist_ok=True)
+    monkeypatch.setenv("APEX_JOBS_REPO", notgit)
+    assert cli.main(["prune-review-worktrees", "--apply"]) == 3
+    assert "git-unavailable" in capsys.readouterr().out
+
+
 # ------------------------- Task 4: CLI verb + exit codes ----------------------
 
 from apex_jobs import cli

@@ -209,7 +209,10 @@ def cmd_prune_review_worktrees(a):
         print(json.dumps(res, indent=2))
     else:
         if res["refused"]:
-            print("db-unreachable: refusing to prune (cannot verify active runs)")
+            if res.get("refused_reason") == "git-unavailable":
+                print("git-unavailable: refusing to prune (cannot enumerate worktrees)")
+            else:
+                print("db-unreachable: refusing to prune (cannot verify active runs)")
         for i in res["items"]:
             print(f"{i['basename']}  {i['classification']:<12}  {i['action']:<12}  "
                   f"status={i['status']}  active={i['active']}  "

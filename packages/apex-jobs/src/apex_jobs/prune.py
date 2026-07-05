@@ -24,6 +24,12 @@ class DbUnreachable(Exception):
     host/port/user)."""
 
 
+class GitUnavailable(Exception):
+    """git worktree enumeration itself failed (non-zero exit) -- we cannot see the
+    real worktree set, so an empty listing must NOT be read as authoritative.
+    Value-silent (carries no git stderr)."""
+
+
 @dataclass
 class ReviewWorktree:
     path: str
@@ -41,9 +47,14 @@ def _norm(path):
 
 
 def _porcelain_worktrees(repo):
-    """Parse `git worktree list --porcelain` -> list of {path, locked}."""
-    out = agent_runner._git("worktree", "list", "--porcelain", cwd=repo,
-                            check=False).stdout
+    """Parse `git worktree list --porcelain` -> list of {path, locked}. Raises
+    GitUnavailable on a non-zero git exit -- an empty stdout from a FAILED git
+    command (bad/unset APEX_JOBS_REPO, non-git path) must not read as 'no
+    worktrees', which would make --apply a silent exit-0 no-op."""
+    r = agent_runner._git("worktree", "list", "--porcelain", cwd=repo, check=False)
+    if r.returncode != 0:
+        raise GitUnavailable()
+    out = r.stdout
     entries, cur = [], None
     for line in out.splitlines():
         if line.startswith("worktree "):
@@ -168,6 +179,15 @@ def _item_dict(w):
             "active": w.active}
 
 
+def _refusal(items, reason, applied, remove_failed=0):
+    """Value-silent refusal summary. `applied` is True when apply mode already
+    mutated worktrees before the refusal (a PARTIAL apply -- not a dry-run)."""
+    src = items or []
+    return {"items": [_item_dict(x) for x in src], "counts": _counts(src),
+            "applied": applied, "remove_failed": remove_failed,
+            "refused": True, "refused_reason": reason}
+
+
 def prune_review_worktrees(apply=False, include_failed=False):
     """Classify (frozen snapshot); under apply, remove each prunable with a
     per-item recheck-before-remove (the ONLY DB call in the loop) and plain
@@ -177,8 +197,9 @@ def prune_review_worktrees(apply=False, include_failed=False):
     try:
         items = classify_review_worktrees(include_failed=include_failed)
     except DbUnreachable:
-        return {"items": [], "counts": {}, "applied": False,
-                "remove_failed": 0, "refused": True}
+        return _refusal(None, "db-unreachable", applied=False)
+    except GitUnavailable:
+        return _refusal(None, "git-unavailable", applied=False)
     remove_failed = 0
     if apply:
         for w in items:
@@ -189,14 +210,18 @@ def prune_review_worktrees(apply=False, include_failed=False):
                 # git/fs facts, then FULLY re-classify -- remove only if it is STILL
                 # prunable (still a review, allowed terminal status, not-active,
                 # clean, not-locked, exists). This is the only DB call in the loop.
+                # A refusal HERE is a PARTIAL apply (earlier items already removed)
+                # -> applied=True so the summary never reads as a dry-run.
                 try:
                     snap = engine.review_dispatch_statuses([w.dispatch_id])
+                    cand = _fresh_candidate(repo, runs, w.dispatch_id)
                 except (psycopg.OperationalError, psycopg.InterfaceError):
-                    return {"items": [_item_dict(x) for x in items],
-                            "counts": _counts(items), "applied": False,
-                            "remove_failed": remove_failed, "refused": True}
+                    return _refusal(items, "db-unreachable", applied=True,
+                                    remove_failed=remove_failed)
+                except GitUnavailable:
+                    return _refusal(items, "git-unavailable", applied=True,
+                                    remove_failed=remove_failed)
                 db = snap.get(w.dispatch_id)
-                cand = _fresh_candidate(repo, runs, w.dispatch_id)
                 if cand is None:
                     w.classification, w.action = "unknown", "preserved"
                     continue
@@ -214,4 +239,5 @@ def prune_review_worktrees(apply=False, include_failed=False):
                     w.classification, w.action = "remove-failed", "preserved"
                     remove_failed += 1
     return {"items": [_item_dict(w) for w in items], "counts": _counts(items),
-            "applied": apply, "remove_failed": remove_failed, "refused": False}
+            "applied": apply, "remove_failed": remove_failed, "refused": False,
+            "refused_reason": None}
