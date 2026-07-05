@@ -32,6 +32,7 @@ say "========================================"
 say "[1] runtime secret-cache permissions"
 declare -a CACHES=(
   "$ROOT/infra/.env:0"
+  "$ROOT/apps/control-plane-api/.env:0"
   "$HOME/code/apex/.env.dev-pg-offsite-backup:0"
 )
 for extra in ${APEX_EXTRA_CACHES:-}; do CACHES+=("$extra:0"); done
@@ -104,6 +105,56 @@ if [[ -f "$MANAGED" ]]; then
   fi
 fi
 
+# ---- Check 1d: cache-coverage completeness (device+inode-aware) -----------
+# Guarantees the physical caches actually holding a managed name are a SUBSET of
+# the registered, scanned CACHES -- so drift-verify cannot false-green on a cache
+# nobody registered, within a bounded discovery set (every .env* under $ROOT plus
+# registered caches plus depth-1 siblings of out-of-$ROOT registered dirs).
+# Dormant unless .managed-secrets names >= 1 secret (same trigger as Check 1c).
+if [[ -f "$MANAGED" && "${#MNAMES[@]}" -gt 0 ]]; then
+  # 1. Registered device+inode set (follow symlinks; %d:%i is cross-fs safe).
+  declare -A REGISTERED_DEVINO=()
+  for entry in "${CACHES[@]}"; do
+    rf="${entry%:*}"; [[ -e "$rf" ]] || continue
+    di="$(stat -L -c '%d:%i' "$rf" 2>/dev/null)" || continue
+    [[ -n "$di" ]] && REGISTERED_DEVINO["$di"]=1
+  done
+  # 2. Discover candidates: registered paths + recursive find -P under $ROOT +
+  #    depth-1 siblings of out-of-$ROOT registered dirs. -P does not descend
+  #    directory symlinks (no escape from $ROOT) but matches .env* symlink files.
+  declare -a CANDIDATES=()
+  for entry in "${CACHES[@]}"; do rf="${entry%:*}"; [[ -e "$rf" ]] && CANDIDATES+=("$rf"); done
+  while IFS= read -r f; do [[ -n "$f" ]] && CANDIDATES+=("$f"); done < <(
+    find -P "$ROOT" -name '.env*' \( -type f -o -type l \) \
+      -not -path '*/node_modules/*' -not -path '*/.git/*' \
+      -not -name '*.example' -not -name '*.sample' -not -name '*.template' 2>/dev/null
+  )
+  for entry in "${CACHES[@]}"; do
+    rf="${entry%:*}"; case "$rf" in "$ROOT"/*) continue;; esac
+    rdir="$(dirname "$rf")"; [[ -d "$rdir" ]] || continue
+    while IFS= read -r f; do [[ -n "$f" ]] && CANDIDATES+=("$f"); done < <(
+      find -P "$rdir" -maxdepth 1 -name '.env*' \( -type f -o -type l \) \
+        -not -name '*.example' -not -name '*.sample' -not -name '*.template' 2>/dev/null
+    )
+  done
+  # 3. FAIL any managed name in an UNREGISTERED candidate; dedup + count by devino.
+  declare -A SEEN_DEVINO=()
+  d_count=0; cov_fail=0
+  for f in "${CANDIDATES[@]}"; do
+    di="$(stat -L -c '%d:%i' "$f" 2>/dev/null)" || continue
+    [[ -n "$di" && -z "${SEEN_DEVINO[$di]:-}" ]] || continue
+    SEEN_DEVINO["$di"]=1; d_count=$((d_count+1))
+    [[ -n "${REGISTERED_DEVINO[$di]:-}" ]] && continue   # registered -> Check 1c's domain
+    for nm in "${MNAMES[@]}"; do
+      if grep -qE "^[[:space:]]*(export[[:space:]]+)?${nm}[[:space:]]*=" "$f" 2>/dev/null; then
+        say "  FAIL  uncovered cache holds managed name: $nm in $f"; rc=1; cov_fail=1
+      fi
+    done
+  done
+  prefix="PASS"; [[ "$cov_fail" == "1" ]] && prefix="FAIL"
+  say "  $prefix  cache-coverage check ran (${#MNAMES[@]} managed name(s), $d_count caches discovered, ${#REGISTERED_DEVINO[@]} registered)"
+fi
+
 # ---- Check 2: leaked credentials in tracked files ------------------------
 say ""
 say "[2] leaked credentials in tracked files"
@@ -118,6 +169,7 @@ if [[ -f "$ALLOWFILE" ]]; then
 fi
 allowed_file() {
   local f="$1" p
+  # shellcheck disable=SC2053  # $p is an allowlist glob pattern; RHS glob match is intentional
   for p in "${ALLOW[@]:-}"; do [[ -n "$p" && "$f" == $p ]] && return 0; done
   return 1
 }
@@ -197,12 +249,14 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   # that from static config and does not try to.
   KEYPAT="([Uu][Ss][Ee][Rr]|[Rr][Oo][Ll][Ee]|[Pp][Gg][Uu][Ss][Ee][Rr]|[Pp][Gg][Rr][Oo][Ll][Ee])"
   VALPAT="(['\"][^'\"]*['\"]|[^[:space:]]+)"
+  # shellcheck disable=SC2086  # RECORDS_SERVING_GLOBS is a space-separated glob list; word-splitting into grep path args is intentional
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-non-app-role]"; rc=1
   done < <(grep -rHInoE "\b${KEYPAT}[[:space:]]*=[[:space:]]*${VALPAT}" ${RECORDS_SERVING_GLOBS} 2>/dev/null \
              | grep -vE ":${KEYPAT}[[:space:]]*=[[:space:]]*['\"]?(records_api|records_intake_writer|records_auditor)(\.[a-z0-9]+)?['\"]?\$" \
              | cut -d: -f1,2)
+  # shellcheck disable=SC2086  # RECORDS_SERVING_GLOBS is a space-separated glob list; word-splitting into grep path args is intentional
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-bypass-credential]"; rc=1
@@ -229,6 +283,7 @@ if [[ -n "${RECORDS_SERVING_GLOBS:-}" ]]; then
   # both the match and the allowlist below, the same trap rule (a) already
   # avoids for keys: a naive global -i would also case-fold the ROLE VALUE
   # and wrongly sanction POSTGRESQL://RECORDS_API.
+  # shellcheck disable=SC2086  # RECORDS_SERVING_GLOBS is a space-separated glob list; word-splitting into grep path args is intentional
   while IFS= read -r loc; do
     [[ -z "$loc" ]] && continue
     say "  FIND  ${loc}  [rule: records-serving-url-non-app-role]"; rc=1

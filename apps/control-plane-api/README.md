@@ -216,6 +216,14 @@ apps/control-plane-api/
 
 ## Platform-First Operation
 
+> **Ops-router work (intake / recognition):** use the Infisical-backed host launcher
+> `apps/control-plane-api/scripts/run_platform_api_local.sh` (Olares dev-residency, over the mesh).
+> It injects `OPS_API_DSN` and `OPS_INTAKE_WRITER_DSN` from Infisical `dev` at runtime, so the ops
+> intake and recognition routers mount without any secret living in a `.env` cache. The
+> `run_platform_api_local.ps1` commands below are NON-OPS: they run the control plane WITHOUT
+> Infisical-sourced `OPS_*`, so the ops routers do NOT mount unless those names already exist in the
+> Windows environment. OPS_* come from Infisical dev (mesh) locally and from Render's dashboard env in production.
+
 When working inside the bootstrap root, prefer these commands from `/home/olares/code/apex/apex-power-ops-platform`:
 
 ```
