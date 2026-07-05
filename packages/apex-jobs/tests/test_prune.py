@@ -376,3 +376,83 @@ def test_prune_refusal_summary_on_db_unreachable(prune_env, monkeypatch):
     res = prune.prune_review_worktrees(apply=True)
     assert res["refused"] is True and res["applied"] is False
     assert all(i["action"] == "refused" for i in res["items"]) or res["items"] == []
+
+
+# ------------------------- Task 4: CLI verb + exit codes ----------------------
+
+from apex_jobs import cli
+
+
+def test_cli_dryrun_exit0_and_reports(prune_env, capsys):
+    conn, runs, created = prune_env
+    d = "review-c11d0001"
+    jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1)
+    _add_wt(runs, created, d)
+    assert cli.main(["prune-review-worktrees"]) == 0
+    out = capsys.readouterr().out
+    assert d in out and "prunable" in out
+
+
+def test_cli_json_shape(prune_env, capsys):
+    conn, runs, created = prune_env
+    d = "review-c11d0002"
+    jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1)
+    _add_wt(runs, created, d)
+    assert cli.main(["prune-review-worktrees", "--json"]) == 0
+    import json
+    payload = json.loads(capsys.readouterr().out)
+    item = [i for i in payload["items"] if i["dispatch_id"] == d][0]
+    assert set(item) >= {"basename", "classification", "action", "status",
+                         "claimed_at", "finished_at", "active"}
+
+
+def test_cli_apply_exit0(prune_env, capsys):
+    conn, runs, created = prune_env
+    d = "review-c11d0003"
+    jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1)
+    p = _add_wt(runs, created, d)
+    assert cli.main(["prune-review-worktrees", "--apply"]) == 0
+    assert not os.path.isdir(p)
+
+
+def test_cli_remove_failed_exit2(prune_env, monkeypatch, capsys):
+    conn, runs, created = prune_env
+    d = "review-c11d0004"
+    jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1)
+    _add_wt(runs, created, d)
+    real_git = agent_runner._git
+    def refuse(*args, cwd, check=True):
+        if args[:2] == ("worktree", "remove"):
+            class R:
+                returncode = 128
+                stdout = ""
+                stderr = ""
+            return R()
+        return real_git(*args, cwd=cwd, check=check)
+    monkeypatch.setattr(agent_runner, "_git", refuse)
+    assert cli.main(["prune-review-worktrees", "--apply"]) == 2
+
+
+def test_cli_db_unreachable_exit3_valuesilent(prune_env, monkeypatch, capsys):
+    conn, runs, created = prune_env
+    d = "review-c11d0005"
+    _enqueue_review(d)
+    _add_wt(runs, created, d)
+    def raise_op(_ids):
+        raise psycopg.OperationalError("password authentication failed for user secret")
+    monkeypatch.setattr(engine, "review_dispatch_statuses", raise_op)
+    assert cli.main(["prune-review-worktrees", "--apply"]) == 3
+    out = capsys.readouterr().out
+    assert "db-unreachable" in out
+    assert "password" not in out and "secret" not in out       # value-silent
+
+
+def test_cli_include_failed_help_warns_irreversible(capsys):
+    with pytest.raises(SystemExit):
+        cli.main(["prune-review-worktrees", "--help"])
+    out = capsys.readouterr().out
+    assert "gc-unrecoverable" in out or "gc unrecoverable" in out

@@ -1,7 +1,7 @@
 """apex-jobs CLI - thin argparse wrapper over the engine. `apex-jobs <verb> ...`.
 
 Verbs: enqueue, enqueue-review, review-run, queue, claim, start, report, request-gate, approve, reject,
-gates, status, ledger, reap, promotions, review, unblock. Returns an int exit
+gates, status, ledger, reap, promotions, review, prune-review-worktrees, unblock. Returns an int exit
 code (3 = gated/refused).
 """
 import argparse
@@ -198,6 +198,35 @@ def cmd_review_run(a):
     return 0 if summary["status"] == "succeeded" else 3
 
 
+def cmd_prune_review_worktrees(a):
+    """Safely prune leaked codex-review worktrees under the runs dir. Dry-run by
+    default; --apply removes succeeded+clean+not-active+not-locked review
+    worktrees. Value-silent. Exit 0 clean, 2 if any remove-failed, 3 on
+    db-unreachable refusal."""
+    from . import prune
+    res = prune.prune_review_worktrees(apply=a.apply, include_failed=a.include_failed)
+    if a.json:
+        print(json.dumps(res, indent=2))
+    else:
+        if res["refused"]:
+            print("db-unreachable: refusing to prune (cannot verify active runs)")
+        for i in res["items"]:
+            print(f"{i['basename']}  {i['classification']:<12}  {i['action']:<12}  "
+                  f"status={i['status']}  active={i['active']}  "
+                  f"claimed={i['claimed_at']}  finished={i['finished_at']}")
+        c = res["counts"]
+        prunable = c.get("prunable", 0)
+        preserved = sum(v for k, v in c.items() if k != "prunable")
+        verb = "removed" if res["applied"] else "would-remove"
+        print(f"{len(res['items'])} candidates: {prunable} {verb}, {preserved} preserved  "
+              f"[{', '.join(f'{k}={v}' for k, v in sorted(c.items()))}]")
+    if res["refused"]:
+        return 3
+    if res["remove_failed"] > 0:
+        return 2
+    return 0
+
+
 def build_parser():
     p = argparse.ArgumentParser(prog="apex-jobs", description="APEX orchestration task bus")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -304,6 +333,16 @@ def build_parser():
     ub = sub.add_parser("unblock")
     ub.add_argument("ident")
     ub.set_defaults(fn=cmd_unblock)
+
+    pw = sub.add_parser("prune-review-worktrees",
+                        help="safely remove leaked codex-review worktrees under the runs dir")
+    pw.add_argument("--apply", action="store_true",
+                    help="actually remove prunable worktrees (default: dry-run)")
+    pw.add_argument("--include-failed", action="store_true", dest="include_failed",
+                    help="also prune FAILED review worktrees. WARNING: a failed review "
+                         "tree is detached (no branch ref); removal may be gc-unrecoverable")
+    pw.add_argument("--json", action="store_true")
+    pw.set_defaults(fn=cmd_prune_review_worktrees)
 
     return p
 
