@@ -642,3 +642,39 @@ def list_promotions():
             "                   where job_id=j.id order by attempt desc limit 1) r on true "
             "where j.status='awaiting_promotion' order by j.updated_at desc")
         return cur.fetchall()
+
+
+def review_dispatch_statuses(dispatch_ids):
+    """Per-dispatch DB status for prune classification, keyed on dispatch_id
+    (UNIQUE in jobs.job). Returns {dispatch_id: {is_review, any_running, status,
+    claimed_at, finished_at}} for every input id that HAS a jobs.job row; ids
+    with no job row are absent (-> orphan). is_review = codex-review job
+    (kind='agent' AND payload.review_head is a non-empty JSON string, matching
+    the runner's truthiness routing). any_running = any run for the job
+    is status='running' (regardless of lease). status/claimed_at/finished_at come
+    from the LATEST run by (claimed_at DESC, attempt DESC). One query. Raises
+    psycopg.OperationalError/InterfaceError on connection failure."""
+    if not dispatch_ids:
+        return {}
+    with _conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            "select j.dispatch_id, "
+            "       coalesce(j.kind = 'agent' and jsonb_typeof(j.payload -> 'review_head') = 'string' "
+            "                and (j.payload ->> 'review_head') <> '', false) as is_review, "
+            "       exists (select 1 from jobs.run r "
+            "               where r.job_id = j.id and r.status = 'running') as any_running, "
+            "       lr.status, lr.claimed_at, lr.finished_at "
+            "from jobs.job j "
+            "left join lateral (select status, claimed_at, finished_at from jobs.run "
+            "                   where job_id = j.id "
+            "                   order by claimed_at desc, attempt desc limit 1) lr on true "
+            "where j.dispatch_id = any(%s)",
+            (list(dispatch_ids),),
+        )
+        return {r["dispatch_id"]: {
+            "is_review": r["is_review"],
+            "any_running": r["any_running"],
+            "status": r["status"],
+            "claimed_at": r["claimed_at"],
+            "finished_at": r["finished_at"],
+        } for r in cur.fetchall()}
