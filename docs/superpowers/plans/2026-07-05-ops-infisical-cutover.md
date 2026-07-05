@@ -177,9 +177,15 @@ In `.github/workflows/records-ci.yml`, beside the existing
       - name: control-plane-api launcher argv contract test
         run: bash apps/control-plane-api/scripts/test_run_platform_api_local.sh
 ```
-Add `apps/control-plane-api/scripts/run_platform_api_local.sh` to the workflow's
-`paths:` trigger list if it gates on changed paths (mirror how
-`infra/secret-audit.sh` is listed).
+If the workflow gates on changed `paths:`, add BOTH new files so a change to
+either re-runs the check (a path filter listing only the launcher would skip a
+test-only edit):
+```yaml
+      - apps/control-plane-api/scripts/run_platform_api_local.sh
+      - apps/control-plane-api/scripts/test_run_platform_api_local.sh
+```
+Optionally also add `apps/control-plane-api/scripts/run_platform_api_local.ps1` so
+the Windows-launcher reconciliation triggers the same lightweight checks.
 
 - [ ] **Step 6: ASCII-check and commit**
 
@@ -366,12 +372,18 @@ ln -s "$outside" "$r3/.env.linked"       # symlink under ROOT, name matches .env
 out="$(run_audit "$r3")"
 if printf '%s' "$out" | grep -qF "uncovered cache holds managed name: $MNAME"; then say "PASS  case3 symlink-to-outside FAIL"; else say "FAIL  case3 symlink not discovered"; fail=1; fi
 
-# --- Case 4: symlink to a REGISTERED cache -> %d:%i collapse, no spurious FAIL -
+# --- Case 4: symlink to a REGISTERED cache that HOLDS the managed name ---------
+# The registered target carries OPS_API_DSN so a broken symlink/devino dedup would
+# treat the symlink as an unregistered cache and emit an uncovered FAIL -- this
+# case only proves collapse because the managed name is present to trigger it.
 r4="$tmp/c4"; make_repo "$r4"; arm "$r4"
-printf 'DEV_PG_PASSWORD=%s\n' "$PLACEHOLDER" > "$r4/infra/.env"; chmod 600 "$r4/infra/.env"  # registered, no managed name
+printf '%s=%s\n' "$MNAME" "$PLACEHOLDER" > "$r4/infra/.env"; chmod 600 "$r4/infra/.env"  # registered, HOLDS the managed name
 ln -s "$r4/infra/.env" "$r4/apps/.env.mirror"   # symlink to the registered infra/.env
 out="$(run_audit "$r4")"
-if printf '%s' "$out" | grep -qF "uncovered cache holds managed name"; then say "FAIL  case4 spurious uncovered-FAIL on registered-target symlink"; fail=1; else say "PASS  case4 registered-target symlink collapsed (no spurious FAIL)"; fi
+# Check 1c drift MUST fire (managed name still copied in the registered cache):
+if printf '%s' "$out" | grep -qF "drift: '$MNAME' is Infisical-managed but still copied"; then say "PASS  case4 Check 1c drift fires for registered cache"; else say "FAIL  case4 drift not raised"; fail=1; fi
+# Check 1d MUST NOT emit an uncovered-cache FAIL: the symlink collapses onto the registered devino:
+if printf '%s' "$out" | grep -qF "uncovered cache holds managed name"; then say "FAIL  case4 spurious uncovered-FAIL (broken symlink/devino dedup)"; fail=1; else say "PASS  case4 registered-target symlink collapsed (no uncovered-FAIL)"; fi
 
 # --- Case 5: clean -> PASS summary with non-zero discovered count, rc=0 --------
 r5="$tmp/c5"; make_repo "$r5"; arm "$r5"
@@ -550,13 +562,20 @@ the agent assists value-silent but NEVER edits a credential value.
    - `apex-power-ops-platform/apps/control-plane-api/.env`: remove the same two.
    - If a Windows-local checkout exists: remove the same two from BOTH its
      `apps/control-plane-api/.env` AND its `infra/.env`; else record "not present."
-3. **Post-purge proof.**
-   - POSITIVE: `apps/control-plane-api/scripts/run_platform_api_local.sh`; assert
-     the OpenAPI surface advertises BOTH ops routes (intake AND recognition) --
-     fail if either is missing.
-   - NEGATIVE control: `env -u OPS_API_DSN -u OPS_INTAKE_WRITER_DSN uvicorn
-     main:app --app-dir apps/control-plane-api` (no inject.sh); assert NEITHER ops
-     route is advertised.
+3. **Post-purge proof (pin ports -- raw uvicorn defaults to 8000, the launcher to
+   8010; a mismatched URL or a still-running positive process would confuse the
+   negative proof).**
+   - POSITIVE (one shell): `PORT=8010 apps/control-plane-api/scripts/run_platform_api_local.sh`;
+     then `curl -s http://127.0.0.1:8010/openapi.json` and assert BOTH ops routes
+     are present (the intake AND recognition paths). STOP this process before the
+     negative control.
+   - NEGATIVE control (fresh shell, no inject.sh, OPS_* unset, DISTINCT port):
+     `env -u OPS_API_DSN -u OPS_INTAKE_WRITER_DSN .venv/bin/python -m uvicorn
+     main:app --app-dir apps/control-plane-api --host 127.0.0.1 --port 8011`; then
+     `curl -s http://127.0.0.1:8011/openapi.json` and assert NEITHER ops route is
+     present. Stop the process.
+   The ops routes appearing ONLY in the positive proof shows OPS_* now come from
+   Infisical and the caches are truly purged.
 4. **Verify no lingering copy (value-silent, names only):**
    ```bash
    cd /home/olares/code/apex/apex-power-ops-platform
