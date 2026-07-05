@@ -262,3 +262,56 @@ def test_tail_artifacts_failure_distinct_and_still_cleans(prune_env, monkeypatch
     assert any("set_run_artifacts error" in m for m in msgs)
     assert not any("review cleanup error" in m for m in msgs)
     assert not any("set_run_cleanup error" in m for m in msgs)
+
+
+# ============================== Task 4: CLI ===================================
+
+def test_enqueue_review_or_merges_payload_keep(prune_env):
+    args = cli.build_parser().parse_args(
+        ["enqueue-review", "--dispatch-id", "review-e0000001", "--review-head", "HEAD",
+         "--base-ref", "HEAD~1", "--payload", '{"keep_worktree": true}'])
+    args.fn(args)
+    assert engine.get_job("review-e0000001")["payload"].get("keep_worktree") is True
+
+
+def test_enqueue_review_flag_sets_keep(prune_env):
+    args = cli.build_parser().parse_args(
+        ["enqueue-review", "--dispatch-id", "review-e0000002", "--review-head", "HEAD",
+         "--base-ref", "HEAD~1", "--keep-worktree"])
+    args.fn(args)
+    assert engine.get_job("review-e0000002")["payload"].get("keep_worktree") is True
+
+
+def test_enqueue_review_neither_defaults_false(prune_env):
+    args = cli.build_parser().parse_args(
+        ["enqueue-review", "--dispatch-id", "review-e0000003", "--review-head", "HEAD",
+         "--base-ref", "HEAD~1"])
+    args.fn(args)
+    assert bool(engine.get_job("review-e0000003")["payload"].get("keep_worktree")) is False
+
+
+def test_review_run_json_includes_cleanup_status(prune_env, capsys, monkeypatch):
+    conn, runs, created = prune_env
+    created.append("review-e0000004")
+    monkeypatch.setenv("APEX_JOBS_AGENT_CMD", json.dumps(FINDINGS_OK))
+    args = cli.build_parser().parse_args(
+        ["review-run", "--review-head", "HEAD", "--base-ref", "HEAD~1",
+         "--dispatch-id", "review-e0000004", "--json"])
+    rc = args.fn(args)
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 0
+    assert out["cleanup_status"] == "cleaned"
+    assert not os.path.isdir(os.path.join(runs, "review-e0000004"))
+
+
+def test_review_run_keep_flag_preserves(prune_env, capsys, monkeypatch):
+    conn, runs, created = prune_env
+    created.append("review-e0000005")
+    monkeypatch.setenv("APEX_JOBS_AGENT_CMD", json.dumps(FINDINGS_OK))
+    args = cli.build_parser().parse_args(
+        ["review-run", "--review-head", "HEAD", "--base-ref", "HEAD~1",
+         "--dispatch-id", "review-e0000005", "--json", "--keep-worktree"])
+    args.fn(args)
+    out = json.loads(capsys.readouterr().out)
+    assert out["cleanup_status"] == "kept"
+    assert os.path.isdir(os.path.join(runs, "review-e0000005"))
