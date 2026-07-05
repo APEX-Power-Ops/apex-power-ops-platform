@@ -8,7 +8,8 @@ arming the two NAMES in `.managed-secrets`.
 
 **Goal:** Make `OPS_API_DSN` and `OPS_INTAKE_WRITER_DSN` sourced-from-Infisical
 for local-dev control-plane work, with NO copy left in any real host cache and a
-drift audit that cannot false-green on an unregistered cache.
+drift audit that cannot false-green on an unregistered cache within its bounded
+discovery set (section 10).
 
 **Architecture:** One committed Infisical-backed host launcher for
 control-plane-api local dev; a reconciliation of the pre-existing Windows
@@ -311,8 +312,9 @@ by NAME, never a value):
    and that the summary `discovered` count proves the planted cache was actually
    enumerated (so a mis-built fixture fails loudly instead of passing).
 3. Unregistered SYMLINK pointing to an OUTSIDE physical cache that holds an armed
-   NAME -> `find -L` follows it and Check 1d FAILs (proves symlink DISCOVERY, not
-   just `stat -L` dedup).
+   NAME -> `find -P` discovers the `.env*` symlink file (matched by `-type l`) and
+   `stat -L`/grep resolve and read its target -> Check 1d FAILs (proves symlink
+   DISCOVERY, not just `stat -L` dedup).
 4. SYMLINK to a REGISTERED cache -> collapses by device+inode: no double-FAIL and
    no spurious uncovered-FAIL.
 5. Clean state (armed name absent from every cache) -> Check 1d PASS summary with a
@@ -411,9 +413,10 @@ trailer `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
    distinct ops-host launcher instruction, and update the README -- so it is not a
    silent stale raw-uvicorn path -- WITHOUT minting a Windows Infisical credential
    cache.
-10. Check 1d coverage (IRP F1): widen discovery to recursive `find -L "$ROOT"
-    -name '.env*'` + registered cache paths (depth-1 sibling scan for out-of-`$ROOT`
-    ones), `%d:%i` dedup, Check 1c's anchored regex, purpose-built excludes; scope
+10. Check 1d coverage (IRP F1): widen discovery to recursive
+    `find -P "$ROOT" -name '.env*' \( -type f -o -type l \)` + `stat -L` +
+    registered cache paths (depth-1 sibling scan for out-of-`$ROOT` ones), `%d:%i`
+    dedup, Check 1c's anchored regex, purpose-built excludes; scope
     section 10 honestly (under-`$ROOT` + registered; out-of-`$ROOT` unregistered
     must use `APEX_EXTRA_CACHES`).
 11. Windows checkout (IRP F6): operator purges OPS_* from a Windows-local
