@@ -38,7 +38,7 @@ from apex_jobs.worker import run_once, run_forever
 run_once(as_="cc", env="host")          # claim→gates→subprocess(payload.command)→report
 run_forever(as_="cc", env="host", poll_s=5.0)
 ```
-The subprocess runs with `APEX_JOB_ENV` set to the worker's env.
+The command subprocess runs with `APEX_JOB_ENV` set to the worker's env.
 
 The command subprocess runs with a **sanitized, default-deny environment**
 (`_env.sanitized_env`): only an allowlist of non-secret names (HOME, PATH,
@@ -81,6 +81,10 @@ A **`kind='agent'`** job runs a headless agent in an isolated git worktree off i
   crash-safe. `discard_promotion` snapshots to `refs/discarded/<id>` (recoverable).
 - **durability:** each `run` carries `lease_expires_at` + `heartbeat_at`; `reap()` requeues/fails
   lease-expired runs (crash recovery).
+- **env isolation:** agent and review subprocesses receive a **sanitized** env --
+  `_agent_env` builds a default-deny allowlisted subset of the worker env (HOME,
+  PATH, locale, XDG dirs) plus `APEX_JOB_ENV`; the worker's DB passwords / DSNs /
+  tokens are **not** inherited (command jobs, above, still run with the worker env).
 - **CLI:** `enqueue --kind agent --base-ref <b> --prompt <p>` · `promotions` · `review <job>` ·
   `approve --gate <g> --by operator` (→ promote) · `reject` (→ discard).
 
