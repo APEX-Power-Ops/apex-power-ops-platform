@@ -6,11 +6,13 @@ fake agent), so the whole runner is exercised without claude / tokens / OAuth.
 REPO + RUNS_DIR are resolved at call time from the env so tests can redirect them.
 run_pool() fans execution out across threads, bounded by `concurrency`.
 """
+import fcntl
 import logging
 import os
 import subprocess
 import threading
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+from contextlib import contextmanager
 
 from . import engine
 from . import _env
@@ -27,6 +29,40 @@ TIMEOUT_S = int(os.environ.get("APEX_JOBS_AGENT_TIMEOUT_S", "3600"))
 # read-only diff.
 _WORKTREE_LOCK = threading.Lock()
 log = logging.getLogger(__name__)
+
+_O_CLOEXEC = getattr(os, "O_CLOEXEC", 0)
+
+
+@contextmanager
+def _worktree_flock(runs, dispatch_id):
+    """Local RUNNER-process-liveness FUSE (NOT a coordinator) for runs/<dispatch_id>.
+    Non-blocking exclusive flock on the sibling lockfile. Yields True if acquired (no
+    live local process holds the path), False if held OR the fuse cannot be established
+    (fs error -> fail-closed). The fd is O_CLOEXEC so it is not inherited by the codex
+    child: the flock releases exactly on the runner process's death. Value-silent."""
+    fd = None
+    acquired = False
+    try:
+        path = os.path.join(runs, dispatch_id + ".lock")
+        os.makedirs(runs, exist_ok=True)
+        fd = os.open(path, os.O_CREAT | os.O_RDWR | _O_CLOEXEC, 0o600)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            acquired = True
+        except OSError:
+            acquired = False
+    except OSError:
+        acquired = False
+    try:
+        yield acquired
+    finally:
+        try:
+            if fd is not None:
+                if acquired:
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+                os.close(fd)
+        except OSError:
+            pass
 
 # Per-target headless agent command templates; {prompt} is substituted. Exact
 # claude flags are pinned in Task 0 Step 4 before the live path is trusted.

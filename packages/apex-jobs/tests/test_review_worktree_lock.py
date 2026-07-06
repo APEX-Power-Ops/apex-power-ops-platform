@@ -147,3 +147,43 @@ def test_release_claim_noop_on_succeeded(conn_test):
     _set_status(conn_test, jid, "succeeded")
     engine.release_claim(jid)
     assert _status(conn_test, jid) == "succeeded"
+
+
+# ---- Task 3: _worktree_flock runner-liveness fuse ----
+def test_f1_flock_process_death_release(tmp_path):
+    runs = str(tmp_path)
+    d = "review-f1000001"
+    lockpath = os.path.join(runs, d + ".lock")
+    fd = os.open(lockpath, os.O_CREAT | os.O_RDWR, 0o600)   # simulate a live holder
+    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with agent_runner._worktree_flock(runs, d) as ok:
+        assert ok is False                                  # occupied
+    os.close(fd)                                            # holder "dies" -> kernel releases
+    with agent_runner._worktree_flock(runs, d) as ok2:
+        assert ok2 is True
+
+
+def test_f1b_flock_fd_is_cloexec(tmp_path):
+    runs = str(tmp_path)
+    d = "review-f1b00001"
+    # While holding the flock inside the CM, a child subprocess opening its OWN fd
+    # must be BLOCKED (we hold LOCK_EX) and must not have inherited our fd.
+    with agent_runner._worktree_flock(runs, d) as ok:
+        assert ok is True
+        code = (
+            "import fcntl,os,sys\n"
+            f"fd=os.open({os.path.join(runs, d + '.lock')!r},os.O_CREAT|os.O_RDWR,0o600)\n"
+            "try:\n fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB); print('GOT')\n"
+            "except OSError: print('BLOCKED')\n"
+        )
+        r = subprocess.run(["python3", "-c", code], capture_output=True, text=True)
+        assert "BLOCKED" in r.stdout                        # our held flock blocks the child
+
+
+def test_f4_fs_error_fail_closed(tmp_path, monkeypatch):
+    runs = str(tmp_path)
+    def boom(*a, **k):
+        raise OSError("ENOSPC /runs/review-x.lock")
+    monkeypatch.setattr(agent_runner.os, "open", boom)
+    with agent_runner._worktree_flock(runs, "review-f4000001") as ok:
+        assert ok is False                                  # fail-closed, value-silent
