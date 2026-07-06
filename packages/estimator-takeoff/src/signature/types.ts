@@ -97,4 +97,4 @@ export interface TransferSwitchSignature extends BaseSignature {
   // voltageClass stays optional (inherited): contextual; never gates.
 }
 
-export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature | GfpSignature | InstrumentTransformerSignature | SwitchSignature
+export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature | GfpSignature | InstrumentTransformerSignature | SwitchSignature | TransferSwitchSignature

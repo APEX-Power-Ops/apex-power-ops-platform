@@ -1,5 +1,5 @@
 import type { ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, GfpSignature, TransformerSignature, TripFunction, VoltageBasis, InstrumentTransformerSignature, ItxPackaging, ItxPackagingEvidence, ItxType, SwitchType, SwitchSignature } from './types'
+import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, GfpSignature, TransformerSignature, TripFunction, VoltageBasis, InstrumentTransformerSignature, ItxPackaging, ItxPackagingEvidence, ItxType, SwitchType, SwitchSignature, TransferSwitchSignature } from './types'
 import type { OperatorQuestion, OperatorQuestionCode } from '../buckets/types'
 import { classifyVoltage } from './voltage'
 
@@ -424,6 +424,8 @@ export type AssessmentCode =
   | 'unrecognized_apparatus_row'
   | 'switch_recognized'
   | 'switch_parent_conflict'
+  | 'transfer_recognized'
+  | 'transfer_parent_conflict'
 
 export interface ApparatusAssessment {
   signature: ApparatusSignature | null
@@ -490,8 +492,38 @@ function assessSwitch(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Appar
   return { signature: sig, isBreakerShaped: false, assessmentCode: 'switch_recognized', questions: [] }
 }
 
+// Transfer-switch assessor (T1-B). A transfer-anchored row that carries a breaker/trip signal (LSIG frame trip
+// function, a breaker/draw-out token) OR a co-located non-transfer parent device (UPS/PDU/SPD/etc.) is a
+// PARENT CONFLICT, not a transfer switch. Otherwise build the TransferSwitchSignature. Bare AF/AT is rating
+// evidence only (parseTransferAmp), NOT a conflict signal.
+function assessTransferSwitch(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
+  const { TRANSFER_TRIP_FN, TRANSFER_BREAKER_CONFLICT, TRANSFER_CONFLICT_NONBREAKER } = _transferGuards
+  if (TRANSFER_TRIP_FN.test(x.raw) || TRANSFER_BREAKER_CONFLICT.test(x.raw) || TRANSFER_CONFLICT_NONBREAKER.test(x.raw)) {
+    return {
+      signature: null, isBreakerShaped: false, assessmentCode: 'transfer_parent_conflict',
+      questions: [q(x, 'Transfer-anchored row carries a breaker/trip or a co-located non-transfer device signal; confirm whether it is a transfer switch or a breaker/parent.', 'transfer_parent_conflict')],
+    }
+  }
+  const sig: TransferSwitchSignature = {
+    kind: 'transfer_switch',
+    automationClass: parseAutomationClass(x.raw),
+    bypassIsolation: parseBypassIsolation(x.raw),
+    ampRating: parseTransferAmp(x.raw),
+    voltageClass: classifyVoltage(x.busVoltageV),
+    voltageV: x.busVoltageV,
+    voltageBasis: voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none'),
+    source: { sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block },
+    tag: x.tag,
+  }
+  return { signature: sig, isBreakerShaped: false, assessmentCode: 'transfer_recognized', questions: [] }
+}
+
 // PRIVATE -- the basis-taking core. NOT exported.
 function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
+  // Producer hard-win: an explicit candidateKind:'transfer_switch' routes to the transfer family before any
+  // text-based family predicate (beats looksLikeRelay/looksLikeSwitch/looksLikeTransformer wording).
+  if (x.candidateKind === 'transfer_switch') return assessTransferSwitch(x, voltageBasis)
+
   if (looksLikeInstrumentTransformer(x)) {
     return assessInstrumentTransformer(x, voltageBasis)
   }
@@ -517,6 +549,13 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
 
   if (looksLikeSwitch(x)) {
     return assessSwitch(x, voltageBasis)
+  }
+
+  // Transfer-switch text route: a TAGGED ATS/MTS/STS/transfer-switch anchor (looksLikeTransferSwitch requires a
+  // tag) routes to the transfer family BEFORE the NON_BREAKER catch. A tagless transfer token still falls through
+  // to the NON_BREAKER tail (non_breaker_carries_rating / non_breaker_excluded), unchanged.
+  if (looksLikeTransferSwitch(x)) {
+    return assessTransferSwitch(x, voltageBasis)
   }
 
   if (NON_BREAKER.test(x.raw)) {

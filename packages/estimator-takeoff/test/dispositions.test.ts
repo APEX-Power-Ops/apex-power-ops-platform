@@ -48,13 +48,13 @@ describe('dispositions', () => {
     const a = art([
       row({ raw: 'MSB 4000AF/4000AT LSIG', tag: 'A', busVoltageV: 480, mountingHint: 'draw_out' }), // matched
       row({ raw: 'SPARE', tag: 'A' }),                                                                // unrecognized_apparatus_row
-      row({ raw: 'ATS 800AF/800AT LSIG', tag: 'A' }),                                                 // non_breaker_carries_rating
+      row({ raw: 'ATS 800AF/800AT LSIG', tag: 'A' }),                                                 // transfer_parent_conflict (Task 3: tagged ATS + LSIG trip -> transfer family conflict; was non_breaker_carries_rating)
       row({ raw: 'MCB 100AF/100AT', tag: 'A' }),                                                      // AUTHORITATIVE missing_voltage (distinct device)
     ])
     const d = runTakeoff(a).dispositions
     expect(d[0]!.status).toBe('matched')
     expect(d[1]!).toMatchObject({ status: 'question', reasonCode: 'unrecognized_apparatus_row' })
-    expect(d[2]!).toMatchObject({ status: 'question', reasonCode: 'non_breaker_carries_rating' })
+    expect(d[2]!).toMatchObject({ status: 'question', reasonCode: 'transfer_parent_conflict' })
     expect(d[3]!).toMatchObject({ status: 'question', reasonCode: 'missing_voltage' })
   })
   it('DOES attach a benign non-authoritative missing-voltage re-occurrence of a counted device', () => {

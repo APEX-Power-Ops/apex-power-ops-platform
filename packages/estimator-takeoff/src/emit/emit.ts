@@ -1,6 +1,6 @@
 import { buildNativeEnvelope, type NativeEnvelopeInput, type NetaStandard } from '@apex/estimator-core'
 import type { ExtractionArtifact, ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, TransformerSignature, RelaySignature, GfpSignature, InstrumentTransformerSignature, SwitchSignature } from '../signature/types'
+import type { ApparatusSignature, BreakerSignature, TransformerSignature, RelaySignature, GfpSignature, InstrumentTransformerSignature, SwitchSignature, TransferSwitchSignature } from '../signature/types'
 import { assessResolvedApparatus } from '../signature/normalize'
 import type { AssessmentCode } from '../signature/normalize'
 import { applyVoltageAssertions } from '../signature/voltage-assertions'
@@ -17,6 +17,8 @@ import { matchInstrumentTransformer } from '../catalog/instrument-transformer-ma
 import { ITX_R1_RATIFIED } from '../catalog/instrument-transformer-map.data'
 import { matchSwitch } from '../catalog/switch-map'
 import { SWITCH_R1_RATIFIED } from '../catalog/switch-map.data'
+import { matchTransferSwitch } from '../catalog/transfer-switch-map'
+import { TRANSFER_R1_RATIFIED } from '../catalog/transfer-switch-map.data'
 import type {
   MatchedLine, OperatorQuestion, TakeoffResult, UnmatchedCandidate, TakeoffFinding,
   ApparatusDisposition, ApparatusDispositionStatus, DispositionReasonCode, ScopePendingLine,
@@ -45,6 +47,8 @@ const ASSESS_TO_REASON: Record<Exclude<AssessmentCode, 'classified'>, Dispositio
   instrument_transformer_type_unparsed:     'instrument_transformer_type_unparsed',
   switch_recognized:        'switch_scope_pending',   // unreachable (has signature); present for exhaustiveness
   switch_parent_conflict:   'switch_parent_conflict',
+  transfer_recognized:      'transfer_scope_pending',   // unreachable (has signature); present for exhaustiveness
+  transfer_parent_conflict: 'transfer_parent_conflict',
 }
 
 // baseDisp creates a LOUD sentinel disposition: its `reason` is UNSTAMPED so assertExhaustive can detect any
@@ -259,6 +263,31 @@ export function runTakeoff(artifact: ExtractionArtifact): TakeoffResult {
         for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'switch_catalog_gap', reason, undefined, line.lineKey)
         findings.push({ code: 'switch_catalog_gap', severity: 'warning', message: reason, context: ssig.tag ?? ssig.source.sheet })
         questions.push({ question: `Catalog gap: ${reason} - estimator must author/confirm a ref before pricing.`, context: ssig.tag ?? ssig.source.sheet, code: 'switch_catalog_gap' })
+      }
+      continue
+    }
+    if (sig.kind === 'transfer_switch') {
+      const xsig: TransferSwitchSignature = sig
+      const scope = matchTransferSwitch(xsig)
+      if (scope) {
+        scopePendingLines.push({
+          candidateRefs: scope.group, provisionalDefaultRef: scope.defaultRef, r1Ratified: TRANSFER_R1_RATIFIED,
+          scopeQuestion: scope.scopeQuestion, qty: line.qty, block: xsig.source.block ?? xsig.source.sheet, line,
+          automationClass: xsig.automationClass, bypassIsolation: xsig.bypassIsolation,
+        })
+        for (const i of line.memberIndices) {
+          stamp(dispositions, i, 'scope_pending', 'transfer_scope_pending', scope.scopeQuestion, undefined, line.lineKey)
+          const disp = dispositions[i]!
+          disp.candidateRefs = scope.group; disp.provisionalDefaultRef = scope.defaultRef; disp.scopeQuestion = scope.scopeQuestion
+          disp.automationClass = xsig.automationClass; disp.bypassIsolation = xsig.bypassIsolation
+        }
+        questions.push({ question: scope.scopeQuestion, context: `${xsig.tag ?? xsig.source.sheet} (transfer ${xsig.automationClass}${xsig.bypassIsolation ? ', iso-bypass' : ''}; candidate group: ${scope.group.join(' | ')})`, code: 'transfer_scope_pending' })
+      } else {
+        const reason = `recognized transfer switch (${xsig.automationClass}${xsig.bypassIsolation ? ', iso-bypass' : ''}) - no applicable priced ref-group`
+        unmatchedCandidates.push({ reason, line })
+        for (const i of line.memberIndices) stamp(dispositions, i, 'unmatched', 'transfer_catalog_gap', reason, undefined, line.lineKey)
+        findings.push({ code: 'transfer_catalog_gap', severity: 'warning', message: reason, context: xsig.tag ?? xsig.source.sheet })
+        questions.push({ question: `Catalog gap: ${reason} - estimator must author/confirm a ref before pricing.`, context: xsig.tag ?? xsig.source.sheet, code: 'transfer_catalog_gap' })
       }
       continue
     }

@@ -25,6 +25,9 @@ function specKey(s: ApparatusSignature): string {
   if (s.kind === 'switch') {
     return [s.kind, s.switchType, s.voltageClass ?? '-', s.fused === undefined ? '-' : (s.fused ? 'F' : 'NF'), s.source.block ?? '-'].join('|')
   }
+  if (s.kind === 'transfer_switch') {
+    return [s.kind, s.automationClass, s.bypassIsolation ? 'BYP' : '-', s.voltageClass ?? '-', s.source.block ?? '-'].join('|')
+  }
   // transformer: full key so two transformers that differ only in coolant/kVA/padMount/ltc get separate lines
   return [s.kind, s.voltageClass, s.voltageV ?? '-', s.voltageBasis, s.source.block ?? '-',
           s.coolant, s.kvaRating ?? '-', s.padMount ? 'pad' : '-', s.ltc ? 'ltc' : '-'].join('|')
@@ -51,6 +54,10 @@ function pickAuthoritative(occ: ApparatusSignature[]): ApparatusSignature | unde
   const richSwitch = auths.find((o) => o.kind === 'switch' && (o.switchType !== 'unknown' || o.fused !== undefined))
     ?? auths.find((o) => o.kind === 'switch' && o.ampRating !== undefined)
   if (richSwitch) return richSwitch
+  // For transfer switches: prefer an occurrence with a legible automationClass (not 'unknown') OR a bypass signal,
+  // so a sparse unknown one-line row cannot win over a detailed schedule row and drop the routing evidence.
+  const richTransfer = auths.find((o) => o.kind === 'transfer_switch' && (o.automationClass !== 'unknown' || o.bypassIsolation !== undefined))
+  if (richTransfer) return richTransfer
   return auths[0]
 }
 

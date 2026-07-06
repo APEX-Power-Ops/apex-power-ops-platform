@@ -29,8 +29,11 @@ describe('normalizeApparatus — parse', () => {
   it('treats a frame-only label (no GB/FB tag) as a breaker', () => {
     expect(normalizeApparatus(mk('MAIN 4000AF/4000AT LSIG', 480))).not.toBeNull()
   })
-  it('returns null for a non-breaker/non-transformer label (ATS without kVA rating)', () => {
-    expect(normalizeApparatus(mk('ATS-1 1000A', 480))).toBeNull()  // ATS still in NON_BREAKER; no kVA/device-token
+  it('a tagged clean-rated ATS builds an automatic transfer signature (Task 3 T1-B; was null pre-transfer-family)', () => {
+    const s = normalizeApparatus(mk('ATS-1 1000A', 480))  // tagged ATS, plain amps, no LSIG -> transfer family (scope_pending)
+    expect(s).not.toBeNull()
+    expect(s!.kind).toBe('transfer_switch')
+    if (s!.kind === 'transfer_switch') expect(s!.automationClass).toBe('automatic')
   })
   it('classifies an MV vacuum breaker', () => {
     const s = asBreaker(normalizeApparatus(mk('MV-SWGR-1 VACUUM 1200A', 13800)))
