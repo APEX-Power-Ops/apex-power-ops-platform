@@ -42,6 +42,32 @@ INS_POLICY_EXISTS = (
     "select count(*) from pg_policies "
     "where schemaname='records' and tablename='audit_log' and policyname='p_audit_log_ins'"
 )
+# audit_log owner (must be records_fn_owner after the cross-role transfer).
+AUDIT_LOG_OWNER = (
+    "select pg_get_userbyid(relowner) from pg_class where oid='records.audit_log'::regclass"
+)
+# records_fn_owner EXACT ALLOWLIST residue: the ONLY permitted pg_shdepend 'a' edge is
+# USAGE on schema records in THIS db. The transient CREATE-on-schema grant taken during
+# the cross-role transfer must be revoked -> this stays 0 (mirrors 048 assert :142-148).
+FN_OWNER_ACL_ALLOWLIST_RESIDUE = (
+    "select count(*) from pg_shdepend s join pg_roles r on r.oid=s.refobjid "
+    "where r.rolname='records_fn_owner' and s.deptype='a' "
+    "  and not (s.classid='pg_namespace'::regclass "
+    "           and s.dbid=(select oid from pg_database where datname=current_database()) "
+    "           and s.objid=(select oid from pg_namespace where nspname='records'))"
+)
+# fn_owner must NOT hold CREATE on schema records at rest (transient CREATE revoked).
+FN_OWNER_HAS_CREATE = (
+    "select has_schema_privilege('records_fn_owner','records','CREATE')"
+)
+# temp-authority residue (046 [4] form): no NON-admin role holds a USABLE
+# (set/inherit) membership INTO records_owner or records_fn_owner (postgres EXEMPT).
+TEMP_AUTHORITY_RESIDUE = (
+    "select count(*) from pg_auth_members am "
+    "join pg_roles ow on ow.oid=am.roleid and ow.rolname in ('records_owner','records_fn_owner') "
+    "join pg_roles m on m.oid=am.member "
+    "where (am.set_option or am.inherit_option) and m.oid <> 'postgres'::regrole"
+)
 
 
 def _q(dsn, sql):
@@ -174,3 +200,184 @@ def test_048_applied_then_down_up():
     assert _q(dsn, FN_EXISTS)[0][0] == 1
     assert _q(dsn, FORCED_RLS)[0][0] is True
     assert _q(dsn, INS_POLICY_EXISTS)[0][0] == 1
+
+
+# --------------------------------------------------------------------------------------
+# SUPABASE-COMPAT green-proof (Task 2.4). Self-driving on RECORDS_PG_ADMIN_DSN: it builds a
+# disposable DB, applies 001-044 + adapted 045 + 046 + 047 + 048 through the NON-super
+# applier, and asserts the adapted 048 SUCCEEDS with the applied posture: audit_log +
+# fn_audit_capture owned by records_fn_owner, audit_log FORCE-RLS, fn_audit_capture
+# SECURITY DEFINER with no PUBLIC EXECUTE, the exact-allowlist residue clean (fn_owner
+# holds EXACTLY USAGE on schema records - the transient CREATE taken for the cross-role
+# transfer is revoked; fn_owner does NOT hold CREATE), and the temp-authority residue
+# clean (no usable non-admin membership into an owner role). It then ALSO drives the WHOLE
+# committed 048_records_audit_log_down.sql through the SAME non-super applier and asserts
+# the objects are dropped + the roles retained. This is the green mirror of
+# test_supabase_compat_redproof.py; 048's compat proof exercises the FULL cross-role
+# create-in-schema + transfer choreography locally, because by 048 the records schema is
+# records_owner-owned even locally (unlike 046's FRESH applier-owned case) - a stronger
+# local proof. It is a LOCAL APPROXIMATION (a real Supabase branch is the fidelity
+# authority, Phase 3).
+# --------------------------------------------------------------------------------------
+import run_validation as rv  # noqa: E402
+
+_ADMIN = os.environ.get("RECORDS_PG_ADMIN_DSN")
+
+compat = pytest.mark.skipif(
+    not _ADMIN, reason="RECORDS_PG_ADMIN_DSN not set - non-super compat green-proof skipped"
+)
+
+# Cluster-level roles the compat proof may leave behind (aborted prior run). Drop the
+# password-less, orphaned set before/after each module run so the proof is idempotent;
+# password-carrying roles are LEFT IN PLACE (DEV-7 safety).
+_DISPOSABLE_ROLES = (
+    "records_api", "records_intake_writer", "records_owner", "records_reclaim_owner",
+    "records_fn_owner", "records_auditor",
+)
+
+
+def _drop_disposable_roles():
+    with psycopg.connect(_ADMIN, autocommit=True) as c:
+        for role in _DISPOSABLE_ROLES:
+            if not c.execute("select 1 from pg_roles where rolname=%s", (role,)).fetchone():
+                continue
+            haspw = c.execute(
+                "select rolpassword is not null from pg_authid where rolname=%s", (role,)
+            ).fetchone()[0]
+            if haspw:
+                continue  # out-of-band password: never drop (DEV-7 discipline)
+            try:
+                c.execute(f'drop owned by "{role}"')
+                c.execute(f'drop role "{role}"')
+            except psycopg.errors.DependentObjectsStillExist:
+                pass  # cross-DB dependency: leave in place
+
+
+@pytest.fixture(scope="module")
+def compat_child():
+    """Disposable DB with 001-044 + adapted 045/046/047/048 applied AS the non-super
+    applier; yields (admin_child_dsn, applier_apply_dsn): the ADMIN child DSN for catalog
+    introspection, and the non-super APPLIER's own apply DSN so a test can drive further
+    SQL (e.g. 048_down) through the SAME non-super identity that applied 048 UP - the
+    identity whose transient owner-role memberships are exactly what Task 2.4's cross-role
+    choreography establishes and revokes. The fixture succeeding IS the green proof that
+    adapted 048 applies under the non-super applier. Value-silent."""
+    if not _ADMIN:
+        pytest.skip("RECORDS_PG_ADMIN_DSN not set")
+    rv.check_admin_dsn(_ADMIN)
+    _drop_disposable_roles()  # clean any orphaned cluster-level roles before applying
+    val = rv.make_val_name()
+    rv.assert_val_name(val)
+    applier = rv.make_local_applier(_ADMIN, rv.LOCAL_APPLIER_ENVELOPE)
+    rv.assert_applier_name(applier.role)
+    with psycopg.connect(_ADMIN, autocommit=True) as c:
+        c.execute(f'create database "{val}"')
+    try:
+        with psycopg.connect(_ADMIN, autocommit=True) as c:
+            c.execute(applier.create_sql)
+            c.execute(f'grant create on database "{val}" to "{applier.role}"')
+        apply_dsn = rv.derive_child_dsn(applier.dsn, val)
+        migs, _ = rv.enumerate_stack(rv.HERE)
+        for num, fname in migs:
+            if num > 48:
+                break
+            rv._apply_as_applier(fname, apply_dsn)  # 001-044, adapted 045/046/047/048; each succeeds
+        yield rv.derive_child_dsn(_ADMIN, val), apply_dsn
+    finally:
+        with psycopg.connect(_ADMIN, autocommit=True) as c:
+            c.execute(f'drop database if exists "{val}" with (force)')
+            c.execute(applier.drop_sql)
+        _drop_disposable_roles()  # do not leave orphaned cluster-level roles behind
+
+
+@compat
+def test_compat_adapted_048_applies_under_non_super(compat_child):
+    # Reaching here means adapted 048 applied AS the non-super applier without raising -
+    # the full create-in-schema + cross-role ownership transfer + owner-only DDL under the
+    # non-super applier is green.
+    admin_dsn, apply_dsn = compat_child
+    assert admin_dsn and apply_dsn
+
+
+@compat
+def test_compat_audit_objects_owned_by_fn_owner(compat_child):
+    # audit_log + fn_audit_capture must both be owned by records_fn_owner (the cross-role
+    # transfer AS records_owner, holding WITH SET in records_fn_owner, landed).
+    admin_dsn, _apply_dsn = compat_child
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        assert c.execute(AUDIT_LOG_OWNER).fetchone()[0] == "records_fn_owner", \
+            "audit_log must be owned by records_fn_owner after the cross-role transfer"
+        owner, secdef, sp_pinned = c.execute(FN_META).fetchone()
+        assert owner == "records_fn_owner", "fn_audit_capture must be owned by records_fn_owner"
+        assert secdef is True, "fn_audit_capture must be SECURITY DEFINER"
+        assert sp_pinned is True, "fn_audit_capture search_path must be pinned"
+
+
+@compat
+def test_compat_audit_log_force_rls_and_no_public_execute(compat_child):
+    admin_dsn, _apply_dsn = compat_child
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        assert c.execute(FORCED_RLS).fetchone()[0] is True, "audit_log must be FORCE-RLS"
+        assert c.execute(FN_PUBLIC_EXECUTE).fetchone()[0] == 0, \
+            "fn_audit_capture must have no PUBLIC EXECUTE"
+
+
+@compat
+def test_compat_fn_owner_exact_allowlist_and_no_create(compat_child):
+    # invariant-8 residue + exact allowlist (048 :137-148): fn_owner holds EXACTLY USAGE on
+    # schema records and NO CREATE - the transient CREATE taken for the cross-role transfer
+    # was revoked before commit.
+    admin_dsn, _apply_dsn = compat_child
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        assert c.execute(FN_OWNER_ACL_ALLOWLIST_RESIDUE).fetchone()[0] == 0, \
+            "records_fn_owner holds an ACL edge beyond USAGE on schema records (transient CREATE leaked?)"
+        assert c.execute(FN_OWNER_HAS_CREATE).fetchone()[0] is False, \
+            "records_fn_owner must NOT hold CREATE on schema records at rest"
+
+
+@compat
+def test_compat_temp_authority_residue_clean(compat_child):
+    # temp-authority residue (046 [4] form): no NON-admin role holds a usable (set/inherit)
+    # membership into records_owner/records_fn_owner. The three transient transfer grants
+    # (postgres->records_owner, postgres->records_fn_owner, records_owner->records_fn_owner)
+    # must be revoked; postgres is EXEMPT.
+    admin_dsn, _apply_dsn = compat_child
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        n = c.execute(TEMP_AUTHORITY_RESIDUE).fetchone()[0]
+        assert n == 0, f"{n} usable non-admin membership edge(s) into an owner role survived 048 UP"
+
+
+@compat
+def test_compat_048_down_full_file_applies_under_non_super(compat_child):
+    # Task 2.4 FULL-FILE RED/GREEN proof: applies the WHOLE committed
+    # 048_records_audit_log_down.sql AS THE SAME NON-SUPER APPLIER that applied 001-048 UP,
+    # then asserts the audit objects are DROPPED and records_fn_owner + records_auditor are
+    # RETAINED (048_down runs BEFORE 047_down, so both roles still exist here). This is the
+    # strongest local proof - the entire file, single BEGIN...COMMIT, under the true
+    # non-super applier - the analog of 047_down's full-file proof.
+    #
+    # Two independent 42501s must both be fixed for this to be GREEN, and reverting EITHER
+    # turns it RED (the whole file is one transaction, so any failure rolls back everything):
+    #   1. `revoke usage on schema records from <role>` ([d1]): needs to run under the schema
+    #      owner's authority (SET ROLE into the derived schema owner records_owner), because
+    #      REVOKE of a schema-USAGE grant requires owning the schema / GRANT OPTION, which the
+    #      bare applier lacks.
+    #   2. `drop function`/`drop table` ([d2]): needs SET ROLE records_fn_owner (via a
+    #      transient WITH SET grant), because DROP requires OWNERSHIP and the objects are
+    #      records_fn_owner-owned.
+    # Driven via rv._apply_as_applier (whole file from disk under the applier DSN, mirroring
+    # the compat fixture's own UP applies) - NOT via _dbtest.run_psql on RECORDS_DEV_DSN,
+    # which runs as the walk's trusted superuser child DB and would mask BOTH bugs.
+    admin_dsn, apply_dsn = compat_child
+    rv._apply_as_applier(DOWN, apply_dsn)  # raises ApplierApplyError on a 42501 regression
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        assert c.execute(AUDIT_LOG_EXISTS).fetchone()[0] == 0, \
+            "audit_log must be DROPPED by 048_down under the non-super applier"
+        assert c.execute(FN_EXISTS).fetchone()[0] == 0, \
+            "fn_audit_capture must be DROPPED by 048_down under the non-super applier"
+        assert c.execute(
+            "select count(*) from pg_roles where rolname='records_fn_owner'"
+        ).fetchone()[0] == 1, "records_fn_owner must be RETAINED (047_down owns its drop)"
+        assert c.execute(
+            "select count(*) from pg_roles where rolname='records_auditor'"
+        ).fetchone()[0] == 1, "records_auditor must be RETAINED (LOGIN-leave)"
