@@ -456,3 +456,26 @@ def test_p4_prune_lock_unavailable_refuses(conn_test, review_env, monkeypatch):
     assert res["refused"] is True and res["refused_reason"] == "db-unreachable"
     subprocess.run(["git", "-C", repo, "worktree", "remove", "--force",
                     os.path.join(runs, d)], check=False)
+
+
+# ---- Task 6: CLI review-run tolerates contended run=None (no IndexError, exit 3) ----
+def test_r7_cli_review_run_contended_no_indexerror(conn_test, review_env, capsys, monkeypatch):
+    from apex_jobs import cli
+    repo, runs = review_env
+    d = "review-b7000001"
+    holder = engine._conn(); holder.autocommit = True
+    with holder.cursor() as cur:
+        cur.execute("select pg_try_advisory_lock(%s, hashtext(%s))",
+                    (engine._REVIEW_WT_LOCK_NS, d))
+    monkeypatch.setenv("APEX_JOBS_AGENT_CMD", '["python3","-c","print(0)"]')
+    try:
+        rc = cli.main(["review-run", "--review-head", "HEAD", "--base-ref", "HEAD",
+                       "--dispatch-id", d, "--json"])
+    finally:
+        with holder.cursor() as cur:
+            cur.execute("select pg_advisory_unlock(%s, hashtext(%s))",
+                        (engine._REVIEW_WT_LOCK_NS, d))
+        holder.close()
+    assert rc == 3                                        # contended -> exit 3, no IndexError
+    out = capsys.readouterr().out
+    assert '"contended": true' in out
