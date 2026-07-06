@@ -7,7 +7,9 @@ that records migrations 045-049 require - on RUN-SUFFIXED scratch roles/objects 
 torn down (zero residue) - then compares the observed outcomes against the Phase-0 baseline
 (see PHASE0-FINDINGS.md) and emits a machine-readable pass/fail matrix. It exits nonzero on ANY
 mismatch (an envelope drift). It also probes the Gate-A ESCALATION path (can `postgres` self-grant
-SET/INHERIT via its admin option) and hard-fails if escalation is possible.
+SET/INHERIT via its admin option, then SET ROLE) and evaluates it against `--gate-a-policy`
+(default `trusted-applier`): under `trusted-applier` the (expected) self-escalation is ACCEPTED and
+reported, not fatal; under `preprovisioned` any self-escalation is a hard failure.
 
 Collision-safety: every scratch role/object name carries a per-run suffix (uuid, or override via
 SUPABASE_PROBE_RUN). The probe NEVER drops a name it did not create this run (no blind pre-drops).
