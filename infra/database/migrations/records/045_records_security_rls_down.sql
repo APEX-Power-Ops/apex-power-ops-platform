@@ -30,7 +30,7 @@ begin
     select nspowner as o from pg_namespace where nspname='records'
     union all
     select relowner from pg_class c join pg_namespace n on n.oid=c.relnamespace
-      where n.nspname='records' and c.relkind in ('r','v','S','p')
+      where n.nspname='records' and c.relkind in ('r','v','m','S','p')
     union all
     select proowner from pg_proc p join pg_namespace n on n.oid=p.pronamespace
       where n.nspname='records'
@@ -44,6 +44,11 @@ begin
   end if;
   v_owner_oid := owner_oids[1];
   v_owner := pg_get_userbyid(v_owner_oid);
+  if v_owner_oid <> v_me_oid
+     and v_owner_oid is distinct from to_regrole('records_reclaim_owner')::oid then
+    raise exception '045_down owner pre-check: unexpected at-rest owner % (expected the applier % or records_reclaim_owner)',
+      v_owner, current_user;
+  end if;
   if v_owner = 'records_reclaim_owner' and v_owner_oid <> v_me_oid then
     execute format('grant records_reclaim_owner to %I with set true, inherit false, admin false', current_user);
   end if;
@@ -55,6 +60,9 @@ end $$;
 do $$
 declare v_owner text; t text;
 begin
+  -- Re-derivation safe ONLY because [d0] above already proved single-owner
+  -- uniformity in this same transaction; do not drop/reorder [d0] without
+  -- re-checking this assumption.
   select pg_get_userbyid(nspowner) into v_owner from pg_namespace where nspname='records';
   execute format('set role %I', v_owner);
 
