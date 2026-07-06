@@ -28,6 +28,28 @@ import _dbtest  # noqa: E402
 import serving_identity  # noqa: E402
 
 
+_PW_RE = re.compile(r"(password=)[^ ]*", re.IGNORECASE)
+_URI_PW_RE = re.compile(r"(://[^:/@ ]+:)[^@ ]*(@)")
+
+
+class RedactedDsn(str):
+    """A DSN str whose repr masks the password token, so a failing pytest
+    fixture-repr never leaks the credential. str(self) is the REAL dsn (psycopg
+    uses it via str() / buffer protocol, unaffected by this repr override).
+
+    Covers both DSN shapes:
+      - keyword form:  host=... password=... sslmode=...   (space-separated)
+      - URI form:       postgresql://user:password@host/db
+    """
+
+    __slots__ = ()
+
+    def __repr__(self):
+        masked = _PW_RE.sub(r"\1***", str.__str__(self))
+        masked = _URI_PW_RE.sub(r"\1***\2", masked)
+        return "RedactedDsn(%r)" % masked
+
+
 class HarnessError(RuntimeError):
     """A harness-contract violation (preflight, naming, sequencing)."""
 
