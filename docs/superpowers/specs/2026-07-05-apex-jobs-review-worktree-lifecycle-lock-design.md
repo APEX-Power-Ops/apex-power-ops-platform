@@ -163,18 +163,22 @@ def _worktree_flock(runs, dispatch_id):
 
 ### 4.4 Runner control flow (`run_review_job`)
 
-Ordering: **PG lock -> `flock` -> `engine.start()` -> `_WORKTREE_LOCK` -> git ops.** `start()` is called only inside the both-locks-held branch, so a losing attempt (PG-not-held, fuse-not-ok, or `LockUnavailable`) opens **no run** and never writes `jobs.job.status`. A loser also `release_claim`s so a pool-claimed job is never stranded.
+Ordering: **PG lock -> `flock` -> `engine.start()` -> `_WORKTREE_LOCK` -> git ops.** `start()` is called only inside the both-locks-held branch, so a losing attempt (PG-not-held, fuse-not-ok, or `LockUnavailable`) opens **no run** and never writes `jobs.job.status`. A loser also `release_claim`s **its own** pool claim so a pool-claimed job is never stranded. `owns_claim` gates that release: the pool path (`_run_one`, which claimed the job) passes `owns_claim=True`; a synchronous `review-run` caller (`cmd_review_run`, which only `get_job`'d the row) passes `owns_claim=False` and MUST NOT release -- otherwise a contended review-run could demote a concurrent worker's legitimate `claimed` job (duplicate claim/run).
 
 ```python
-def run_review_job(job, env, as_="cc", agent_cmd=None):
+def run_review_job(job, env, as_="cc", agent_cmd=None, owns_claim=False):
     repo, runs = _repo(), _runs_dir()
     dispatch_id = job["dispatch_id"]
     review_head = (job.get("payload") or {}).get("review_head") or "HEAD"
 
-    def _contended():
-        # LOSER: no run opened, no job.status write, no tree touched. Un-strand a pool claim.
-        try: engine.release_claim(job["id"])            # CAS claimed->pending; no-op if a winner advanced it
-        except Exception as e: log.warning("review release_claim error: %s", type(e).__name__)
+    def _contended():                                   # owns_claim gates the release
+        # LOSER: no run opened, no job.status write, no tree touched. Un-strand ONLY a
+        # claim THIS invocation acquired (owns_claim -> the pool path). A review-run caller
+        # (owns_claim=False) never claimed the job, so it must not demote a concurrent
+        # worker's legitimate 'claimed' job (-> duplicate claim/run).
+        if owns_claim:
+            try: engine.release_claim(job["id"])        # CAS claimed->pending; no-op if a winner advanced it
+            except Exception as e: log.warning("review release_claim error: %s", type(e).__name__)
         return {"job": dispatch_id, "run": None, "status": "contended",
                 "review_head": review_head, "findings_len": 0,
                 "contended": True, "cleanup_status": "not_attempted"}
@@ -200,7 +204,7 @@ def run_review_job(job, env, as_="cc", agent_cmd=None):
         return _contended()
 ```
 
-- A contended result carries `status="contended"`, `run=None`; `_contended()` releases any pool claim. `engine.start()` stays inside the winner branch; its `GateError` propagates out of `run_review_job` exactly as today (the pool records it), releasing both locks on the way out.
+- A contended result carries `status="contended"`, `run=None`; `_contended()` releases a pool claim **only when `owns_claim`** (the pool path claimed it) -- a `review-run` caller (`owns_claim=False`) never demotes a concurrent worker's claim. `engine.start()` stays inside the winner branch; its `GateError` propagates out of `run_review_job` exactly as today (the pool records it), releasing both locks on the way out.
 - **Re-claim spin:** on persistent contention (a long prune hold, or a persistent fs error such as a full disk), `release_claim` -> `pending` -> the pool may re-claim and re-contend in a tight loop until the condition clears. Accepted at single-worker dev scale (prune per-item is fast; a full disk is an out-of-band operational failure). Bounded backoff is a possible follow-on.
 
 ### 4.4b Runner death and the `codex` child (accepted residual)

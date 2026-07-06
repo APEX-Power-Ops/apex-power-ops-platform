@@ -203,24 +203,30 @@ def _cleanup_review_worktree(repo, wt, run_id):
         r = _git("worktree", "remove", wt, cwd=repo, check=False)   # plain, NEVER --force
         return "cleaned" if r.returncode == 0 else "failed_preserved"
 
-def run_review_job(job, env, as_="cc", agent_cmd=None):
+def run_review_job(job, env, as_="cc", agent_cmd=None, owns_claim=False):
     """Run a kind='agent' REVIEW job under the dispatch COORDINATOR (PG advisory lock)
     plus the runner-liveness FUSE (flock). A losing attempt (PG-not-held, fuse-not-ok,
-    or LockUnavailable) opens NO run, writes NO job.status, touches NO tree, and releases
-    any pool claim. The winner checks out the ref under review (payload.review_head,
-    DETACHED), runs codex, records findings, and auto-cleans. Read-only -- NO commit, NO
-    diff, and NO promotion gate: a review only reports. The startup
-    `git worktree remove --force` is reached ONLY with BOTH locks held. agent_cmd
-    overrides the CLI (fake, in tests)."""
+    or LockUnavailable) opens NO run, writes NO job.status, and touches NO tree. If
+    owns_claim (the pool path claimed this job), a loser also releases ITS OWN pool claim
+    so it is never stranded; a synchronous review-run (owns_claim=False, it only get_job'd
+    the row) never claimed the job and MUST NOT release a concurrent worker's claim. The
+    winner checks out the ref under review (payload.review_head, DETACHED), runs codex,
+    records findings, and auto-cleans. Read-only -- NO commit, NO diff, and NO promotion
+    gate: a review only reports. The startup `git worktree remove --force` is reached ONLY
+    with BOTH locks held. agent_cmd overrides the CLI (fake, in tests)."""
     repo, runs = _repo(), _runs_dir()
     dispatch_id = job["dispatch_id"]
     review_head = (job.get("payload") or {}).get("review_head") or "HEAD"
 
     def _contended():
-        try:
-            engine.release_claim(job["id"])   # CAS claimed->pending; no-op if a winner advanced it
-        except Exception as e:
-            log.warning("review release_claim error: %s", type(e).__name__)
+        # Only release a claim THIS invocation acquired (pool path). A synchronous
+        # review-run (owns_claim=False) never claimed the job, so releasing here could
+        # demote a DIFFERENT worker's legitimate 'claimed' job -> duplicate claim/run.
+        if owns_claim:
+            try:
+                engine.release_claim(job["id"])   # CAS claimed->pending; no-op if a winner advanced it
+            except Exception as e:
+                log.warning("review release_claim error: %s", type(e).__name__)
         return {"job": dispatch_id, "run": None, "status": "contended",
                 "review_head": review_head, "findings_len": 0,
                 "contended": True, "cleanup_status": "not_attempted"}
@@ -300,7 +306,9 @@ def _run_one(job, env, as_, agent_cmd):
     (lazy import avoids an import cycle — worker imports engine, agent_runner does too)."""
     if job.get("kind") == "agent":
         if (job.get("payload") or {}).get("review_head"):
-            return run_review_job(job, env, as_=as_, agent_cmd=agent_cmd)
+            # pool path: run_pool already claimed this job -> owns_claim so a contended
+            # loser un-strands its OWN claim (a review-run caller passes owns_claim=False).
+            return run_review_job(job, env, as_=as_, agent_cmd=agent_cmd, owns_claim=True)
         return run_agent_job(job, env, as_=as_, agent_cmd=agent_cmd)
     from .worker import _run_command_job
     return _run_command_job(job, env, as_)

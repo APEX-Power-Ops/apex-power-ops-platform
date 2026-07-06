@@ -345,7 +345,33 @@ def test_r6_contended_pool_claim_unstranded(conn_test, review_env):
     repo, runs = review_env
     d = "review-r6000001"
     jid = _enqueue_review(d)
-    _set_status(conn_test, jid, "claimed")                 # pool has claimed it
+    _set_status(conn_test, jid, "claimed")                 # THIS pool worker claimed it
+    holder = engine._conn(); holder.autocommit = True
+    with holder.cursor() as cur:
+        cur.execute("select pg_try_advisory_lock(%s, hashtext(%s))",
+                    (engine._REVIEW_WT_LOCK_NS, d))
+    try:
+        # owns_claim=True: the pool worker that claimed the job is the one contending,
+        # so it un-strands its OWN claim.
+        summary = agent_runner.run_review_job(engine.get_job(d), env="host",
+                                              agent_cmd=FAKE_OK, owns_claim=True)
+    finally:
+        with holder.cursor() as cur:
+            cur.execute("select pg_advisory_unlock(%s, hashtext(%s))",
+                        (engine._REVIEW_WT_LOCK_NS, d))
+        holder.close()
+    assert summary["status"] == "contended"
+    assert _status(conn_test, jid) == "pending"            # re-claimable, not stranded
+
+
+def test_r8_contended_review_run_does_not_demote_foreign_claim(conn_test, review_env):
+    # A synchronous review-run invocation did NOT claim the job (owns_claim defaults False:
+    # it get_job'd it). If it contends while a DIFFERENT worker legitimately holds the
+    # claim, it must NOT release that foreign claim (doing so would allow a duplicate
+    # claim/run). Only the pool path (which claimed the job) releases its own claim.
+    d = "review-b8000001"
+    jid = _enqueue_review(d)
+    _set_status(conn_test, jid, "claimed")                 # a DIFFERENT worker owns this claim
     holder = engine._conn(); holder.autocommit = True
     with holder.cursor() as cur:
         cur.execute("select pg_try_advisory_lock(%s, hashtext(%s))",
@@ -358,7 +384,7 @@ def test_r6_contended_pool_claim_unstranded(conn_test, review_env):
                         (engine._REVIEW_WT_LOCK_NS, d))
         holder.close()
     assert summary["status"] == "contended"
-    assert _status(conn_test, jid) == "pending"            # re-claimable, not stranded
+    assert _status(conn_test, jid) == "claimed"            # foreign claim preserved, NOT demoted
 
 
 def test_k1_keep_worktree_preserves_and_releases(conn_test, review_env):
