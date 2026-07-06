@@ -182,4 +182,26 @@ Pre-stated so the spec inherits them:
 
 ## Part 9 - Operator ratification (2026-07-05)
 
-PENDING. (To be filled with the operator's D1-D6 decisions + any tightenings; the spec is built on that ratified state.)
+Operator ratified D1-D6 as leaned, with one grounding correction folded (D6). The design spec is built on this ratified state.
+
+### D1 - Accounting - RATIFIED
+Use the existing priced refs by EXACT ref STRING (never section - firm 7.22 AND 7.18 are both overloaded). Author NO new hours. Default to the `(IR/DLRO)` scope where a default is needed. Two SME questions carried explicitly, failing closed to `transfer_catalog_gap` until answered:
+- Is `Automatic Transfer Switch (Functional Testing)` at firm 7.18 with null acceptance hours a DATA BUG (should be 7.22.3) or a maintenance-only convention?
+- Are STS and MV transfer switches true catalog gaps for this lane?
+
+### D2 - Match model - RATIFIED
+Scope-driven; provisional default ONLY when automation class is legible: `ATS` -> Automatic (IR/DLRO); `ATS`+bypass -> Iso-Bypass; `MTS` -> Manual. Bare "transfer switch" -> group only, NO default. Never auto-price.
+
+### D3 - Recognition + the ROUTING INVERSION - RATIFIED
+Device-first anchors claim `ATS`/`MTS`/`STS` BEFORE the NON_BREAKER tail. REMOVE `ATS`/`MTS`/`STS` from NON_BREAKER. Claim the spelled-out `transfer switch`. H3 guard: a transfer-labeled row carrying `AF/AT` (breaker-pair scheme) -> `transfer_parent_conflict` question; must NOT suppress real breaker rows.
+
+### D4 - E01-11 golden re-baseline - RATIFIED
+Intentional re-baseline approved: document before/after; ALL non-transfer rows byte-identical.
+
+### D5 - STS + UPS - RATIFIED
+STS -> `transfer_catalog_gap` (never mapped to ATS). UPS -> OUT-of-family (future 7.22.2 lane); E01-11 UPS mains stay breakers where they are breaker rows.
+
+### D6 - V1 sub-type scope - RATIFIED with a grounding correction
+V1 = the priced refs only, `(IR/DLRO)` default. Poles, transition type, MV, and functional-only stay notes/gaps, NOT V1 ref axes. **CORRECTION (folded):** the operator's 2x2 listed "manual iso-bypass" as a 4th ref, but the catalog has NO `Manual Transfer Switch - Iso Bypass` ref. The 4 priced cells are {auto base, auto iso-bypass, manual base, + auto `(Functional Testing)` [excluded from V1]}; a MANUAL transfer with bypass-isolation fails closed to `transfer_catalog_gap` (an SME "author it?" item). V1 MAPPED refs = `Automatic Transfer Switch - (IR/DLRO)`, `Automatic Transfer Switch - Iso Bypass (IR/DLRO)`, `Manual Transfer Switch - (IR/DLRO)`.
+
+Status: RATIFIED. Proceed to the design spec (`docs/superpowers/specs/2026-07-05-estimator-takeoff-transfer-switch-family-design.md`).
