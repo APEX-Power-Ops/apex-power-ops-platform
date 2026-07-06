@@ -60,6 +60,39 @@ const NEGATED_FUSED = /\b(non|un)[\s-]?fus(ed|ible)\b/i
 const NF_ABBR = /\bN\.?F\.?\b/i
 // PLAIN continuous amps ONLY: the \bA\b boundary means 800AF / 800AT do NOT match (AF/AT can never be amps).
 const SWITCH_AMP = /(?<!\d)(\d{2,6})\s*A\b/i
+
+// --- Transfer / automatic switch recognition (Task 2) ---
+const TRANSFER_DEVICE = /\b(automatic\s+transfer\s+switch|manual\s+transfer\s+switch|transfer\s+switch|ATS|MTS|STS)\b/i
+// NON_BREAKER MINUS the transfer tokens - used ONLY in the transfer conflict guard so a plain ATS/MTS/STS does not self-conflict:
+const TRANSFER_CONFLICT_NONBREAKER = /\b(PDU|UPS|SPD|PQM|METER|BUS\s*DUCT)\b/i
+const TRANSFER_BYPASS = /\b(iso(lation)?[\s-]?bypass|bypass[\s-]?iso(lation)?|\biso\b|\bbypass\b)\b/i
+const TRANSFER_TRIP_FN = /\bL(?=[SIGE]{2})(S?)(I?)(G?)(E?)\b/i           // LSI/LSIG (reuse switch shape)
+const TRANSFER_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i
+const TRANSFER_FRAME = /\b(\d{2,6})\s*A[FT]\b/i                          // frame/trip amp value (evidence, T1-B)
+const TRANSFER_PLAIN_AMP = /(?<!\d)(\d{2,6})\s*A\b/i
+
+export function looksLikeTransferSwitch(x: ExtractedApparatus): boolean {
+  if (x.candidateKind === 'transfer_switch') return true
+  if (x.candidateKind !== undefined) return false   // any other producer kind defers (already excludes 'transfer_switch' above)
+  return TRANSFER_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0
+}
+export function parseAutomationClass(raw: string): 'automatic' | 'manual' | 'static' | 'unknown' {
+  if (/\bautomatic\s+transfer\s+switch\b|\bATS\b/i.test(raw)) return 'automatic'
+  if (/\bmanual\s+transfer\s+switch\b|\bMTS\b/i.test(raw)) return 'manual'
+  if (/\bstatic\b|\bsolid[\s-]?state\b|\bSTS\b/i.test(raw)) return 'static'
+  return 'unknown'
+}
+export function parseBypassIsolation(raw: string): boolean | undefined {
+  return TRANSFER_BYPASS.test(raw) ? true : undefined
+}
+export function parseTransferAmp(raw: string): number | undefined {
+  const p = TRANSFER_PLAIN_AMP.exec(raw); if (p) return Number(p[1])
+  const f = TRANSFER_FRAME.exec(raw); if (f) return Number(f[1])
+  return undefined
+}
+// Exposed for Task 3's assessor:
+export const _transferGuards = { TRANSFER_TRIP_FN, TRANSFER_BREAKER_CONFLICT, TRANSFER_CONFLICT_NONBREAKER }
+
 // R1-b: the S&C "Vista" SWITCH product. Discriminate on the PRODUCT NAME ("Pad-Mount Vista" / "Vista Switch|Disconnect"),
 // NOT a bare "vista" - "vista" alone is a common US place name (Vista, Chula Vista, Buena Vista) and is NOT
 // transformer-disqualifying. Used in looksLikeTransformer to route a Vista switch out of the "pad mount" transformer token.
