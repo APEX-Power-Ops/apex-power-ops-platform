@@ -164,21 +164,26 @@ def test_f1_flock_process_death_release(tmp_path):
         assert ok2 is True
 
 
-def test_f1b_flock_fd_is_cloexec(tmp_path):
+def test_f1b_flock_fd_is_cloexec(tmp_path, monkeypatch):
     runs = str(tmp_path)
     d = "review-f1b00001"
-    # While holding the flock inside the CM, a child subprocess opening its OWN fd
-    # must be BLOCKED (we hold LOCK_EX) and must not have inherited our fd.
+    # Directly assert the flock fd carries FD_CLOEXEC (O_CLOEXEC honored). A "child
+    # opening its OWN fd is blocked" behavioural check is VACUOUS for this invariant:
+    # a distinct open-file-description always contends for the flock whether or not the
+    # parent fd is close-on-exec, so it would still pass if _O_CLOEXEC were dropped.
+    # Capture the real flock fd and inspect its close-on-exec flag instead -- this fails
+    # iff _O_CLOEXEC is removed from the os.open flags.
+    captured = {}
+    real_open = os.open
+    def _cap(path, flags, mode=0o777):
+        fd = real_open(path, flags, mode)
+        captured["fd"] = fd
+        return fd
+    monkeypatch.setattr(agent_runner.os, "open", _cap)
     with agent_runner._worktree_flock(runs, d) as ok:
         assert ok is True
-        code = (
-            "import fcntl,os,sys\n"
-            f"fd=os.open({os.path.join(runs, d + '.lock')!r},os.O_CREAT|os.O_RDWR,0o600)\n"
-            "try:\n fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB); print('GOT')\n"
-            "except OSError: print('BLOCKED')\n"
-        )
-        r = subprocess.run(["python3", "-c", code], capture_output=True, text=True)
-        assert "BLOCKED" in r.stdout                        # our held flock blocks the child
+        flags = fcntl.fcntl(captured["fd"], fcntl.F_GETFD)
+        assert flags & fcntl.FD_CLOEXEC        # close-on-exec: NOT inherited by the codex child
 
 
 def test_f4_fs_error_fail_closed(tmp_path, monkeypatch):
@@ -456,6 +461,33 @@ def test_p4_prune_lock_unavailable_refuses(conn_test, review_env, monkeypatch):
     assert res["refused"] is True and res["refused_reason"] == "db-unreachable"
     subprocess.run(["git", "-C", repo, "worktree", "remove", "--force",
                     os.path.join(runs, d)], check=False)
+
+
+def test_p5_prune_nontransport_dberror_fail_closed(conn_test, review_env, monkeypatch):
+    # Spec 4.6: the apply-loop outer except is broadened to (LockUnavailable,
+    # psycopg.Error, OSError) so a NON-transport DB error mid-apply (e.g. a
+    # ProgrammingError / InsufficientPrivilege that the inner OperationalError/
+    # InterfaceError catch misses) fails CLOSED to a db-unreachable refusal, never a
+    # raw traceback and never a fail-open remove. P4 only covers LockUnavailable.
+    from apex_jobs import prune
+    repo, runs = review_env
+    d = "review-b5000001"
+    jid = _enqueue_review(d)
+    _seed_run_succeeded(conn_test, jid)
+    wt = os.path.join(runs, d)
+    subprocess.run(["git", "-C", repo, "worktree", "add", "--detach", wt, "HEAD"], check=True)
+    real = engine.review_dispatch_statuses
+    calls = {"n": 0}
+    def flaky(ids):
+        calls["n"] += 1
+        if calls["n"] >= 2:                    # 1 = classify (ok); 2 = recheck (non-transport raise)
+            raise psycopg.ProgrammingError("permission denied for table jobs.run")
+        return real(ids)
+    monkeypatch.setattr(engine, "review_dispatch_statuses", flaky)
+    res = prune.prune_review_worktrees(apply=True)
+    assert res["refused"] is True and res["refused_reason"] == "db-unreachable"
+    assert os.path.isdir(wt)                    # fail-closed: NOT removed
+    subprocess.run(["git", "-C", repo, "worktree", "remove", "--force", wt], check=False)
 
 
 # ---- Task 6: CLI review-run tolerates contended run=None (no IndexError, exit 3) ----

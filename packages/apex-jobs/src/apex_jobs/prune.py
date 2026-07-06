@@ -257,7 +257,11 @@ def prune_review_worktrees(apply=False, include_failed=False):
                             else:
                                 w.classification, w.action = "remove-failed", "preserved"
                                 remove_failed += 1
-            except (engine.LockUnavailable, psycopg.OperationalError, psycopg.InterfaceError):
+            except (engine.LockUnavailable, psycopg.Error, OSError):
+                # Fail-CLOSED on ANY lock/DB/fs error during a destructive apply (spec 4.6):
+                # a non-transport psycopg.Error (e.g. InsufficientPrivilege) or an OSError
+                # (e.g. git binary missing) becomes a db-unreachable refusal, never a raw
+                # traceback and never a fail-open remove.
                 return _refusal(items, "db-unreachable", applied=True, remove_failed=remove_failed)
     return {"items": [_item_dict(w) for w in items], "counts": _counts(items),
             "applied": apply, "remove_failed": remove_failed, "refused": False,
