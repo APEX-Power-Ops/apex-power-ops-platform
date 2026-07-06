@@ -32,12 +32,26 @@ class HarnessError(RuntimeError):
     """A harness-contract violation (preflight, naming, sequencing)."""
 
 
+class ApplierApplyError(HarnessError):
+    """A migration apply that failed under the non-superuser applier, carrying the
+    structured psql error: migration basename, source line, SQLSTATE, message."""
+
+    def __init__(self, migration, line, sqlstate, message):
+        self.migration = migration
+        self.line = line
+        self.sqlstate = sqlstate
+        self.message = message
+        super().__init__(f"{migration}:{line} SQLSTATE {sqlstate}: {message}")
+
+
 Tier = collections.namedtuple("Tier", "name status detail")
 
 MIG_RE = re.compile(r"^(\d{3})_.+\.sql$")
 TEST_RE = re.compile(r"^test_(\d{3})_.+\.py$")
 VAL_RE = re.compile(r"^records_val_\d{8}T\d{6}_\d+$")
 APPLIER_RE = re.compile(r"^records_val_applier_\d{8}T\d{6}_\d+$")
+# psql VERBOSITY=verbose first ERROR line: "psql:FILE:LINE: ERROR:  SQLSTATE: message"
+_PSQL_ERR_RE = re.compile(r":(\d+):\s*ERROR:\s*([0-9A-Za-z]{5}):\s*(.*)")
 
 # --- --apply-as-non-superuser: a LOCAL APPROXIMATION of Supabase managed postgres.
 # Local Postgres runs the harness as a true superuser; this mode instead applies
@@ -306,14 +320,57 @@ def _child_env(child_dsn):
     return env
 
 
+def _apply_as_applier(fname, apply_dsn):
+    """Apply one migration via psql AS the applier DSN, VERBOSITY=verbose so the
+    SQLSTATE is captured. Returns None on success; on failure raises
+    ApplierApplyError(migration, line, sqlstate, message). Value-silent - the DSN
+    password goes only into the child env (PGPASSWORD), never into argv or output."""
+    p = _dbtest.dsn_params(apply_dsn)
+    env = {**os.environ, "PGSSLMODE": "disable"}
+    env.pop("PGPASSWORD", None)
+    pw = p.get("password")
+    if pw:
+        env["PGPASSWORD"] = pw
+    r = subprocess.run(
+        [
+            _dbtest.psql_exe(),
+            "-h", p.get("host", "127.0.0.1"),
+            "-p", p.get("port", "5432"),
+            "-U", p.get("user", "postgres"),
+            "-d", p["dbname"],
+            "-v", "ON_ERROR_STOP=1", "-v", "VERBOSITY=verbose", "-q",
+            "-f", os.path.join(HERE, fname),
+        ],
+        env=env, capture_output=True, text=True,
+    )
+    if r.returncode == 0:
+        return
+    line, sqlstate, message = 0, "", ""
+    for ln in r.stderr.splitlines():
+        m = _PSQL_ERR_RE.search(ln)
+        if m:
+            line, sqlstate, message = int(m.group(1)), m.group(2), m.group(3).strip()
+            break
+    raise ApplierApplyError(os.path.basename(fname), line, sqlstate, message)
+
+
 def tier3_walk(child_dsn, executed, migs, tests, apply_dsn=None):
     # apply_dsn (when set) authenticates the psql APPLY as a non-superuser applier
-    # (--apply-as-non-superuser); fingerprints and per-migration tests still run as
-    # the admin child_dsn. Default: apply as admin (child_dsn), unchanged behavior.
+    # (--apply-as-non-superuser), captured verbose so a superuser-only failure
+    # surfaces its migration/line/SQLSTATE as a clean FAIL tier; fingerprints and
+    # per-migration tests still run as the admin child_dsn. Default (apply_dsn None):
+    # apply as admin via _dbtest.run_psql, unchanged behavior.
     env = _child_env(child_dsn)
-    apply_dsn = apply_dsn or child_dsn
     for num, sql in migs:
-        _dbtest.run_psql(sql, apply_dsn)
+        if apply_dsn:
+            try:
+                _apply_as_applier(sql, apply_dsn)
+            except ApplierApplyError as e:
+                return Tier("3-migrations", "FAIL",
+                            f"{e.migration}:{e.line} SQLSTATE {e.sqlstate}: {e.message} "
+                            "(non-super applier)")
+        else:
+            _dbtest.run_psql(sql, child_dsn)
         tf = tests.get(num)
         if not tf:
             continue
