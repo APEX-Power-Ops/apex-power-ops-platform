@@ -1,0 +1,116 @@
+"""TDD - apex-jobs review worktree lifecycle lock (PG advisory lock coordinator +
+flock liveness fuse). Real orchestration_test DB (conn_test) + throwaway detached
+worktrees under a tmp runs dir. Value-silent: assertions use statuses/labels/
+counts/booleans only -- never file contents, env, or DSN. Kept in a SEPARATE
+module so test_prune.py stays byte-unchanged."""
+import fcntl
+import os
+import subprocess
+
+import psycopg
+import pytest
+
+from apex_jobs import engine, agent_runner
+from test_prune import _enqueue_review, REPO
+
+
+# ---- fakes for the value-silence / autocommit / unlock-mask paths ----
+class _FakeCur:
+    def __init__(self, conn): self.conn = conn
+    def __enter__(self): return self
+    def __exit__(self, *a): return False
+    def execute(self, sql, params=None):
+        self.conn.calls.append(sql)
+        if "pg_advisory_unlock" in sql and self.conn.fail_unlock:
+            raise psycopg.OperationalError("unlock boom host=secret")
+    def fetchone(self): return {"ok": True}
+
+
+class _FakeConn:
+    def __init__(self, fail_unlock=False, fail_close=False):
+        self.autocommit = False
+        self.fail_unlock = fail_unlock
+        self.fail_close = fail_close
+        self.calls = []
+        self.closed = False
+    def cursor(self): return _FakeCur(self)
+    def close(self):
+        self.closed = True
+        if self.fail_close:
+            raise psycopg.OperationalError("close boom host=secret")
+
+
+def test_ns_constant_pinned():
+    assert engine._REVIEW_WT_LOCK_NS == 0x52565754
+
+
+def test_e1_acquire_and_release(conn_test):
+    d = "review-e1000001"
+    with engine.review_worktree_lock(d) as held:
+        assert held is True
+    with engine.review_worktree_lock(d) as held2:   # released -> re-acquire succeeds
+        assert held2 is True
+
+
+def test_e2_second_holder_contends(conn_test):
+    d = "review-e2000002"
+    with engine.review_worktree_lock(d) as held:
+        assert held is True
+        with engine.review_worktree_lock(d) as held2:   # distinct connection, same key
+            assert held2 is False
+
+
+def test_e3_crash_release(conn_test):
+    d = "review-e3000003"
+    ns = engine._REVIEW_WT_LOCK_NS
+    a = engine._conn(); a.autocommit = True
+    with a.cursor() as cur:
+        cur.execute("select pg_try_advisory_lock(%s, hashtext(%s)) as ok", (ns, d))
+        assert cur.fetchone()["ok"] is True
+    a.close()                                            # session drop -> auto-release
+    with engine.review_worktree_lock(d) as held:
+        assert held is True
+
+
+def test_e4_distinct_dispatch_no_false_contention(conn_test):
+    with engine.review_worktree_lock("review-e4000001") as h1:
+        with engine.review_worktree_lock("review-e4000002") as h2:
+            assert h1 is True and h2 is True
+
+
+def test_e5_connect_failure_value_silent(conn_test, monkeypatch):
+    def boom():
+        raise psycopg.OperationalError("host=secret user=orchestration password=hunter2")
+    monkeypatch.setattr(engine, "_conn", boom)
+    with pytest.raises(engine.LockUnavailable) as ei:
+        with engine.review_worktree_lock("review-e5000001"):
+            pass
+    e = ei.value
+    assert e.__context__ is None and e.__cause__ is None
+    assert "secret" not in str(e) and "hunter2" not in str(e)
+
+
+def test_e6_resolve_dsn_runtimeerror_value_silent(conn_test, monkeypatch):
+    def boom():
+        raise RuntimeError("APEX_JOBS_PGPASSWORD or DEV_PG_PASSWORD required")
+    monkeypatch.setattr(engine, "_conn", boom)
+    with pytest.raises(engine.LockUnavailable) as ei:
+        with engine.review_worktree_lock("review-e6000001"):
+            pass
+    assert ei.value.__context__ is None
+
+
+def test_e7_unlock_and_close_failure_do_not_mask(conn_test, monkeypatch):
+    monkeypatch.setattr(engine, "_conn", lambda: _FakeConn(fail_unlock=True, fail_close=True))
+    with engine.review_worktree_lock("review-e7000001") as held:
+        assert held is True
+        result = "clean-return"
+    assert result == "clean-return"   # no exception escaped the CM
+
+
+def test_e8_lock_connection_is_autocommit(conn_test, monkeypatch):
+    fake = _FakeConn()
+    monkeypatch.setattr(engine, "_conn", lambda: fake)
+    with engine.review_worktree_lock("review-e8000001") as held:
+        assert held is True
+    assert fake.autocommit is True
