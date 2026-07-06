@@ -19,7 +19,7 @@ export interface ReconciliationReport {
   dispositions: ApparatusDisposition[]
   findings: TakeoffFinding[]      // full finding list (not just counts) so the report + export are auditable
   envelopeTotals?: { bid_cents: number }   // present when an envelope was emitted
-  scopePending: { lineKey: string; tag?: string; qty: number; candidateRefs: string[]; provisionalDefaultRef?: string; r1Ratified: boolean; scopeQuestion: string; packagingEvidence?: string; phaseCount?: number; switchType?: string; fused?: boolean }[]
+  scopePending: { lineKey: string; tag?: string; qty: number; candidateRefs: string[]; provisionalDefaultRef?: string; r1Ratified: boolean; scopeQuestion: string; packagingEvidence?: string; phaseCount?: number; switchType?: string; fused?: boolean; automationClass?: string; bypassIsolation?: boolean }[]
 }
 
 // clean = nothing unresolved is hiding AND at least one line was matched/priced.
@@ -92,6 +92,8 @@ export function reconcile(
     phaseCount: sp.phaseCount,
     switchType: sp.switchType,
     fused: sp.fused,
+    automationClass: sp.automationClass,
+    bypassIsolation: sp.bypassIsolation,
   }))
   const report: ReconciliationReport = {
     status: isClean(result) ? 'clean' : 'partial_preview',
@@ -131,7 +133,7 @@ export function renderReportText(report: ReconciliationReport): string {
     out.push('')
     out.push('  Scope-pending (Gate-2):')
     for (const sp of report.scopePending) {
-      out.push('    [' + (sp.tag ?? sp.lineKey) + '] qty=' + sp.qty + ' provisional=' + (sp.provisionalDefaultRef ?? 'none') + ' r1Ratified=' + sp.r1Ratified + (sp.packagingEvidence ? ' packaging=' + sp.packagingEvidence : '') + (sp.phaseCount ? ' phases=' + sp.phaseCount : '') + (sp.switchType ? ' type=' + sp.switchType : '') + (sp.fused !== undefined ? ' fused=' + sp.fused : ''))
+      out.push('    [' + (sp.tag ?? sp.lineKey) + '] qty=' + sp.qty + ' provisional=' + (sp.provisionalDefaultRef ?? 'none') + ' r1Ratified=' + sp.r1Ratified + (sp.packagingEvidence ? ' packaging=' + sp.packagingEvidence : '') + (sp.phaseCount ? ' phases=' + sp.phaseCount : '') + (sp.switchType ? ' type=' + sp.switchType : '') + (sp.fused !== undefined ? ' fused=' + sp.fused : '') + (sp.automationClass ? ' automation=' + sp.automationClass : '') + (sp.bypassIsolation !== undefined ? ' bypassIso=' + sp.bypassIsolation : ''))
       out.push('      candidates: ' + sp.candidateRefs.join(' | '))
       out.push('      question: ' + sp.scopeQuestion)
     }
