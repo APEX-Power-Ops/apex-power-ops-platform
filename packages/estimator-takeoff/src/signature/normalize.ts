@@ -1,5 +1,5 @@
 import type { ExtractedApparatus } from '../extraction/types'
-import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, GfpSignature, TransformerSignature, TripFunction, VoltageBasis, InstrumentTransformerSignature, ItxPackaging, ItxPackagingEvidence, ItxType, SwitchType, SwitchSignature } from './types'
+import type { ApparatusSignature, BreakerSignature, Coolant, Mounting, MountingBasis, MvType, RelayRole, RelaySignature, RelayTechnology, GfpSignature, TransformerSignature, TripFunction, VoltageBasis, InstrumentTransformerSignature, ItxPackaging, ItxPackagingEvidence, ItxType, SwitchType, SwitchSignature, TransferSwitchSignature } from './types'
 import type { OperatorQuestion, OperatorQuestionCode } from '../buckets/types'
 import { classifyVoltage } from './voltage'
 
@@ -60,6 +60,39 @@ const NEGATED_FUSED = /\b(non|un)[\s-]?fus(ed|ible)\b/i
 const NF_ABBR = /\bN\.?F\.?\b/i
 // PLAIN continuous amps ONLY: the \bA\b boundary means 800AF / 800AT do NOT match (AF/AT can never be amps).
 const SWITCH_AMP = /(?<!\d)(\d{2,6})\s*A\b/i
+
+// --- Transfer / automatic switch recognition (Task 2) ---
+const TRANSFER_DEVICE = /\b(automatic\s+transfer\s+switch|manual\s+transfer\s+switch|transfer\s+switch|ATS|MTS|STS)\b/i
+// NON_BREAKER MINUS the transfer tokens - used ONLY in the transfer conflict guard so a plain ATS/MTS/STS does not self-conflict:
+const TRANSFER_CONFLICT_NONBREAKER = /\b(PDU|UPS|SPD|PQM|METER|BUS\s*DUCT)\b/i
+const TRANSFER_BYPASS = /\b(iso(lation)?[\s-]?bypass|bypass[\s-]?iso(lation)?|\biso\b|\bbypass\b)\b/i
+const TRANSFER_TRIP_FN = /\bL(?=[SIGE]{2})(S?)(I?)(G?)(E?)\b/i           // LSI/LSIG (reuse switch shape)
+const TRANSFER_BREAKER_CONFLICT = /\b(MCB|MCCB|ACB|VCB|breaker|draw.?out|GB|FB)\b/i
+const TRANSFER_FRAME = /\b(\d{2,6})\s*A[FT]\b/i                          // frame/trip amp value (evidence, T1-B)
+const TRANSFER_PLAIN_AMP = /(?<!\d)(\d{2,6})\s*A\b/i
+
+export function looksLikeTransferSwitch(x: ExtractedApparatus): boolean {
+  if (x.candidateKind === 'transfer_switch') return true
+  if (x.candidateKind !== undefined) return false   // any other producer kind defers (already excludes 'transfer_switch' above)
+  return TRANSFER_DEVICE.test(x.raw) && x.tag !== undefined && x.tag.length > 0
+}
+export function parseAutomationClass(raw: string): 'automatic' | 'manual' | 'static' | 'unknown' {
+  if (/\bautomatic\s+transfer\s+switch\b|\bATS\b/i.test(raw)) return 'automatic'
+  if (/\bmanual\s+transfer\s+switch\b|\bMTS\b/i.test(raw)) return 'manual'
+  if (/\bstatic\b|\bsolid[\s-]?state\b|\bSTS\b/i.test(raw)) return 'static'
+  return 'unknown'
+}
+export function parseBypassIsolation(raw: string): boolean | undefined {
+  return TRANSFER_BYPASS.test(raw) ? true : undefined
+}
+export function parseTransferAmp(raw: string): number | undefined {
+  const p = TRANSFER_PLAIN_AMP.exec(raw); if (p) return Number(p[1])
+  const f = TRANSFER_FRAME.exec(raw); if (f) return Number(f[1])
+  return undefined
+}
+// Exposed for Task 3's assessor:
+export const _transferGuards = { TRANSFER_TRIP_FN, TRANSFER_BREAKER_CONFLICT, TRANSFER_CONFLICT_NONBREAKER }
+
 // R1-b: the S&C "Vista" SWITCH product. Discriminate on the PRODUCT NAME ("Pad-Mount Vista" / "Vista Switch|Disconnect"),
 // NOT a bare "vista" - "vista" alone is a common US place name (Vista, Chula Vista, Buena Vista) and is NOT
 // transformer-disqualifying. Used in looksLikeTransformer to route a Vista switch out of the "pad mount" transformer token.
@@ -103,7 +136,9 @@ function looksLikeTransformer(x: ExtractedApparatus): boolean {
   // FIX 4: kVA-rating fallback must not steal NON_BREAKER rows (UPS, PDU, etc. can carry kVA ratings).
   // A real transformer device token (XFMR/transformer/dry-type/pad-mount/oil-filled) already recognizes above.
   // kVA-breaker guard: also exclude a breaker label that merely carries a kVA value (e.g. a main feeding a 500kVA xfmr) via !looksLikeBreaker.
-  return KVA_RATING.test(x.raw) && (x.tag !== undefined && x.tag.length > 0) && !NON_BREAKER.test(x.raw) && !looksLikeBreaker(x.raw)
+  // P2 (Codex): also exclude a spelled-out transfer anchor carrying kVA ("Automatic Transfer Switch 500kVA") so it routes
+  // to the transfer text family below, mirroring the abbreviated ATS/MTS/STS path (already excluded via !NON_BREAKER).
+  return KVA_RATING.test(x.raw) && (x.tag !== undefined && x.tag.length > 0) && !NON_BREAKER.test(x.raw) && !looksLikeBreaker(x.raw) && !TRANSFER_DEVICE.test(x.raw)
 }
 
 function looksLikeBreaker(raw: string): boolean {
@@ -391,6 +426,8 @@ export type AssessmentCode =
   | 'unrecognized_apparatus_row'
   | 'switch_recognized'
   | 'switch_parent_conflict'
+  | 'transfer_recognized'
+  | 'transfer_parent_conflict'
 
 export interface ApparatusAssessment {
   signature: ApparatusSignature | null
@@ -457,8 +494,38 @@ function assessSwitch(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Appar
   return { signature: sig, isBreakerShaped: false, assessmentCode: 'switch_recognized', questions: [] }
 }
 
+// Transfer-switch assessor (T1-B). A transfer-anchored row that carries a breaker/trip signal (LSIG frame trip
+// function, a breaker/draw-out token) OR a co-located non-transfer parent device (UPS/PDU/SPD/etc.) is a
+// PARENT CONFLICT, not a transfer switch. Otherwise build the TransferSwitchSignature. Bare AF/AT is rating
+// evidence only (parseTransferAmp), NOT a conflict signal.
+function assessTransferSwitch(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
+  const { TRANSFER_TRIP_FN, TRANSFER_BREAKER_CONFLICT, TRANSFER_CONFLICT_NONBREAKER } = _transferGuards
+  if (TRANSFER_TRIP_FN.test(x.raw) || TRANSFER_BREAKER_CONFLICT.test(x.raw) || TRANSFER_CONFLICT_NONBREAKER.test(x.raw)) {
+    return {
+      signature: null, isBreakerShaped: false, assessmentCode: 'transfer_parent_conflict',
+      questions: [q(x, 'Transfer-anchored row carries a breaker/trip or a co-located non-transfer device signal; confirm whether it is a transfer switch or a breaker/parent.', 'transfer_parent_conflict')],
+    }
+  }
+  const sig: TransferSwitchSignature = {
+    kind: 'transfer_switch',
+    automationClass: parseAutomationClass(x.raw),
+    bypassIsolation: parseBypassIsolation(x.raw),
+    ampRating: parseTransferAmp(x.raw),
+    voltageClass: classifyVoltage(x.busVoltageV),
+    voltageV: x.busVoltageV,
+    voltageBasis: voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none'),
+    source: { sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block },
+    tag: x.tag,
+  }
+  return { signature: sig, isBreakerShaped: false, assessmentCode: 'transfer_recognized', questions: [] }
+}
+
 // PRIVATE -- the basis-taking core. NOT exported.
 function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
+  // Producer hard-win: an explicit candidateKind:'transfer_switch' routes to the transfer family before any
+  // text-based family predicate (beats looksLikeRelay/looksLikeSwitch/looksLikeTransformer wording).
+  if (x.candidateKind === 'transfer_switch') return assessTransferSwitch(x, voltageBasis)
+
   if (looksLikeInstrumentTransformer(x)) {
     return assessInstrumentTransformer(x, voltageBasis)
   }
@@ -484,6 +551,13 @@ function assessCore(x: ExtractedApparatus, voltageBasis?: VoltageBasis): Apparat
 
   if (looksLikeSwitch(x)) {
     return assessSwitch(x, voltageBasis)
+  }
+
+  // Transfer-switch text route: a TAGGED ATS/MTS/STS/transfer-switch anchor (looksLikeTransferSwitch requires a
+  // tag) routes to the transfer family BEFORE the NON_BREAKER catch. A tagless transfer token still falls through
+  // to the NON_BREAKER tail (non_breaker_carries_rating / non_breaker_excluded), unchanged.
+  if (looksLikeTransferSwitch(x)) {
+    return assessTransferSwitch(x, voltageBasis)
   }
 
   if (NON_BREAKER.test(x.raw)) {

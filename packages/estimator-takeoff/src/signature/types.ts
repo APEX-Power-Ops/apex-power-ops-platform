@@ -88,4 +88,13 @@ export interface SwitchSignature extends BaseSignature {
   // voltageClass stays optional (inherited): contextual; drives the group when present, never gates.
 }
 
-export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature | GfpSignature | InstrumentTransformerSignature | SwitchSignature
+export type TransferAutomationClass = 'automatic' | 'manual' | 'static' | 'unknown'
+export interface TransferSwitchSignature extends BaseSignature {
+  kind: 'transfer_switch'
+  automationClass: TransferAutomationClass
+  bypassIsolation?: boolean   // 'iso'/'bypass' present -> picks the Iso-Bypass ref
+  ampRating?: number          // evidence/display only (continuous A OR the AF/AT frame value; T1-B)
+  // voltageClass stays optional (inherited): contextual; never gates.
+}
+
+export type ApparatusSignature = BreakerSignature | TransformerSignature | RelaySignature | GfpSignature | InstrumentTransformerSignature | SwitchSignature | TransferSwitchSignature

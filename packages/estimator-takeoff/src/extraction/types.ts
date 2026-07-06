@@ -12,7 +12,7 @@ export interface ExtractedApparatus {
   busVoltageV?: number                          // nominal bus voltage if drawing-nav associated one
   block?: string                                // electrical block, e.g. "P1-110"
   mountingHint?: Mounting                        // construction evidence (schedule/symbol/operator); engine prefers this over text parsing
-  candidateKind?: 'breaker' | 'transformer' | 'relay' | 'gfp' | 'instrument_transformer' | 'switch'   // 'gfp' = producer asserts a STANDALONE ground-fault protection device (honored only on a non-parent-shaped row)
+  candidateKind?: 'breaker' | 'transformer' | 'relay' | 'gfp' | 'instrument_transformer' | 'switch' | 'transfer_switch'   // 'gfp' = producer asserts a STANDALONE ground-fault protection device (honored only on a non-parent-shaped row)
 }
 
 export interface VoltageAssertion {
