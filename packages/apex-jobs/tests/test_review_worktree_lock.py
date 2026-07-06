@@ -114,3 +114,36 @@ def test_e8_lock_connection_is_autocommit(conn_test, monkeypatch):
     with engine.review_worktree_lock("review-e8000001") as held:
         assert held is True
     assert fake.autocommit is True
+
+
+# ---- Task 2: release_claim CAS (conn_test yields TUPLE rows -> positional [0]) ----
+def _set_status(conn, job_id, status):
+    with conn.cursor() as cur:
+        cur.execute("update jobs.job set status=%s where id=%s", (status, job_id))
+
+
+def _status(conn, job_id):
+    with conn.cursor() as cur:
+        cur.execute("select status from jobs.job where id=%s", (job_id,))
+        return cur.fetchone()[0]
+
+
+def test_release_claim_unstrands_claimed(conn_test):
+    jid = _enqueue_review("review-rc000001")
+    _set_status(conn_test, jid, "claimed")
+    engine.release_claim(jid)
+    assert _status(conn_test, jid) == "pending"
+
+
+def test_release_claim_noop_on_running(conn_test):
+    jid = _enqueue_review("review-rc000002")
+    _set_status(conn_test, jid, "running")
+    engine.release_claim(jid)
+    assert _status(conn_test, jid) == "running"
+
+
+def test_release_claim_noop_on_succeeded(conn_test):
+    jid = _enqueue_review("review-rc000003")
+    _set_status(conn_test, jid, "succeeded")
+    engine.release_claim(jid)
+    assert _status(conn_test, jid) == "succeeded"

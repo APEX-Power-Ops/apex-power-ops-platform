@@ -770,3 +770,15 @@ def review_worktree_lock(dispatch_id):
                 conn.close()
             except Exception:
                 pass
+
+
+def release_claim(job_id):
+    """Value-silent CAS: return a still-CLAIMED job to 'pending' so a contended
+    pool-claimed review (which opened no run) is never stranded. No-op if a winner
+    already advanced the job to running/terminal (WHERE status='claimed'), so it can
+    never overwrite live or finished work."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("update jobs.job set status='pending', updated_at=now() "
+                        "where id=%s and status='claimed'", (job_id,))
+        conn.commit()
