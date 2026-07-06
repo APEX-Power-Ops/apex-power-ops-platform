@@ -58,22 +58,26 @@ _PSQL_ERR_RE = re.compile(r":(\d+):\s*ERROR:\s*([0-9A-Za-z]{5}):\s*(.*)")
 # the migration walk through a disposable NON-superuser role, so the whole class of
 # superuser-only failures (the 045 `alter role ... nosuperuser` that blocked the
 # 2026-07-04 prod apply) becomes CI-catchable. It APPROXIMATES, it does not PROVE,
-# Supabase compatibility - a real Supabase branch (Phase 0) is the fidelity
-# authority, and Phase 0 is currently blocked on Supabase lifecycle capacity.
+# Supabase compatibility - a real Supabase branch (Phase 3) is the fidelity authority.
 #
-# The provisional envelope is deliberately minimal: non-super (the load-bearing
-# constraint), createrole (managed postgres holds it per Gate-9 grounding fact 1,
-# and 045 runs `create role`, so the applier must reach the ALTER for the RIGHT
-# reason, not die early at CREATE). bypassrls / replication / createdb are NOT
-# pre-granted - spec B1: do not bake in attributes Phase 0 has not confirmed
-# managed postgres can set. Phase 0 replaces this with the branch-observed envelope.
+# The envelope mirrors the Phase-0 BRANCH-OBSERVED privilege set of managed postgres
+# (PHASE0-FINDINGS "A2"): non-super (the load-bearing constraint; superuser stays
+# unsettable) plus createrole + createdb + bypassrls + replication - the powerful-but-
+# non-super admin identity Supabase's managed postgres actually is. This fidelity
+# matters for Phase 2: to SET the app roles' nocreatedb/nocreaterole/nobypassrls/
+# noreplication attrs, the applier must itself HOLD createdb/createrole/bypassrls/
+# replication (PG16+ requires holding an attr to set its NO form on another role);
+# managed postgres holds all four (A2 recorded them settable), so the local applier
+# must too, or the adapted 045 alter-role would false-RED at 42501 for a TOOLING
+# reason rather than a compat one. superuser stays FALSE so the 2026-07-04
+# `nosuperuser` failure class (the 045 red-proof) is still faithfully reproduced.
 LOCAL_APPLIER_ENVELOPE = {
     "login": True,
     "superuser": False,
     "createrole": True,
-    "createdb": False,
-    "bypassrls": False,
-    "replication": False,
+    "createdb": True,
+    "bypassrls": True,
+    "replication": True,
 }
 
 LocalApplier = collections.namedtuple("LocalApplier", "role dsn create_sql drop_sql")

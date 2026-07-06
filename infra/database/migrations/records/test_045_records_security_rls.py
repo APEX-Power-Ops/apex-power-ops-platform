@@ -161,3 +161,145 @@ def test_reader_no_write_anywhere(conn):
                 "select has_table_privilege('records_api', %s, %s)", (f"records.{tbl}", priv)
             ).fetchone()[0]
             assert not has, f"records_api unexpectedly holds {priv} on {tbl}"
+
+
+# --------------------------------------------------------------------------------------
+# SUPABASE-COMPAT green-proof (Task 2.1). Self-driving on RECORDS_PG_ADMIN_DSN: it builds
+# a disposable DB, applies 001-044 then the ADAPTED 045 through the NON-super applier, and
+# asserts the adapted 045 SUCCEEDS with the correct role posture / policy binding / D-A
+# membership isolation. This is the green mirror of test_supabase_compat_redproof.py; it is
+# a LOCAL APPROXIMATION (records objects are applier-owned locally, postgres-owned on a real
+# Supabase branch - the branch is the fidelity authority, Phase 3).
+# --------------------------------------------------------------------------------------
+import run_validation as rv  # noqa: E402
+
+_ADMIN = os.environ.get("RECORDS_PG_ADMIN_DSN")
+
+compat = pytest.mark.skipif(
+    not _ADMIN, reason="RECORDS_PG_ADMIN_DSN not set - non-super compat green-proof skipped"
+)
+
+
+# The records app roles are CLUSTER-level, so a per-DB disposable does not isolate them.
+# On a clean target the applier creates + owns them (holds ADMIN); a leaked, orphaned pair
+# (from an aborted prior run whose applier was dropped) has no admin edge and blocks the
+# next applier's ALTER with 42501. Drop the disposable, password-less pair before/after each
+# module run so the proof is idempotent. Password-carrying roles are LEFT IN PLACE (safety).
+_APP_ROLES = ("records_api", "records_intake_writer")
+
+
+def _drop_disposable_app_roles():
+    with psycopg.connect(_ADMIN, autocommit=True) as c:
+        for role in _APP_ROLES:
+            if not c.execute("select 1 from pg_roles where rolname=%s", (role,)).fetchone():
+                continue
+            haspw = c.execute(
+                "select rolpassword is not null from pg_authid where rolname=%s", (role,)
+            ).fetchone()[0]
+            if haspw:
+                continue  # out-of-band password: never drop (DEV-7 discipline)
+            try:
+                c.execute(f'drop role "{role}"')
+            except psycopg.errors.DependentObjectsStillExist:
+                pass  # cross-DB dependency: leave in place
+
+
+@pytest.fixture(scope="module")
+def compat_child():
+    """Disposable DB with 001-044 + the ADAPTED 045 applied AS the non-super applier;
+    yields the ADMIN child DSN for catalog introspection. The fixture succeeding IS the
+    green proof that adapted 045 applies under the non-super applier. Value-silent."""
+    if not _ADMIN:
+        pytest.skip("RECORDS_PG_ADMIN_DSN not set")
+    rv.check_admin_dsn(_ADMIN)
+    _drop_disposable_app_roles()  # clean any orphaned cluster-level pair before applying
+    val = rv.make_val_name()
+    rv.assert_val_name(val)
+    applier = rv.make_local_applier(_ADMIN, rv.LOCAL_APPLIER_ENVELOPE)
+    rv.assert_applier_name(applier.role)
+    with psycopg.connect(_ADMIN, autocommit=True) as c:
+        c.execute(f'create database "{val}"')
+    try:
+        with psycopg.connect(_ADMIN, autocommit=True) as c:
+            c.execute(applier.create_sql)
+            c.execute(f'grant create on database "{val}" to "{applier.role}"')
+        apply_dsn = rv.derive_child_dsn(applier.dsn, val)
+        migs, _ = rv.enumerate_stack(rv.HERE)
+        for num, fname in migs:
+            if num > 45:
+                break
+            rv._apply_as_applier(fname, apply_dsn)  # 001-044 then adapted 045; each must succeed
+        yield rv.derive_child_dsn(_ADMIN, val)
+    finally:
+        with psycopg.connect(_ADMIN, autocommit=True) as c:
+            c.execute(f'drop database if exists "{val}" with (force)')
+            c.execute(applier.drop_sql)
+        _drop_disposable_app_roles()  # do not leave orphaned cluster-level roles behind
+
+
+@compat
+def test_compat_adapted_045_applies_under_non_super(compat_child):
+    # Reaching here means adapted 045 applied AS the non-super applier without raising.
+    assert compat_child
+
+
+@compat
+def test_compat_app_role_flags(compat_child):
+    with psycopg.connect(compat_child, autocommit=True) as c:
+        for role in ("records_api", "records_intake_writer"):
+            sup, byp, login = c.execute(
+                "select rolsuper, rolbypassrls, rolcanlogin from pg_roles where rolname=%s",
+                (role,),
+            ).fetchone()
+            assert sup is False, f"{role} must be rolsuper=false"
+            assert byp is False, f"{role} must be rolbypassrls=false"
+            assert login is True, f"{role} must be rolcanlogin=true"
+
+
+@compat
+def test_compat_reader_no_write_writer_no_delete(compat_child):
+    with psycopg.connect(compat_child, autocommit=True) as c:
+        for tbl in ALL_TABLES:
+            for priv in ("INSERT", "UPDATE", "DELETE"):
+                has = c.execute(
+                    "select has_table_privilege('records_api', %s, %s)",
+                    (f"records.{tbl}", priv),
+                ).fetchone()[0]
+                assert not has, f"records_api holds {priv} on {tbl}"
+            hasdel = c.execute(
+                "select has_table_privilege('records_intake_writer', %s, 'DELETE')",
+                (f"records.{tbl}",),
+            ).fetchone()[0]
+            assert not hasdel, f"records_intake_writer holds DELETE on {tbl}"
+
+
+@compat
+def test_compat_policies_bound_to_custom_roles(compat_child):
+    # Gate B: policies target the custom app roles directly, never PUBLIC.
+    with psycopg.connect(compat_child, autocommit=True) as c:
+        pub = c.execute(
+            "select tablename, policyname from pg_policies where schemaname='records' "
+            "and (roles is null or 'public' = any(roles))"
+        ).fetchall()
+        assert pub == [], f"records policy TO PUBLIC: {pub}"
+        bound = c.execute(
+            "select count(*) from pg_policies where schemaname='records' "
+            "and roles && array['records_api','records_intake_writer']::name[]"
+        ).fetchone()[0]
+        assert bound > 0, "no records policy is bound TO the custom app roles"
+
+
+@compat
+def test_compat_membership_isolation_holds(compat_child):
+    # D-A: no USABLE (set/inherit) membership edge from/to an app role by a NON-admin role.
+    with psycopg.connect(compat_child, autocommit=True) as c:
+        rows = c.execute(
+            "select a.rolname, b.rolname, am.set_option, am.inherit_option "
+            "from pg_auth_members am "
+            "join pg_roles a on a.oid=am.roleid join pg_roles b on b.oid=am.member "
+            "where (a.rolname in ('records_api','records_intake_writer') "
+            "    or b.rolname in ('records_api','records_intake_writer')) "
+            "and (am.set_option or am.inherit_option) "
+            "and am.member <> 'postgres'::regrole"
+        ).fetchall()
+        assert rows == [], f"app role holds a usable membership edge: {rows}"

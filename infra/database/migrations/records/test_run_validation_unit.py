@@ -181,18 +181,20 @@ def test_parse_args_apply_as_non_superuser_flag():
     assert rv.parse_args([]).apply_as_non_superuser is False
 
 
-def test_local_applier_envelope_is_provisional_non_super():
-    # The provisional envelope, pending Phase-0 branch confirmation: non-super +
-    # createrole (needed to reach 045's CREATE ROLE) and deliberately WITHOUT
-    # bypassrls/replication/createdb (spec B1: do not pre-grant what Phase 0 has
-    # not confirmed managed postgres can set).
+def test_local_applier_envelope_mirrors_branch_observed_managed_postgres():
+    # Phase-0-confirmed envelope (PHASE0-FINDINGS A2): the powerful-but-non-super admin
+    # identity managed postgres actually is - non-super (superuser stays unsettable) plus
+    # createrole + createdb + bypassrls + replication. Phase 2 needs the applier to HOLD
+    # these so it can SET the app roles' NO forms (PG16+ requires holding an attr to set
+    # its NO form on another role); only superuser stays False, preserving the 045
+    # nosuperuser red-proof.
     env = rv.LOCAL_APPLIER_ENVELOPE
     assert env["superuser"] is False
     assert env["login"] is True
     assert env["createrole"] is True
-    assert env["bypassrls"] is False
-    assert env["replication"] is False
-    assert env["createdb"] is False
+    assert env["bypassrls"] is True
+    assert env["replication"] is True
+    assert env["createdb"] is True
 
 
 def test_make_local_applier_returns_non_super_applier_dsn():
@@ -206,13 +208,15 @@ def test_make_local_applier_returns_non_super_applier_dsn():
     assert "host=127.0.0.1" in res.dsn and "dbname=postgres" in res.dsn
     # reuse the admin password token (never a fresh secret): applier auths cleanly
     assert "password=x" in res.dsn
-    # DDL proves non-superuser AND reflects the provisional envelope verbatim
+    # DDL proves NON-superuser (the load-bearing constraint) AND reflects the branch-observed
+    # envelope verbatim: createrole/createdb/bypassrls/replication HELD (so the applier can set
+    # the app roles' NO forms), superuser NOT.
     cs = res.create_sql.lower()
     assert "nosuperuser" in cs
     assert "createrole" in cs and "nocreaterole" not in cs
-    assert "nocreatedb" in cs
-    assert "nobypassrls" in cs
-    assert "noreplication" in cs
+    assert "createdb" in cs and "nocreatedb" not in cs
+    assert "bypassrls" in cs and "nobypassrls" not in cs
+    assert "replication" in cs and "noreplication" not in cs
     assert " login " in cs and "nologin" not in cs
     assert res.role in res.drop_sql and "drop role" in res.drop_sql.lower()
 
