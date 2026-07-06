@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Plan rev 2 (2026-07-06):** folds the plan-review IRP + Codex. Architecture VERIFIED SOUND (route order + `NON_BREAKER` preservation + byte-identical strategy confirmed correct). P1 type-fidelity fixes: `assessTransferSwitch` now mirrors `assessSwitch` exactly (`VoltageBasis` param, full `source`, `questions[]`/`isBreakerShaped`, `q()` helper, `classifyVoltage(x.busVoltageV)`); `candidateKind` widening moved into Task 2 (else Task 2 typecheck REDs); the two Task-3 hard-RED re-baselines (`dispositions.test.ts:57`, `normalize.test.ts:33`) enumerated in-commit. P2: crux-#10 gfp-row stays on the tail (`non_breaker_carries_rating`, non-vacuous assert); the E01-11 re-baseline is PINNED by an executable golden; the 9th `STSDP-MCB` breaker row noted as byte-identical.
+
 **Goal:** Admit the 7th apparatus family (automatic / transfer switches, NETA 7.22.3) into `packages/estimator-takeoff` so a recognized, TAGGED transfer switch is counted per device and routed to a Gate-2 automation-class scope decision (never auto-priced), a main-tie-main breaker-pair SCHEME keeps its breakers as breakers, and all six prior families + tagless rows stay byte-identical except the intentional re-baseline of the TAGGED transfer rows.
 
 **Architecture:** Reuse the switch/relay/GFP scope_pending machinery. Add a seventh signature `kind:'transfer_switch'`. **Do NOT edit `NON_BREAKER`** (an earlier design that removed ATS/MTS/STS from it regressed four other consumers - the GFP `isGfpParentShape` guard, the transformer kVA-fallback exclusion, the NON_BREAKER tail, and the breaker-fallback guard). Instead route a device-first transfer recognizer BETWEEN `looksLikeSwitch` (normalize.ts:485) and the `NON_BREAKER` catch (normalize.ts:489) so a TAGGED transfer row is claimed before the tail; short-circuit `candidateKind:'transfer_switch'` at the top of `assessCore`; and give the H3 conflict guard a transfer-LOCAL predicate (`NON_BREAKER` minus ATS/MTS/STS) so a plain `ATS` never self-conflicts. Per the operator T1-B ruling, a bare `AF/AT` on a transfer-anchored row is RATING EVIDENCE (scope_pending), not a conflict.
@@ -62,8 +64,9 @@ import type { TransferSwitchSignature } from '../src/signature/types'
 import seed from '../../estimator-core/src/catalog/equipment-models.seed.json'
 
 const sig = (o: Partial<TransferSwitchSignature>): TransferSwitchSignature => ({
-  kind: 'transfer_switch', automationClass: 'automatic', source: { block: null }, ...o,
-} as TransferSwitchSignature)
+  kind: 'transfer_switch', automationClass: 'automatic', voltageBasis: 'none',
+  source: { sheet: 'E', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line' }, ...o,
+} as TransferSwitchSignature)   // full BaseSignature.source (block optional; never null) so the cast compiles
 
 describe('matchTransferSwitch', () => {
   it('automatic -> default base IR/DLRO ref, group of 2', () => {
@@ -176,6 +179,7 @@ git commit -m "feat(transfer): catalog - 3 V1 refs + matchTransferSwitch + gaps 
 ### Task 2: Recognition predicates - regexes, looksLikeTransferSwitch, parse functions
 
 **Files:**
+- Modify: `packages/estimator-takeoff/src/extraction/types.ts:15` + `extraction/parse.ts:58` (widen `candidateKind` to include `'transfer_switch'` FIRST - a pure additive widening that does NOT touch the `ApparatusSignature` union, so it compiles green; REQUIRED before `looksLikeTransferSwitch` references `'transfer_switch'`, else the Task 2 typecheck gate REDs on a TS2367 no-overlap comparison under `strict:true`)
 - Modify: `packages/estimator-takeoff/src/signature/normalize.ts` (add the transfer regexes + `looksLikeTransferSwitch` + `parseAutomationClass` + `parseBypassIsolation` + `parseTransferAmp`; do NOT wire `assessCore` yet)
 - Test: `packages/estimator-takeoff/test/normalize-transfer.test.ts`
 
@@ -229,7 +233,7 @@ describe('parse', () => {
 
 - [ ] **Step 2: Run it; expect FAIL** (functions not exported). Run: `... test -- normalize-transfer`.
 
-- [ ] **Step 3: Implement in `normalize.ts`** (add near the switch regexes; do NOT touch `NON_BREAKER`/`SWITCH_EXCLUDE`).
+- [ ] **Step 3: Implement.** FIRST widen `extraction/types.ts:15` `candidateKind` to `... | 'transfer_switch'` + update the `extraction/parse.ts:58` validator whitelist + expected-string message (pure additive; keeps Task 2 typecheck green). THEN add the following to `normalize.ts` (near the switch regexes; do NOT touch `NON_BREAKER`/`SWITCH_EXCLUDE`).
 
 ```ts
 const TRANSFER_DEVICE = /\b(automatic\s+transfer\s+switch|manual\s+transfer\s+switch|transfer\s+switch|ATS|MTS|STS)\b/i
@@ -322,28 +326,36 @@ describe('assessTransferSwitch T1-B', () => {
 - [ ] **Step 2: Run; expect FAIL** (assessor + union not present). Run: `... test -- transfer-assess quantify-transfer`.
 
 - [ ] **Step 3: Implement (all together).**
-  1. `extraction/types.ts:15`: widen `candidateKind` to `... | 'transfer_switch'`. `extraction/parse.ts:58`: accept `'transfer_switch'` + update the message.
+  1. (candidateKind widening: DONE in Task 2 - `extraction/types.ts:15` + `parse.ts:58` already include `'transfer_switch'`; nothing to do here.)
   2. `signature/types.ts:91`: `export type ApparatusSignature = ... | SwitchSignature | TransferSwitchSignature`.
   3. `signature/normalize.ts`: add the assessor + new `AssessmentCode` members `'transfer_recognized' | 'transfer_parent_conflict'`:
+     **MIRROR `assessSwitch` (normalize.ts:452-457) VERBATIM for the BaseSignature fields** - `ApparatusAssessment` requires ALL of `{ signature, questions: OperatorQuestion[], isBreakerShaped: boolean, assessmentCode }` (none optional); `BaseSignature` requires `voltageV`, `voltageBasis: VoltageBasis` (`'detected'|'asserted'|'none'`, NOT a number), `voltageClass`, and a full `source: { sheet, page, bbox, evidence, block? }` (block is `string|undefined`, never `null`); use the module-local `q(x, msg, code)` helper (normalize.ts:401):
      ```ts
-     function assessTransferSwitch(x: ExtractedApparatus, voltageBasis?: number): ApparatusAssessment {
+     import type { VoltageBasis } from './types'   // already in scope in normalize.ts
+     function assessTransferSwitch(x: ExtractedApparatus, voltageBasis?: VoltageBasis): ApparatusAssessment {
        const { TRANSFER_TRIP_FN, TRANSFER_BREAKER_CONFLICT, TRANSFER_CONFLICT_NONBREAKER } = _transferGuards
        if (TRANSFER_TRIP_FN.test(x.raw) || TRANSFER_BREAKER_CONFLICT.test(x.raw) || TRANSFER_CONFLICT_NONBREAKER.test(x.raw)) {
-         return { assessmentCode: 'transfer_parent_conflict', signature: null,
-           question: 'Transfer-anchored row carries a breaker/trip or a co-located non-transfer device signal; confirm whether it is a transfer switch or a breaker/parent.' }
+         return {
+           signature: null, isBreakerShaped: false, assessmentCode: 'transfer_parent_conflict',
+           questions: [q(x, 'Transfer-anchored row carries a breaker/trip or a co-located non-transfer device signal; confirm whether it is a transfer switch or a breaker/parent.', 'transfer_parent_conflict')],
+         }
        }
        const sig: TransferSwitchSignature = {
          kind: 'transfer_switch',
          automationClass: parseAutomationClass(x.raw),
          bypassIsolation: parseBypassIsolation(x.raw),
          ampRating: parseTransferAmp(x.raw),
-         voltageClass: classifyVoltage(x.busVoltageV ?? voltageBasis),
-         source: { block: x.block ?? null }, tag: x.tag,
+         voltageClass: classifyVoltage(x.busVoltageV),
+         voltageV: x.busVoltageV,
+         voltageBasis: voltageBasis ?? (x.busVoltageV !== undefined ? 'detected' : 'none'),
+         source: { sheet: x.sheet, page: x.page, bbox: x.bbox, evidence: x.evidence, block: x.block },
+         tag: x.tag,
        }
-       return { assessmentCode: 'transfer_recognized', signature: sig }
+       return { signature: sig, isBreakerShaped: false, assessmentCode: 'transfer_recognized', questions: [] }
      }
      ```
-     `assessCore`: (i) at the TOP add `if (x.candidateKind === 'transfer_switch') return assessTransferSwitch(x, voltageBasis)`; (ii) AFTER the `looksLikeSwitch` block (normalize.ts:485) and BEFORE the `NON_BREAKER` catch (normalize.ts:489) add `if (looksLikeTransferSwitch(x)) return assessTransferSwitch(x, voltageBasis)`. Do NOT edit `NON_BREAKER`, `isGfpParentShape`, `looksLikeTransformer`, or the tail.
+     (`classifyVoltage(x.busVoltageV)` takes a `number|undefined` - NEVER the `voltageBasis` string. If any BaseSignature field name differs from the above, `assessSwitch` at normalize.ts:452-457 is the source of truth - copy it and change only `kind` + the transfer-specific fields.)
+     `assessCore`: (i) at the TOP add `if (x.candidateKind === 'transfer_switch') return assessTransferSwitch(x, voltageBasis)`; (ii) AFTER the `looksLikeSwitch` block (normalize.ts:485) and BEFORE the `NON_BREAKER` catch (normalize.ts:489) add `if (looksLikeTransferSwitch(x)) return assessTransferSwitch(x, voltageBasis)`. Do NOT edit `NON_BREAKER`, `isGfpParentShape`, `looksLikeTransformer`, `assessSwitch`/instrument conflict guards, or the tail (all six `NON_BREAKER.test` consumers stay untouched: `:106`, `:231`, `:292`, `:443`, `:489`, `:500`).
   4. `quantify/quantify.ts` `specKey`: BEFORE the transformer fall-through add
      ```ts
      if (s.kind === 'transfer_switch')
@@ -356,7 +368,7 @@ describe('assessTransferSwitch T1-B', () => {
 - [ ] **Step 4: Run the FULL suite + typechecks; expect PASS (build green at this commit). Commit.**
 
 Run (NO `| tail`): `... pnpm --filter @apex/estimator-takeoff test && pnpm --filter @apex/estimator-takeoff typecheck && pnpm --filter "./apps/operations-web" typecheck`
-Expected: green. **Any assertion that goes RED is a TAGGED-transfer behavior change** (a tagged `ATS`/`MTS`/`STS` that now routes to the transfer family) - re-baseline it IN THIS COMMIT with a documented before/after (the reason-code deltas: a tagged `ATS 800AF/800AT LSIG` -> `transfer_parent_conflict` [was `non_breaker_carries_rating`]; a tagged bare `ATS-1` -> transfer scope_pending), so the build stays green at every commit (NO xfail). Do NOT touch any TAGLESS assertion (`at('ATS 800AF/800AT')` stays `non_breaker_carries_rating`), any `UPS-*` row, any `drift-check`/`golden-e01-11` value-loose assertion that still passes, or any prior-family assertion. Coarse assertions that stay green but no longer positively prove the route fired (the vacuous `MTS`/`STS` null-shape checks) are TIGHTENED in Task 5, not here. Commit:
+Expected: green. **Any assertion that goes RED is a TAGGED-transfer behavior change** (a tagged `ATS`/`MTS`/`STS` that now routes to the transfer family) - re-baseline it IN THIS COMMIT with a documented before/after (the reason-code deltas: a tagged `ATS 800AF/800AT LSIG` -> `transfer_parent_conflict` [was `non_breaker_carries_rating`]; a tagged bare `ATS-1` -> transfer scope_pending), so the build stays green at every commit (NO xfail). Do NOT touch any TAGLESS assertion (`at('ATS 800AF/800AT')` stays `non_breaker_carries_rating`), any `UPS-*` row, any `drift-check`/`golden-e01-11` value-loose assertion that still passes, or any prior-family assertion. Coarse assertions that stay green but no longer positively prove the route fired (the vacuous `MTS`/`STS` null-shape checks at `normalize.test.ts:89/116`) are TIGHTENED in Task 5, not here. **The two known hard-REDs to re-baseline HERE (add both files to this commit, with a documented before/after):** `dispositions.test.ts:57` (tagged `ATS 800AF/800AT LSIG` -> reasonCode `transfer_parent_conflict`, was `non_breaker_carries_rating`) and `normalize.test.ts:33` (tagged `ATS-1 1000A` -> a non-null transfer signature [automatic; the T1-B clean-rated-ATS scope_pending case], was `.toBeNull()`). Verified stays-green (do NOT touch): `normalize.test.ts:89/116` (coarse null + questions>0); `normalize.test.ts:154` `at('ATS 800AF/800AT')` (TAGLESS via the `at()` helper); `golden-e01-11.test.ts` + `drift-check.test.ts` (value-loose). Commit:
 ```bash
 git add -A && git commit -m "feat(transfer): assessor + union widen + quantify/emit/buckets wiring (Task 3, coupled core)"
 ```
@@ -373,7 +385,7 @@ git add -A && git commit -m "feat(transfer): assessor + union widen + quantify/e
 - Consumes: `runTakeoff` (the full pipeline, Tasks 1-3).
 - Produces: the end-to-end crux-case coverage + the report projection.
 
-- [ ] **Step 1: Write the failing pipeline test** covering spec crux #1-#8, #10 (cross-family byte-identical), #14 (producer hard-win): a tagged `ATS-1` -> transfer scope_pending (automatic, default IR/DLRO); `MTS-2` -> manual; `ATS ... bypass` -> Iso-Bypass default; bare `transfer switch` -> unknown group no default; `MTS ... bypass` -> `transfer_catalog_gap`; `STS-1` -> gap; a `UPS-*-MIB 1600AF/1600AT` -> `non_breaker_carries_rating` (UNCHANGED); `ATS-1 500kVA` -> transfer (NOT transformer); a tagged `ATS-1 GROUND FAULT` candidateKind:'gfp' -> NOT a priced GFP line. Assert the report carries `automationClass`/`bypassIsolation`.
+- [ ] **Step 1: Write the failing pipeline test** covering spec crux #1-#8, #10 (cross-family byte-identical), #14 (producer hard-win): a tagged `ATS-1` -> transfer scope_pending (automatic, default IR/DLRO); `MTS-2` -> manual; `ATS ... bypass` -> Iso-Bypass default; bare `transfer switch` -> unknown group no default; `MTS ... bypass` -> `transfer_catalog_gap`; `STS-1` -> gap; a `UPS-*-MIB 1600AF/1600AT` -> `non_breaker_carries_rating` (UNCHANGED); `ATS-1 500kVA` (tagged, no candidateKind) -> transfer scope_pending (NOT transformer - `looksLikeTransformer`'s `!NON_BREAKER.test` still excludes it); a tagged `ATS-1 ... GROUND FAULT` with `candidateKind:'gfp'` -> stays on the NON_BREAKER tail as **`non_breaker_carries_rating`** (NOT claimed by transfer - `looksLikeTransferSwitch` defers to any non-`transfer_switch` producer kind; NOT a priced GFP line; GFP byte-identical). **Assert the exact `non_breaker_carries_rating` reasonCode for the gfp-tagged row (non-vacuous - the coarse "not a priced GFP line" passes on the old path too).** Assert the report carries `automationClass`/`bypassIsolation`.
 
 - [ ] **Step 2: Run; expect FAIL** (report projection missing the fields). Run: `... test -- transfer-pipeline`.
 
@@ -399,9 +411,9 @@ git commit -m "feat(transfer): report projection + end-to-end pipeline crux test
 - Consumes: the full pipeline (Tasks 1-4).
 - Produces: the transfer coexistence golden + the documented re-baseline + the byte-identical confirmation.
 
-- [ ] **Step 1: Enumerate the exact tagged-transfer assertions that change (the D4 before/after).** Grep `ATS|MTS|STS` in `test/*.test.ts`; for each TAGGED occurrence assert its old vs new disposition. Expected deltas: tagged `ATS/MTS/STS 800AF/800AT LSIG` -> `transfer_parent_conflict` (was `non_breaker_carries_rating`); tagged `ATS-1` bare -> transfer scope_pending; the E01-11 `STS-*` rows (8, all `1200AF/1200AT LSI`, tagged) -> `transfer_parent_conflict`. Confirm NO tagless row and NO `UPS-*` row changes (grep `at('ATS 800AF/800AT')` and the `UPS-*-MIB` fixture rows stay their current codes). Write the before/after into a comment block in `transfer-golden.test.ts`.
+- [ ] **Step 1: Document the D4 before/after (the two hard-REDs were re-baselined in Task 3; here = the fixture accounting + the STSDP exclusion + the vacuous tightenings in Step 3).** Confirm the E01-11 fixture: exactly **8** `STS-P1-110-0N(A|P) 1200AF/1200AT LSI` rows (all tagged, all carry `LSI`) re-baseline `non_breaker_carries_rating -> transfer_parent_conflict`. **The 9th STS-prefixed row `STSDP-P1-110-MCB 3000AF/3000AT LSIG` is NOT `\bSTS\b`-anchored (no word boundary before `DP`) - it is an MCB breaker and MUST stay a MATCHED breaker, byte-identical (NOT part of the re-baseline).** Confirm the 5 `UPS-*` rows + all non-transfer rows unchanged. NOTE: `golden-e01-11.test.ts` is VALUE-LOOSE (asserts `bid_cents>0`/`findings===0`/`accounted`, NOT reason codes or the literal `198000`), so it does NOT RED from the STS re-baseline; the `198000`/`39-question` figures live only in SKILL.md prose - so the re-baseline is PINNED by the executable E01-11 assertion in Step 2, not by golden-e01-11. Write the before/after into a comment block in `transfer-golden.test.ts`.
 
-- [ ] **Step 2: Write the failing coexistence golden `test/transfer-golden.test.ts`** (a real one-line: a tagged `ATS-1` + `ATS-2 Iso Bypass` + `MTS-3` + `STS-4` + a `Main-Tie-Main` pair of REAL breakers + a `UPS-5-MIB 1600AF/1600AT` main coexist). Expect: ATS-1 -> automatic scope_pending; ATS-2 -> Iso-Bypass; MTS-3 -> manual; STS-4 -> `transfer_catalog_gap`; the two MAIN/TIE breakers -> priced breakers; UPS-5 -> `non_breaker_carries_rating` question; `partial_preview`; `accounted true`.
+- [ ] **Step 2: Write the failing coexistence golden `test/transfer-golden.test.ts`** (a real one-line: a tagged `ATS-1` + `ATS-2 Iso Bypass` + `MTS-3` + `STS-4` + a `Main-Tie-Main` pair of REAL breakers + a `UPS-5-MIB 1600AF/1600AT` main coexist). Expect: ATS-1 -> automatic scope_pending; ATS-2 -> Iso-Bypass; MTS-3 -> manual; STS-4 -> `transfer_catalog_gap`; the two MAIN/TIE breakers -> priced breakers; UPS-5 -> `non_breaker_carries_rating` question; `partial_preview`; `accounted true`. **ALSO add an executable E01-11 re-baseline PIN** (in this file or `golden-e01-11.test.ts`): `runTakeoff(<E01-11 fixture>)` yields exactly **8** `transfer_parent_conflict` dispositions (the `STS-P1-110` rows), the `STSDP-P1-110-MCB` row is a MATCHED breaker, the 5 `UPS-*` rows are `non_breaker_carries_rating`, `operator_questions === 39`, and `bid_cents === 198000` - so "bid + question-count unchanged" is a TEST, not an eyeball.
 
 - [ ] **Step 3: TIGHTEN the re-baselined normalize tests to be NON-VACUOUS.** In `test/normalize.test.ts`, change the tagged `MTS-2 800AF/800AT LSIG` / `STS-1 800AF/800AT LSIG` assertions from the coarse `signature===null + questions>0` to `assessmentCode === 'transfer_parent_conflict'` (positively proving the route fired - a build that skipped the route would now RED). Update `dispositions.test.ts` tagged-ATS reasonCode -> `transfer_parent_conflict`; refresh the stale `runner.test.ts:59` comment.
 
@@ -410,7 +422,7 @@ git commit -m "feat(transfer): report projection + end-to-end pipeline crux test
 - [ ] **Step 5: Run the FULL suite + both typechecks; confirm the six prior goldens + all tagless/UPS rows byte-identical.**
 
 Run (NO `| tail` - let the test exit code propagate): `ssh olares-mesh 'export PATH=/home/olares/.nvm/versions/node/v20.20.2/bin:$HOME/.local/bin:$PATH; cd /home/olares/code/apex/apex-estimator-ats && pnpm --filter @apex/estimator-takeoff test && pnpm --filter @apex/estimator-takeoff typecheck && pnpm --filter "./apps/operations-web" typecheck'`
-Expected: ALL green; `breaker/transformer/relay/gfp/itx/switch` goldens byte-identical; the E01-11 `bid_cents 198000` unchanged; ONLY the tagged-transfer + SKILL.md deltas present. **Build-time watch:** if any NON-transfer row or any tagless ATS/MTS/STS row moved, STOP and investigate.
+Expected: ALL green; `breaker/transformer/relay/gfp/itx/switch` goldens byte-identical; the E01-11 `bid_cents 198000` + `39 operator_questions` unchanged; ONLY the tagged-transfer + SKILL.md deltas present. **Build-time watch:** if any NON-transfer row, any tagless ATS/MTS/STS row, or the `STSDP-P1-110-MCB` breaker row moved, STOP and investigate.
 
 - [ ] **Step 6: Commit.**
 ```bash
