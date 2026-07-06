@@ -1,4 +1,9 @@
 -- 047_records_audit_roles_down.sql
+--
+-- SUPABASE-COMPAT (compat lane Task 2.3, RATIFIED down posture): NOLOGIN owner roles
+-- drop only after zero-owned guards; LOGIN credential roles are LEFT IN PLACE with
+-- their records access revoked (never destroy a possibly operator-provisioned serving
+-- credential; never read pg_authid - it is superuser-only, 42501 for non-super postgres).
 BEGIN;
 SET client_encoding TO 'UTF8';
 -- records_fn_owner: NOLOGIN pure owner -> zero-owned guard (class+proc+schema) +
@@ -22,24 +27,22 @@ do $$ begin
   if exists (select 1 from pg_roles where rolname='records_fn_owner')
     then raise exception '047_down: records_fn_owner survived drop'; end if;
 end $$;
--- records_auditor: LOGIN, password provisioned out-of-band -> DEV-7 guard,
--- mirroring 045_down. NO `DROP OWNED` (the LOGIN-role hazard Gate 3 avoided):
--- explicit DB-scoped revokes, then DROP ROLE ONLY if it is passwordless
--- (harness / disposable-DB case); RETAIN with a NOTICE if password-bearing.
+-- records_auditor: LOGIN credential role, password provisioned out-of-band -> RATIFIED
+-- LOGIN-leave, mirroring 045_down [d5]. The non-super applier CANNOT read the true
+-- password state (pg_authid is superuser-only, 42501; pg_roles.rolpassword is a masked
+-- '********' and useless as a signal), so this is CONSERVATIVE and FAIL-SAFE: revoke the
+-- role's records access and LEAVE the role object in place - never dropped - protecting
+-- any operator serving credential. NO `select ... from pg_authid` anywhere; NO DROP ROLE.
+-- A subsequent 047 up re-adopts it (create-if-not-exists). Role teardown on a disposable
+-- target is the harness's job, not this credential-preserving down.
 do $$
-declare has_pw bool;
 begin
   if not exists (select 1 from pg_roles where rolname='records_auditor') then
     return;
   end if;
   revoke usage on schema records from records_auditor;   -- safe if not granted
   -- (048_down already revoked SELECT on audit_log / it drops with the table)
-  select (rolpassword is not null) into has_pw from pg_authid where rolname='records_auditor';
-  if coalesce(has_pw, true) then   -- unreadable pw => assume present => fail-safe RETAIN
-    raise notice '047_down: records_auditor is password-bearing; RETAINED (DEV-7 guard).';
-  else
-    drop role records_auditor;
-  end if;
+  raise notice '047_down: records_auditor is a LOGIN credential role; records access revoked, role RETAINED (fail-safe leave).';
 end $$;
 
 COMMIT;
