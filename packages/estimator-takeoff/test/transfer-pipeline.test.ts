@@ -112,4 +112,25 @@ describe('transfer-switch pipeline (crux cases)', () => {
     expect(res.scopePendingLines?.length).toBe(1)
     expect(res.dispositions[0]!.reasonCode).toBe('transfer_scope_pending')
   })
+
+  // P2 (Codex): a spelled-out transfer anchor carrying kVA (no ATS/MTS/STS abbrev) must route to the transfer
+  // family, NOT be claimed by the transformer kVA-fallback. Mirrors the abbreviated path (crux #8).
+  it('#15 a tagged spelled-out "Automatic Transfer Switch 500kVA" -> transfer scope_pending (automatic), NOT transformer', () => {
+    const res = runTakeoff(art([{ raw: 'Automatic Transfer Switch 500kVA', tag: 'ATS-15' }]))
+    expect(res.scopePendingLines?.length).toBe(1)
+    const sp = res.scopePendingLines![0]!
+    expect(sp.automationClass).toBe('automatic')
+    expect(res.dispositions[0]!.reasonCode).toBe('transfer_scope_pending')
+  })
+
+  // P2 (Codex): plain-then-bypass ordering must still surface the manual+bypass catalog gap (D6), not collapse
+  // to a plain Manual scope_pending because the plain row was seen first.
+  it('#16 plain MTS-1 THEN MTS-1 Iso Bypass (same device) -> surfaces transfer_catalog_gap, not a plain Manual scope_pending', () => {
+    const res = runTakeoff(art([
+      { raw: 'MTS-1', tag: 'MTS-1' },
+      { raw: 'MTS-1 Iso Bypass', tag: 'MTS-1' },
+    ]))
+    expect(res.findings.some((f) => f.code === 'transfer_catalog_gap')).toBe(true)
+    expect(res.scopePendingLines?.length ?? 0).toBe(0)
+  })
 })

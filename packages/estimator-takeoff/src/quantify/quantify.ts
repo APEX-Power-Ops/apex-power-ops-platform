@@ -54,9 +54,11 @@ function pickAuthoritative(occ: ApparatusSignature[]): ApparatusSignature | unde
   const richSwitch = auths.find((o) => o.kind === 'switch' && (o.switchType !== 'unknown' || o.fused !== undefined))
     ?? auths.find((o) => o.kind === 'switch' && o.ampRating !== undefined)
   if (richSwitch) return richSwitch
-  // For transfer switches: prefer an occurrence with a legible automationClass (not 'unknown') OR a bypass signal,
-  // so a sparse unknown one-line row cannot win over a detailed schedule row and drop the routing evidence.
-  const richTransfer = auths.find((o) => o.kind === 'transfer_switch' && (o.automationClass !== 'unknown' || o.bypassIsolation !== undefined))
+  // For transfer switches: prefer a bypass-isolation occurrence FIRST (P2/Codex: a plain known-automation row seen
+  // before its own bypass sibling must not win and drop the bypass evidence), then any legible automationClass OR
+  // bypass signal, so a sparse unknown one-line row cannot win over a detailed schedule row and drop the routing evidence.
+  const richTransfer = auths.find((o) => o.kind === 'transfer_switch' && o.bypassIsolation === true)
+    ?? auths.find((o) => o.kind === 'transfer_switch' && (o.automationClass !== 'unknown' || o.bypassIsolation !== undefined))
   if (richTransfer) return richTransfer
   return auths[0]
 }

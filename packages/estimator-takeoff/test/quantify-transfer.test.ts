@@ -44,4 +44,18 @@ describe('quantify transfer_switch', () => {
       expect(rep.bypassIsolation).toBe(true)
     }
   })
+
+  it('pickAuthoritative ranks a bypass occurrence ahead of a plain-known-automation sibling (plain-then-bypass order, Codex P2)', () => {
+    // same device (same tag+kind): the PLAIN manual row appears FIRST, the Iso-Bypass row SECOND.
+    // A plain known-automation must NOT win over a later bypass sibling and drop the bypass routing evidence.
+    const plain = ts({ tag: 'MTS-1', automationClass: 'manual', source: { sheet: 'one', page: 1, bbox: [0, 0, 1, 1], evidence: 'one-line' } }, 0)
+    const bypass = ts({ tag: 'MTS-1', automationClass: 'manual', bypassIsolation: true, source: { sheet: 'sch', page: 1, bbox: [1, 0, 2, 1], evidence: 'switchgear-schedule' } }, 1)
+    const { lines } = quantify([plain, bypass])
+    expect(lines.length).toBe(1)
+    const rep = lines[0]!.signature
+    expect(rep.kind).toBe('transfer_switch')
+    if (rep.kind === 'transfer_switch') {
+      expect(rep.bypassIsolation).toBe(true)
+    }
+  })
 })
