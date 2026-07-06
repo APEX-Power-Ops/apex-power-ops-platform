@@ -209,4 +209,18 @@ A non-owner `GRANT create on schema ... to <receiver>` only WARNs and no-ops (it
 
 ### Status
 
-Phase 0 = **DISCOVERY COMPLETE** (envelope characterized; hardened reusable probe committed) - NOT a closed ops gate. Do NOT start Phase 2 migration rewrites until Task 2.0 explicitly records: (1) Gate A - pre-provision vs exempt-`postgres`; (2) 046_down reclaim - dedicated reclaim-owner vs drop/recreate vs non-`postgres` target; (3) executor premise - non-super `postgres` path remains the intended model. Both branch DSNs in Infisical (`SUPABASE_BRANCH_PW`/`SUPABASE_BRANCH_DSN`) are stale (both branches deleted).
+Phase 0 = **DISCOVERY COMPLETE** (envelope characterized; hardened reusable probe committed) - NOT a closed ops gate. Do NOT start Phase 2 migration rewrites until Task 2.0 explicitly records: (1) Gate A - pre-provision vs exempt-`postgres`; (2) 046_down reclaim - dedicated reclaim-owner vs drop/recreate vs non-`postgres` target; (3) executor premise - non-super `postgres` path remains the intended model. Both branch DSNs in Infisical (`SUPABASE_BRANCH_PW`/`SUPABASE_BRANCH_DSN`) are stale (both branches deleted; operator removed both, verified ABSENT).
+
+---
+
+## TASK 2.0 DECISIONS - RECORDED (operator, 2026-07-06). Phase 2 is GO.
+
+The Phase-0 discovery (gates + IRP D1-D6 + ADDENDUM v2) is the basis; the operator ruled the three decision gates. Phase 2 (Tasks 2.1-2.5) builds against these parameters.
+
+1. **Gate A = TRUSTED-APPLIER EXEMPTION** (NOT pre-provisioning). Managed `postgres` is already `BYPASSRLS` + `CREATEROLE` + the operator/admin apply identity; making it non-powerful is fiction. MODEL: the `postgres`/operator applier is custody-controlled and **EXEMPT from invariant 8**; invariant 8 governs the runtime/serving/non-admin roles (`records_api`, `records_intake_writer`, `records_auditor`, and any `service_role`/`authenticated`/`anon`), which do NOT receive the auto-admin creator edge. Pre-provisioning was rejected (it drags in an out-of-band role-bootstrap + temp-membership lifecycle `postgres` cannot fully clean up - more fragile ceremony, same real trust boundary). PHASE-2 IMPACT: (a) restate/scope invariant 8 to the non-admin roles + document the `postgres` exemption; (b) the zero-membership asserts in 045/046/047 refine to `WHERE (set_option OR inherit_option)` AND explicitly EXCLUDE `postgres` - they enforce isolation of the NON-admin roles only; (c) `supabase_probe.py` runs `--gate-a-policy=trusted-applier` (self-escalation reported, not fatal).
+
+2. **046_down = DEDICATED CUSTOM RECLAIM-OWNER** (NOT drop/recreate). Introduce a NOLOGIN `records_reclaim_owner`-style role; 046_down reassigns the `records_owner`-owned objects to it (the proven cross-role reverse transfer), preserving data + supporting down->up proof. The UP pre-state assert accepts EITHER `postgres` OR the reclaim owner as the prior owner. Down migrations are NOT destructive-reset tools here. (`grant postgres to <custom>` stays blocked, so reclaim-to-`postgres` is not used.)
+
+3. **Executor premise = NON-SUPER managed `postgres`** (the real production executor; do NOT revert to a superuser-authored model). Document precisely: non-super `postgres` applies migrations as a trusted admin/applier; serving connects AS non-bypass direct roles (`records_api`, the Gate-9 Option-B premise). D4's DML negative control (Phase 3) confirms records RLS binds the non-bypass serving role.
+
+**GO for Phase 2** (Tasks 2.1-2.5): rewrite 045-049 (+ downs) to the proven choreography (D1); refine + `postgres`-exclude the 045/046/047 asserts (D3 + decision 1); fix 049's `role_column_grants` self-oracle (D5); build 046_down to the reclaim-owner (decision 2); add the DML negative control + non-bypass serving check in Phase 3 (D4). Red/green proven on a fresh branch; whole-branch Codex before merge.

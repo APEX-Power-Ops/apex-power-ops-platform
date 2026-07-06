@@ -20,9 +20,14 @@ Connection (value-silent; pick ONE):
                        SUPABASE_PROBE_DB + SUPABASE_PROBE_PW
 
 Usage:
-  SUPABASE_PROBE_DSN='...'  python3 supabase_probe.py [--json]
+  SUPABASE_PROBE_DSN='...'  python3 supabase_probe.py [--json] [--gate-a-policy=trusted-applier|preprovisioned]
+Gate-A policy (Task-2.0 decision; default `trusted-applier`): under `trusted-applier` the managed
+`postgres` applier is custody-controlled and EXEMPT from invariant 8, so the self-escalation the
+`gate_a_escalation` probe demonstrates is EXPECTED and does NOT fail the gate (it is reported, not
+fatal). Under `preprovisioned` any self-escalation is a HARD failure (the records roles must be
+minted out-of-band so `postgres` is never their creator).
 Requires psql on PATH. Value-silent: prints only probe names, ok/sqlstate tokens, and match
-booleans - never the DSN or password. Exit 0 = envelope matches baseline; nonzero = drift/escalation.
+booleans - never the DSN or password. Exit 0 = envelope OK for the selected policy; nonzero = drift.
 """
 import os
 import sys
@@ -296,39 +301,79 @@ select k,v from _pr order by k;""",
 ]
 
 
+def parse_policy():
+    for a in sys.argv[1:]:
+        if a.startswith("--gate-a-policy="):
+            v = a.split("=", 1)[1].strip()
+            if v in ("trusted-applier", "preprovisioned"):
+                return v
+            sys.stderr.write("ERROR: --gate-a-policy must be trusted-applier or preprovisioned\n")
+            sys.exit(3)
+    return "trusted-applier"  # Task-2.0 chosen model: postgres/applier exempt from invariant 8
+
+
+def check_gate_a(obs, policy):
+    """Policy-aware evaluation of the escalation probe. Returns (ok, mismatches, note)."""
+    if "_error" in obs:
+        return False, ["psql_error:" + obs["_error"]], ""
+    canset = obs.get("set_role_after_selfgrant", "<missing>")
+    escalatable = "SUCCESS_ESCALATED" in canset
+    if policy == "trusted-applier":
+        if escalatable:
+            return True, [], ("escalation POSSIBLE - ACCEPTED under trusted-applier "
+                              "(postgres exempt from invariant 8; non-admin roles unaffected)")
+        return False, ["gate_a_escalation: expected self-escalation under managed Supabase, "
+                       "got '%s' (platform behavior changed - re-review the trust model)" % canset], ""
+    # preprovisioned: escalation must NOT be possible
+    if "FAIL" in canset:
+        return True, [], "escalation blocked - consistent with preprovisioned policy"
+    return False, ["gate_a_escalation: escalation POSSIBLE (set_role=%s) - NOT allowed under "
+                   "preprovisioned policy (roles must be minted out-of-band so postgres is not "
+                   "their creator)" % canset], ""
+
+
 def main():
     as_json = "--json" in sys.argv
+    policy = parse_policy()
     env = build_env()
     token = os.environ.get("SUPABASE_PROBE_RUN") or ("r" + uuid.uuid4().hex[:10])
     results = []
     hard_fail = False
     for name, sql, checks in PROBES:
         obs = run_sql(env, sql.replace("__S__", token))
-        mism = []
-        if "_error" in obs:
-            mism.append("psql_error:" + obs["_error"])
+        note = ""
+        if name == "gate_a_escalation":
+            ok, mism, note = check_gate_a(obs, policy)
         else:
-            for key, expect in checks:
-                got = obs.get(key, "<missing>")
-                if expect not in got:
-                    mism.append("%s: expected ~'%s' got '%s'" % (key, expect, got))
-        ok = not mism
+            mism = []
+            if "_error" in obs:
+                mism.append("psql_error:" + obs["_error"])
+            else:
+                for key, expect in checks:
+                    got = obs.get(key, "<missing>")
+                    if expect not in got:
+                        mism.append("%s: expected ~'%s' got '%s'" % (key, expect, got))
+            ok = not mism
         if not ok:
             hard_fail = True
-        results.append({"probe": name, "match": ok, "observed": obs, "mismatches": mism})
+        results.append({"probe": name, "match": ok, "observed": obs, "mismatches": mism, "note": note})
 
-    matrix = {"passed": not hard_fail, "run_suffix": token,
-              "probes": [{"probe": r["probe"], "match": r["match"], "mismatches": r["mismatches"]} for r in results]}
+    matrix = {"passed": not hard_fail, "run_suffix": token, "gate_a_policy": policy,
+              "probes": [{"probe": r["probe"], "match": r["match"], "mismatches": r["mismatches"],
+                          "note": r["note"]} for r in results]}
     if as_json:
         print(json.dumps({"matrix": matrix, "detail": results}, indent=2))
     else:
+        print("gate-a-policy: %s" % policy)
         for r in results:
             flag = "PASS" if r["match"] else "FAIL"
             print("[%s] %s" % (flag, r["probe"]))
+            if r["note"]:
+                print("       ~ " + r["note"])
             for m in r["mismatches"]:
                 print("       - " + m)
-        print("OVERALL: %s (run %s)" % ("PASS (envelope matches Phase-0 baseline)" if not hard_fail
-                                        else "FAIL (envelope drift / escalation vs baseline)", token))
+        print("OVERALL: %s (run %s, gate-a-policy %s)" % ("PASS" if not hard_fail else "FAIL",
+                                                          token, policy))
     sys.exit(0 if not hard_fail else 1)
 
 
