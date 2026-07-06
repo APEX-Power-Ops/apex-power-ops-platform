@@ -6,6 +6,7 @@ module so test_prune.py stays byte-unchanged."""
 import fcntl
 import os
 import subprocess
+import sys
 
 import psycopg
 import pytest
@@ -187,3 +188,184 @@ def test_f4_fs_error_fail_closed(tmp_path, monkeypatch):
     monkeypatch.setattr(agent_runner.os, "open", boom)
     with agent_runner._worktree_flock(runs, "review-f4000001") as ok:
         assert ok is False                                  # fail-closed, value-silent
+
+
+# ---- Task 4: run_review_job restructure (PG lock -> flock -> start() -> git ops) ----
+# absolute interpreter path (matches test_agent_runner idiom): the review agent runs
+# under _agent_env's sanitized PATH, so a bare "python3" would be PATH-fragile.
+FAKE_OK = [sys.executable, "-c", "print('review findings ok')"]
+
+
+def _mk_review_repo(tmp_path):
+    """A throwaway git repo to host detached review worktrees."""
+    repo = str(tmp_path / "repo")
+    os.makedirs(repo)
+    subprocess.run(["git", "init", "-q", repo], check=True)
+    subprocess.run(["git", "-C", repo, "-c", "user.email=t@t", "-c", "user.name=t",
+                    "commit", "-q", "--allow-empty", "-m", "root"], check=True)
+    return repo
+
+
+@pytest.fixture
+def review_env(tmp_path, monkeypatch):
+    repo = _mk_review_repo(tmp_path)
+    runs = str(tmp_path / "runs")
+    os.makedirs(runs)
+    monkeypatch.setenv("APEX_JOBS_REPO", repo)
+    monkeypatch.setenv("APEX_JOBS_RUNS_DIR", runs)
+    return repo, runs
+
+
+def test_r2_happy_path_runs_and_autocleans(conn_test, review_env):
+    repo, runs = review_env
+    jid = _enqueue_review("review-r2000001")
+    job = engine.get_job("review-r2000001")
+    summary = agent_runner.run_review_job(job, env="host", agent_cmd=FAKE_OK)
+    assert summary["status"] == "succeeded"
+    assert summary["contended"] is False
+    assert summary["cleanup_status"] == "cleaned"
+    assert not os.path.isdir(os.path.join(runs, "review-r2000001"))   # auto-cleaned
+
+
+def test_r1_r3_contended_pg_opens_no_run_touches_no_tree(conn_test, review_env):
+    repo, runs = review_env
+    d = "review-r1000001"
+    jid = _enqueue_review(d)
+    job = engine.get_job(d)
+    spy = []
+    orig_git = agent_runner._git
+    def _spy_git(*args, cwd, check=True):
+        spy.append(args)
+        return orig_git(*args, cwd=cwd, check=check)
+    # hold the PG lock on a raw connection so run_review_job contends
+    holder = engine._conn(); holder.autocommit = True
+    with holder.cursor() as cur:
+        cur.execute("select pg_try_advisory_lock(%s, hashtext(%s))",
+                    (engine._REVIEW_WT_LOCK_NS, d))
+    try:
+        import unittest.mock as m
+        with m.patch.object(agent_runner, "_git", _spy_git):
+            summary = agent_runner.run_review_job(job, env="host", agent_cmd=FAKE_OK)
+    finally:
+        with holder.cursor() as cur:
+            cur.execute("select pg_advisory_unlock(%s, hashtext(%s))",
+                        (engine._REVIEW_WT_LOCK_NS, d))
+        holder.close()
+    assert summary["status"] == "contended" and summary["contended"] is True
+    assert summary["run"] is None and summary["cleanup_status"] == "not_attempted"
+    assert not any(a[:2] == ("worktree", "remove") or a[:2] == ("worktree", "add") for a in spy)
+    assert not os.path.isdir(os.path.join(runs, d))
+
+
+def _hold_flock(runs, d):
+    os.makedirs(runs, exist_ok=True)
+    fd = os.open(os.path.join(runs, d + ".lock"), os.O_CREAT | os.O_RDWR, 0o600)
+    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    return fd
+
+
+def test_f2_fuse_fail_opens_no_run_no_tree(conn_test, review_env):
+    repo, runs = review_env
+    d = "review-f2000001"
+    _enqueue_review(d)
+    job = engine.get_job(d)
+    fd = _hold_flock(runs, d)                     # a live process holds the path
+    try:
+        summary = agent_runner.run_review_job(job, env="host", agent_cmd=FAKE_OK)
+    finally:
+        os.close(fd)
+    assert summary["status"] == "contended" and summary["run"] is None
+    assert not os.path.isdir(os.path.join(runs, d))
+
+
+def test_f3_pg_terminated_but_flock_held_no_delete(conn_test, review_env):
+    repo, runs = review_env
+    d = "review-f3000001"
+    _enqueue_review(d)
+    job = engine.get_job(d)
+    # A's live tree + A holds the flock; A's PG session is (already) gone.
+    wt = os.path.join(runs, d)
+    subprocess.run(["git", "-C", repo, "worktree", "add", "--detach", wt, "HEAD"], check=True)
+    fd = _hold_flock(runs, d)
+    try:
+        summary = agent_runner.run_review_job(job, env="host", agent_cmd=FAKE_OK)
+    finally:
+        os.close(fd)
+    assert summary["status"] == "contended"
+    assert os.path.isdir(wt)                      # B did NOT delete A's live tree
+    subprocess.run(["git", "-C", repo, "worktree", "remove", "--force", wt], check=False)
+
+
+def test_r4_lock_unavailable_contended(conn_test, review_env, monkeypatch):
+    repo, runs = review_env
+    d = "review-r4000001"
+    _enqueue_review(d)
+    job = engine.get_job(d)
+    from contextlib import contextmanager
+    @contextmanager
+    def boom(dispatch_id):
+        raise engine.LockUnavailable()
+        yield  # pragma: no cover
+    monkeypatch.setattr(engine, "review_worktree_lock", boom)
+    summary = agent_runner.run_review_job(job, env="host", agent_cmd=FAKE_OK)
+    assert summary["status"] == "contended" and summary["run"] is None
+    assert not os.path.isdir(os.path.join(runs, d))
+
+
+def test_r5_contended_loser_cannot_demote_succeeded(conn_test, review_env):
+    repo, runs = review_env
+    d = "review-r5000001"
+    _enqueue_review(d)
+    job = engine.get_job(d)
+    # winner A runs to succeeded
+    a = agent_runner.run_review_job(job, env="host", agent_cmd=FAKE_OK)
+    assert a["status"] == "succeeded"
+    # now a live holder grabs the PG lock; a fresh attempt B contends
+    holder = engine._conn(); holder.autocommit = True
+    with holder.cursor() as cur:
+        cur.execute("select pg_try_advisory_lock(%s, hashtext(%s))",
+                    (engine._REVIEW_WT_LOCK_NS, d))
+    try:
+        b = agent_runner.run_review_job(engine.get_job(d), env="host", agent_cmd=FAKE_OK)
+    finally:
+        with holder.cursor() as cur:
+            cur.execute("select pg_advisory_unlock(%s, hashtext(%s))",
+                        (engine._REVIEW_WT_LOCK_NS, d))
+        holder.close()
+    assert b["status"] == "contended"
+    assert _status(conn_test, job["id"]) == "succeeded"    # B did not demote the job
+
+
+def test_r6_contended_pool_claim_unstranded(conn_test, review_env):
+    repo, runs = review_env
+    d = "review-r6000001"
+    jid = _enqueue_review(d)
+    _set_status(conn_test, jid, "claimed")                 # pool has claimed it
+    holder = engine._conn(); holder.autocommit = True
+    with holder.cursor() as cur:
+        cur.execute("select pg_try_advisory_lock(%s, hashtext(%s))",
+                    (engine._REVIEW_WT_LOCK_NS, d))
+    try:
+        summary = agent_runner.run_review_job(engine.get_job(d), env="host", agent_cmd=FAKE_OK)
+    finally:
+        with holder.cursor() as cur:
+            cur.execute("select pg_advisory_unlock(%s, hashtext(%s))",
+                        (engine._REVIEW_WT_LOCK_NS, d))
+        holder.close()
+    assert summary["status"] == "contended"
+    assert _status(conn_test, jid) == "pending"            # re-claimable, not stranded
+
+
+def test_k1_keep_worktree_preserves_and_releases(conn_test, review_env):
+    repo, runs = review_env
+    d = "review-k1000001"
+    engine.enqueue(dispatch_id=d, title="k", payload={"review_head": "HEAD", "keep_worktree": True},
+                   target="codex", kind="agent", env_required="host")
+    job = engine.get_job(d)
+    summary = agent_runner.run_review_job(job, env="host", agent_cmd=FAKE_OK)
+    assert summary["cleanup_status"] == "kept"
+    assert os.path.isdir(os.path.join(runs, d))            # kept
+    with engine.review_worktree_lock(d) as held:           # lock was released at terminal handling
+        assert held is True
+    subprocess.run(["git", "-C", repo, "worktree", "remove", "--force",
+                    os.path.join(runs, d)], check=False)
