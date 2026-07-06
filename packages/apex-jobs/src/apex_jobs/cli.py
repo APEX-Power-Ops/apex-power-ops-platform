@@ -192,14 +192,20 @@ def cmd_review_run(a):
     seam = os.environ.get("APEX_JOBS_AGENT_CMD")
     agent_cmd = json.loads(seam) if seam else None
     summary = agent_runner.run_review_job(job, env="host", agent_cmd=agent_cmd)
-    res = (engine.runs_for(disp)[-1]["result"]) or {}
+    contended = bool(summary.get("contended"))
+    if summary.get("run") is None:
+        res = {}                                          # contended: no run -> no findings to read
+    else:
+        runs = engine.runs_for(disp)
+        res = (runs[-1]["result"] if runs else None) or {}
     if a.json:
         print(json.dumps({"dispatch_id": disp, "status": summary["status"],
                           "review_head": a.review_head, "base_ref": a.base_ref,
                           "cleanup_status": summary["cleanup_status"],
+                          "contended": contended,
                           "findings": res.get("findings", "")}, indent=2))
     else:
-        print(f"dispatch_id={disp} status={summary['status']}")
+        print(f"dispatch_id={disp} status={summary['status']} contended={contended}")
         print("---- findings ----")
         print(res.get("findings", ""))
     return 0 if summary["status"] == "succeeded" else 3

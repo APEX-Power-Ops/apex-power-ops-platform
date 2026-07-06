@@ -34,7 +34,7 @@ class GitUnavailable(Exception):
 class ReviewWorktree:
     path: str
     dispatch_id: str
-    classification: str          # prunable|active|dirty|locked|orphan|failed|unknown|remove-failed
+    classification: str          # prunable|active|dirty|locked|orphan|failed|unknown|remove-failed|contended
     action: str                  # would-remove|removed|preserved|refused
     status: object               # latest run status or None
     claimed_at: object           # datetime or None
@@ -211,39 +211,58 @@ def prune_review_worktrees(apply=False, include_failed=False):
         for w in items:
             if w.classification != "prunable":
                 continue
-            with agent_runner._WORKTREE_LOCK:
-                # recheck-before-remove: re-query THIS dispatch and re-enumerate its
-                # git/fs facts, then FULLY re-classify -- remove only if it is STILL
-                # prunable (still a review, allowed terminal status, not-active,
-                # clean, not-locked, exists). This is the only DB call in the loop.
-                # A refusal HERE is a PARTIAL apply (earlier items already removed)
-                # -> applied=True so the summary never reads as a dry-run.
-                try:
-                    snap = engine.review_dispatch_statuses([w.dispatch_id])
-                    cand = _fresh_candidate(repo, runs, w.dispatch_id)
-                except (psycopg.OperationalError, psycopg.InterfaceError):
-                    return _refusal(items, "db-unreachable", applied=True,
-                                    remove_failed=remove_failed)
-                except GitUnavailable:
-                    return _refusal(items, "git-unavailable", applied=True,
-                                    remove_failed=remove_failed)
-                db = snap.get(w.dispatch_id)
-                if cand is None:
-                    w.classification, w.action = "unknown", "preserved"
-                    continue
-                cls, _act, status, claimed_at, finished_at, active = _classify_one(
-                    cand, db, include_failed)
-                if cls != "prunable":
-                    w.classification, w.action = cls, "preserved"
-                    w.status, w.claimed_at, w.finished_at, w.active = (
-                        status, claimed_at, finished_at, active)
-                    continue
-                r = agent_runner._git("worktree", "remove", w.path, cwd=repo, check=False)
-                if r.returncode == 0:
-                    w.action = "removed"
-                else:
-                    w.classification, w.action = "remove-failed", "preserved"
-                    remove_failed += 1
+            # Coordinator + fuse guard the destructive remove: a live-held dispatch (PG
+            # lock held by a runner, or its flock still held by a living process) is
+            # classified 'contended'/'preserved' and never removed. A LockUnavailable or
+            # transport error is fail-closed to a partial-apply refusal (never fail-open).
+            try:
+                with engine.review_worktree_lock(w.dispatch_id) as held:
+                    if not held:
+                        w.classification, w.action = "contended", "preserved"
+                        continue
+                    with agent_runner._worktree_flock(runs, w.dispatch_id) as fuse_ok:
+                        if not fuse_ok:
+                            w.classification, w.action = "contended", "preserved"
+                            continue
+                        with agent_runner._WORKTREE_LOCK:
+                            # recheck-before-remove: re-query THIS dispatch and re-enumerate its
+                            # git/fs facts, then FULLY re-classify -- remove only if it is STILL
+                            # prunable (still a review, allowed terminal status, not-active,
+                            # clean, not-locked, exists). This is the only DB call in the loop.
+                            # A refusal HERE is a PARTIAL apply (earlier items already removed)
+                            # -> applied=True so the summary never reads as a dry-run.
+                            try:
+                                snap = engine.review_dispatch_statuses([w.dispatch_id])
+                                cand = _fresh_candidate(repo, runs, w.dispatch_id)
+                            except (psycopg.OperationalError, psycopg.InterfaceError):
+                                return _refusal(items, "db-unreachable", applied=True,
+                                                remove_failed=remove_failed)
+                            except GitUnavailable:
+                                return _refusal(items, "git-unavailable", applied=True,
+                                                remove_failed=remove_failed)
+                            db = snap.get(w.dispatch_id)
+                            if cand is None:
+                                w.classification, w.action = "unknown", "preserved"
+                                continue
+                            cls, _act, status, claimed_at, finished_at, active = _classify_one(
+                                cand, db, include_failed)
+                            if cls != "prunable":
+                                w.classification, w.action = cls, "preserved"
+                                w.status, w.claimed_at, w.finished_at, w.active = (
+                                    status, claimed_at, finished_at, active)
+                                continue
+                            r = agent_runner._git("worktree", "remove", w.path, cwd=repo, check=False)
+                            if r.returncode == 0:
+                                w.action = "removed"
+                            else:
+                                w.classification, w.action = "remove-failed", "preserved"
+                                remove_failed += 1
+            except (engine.LockUnavailable, psycopg.Error, OSError):
+                # Fail-CLOSED on ANY lock/DB/fs error during a destructive apply (spec 4.6):
+                # a non-transport psycopg.Error (e.g. InsufficientPrivilege) or an OSError
+                # (e.g. git binary missing) becomes a db-unreachable refusal, never a raw
+                # traceback and never a fail-open remove.
+                return _refusal(items, "db-unreachable", applied=True, remove_failed=remove_failed)
     return {"items": [_item_dict(w) for w in items], "counts": _counts(items),
             "applied": apply, "remove_failed": remove_failed, "refused": False,
             "refused_reason": None}

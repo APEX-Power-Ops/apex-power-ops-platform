@@ -16,6 +16,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+from contextlib import contextmanager
 
 import psycopg
 from psycopg.types.json import Jsonb
@@ -717,3 +718,67 @@ def review_dispatch_statuses(dispatch_ids):
             "claimed_at": r["claimed_at"],
             "finished_at": r["finished_at"],
         } for r in cur.fetchall()}
+
+
+class LockUnavailable(Exception):
+    """Cannot establish PG dispatch ownership (connect/acquire/config failed).
+    Value-silent: carries NO underlying psycopg/DSN text and NO chained
+    __context__ (raised outside the except block)."""
+
+
+_REVIEW_WT_LOCK_NS = 0x52565754  # ASCII 'RVWT'; the ONE namespace constant (imported everywhere)
+
+
+@contextmanager
+def review_worktree_lock(dispatch_id):
+    """Cross-process COORDINATOR for runs/<dispatch_id>. Dedicated autocommit
+    connection; non-blocking session advisory lock. Yields the acquired bool.
+    Value-silent: any transport OR resolve_dsn config failure at connect/acquire
+    raises LockUnavailable (raised outside the except so __context__ is None).
+    The unlock and both close() sites are guarded so neither masks a caller return."""
+    conn = None
+    acquired = False
+    failed = False
+    try:
+        conn = _conn()
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            cur.execute("select pg_try_advisory_lock(%s, hashtext(%s)) as ok",
+                        (_REVIEW_WT_LOCK_NS, dispatch_id))
+            acquired = bool(cur.fetchone()["ok"])
+    except (psycopg.Error, OSError, ValueError, KeyError, RuntimeError):
+        failed = True
+    if failed:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+        raise LockUnavailable()
+    try:
+        yield acquired
+    finally:
+        try:
+            if acquired:
+                with conn.cursor() as cur:
+                    cur.execute("select pg_advisory_unlock(%s, hashtext(%s))",
+                                (_REVIEW_WT_LOCK_NS, dispatch_id))
+        except (psycopg.Error, OSError):
+            pass
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
+def release_claim(job_id):
+    """Value-silent CAS: return a still-CLAIMED job to 'pending' so a contended
+    pool-claimed review (which opened no run) is never stranded. No-op if a winner
+    already advanced the job to running/terminal (WHERE status='claimed'), so it can
+    never overwrite live or finished work."""
+    with _conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("update jobs.job set status='pending', updated_at=now() "
+                        "where id=%s and status='claimed'", (job_id,))
+        conn.commit()
