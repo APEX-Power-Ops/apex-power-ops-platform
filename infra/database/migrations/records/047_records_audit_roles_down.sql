@@ -58,12 +58,36 @@ end $$;
 -- any operator serving credential. NO `select ... from pg_authid` anywhere; NO DROP ROLE.
 -- A subsequent 047 up re-adopts it (create-if-not-exists). Role teardown on a disposable
 -- target is the harness's job, not this credential-preserving down.
+--
+-- Task 2.3 review fix 2: `revoke usage on schema records from records_auditor` 42501s under
+-- the non-super applier for a DIFFERENT reason than the fn_owner drop-owned above - REVOKE of
+-- a schema-USAGE grant requires the executor to OWN schema records (or hold GRANT OPTION),
+-- which the bare applier does not (schema records is owned by records_owner in the walk, and
+-- by the applier only in a theoretical fresh case). So run the REVOKE under the authority of
+-- the schema's CURRENT owner, derived dynamically and idempotently (mirrors 045_down [d1]'s
+-- set-role-into-the-owner treatment): if the applier already IS the owner, revoke directly;
+-- otherwise take a transient WITH SET grant into the owner, SET ROLE, revoke, then reset +
+-- revoke the transient. SET (not INHERIT) suffices - REVOKE authority comes from acting AS
+-- the schema owner, not from has_privs_of_role. records_owner is guaranteed present at
+-- 047_down in the walk (046_down runs AFTER 047_down). The REVOKE is idempotent: if 048_down
+-- already revoked the grant, it is a harmless no-op under the owner's authority. LOGIN-leave
+-- posture is unchanged (never drop records_auditor, no pg_authid).
 do $$
+declare v_schema_owner text;
 begin
   if not exists (select 1 from pg_roles where rolname='records_auditor') then
     return;
   end if;
-  revoke usage on schema records from records_auditor;   -- safe if not granted
+  select pg_get_userbyid(nspowner) into v_schema_owner from pg_namespace where nspname='records';
+  if v_schema_owner = current_user then
+    revoke usage on schema records from records_auditor;   -- safe if not granted
+  else
+    execute format('grant %I to %I with set true, inherit false, admin false', v_schema_owner, current_user);
+    execute format('set role %I', v_schema_owner);
+    revoke usage on schema records from records_auditor;   -- idempotent no-op if 048_down already revoked
+    reset role;
+    execute format('revoke %I from %I', v_schema_owner, current_user);
+  end if;
   -- (048_down already revoked SELECT on audit_log / it drops with the table)
   raise notice '047_down: records_auditor is a LOGIN credential role; records access revoked, role RETAINED (fail-safe leave).';
 end $$;

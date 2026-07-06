@@ -216,83 +216,44 @@ def test_compat_fn_owner_is_pure_no_acl_grants(compat_child):
         assert n == 0, f"records_fn_owner holds {n} ACL grant(s) at 047; must be bare"
 
 
-# The records_fn_owner teardown block is EXTRACTED (not duplicated) from the committed
-# 047_records_audit_roles_down.sql on disk, so this proof is genuinely coupled to the real
-# file - a future accidental revert of the fix in the .sql is what turns this test RED, not a
-# hand-copied literal that could silently drift from the committed source. Extracted between
-# two stable markers already present in the file: starts right after `SET client_encoding`
-# (the BEGIN preamble), ends right before the `-- records_auditor:` block comment. Applied as
-# its OWN transaction (wrapped here, not in the source file) so it can be proven in isolation
-# from the records_auditor block that follows it in the committed file. Isolation is required
-# because the committed file is a single BEGIN...COMMIT: a failure anywhere in the file rolls
-# back the ENTIRE file, including an already-successful fn_owner drop, so a whole-file apply
-# cannot isolate the fn_owner mechanism from an unrelated failure later in the same file (see
-# the records_auditor defect noted below).
-_DOWN_SQL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), DOWN)
-_START_MARKER = "SET client_encoding TO 'UTF8';"
-_END_MARKER = "-- records_auditor:"
-
-
-def _extract_fn_owner_teardown_sql():
-    with open(_DOWN_SQL_PATH, encoding="utf-8") as fh:
-        text = fh.read()
-    start = text.index(_START_MARKER) + len(_START_MARKER)
-    end = text.index(_END_MARKER, start)
-    block = text[start:end]
-    assert "records_fn_owner" in block, (
-        f"{DOWN} marker extraction found no records_fn_owner text between the "
-        "SET client_encoding preamble and the records_auditor comment; markers drifted"
-    )
-    return "begin;\n" + block + "\ncommit;\n"
-
-
 @compat
-def test_compat_047_down_fn_owner_teardown_applies_under_non_super(compat_child):
-    # Task 2.3 review fix RED/GREEN proof, isolated to the records_fn_owner mechanism:
-    # without the transient INHERIT grant in 047_down, `drop owned by records_fn_owner`
-    # 42501s here (RED) because the non-super applier holds only the admin-only creator edge
-    # (set_option=inherit_option=false) on records_fn_owner, which does NOT confer
-    # has_privs_of_role. With the fix, applying the SAME statements AS THE SAME NON-SUPER
-    # APPLIER that applied 047 UP succeeds (GREEN): records_fn_owner is dropped.
+def test_compat_047_down_full_file_applies_under_non_super(compat_child):
+    # Task 2.3 review fix (both parts) FULL-FILE RED/GREEN proof: applies the WHOLE committed
+    # 047_records_audit_roles_down.sql AS THE SAME NON-SUPER APPLIER that applied 001-047 UP,
+    # then asserts the ratified LOGIN-leave posture (records_fn_owner DROPPED; records_auditor
+    # RETAINED). This is the strongest local proof - the entire file, single BEGIN...COMMIT,
+    # under the true non-super applier - superseding the earlier isolated fn_owner-only proof.
     #
-    # Applies the EXTRACTED fn_owner block (see _extract_fn_owner_teardown_sql above; sourced
-    # from the real committed file, wrapped in its own begin/commit) directly via psycopg on
-    # apply_dsn (the applier's own DSN), rather than the whole committed
-    # 047_records_audit_roles_down.sql file. Reason: the committed file also contains an
-    # UNRELATED, pre-existing, out-of-scope defect in its
-    # records_auditor block (`revoke usage on schema records from records_auditor` 42501s
-    # under the non-super applier for a DIFFERENT reason - REVOKE on a schema requires
-    # ownership/GRANT OPTION on that schema, which the applier does not hold at this point in
-    # the stack; the same unprotected-REVOKE shape also exists in 048_records_audit_log_down.sql).
-    # Because the whole file is one BEGIN...COMMIT, that later failure would roll back the
-    # fn_owner drop this test targets too, making a whole-file apply unable to isolate the
-    # fix under review. Flagged separately (out of scope for Task 2.3's records_fn_owner
-    # defect); NOT re-proven or fixed here. This isolated proof mirrors
-    # test_supabase_compat_redproof.py's test_unadapted_045_fails_at_alter_role_42501 pattern
-    # (raw statements against the applier DSN) rather than rv._apply_as_applier, which only
-    # applies whole files from disk.
+    # Two independent 42501s must both be fixed for this to be GREEN, and reverting EITHER
+    # turns it RED (the whole file is one transaction, so any failure rolls back everything):
+    #   1. `drop owned by records_fn_owner` (records_fn_owner block): needs the transient WITH
+    #      SET + INHERIT TRUE grant into records_fn_owner (has_privs_of_role for DROP OWNED).
+    #   2. `revoke usage on schema records from records_auditor` (records_auditor block): needs
+    #      to run under the schema owner's authority (SET ROLE into the derived schema owner),
+    #      because REVOKE of a schema-USAGE grant requires owning the schema / GRANT OPTION,
+    #      which the bare applier lacks.
+    # Driven via rv._apply_as_applier (whole file from disk under the applier DSN, mirroring
+    # the compat fixture's own UP applies) - NOT via _dbtest.run_psql on RECORDS_DEV_DSN, which
+    # runs as the walk's trusted superuser child DB and would mask BOTH bugs (that is exactly
+    # the superuser path the review flagged as insufficient).
     admin_dsn, apply_dsn = compat_child
-    sql = _extract_fn_owner_teardown_sql()
-    with psycopg.connect(apply_dsn, autocommit=True) as c:
-        c.execute(sql)  # raises on a 42501 regression (e.g. the transient grant reverted)
+    rv._apply_as_applier(DOWN, apply_dsn)  # raises ApplierApplyError on a 42501 regression
     with psycopg.connect(admin_dsn, autocommit=True) as c:
         assert c.execute(FN_OWNER_EXISTS).fetchone()[0] == 0, \
-            "records_fn_owner must be dropped by its 047_down teardown under the non-super applier"
+            "records_fn_owner must be DROPPED by 047_down under the non-super applier"
+        assert c.execute(AUDITOR_EXISTS).fetchone()[0] == 1, \
+            "records_auditor must be RETAINED (LOGIN-leave) by 047_down under the non-super applier"
 
 
 # DOWN LOGIN-leave posture (records_fn_owner DROPPED after its zero-owned guard;
 # records_auditor RETAINED with records access revoked; NO pg_authid, NO drop of the LOGIN
 # role) is asserted end-to-end by the walk-contract test_047_applied_then_down_up above (which
-# runs under the trusted walk DSN, not the non-super applier), which the full run_validation
-# walk exercises. The records_fn_owner DROP OWNED mechanism specifically - the Task 2.3 review
-# fix's target - is ADDITIONALLY proven under the non-super applier, in isolation, by
-# test_compat_047_down_fn_owner_teardown_applies_under_non_super above: 047_down now mirrors
-# 046_down's [d0] transient WITH SET + INHERIT TRUE grant treatment, so `drop owned by
-# records_fn_owner` succeeds under the non-super applier holding only the admin-only creator
-# edge. This is NOT an unfixed fidelity boundary that 046_down "also carries" - 046_down fixed
-# the identical problem for records_owner, and 047_down now applies the same fix for
-# records_fn_owner. The COMMITTED FILE'S FULL end-to-end apply under the non-super applier
-# remains unproven locally, because of the separate, out-of-scope records_auditor
-# schema-usage-revoke defect documented above (also present in 048_down) - that is a Phase-3
-# real-branch / follow-up-task concern, not a regression introduced by this fix. A real
-# Supabase branch (Phase 3) remains the ultimate fidelity authority for either proof.
+# runs under the trusted walk DSN), AND - stronger - under the true NON-super applier by
+# test_compat_047_down_full_file_applies_under_non_super above, which applies the WHOLE
+# committed 047_down file. Both of 047_down's non-super 42501s are now fixed in the ratified
+# style: the records_fn_owner drop-owned mirrors 046_down's [d0] transient WITH SET + INHERIT
+# TRUE grant, and the records_auditor schema-USAGE revoke runs under the schema owner's
+# authority (SET ROLE into the derived owner) mirroring 045_down's [d1]. 047_down is therefore
+# non-super-clean end to end. (The identical unprotected-REVOKE shape in
+# 048_records_audit_log_down.sql is handled in Task 2.4, not here.) A real Supabase branch
+# (Phase 3) remains the ultimate fidelity authority.
