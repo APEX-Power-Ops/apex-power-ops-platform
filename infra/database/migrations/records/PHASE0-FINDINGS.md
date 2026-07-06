@@ -5,7 +5,9 @@
 **Transport:** All capability probes ran via the authorized MCP `execute_sql(project_id=<branch_ref>)` as the non-super `postgres`, using session-local plpgsql `EXCEPTION`-capture harnesses (each probe self-contained: unique scratch roles/objects + teardown; per-statement SQLSTATE captured). This is the plan-permitted route for "controlled, savepoint-isolated capability probes." The host-`psql`-over-branch-DSN stack apply (Task 0.1) and the `supabase_probe.py` DSN self-proof (Task 0.7) are PENDING a working branch DSN (see "Branch DSN status").
 **Residue:** Every probe tore down its scratch roles/objects (verified `schema:0; roles=none` per probe). The whole branch is deleted at Phase-0 end (ultimate cleanup). Nothing in this lane touched prod.
 
-**AMENDED 2026-07-06:** A mandatory IRP cross-engine audit (Codex exit 0 + Claude completeness) + gap-closure probes (P0.8a-c) extended and refined these verdicts. See "## IRP CROSS-ENGINE AUDIT + GAP CLOSURE" at the END of this file - read it before parameterizing Phase 2 (it adds D1-D6: the choreography is proven technique NOT shipped code, the assert refinement extends to 045+047, 049 needs SET-ROLE + an oracle fix, and postgres BYPASSES FORCE RLS).
+**AMENDED 2026-07-06:** A mandatory IRP cross-engine audit (Codex exit 0 + Claude completeness) + gap-closure probes (P0.8a-c) extended and refined these verdicts. See "## IRP CROSS-ENGINE AUDIT + GAP CLOSURE" - read it before parameterizing Phase 2 (it adds D1-D6: the choreography is proven technique NOT shipped code, the assert refinement extends to 045+047, 049 needs SET-ROLE + an oracle fix, and postgres BYPASSES FORCE RLS).
+
+**AMENDED AGAIN 2026-07-06 v2 (post-operator-review):** Phase 0 is **DISCOVERY COMPLETE, NOT a closed ops gate.** A hardened probe run on a second branch FLIPPED Gate A - the creator edge is **SELF-ESCALATABLE** (`postgres` uses its admin option to self-grant SET+INHERIT, then `SET ROLE` succeeds), so the earlier "accept admin-only edge (lean b)" is **WITHDRAWN**. `supabase_probe.py` was hardened (per-run suffix + no blind pre-drops; full-object-type ownership transfer table/view/seq/func/schema; DDL envelope under owner context; a baked-in `gate_a_escalation` hard-gate). See "## 2026-07-06 ADDENDUM v2" at the END - it supersedes the Gate A section below.
 
 ---
 
@@ -15,7 +17,7 @@
 |---|---|---|
 | Object-ownership default | Objects created by non-super `postgres` are `postgres`-owned (schema, table, view, sequence, function) | 046 `postgres`-ownership assumption HOLDS; NO `supabase_admin`-owner flag |
 | A2 role-attr settability | Only `NOSUPERUSER`/`SUPERUSER` unsettable (42501); `nobypassrls, noreplication, nocreatedb, nocreaterole, login/nologin` all settable | Drop only the `NOSUPERUSER` keyword + assert `rolsuper=false`; KEEP the rest |
-| Gate A (creator edge) | UNAVOIDABLE admin-only edge (un-removable, non-privilege-usable) | STOP/escalate at Task 2.0; refine 046 terminal assert (see below) |
+| Gate A (creator edge) | **SELF-ESCALATABLE** - admin-only on creation, but `postgres` self-grants SET+INHERIT via its admin option -> `SET ROLE` SUCCEEDS (NOT "non-usable") | **HARD STOP at Task 2.0**: pre-provision roles OR operator explicitly exempts the trusted `postgres`/applier; the assert refinement is necessary-but-insufficient. See ADDENDUM v2 |
 | Gate B (policy binding) | `CREATE POLICY ... TO <custom_role>` SUCCEEDS | Keep `TO records_api, records_intake_writer`; stale "authenticated" header = docs-only |
 | Ownership choreography | Forward + cross-role + reverse B->A all proven | Copy-ready choreography below |
 | 046_down reclaim-to-postgres | `grant postgres to <custom>` REJECTED (42501) | Down-parity ESCALATION at Task 2.0 |
@@ -45,7 +47,7 @@ Evidence: `create=ok;nosuperuser=FAIL:42501;nobypassrls=ok;noreplication=ok;nocr
 
 ## Gate A - CREATEROLE self-grant + membership revoke (resolves Decision Gate A)
 
-**Verdict: GATE_A = unavoidable-edge (admin-only, non-privilege-usable). STOP/escalate at Task 2.0.**
+**Verdict (CORRECTED 2026-07-06 v2): GATE_A = SELF-ESCALATABLE creator edge. HARD STOP at Task 2.0.** The auto-edge is admin-only ON CREATION, but `postgres` can USE its admin option to self-grant SET+INHERIT and then `SET ROLE` into the role - so it is NOT "non-usable." The "## 2026-07-06 ADDENDUM v2" section (escalation proof) SUPERSEDES the "admin-only, non-usable" characterization in the rest of this section.
 
 On the managed branch, when the non-super `postgres` creates a role, an auto membership grant is created:
 
@@ -54,9 +56,9 @@ grantor = supabase_admin,  member = postgres,  admin_option = true,  set_option 
 ```
 
 - The edge is **un-removable by `postgres`**: `revoke <role> from postgres` runs without error but is a no-op (edge persists - `postgres` is not the grantor); `revoke <role> from postgres granted by supabase_admin` FAILS `42501`; `revoke admin option for <role> from postgres` runs "ok" but does not change `admin_option` (no-op).
-- The edge is **NOT privilege-usable**: `set_option = false` and `inherit_option = false` -> `postgres` cannot `SET ROLE` into the created role (`42501`) and does not inherit its privileges. It is a membership-management (ADMIN) residue only, not a privilege-escalation path.
+- The edge is **admin-only ON CREATION** (`set_option = false`, `inherit_option = false` -> `postgres` cannot IMMEDIATELY `SET ROLE` into it), **BUT it is SELF-ESCALATABLE (CORRECTED v2):** because `postgres` holds `admin_option`, it can `GRANT <role> TO postgres WITH SET TRUE` (and `INHERIT TRUE`), which ADDS a second membership row (`grantor=postgres, set=true, inherit=true`) after which `SET ROLE` SUCCEEDS. So it is a latent privilege-escalation path, NOT a benign residue. Proof in "## 2026-07-06 ADDENDUM v2".
 
-**Impact on 046:** 046's terminal assert (`raise exception '... LOGIN role(s) are members of records_owner'`) checks mere membership. Because `postgres` (a LOGIN role) remains an un-removable member of every role it creates, that assert AS WRITTEN would trip. **Phase-2 refinement (046):** change the terminal check to flag only SET/INHERIT-USABLE membership by a LOGIN role - i.e. `WHERE (set_option OR inherit_option)` - not bare membership. This preserves invariant 8 (no LOGIN role holds a usable SET/INHERIT path into `records_owner`) while tolerating the admin-only edge.
+**Impact on 046:** 046's terminal assert (`raise exception '... LOGIN role(s) are members of records_owner'`) checks mere membership. Because `postgres` (a LOGIN role) remains an un-removable member of every role it creates, that assert AS WRITTEN would trip. **Phase-2 refinement (046):** change the terminal check to flag only SET/INHERIT-USABLE membership by a LOGIN role - i.e. `WHERE (set_option OR inherit_option)` - not bare membership. Per the v2 self-escalation finding, that refinement is NECESSARY BUT NOT SUFFICIENT: `postgres` can make `set_option=true` at will via its admin option, so no in-migration assert can constrain `postgres`. Invariant-8 isolation of `postgres` from `records_owner` is achievable ONLY by pre-provisioning the roles (so `postgres` is never their creator/admin) OR by an explicit operator decision that the trusted `postgres`/applier is exempt from invariant 8. See ADDENDUM v2.
 
 **Task 2.0 operator decision (hard stop):**
 - (a) pre-provisioned-role path (roles minted out-of-band by `supabase_admin`/dashboard so `postgres` is never the creator, avoiding the edge), OR
@@ -120,7 +122,7 @@ Host->branch connectivity is PROVEN (Olares host reaches the branch over IPv6 an
 
 - Task 0.2 (A2) - DONE. Task 0.3 (Gate A) - DONE (unavoidable-edge; escalate at 2.0). Task 0.4 (choreography) - DONE (forward+cross-role+reverse proven; 046_down reclaim BLOCKED -> escalate). Task 0.5 (Gate B) - DONE (keep). Task 0.6 (DDL envelope) - DONE. Object-ownership default (0.1 core) - DONE.
 - Task 0.1 full stack apply + Task 0.7 DSN self-proof - DONE 2026-07-06 (host `psql` over the branch DSN, once the operator provisioned the branch DB password). Task 0.1: records 001-044 applied GREEN (44/44); real-schema owner inventory = `schema_owner=postgres`, `distinct_owners=postgres`, `supabase_admin_owned_objs=0`. Task 0.7: `supabase_probe.py` self-proof PASS (all 6 classes match this baseline, exit 0).
-- Branch TEARDOWN 2026-07-06: `delete_branch` succeeded; only `main` remains. Pre-teardown scratch-residue = `roles: none, schemas: none`. Zero prod impact throughout. **Phase 0 COMPLETE.**
+- Branch TEARDOWN 2026-07-06: `delete_branch` succeeded; only `main` remains. Pre-teardown scratch-residue = `roles: none, schemas: none`. Zero prod impact throughout. **Phase 0 DISCOVERY COMPLETE** (not a closed ops gate; a v2 branch later flipped Gate A - see ADDENDUM v2).
 - Phase 2 is decision-gated at Task 2.0 on: Gate A acceptance (lean b), the 046_down down-parity design, and the assert refinement (045+046+047 per D3).
 
 ---
@@ -172,3 +174,39 @@ IMPLICATION: 046's FORCE-RLS objective is proven at the ENFORCEMENT level ONLY f
 ### Bottom line
 
 The per-variable verdicts are sound; the audit ENRICHED the Phase-2 parameter set (D1 encode-choreography, D3 assert scope 045/046/047, D5 trigger-under-set-role + oracle fix, D4 enforcement + negative control, D6 grants-under-set-role) and CONFIRMED the load-bearing Gate-A shape. Task 2.0 must additionally: (i) resolve the executor-identity premise (superuser-authored vs non-super apply); (ii) rewrite 046/048/049 + downs to the choreography BEFORE any managed apply; (iii) extend the assert refinement to 045/047; (iv) fix the 049 oracle; (v) add the DML negative control + confirm non-bypass serving role; (vi) design 046_down reclaim to a dedicated custom reclaim-owner (postgres-reclaim is impossible). Cross-engine record: workflow `wd0q6ie2g`.
+
+---
+
+## 2026-07-06 ADDENDUM v2 - Gate A ESCALATION (verdict flip) + probe hardening
+
+Prompted by an operator code-review verdict (CHANGES REQUESTED): Phase 0 is a strong DISCOVERY artifact but not a closed ops gate; the Gate-A "admin-only" claim was not fully proven, and `supabase_probe.py` under-covered the Phase-4 precondition. A second throwaway branch (`mfakxwgdugpzbdtqimdb`, DELETED zero-residue; identical env: PG 17.6, `postgres` non-super + `rolbypassrls=true`) resolved both. Supabase status was OPERATIONAL (the June-30 incident is fully resolved).
+
+### GATE A ESCALATION - CONFIRMED (the "accept admin-only" lean is WITHDRAWN)
+
+The scary path the earlier probe skipped: can `postgres`, holding ADMIN option on the auto-edge, self-grant SET/INHERIT? Probe result:
+- `edge_on_create`: `supabase_admin->postgres, admin=true, set=false, inh=false`.
+- `grant sp_esc to postgres with set true` -> **ACCEPTED**; `... with inherit true` -> **ACCEPTED**.
+- `edge_after_selfgrant`: `supabase_admin:admin=true/set=false/inh=false ; postgres:admin=false/set=true/inh=true` (a SECOND row, grantor=`postgres`, SET+INHERIT true).
+- `set role sp_esc` -> **SUCCESS_ESCALATED**.
+
+So the creator edge is **self-escalatable to full SET+INHERIT membership**: `postgres` can become `records_owner`/`records_fn_owner` at will. It is NOT "admin-only, non-usable." Combined with `postgres` being `rolbypassrls=true`, the applier `postgres` is isolated from the owner roles by NOTHING in-migration.
+
+**Task-2.0 Gate-A decision (HARD STOP) - the two real options:**
+- (a) **Pre-provision the roles out-of-band** (minted by `supabase_admin`/dashboard so `postgres` is never their creator -> no admin edge -> no self-escalation). The only way to satisfy a STRICT invariant 8 (`postgres` cannot reach `records_owner`).
+- (b) **Explicit operator decision that the trusted `postgres`/applier is EXEMPT** from invariant 8 (it is already `bypassrls`+`createrole`; the NON-admin app/serving roles - `records_api`/`service_role`/`authenticated`/`anon` - do NOT receive the auto-admin-edge, so THEY stay isolated). Under (b), restate invariant 8 to scope it to non-admin roles and document that `postgres` self-escalation is accepted.
+- The `WHERE (set_option OR inherit_option)` assert refinement (D3) is NECESSARY for the non-admin roles BUT CANNOT constrain `postgres` (it self-escalates `set_option=true`), so it is not a mitigation for the `postgres` path. NO silent acceptance.
+
+### supabase_probe.py hardening (P1-2 / P2-3 addressed)
+
+- **Collision-safe naming:** every scratch role/object carries a per-run suffix (uuid, or `SUPABASE_PROBE_RUN` override); NO blind pre-drops - teardown drops ONLY the suffixed names created this run.
+- **Full-object-type ownership transfer:** the choreography probe now transfers table + view + sequence + function + schema (was table-only), forward + owner-only-under-set-role + cross-role A->B + reverse B->A + `grant postgres to <custom>` (blocked). Validated on the v2 branch: `RED=FAIL:42501; fwd_table/view/seq/func/schema=ok; owner_only=ok; cross=ok; reverse=ok; grant_postgres_to_custom=REJECTED:42501` (residue clean).
+- **DDL envelope under OWNER context:** new `ddl_envelope` class exercises revoke-public-create, enable/force RLS, create/drop policy, `security_invoker` set+reset, create index, SECURITY DEFINER function, revoke-execute-from-public, and the down-path positive `grant execute ... to public` - all under `set role <owner>`. Validated: all 14 = ok.
+- **Baked `gate_a_escalation` HARD-GATE:** the probe now runs the self-escalation test and hard-fails (exit nonzero) if `SET ROLE` succeeds after self-grant. So on managed Supabase the probe correctly reports FAIL until Gate A is resolved (fail-closed) - by design, not a bug.
+
+### Choreography detail (Phase-2 relevant): receiver schema-CREATE must be granted by the schema owner
+
+A non-owner `GRANT create on schema ... to <receiver>` only WARNs and no-ops (it does not error), so the receiver silently lacks CREATE and the transfer fails `42501`. The receiver's schema `CREATE`/`USAGE` must be granted WHILE `postgres` still owns the schema, OR by the current schema owner under `set role`. (Relevant to 048: `records_fn_owner`'s CREATE on the `records` schema must be granted by `records_owner`, not by `postgres` after 046 moved the schema.)
+
+### Status
+
+Phase 0 = **DISCOVERY COMPLETE** (envelope characterized; hardened reusable probe committed) - NOT a closed ops gate. Do NOT start Phase 2 migration rewrites until Task 2.0 explicitly records: (1) Gate A - pre-provision vs exempt-`postgres`; (2) 046_down reclaim - dedicated reclaim-owner vs drop/recreate vs non-`postgres` target; (3) executor premise - non-super `postgres` path remains the intended model. Both branch DSNs in Infisical (`SUPABASE_BRANCH_PW`/`SUPABASE_BRANCH_DSN`) are stale (both branches deleted).
