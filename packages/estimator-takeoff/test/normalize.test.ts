@@ -89,7 +89,10 @@ describe('assessApparatus — first-class questions / non-breaker handling', () 
     expect(a.signature).toBeNull(); expect(a.isBreakerShaped).toBe(true); expect(a.questions).toHaveLength(1)
   })
   it('does not classify a NON-breaker that carries a frame/trip; raises a question instead', () => {
+    // Tagged MTS transfer anchor + LSIG trip -> T1-B conflict (positively pin the route fired;
+    // a build that skipped the transfer route would RED here, not silently fall to the tail).
     const a = assessApparatus(mk('MTS-2 800AF/800AT LSIG', 480))
+    expect(a.assessmentCode).toBe('transfer_parent_conflict')
     expect(a.signature).toBeNull(); expect(a.isBreakerShaped).toBe(false)
     expect(a.questions.length).toBeGreaterThan(0)
   })
@@ -117,7 +120,9 @@ describe('assessApparatus — first-class questions / non-breaker handling', () 
     expect(a.isBreakerShaped).toBe(false)
   })
   it('excludes a static transfer switch (STS) carrying a frame/trip as a non-breaker (aligns the producer profile)', () => {
+    // Tagged STS transfer anchor + LSIG trip -> T1-B conflict (positively pin the route fired).
     const a = assessApparatus(mk('STS-1 800AF/800AT LSIG', 480))
+    expect(a.assessmentCode).toBe('transfer_parent_conflict')
     expect(a.signature).toBeNull(); expect(a.isBreakerShaped).toBe(false)
     expect(a.questions.length).toBeGreaterThan(0)   // surfaced for device-type confirmation, never priced
   })

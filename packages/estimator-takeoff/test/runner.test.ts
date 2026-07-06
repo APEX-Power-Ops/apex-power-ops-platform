@@ -56,6 +56,6 @@ describe('runFromArtifact', () => {
     expect(out.exitCode).not.toBe(0)
     expect(out.report!.status).not.toBe('clean')
     expect(out.envelope).toBeUndefined()
-    expect(out.report!.counts.operator_questions).toBeGreaterThanOrEqual(2)  // SPARE has question disposition but no operatorQuestion (by design); ATS+MCB each push one
+    expect(out.report!.counts.operator_questions).toBeGreaterThanOrEqual(2)  // SPARE has question disposition but no operatorQuestion (by design); the tagged ATS (now a transfer_parent_conflict) + MCB each push one
   })
 })

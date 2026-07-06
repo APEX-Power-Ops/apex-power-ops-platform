@@ -101,7 +101,7 @@ Reconciliation: partial_preview
   bid_cents            198000
 ```
 
-How to read it: the 3 asserted mains priced (`matched_lines 2 (qty 3)` -> LV Draw-Out LSIG breakers, `bid_cents 198000`, validator-clean). The other 38 rows are NOT lost - they surface as `question` dispositions (the un-asserted breakers as `missing_voltage`; the STS/UPS rows as `non_breaker_carries_rating`) plus the sheet's MV/LV profile warning, totalling 39 operator questions. `accounted true` confirms every one of the 41 rows is reconciled. This is a `partial_preview`, not a bid: to turn it into a real estimate, assert the remaining buses' voltages and confirm the non-breaker device types, then re-run.
+How to read it: the 3 asserted mains priced (`matched_lines 2 (qty 3)` -> LV Draw-Out LSIG breakers, `bid_cents 198000`, validator-clean). The other 38 rows are NOT lost - they surface as `question` dispositions (the un-asserted breakers as `missing_voltage`; the 8 tagged `STS-P1-110` transfer rows carry an LSI trip so they surface as `transfer_parent_conflict`; the 5 `UPS-*` rows as `non_breaker_carries_rating`) plus the sheet's MV/LV profile warning, totalling 39 operator questions. `accounted true` confirms every one of the 41 rows is reconciled. This is a `partial_preview`, not a bid: to turn it into a real estimate, assert the remaining buses' voltages and confirm the non-breaker device types, then re-run.
 
 ## Deferred (not part of this skill - do not improvise them)
 
