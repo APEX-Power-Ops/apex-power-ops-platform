@@ -369,3 +369,90 @@ def test_k1_keep_worktree_preserves_and_releases(conn_test, review_env):
         assert held is True
     subprocess.run(["git", "-C", repo, "worktree", "remove", "--force",
                     os.path.join(runs, d)], check=False)
+
+
+# ---- Task 5: prune honors PG lock + flock (contended preserve, fail-closed) ----
+def _seed_run_succeeded(conn, job_id):
+    with conn.cursor() as cur:
+        cur.execute("insert into jobs.run (job_id, attempt, claimed_by, env, status, "
+                    "claimed_at, finished_at) values (%s, 1, 'cc', 'host', 'succeeded', "
+                    "now(), now())", (job_id,))
+
+
+def test_p2_prune_preserves_flock_held(conn_test, review_env):
+    from apex_jobs import prune
+    repo, runs = review_env
+    d = "review-b2000001"   # 8 hex chars (RE_REVIEW: ^review-[0-9a-f]{8}$)
+    jid = _enqueue_review(d)
+    # a succeeded run + a real clean worktree -> normally 'prunable'
+    _seed_run_succeeded(conn_test, jid)
+    wt = os.path.join(runs, d)
+    subprocess.run(["git", "-C", repo, "worktree", "add", "--detach", wt, "HEAD"], check=True)
+    fd = _hold_flock(runs, d)                              # a live runner holds the path
+    try:
+        res = prune.prune_review_worktrees(apply=True)
+    finally:
+        os.close(fd)
+    item = next(i for i in res["items"] if i["dispatch_id"] == d)
+    assert item["classification"] == "contended" and item["action"] == "preserved"
+    assert os.path.isdir(wt)                               # NOT removed
+    subprocess.run(["git", "-C", repo, "worktree", "remove", "--force", wt], check=False)
+
+
+def test_p1_prune_preserves_pg_lock_held(conn_test, review_env):
+    from apex_jobs import prune
+    repo, runs = review_env
+    d = "review-b1000001"
+    jid = _enqueue_review(d)
+    _seed_run_succeeded(conn_test, jid)
+    wt = os.path.join(runs, d)
+    subprocess.run(["git", "-C", repo, "worktree", "add", "--detach", wt, "HEAD"], check=True)
+    holder = engine._conn(); holder.autocommit = True
+    with holder.cursor() as cur:
+        cur.execute("select pg_try_advisory_lock(%s, hashtext(%s))",
+                    (engine._REVIEW_WT_LOCK_NS, d))
+    try:
+        res = prune.prune_review_worktrees(apply=True)
+    finally:
+        with holder.cursor() as cur:
+            cur.execute("select pg_advisory_unlock(%s, hashtext(%s))",
+                        (engine._REVIEW_WT_LOCK_NS, d))
+        holder.close()
+    item = next(i for i in res["items"] if i["dispatch_id"] == d)
+    assert item["classification"] == "contended"
+    assert os.path.isdir(wt)
+    subprocess.run(["git", "-C", repo, "worktree", "remove", "--force", wt], check=False)
+
+
+def test_p3_prune_removes_when_free(conn_test, review_env):
+    from apex_jobs import prune
+    repo, runs = review_env
+    d = "review-b3000001"
+    jid = _enqueue_review(d)
+    _seed_run_succeeded(conn_test, jid)
+    wt = os.path.join(runs, d)
+    subprocess.run(["git", "-C", repo, "worktree", "add", "--detach", wt, "HEAD"], check=True)
+    res = prune.prune_review_worktrees(apply=True)         # nothing holds the locks
+    item = next(i for i in res["items"] if i["dispatch_id"] == d)
+    assert item["action"] == "removed"
+    assert not os.path.isdir(wt)
+
+
+def test_p4_prune_lock_unavailable_refuses(conn_test, review_env, monkeypatch):
+    from apex_jobs import prune
+    repo, runs = review_env
+    d = "review-b4000001"
+    jid = _enqueue_review(d)
+    _seed_run_succeeded(conn_test, jid)
+    subprocess.run(["git", "-C", repo, "worktree", "add", "--detach",
+                    os.path.join(runs, d), "HEAD"], check=True)
+    from contextlib import contextmanager
+    @contextmanager
+    def boom(dispatch_id):
+        raise engine.LockUnavailable()
+        yield  # pragma: no cover
+    monkeypatch.setattr(engine, "review_worktree_lock", boom)
+    res = prune.prune_review_worktrees(apply=True)
+    assert res["refused"] is True and res["refused_reason"] == "db-unreachable"
+    subprocess.run(["git", "-C", repo, "worktree", "remove", "--force",
+                    os.path.join(runs, d)], check=False)
