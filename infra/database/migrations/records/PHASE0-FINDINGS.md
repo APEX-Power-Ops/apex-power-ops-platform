@@ -110,17 +110,18 @@ All command classes 045-049 use are permitted for the non-super `postgres` (save
 
 ---
 
-## Branch DSN status (Tasks 0.1 / 0.7 - host psql)
+## Branch DSN status (Tasks 0.1 / 0.7 - host psql) - RESOLVED
 
-Host->branch connectivity is PROVEN (Olares host reaches the branch over IPv6 and via the `aws-1-us-west-2` Supavisor pooler tenant). The operator-provisioned `SUPABASE_BRANCH_DSN` (Infisical `prod` env) targets the correct branch ref (`prod_ref_in_dsn=0`), but the **password is rejected on both the tenant-qualified pooler format and the direct format** -> the stored branch password does not match the branch's actual `postgres` password. Correct form: `postgres.rdmxqwkrcebdhalodcgi@aws-1-us-west-2.pooler.supabase.com:5432/postgres` (tenant-qualified pooler user) with the branch's real DB password (reset/reveal in the Supabase dashboard for the branch project). Until fixed, Task 0.1's full 001-044 stack apply + real-schema owner inventory and Task 0.7's DSN self-proof are pending; the object-ownership default (the decision-relevant part of 0.1) is already proven via the scratch-object probe above, and `supabase_probe.py` is validated via `execute_sql` transport.
+Host->branch connectivity is PROVEN (Olares host reaches the branch over IPv6 and via the `aws-1-us-west-2` Supavisor pooler tenant). The branch has its OWN DB password (distinct from prod, not exposed by MCP `create_branch`/`get_project`). The operator provisioned the branch DB password out-of-band into Infisical `prod` (`SUPABASE_BRANCH_PW`); the working connection is the tenant-qualified pooler user `postgres.rdmxqwkrcebdhalodcgi@aws-1-us-west-2.pooler.supabase.com:5432/postgres` (plain `postgres` on the pooler fails - Supavisor needs the tenant suffix; a hand-built URI also risks silent truncation on un-percent-encoded special chars, so the raw password + discrete `PG*` args is the robust value-silent path). With that, Task 0.1 (001-044 apply + real-schema owner inventory) and Task 0.7 (`supabase_probe.py` DSN self-proof) both completed - see "Status vs plan".
 
 ---
 
 ## Status vs plan
 
 - Task 0.2 (A2) - DONE. Task 0.3 (Gate A) - DONE (unavoidable-edge; escalate at 2.0). Task 0.4 (choreography) - DONE (forward+cross-role+reverse proven; 046_down reclaim BLOCKED -> escalate). Task 0.5 (Gate B) - DONE (keep). Task 0.6 (DDL envelope) - DONE. Object-ownership default (0.1 core) - DONE.
-- Task 0.1 full stack apply + Task 0.7 DSN self-proof - PENDING branch DSN password fix.
-- Phase 2 is decision-gated at Task 2.0 on: Gate A acceptance (lean b), the 046_down down-parity design, and the 046 terminal-assert refinement.
+- Task 0.1 full stack apply + Task 0.7 DSN self-proof - DONE 2026-07-06 (host `psql` over the branch DSN, once the operator provisioned the branch DB password). Task 0.1: records 001-044 applied GREEN (44/44); real-schema owner inventory = `schema_owner=postgres`, `distinct_owners=postgres`, `supabase_admin_owned_objs=0`. Task 0.7: `supabase_probe.py` self-proof PASS (all 6 classes match this baseline, exit 0).
+- Branch TEARDOWN 2026-07-06: `delete_branch` succeeded; only `main` remains. Pre-teardown scratch-residue = `roles: none, schemas: none`. Zero prod impact throughout. **Phase 0 COMPLETE.**
+- Phase 2 is decision-gated at Task 2.0 on: Gate A acceptance (lean b), the 046_down down-parity design, and the assert refinement (045+046+047 per D3).
 
 ---
 
