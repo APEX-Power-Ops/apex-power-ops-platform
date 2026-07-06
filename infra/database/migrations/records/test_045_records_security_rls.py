@@ -229,7 +229,7 @@ def compat_child():
             if num > 45:
                 break
             rv._apply_as_applier(fname, apply_dsn)  # 001-044 then adapted 045; each must succeed
-        yield rv.derive_child_dsn(_ADMIN, val)
+        yield rv.RedactedDsn(rv.derive_child_dsn(_ADMIN, val))
     finally:
         with psycopg.connect(_ADMIN, autocommit=True) as c:
             c.execute(f'drop database if exists "{val}" with (force)')

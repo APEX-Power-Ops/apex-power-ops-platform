@@ -104,21 +104,22 @@ def test_summary_formats_all_statuses():
     assert "0-syntax" in out and "PASS" in out and "FAIL" in out and "SKIP" in out
 
 
-# snapshot_roles default must track all EIGHT cluster-level roles the harness may
-# create: the 5 Gate-5 roles (walk-created records_owner/records_fn_owner/records_auditor
-# leak past a disposable-DB drop) PLUS the 3 Data-API stubs tier7 creates
-# (anon/authenticated/service_role). The finally-block drops exactly the roles absent
-# pre-run; drop-if-exists no-ops on any stub tier7 did not create, so tracking all 8 is
-# safe for tiers 0-6 (Codex P2-1; Gate 9 F2).
+# snapshot_roles default must track all NINE cluster-level roles the harness may
+# create: the 6 Gate-5 roles (walk-created records_owner/records_fn_owner/records_auditor
+# + records_reclaim_owner from 046 leak past a disposable-DB drop) PLUS the 3 Data-API
+# stubs tier7 creates (anon/authenticated/service_role). The finally-block drops exactly
+# the roles absent pre-run; drop-if-exists no-ops on any stub tier7 did not create, so
+# tracking all 9 is safe for tiers 0-6 (Codex P2-1; Gate 9 F2; whole-branch fix D).
 GATE5_ROLES = (
     "records_api", "records_intake_writer",
     "records_owner", "records_fn_owner", "records_auditor",
+    "records_reclaim_owner",
 )
 DATA_API_STUBS = ("anon", "authenticated", "service_role")
 ALL_TRACKED_ROLES = GATE5_ROLES + DATA_API_STUBS
 
 
-def test_snapshot_roles_default_tracks_all_eight():
+def test_snapshot_roles_default_tracks_all_nine():
     import inspect
     default = inspect.signature(rv.snapshot_roles).parameters["names"].default
     assert tuple(default) == ALL_TRACKED_ROLES
@@ -152,17 +153,17 @@ class _FakeResult:
 
 
 def test_snapshot_roles_returns_absent_owner_auditor(monkeypatch):
-    # The 2 app roles + 3 Data-API stubs pre-exist; only the 3 owner/auditor roles are
-    # absent -> snapshot_roles must return exactly those three, in names order (the ones
+    # The 2 app roles + 3 Data-API stubs pre-exist; only the 4 owner/auditor/reclaim roles
+    # are absent -> snapshot_roles must return exactly those four, in names order (the ones
     # the walk creates and the finally-block must drop).
     present = {"records_api", "records_intake_writer", "anon", "authenticated", "service_role"}
     monkeypatch.setattr(rv, "_connect", lambda admin: _FakeConn(present))
     created = rv.snapshot_roles("host=h port=1 dbname=postgres user=u")
-    assert created == ["records_owner", "records_fn_owner", "records_auditor"]
+    assert created == ["records_owner", "records_fn_owner", "records_auditor", "records_reclaim_owner"]
 
 
 def test_snapshot_roles_none_absent_returns_empty(monkeypatch):
-    # All eight already exist pre-run -> nothing was created this run -> drop nothing.
+    # All nine already exist pre-run -> nothing was created this run -> drop nothing.
     monkeypatch.setattr(rv, "_connect", lambda admin: _FakeConn(set(ALL_TRACKED_ROLES)))
     assert rv.snapshot_roles("host=h port=1 dbname=postgres user=u") == []
 

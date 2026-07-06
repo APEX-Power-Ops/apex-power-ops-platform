@@ -17,11 +17,14 @@ ROLE_FLAGS = (
     "order by rolname"
 )
 
-# D-A refined (REV 5, PHASE0-FINDINGS D3): count only USABLE (set/inherit) edges
-# touching either audit role in EITHER direction, EXEMPTING the trusted postgres
-# applier (its un-removable admin-only creator edge is set=inherit=false -> not
-# usable, and postgres is custody-controlled). A real usable membership involving
-# an audit role and a non-admin role still trips.
+# D-A refined (REV 5, PHASE0-FINDINGS D3; whole-branch fix): count only USABLE
+# (set/inherit) edges touching either audit role in EITHER direction, EXEMPTING the
+# trusted postgres applier ONLY when it is the MEMBER of the edge. The usable-filter
+# already drops the non-usable admin-only creator edge (roleid=audit_role,
+# member=postgres, set=inherit=false), so member-only is the sole needed exemption.
+# We deliberately do NOT exempt roleid=postgres: a USABLE edge where roleid=postgres
+# and member=records_auditor (auditor is a usable member OF postgres -> SET ROLE
+# postgres escalation) MUST be caught. This mirrors the corrected 047 terminal assert.
 USABLE_MEMBERSHIP_EDGES = (
     "select count(*) from pg_auth_members am "
     "join pg_roles rl on rl.oid=am.roleid "
@@ -29,7 +32,6 @@ USABLE_MEMBERSHIP_EDGES = (
     "where (rl.rolname in ('records_fn_owner','records_auditor') "
     "    or mm.rolname in ('records_fn_owner','records_auditor')) "
     "  and (am.set_option or am.inherit_option) "
-    "  and am.roleid <> 'postgres'::regrole "
     "  and am.member <> 'postgres'::regrole"
 )
 
@@ -186,9 +188,11 @@ def test_compat_audit_role_flags(compat_child):
 
 @compat
 def test_compat_audit_membership_isolation_holds(compat_child):
-    # D-A (invariant 8, RESTATED): no NON-admin role holds a USABLE (set/inherit) membership
-    # edge to/from either audit role. The trusted applier/postgres identity is EXEMPT
-    # (endpoint <> postgres); admin-only edges (set=inherit=false) are not flagged.
+    # D-A (invariant 8, RESTATED; whole-branch fix): no NON-admin role holds a USABLE
+    # (set/inherit) membership edge to/from either audit role. The trusted applier is
+    # EXEMPT ONLY as the MEMBER (member <> postgres); a usable edge where postgres is the
+    # ROLEID and an audit role is the member (a SET ROLE postgres escalation) is CAUGHT.
+    # The usable-filter already drops the non-usable admin-only creator edge.
     admin_dsn, _apply_dsn = compat_child
     with psycopg.connect(admin_dsn, autocommit=True) as c:
         rows = c.execute(
@@ -199,9 +203,45 @@ def test_compat_audit_membership_isolation_holds(compat_child):
             "where (rl.rolname in ('records_fn_owner','records_auditor') "
             "    or mm.rolname in ('records_fn_owner','records_auditor')) "
             "and (am.set_option or am.inherit_option) "
-            "and am.roleid <> 'postgres'::regrole and am.member <> 'postgres'::regrole"
+            "and am.member <> 'postgres'::regrole"
         ).fetchall()
         assert rows == [], f"a usable membership edge touches an audit role: {rows}"
+
+
+@compat
+def test_compat_047_terminal_assert_catches_set_role_postgres_escalation(compat_child):
+    # WHOLE-BRANCH FIX (finding A): the corrected 047 terminal assert is member-only.
+    # Plant a real self-escalatable edge on the migrated compat DB - the LOGIN auditor
+    # becomes a USABLE member OF postgres (roleid=postgres, member=records_auditor,
+    # set=true) i.e. `SET ROLE postgres` reach. The corrected member-only query MUST flag
+    # it; the OLD roleid-exempting query would have MISSED it (roleid=postgres exempted).
+    # The local admin DSN is a superuser here, so it CAN create the edge. Value-silent:
+    # asserts are on integer counts only.
+    admin_dsn, _apply_dsn = compat_child
+    corrected = (
+        "select count(*) from pg_auth_members am "
+        "join pg_roles rl on rl.oid=am.roleid "
+        "join pg_roles mm on mm.oid=am.member "
+        "where (rl.rolname in ('records_fn_owner','records_auditor') "
+        "    or mm.rolname in ('records_fn_owner','records_auditor')) "
+        "  and (am.set_option or am.inherit_option) "
+        "  and am.member <> 'postgres'::regrole"
+    )
+    old_roleid_exempting = corrected + " and am.roleid <> 'postgres'::regrole"
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        try:
+            c.execute("grant postgres to records_auditor with set true")
+            caught = c.execute(corrected).fetchone()[0]
+            missed = c.execute(old_roleid_exempting).fetchone()[0]
+            assert caught >= 1, \
+                "corrected member-only assert MUST flag the SET ROLE postgres escalation"
+            assert missed == 0, \
+                "the old roleid-exempting clause would have MISSED the escalation (proves the fix)"
+        finally:
+            c.execute("revoke postgres from records_auditor")
+        # after cleanup the corrected assert is clean again (creator edge is non-usable)
+        assert c.execute(corrected).fetchone()[0] == 0, \
+            "no usable audit-role membership edge must remain after revoke"
 
 
 @compat

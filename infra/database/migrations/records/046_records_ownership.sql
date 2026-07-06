@@ -180,6 +180,16 @@ begin
   for r in select c.relname from pg_class c join pg_namespace ns on ns.oid=c.relnamespace
             where ns.nspname='records' and c.relkind='r'
   loop execute format('alter table records.%I force row level security', r.relname); end loop;
+  -- RE-UP schema-CREATE residue (whole-branch fix E): 046_down [d1] granted
+  -- records_reclaim_owner CREATE on schema records (PG16 receiver-CREATE for the reverse
+  -- transfer). On a re-UP that transfers the schema BACK to records_owner, reclaim would
+  -- retain a stale explicit CREATE ACL while owning nothing. Revoke it HERE, under SET ROLE
+  -- records_owner (the schema owner holds the grant authority; [owner-post] later revokes
+  -- the applier's WITH SET membership, so this MUST run before that). Idempotent: a plain
+  -- REVOKE is a no-op on the FRESH path where reclaim never received CREATE. Keeps the
+  -- lane's "revoke all transients before terminal asserts" discipline symmetric for the
+  -- persistent reclaim role.
+  execute 'revoke create on schema records from records_reclaim_owner';
   reset role;
 end $$;
 
@@ -265,6 +275,16 @@ begin
         and pg_get_userbyid(nspowner)='records_reclaim_owner')
     into n;
   if n>0 then raise exception '046: records_reclaim_owner owns % records object(s) after UP; must own nothing', n; end if;
+
+  -- records_reclaim_owner holds NO residual schema-level CREATE ACL on records after UP
+  -- (whole-branch fix E): 046_down [d1] grants reclaim CREATE on schema records for the
+  -- reverse transfer; [owner-post] revokes it on the re-UP transfer-away. Assert the
+  -- EXPLICIT ACL is gone (mirrors 048's explicit-USAGE aclexplode(nspacl) style). No-op
+  -- residue on the FRESH path where reclaim never received CREATE.
+  select count(*) into n from pg_namespace ns, lateral aclexplode(ns.nspacl) a
+     join pg_roles g on g.oid = a.grantee
+   where ns.nspname='records' and g.rolname='records_reclaim_owner' and a.privilege_type='CREATE';
+  if n>0 then raise exception '046: records_reclaim_owner retains % residual schema-CREATE ACL on records after UP; must hold none', n; end if;
 
   -- D-A trusted-applier membership isolation: no NON-admin role holds a USABLE
   -- (set_option OR inherit_option) membership path INTO records_owner or

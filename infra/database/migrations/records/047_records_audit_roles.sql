@@ -71,17 +71,20 @@ begin
   if n>0 then raise exception '047: records_fn_owner holds ACL grants at 047 (must be bare; schema USAGE is added in 048)'; end if;
   -- D-A trusted-applier membership isolation (REV 5, PHASE0-FINDINGS D3): no USABLE
   -- (set_option OR inherit_option) membership edge touches EITHER audit role in EITHER
-  -- direction, EXCEPT edges whose endpoint is the trusted postgres applier (its
-  -- un-removable admin-only creator edge is set=inherit=false -> non-usable, and
-  -- postgres is custody-controlled). A real usable membership involving an audit role
-  -- and a non-admin role still trips. The both-direction revoke above stays (harmless).
+  -- direction, EXCEPT the trusted postgres applier when it is the MEMBER of the edge.
+  -- The (set_option OR inherit_option) usable-filter already drops the non-usable
+  -- admin-only creator edge (roleid=audit_role, member=postgres, set=inherit=false), so
+  -- the ONLY exemption needed is member-only (am.member <> postgres): exempt the trusted
+  -- applier when IT is the member. We deliberately do NOT exempt roleid=postgres: a
+  -- USABLE edge where roleid=postgres and member=records_auditor (the LOGIN auditor is a
+  -- usable member OF postgres -> a SET ROLE postgres escalation) MUST be caught; a
+  -- roleid-side exemption would have masked it. This matches 045/046/048/049 (member-only).
   select count(*) into n from pg_auth_members am
      join pg_roles rl on rl.oid=am.roleid
      join pg_roles m on m.oid=am.member
    where (rl.rolname in ('records_fn_owner','records_auditor')
           or m.rolname in ('records_fn_owner','records_auditor'))
      and (am.set_option or am.inherit_option)
-     and am.roleid <> 'postgres'::regrole
      and am.member <> 'postgres'::regrole;
   if n>0 then raise exception '047: % usable membership edge(s) touch an audit role; must be zero', n; end if;
 end $$;

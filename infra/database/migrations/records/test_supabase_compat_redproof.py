@@ -72,7 +72,7 @@ def applier_on_base_stack():
             if num >= 45:
                 break
             rv._apply_as_applier(fname, apply_dsn)  # each must succeed (viability)
-        yield apply_dsn
+        yield rv.RedactedDsn(apply_dsn)
     finally:
         with psycopg.connect(ADMIN, autocommit=True) as c:
             c.execute(f'drop database if exists "{val}" with (force)')

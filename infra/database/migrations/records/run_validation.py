@@ -424,16 +424,18 @@ def tier4_import_db(child_dsn, executed):
 
 def snapshot_roles(admin, names=("records_api", "records_intake_writer",
                                  "records_owner", "records_fn_owner", "records_auditor",
+                                 "records_reclaim_owner",
                                  "anon", "authenticated", "service_role")):
     # Roles are CLUSTER-level, so dropping the disposable records_val_* DB leaves
-    # any walk-created role behind. Track all EIGHT roles the harness may create:
-    # the 5 Gate-5 roles (both app roles + records_owner/records_fn_owner/
-    # records_auditor from 046/047) PLUS the 3 Data-API stubs tier7 creates
-    # (anon/authenticated/service_role) so the finally-block drops exactly the
-    # roles that did NOT exist before this run. drop-if-exists no-ops on any stub
-    # tier7 did not create, so tracking all 8 is safe for tiers 0-6. The
-    # object-owning roles (records_owner, records_fn_owner) are dropped only AFTER
-    # the disposable DB is dropped, so at drop time they own nothing.
+    # any walk-created role behind. Track all NINE roles the harness may create:
+    # the 6 Gate-5 roles (both app roles + records_owner/records_fn_owner/
+    # records_auditor from 046/047 + records_reclaim_owner from 046) PLUS the 3
+    # Data-API stubs tier7 creates (anon/authenticated/service_role) so the
+    # finally-block drops exactly the roles that did NOT exist before this run.
+    # drop-if-exists no-ops on any stub tier7 did not create, so tracking all 9 is
+    # safe for tiers 0-6. The object-owning roles (records_owner, records_fn_owner)
+    # and the persistent records_reclaim_owner are dropped only AFTER the disposable
+    # DB is dropped, so at drop time they own nothing.
     with _connect(admin) as c:
         existing = {r[0] for r in c.execute(
             "select rolname from pg_roles where rolname = any(%s)", (list(names),)).fetchall()}
@@ -658,12 +660,33 @@ MEMBERSHIP_EDGES = (
     "   or am.member in (select oid from pg_roles where rolname = any(%s))"
 )
 
-# trg_audit set == writer-grant set (records_intake_writer INSERT/UPDATE), same
-# two counts 049/test_049 use.
+# trg_audit set == writer-grant set (records_intake_writer INSERT/UPDATE). Derived from
+# the RAW catalog ACLs (pg_class.relacl + pg_attribute.attacl via aclexplode) - the SAME
+# visibility-INDEPENDENT oracle 049 uses. information_schema.role_column_grants is a
+# visibility-scoped view: connected as the admin child it can yield 0 even when 049
+# created the triggers from raw attacl, false-failing the gate after a correct migration.
+# Excludes audit_log (recursion) + neta_table_source_links (owner-only, D7); DISTINCT
+# table; grantee=records_intake_writer, INSERT/UPDATE, schema records. Matches 049.
 TRG_WANT = (
-    "select count(distinct table_name) from information_schema.role_column_grants "
-    "where grantee='records_intake_writer' and table_schema='records' "
-    "  and privilege_type in ('INSERT','UPDATE')"
+    "select count(*) from ("
+    "  select distinct c.relname"
+    "    from pg_class c"
+    "    join pg_namespace ns on ns.oid = c.relnamespace"
+    "    left join lateral aclexplode(c.relacl) ra on true"
+    "    left join lateral ("
+    "      select a.privilege_type as ptype, a.grantee as gtee"
+    "        from pg_attribute att,"
+    "             lateral aclexplode(att.attacl) a"
+    "       where att.attrelid = c.oid and att.attnum > 0 and not att.attisdropped"
+    "    ) ca on true"
+    "   where ns.nspname = 'records'"
+    "     and c.relkind = 'r'"
+    "     and c.relname not in ('audit_log','neta_table_source_links')"
+    "     and ("
+    "       (ra.grantee = 'records_intake_writer'::regrole and ra.privilege_type in ('INSERT','UPDATE'))"
+    "       or (ca.gtee = 'records_intake_writer'::regrole and ca.ptype in ('INSERT','UPDATE'))"
+    "     )"
+    ") s"
 )
 TRG_GOT = (
     "select count(*) from pg_trigger tg join pg_class c on c.oid=tg.tgrelid "
