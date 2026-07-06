@@ -5,6 +5,8 @@
 **Transport:** All capability probes ran via the authorized MCP `execute_sql(project_id=<branch_ref>)` as the non-super `postgres`, using session-local plpgsql `EXCEPTION`-capture harnesses (each probe self-contained: unique scratch roles/objects + teardown; per-statement SQLSTATE captured). This is the plan-permitted route for "controlled, savepoint-isolated capability probes." The host-`psql`-over-branch-DSN stack apply (Task 0.1) and the `supabase_probe.py` DSN self-proof (Task 0.7) are PENDING a working branch DSN (see "Branch DSN status").
 **Residue:** Every probe tore down its scratch roles/objects (verified `schema:0; roles=none` per probe). The whole branch is deleted at Phase-0 end (ultimate cleanup). Nothing in this lane touched prod.
 
+**AMENDED 2026-07-06:** A mandatory IRP cross-engine audit (Codex exit 0 + Claude completeness) + gap-closure probes (P0.8a-c) extended and refined these verdicts. See "## IRP CROSS-ENGINE AUDIT + GAP CLOSURE" at the END of this file - read it before parameterizing Phase 2 (it adds D1-D6: the choreography is proven technique NOT shipped code, the assert refinement extends to 045+047, 049 needs SET-ROLE + an oracle fix, and postgres BYPASSES FORCE RLS).
+
 ---
 
 ## Decision-variable summary (parameterizes Phase 2 / Task 2.0)
@@ -119,3 +121,53 @@ Host->branch connectivity is PROVEN (Olares host reaches the branch over IPv6 an
 - Task 0.2 (A2) - DONE. Task 0.3 (Gate A) - DONE (unavoidable-edge; escalate at 2.0). Task 0.4 (choreography) - DONE (forward+cross-role+reverse proven; 046_down reclaim BLOCKED -> escalate). Task 0.5 (Gate B) - DONE (keep). Task 0.6 (DDL envelope) - DONE. Object-ownership default (0.1 core) - DONE.
 - Task 0.1 full stack apply + Task 0.7 DSN self-proof - PENDING branch DSN password fix.
 - Phase 2 is decision-gated at Task 2.0 on: Gate A acceptance (lean b), the 046_down down-parity design, and the 046 terminal-assert refinement.
+
+---
+
+## IRP CROSS-ENGINE AUDIT + GAP CLOSURE (2026-07-06)
+
+A mandatory adversarial cross-engine audit (workflow `wd0q6ie2g`: Claude completeness lens + Codex exit 0 + synthesis; the correctness agent dropped mid-response on a connection error, its ground covered by the Codex pass) of these findings vs the ACTUAL 045-049 migration bodies surfaced coverage gaps and amendments. All were closed empirically on the same branch (probes P0.8a-c, residue clean each). The earlier per-variable verdicts stand except where amended here.
+
+### Root-cause framing (both engines converged)
+
+Migrations 045-049 were authored for a SUPERUSER executor: 046's header says "Runs as the superuser admin; superuser bypasses FORCE" and 045 says "D2-A: tables stay postgres-owned; FORCE RLS inert on the superuser owner." Prod/branch `postgres` is NON-super AND still `rolbypassrls=true`. Adapting to the non-super executor IS Phase 2's job; the amendments below make its parameters precise.
+
+### Gate-A edge shape - REPRODUCIBILITY CONFIRMED (closes the load-bearing flag)
+
+P0.8a created 3 fresh postgres-owned roles: EACH auto-edge = `supabase_admin -> postgres, admin=true, set=false, inherit=false`, and `postgres` could NOT `SET ROLE` into any (42501). The false/false shape is reproducible for postgres-CREATEd roles, so the `WHERE (set_option OR inherit_option)` assert refinement is SAFE. (SEEDED postgres memberships carry set/inherit=true - a DIFFERENT code path; the migrations CREATE their roles, so the CREATE-path false/false shape governs.)
+
+### D1 - the proven choreography is TECHNIQUE, not yet SHIPPED CODE (HIGH)
+
+The ownership choreography above is proven-viable, but the CURRENT 046/048/049 (and 046_down/045_down) bodies do NOT encode it - 046 [2] is a bare `alter ... owner to records_owner` loop with NO `grant records_owner to postgres with set` and NO `grant create on schema` (exactly the RED pattern proven to fail 42501). This is EXACTLY the Phase-2 rewrite (Tasks 2.2/2.4/2.5); "copy-ready" means copy-ready TECHNIQUE to encode, NOT that a literal apply of the shipped bodies passes. DO NOT apply 045-049 as-is to a managed branch.
+
+### D3 - assert-refinement scope EXTENDS to 045 + 047 (not just 046) (HIGH)
+
+The un-removable creator edge (postgres is an admin member of every role it creates; `revoke ... from postgres` is a silent no-op) trips the zero-membership asserts in THREE files:
+- 045 [1] "an app role retains a role membership (escalation path)" - bare membership touching records_api/records_intake_writer in EITHER direction -> trips.
+- 046 [4] "LOGIN role(s) are members of records_owner" -> trips (already noted).
+- 047 (final) "membership edge(s) touch an audit role" -> trips.
+Phase-2 PARAMETER: apply the `WHERE (set_option OR inherit_option)` refinement (usable-membership only) to the asserts in 045 (Task 2.1), 046 (Task 2.2), AND 047 (Task 2.3). Keep the both-direction `revoke` loops (harmless) but do not rely on them.
+
+### D5 - 049 CREATE TRIGGER must run under SET ROLE records_owner + fix the self-oracle (HIGH/MED)
+
+P0.8b (faithful 049 model: table owned by OWNER, trigger fn owned by a DIFFERENT role FN with EXECUTE granted to OWNER):
+- `create trigger ... as bare postgres` (non-owner) -> FAIL 42501.
+- `set role OWNER; create trigger ...; reset role` -> OK.
+Phase-2 PARAMETER (Task 2.5): 049 MUST create each trigger under `set role records_owner` (the table owner), with EXECUTE on `fn_audit_capture` reachable to records_owner. A bare-postgres 049 fails 42501.
+Additionally (Codex): 049 derives its trigger SET and its terminal count oracle BOTH from `information_schema.role_column_grants`, which is visibility-filtered to the current role as grantor/grantee. If 049 ever runs as a role lacking that visibility it yields 0 rows -> 0 triggers -> got==want==0 GREEN with audit SILENTLY DISABLED. Phase-2 PARAMETER: derive `want` INDEPENDENTLY of `role_column_grants` visibility (e.g. from the writer-grant table set directly) OR assert the running role is the grantor.
+
+### D4 - FORCE RLS enforces for non-bypass roles but `postgres` BYPASSES it (MED)
+
+P0.8c (DML negative control: FORCE-RLS table, 3 rows, policy `TO reader USING(false)`):
+- as `postgres` (rolbypassrls=true): sees 3 rows -> BYPASSES FORCE RLS.
+- as the non-bypass OWNER under FORCE RLS with no permissive policy: sees 0 rows -> RLS binds the owner.
+(The reader sub-test returned 42501 only because postgres lacked SET membership in the reader role - a probe limitation, not an enforcement result; the owner result already proves enforcement against a non-bypass principal.)
+IMPLICATION: 046's FORCE-RLS objective is proven at the ENFORCEMENT level ONLY for non-bypass roles. Every operational `postgres`/`service_role` (BYPASSRLS) session bypasses records RLS regardless of FORCE - consistent with and DEPENDENT ON the Gate-9 Option-B serving premise (the serving DSN connects AS a NON-bypass role, `records_api`). Phase-2/3 PARAMETER (Task 3.3): add a DML negative-control assert (records RLS actually blocks a non-bypass role), not just catalog `relforcerowsecurity` state; confirm the serving DSN role is non-bypass.
+
+### D6 - down-path positive PUBLIC/object grants on non-owned objects (P2)
+
+`045_down [d3] grant execute on all routines in schema records to public` (and 048's positive schema/table grants) run while objects may be owned by records_owner/records_fn_owner. In P0.8b positive `grant usage`/`grant select` as `postgres` SUCCEEDED while postgres held set-membership in the owner, so these likely pass during the choreography window; the robust pattern is to issue them under `set role <current owner>`. Task-2.4/2.5/down PARAMETER: issue down-path and cross-owner PUBLIC/object grants under `set role` the current owner.
+
+### Bottom line
+
+The per-variable verdicts are sound; the audit ENRICHED the Phase-2 parameter set (D1 encode-choreography, D3 assert scope 045/046/047, D5 trigger-under-set-role + oracle fix, D4 enforcement + negative control, D6 grants-under-set-role) and CONFIRMED the load-bearing Gate-A shape. Task 2.0 must additionally: (i) resolve the executor-identity premise (superuser-authored vs non-super apply); (ii) rewrite 046/048/049 + downs to the choreography BEFORE any managed apply; (iii) extend the assert refinement to 045/047; (iv) fix the 049 oracle; (v) add the DML negative control + confirm non-bypass serving role; (vi) design 046_down reclaim to a dedicated custom reclaim-owner (postgres-reclaim is impossible). Cross-engine record: workflow `wd0q6ie2g`.
