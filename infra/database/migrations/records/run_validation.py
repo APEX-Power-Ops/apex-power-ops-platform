@@ -37,6 +37,32 @@ Tier = collections.namedtuple("Tier", "name status detail")
 MIG_RE = re.compile(r"^(\d{3})_.+\.sql$")
 TEST_RE = re.compile(r"^test_(\d{3})_.+\.py$")
 VAL_RE = re.compile(r"^records_val_\d{8}T\d{6}_\d+$")
+APPLIER_RE = re.compile(r"^records_val_applier_\d{8}T\d{6}_\d+$")
+
+# --- --apply-as-non-superuser: a LOCAL APPROXIMATION of Supabase managed postgres.
+# Local Postgres runs the harness as a true superuser; this mode instead applies
+# the migration walk through a disposable NON-superuser role, so the whole class of
+# superuser-only failures (the 045 `alter role ... nosuperuser` that blocked the
+# 2026-07-04 prod apply) becomes CI-catchable. It APPROXIMATES, it does not PROVE,
+# Supabase compatibility - a real Supabase branch (Phase 0) is the fidelity
+# authority, and Phase 0 is currently blocked on Supabase lifecycle capacity.
+#
+# The provisional envelope is deliberately minimal: non-super (the load-bearing
+# constraint), createrole (managed postgres holds it per Gate-9 grounding fact 1,
+# and 045 runs `create role`, so the applier must reach the ALTER for the RIGHT
+# reason, not die early at CREATE). bypassrls / replication / createdb are NOT
+# pre-granted - spec B1: do not bake in attributes Phase 0 has not confirmed
+# managed postgres can set. Phase 0 replaces this with the branch-observed envelope.
+LOCAL_APPLIER_ENVELOPE = {
+    "login": True,
+    "superuser": False,
+    "createrole": True,
+    "createdb": False,
+    "bypassrls": False,
+    "replication": False,
+}
+
+LocalApplier = collections.namedtuple("LocalApplier", "role dsn create_sql drop_sql")
 
 # Schema-only catalog fingerprint of the records schema: tables, columns,
 # constraints, indexes, functions, triggers, enums. Data-only changes (the 006/
@@ -139,6 +165,55 @@ def assert_val_name(name):
         raise HarnessError(f"refusing CREATE/DROP: {name!r} is not a run-generated records_val_* name")
 
 
+def make_applier_name():
+    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S")
+    return f"records_val_applier_{stamp}_{os.getpid()}"
+
+
+def assert_applier_name(name):
+    if not APPLIER_RE.fullmatch(name):
+        raise HarnessError(f"refusing CREATE/DROP: {name!r} is not a run-generated records_val_applier_* name")
+
+
+def _swap_dsn_token(dsn, key, value):
+    """Replace the single `key=...` token in a DSN, preserving all others."""
+    toks = dsn.split()
+    hits = [i for i, t in enumerate(toks) if t.startswith(f"{key}=")]
+    if len(hits) != 1:
+        raise HarnessError(f"admin DSN must contain exactly one {key}= component")
+    toks[hits[0]] = f"{key}={value}"
+    return " ".join(toks)
+
+
+def make_local_applier(admin_dsn, envelope):
+    """Build a disposable NON-superuser applier (pure - no DB).
+
+    Returns the role name, a DSN that authenticates AS the applier (admin DSN with
+    only `user=` swapped, so it reuses the admin password token - never a fresh
+    secret to thread through psql's env/DSN password precedence), and the CREATE /
+    DROP DDL derived from `envelope`. The caller (main) executes the DDL as admin,
+    grants the applier CREATE on the disposable DB, and applies the walk as it.
+    """
+    role = make_applier_name()
+    dsn = _swap_dsn_token(admin_dsn, "user", role)
+    pw = _dbtest.dsn_params(admin_dsn).get("password", "")
+    clauses = [
+        "login" if envelope["login"] else "nologin",
+        "superuser" if envelope["superuser"] else "nosuperuser",
+        "createrole" if envelope["createrole"] else "nocreaterole",
+        "createdb" if envelope["createdb"] else "nocreatedb",
+        "bypassrls" if envelope["bypassrls"] else "nobypassrls",
+        "replication" if envelope["replication"] else "noreplication",
+    ]
+    # Reuse the admin password (copied, never printed) so the applier authenticates
+    # over local password auth. create_sql carries the literal; it is executed via
+    # the admin connection and is NEVER logged (value-silent).
+    pw_lit = "'" + pw.replace("'", "''") + "'"
+    create_sql = f'create role "{role}" with {" ".join(clauses)} password {pw_lit}'
+    drop_sql = f'drop role if exists "{role}"'
+    return LocalApplier(role, dsn, create_sql, drop_sql)
+
+
 def parse_tiers(only):
     """Validate --only. Unknown tiers must REFUSE - a typo like --only 9
     running zero tiers and exiting 0 would be a false-green gate."""
@@ -231,10 +306,14 @@ def _child_env(child_dsn):
     return env
 
 
-def tier3_walk(child_dsn, executed, migs, tests):
+def tier3_walk(child_dsn, executed, migs, tests, apply_dsn=None):
+    # apply_dsn (when set) authenticates the psql APPLY as a non-superuser applier
+    # (--apply-as-non-superuser); fingerprints and per-migration tests still run as
+    # the admin child_dsn. Default: apply as admin (child_dsn), unchanged behavior.
     env = _child_env(child_dsn)
+    apply_dsn = apply_dsn or child_dsn
     for num, sql in migs:
-        _dbtest.run_psql(sql, child_dsn)
+        _dbtest.run_psql(sql, apply_dsn)
         tf = tests.get(num)
         if not tf:
             continue
@@ -966,14 +1045,29 @@ def tier7_serving(child_dsn):
     return Tier("7-serving", "PASS", "Option-B serving matrix proven exhaustively (AC1-AC10)")
 
 
-def main(argv=None):
+def build_parser():
     ap = argparse.ArgumentParser(description="records validation gate")
     ap.add_argument("--require-db", action="store_true",
                     help="CI mode: any absence/skip on DB or source inputs is a failure")
     ap.add_argument("--only", default="", help="comma list of tiers to run, e.g. 3,4")
     ap.add_argument("--db-dsn", default="", help="explicit records_val_* DSN (required with --only 3/4)")
     ap.add_argument("--keep-db", action="store_true", help="skip the drop; print the retained name")
-    args = ap.parse_args(argv)
+    ap.add_argument("--apply-as-non-superuser", action="store_true",
+                    help="apply the tier-3 walk through a disposable non-superuser role "
+                         "(LOCAL APPROXIMATION of Supabase managed postgres; not a compat proof)")
+    return ap
+
+
+def parse_args(argv=None):
+    return build_parser().parse_args(argv)
+
+
+def main(argv=None):
+    args = parse_args(argv)
+
+    if args.apply_as_non_superuser and args.db_dsn:
+        print("error: --apply-as-non-superuser needs the harness-created disposable DB (not --db-dsn)")
+        return 2
 
     try:
         wanted = parse_tiers(args.only)
@@ -984,6 +1078,7 @@ def main(argv=None):
     admin = os.environ.get("RECORDS_PG_ADMIN_DSN", "")
     child_dsn, val_name, created = "", "", False
     created_roles = []
+    applier, apply_dsn = None, None
 
     if args.db_dsn:
         name = _dbtest.dsn_params(args.db_dsn).get("dbname", "")
@@ -1030,9 +1125,17 @@ def main(argv=None):
                         c.execute(f'create database "{val_name}"')
                     created = True
                     child_dsn = derive_child_dsn(admin, val_name)
+                    if args.apply_as_non_superuser:
+                        applier = make_local_applier(admin, LOCAL_APPLIER_ENVELOPE)
+                        assert_applier_name(applier.role)
+                        with _connect(admin) as c:
+                            c.execute(applier.create_sql)
+                            c.execute(f'grant create on database "{val_name}" to "{applier.role}"')
+                        apply_dsn = derive_child_dsn(applier.dsn, val_name)
+                        print(f"[applier] applying tier-3 walk as non-superuser {applier.role}")
             try:
                 if 3 in db_wanted:
-                    tiers.append(tier3_walk(child_dsn, executed, migs, tests))
+                    tiers.append(tier3_walk(child_dsn, executed, migs, tests, apply_dsn=apply_dsn))
                 if 4 in db_wanted and not any(
                     t.name == "3-migrations" and t.status == "FAIL" for t in tiers
                 ):
@@ -1082,6 +1185,14 @@ def main(argv=None):
                             print(f"[drop-role] {role}")
                     except Exception as e:
                         print(f"[keep-role] {role}: {e}")
+                if applier is not None:   # disposable non-super applier (drop AFTER its DB)
+                    try:
+                        assert_applier_name(applier.role)
+                        with _connect(admin) as c:
+                            c.execute(applier.drop_sql)
+                        print(f"[drop-applier] {applier.role}")
+                    except Exception as e:
+                        print(f"[keep-applier] {applier.role}: {type(e).__name__}")
         except (HarnessError, _dbtest.RecordsEnvError) as e:
             tiers.append(Tier("3-migrations" if 3 in wanted else "4-import-db", "FAIL", str(e)))
     elif db_wanted:

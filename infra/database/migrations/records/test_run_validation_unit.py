@@ -165,3 +165,61 @@ def test_snapshot_roles_none_absent_returns_empty(monkeypatch):
     # All eight already exist pre-run -> nothing was created this run -> drop nothing.
     monkeypatch.setattr(rv, "_connect", lambda admin: _FakeConn(set(ALL_TRACKED_ROLES)))
     assert rv.snapshot_roles("host=h port=1 dbname=postgres user=u") == []
+
+
+# --- Phase 1 (Supabase-compat): --apply-as-non-superuser local approximation -----
+# PURE surface only (no DB). The behavioral proof that the applier reaches 045's
+# `alter role` and fails 42501 lives in the DB-backed red-proof
+# (test_supabase_compat_redproof.py). This mode APPROXIMATES Supabase managed
+# `postgres` on a true-superuser local Postgres; it is NOT a Supabase-compat proof
+# - Phase 0 (a real Supabase branch) is the fidelity authority.
+ADMIN_DSN = "host=127.0.0.1 port=5432 dbname=postgres user=postgres password=x sslmode=disable"
+
+
+def test_parse_args_apply_as_non_superuser_flag():
+    assert rv.parse_args(["--apply-as-non-superuser"]).apply_as_non_superuser is True
+    assert rv.parse_args([]).apply_as_non_superuser is False
+
+
+def test_local_applier_envelope_is_provisional_non_super():
+    # The provisional envelope, pending Phase-0 branch confirmation: non-super +
+    # createrole (needed to reach 045's CREATE ROLE) and deliberately WITHOUT
+    # bypassrls/replication/createdb (spec B1: do not pre-grant what Phase 0 has
+    # not confirmed managed postgres can set).
+    env = rv.LOCAL_APPLIER_ENVELOPE
+    assert env["superuser"] is False
+    assert env["login"] is True
+    assert env["createrole"] is True
+    assert env["bypassrls"] is False
+    assert env["replication"] is False
+    assert env["createdb"] is False
+
+
+def test_make_local_applier_returns_non_super_applier_dsn():
+    res = rv.make_local_applier(ADMIN_DSN, rv.LOCAL_APPLIER_ENVELOPE)
+    # a run-generated disposable applier role, NOT the superuser admin
+    assert re.fullmatch(r"records_val_applier_\d{8}T\d{6}_\d+", res.role)
+    rv.assert_applier_name(res.role)
+    # DSN authenticates AS the applier (not postgres); host/port/dbname preserved
+    assert f"user={res.role}" in res.dsn
+    assert "user=postgres" not in res.dsn
+    assert "host=127.0.0.1" in res.dsn and "dbname=postgres" in res.dsn
+    # reuse the admin password token (never a fresh secret): applier auths cleanly
+    assert "password=x" in res.dsn
+    # DDL proves non-superuser AND reflects the provisional envelope verbatim
+    cs = res.create_sql.lower()
+    assert "nosuperuser" in cs
+    assert "createrole" in cs and "nocreaterole" not in cs
+    assert "nocreatedb" in cs
+    assert "nobypassrls" in cs
+    assert "noreplication" in cs
+    assert " login " in cs and "nologin" not in cs
+    assert res.role in res.drop_sql and "drop role" in res.drop_sql.lower()
+
+
+def test_assert_applier_name_rejects_foreign_names():
+    rv.assert_applier_name(rv.make_local_applier(ADMIN_DSN, rv.LOCAL_APPLIER_ENVELOPE).role)
+    for bad in ("postgres", "records_val_x", "records_api", "records_val_applier",
+                "records_val_20260101T000000_1", "x_records_val_applier_20260101T000000_1"):
+        with pytest.raises(rv.HarnessError):
+            rv.assert_applier_name(bad)
