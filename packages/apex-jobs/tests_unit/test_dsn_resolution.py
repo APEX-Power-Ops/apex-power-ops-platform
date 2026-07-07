@@ -1,6 +1,7 @@
 """Contract lock for apex_jobs.db.resolve_dsn(): the apex-jobs worker password
-comes from APEX_JOBS_PGPASSWORD (preferred) or DEV_PG_PASSWORD (fallback), and
-builds the dev-tier DSN. Value-silent: assertions use non-secret SENTINELs and
+comes from APEX_JOBS_PGPASSWORD (Infisical, injected). DEV_PG_PASSWORD is NOT a
+fallback -- it is the postgres superuser password and does not authenticate as
+the orchestration role. Value-silent: assertions use non-secret SENTINELs and
 precomputed booleans, never an env dump. Lives in tests_unit/ (outside the DB
 conftest's scope) so it always runs with no DB fixture or credentials.
 """
@@ -29,7 +30,7 @@ def _resolve_with(overrides):
                 os.environ[k] = v
 
 
-def test_injected_var_used_when_dev_pg_unset():
+def test_apex_jobs_pw_resolves():
     dsn = _resolve_with({"APEX_JOBS_PGPASSWORD": "SENTINEL_A"})
     targets_dev = "dbname=orchestration_dev" in dsn
     right_user = "user=orchestration" in dsn
@@ -37,27 +38,30 @@ def test_injected_var_used_when_dev_pg_unset():
     assert targets_dev and right_user and uses_injected
 
 
-def test_apex_jobs_pw_preferred_over_dev_pg():
-    dsn = _resolve_with({"APEX_JOBS_PGPASSWORD": "SENTINEL_A", "DEV_PG_PASSWORD": "SENTINEL_B"})
-    uses_apex = "password=SENTINEL_A" in dsn
-    ignores_dev = "SENTINEL_B" not in dsn
-    assert uses_apex and ignores_dev
-
-
-def test_missing_both_raises():
-    saved = {k: os.environ.get(k) for k in _KEYS}
+def test_dev_pg_password_alone_does_not_resolve():
+    # Load-bearing contract: DEV_PG_PASSWORD is the postgres superuser password,
+    # not an orchestration fallback. With only it set, resolution must fail closed
+    # and must not leak the value into the DSN or the error message.
+    raised = False
+    leaked = True
     try:
-        for k in _KEYS:
-            os.environ.pop(k, None)
-        raised = False
-        try:
-            db.resolve_dsn()
-        except RuntimeError:
-            raised = True
-        assert raised
-    finally:
-        for k, v in saved.items():
-            if v is None:
-                os.environ.pop(k, None)
-            else:
-                os.environ[k] = v
+        out = _resolve_with({"DEV_PG_PASSWORD": "SENTINEL_B"})
+        leaked = "SENTINEL_B" in out
+    except RuntimeError as e:
+        raised = True
+        leaked = "SENTINEL_B" in str(e)
+    assert raised and not leaked
+
+
+def test_missing_apex_jobs_pw_raises():
+    raised = False
+    try:
+        _resolve_with({})
+    except RuntimeError:
+        raised = True
+    assert raised
+
+
+def test_apex_jobs_dsn_override_wins():
+    dsn = _resolve_with({"APEX_JOBS_DSN": "SENTINEL_DSN"})
+    assert dsn == "SENTINEL_DSN"
