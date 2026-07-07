@@ -106,3 +106,67 @@ operator-gated; not yet authorized.**
 
 **GO #1 verdict: PASS. Schema stood up, seed loaded, no records role/ownership yet. Next gate: GO #2
 (T2 apply 045-049 + §5 acceptance) - operator-gated; not yet authorized.**
+
+---
+
+## GO #2 — T2 apply (045-049) + adapted acceptance  (2026-07-07, operator-gated)  — RESULT: PASS
+
+### DEVIATION + operator-ratified adaptation (§5 acceptance)
+- The literal §5 tiers (run_validation tier5/6/7) impersonate via `SET SESSION AUTHORIZATION`
+  (superuser-only). Prod `postgres` is non-super -> 42501 false-RED. VERIFIED on prod:
+  `SET SESSION AUTHORIZATION` FAIL(42501); `SET ROLE` OK. Stopped before T2, surfaced the deviation.
+- Operator RATIFIED a **prod-compatible dormant acceptance shim** (`prod_acceptance_managed.py`,
+  sha256 `c8bf670c6c7eb4f3e307519dea4f0c2c15d32df033fad7666aa3830b826aa56f`): (1) static invariants
+  full-strength (reuses run_validation SQL constants); (2) behavioral via SET ROLE + transient
+  self-grant (NO bare-postgres records access) + EXACT row-PK audit sentinel + Phase A/B/C residue;
+  (3) session_user semantics CARRIED from Phase-3B, disclosed. Cross-engine reviewed (Claude + 4 Codex
+  passes; all findings folded incl. bare-postgres load-bearing, reachability-false-green,
+  sequence-residue honesty). Final Codex verdict: SAFE TO RUN. Not literally zero-residue: only
+  `audit_log.audit_id` identity advances + normal aborted-write WAL churn (packet-Sec-5 ratified,
+  benign on dormant substrate).
+
+### Pre-write gates (all GREEN before 045)
+- **Pre-state drift:** records present, 15 tables/2 views, 0 records roles, owner=postgres, RLS/FORCE
+  0/0, policies 0, audit_log absent (== exactly T1-only, no drift).
+- **Artifact identity:** shim `c8bf670c...b826aa56f`; T2 script `t2_apply.sh`
+  `bfe3ddddfa53e4911b27b8b8057ba3363ee626f7b3ebb7d6920cd7712eb0b9c5`.
+- **§2.4 bind** re-verified under injection: `PSQL_RC=0`, envelope f/t/t.
+
+### T2 apply (045-049)
+- `psql -v ON_ERROR_STOP=1 -q -f` per self-wrapped file under injection: **5/5 OK**
+  (045_records_security_rls, 046_records_ownership, 047_records_audit_roles, 048_records_audit_log,
+  049_records_audit_triggers). `T2_COMPLETE: applied 5/5 (045-049)`.
+
+### Post-T2 posture (connector, read-only) - matches Phase-3B branch-proof Phase C
+- 6 roles: records_api/intake_writer/auditor LOGIN; records_owner/fn_owner/reclaim_owner NOLOGIN;
+  none super/bypass. base_tables=16, RLS 16/16, FORCE 16/16, policies=28. schema_owner=records_owner
+  (046 transferred), audit_log owner=records_fn_owner, fn_audit_capture owner=records_fn_owner,
+  trg_audit=6, owned-by-super/bypass=0, non-owner tab/view=0.
+
+### §5 adapted acceptance (shim under injection) - PASS
+- `ADAPTED_ACCEPTANCE_OVERALL: PASS`: [PASS] bucket1-static-invariants, [PASS] bucket2-behavioral-set-role,
+  [INFO] bucket3 session_user semantics carried-from-Phase-3B (not re-proved on prod; deferred to a
+  real direct-login consumer).
+- Residue (connector, pg_catalog corroboration): non-exempt membership edges=0, exempt creator
+  edges=6, scratch/sentinel roles=[]. Shim Phase-B verified records-row sentinels via the app roles.
+
+### §7 Data-API exclusion (3 gates)
+- **Grant gate:** shim bucket 1 - anon/authenticated/service_role hold NO schema USAGE + NO object
+  grant on records; PUBLIC=0 (exhaustive aclexplode).
+- **Config + live gate:** `GET /rest/v1/assets` with `Accept-Profile: records` (active publishable
+  key) -> **HTTP 406 PGRST106** `"Invalid schema: records"`, hint `"Only the following schemas are
+  exposed: public, graphql_public"`. Specific schema-not-exposed failure (not 200/401/404). Pre-auth
+  schema-exposure rejection == records config-excluded from the Data API.
+
+### §9 advisor diff (by finding identity)
+- Security: baseline 152 (ERROR 62/WARN 71/INFO 19), **0 records-scoped** -> post-T2 154 (ERROR 62/
+  WARN 72/INFO 20), **2 records-scoped**, delta = exactly these two, both BY-DESIGN:
+  `[INFO] rls_enabled_no_policy` on records.neta_table_source_links (deny-all D10) +
+  `[WARN] function_search_path_mutable` on records.fn_set_updated_at (base trigger fn). **No records
+  ERROR.** (All 62 ERROR / 72 WARN are inherited public/tcc/... schemas, pre-existing, out of scope.)
+
+**GO #2 verdict: PASS.** Secured records substrate live on prod: RLS/FORCE/policies/ownership/audit
+all as designed; Data-API-excluded; acceptance green on the managed substrate. **Transient window:**
+3 LOGIN-but-passwordless roles (records_api/intake_writer/auditor) exist between T2 and the GO #3
+toggle - no credential minted. **Next gate: GO #3 (dormant NOLOGIN toggle of all three + all-6-NOLOGIN
+assert) - operator-gated; not yet authorized.**
