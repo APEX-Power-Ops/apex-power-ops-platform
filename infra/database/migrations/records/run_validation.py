@@ -284,10 +284,13 @@ def _run(cmd, env=None, cwd=None):
     return r.returncode, tail
 
 
-def _pytest(paths, env, label, marker=None):
+def _pytest(paths, env, label, markexpr=None):
     args = [sys.executable, "-m", "pytest", "-q"]
-    if marker:
-        args += ["-k", marker]  # select by test-name expression (compat tests are named test_compat_*)
+    if markexpr:
+        # select by MARKER expression (the `compat` marker is registered in the root
+        # pyproject [tool.pytest.ini_options]); marker-based selection is intent-exact,
+        # unlike the prior name-based `-k` which matched any node id containing the text.
+        args += ["-m", markexpr]
     rc, tail = _run([*args, *paths], env=env, cwd=REPO_ROOT)
     print(f"--- {label} (rc={rc}) ---\n{tail}")
     return rc, tail
@@ -306,6 +309,15 @@ def _existing_records_roles(dsn_value):
         return {r[0] for r in c.execute(
             "select rolname from pg_roles where rolname = any(%s)",
             (list(_RECORDS_ROLE_NAMES),)).fetchall()}
+
+
+# Exact number of @compat-marked tests across the five numbered records test files
+# (045:5 + 046:7 + 047:6 + 048:6 + 049:4). The tier-3 isolated @compat pass asserts it
+# selected/passed EXACTLY this many, so a mis-selection (0 from a bad marker) OR silent
+# drift (a @compat test added/removed) fails the gate instead of false-greening.
+# test_run_validation_unit.py::test_expected_compat_tests_matches_source ties this
+# constant to the actual decorator count so the two cannot diverge unnoticed.
+EXPECTED_COMPAT_TESTS = 28
 
 
 def _parse_passed(tail):
@@ -434,13 +446,15 @@ def tier3_walk(child_dsn, executed, migs, tests, apply_dsn=None):
     compat_files = [os.path.join("infra", "database", "migrations", "records", tf)
                     for _, tf in sorted(tests.items())]
     pre_roles = _existing_records_roles(child_dsn)
-    crc, ctail = _pytest(compat_files, env, "3-compat", marker="compat")
+    crc, ctail = _pytest(compat_files, env, "3-compat", markexpr="compat")
     if crc != 0:
         return Tier("3-migrations", "FAIL", f"@compat isolated pass failed (rc={crc})")
     n_compat = _parse_passed(ctail)
-    if n_compat <= 0:
+    if n_compat != EXPECTED_COMPAT_TESTS:
         return Tier("3-migrations", "FAIL",
-                    "@compat isolated pass ran 0 tests (deselected/all-skipped) - false-green guard")
+                    f"@compat isolated pass ran {n_compat} tests, expected exactly "
+                    f"{EXPECTED_COMPAT_TESTS} (mis-selection/all-skipped/drift) - false-green "
+                    "guard; update EXPECTED_COMPAT_TESTS if the @compat suite legitimately changed")
     residue = _existing_records_roles(child_dsn) - pre_roles
     if residue:
         return Tier("3-migrations", "FAIL",
@@ -461,7 +475,7 @@ def tier3_walk(child_dsn, executed, migs, tests, apply_dsn=None):
             continue
         pre = _fingerprint(child_dsn)
         rc, _ = _pytest([os.path.join("infra", "database", "migrations", "records", tf)],
-                        env, tf, marker="not compat")
+                        env, tf, markexpr="not compat")
         if rc != 0:
             return Tier("3-migrations", "FAIL", f"{tf} (non-compat) failed (rc={rc}); walk stopped")
         post = _fingerprint(child_dsn)

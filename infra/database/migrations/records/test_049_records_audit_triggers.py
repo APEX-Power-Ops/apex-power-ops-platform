@@ -401,9 +401,17 @@ import run_validation as rv  # noqa: E402
 
 _ADMIN = os.environ.get("RECORDS_PG_ADMIN_DSN")
 
-compat = pytest.mark.skipif(
-    not _ADMIN, reason="RECORDS_PG_ADMIN_DSN not set - non-super compat green-proof skipped"
-)
+def compat(fn):
+    """Stacked marks: apply the registered `compat` marker (so run_validation tier-3
+    selects the isolated compat pass via `-m compat` and the per-migration walk deselects
+    via `-m "not compat"`) AND skip when RECORDS_PG_ADMIN_DSN is absent (no local Postgres
+    to build the non-super applier)."""
+    return pytest.mark.compat(
+        pytest.mark.skipif(
+            not _ADMIN,
+            reason="RECORDS_PG_ADMIN_DSN not set - non-super compat green-proof skipped",
+        )(fn)
+    )
 
 # Cluster-level roles the compat proof may leave behind (aborted prior run). Drop the
 # password-less, orphaned set before/after each module run so the proof is idempotent;
