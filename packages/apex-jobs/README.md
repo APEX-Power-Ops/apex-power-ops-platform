@@ -30,7 +30,11 @@ dispatch_id asc), so concurrent executors never double-claim.
 `enqueue · queue · claim · start · report · request-gate · approve · reject ·
 gates · status · ledger · reap · promotions · review · unblock`. Target a database with `APEX_JOBS_DB` (default
 `orchestration_dev`) or `APEX_JOBS_DSN`; connects as the `orchestration` role.
-The dev password lives in the gitignored `infra/.env` — never committed.
+Run with the dev password injected from Infisical:
+`infra/infisical/apex-jobs.sh <verb>` (mirrors `dev-psql.sh`) injects
+`APEX_JOBS_PGPASSWORD` from the `dev` environment. `APEX_JOBS_PGPASSWORD` is
+Infisical-managed and no longer in `infra/.env`; `DEV_PG_PASSWORD` (still cached)
+remains the fallback when you source `infra/.env` and run `apex-jobs` directly.
 
 ## Worker
 ```python
