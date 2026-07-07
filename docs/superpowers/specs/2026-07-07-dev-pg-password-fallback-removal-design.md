@@ -135,13 +135,22 @@ lane closes.
    what prevents the fallback from silently drifting back.
 2. `tests_unit/test_dsn_resolution.py` full contract green with NO DB and NO credentials
    (it lives outside the DB conftest scope).
-3. **Live injected round-trip:** with `DEV_PG_PASSWORD` absent from the calling shell,
-   `env -u DEV_PG_PASSWORD infra/infisical/apex-jobs.sh status` connects (orchestration via
-   injected `APEX_JOBS_PGPASSWORD`).
-4. **Full suites green via injection:** the apex-jobs package suite and the jobs migration
-   tests run green under `inject.sh dev` with `DEV_PG_PASSWORD` unset in the shell -- proving
-   the injected `APEX_JOBS_PGPASSWORD` path is the working path and the removed fallback was
-   dead, not load-bearing.
+3. **Live injected round-trip (proves the working path AND fallback removal at the live layer):**
+   run a no-arg read-only verb (`queue`) through injection with `DEV_PG_PASSWORD` stripped
+   AFTER injection, so the connection environment carries `APEX_JOBS_PGPASSWORD` but NOT
+   `DEV_PG_PASSWORD`:
+   `infra/infisical/inject.sh dev -- env -u DEV_PG_PASSWORD bash -c 'cd packages/apex-jobs && exec uv run apex-jobs queue'`.
+   It connects as `orchestration` via the injected `APEX_JOBS_PGPASSWORD`. Stripping
+   `DEV_PG_PASSWORD` AFTER injection (not before -- `apex-jobs.sh`/`inject.sh` would re-add it
+   from Infisical `dev`, making a pre-injection `env -u` a no-op) is what makes this prove the
+   removed fallback is not silently carrying the connection. `status` is NOT used for this: it
+   takes a required positional `ident` (`cli.py:340`) and exits in argparse before connecting;
+   `queue` (`cli.py:297`) is a genuine no-arg read that opens a DB connection.
+4. **Full suites green via injection, `DEV_PG_PASSWORD` stripped post-injection:** the apex-jobs
+   package suite and the jobs migration tests run green under
+   `inject.sh dev -- env -u DEV_PG_PASSWORD bash -c '...'` (so `DEV_PG_PASSWORD` is absent from
+   the injected env at connection time) -- proving the injected `APEX_JOBS_PGPASSWORD` path
+   carries the suites and the removed fallback was dead, not load-bearing.
 5. **No-regression `secret-audit.sh`:** identical FAIL set to the pre-lane baseline (the
    parked keys `SUPABASE_PROD_DSN`, `TCC_BREAKER_RO_PW`, `TCC_BREAKER_CODEX_PW`);
    `DEV_PG_PASSWORD` still allowed by name; `.managed-secrets` unchanged; only a comment added
