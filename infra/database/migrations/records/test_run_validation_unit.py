@@ -255,3 +255,82 @@ def test_redacted_dsn_is_str_subclass_usable_as_dsn():
     # a bare str() equality / concatenation still behaves like a normal string
     assert x == real
     assert (x + "").startswith("host=h")
+
+
+# --- @compat marker hardening: -m selection + exact-count drift guard -------------
+# The tier-3 isolated @compat pass selects by the registered `compat` MARKER (-m), and
+# asserts it ran EXACTLY EXPECTED_COMPAT_TESTS. These unit tests pin both halves so the
+# selection cannot silently regress to name-based (-k), and the constant cannot silently
+# diverge from the real @compat suite. Both are DB-free (no import of the DB test modules).
+class _CapturingRun:
+    """Records the argv passed to rv._run and returns a canned (rc, tail)."""
+
+    def __init__(self, tail="1 passed"):
+        self.cmd = None
+        self._tail = tail
+
+    def __call__(self, cmd, env=None, cwd=None):
+        self.cmd = cmd
+        return 0, self._tail
+
+
+def _marker_after_pytest(cmd):
+    """The value of pytest's own `-m` (the marker flag AFTER the `pytest` module token);
+    the first `-m` is python's `-m pytest`, so search past it."""
+    i = cmd.index("-m", cmd.index("pytest"))
+    return cmd[i + 1]
+
+
+def test_pytest_selects_by_marker_expr_not_keyword(monkeypatch):
+    cap = _CapturingRun()
+    monkeypatch.setattr(rv, "_run", cap)
+    rv._pytest(["some_test.py"], {}, "lbl", markexpr="compat")
+    assert "-k" not in cap.cmd                 # NOT name-based selection
+    assert _marker_after_pytest(cap.cmd) == "compat"
+
+
+def test_pytest_passes_negated_marker_expr(monkeypatch):
+    cap = _CapturingRun()
+    monkeypatch.setattr(rv, "_run", cap)
+    rv._pytest(["some_test.py"], {}, "lbl", markexpr="not compat")
+    assert "-k" not in cap.cmd
+    assert _marker_after_pytest(cap.cmd) == "not compat"
+
+
+def test_pytest_without_markexpr_adds_no_selection_flag(monkeypatch):
+    cap = _CapturingRun()
+    monkeypatch.setattr(rv, "_run", cap)
+    rv._pytest(["some_test.py"], {}, "lbl")
+    assert "-k" not in cap.cmd
+    assert cap.cmd.count("-m") == 1            # only python's own `-m pytest`
+
+
+COMPAT_TEST_FILES = (
+    "test_045_records_security_rls.py", "test_046_records_ownership.py",
+    "test_047_records_audit_roles.py", "test_048_records_audit_log.py",
+    "test_049_records_audit_triggers.py",
+)
+
+
+def test_expected_compat_tests_matches_source():
+    # Drift guard: EXPECTED_COMPAT_TESTS must equal the number of @compat-decorated test
+    # functions across the five numbered records test files, so the tier-3 exact-count guard
+    # can never silently diverge from the real suite. Static (ast) count over the source -
+    # no DB, no import of the compat test modules (which pull psycopg at import).
+    import ast
+    here = os.path.dirname(os.path.abspath(rv.__file__))
+    total = 0
+    for name in COMPAT_TEST_FILES:
+        with open(os.path.join(here, name), encoding="utf-8") as fh:
+            tree = ast.parse(fh.read())
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                total += sum(
+                    1 for d in node.decorator_list
+                    if isinstance(d, ast.Name) and d.id == "compat"
+                )
+    assert total == rv.EXPECTED_COMPAT_TESTS, (
+        f"{total} @compat-decorated tests found across 045-049 but "
+        f"EXPECTED_COMPAT_TESTS={rv.EXPECTED_COMPAT_TESTS}; update the constant and the "
+        "tier-3 guard together"
+    )
