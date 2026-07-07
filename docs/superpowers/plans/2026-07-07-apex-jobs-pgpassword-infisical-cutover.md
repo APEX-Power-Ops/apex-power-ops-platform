@@ -190,10 +190,12 @@ Expected: connects to `orchestration_dev` (no error, no value printed).
 
 - [ ] **Step 2: Arm the name.** Append `APEX_JOBS_PGPASSWORD` to `infra/infisical/.managed-secrets` (name only, one per line).
 
-- [ ] **Step 3: Run the full audit - verify green.**
+- [ ] **Step 3: Verify NO audit regression against the REAL `infra/.env`** (run from the MAIN worktree - the lane worktree has no `infra/.env`; it is a per-worktree gitignored cache).
 
-Run: `ssh olares-mesh 'cd <wt> && bash infra/secret-audit.sh'`
-Expected: rc=0 - Check 1b (only `DEV_PG_PASSWORD` cache-allowed), 1c (`APEX_JOBS_PGPASSWORD` managed, absent from cache), 1d (cache-coverage) all PASS.
+Baseline is `rc=1`: Check 1b FAILs 3 pre-existing PARKED keys (`TCC_BREAKER_RO_PW`, `TCC_BREAKER_CODEX_PW`, `SUPABASE_PROD_DSN`) - OUT OF SCOPE. Success = that FAIL set is UNCHANGED and `APEX_JOBS_PGPASSWORD` adds zero findings. Verify the shrunk allowlist against the real `.env` WITHOUT editing main, via the `:67` override:
+
+Run: `ssh olares-mesh 'cd /home/olares/code/apex/apex-power-ops-platform && APEX_ENV_ALLOWED_KEYS="DEV_PG_PASSWORD" bash infra/secret-audit.sh'`
+Expected: Check 1b PASSes `DEV_PG_PASSWORD`, FAILs ONLY the 3 parked keys; no `APEX_JOBS_PGPASSWORD` finding. And `grep -c '^APEX_JOBS_PGPASSWORD=' <each of the 3 caches>` == 0 (drift-clean). Do NOT expect `rc=0` (parked keys keep it 1). Full colocated confirmation (real `.env` + armed `.managed-secrets` + shrunk script together) is a post-merge run on `main`.
 
 - [ ] **Step 4: Commit** (`chore(secrets): arm APEX_JOBS_PGPASSWORD in .managed-secrets (post-cutover)`).
 

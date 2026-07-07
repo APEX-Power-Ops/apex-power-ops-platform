@@ -47,6 +47,12 @@ OUT (deferred, do NOT touch):
   Check 1b PASSes only allowlisted keys found in `infra/.env`; Check 1c FAILs a
   `.managed-secrets` name that still lingers in the cache; the audit even hints the
   transition (line 99: "also in ENV_ALLOWED_KEYS - drop it there once removed").
+- Baseline (verified 2026-07-07 on this dev host): `secret-audit.sh` already exits
+  rc=1 because Check 1b FAILs the 3 parked keys `TCC_BREAKER_RO_PW` /
+  `TCC_BREAKER_CODEX_PW` / `SUPABASE_PROD_DSN` (out of scope). `APEX_JOBS_PGPASSWORD`
+  is absent from all 3 registered caches. `APEX_ENV_ALLOWED_KEYS` has NO override
+  anywhere (only the `:67` default); CI runs only the fixture test (records-ci.yml),
+  never the full audit against a real cache.
 - `infra/database/migrations/records/test_secret_audit_env_allowlist.sh` currently
   asserts `APEX_JOBS_PGPASSWORD` is an ALLOWED cache key (exercises the DEFAULT
   allowlist) - must flip to managed / not-cache-allowed on cutover.
@@ -74,9 +80,12 @@ reads, echoes, or transports any secret value.)
    default in `infra/secret-audit.sh:67` (default becomes just `DEV_PG_PASSWORD`),
    and flip `test_secret_audit_env_allowlist.sh` so `APEX_JOBS_PGPASSWORD` is
    asserted managed / no-longer-cache-allowed instead of allowed.
-5. THEN arm `APEX_JOBS_PGPASSWORD` in `.managed-secrets`; run `secret-audit.sh` and
-   confirm Check 1b (only `DEV_PG_PASSWORD` cache-allowed), 1c (managed name not in
-   cache), 1d (cache-coverage) all green.
+5. THEN arm `APEX_JOBS_PGPASSWORD` in `.managed-secrets`; verify NO new audit
+   findings vs the parked baseline: `APEX_JOBS_PGPASSWORD` absent from all 3 caches
+   (Check 1c/1d drift-clean, now 3 managed names) and Check 1b FAILs ONLY the
+   pre-existing parked keys (`TCC_BREAKER_*`, `SUPABASE_PROD_DSN`) - unchanged, out of
+   scope. Overall rc stays 1 for those parked keys: that is the accepted baseline,
+   NOT a regression.
 6. Update the apex-jobs README launch runbook to the injected launcher.
 7. Whole-branch Codex cross-engine review before finishing (IRP).
 
@@ -108,6 +117,8 @@ the worker cannot start.
 ## Done / verification
 
 Injected launch resolves + connects to `orchestration_dev`; `APEX_JOBS_PGPASSWORD`
-absent from `infra/.env` AND from `ENV_ALLOWED_KEYS`; NAME armed in `.managed-secrets`;
-`secret-audit.sh` rc=0 (1b/1c/1d green); README updated; Codex review clean.
-Host-canonical single-writer; ASCII-only added lines; no secret value ever handled.
+absent from all local caches AND from `ENV_ALLOWED_KEYS`; NAME armed in `.managed-secrets`;
+`secret-audit.sh` shows NO NEW findings vs the parked baseline (rc stays 1 ONLY for the
+pre-existing out-of-scope parked keys `TCC_BREAKER_*` / `SUPABASE_PROD_DSN`; do NOT expect
+rc=0), and `APEX_JOBS_PGPASSWORD` contributes zero findings; README updated; Codex review
+clean. Host-canonical single-writer; ASCII-only added lines; no secret value ever handled.
