@@ -284,10 +284,44 @@ def _run(cmd, env=None, cwd=None):
     return r.returncode, tail
 
 
-def _pytest(paths, env, label):
-    rc, tail = _run([sys.executable, "-m", "pytest", "-q", *paths], env=env, cwd=REPO_ROOT)
+def _pytest(paths, env, label, marker=None):
+    args = [sys.executable, "-m", "pytest", "-q"]
+    if marker:
+        args += ["-k", marker]  # select by test-name expression (compat tests are named test_compat_*)
+    rc, tail = _run([*args, *paths], env=env, cwd=REPO_ROOT)
     print(f"--- {label} (rc={rc}) ---\n{tail}")
-    return rc
+    return rc, tail
+
+
+_RECORDS_ROLE_NAMES = (
+    "records_api", "records_intake_writer", "records_owner",
+    "records_fn_owner", "records_auditor", "records_reclaim_owner",
+)
+
+
+def _existing_records_roles(dsn_value):
+    """Set of the cluster-level records roles that currently exist (roles are cluster-wide,
+    so this is the same from any DB connection)."""
+    with _connect(dsn_value) as c:
+        return {r[0] for r in c.execute(
+            "select rolname from pg_roles where rolname = any(%s)",
+            (list(_RECORDS_ROLE_NAMES),)).fetchall()}
+
+
+def _parse_passed(tail):
+    """Passed-test count from a pytest -q tail. Prefer the 'N passed' summary; fall back to
+    counting passed markers ('.') in the progress line (the summary line is not always inside
+    _run's truncated tail). Any F/E in the progress line -> 0 (a failure, not a pass count)."""
+    m = re.search(r"(\d+) passed", tail or "")
+    if m:
+        return int(m.group(1))
+    for line in reversed((tail or "").splitlines()):
+        seg = line.split("[")[0].strip()  # drop a trailing [NN%] progress marker
+        if seg and set(seg) <= set(".sFExX "):
+            if "F" in seg or "E" in seg:
+                return 0
+            return seg.count(".")
+    return 0
 
 
 def _connect(dsn_value):
@@ -319,7 +353,7 @@ def tier0_syntax_origin():
 
 
 def tier1_converters(env):
-    rc = _pytest([os.path.join("packages", "power-test-converters", "tests")], env, "tier1")
+    rc, _ = _pytest([os.path.join("packages", "power-test-converters", "tests")], env, "tier1")
     return Tier("1-converters", "PASS" if rc == 0 else "FAIL", f"pytest rc={rc}")
 
 
@@ -329,7 +363,7 @@ DB_IMPORT_TESTS = ["test_db_write.py", "test_ingest_end_to_end.py", "test_ingest
 
 def tier2_import_pure(env):
     paths = [os.path.join("packages", "records-import", "tests", f) for f in PURE_IMPORT_TESTS]
-    rc = _pytest(paths, env, "tier2")
+    rc, _ = _pytest(paths, env, "tier2")
     return Tier("2-import-pure", "PASS" if rc == 0 else "FAIL", f"pytest rc={rc}")
 
 
@@ -387,6 +421,31 @@ def tier3_walk(child_dsn, executed, migs, tests, apply_dsn=None):
     # per-migration tests still run as the admin child_dsn. Default (apply_dsn None):
     # apply as admin via _dbtest.run_psql, unchanged behavior.
     env = _child_env(child_dsn)
+
+    # (B) Isolated @compat proof FIRST, before the admin walk creates the long-lived cluster
+    # roles. The @compat tests own their OWN cluster-role lifecycle: a disposable applier
+    # creates the records roles, applies the stack UP, drives the non-super _down proof (which
+    # DROPS cluster owner roles - 047_down drops records_fn_owner), then cleans up - exactly
+    # as direct pytest runs them. Interleaving that inside the admin walk breaks the walk
+    # (047_down's records_fn_owner drop leaves 048's admin apply with no records_fn_owner), so
+    # the compat proof runs once, isolated, up front; the per-migration walk below runs each
+    # test file with `-m "not compat"`. Order matters: compat first so the admin walk's roles
+    # and migrated child DB survive intact for tiers 4-7.
+    compat_files = [os.path.join("infra", "database", "migrations", "records", tf)
+                    for _, tf in sorted(tests.items())]
+    pre_roles = _existing_records_roles(child_dsn)
+    crc, ctail = _pytest(compat_files, env, "3-compat", marker="compat")
+    if crc != 0:
+        return Tier("3-migrations", "FAIL", f"@compat isolated pass failed (rc={crc})")
+    n_compat = _parse_passed(ctail)
+    if n_compat <= 0:
+        return Tier("3-migrations", "FAIL",
+                    "@compat isolated pass ran 0 tests (deselected/all-skipped) - false-green guard")
+    residue = _existing_records_roles(child_dsn) - pre_roles
+    if residue:
+        return Tier("3-migrations", "FAIL",
+                    f"@compat isolated pass left cluster-role residue: {sorted(residue)}")
+
     for num, sql in migs:
         if apply_dsn:
             try:
@@ -401,21 +460,24 @@ def tier3_walk(child_dsn, executed, migs, tests, apply_dsn=None):
         if not tf:
             continue
         pre = _fingerprint(child_dsn)
-        rc = _pytest([os.path.join("infra", "database", "migrations", "records", tf)], env, tf)
+        rc, _ = _pytest([os.path.join("infra", "database", "migrations", "records", tf)],
+                        env, tf, marker="not compat")
         if rc != 0:
-            return Tier("3-migrations", "FAIL", f"{tf} failed (rc={rc}); walk stopped")
+            return Tier("3-migrations", "FAIL", f"{tf} (non-compat) failed (rc={rc}); walk stopped")
         post = _fingerprint(child_dsn)
         if pre != post:
             return Tier("3-migrations", "FAIL",
                         f"{tf} PASSED but did not restore its migration (schema fingerprint moved)")
         executed.append(tf)
-    return Tier("3-migrations", "PASS", f"{len(migs)} applied, {len(executed)} tests executed, 0 skipped")
+    return Tier("3-migrations", "PASS",
+                f"@compat {n_compat} passed (isolated) + {len(migs)} applied, "
+                f"{len(executed)} non-compat test files, 0 skipped")
 
 
 def tier4_import_db(child_dsn, executed):
     env = _child_env(child_dsn)
     paths = [os.path.join("packages", "records-import", "tests", f) for f in DB_IMPORT_TESTS]
-    rc = _pytest(paths, env, "tier4")
+    rc, _ = _pytest(paths, env, "tier4")
     if rc == 0:
         executed.extend(DB_IMPORT_TESTS)
     return Tier("4-import-db", "PASS" if rc == 0 else "FAIL",
