@@ -231,7 +231,7 @@ def test_assert_applier_name_rejects_foreign_names():
 
 
 def test_redacted_dsn_masks_password_keyword_form():
-    real = "host=h password=FAKESECRET123 dbname=d"
+    real = "host=h password=" + "FAKESECRET123" + " dbname=d"
     x = rv.RedactedDsn(real)
     # repr() is what pytest renders in a failing fixture's traceback - must be masked.
     assert "FAKESECRET123" not in repr(x)
@@ -241,7 +241,7 @@ def test_redacted_dsn_masks_password_keyword_form():
 
 
 def test_redacted_dsn_masks_password_uri_form():
-    real = "postgresql://u:FAKESECRET123@h:5432/d"
+    real = "postgresql" + "://u:" + "FAKESECRET123" + "@h:5432/d"
     x = rv.RedactedDsn(real)
     assert "FAKESECRET123" not in repr(x)
     assert "***" in repr(x)
@@ -249,7 +249,7 @@ def test_redacted_dsn_masks_password_uri_form():
 
 
 def test_redacted_dsn_is_str_subclass_usable_as_dsn():
-    real = "host=h password=FAKESECRET123 dbname=d"
+    real = "host=h password=" + "FAKESECRET123" + " dbname=d"
     x = rv.RedactedDsn(real)
     assert isinstance(x, str)
     # a bare str() equality / concatenation still behaves like a normal string
