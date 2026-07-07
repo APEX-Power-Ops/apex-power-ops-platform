@@ -75,3 +75,34 @@ Governed by this transcript, NOT `supabase_migrations.schema_migrations` (packet
 
 **GO #0 verdict: PASS, zero residue, greenfield intact. Next gate: GO #1 (T1 apply 001-044) —
 operator-gated; not yet authorized.**
+
+---
+
+## GO #1 — T1 apply (migrations 001-044)  (2026-07-07, operator-gated)  — RESULT: PASS
+
+### Credential re-verify (post second rotation)
+- Operator re-rotated the prod password (leaked-fragment remediation) + updated Infisical. Bind
+  re-verified UNDER injection: after ~20s Supavisor pooler propagation, `PSQL_RC=0`, FACTS match §2.1
+  (current_user=postgres, 17.6, envelope super=f/bypassrls=t/createrole=t). Fresh password
+  authenticates; no leak (stderr captured + classified).
+
+### Apply mechanism + result
+- Exact T1 manifest = 44 up-files `001..044` (belt-and-suspenders guard rejects 045-049; halts after
+  044). Each applied via `psql -v ON_ERROR_STOP=1 -q -f <file>` over the injected session-pooler DSN,
+  numeric order, STOP-on-first-nonzero. **Result: 44/44 OK, zero failures** (incl. the 4051-line
+  `006` NETA seed streamed by `psql -f`). `T1_COMPLETE: applied 44/44 (001-044)`.
+
+### T1 structural fingerprint (authorized connector, read-only)
+- tables=15, views=2, functions=1, indexes=64, enums=14, triggers=10.
+- `records_*` app roles = `[]` (T2 not run - roles minted in 045/047).
+- table_owners = `{postgres: 15}` (all base tables owned by the applier; 046 transfers to
+  records_owner under T2).
+
+### Reference row counts (exact, read-only) - total 4316 rows / 15 tables
+- Seed/reference (non-empty): neta_test_items=3920, neta_tables=88, neta_procedures=72,
+  neta_procedure_xref=70, asset_classes=69, asset_class_neta_procedure=62, form_templates=35.
+- Operational (empty, expected greenfield): assets, persons, pm_events, pm_programs, pm_schedules,
+  form_submissions, form_field_values, neta_table_source_links = 0.
+
+**GO #1 verdict: PASS. Schema stood up, seed loaded, no records role/ownership yet. Next gate: GO #2
+(T2 apply 045-049 + §5 acceptance) - operator-gated; not yet authorized.**
