@@ -9,8 +9,10 @@ lvbreakertcc lane with ZERO risk to prod Supabase. Design spec:
 This breaker sandbox was a completed 2026-06-25 one-off. The `breaker-viewer` MCP is
 gone, and nothing connects as `tcc_breaker_codex_79audit` at runtime. `TCC_BREAKER_CODEX_PW`
 is therefore RETIRED: removed from the host `infra/.env`, NOT loaded into Infisical, and
-NOT armed in `infra/infisical/.managed-secrets`. Re-running any provision/codex step below
-requires re-seeding the role passwords first.
+NOT armed in `infra/infisical/.managed-secrets`. Re-provisioning this sandbox is out of scope;
+if ever revisited it is a fresh operator decision -- do NOT use the old `>> infra/.env` seeding
+in the Provision-order section below (with `TCC_BREAKER_RO_PW` now armed, writing either key back
+into `infra/.env` reintroduces drift and fails `secret-audit`).
 
 `TCC_BREAKER_RO_PW` remains live: the F-79-03 access-harness (`infra/database/access-harness`)
 reads the `tcc_breaker_viewer_<date>` clone read-only via `tcc_breaker_ro`. It is managed in
@@ -29,8 +31,8 @@ destructive-cleanup packet.
 
 ## Roles (no cluster-wide attributes)
 - `tcc_breaker_ro` — SELECT on the viewer clone only.
-- `tcc_breaker_codex_79audit` — owns its clone's tcc objects; no baseline, no viewer. Passwords in
-  the gitignored 0600 `infra/.env` (`TCC_BREAKER_RO_PW` / `TCC_BREAKER_CODEX_PW`).
+- `tcc_breaker_codex_79audit` — owns its clone's tcc objects; no baseline, no viewer. passwords: `TCC_BREAKER_RO_PW` is Infisical-managed (`dev`, injected) and `TCC_BREAKER_CODEX_PW`
+  is retired -- neither is in `infra/.env` (see Status above).
 
 ## Seed (operator-side; prod cred never lands on the host)
 ```
@@ -46,6 +48,10 @@ scp tcc_baseline_20260625.dump olares-mesh:/home/olares/dev-pg-backups/tcc/
 1. `provision/restore_baseline.sh <baseline> <dump>` — freeze-on-create → auth-stub preflight →
    `pg_restore --exit-on-error`. On any failure it drops the partial baseline (fail-closed).
 2. **One-time role setup** (skip if `tcc_breaker_ro` / `tcc_breaker_codex_79audit` already exist).
+   **RETIRED PATH (2026-07-07): do NOT run the `>> infra/.env` seeding below.** Both keys left
+   `infra/.env`; `TCC_BREAKER_RO_PW` is Infisical-managed + armed (writing it back fails
+   `secret-audit`), and `TCC_BREAKER_CODEX_PW` is retired (recreating it needs a fresh decision).
+   The block is kept for provenance only.
    The clone scripts in steps 3–4 grant to these roles, so they MUST exist first:
    ```bash
    # generate random passwords into the gitignored 0600 infra/.env if absent (MAIN worktree's infra/.env)
