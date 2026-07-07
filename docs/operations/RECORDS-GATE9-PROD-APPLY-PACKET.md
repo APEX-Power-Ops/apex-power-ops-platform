@@ -11,7 +11,7 @@ Design basis: `docs/superpowers/specs/2026-07-03-records-gate9-supabase-serving-
 records_api / records_intake_writer / records_auditor).
 
 Scope reminder (read-only prod check, 2026-07-03): records schema absent, 0
-records_* roles, 0 of 198 migrations from the records lane landed, records not
+records_* roles, 0 of 49 records up-migrations (96 migration files incl. downs) from the records lane landed, records not
 in the Data API exposed-schemas. This is a greenfield first landing, not a
 rebind of a live policy.
 
@@ -39,15 +39,30 @@ step, partial completion) requires a fresh operator decision before continuing.
 - [ ] Confirm no prior partial records apply exists in prod (expect: records
       schema absent, 0 records_* roles - re-verify empirically, do not assume
       the 2026-07-03 read-only check is still current).
+- [ ] **Applier-privilege precondition (executable, gates the migration GO).**
+      Run `supabase_probe.py` (the Phase-0 reusable probe) against the target;
+      it MUST exit 0 - every privilege class the stack needs proven green on
+      THIS target: role-attribute sets, role creation, membership grant/revoke
+      WITH SET, ownership transfer (forward + cross-role + reverse-to-postgres),
+      CREATE POLICY TO a custom role, RLS + FORCE RLS, and trigger/function
+      ownership. This is the check whose absence let 045 fail mid-apply on
+      2026-07-04. Because the probe performs scratch WRITES (it creates and
+      tears down scratch roles/objects, transactionally and value-silently), it
+      requires its OWN operator-approved scratch-write GO, distinct from and
+      PRIOR TO the migration write GO below - it is NOT run "before any GO".
 - [ ] Operator GO recorded (name/date, out of this packet's scope to capture
       the mechanism - use whatever the operator's standard sign-off record is).
 
 ## 2. Land the records migration stack (first-ever prod landing)
 
-- [ ] Apply migrations 001-049 as reviewable SQL, in numeric order, each in
-      its own transaction (or a single transaction if the migration runner
-      guarantees atomic all-or-nothing across the range - match whatever
-      transactional discipline the harness already validated).
+- [ ] Apply migrations 001-049 as reviewable SQL, in numeric order. Every
+      up-migration is self-wrapped in `BEGIN;` / `COMMIT;` at SOURCE (all 49
+      files as of 2026-07-04 - the six formerly-unwrapped ones, 001-005 and
+      008, were source-wrapped in this lane), so per-file atomicity is owned by
+      the SQL itself and does NOT depend on a runner `-1` flag or operator
+      memory. Apply each file with `psql -v ON_ERROR_STOP=1 -f`
+      (stop-on-first-error); all-or-nothing is per file, the discipline the
+      disposable harness validated.
 - [ ] This is the first-ever prod landing of this stack - there is no existing
       prod records data or schema to preserve or migrate; treat every
       migration as a clean create, not an alter-in-place against live rows.

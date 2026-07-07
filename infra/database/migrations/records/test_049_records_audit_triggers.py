@@ -2,6 +2,7 @@ import os
 import sys
 
 import psycopg
+import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import _dbtest  # noqa: E402
@@ -12,10 +13,37 @@ DOWN = "049_records_audit_triggers_down.sql"
 # The writer-grant set (records_intake_writer INSERT/UPDATE). 049 attaches
 # trg_audit to EXACTLY these and to nothing else (not audit_log, which would
 # recurse, nor neta_table_source_links, which is owner-only, D7).
+#
+# VISIBILITY-INDEPENDENT ORACLE (D5-B): derive the writer-grant table set from
+# the RAW catalog ACLs - pg_class.relacl (table-level) AND pg_attribute.attacl
+# (column-level, which is how 045 records the writer's INSERT/UPDATE: the grants
+# are COLUMN-scoped, so a relacl-only read would yield 0) - via aclexplode. The
+# ORIGINAL 049 (and the pre-fix test) derived this from
+# information_schema.role_column_grants, which is CURRENT-USER-VISIBILITY scoped:
+# a low-visibility running role sees 0 rows -> 0 triggers -> got==want==0 GREEN
+# with audit SILENTLY DISABLED. aclexplode over catalog ACL columns is readable
+# by ANY role (not visibility-filtered), so this yields the TRUE writer-grant set.
+# The migration 049 uses this SAME derivation for both its create loop and its
+# terminal want-count; the test asserts want > 0 so a regression to a visibility-
+# scoped oracle FAILS LOUD instead of silent-greening.
 WANT_TRIGGER_COUNT = (
-    "select count(distinct table_name) from information_schema.role_column_grants "
-    "where grantee='records_intake_writer' and table_schema='records' "
-    "  and privilege_type in ('INSERT','UPDATE')"
+    "select count(*) from ("
+    "  select distinct c.relname"
+    "    from pg_class c"
+    "    join pg_namespace ns on ns.oid = c.relnamespace"
+    "    left join lateral aclexplode(c.relacl) ra on true"
+    "    left join lateral ("
+    "      select a.privilege_type as ptype, a.grantee as gtee"
+    "        from pg_attribute att, lateral aclexplode(att.attacl) a"
+    "       where att.attrelid = c.oid and att.attnum > 0 and not att.attisdropped"
+    "    ) ca on true"
+    "   where ns.nspname = 'records' and c.relkind = 'r'"
+    "     and c.relname not in ('audit_log','neta_table_source_links')"
+    "     and ("
+    "       (ra.grantee = 'records_intake_writer'::regrole and ra.privilege_type in ('INSERT','UPDATE'))"
+    "       or (ca.gtee = 'records_intake_writer'::regrole and ca.ptype in ('INSERT','UPDATE'))"
+    "     )"
+    ") s"
 )
 GOT_TRIGGER_COUNT = (
     "select count(*) from pg_trigger tg join pg_class c on c.oid=tg.tgrelid "
@@ -48,6 +76,24 @@ PERSONS_HAS_TRIGGER = (
     "where ns.nspname='records' and c.relname='persons' "
     "  and tg.tgname='trg_audit' and not tg.tgisinternal"
 )
+# records_owner must hold NO EXECUTE on fn_audit_capture at rest: 049 grants it a
+# TRANSIENT EXECUTE only for CREATE-TRIGGER time and revokes it afterward (the
+# trigger keeps firing without it). A leaked grant is a residue failure.
+OWNER_HAS_FN_EXECUTE = (
+    "select count(*) from pg_proc p, "
+    "  lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a "
+    "where p.pronamespace=(select oid from pg_namespace where nspname='records') "
+    "  and p.proname='fn_audit_capture' "
+    "  and a.grantee='records_owner'::regrole and a.privilege_type='EXECUTE'"
+)
+# temp-authority residue (046 [4] / 048 form): no NON-admin role holds a USABLE
+# (set/inherit) membership INTO records_owner or records_fn_owner (postgres EXEMPT).
+TEMP_AUTHORITY_RESIDUE = (
+    "select count(*) from pg_auth_members am "
+    "join pg_roles ow on ow.oid=am.roleid and ow.rolname in ('records_owner','records_fn_owner') "
+    "join pg_roles m on m.oid=am.member "
+    "where (am.set_option or am.inherit_option) and m.oid <> 'postgres'::regrole"
+)
 
 
 def _q(dsn, sql):
@@ -72,6 +118,10 @@ def test_049_applied_then_down_up():
     # trigger set == writer-grant set (exactly), and the triggers all fire
     # AFTER I/U/D FOR EACH ROW via fn_audit_capture.
     want = _q(dsn, WANT_TRIGGER_COUNT)[0][0]
+    # SELF-ORACLE GUARD (D5-B): the visibility-independent set is NON-EMPTY. A
+    # regression to a visibility-scoped oracle (role_column_grants) that yields 0
+    # under a low-visibility running role would fail HERE instead of silent-greening.
+    assert want > 0, "writer-grant table set is empty - audit would be SILENTLY DISABLED"
     assert want == 6  # assets, form_submissions, form_field_values, pm_schedules, pm_events, persons
     assert _q(dsn, GOT_TRIGGER_COUNT)[0][0] == want
     # none on audit_log (recursion) or neta_table_source_links (owner-only).
@@ -330,3 +380,157 @@ def test_049_applied_then_down_up():
     assert _q(dsn, GOT_TRIGGER_COUNT)[0][0] == want
     assert _q(dsn, FORBIDDEN_TRIGGER)[0][0] == 0
     assert _q(dsn, PERSONS_HAS_TRIGGER)[0][0] == 1
+
+
+# --------------------------------------------------------------------------------------
+# SUPABASE-COMPAT green-proof (Task 2.5). Self-driving on RECORDS_PG_ADMIN_DSN: it builds
+# a disposable DB, applies 001-044 + adapted 045 + 046 + 047 + 048 + 049 through the
+# NON-super applier, and asserts the adapted 049 SUCCEEDS with the applied posture:
+# trg_audit on EXACTLY the writer-grant set (visibility-independent oracle), none on
+# audit_log/neta_table_source_links, want > 0 (the self-oracle floor), records_owner
+# holds NO leftover EXECUTE on fn_audit_capture (the transient CREATE-TRIGGER grant is
+# revoked), and the temp-authority residue clean (no usable non-admin membership into an
+# owner role). It then ALSO drives the WHOLE committed 049_..._down.sql through the SAME
+# non-super applier and asserts every trigger is dropped. This is the green mirror of
+# test_supabase_compat_redproof.py; 049's compat proof exercises the FULL set-role-owner
+# CREATE/DROP TRIGGER + transient-EXECUTE choreography locally, because by 049 the target
+# tables are records_owner-owned even locally. It is a LOCAL APPROXIMATION (a real
+# Supabase branch is the fidelity authority, Phase 3).
+# --------------------------------------------------------------------------------------
+import run_validation as rv  # noqa: E402
+
+_ADMIN = os.environ.get("RECORDS_PG_ADMIN_DSN")
+
+compat = pytest.mark.skipif(
+    not _ADMIN, reason="RECORDS_PG_ADMIN_DSN not set - non-super compat green-proof skipped"
+)
+
+# Cluster-level roles the compat proof may leave behind (aborted prior run). Drop the
+# password-less, orphaned set before/after each module run so the proof is idempotent;
+# password-carrying roles are LEFT IN PLACE (DEV-7 safety).
+_DISPOSABLE_ROLES = (
+    "records_api", "records_intake_writer", "records_owner", "records_reclaim_owner",
+    "records_fn_owner", "records_auditor",
+)
+
+
+def _drop_disposable_roles():
+    with psycopg.connect(_ADMIN, autocommit=True) as c:
+        for role in _DISPOSABLE_ROLES:
+            if not c.execute("select 1 from pg_roles where rolname=%s", (role,)).fetchone():
+                continue
+            haspw = c.execute(
+                "select rolpassword is not null from pg_authid where rolname=%s", (role,)
+            ).fetchone()[0]
+            if haspw:
+                continue  # out-of-band password: never drop (DEV-7 discipline)
+            try:
+                c.execute(f'drop owned by "{role}"')
+                c.execute(f'drop role "{role}"')
+            except psycopg.errors.DependentObjectsStillExist:
+                pass  # cross-DB dependency: leave in place
+
+
+@pytest.fixture(scope="module")
+def compat_child():
+    """Disposable DB with 001-044 + adapted 045/046/047/048/049 applied AS the non-super
+    applier; yields (admin_child_dsn, applier_apply_dsn): the ADMIN child DSN for catalog
+    introspection, and the non-super APPLIER's own apply DSN so a test can drive further
+    SQL (e.g. 049_down) through the SAME non-super identity that applied 049 UP - the
+    identity whose transient owner-role memberships are exactly what Task 2.5's set-role-
+    owner choreography establishes and revokes. The fixture succeeding IS the green proof
+    that adapted 049 applies under the non-super applier. Value-silent."""
+    if not _ADMIN:
+        pytest.skip("RECORDS_PG_ADMIN_DSN not set")
+    rv.check_admin_dsn(_ADMIN)
+    _drop_disposable_roles()  # clean any orphaned cluster-level roles before applying
+    val = rv.make_val_name()
+    rv.assert_val_name(val)
+    applier = rv.make_local_applier(_ADMIN, rv.LOCAL_APPLIER_ENVELOPE)
+    rv.assert_applier_name(applier.role)
+    with psycopg.connect(_ADMIN, autocommit=True) as c:
+        c.execute(f'create database "{val}"')
+    try:
+        with psycopg.connect(_ADMIN, autocommit=True) as c:
+            c.execute(applier.create_sql)
+            c.execute(f'grant create on database "{val}" to "{applier.role}"')
+        apply_dsn = rv.derive_child_dsn(applier.dsn, val)
+        migs, _ = rv.enumerate_stack(rv.HERE)
+        for num, fname in migs:
+            if num > 49:
+                break
+            rv._apply_as_applier(fname, apply_dsn)  # 001-044, adapted 045-049; each succeeds
+        yield rv.RedactedDsn(rv.derive_child_dsn(_ADMIN, val)), rv.RedactedDsn(apply_dsn)
+    finally:
+        with psycopg.connect(_ADMIN, autocommit=True) as c:
+            c.execute(f'drop database if exists "{val}" with (force)')
+            c.execute(applier.drop_sql)
+        _drop_disposable_roles()  # do not leave orphaned cluster-level roles behind
+
+
+@compat
+def test_compat_adapted_049_applies_under_non_super(compat_child):
+    # Reaching here means adapted 049 applied AS the non-super applier without raising -
+    # the CREATE TRIGGER under SET ROLE records_owner + transient EXECUTE grant from
+    # records_fn_owner + the visibility-independent oracle under the non-super applier is
+    # green.
+    admin_dsn, apply_dsn = compat_child
+    assert admin_dsn and apply_dsn
+
+
+@compat
+def test_compat_trigger_set_equals_writer_grant_set(compat_child):
+    # trg_audit on EXACTLY the visibility-independent writer-grant set; want > 0 (the
+    # self-oracle floor - a regression to a visibility-scoped oracle would collapse this
+    # to 0 and FAIL here, not silent-green); none on audit_log/neta_table_source_links.
+    admin_dsn, _apply_dsn = compat_child
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        want = c.execute(WANT_TRIGGER_COUNT).fetchone()[0]
+        assert want > 0, "writer-grant table set is empty - audit would be SILENTLY DISABLED"
+        assert want == 6, f"expected 6 writer-grant tables, got {want}"
+        got = c.execute(GOT_TRIGGER_COUNT).fetchone()[0]
+        assert got == want, f"trigger count {got} <> writer-grant table count {want}"
+        assert c.execute(FORBIDDEN_TRIGGER).fetchone()[0] == 0, \
+            "trg_audit must be ABSENT from audit_log and neta_table_source_links"
+        assert c.execute(BAD_TRIGGER_DEFS).fetchone()[0] == 0, \
+            "every trg_audit must fire AFTER I/U/D FOR EACH ROW via fn_audit_capture"
+
+
+@compat
+def test_compat_owner_execute_and_temp_authority_residue_clean(compat_child):
+    # residue: records_owner holds NO EXECUTE on fn_audit_capture at rest (the transient
+    # CREATE-TRIGGER grant issued BY records_fn_owner was revoked), and no NON-admin role
+    # holds a usable (set/inherit) membership into records_owner/records_fn_owner (the two
+    # transient memberships were revoked; postgres is EXEMPT).
+    admin_dsn, _apply_dsn = compat_child
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        assert c.execute(OWNER_HAS_FN_EXECUTE).fetchone()[0] == 0, \
+            "records_owner retains EXECUTE on fn_audit_capture (transient grant leaked)"
+        n = c.execute(TEMP_AUTHORITY_RESIDUE).fetchone()[0]
+        assert n == 0, f"{n} usable non-admin membership edge(s) into an owner role survived 049 UP"
+
+
+@compat
+def test_compat_049_down_full_file_applies_under_non_super(compat_child):
+    # Task 2.5 FULL-FILE RED/GREEN proof: applies the WHOLE committed
+    # 049_records_audit_triggers_down.sql AS THE SAME NON-SUPER APPLIER that applied
+    # 001-049 UP, then asserts every trg_audit trigger is DROPPED. This is the strongest
+    # local proof - the entire file, single BEGIN...COMMIT, under the true non-super
+    # applier - the analog of 047_down's / 048_down's full-file proof.
+    #
+    # The 42501 this catches: `drop trigger` on records_owner-owned tables needs table
+    # OWNERSHIP, so 049_down must SET ROLE records_owner (via a transient WITH SET grant).
+    # Reverting that turns this RED (the whole file is one transaction, so any failure
+    # rolls back everything). Driven via rv._apply_as_applier (whole file from disk under
+    # the applier DSN, mirroring the compat fixture's own UP applies) - NOT via
+    # _dbtest.run_psql on RECORDS_DEV_DSN, which runs as the walk's trusted superuser child
+    # DB and would mask the bug.
+    admin_dsn, apply_dsn = compat_child
+    rv._apply_as_applier(DOWN, apply_dsn)  # raises ApplierApplyError on a 42501 regression
+    with psycopg.connect(admin_dsn, autocommit=True) as c:
+        assert c.execute(GOT_TRIGGER_COUNT).fetchone()[0] == 0, \
+            "all trg_audit triggers must be DROPPED by 049_down under the non-super applier"
+        # records_owner must be RETAINED (049_down does not drop roles; 046_down owns that).
+        assert c.execute(
+            "select count(*) from pg_roles where rolname='records_owner'"
+        ).fetchone()[0] == 1, "records_owner must be RETAINED (046_down owns its drop)"
