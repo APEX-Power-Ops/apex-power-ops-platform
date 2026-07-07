@@ -1,7 +1,8 @@
 """Contract lock for apex_jobs.db.resolve_dsn(): the apex-jobs worker password
 comes from APEX_JOBS_PGPASSWORD (preferred) or DEV_PG_PASSWORD (fallback), and
 builds the dev-tier DSN. Value-silent: assertions use non-secret SENTINELs and
-precomputed booleans, never an env dump. Run standalone with --noconftest (no DB).
+precomputed booleans, never an env dump. Lives in tests_unit/ (outside the DB
+conftest's scope) so it always runs with no DB fixture or credentials.
 """
 import os
 
