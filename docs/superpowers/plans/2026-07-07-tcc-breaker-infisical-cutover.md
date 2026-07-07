@@ -27,9 +27,9 @@
 
 - [ ] **Step 1: access-harness README.** In the Environment table row for `TCC_BREAKER_RO_PW` and/or a nearby "Running on the host" note, record: the value is injected from Infisical `dev` (`infra/infisical/inject.sh dev -- <cmd>`) for host-side `snapshot-tcc`/tests; `host_tcc_conn` targets the sandbox viewer clone `tcc_breaker_viewer_20260625` on `100.64.0.1:5432`; the Windows full-Access pipeline reads `TCC_BREAKER_RO_PW` as a Windows env var (a separate machine cache, not the host `infra/.env`). Exact hunk pinned at execution after reading the current bytes.
 - [ ] **Step 2: sandbox/breaker README.** Add a "Status / credential retirement" note: the breaker sandbox is a completed 2026-06-25 one-off; `TCC_BREAKER_CODEX_PW` is retired (removed from host `infra/.env`, NOT loaded into Infisical, NOT armed in `.managed-secrets`); the codex-harness + `_20260625` DBs/roles are leftover residue for a separate destructive-cleanup packet; re-running the sandbox requires re-seeding the vars. Exact hunk pinned at execution.
-- [ ] **Step 3: scp both, ASCII-check.**
+- [ ] **Step 3: scp both, ASCII-check (diff-scoped).**
 
-Run: `SSH 'cd REPO && for f in infra/database/access-harness/README.md infra/database/sandbox/breaker/README.md; do LC_ALL=C grep -qP "[^\x00-\x7F]" "$f" && { echo NON_ASCII:$f; exit 1; }; done; echo ASCII_CLEAN'` (added lines only -- pre-existing non-ASCII outside the hunks is fine).
+Run: `SSH 'cd REPO && git --no-pager diff -- infra/database/access-harness/README.md infra/database/sandbox/breaker/README.md | grep "^+" | grep -v "^+++" | LC_ALL=C grep -nP "[^\x00-\x7F]" && echo NON_ASCII_ADDED || echo ADDED_LINES_ASCII_CLEAN'`. Any line the diff touches must be ASCII on its added (`+`) form -- normalize a legacy em dash to `--` if a changed line carries one. Untouched legacy non-ASCII elsewhere in the file is out of scope.
 - [ ] **Step 4: Commit.**
 
 `SSH 'cd REPO && git add infra/database/access-harness/README.md infra/database/sandbox/breaker/README.md && git commit -m "docs(secrets): TCC_BREAKER_RO_PW injected runbook + TCC_BREAKER_CODEX_PW retirement" ...'`

@@ -31,7 +31,7 @@ destructive-cleanup packet.
 
 ## Roles (no cluster-wide attributes)
 - `tcc_breaker_ro` — SELECT on the viewer clone only.
-- `tcc_breaker_codex_79audit` — owns its clone's tcc objects; no baseline, no viewer. passwords: `TCC_BREAKER_RO_PW` is Infisical-managed (`dev`, injected) and `TCC_BREAKER_CODEX_PW`
+- `tcc_breaker_codex_79audit` -- owns its clone's tcc objects; no baseline, no viewer. Passwords: `TCC_BREAKER_RO_PW` is Infisical-managed (`dev`, injected) and `TCC_BREAKER_CODEX_PW`
   is retired -- neither is in `infra/.env` (see Status above).
 
 ## Seed (operator-side; prod cred never lands on the host)
