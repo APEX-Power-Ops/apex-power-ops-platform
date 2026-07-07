@@ -16,6 +16,7 @@ from . import engine
 from . import agent_runner
 
 RE_REVIEW = re.compile(r"^review-[0-9a-f]{8}$")
+RE_LOCK = re.compile(r"^review-[0-9a-f]{8}\.lock$")
 
 
 class DbUnreachable(Exception):
@@ -40,6 +41,17 @@ class ReviewWorktree:
     claimed_at: object           # datetime or None
     finished_at: object          # datetime or None
     active: bool                 # job has a running run
+
+
+@dataclass
+class OrphanLock:
+    basename: str
+    dispatch_id: str
+    held: bool                   # a live process holds the flock (check 4 failed)
+    has_active_run: bool         # DB says a review run is running (check 3 failed)
+    has_registered_worktree: bool
+    action: str = "preserved"    # would-remove-lock|removed-lock|preserved
+    preserve_reason: object = None
 
 
 def _norm(path):
@@ -92,6 +104,57 @@ def list_review_worktrees(repo, runs_dir):
             continue
         flags = _worktree_flags(path, e["locked"])
         out.append({"path": path, "dispatch_id": base, **flags})
+    return out
+
+
+def list_orphan_locks(runs_dir, registered_ids):
+    """review-<8hex>.lock files under runs_dir whose dispatch_id is NOT a registered
+    review worktree. Regex-gated (check 1) + registered-excluded (check 2). Returns
+    dicts {basename, dispatch_id}. DB active-run (3) + flock (4) applied by caller."""
+    reg = set(registered_ids)
+    try:
+        names = os.listdir(runs_dir)
+    except OSError:
+        return []
+    out = []
+    for name in sorted(names):
+        if not RE_LOCK.match(name):
+            continue
+        did = name[: -len(".lock")]
+        if did in reg:
+            continue
+        out.append({"basename": name, "dispatch_id": did})
+    return out
+
+
+def _lock_held(runs_dir, dispatch_id):
+    """True if a live process holds the flock (non-blocking acquire fails), False if
+    acquirable (=> not held). Fail-CLOSED to True on any fs/lock error."""
+    try:
+        with agent_runner._worktree_flock(runs_dir, dispatch_id) as acquired:
+            return not acquired
+    except OSError:
+        return True
+
+
+def classify_orphan_locks(registered_ids):
+    """Orphan-lock candidates with git/DB/fs facts, one frozen DB snapshot for their
+    ids. Raises DbUnreachable on psycopg Operational/Interface error."""
+    runs = agent_runner._runs_dir()
+    cands = list_orphan_locks(runs, registered_ids)
+    ids = [c["dispatch_id"] for c in cands]
+    try:
+        snap = engine.review_dispatch_statuses(ids)
+    except (psycopg.OperationalError, psycopg.InterfaceError):
+        raise DbUnreachable()
+    out = []
+    for c in cands:
+        db = snap.get(c["dispatch_id"])
+        out.append(OrphanLock(
+            basename=c["basename"], dispatch_id=c["dispatch_id"],
+            held=_lock_held(runs, c["dispatch_id"]),
+            has_active_run=bool(db and db["any_running"]),
+            has_registered_worktree=False))
     return out
 
 
