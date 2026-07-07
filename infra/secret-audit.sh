@@ -64,7 +64,7 @@ fi
 # An orphan secret (e.g. a prod DSN) parked in this gitignored 0600 cache is
 # invisible to Check 2, which scans TRACKED files only. The cache is meant to
 # hold exactly the dev-pg password; flag anything else (key NAMES only).
-ENV_ALLOWED_KEYS="${APEX_ENV_ALLOWED_KEYS:-DEV_PG_PASSWORD APEX_JOBS_PGPASSWORD}"
+ENV_ALLOWED_KEYS="${APEX_ENV_ALLOWED_KEYS:-DEV_PG_PASSWORD}"
 if [[ -f "$ROOT/infra/.env" ]]; then
   while IFS= read -r k; do
     [[ -z "$k" ]] && continue
