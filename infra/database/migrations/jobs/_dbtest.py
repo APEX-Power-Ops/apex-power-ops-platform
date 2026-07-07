@@ -3,12 +3,14 @@ Applies .sql via the host psql over TCP; pins orchestration_test explicitly
 because ambient PG env may point elsewhere. No Windows-path assumptions.
 
 Credentials come from env only -- no in-code fallback (records-lane convention):
-ORCH_TEST_PGPASSWORD or DEV_PG_PASSWORD, or ORCH_TEST_DSN as a full override
+ORCH_TEST_PGPASSWORD or APEX_JOBS_PGPASSWORD, or ORCH_TEST_DSN as a full override
 that drives BOTH the psycopg connection and the psql apply path (parsed via
 psycopg.conninfo; a DSN without a password still needs one of the password
-vars). On the host: set -a; . infra/.env; set +a. DB-backed tests skip with a
-clear hint when the env is absent. The destructive-target guard (resolved
-dbname must end in _test) lives in this directory's conftest.py."""
+vars). The orchestration role password is APEX_JOBS_PGPASSWORD (injected from
+Infisical dev); DEV_PG_PASSWORD is the postgres superuser and does NOT
+authenticate as orchestration. DB-backed tests skip with a clear hint when the
+env is absent. The destructive-target guard (resolved dbname must end in _test)
+lives in this directory's conftest.py."""
 import os
 import subprocess
 
@@ -21,13 +23,13 @@ PSQL = os.environ.get("PSQL_EXE", "psql")
 DBNAME = os.environ.get("ORCH_TEST_DB", "orchestration_test")
 
 ENV_HINT = (
-    "DB env absent: set ORCH_TEST_PGPASSWORD or DEV_PG_PASSWORD "
-    "(host: set -a; . infra/.env; set +a) -- no in-code fallback"
+    "DB env absent: set ORCH_TEST_PGPASSWORD or APEX_JOBS_PGPASSWORD "
+    "(inject from Infisical dev) -- no in-code fallback"
 )
 
 
 def _password():
-    pw = os.environ.get("ORCH_TEST_PGPASSWORD") or os.environ.get("DEV_PG_PASSWORD")
+    pw = os.environ.get("ORCH_TEST_PGPASSWORD") or os.environ.get("APEX_JOBS_PGPASSWORD")
     if not pw:
         pytest.skip(ENV_HINT)
     return pw

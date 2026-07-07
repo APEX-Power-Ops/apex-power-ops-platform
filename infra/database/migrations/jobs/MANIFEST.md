@@ -27,12 +27,11 @@ drops the schema CASCADE (removing enums + tables in one shot).
 - Engine / CLI / worker tests: `packages/apex-jobs/tests/` (11 more; run against `orchestration_test`).
 
 Run (host) per the records convention. Credentials come from env only --
-no in-code fallback: source the governed infra/.env first (DEV_PG_PASSWORD),
-or set ORCH_TEST_PGPASSWORD / ORCH_TEST_DSN; the tests skip with a hint
+no in-code fallback: set ORCH_TEST_PGPASSWORD or APEX_JOBS_PGPASSWORD (inject
+from Infisical dev), or ORCH_TEST_DSN; the tests skip with a hint
 otherwise:
 ```
-set -a; . ../../../.env; set +a
-uv run --with "psycopg[binary]" --with pytest pytest test_001_jobs_schema.py
+../../../infisical/inject.sh dev -- bash -c 'unset DEV_PG_PASSWORD; uv run --with "psycopg[binary]" --with pytest pytest test_001_jobs_schema.py'
 ```
 `ORCH_TEST_DSN` drives BOTH the psycopg connection and the psql apply path.
 This suite and `packages/apex-jobs/tests/` share `orchestration_test` and
@@ -47,8 +46,8 @@ describe meta-commands hit the renamed-catalog skew). No Windows-path assumption
 
 ## Apply to a database
 ```
-for f in 001_jobs_enums 002_jobs_tables 003_jobs_indexes 004_jobs_views 005_durability_and_agents; do
-  PGPASSWORD=$DEV_PG_PASSWORD psql -h 127.0.0.1 -p 5432 -U orchestration \
+../../../infisical/inject.sh dev -- bash -c 'for f in 001_jobs_enums 002_jobs_tables 003_jobs_indexes 004_jobs_views 005_durability_and_agents; do
+  PGPASSWORD=$APEX_JOBS_PGPASSWORD psql -h 127.0.0.1 -p 5432 -U orchestration \
     -d orchestration_dev -v ON_ERROR_STOP=1 -f $f.sql
-done
+done'
 ```

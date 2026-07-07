@@ -2,8 +2,10 @@
 session; truncate the tables before each test. Host-native psql, no Windows paths.
 
 Credentials come from env only -- no in-code fallback (records-lane convention):
-APEX_JOBS_PGPASSWORD or DEV_PG_PASSWORD (host: set -a; . infra/.env; set +a).
-The whole suite skips with a clear hint when the env is absent.
+APEX_JOBS_PGPASSWORD, injected from Infisical (dev) e.g. via
+infra/infisical/apex-jobs.sh. DEV_PG_PASSWORD is the postgres superuser and does
+NOT authenticate as orchestration. The whole suite skips with a clear hint when
+the env is absent.
 
 The engine's resolve_dsn() defaults to orchestration_dev, while these fixtures
 prep DBNAME (default orchestration_test) -- so the runtime is PINNED below to
@@ -45,15 +47,16 @@ os.environ["APEX_JOBS_HOST"] = "127.0.0.1"
 os.environ["APEX_JOBS_PORT"] = "5432"
 os.environ["APEX_JOBS_USER"] = "orchestration"
 
-PGPW = os.environ.get("APEX_JOBS_PGPASSWORD") or os.environ.get("DEV_PG_PASSWORD")
+PGPW = os.environ.get("APEX_JOBS_PGPASSWORD")
 DSN = (
     f"host=127.0.0.1 port=5432 dbname={DBNAME} user=orchestration "
     f"password={PGPW} sslmode=disable"
 ) if PGPW else None
 
 ENV_HINT = (
-    "DB env absent: set APEX_JOBS_PGPASSWORD or DEV_PG_PASSWORD "
-    "(host: set -a; . infra/.env; set +a) -- no in-code fallback"
+    "DB env absent: set APEX_JOBS_PGPASSWORD (inject from Infisical dev, e.g. "
+    "infra/infisical/apex-jobs.sh) -- no in-code fallback; DEV_PG_PASSWORD does "
+    "not authenticate as orchestration"
 )
 
 APPLY = ["001_jobs_enums.sql", "002_jobs_tables.sql", "003_jobs_indexes.sql",

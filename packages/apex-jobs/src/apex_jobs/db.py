@@ -2,8 +2,9 @@
 
 Defaults to orchestration_dev on the host dev-pg (127.0.0.1:5432) as the
 `orchestration` role. Override the database via APEX_JOBS_DB (tests use
-orchestration_test) or the whole DSN via APEX_JOBS_DSN. The dev password lives
-in the gitignored infra/.env (DEV_PG_PASSWORD); never committed to this PUBLIC repo.
+orchestration_test) or the whole DSN via APEX_JOBS_DSN. The orchestration role
+password is APEX_JOBS_PGPASSWORD, injected from Infisical (dev) -- e.g. via
+infra/infisical/apex-jobs.sh; never committed to this PUBLIC repo.
 """
 import os
 
@@ -16,11 +17,13 @@ def resolve_dsn() -> str:
     if dsn:
         return dsn
     db = os.environ.get("APEX_JOBS_DB", "orchestration_dev")
-    pw = os.environ.get("APEX_JOBS_PGPASSWORD") or os.environ.get("DEV_PG_PASSWORD")
+    pw = os.environ.get("APEX_JOBS_PGPASSWORD")
     if not pw:
         raise RuntimeError(
-            "set DEV_PG_PASSWORD (or APEX_JOBS_PGPASSWORD) before running apex-jobs "
-            "-- e.g. `set -a; . infra/.env; set +a`. No hardcoded fallback (committed-secret hazard)."
+            "set APEX_JOBS_PGPASSWORD before running apex-jobs (or APEX_JOBS_DSN to "
+            "override the whole DSN) -- inject it from Infisical, e.g. "
+            "`infra/infisical/apex-jobs.sh <verb>`. DEV_PG_PASSWORD is the postgres "
+            "superuser password and does NOT authenticate as the orchestration role."
         )
     host = os.environ.get("APEX_JOBS_HOST", "127.0.0.1")
     port = os.environ.get("APEX_JOBS_PORT", "5432")

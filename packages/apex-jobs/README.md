@@ -33,8 +33,9 @@ gates · status · ledger · reap · promotions · review · unblock`. Target a 
 Run with the dev password injected from Infisical:
 `infra/infisical/apex-jobs.sh <verb>` (mirrors `dev-psql.sh`) injects
 `APEX_JOBS_PGPASSWORD` from the `dev` environment. `APEX_JOBS_PGPASSWORD` is
-Infisical-managed and no longer in `infra/.env`; `DEV_PG_PASSWORD` (still cached)
-remains the fallback when you source `infra/.env` and run `apex-jobs` directly.
+Infisical-managed and no longer in `infra/.env`; there is no `DEV_PG_PASSWORD`
+fallback (it is the postgres superuser password and does not authenticate as the
+`orchestration` role).
 
 ## Worker
 ```python

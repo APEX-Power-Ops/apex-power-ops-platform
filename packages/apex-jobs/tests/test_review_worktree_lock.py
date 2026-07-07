@@ -93,7 +93,7 @@ def test_e5_connect_failure_value_silent(conn_test, monkeypatch):
 
 def test_e6_resolve_dsn_runtimeerror_value_silent(conn_test, monkeypatch):
     def boom():
-        raise RuntimeError("APEX_JOBS_PGPASSWORD or DEV_PG_PASSWORD required")
+        raise RuntimeError("APEX_JOBS_PGPASSWORD required")
     monkeypatch.setattr(engine, "_conn", boom)
     with pytest.raises(engine.LockUnavailable) as ei:
         with engine.review_worktree_lock("review-e6000001"):
