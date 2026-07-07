@@ -10,6 +10,9 @@ secret-distribution layer. Host processes get secrets at runtime via the
   injected. The canonical consumer entrypoint.
 - `dev-psql.sh [psql args...]` -- example load-bearing consumer: a dev-cluster
   psql session with `DEV_PG_PASSWORD` injected from Infisical (default DB `ops_dev`).
+- `apex-jobs.sh <verb> [args...]` -- runs the apex-jobs orchestration CLI with
+  `APEX_JOBS_PGPASSWORD` injected from Infisical (dev env), against `orchestration_dev`;
+  exports `APEX_JOBS_REPO` to this checkout.
 - `.managed-secrets` -- NAMES of secrets now sourced from Infisical. Arming a name
   here makes `infra/secret-audit.sh` (Check 1c) FAIL if a stale copy still lingers
   in a local cache (rotation runbook step 6: "no value outside Infisical").
