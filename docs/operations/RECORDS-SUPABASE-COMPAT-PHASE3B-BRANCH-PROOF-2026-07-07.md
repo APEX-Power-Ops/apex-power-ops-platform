@@ -88,6 +88,7 @@ throughout (password injected via Infisical prod env, never echoed).
   (SUPABASE_PROD_DSN) and added SUPABASE_BRANCH_PW. Remediation complete.
 
 ## Verdict
-UNADAPTED = RED (42501), ADAPTED = GREEN, all 7 invariants + D4 verified on the
-REAL managed non-super postgres, zero-residue teardown. The compat lane's
+UNADAPTED = RED (42501), ADAPTED = GREEN, all Gate-5 invariants plus ownership
+(INV1-INV8, 8 recorded checks) + D4 verified on the REAL managed non-super
+postgres, zero-residue teardown. The compat lane's
 adaptation is proven on the authoritative substrate.
