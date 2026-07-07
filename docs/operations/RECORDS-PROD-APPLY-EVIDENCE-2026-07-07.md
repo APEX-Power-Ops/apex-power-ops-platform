@@ -170,3 +170,31 @@ all as designed; Data-API-excluded; acceptance green on the managed substrate. *
 3 LOGIN-but-passwordless roles (records_api/intake_writer/auditor) exist between T2 and the GO #3
 toggle - no credential minted. **Next gate: GO #3 (dormant NOLOGIN toggle of all three + all-6-NOLOGIN
 assert) - operator-gated; not yet authorized.**
+
+---
+
+## GO #3 — DORMANT_TOGGLE (packet Sec 8)  (2026-07-07, operator-gated)  — RESULT: PASS
+
+### Toggle (psql -v ON_ERROR_STOP=1 -f under injection)
+- **BEFORE** rolcanlogin: records_api=t, records_intake_writer=t, records_auditor=t (LOGIN);
+  records_owner=f, records_fn_owner=f, records_reclaim_owner=f.
+- `ALTER ROLE records_api NOLOGIN;` `ALTER ROLE records_intake_writer NOLOGIN;`
+  `ALTER ROLE records_auditor NOLOGIN;` -> 3x ALTER ROLE OK.
+- **AFTER** rolcanlogin: ALL 6 records roles = f. Packet-local assert (NOT tier-6, which expects
+  auditor LOGIN): `GO3_ASSERT_PASS: all 6 records roles rolcanlogin=false` (PSQL_EXIT=0).
+
+### Independent confirmation (connector, read-only)
+- `all_6_nologin=true`, `n_login=0`, n_records_roles=6. Posture intact post-toggle: FORCE-RLS 16/16,
+  schema_owner=records_owner, owned-by-super/bypass=0. No credential minted (dormant / zero-consumer).
+
+**GO #3 verdict: PASS. APPLY CAMPAIGN COMPLETE.** The records substrate (001-049) is LIVE on prod
+`fxoyniqnrlkxfligbxmg`: full schema + seed, RLS/FORCE/policies/ownership/audit as designed,
+Data-API-excluded, and now FULLY DORMANT (all 6 roles NOLOGIN, no credential). A future real serving
+consumer requires a SEPARATE operator packet (grant LOGIN + Vault-first password). Migration-history
+posture per Sec 4: governed by THIS transcript, not `supabase_migrations` (001-049 absent from that
+list is expected; state confirmed by live introspection above).
+
+### Residual note (packet honesty)
+- Not literally zero-residue on prod: the GO #0 probe (torn down, zero-residue verified) and the GO #2
+  acceptance shim advanced identity/`audit_log.audit_id` sequences + normal aborted-write WAL churn
+  (packet-Sec-5 ratified, benign on the dormant substrate). No ROW/grant/role residue survives.
