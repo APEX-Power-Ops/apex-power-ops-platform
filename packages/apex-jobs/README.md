@@ -55,12 +55,13 @@ apex-jobs runs **alongside** the `ops/agents/inbox` file queue. No cutover yet â
 the inbox remains the live mechanism until apex-jobs is proven in routine use.
 
 ## Tests (76)
-Credentials come from env only -- no in-code fallback: source the governed
-infra/.env first (DEV_PG_PASSWORD) or set APEX_JOBS_PGPASSWORD; the suite
-skips with a hint otherwise.
+Credentials come from env only -- no in-code fallback. Post-cutover the
+orchestration password is `APEX_JOBS_PGPASSWORD`, injected from Infisical
+(`dev`); the suite skips with a hint if absent. Sourcing `infra/.env` no longer
+suffices -- `APEX_JOBS_PGPASSWORD` left that cache and `DEV_PG_PASSWORD` does not
+authenticate as the `orchestration` role.
 ```
-set -a; . ../../infra/.env; set +a
-APEX_JOBS_DB=orchestration_test PSQL_EXE=psql uv run --extra test pytest
+../../infra/infisical/inject.sh dev -- bash -c 'APEX_JOBS_DB=orchestration_test PSQL_EXE=psql uv run --extra test pytest'
 ```
 The conftest PINS the engine runtime to the fixture target (APEX_JOBS_DB,
 default `orchestration_test`, at 127.0.0.1:5432 as `orchestration`) so app
