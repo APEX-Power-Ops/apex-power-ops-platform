@@ -17,6 +17,10 @@ secret-distribution layer. Host processes get secrets at runtime via the
   here makes `infra/secret-audit.sh` (Check 1c) FAIL if a stale copy still lingers
   in a local cache (rotation runbook step 6: "no value outside Infisical").
 - `.env`, `.env.agent` -- gitignored 0600 caches (server config; machine-identity creds).
+- `DEV_PG_PASSWORD` is intentionally retained in `infra/.env` (and is the sole
+  `secret-audit.sh` `ENV_ALLOWED_KEYS` entry): it is the dev-cluster `postgres`
+  superuser that `compose.dev-lanes.yml` uses to initialize the container. It is
+  NOT a cutover target -- the orchestration-role password is `APEX_JOBS_PGPASSWORD`.
 
 ## Migrating a consumer (cutover checklist)
 1. Replace the consumer's `infra/.env` source with `inject.sh <env> -- <cmd>`

@@ -64,6 +64,11 @@ fi
 # An orphan secret (e.g. a prod DSN) parked in this gitignored 0600 cache is
 # invisible to Check 2, which scans TRACKED files only. The cache is meant to
 # hold exactly the dev-pg password; flag anything else (key NAMES only).
+# DEV_PG_PASSWORD is intentionally retained here and is the sole allowed cache key:
+# it is the dev-cluster postgres superuser password that compose.dev-lanes.yml uses
+# to initialize the apex-dev-pg container. It is NOT an orchestration-role credential
+# (that is APEX_JOBS_PGPASSWORD, injected from Infisical) and is NOT a cutover target
+# in the current secret-hygiene lanes.
 ENV_ALLOWED_KEYS="${APEX_ENV_ALLOWED_KEYS:-DEV_PG_PASSWORD}"
 if [[ -f "$ROOT/infra/.env" ]]; then
   while IFS= read -r k; do
