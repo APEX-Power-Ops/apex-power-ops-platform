@@ -135,22 +135,25 @@ lane closes.
    what prevents the fallback from silently drifting back.
 2. `tests_unit/test_dsn_resolution.py` full contract green with NO DB and NO credentials
    (it lives outside the DB conftest scope).
-3. **Live injected round-trip (proves the working path AND fallback removal at the live layer):**
-   run a no-arg read-only verb (`queue`) through injection with `DEV_PG_PASSWORD` stripped
-   AFTER injection, so the connection environment carries `APEX_JOBS_PGPASSWORD` but NOT
-   `DEV_PG_PASSWORD`:
-   `infra/infisical/inject.sh dev -- env -u DEV_PG_PASSWORD bash -c 'cd packages/apex-jobs && exec uv run apex-jobs queue'`.
-   It connects as `orchestration` via the injected `APEX_JOBS_PGPASSWORD`. Stripping
-   `DEV_PG_PASSWORD` AFTER injection (not before -- `apex-jobs.sh`/`inject.sh` would re-add it
-   from Infisical `dev`, making a pre-injection `env -u` a no-op) is what makes this prove the
-   removed fallback is not silently carrying the connection. `status` is NOT used for this: it
-   takes a required positional `ident` (`cli.py:340`) and exits in argparse before connecting;
-   `queue` (`cli.py:297`) is a genuine no-arg read that opens a DB connection.
-4. **Full suites green via injection, `DEV_PG_PASSWORD` stripped post-injection:** the apex-jobs
-   package suite and the jobs migration tests run green under
-   `inject.sh dev -- env -u DEV_PG_PASSWORD bash -c '...'` (so `DEV_PG_PASSWORD` is absent from
-   the injected env at connection time) -- proving the injected `APEX_JOBS_PGPASSWORD` path
-   carries the suites and the removed fallback was dead, not load-bearing.
+3. **Normal launcher proof (working path):**
+   `env -u DEV_PG_PASSWORD infra/infisical/apex-jobs.sh queue` runs the launcher end to end and
+   connects as `orchestration` via the injected `APEX_JOBS_PGPASSWORD`. This proves ONLY the
+   working path, and the wording must not imply more: `inject.sh dev` injects the whole `dev`
+   secret set, so `DEV_PG_PASSWORD` IS present in the child process here (the parent-side
+   `env -u` does not reach the injected child) -- it is simply unused after the fix. A no-arg
+   read verb is required: `status` takes a positional `ident` (`cli.py:340`) and exits in
+   argparse before connecting; `queue` (`cli.py:297`) opens a DB connection.
+4. **Strict fallback-removal proof (suites, `DEV_PG_PASSWORD` genuinely absent from the
+   process):** `unset` it INSIDE the injected child (after injection), so the removed fallback
+   cannot be load-bearing even when the value is truly unavailable to the process. Command
+   shapes (the plan pins exact flags):
+   - package suite:
+     `infra/infisical/inject.sh dev -- bash -c 'unset DEV_PG_PASSWORD; cd packages/apex-jobs && APEX_JOBS_DB=orchestration_test PSQL_EXE=psql uv run --extra test pytest'`
+   - jobs migration tests:
+     `infra/infisical/inject.sh dev -- bash -c 'unset DEV_PG_PASSWORD; cd infra/database/migrations/jobs && uv run --with "psycopg[binary]" --with pytest pytest'`
+   Both green prove the injected `APEX_JOBS_PGPASSWORD` path carries the suites and the removed
+   `DEV_PG_PASSWORD` fallback was dead. The `tests_unit` contract (step 2) already proves the
+   resolution layer with no DB and no credentials at all.
 5. **No-regression `secret-audit.sh`:** identical FAIL set to the pre-lane baseline (the
    parked keys `SUPABASE_PROD_DSN`, `TCC_BREAKER_RO_PW`, `TCC_BREAKER_CODEX_PW`);
    `DEV_PG_PASSWORD` still allowed by name; `.managed-secrets` unchanged; only a comment added
