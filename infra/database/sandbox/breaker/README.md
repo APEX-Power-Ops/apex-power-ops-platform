@@ -4,6 +4,22 @@ An air-gapped copy of the breaker catalog (`tcc.*`) on the Olares host so Codex 
 lvbreakertcc lane with ZERO risk to prod Supabase. Design spec:
 `docs/superpowers/specs/2026-06-25-breaker-sandbox-codex-lane-design.md`.
 
+## Status (2026-07-07): completed one-off; TCC_BREAKER_CODEX_PW retired
+
+This breaker sandbox was a completed 2026-06-25 one-off. The `breaker-viewer` MCP is
+gone, and nothing connects as `tcc_breaker_codex_79audit` at runtime. `TCC_BREAKER_CODEX_PW`
+is therefore RETIRED: removed from the host `infra/.env`, NOT loaded into Infisical, and
+NOT armed in `infra/infisical/.managed-secrets`. Re-running any provision/codex step below
+requires re-seeding the role passwords first.
+
+`TCC_BREAKER_RO_PW` remains live: the F-79-03 access-harness (`infra/database/access-harness`)
+reads the `tcc_breaker_viewer_<date>` clone read-only via `tcc_breaker_ro`. It is managed in
+Infisical (`dev`) and injected -- see that harness's README.
+
+The leftover `tcc_breaker_*_<date>` databases and the `tcc_breaker_ro` /
+`tcc_breaker_codex_79audit` roles are residue; dropping them is a separate operator-gated
+destructive-cleanup packet.
+
 ## Databases (host `apex-dev-pg`, PG17)
 - `tcc_breaker_baseline_<date>` — one-way restore of prod `tcc`. Frozen; no routine connections
   (clean `TEMPLATE` source).

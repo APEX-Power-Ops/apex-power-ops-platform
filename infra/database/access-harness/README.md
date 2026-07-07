@@ -26,11 +26,18 @@ uv run python -m access_harness.cli --help
 | variable | purpose |
 | --- | --- |
 | `ACCESS_HARNESS_SUPERUSER_DSN` | local Postgres superuser DSN (the target db is in the DSN; `tcc_fidelity_test` is derived for the test fence) |
-| `TCC_BREAKER_RO_PW` | host `tcc_breaker_ro` SELECT-only password (the governed tcc over the LarePass mesh, `100.64.0.1:5432`). The host connection is built from psycopg **kwargs, never a URI** (the password has URL-breaking characters). |
+| `TCC_BREAKER_RO_PW` | `tcc_breaker_ro` SELECT-only password for the sandbox viewer clone `tcc_breaker_viewer_20260625` on the `apex-dev-pg` mesh endpoint `100.64.0.1:5432` (`host_tcc_conn`). Built from psycopg **kwargs, never a URI** (the password has URL-breaking characters). |
 | `ACCESS_HARNESS_FROZEN_DIR` | directory for content-addressed frozen `.accdb` copies (default `D:\_access_frozen`) |
 | `ACCESS_HARNESS_ACCDB` / `--accdb` | the source `.accdb` path (default `D:\TCC_NEW.accdb`) |
 
 The password is never printed or logged.
+
+`TCC_BREAKER_RO_PW` is managed in Infisical (`dev`) and is no longer in the host
+`infra/.env`. Run host-side commands that need it under injection --
+`infra/infisical/inject.sh dev -- <cmd>` (from the repo root) supplies it to the
+child process only. The Windows full-Access pipeline reads `TCC_BREAKER_RO_PW` as
+a Windows environment variable (a separate machine cache, outside the host
+`infra/.env` cutover).
 
 ## Subcommands
 
