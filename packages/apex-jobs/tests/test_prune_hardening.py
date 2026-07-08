@@ -68,3 +68,35 @@ def test_nonmatching_lock_not_enumerated(prune_env):
     open(os.path.join(runs, "review-notgen.lock"), "a").close()   # bad basename (check 1)
     open(os.path.join(runs, "other.lock"), "a").close()
     assert prune.list_orphan_locks(runs, []) == []
+
+
+def test_summary_has_additive_buckets_and_keys(prune_env):
+    conn, runs, created = prune_env
+    d1 = "review-5e5e5e5e"; jid = _enqueue_review(d1)
+    _seed_run(conn, jid, status="succeeded", attempt=1,
+              finished_at="2026-07-05T00:00:00+00:00")
+    _add_wt(runs, created, d1)
+    _touch_lock(runs, "review-6f6f6f6f")
+    res = prune.prune_review_worktrees()               # dry-run, no new flags
+    for k in ("items", "counts", "applied", "remove_failed", "refused", "refused_reason"):
+        assert k in res                                # existing keys preserved
+    for k in ("orphan_locks", "buckets", "lock_remove_failed"):
+        assert k in res                                # additive keys present
+    assert set(res["buckets"]) == {"registered", "dirty_succeeded",
+                                   "orphan_locks", "registered_missing"}
+    assert res["buckets"]["orphan_locks"] == 1
+    assert all("exists" in i for i in res["items"])
+    assert res["applied"] is False                     # default still dry-run
+
+
+def test_dirty_succeeded_bucket_counts(prune_env):
+    conn, runs, created = prune_env
+    d = "review-7a7a7a7a"; jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1,
+              finished_at="2026-07-05T00:00:00+00:00")
+    p = _add_wt(runs, created, d)
+    open(os.path.join(p, "dirty.txt"), "w").close()    # untracked -> dirty
+    res = prune.prune_review_worktrees()
+    assert res["buckets"]["dirty_succeeded"] == 1
+    item = [i for i in res["items"] if i["dispatch_id"] == d][0]
+    assert item["classification"] == "dirty" and item["action"] == "preserved"  # default: preserved

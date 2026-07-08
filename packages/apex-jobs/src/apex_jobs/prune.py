@@ -41,6 +41,7 @@ class ReviewWorktree:
     claimed_at: object           # datetime or None
     finished_at: object          # datetime or None
     active: bool                 # job has a running run
+    exists: bool = True          # worktree dir present on disk
 
 
 @dataclass
@@ -142,6 +143,8 @@ def classify_orphan_locks(registered_ids):
     ids. Raises DbUnreachable on psycopg Operational/Interface error."""
     runs = agent_runner._runs_dir()
     cands = list_orphan_locks(runs, registered_ids)
+    if not cands:
+        return []
     ids = [c["dispatch_id"] for c in cands]
     try:
         snap = engine.review_dispatch_statuses(ids)
@@ -222,7 +225,7 @@ def classify_review_worktrees(include_failed=False):
         result.append(ReviewWorktree(
             path=c["path"], dispatch_id=c["dispatch_id"], classification=cls,
             action=action, status=status, claimed_at=claimed_at,
-            finished_at=finished_at, active=active))
+            finished_at=finished_at, active=active, exists=c["exists"]))
     return result
 
 
@@ -239,37 +242,65 @@ def _item_dict(w):
             "status": w.status,
             "claimed_at": w.claimed_at.isoformat() if w.claimed_at else None,
             "finished_at": w.finished_at.isoformat() if w.finished_at else None,
-            "active": w.active}
+            "active": w.active, "exists": w.exists}
 
 
-def _refusal(items, reason, applied, remove_failed=0):
+def _orphan_dict(o):
+    return {"basename": o.basename, "dispatch_id": o.dispatch_id, "held": o.held,
+            "has_active_run": o.has_active_run,
+            "has_registered_worktree": o.has_registered_worktree,
+            "action": o.action, "preserve_reason": o.preserve_reason}
+
+
+def _buckets(items, orphan_locks):
+    return {
+        "registered": len(items),
+        "dirty_succeeded": sum(1 for w in items if w.classification == "dirty"
+                               and w.status == "succeeded" and not w.active),
+        "orphan_locks": len(orphan_locks),
+        "registered_missing": sum(1 for w in items if not w.exists),
+    }
+
+
+def _refusal(items, reason, applied, remove_failed=0, orphan_locks=None,
+             lock_remove_failed=0):
     """Value-silent refusal summary. `applied` is True when apply mode already
     mutated worktrees before the refusal (a PARTIAL apply -- not a dry-run). Any
     still-'would-remove' candidate (prunable but NOT reached before the abort) is
     relabeled action='refused', so an unprocessed worktree is never reported as
-    removed."""
+    removed. Additive bucket/orphan_locks/lock_remove_failed fields; existing keys
+    preserved."""
     src = items or []
+    locks = orphan_locks or []
     for w in src:
         if w.action == "would-remove":
             w.action = "refused"
     return {"items": [_item_dict(x) for x in src], "counts": _counts(src),
+            "buckets": _buckets(src, locks),
+            "orphan_locks": [_orphan_dict(o) for o in locks],
             "applied": applied, "remove_failed": remove_failed,
+            "lock_remove_failed": lock_remove_failed,
             "refused": True, "refused_reason": reason}
 
 
-def prune_review_worktrees(apply=False, include_failed=False):
+def prune_review_worktrees(apply=False, include_failed=False,
+                           force_succeeded_dirty=False, prune_orphan_locks=False):
     """Classify (frozen snapshot); under apply, remove each prunable with a
     per-item recheck-before-remove (the ONLY DB call in the loop) and plain
     `git worktree remove` (no --force). Returns a value-silent summary. On
     DbUnreachable, returns a refusal summary (caller maps to exit 3)."""
     repo, runs = agent_runner._repo(), agent_runner._runs_dir()
+    locks = []
     try:
         items = classify_review_worktrees(include_failed=include_failed)
+        registered_ids = [w.dispatch_id for w in items]
+        locks = classify_orphan_locks(registered_ids)
     except DbUnreachable:
-        return _refusal(None, "db-unreachable", applied=False)
+        return _refusal(None, "db-unreachable", applied=False, orphan_locks=locks)
     except GitUnavailable:
-        return _refusal(None, "git-unavailable", applied=False)
+        return _refusal(None, "git-unavailable", applied=False, orphan_locks=locks)
     remove_failed = 0
+    lock_remove_failed = 0
     if apply:
         for w in items:
             if w.classification != "prunable":
@@ -327,5 +358,8 @@ def prune_review_worktrees(apply=False, include_failed=False):
                 # traceback and never a fail-open remove.
                 return _refusal(items, "db-unreachable", applied=True, remove_failed=remove_failed)
     return {"items": [_item_dict(w) for w in items], "counts": _counts(items),
-            "applied": apply, "remove_failed": remove_failed, "refused": False,
-            "refused_reason": None}
+            "buckets": _buckets(items, locks),
+            "orphan_locks": [_orphan_dict(o) for o in locks],
+            "applied": apply, "remove_failed": remove_failed,
+            "lock_remove_failed": lock_remove_failed,
+            "refused": False, "refused_reason": None}
