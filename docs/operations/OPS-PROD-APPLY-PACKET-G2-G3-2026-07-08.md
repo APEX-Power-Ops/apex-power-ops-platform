@@ -34,15 +34,30 @@ G2 is split. This prep step is everything up to (but NOT including) the DB-side 
 3. **No DB write yet.** The roles do not exist on prod until G3 step 1; arming cannot run before
    they exist. G2-prep only stages the intended credentials + this runbook.
 
-**Serving-arming SQL (authored here; EXECUTED only in G3 step 2, under an operator write GO):**
-```
--- run as the prod migration admin (postgres), AFTER ops 012 has created the two roles.
--- <from-Infisical> = the SCRAM password pulled value-silently from Infisical prod; it is NEVER
--- written literally into this file, any migration, or any transcript.
-alter role ops_api            password '<from-Infisical OPS_API_DSN>';
-alter role ops_intake_writer  password '<from-Infisical OPS_INTAKE_WRITER_DSN>';
-grant connect on database postgres to ops_api, ops_intake_writer;
-```
+**Serving-arming SQL + execution mechanism (authored here; EXECUTED only in G3 step 2, under an operator write GO):**
+The role password is the SCRAM PASSWORD COMPONENT PARSED FROM the Infisical DSN -- NOT the full DSN
+string used as the password. Store the two components as their own value-silent variables
+(`OPS_API_PASSWORD`, `OPS_INTAKE_WRITER_PASSWORD`), each = only the password field parsed from the
+corresponding `OPS_*_DSN`. The password value is NEVER written literally into this file, any
+migration, any command line, or any transcript.
+
+Execution is value-silent and MANDATORY: run as the prod admin `postgres` via a host `psql` path
+with BOUND variables so no literal password appears on any command line or in any log -- explicitly
+NOT via MCP `execute_sql` / `apply_migration` (which would place the literal password inside a
+VISIBLE tool-call argument). Passwords are injected from Infisical into the process env for the
+single call and never echoed; capture + classify stderr and never dump it (psql parse/auth errors
+can echo connection-string fragments). Illustrative shape (values from injected env; run only AFTER
+ops 012 has created the two passwordless roles):
+
+    psql "<postgres admin conninfo -- value-silent, never echoed>" -v ON_ERROR_STOP=1 \
+      -v ops_api_pw="$OPS_API_PASSWORD" -v ops_intake_pw="$OPS_INTAKE_WRITER_PASSWORD" \
+      -f arm_serving.sql   # 0600 temp, shredded after; stderr captured + redacted, never printed
+
+    -- arm_serving.sql (:'x' single-quote-escapes the bound value; no literal password in the file):
+    --   alter role ops_api            password :'ops_api_pw';
+    --   alter role ops_intake_writer  password :'ops_intake_pw';
+    --   grant connect on database postgres to ops_api, ops_intake_writer;
+
 Rationale (P3 F6): on the managed path 012 deliberately does NOT grant database CONNECT (it leaves
 inherited PUBLIC CONNECT intact); serving must therefore hold an EXPLICIT CONNECT grant so it does
 not depend on PUBLIC CONNECT persisting.
@@ -58,12 +73,31 @@ precomputed booleans / name-lists, NEVER dump the env dict -- value-silent-tests
   the 4 recognition SECDEF fns AND CANNOT fabricate (INSERT ops.apparatus/scopes) AND CANNOT execute
   any deferred billing fn.
 - Both roles: `rolbypassrls=FALSE` on the live login.
+- **Target guard (MANDATORY, checked BEFORE the harness runs):** each DSN used for these real-login
+  checks MUST resolve to prod host `fxoyniqnrlkxfligbxmg` (`db.fxoyniqnrlkxfligbxmg.supabase.co` /
+  its pooler), database `postgres`, with login user EXACTLY `ops_api` or `ops_intake_writer`.
+  Assert host + db + user up front and REFUSE to run if the DSN resolves to `ops_test`/dev, any
+  other database, or any other user -- a value-silent misfire against a non-prod target must be
+  impossible by construction.
 - **STOP before execution.** G2-prep ends here.
 
 ## 2. G3 -- prod apply (the real prod write sequence; each step a separate operator GO)
 Applies to governed prod `fxoyniqnrlkxfligbxmg`. Follows the established prod-apply discipline used
 for the records 001-049 apply: SHA-pinned inputs, value-silent, per-step evidence
 (pre-SHA / post-counts / post-posture / committed transcript), no admin-bypass.
+
+0. **Pre-write drift gate (read-only, MANDATORY -- STOP on ANY drift).** The section-0 precheck
+   records prod state at authoring time; it must be RE-CONFIRMED on a fresh read-only connection
+   immediately before any write, because prod can move between authoring and apply. Re-confirm:
+   (a) target project ref is `fxoyniqnrlkxfligbxmg` (NOT a preview branch, NOT dev);
+   (b) applier is managed non-super `postgres` (`rolsuper=false`) and `current_database()='postgres'`;
+   (c) `ops` schema ABSENT and `ops_*` roles ABSENT (this packet is a first apply, not a re-apply);
+   (d) `work` schema still has 0 tables, OR any present `work` relations are explicitly reviewed +
+   accepted as coexistence-safe (012 grants no ops role a work privilege on either path);
+   (e) the 6 `records_*` roles still ALL NOLOGIN;
+   (f) `supabase_migrations` count + a schema posture snapshot match the recorded prod baseline;
+   (g) the 12 input files' sha256 match the SHA-pinned manifest for this apply.
+   ANY mismatch -> STOP + report, do not write.
 
 1. **Apply ops 001-012 to prod.** Apply the canonical ladder (001-011 base with
    008=`008_core_equipment_models.sql`; the `ops_dev`-only `008_apply_preflight.sql` is excluded),
@@ -73,12 +107,22 @@ for the records 001-049 apply: SHA-pinned inputs, value-silent, per-step evidenc
    (empty work no-op; NOLOGIN records_* tolerated; PUBLIC CONNECT retained). Evidence: pre-SHA of
    each file, post fingerprint (11 views / 28 fns / 9 SECDEF owned by ops_fn_owner), advisors
    (expect 0 ops ERROR).
-2. **DB-side serving arming.** Run the section-1 arming SQL (ALTER ROLE ... PASSWORD from Infisical;
-   GRANT CONNECT) under this step's write GO. Value-silent (password flows Infisical -> the arming
-   command, never echoed).
-3. **Verify the Infisical DSN login round-trip.** Run the section-1 round-trip checks connecting AS
-   `ops_api` / `ops_intake_writer` via the armed Infisical DSNs. Value-silent; assert on precomputed
-   booleans.
+   **Migration-history posture (explicit):** applying via MCP `execute_sql` deliberately writes NO
+   `supabase_migrations` rows (the ops ladder uses its own numbering, separate from the Supabase
+   001-198 scheme; mixing them is undesirable). Acceptance is therefore EVIDENCE / MANIFEST-governed
+   -- the 012 in-migration asserts, the committed per-step transcript, and the ops `MANIFEST.md` are
+   the authoritative record of what was applied -- NOT migration-history-governed. This is
+   consistent with the records evidence-governed prod-apply posture. (If history-tracking is ever
+   wanted, `apply_migration` is the alternative, at the cost of mixing numbering schemes -- out of
+   scope for this packet.)
+2. **DB-side serving arming.** Run the section-1 arming SQL via the section-1 value-silent `psql`
+   bound-variable mechanism (passwords = the components parsed from the Infisical DSNs, injected
+   from Infisical, `:'...'`-bound, never echoed; NOT MCP `execute_sql`) under this step's write GO.
+   Includes the explicit `GRANT CONNECT ON DATABASE postgres TO ops_api, ops_intake_writer`.
+3. **Verify the Infisical DSN login round-trip.** Run the section-1 round-trip checks (INCLUDING the
+   mandatory target guard: each DSN resolves to prod host `fxoyniqnrlkxfligbxmg`, database
+   `postgres`, user exactly `ops_api` / `ops_intake_writer` -- never `ops_test`/dev) connecting AS
+   each role via the armed Infisical DSNs. Value-silent; assert on precomputed booleans.
 4. **Run the boundary harness + advisors on prod.** Two-oracle boundary (catalog + real-login
    behavioral) + `get_advisors` (classify ops/core; expect 0 ops ERROR, the 19 base-fn
    search_path WARNs = pre-existing, tracked as `task_7dd40f4f`).
