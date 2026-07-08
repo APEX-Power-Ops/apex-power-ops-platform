@@ -100,3 +100,39 @@ def test_dirty_succeeded_bucket_counts(prune_env):
     assert res["buckets"]["dirty_succeeded"] == 1
     item = [i for i in res["items"] if i["dispatch_id"] == d][0]
     assert item["classification"] == "dirty" and item["action"] == "preserved"  # default: preserved
+
+
+def test_force_dirty_dry_run_labels_would_remove_force(prune_env):
+    conn, runs, created = prune_env
+    d = "review-8b8b8b8b"; jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1,
+              finished_at="2026-07-05T00:00:00+00:00")
+    p = _add_wt(runs, created, d); open(os.path.join(p, "x.txt"), "w").close()
+    res = prune.prune_review_worktrees(force_succeeded_dirty=True)     # no --apply
+    item = [i for i in res["items"] if i["dispatch_id"] == d][0]
+    assert item["action"] == "would-remove-force" and item["classification"] == "dirty"
+    assert os.path.isdir(p)                                            # dry-run: not removed
+
+
+def test_force_dirty_apply_removes(prune_env):
+    conn, runs, created = prune_env
+    d = "review-9c9c9c9c"; jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1,
+              finished_at="2026-07-05T00:00:00+00:00")
+    p = _add_wt(runs, created, d); open(os.path.join(p, "x.txt"), "w").close()
+    res = prune.prune_review_worktrees(apply=True, force_succeeded_dirty=True)
+    item = [i for i in res["items"] if i["dispatch_id"] == d][0]
+    assert item["action"] == "removed-force" and not os.path.isdir(p)
+
+
+def test_force_dirty_never_touches_failed_or_active(prune_env):
+    conn, runs, created = prune_env
+    df = "review-a1a1a1a1"; jf = _enqueue_review(df)
+    _seed_run(conn, jf, status="failed", attempt=1,
+              finished_at="2026-07-05T00:00:00+00:00")
+    pf = _add_wt(runs, created, df); open(os.path.join(pf, "x.txt"), "w").close()
+    da = "review-b2b2b2b2"; ja = _enqueue_review(da)
+    _seed_run(conn, ja, status="running", attempt=1)
+    pa = _add_wt(runs, created, da); open(os.path.join(pa, "x.txt"), "w").close()
+    prune.prune_review_worktrees(apply=True, force_succeeded_dirty=True)
+    assert os.path.isdir(pf) and os.path.isdir(pa)      # neither force-removed

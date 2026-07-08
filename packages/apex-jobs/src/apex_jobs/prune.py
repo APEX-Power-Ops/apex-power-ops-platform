@@ -283,6 +283,58 @@ def _refusal(items, reason, applied, remove_failed=0, orphan_locks=None,
             "refused": True, "refused_reason": reason}
 
 
+def _guarded_remove_worktree(w, repo, runs, include_failed, force):
+    """PG-lock -> flock fuse -> _WORKTREE_LOCK -> recheck-before-remove -> git worktree
+    remove [--force]. `force` (dirty+succeeded) removes with --force and rechecks for
+    that shape; else rechecks for still-prunable. Mutates w in place. Returns
+    (remove_failed_delta:int, refusal:str|None). Fail-CLOSED on any lock/DB/fs error."""
+    try:
+        with engine.review_worktree_lock(w.dispatch_id) as held:
+            if not held:
+                w.classification, w.action = "contended", "preserved"
+                return 0, None
+            with agent_runner._worktree_flock(runs, w.dispatch_id) as fuse_ok:
+                if not fuse_ok:
+                    w.classification, w.action = "contended", "preserved"
+                    return 0, None
+                with agent_runner._WORKTREE_LOCK:
+                    try:
+                        snap = engine.review_dispatch_statuses([w.dispatch_id])
+                        cand = _fresh_candidate(repo, runs, w.dispatch_id)
+                    except (psycopg.OperationalError, psycopg.InterfaceError):
+                        return 0, "db-unreachable"
+                    except GitUnavailable:
+                        return 0, "git-unavailable"
+                    db = snap.get(w.dispatch_id)
+                    if cand is None:
+                        w.classification, w.action = "unknown", "preserved"
+                        return 0, None
+                    cls, _act, status, claimed_at, finished_at, active = _classify_one(
+                        cand, db, include_failed)
+                    if force:
+                        removable = (cls == "dirty" and status == "succeeded" and not active)
+                        label = "removed-force"
+                    else:
+                        removable = (cls == "prunable")
+                        label = "removed"
+                    if not removable:
+                        w.classification, w.action = cls, "preserved"
+                        w.status, w.claimed_at, w.finished_at, w.active = (
+                            status, claimed_at, finished_at, active)
+                        return 0, None
+                    args = ["worktree", "remove", w.path]
+                    if force:
+                        args.insert(2, "--force")
+                    r = agent_runner._git(*args, cwd=repo, check=False)
+                    if r.returncode == 0:
+                        w.action = label
+                        return 0, None
+                    w.classification, w.action = "remove-failed", "preserved"
+                    return 1, None
+    except (engine.LockUnavailable, psycopg.Error, OSError):
+        return 0, "db-unreachable"
+
+
 def prune_review_worktrees(apply=False, include_failed=False,
                            force_succeeded_dirty=False, prune_orphan_locks=False):
     """Classify (frozen snapshot); under apply, remove each prunable with a
@@ -299,64 +351,25 @@ def prune_review_worktrees(apply=False, include_failed=False,
         return _refusal(None, "db-unreachable", applied=False, orphan_locks=locks)
     except GitUnavailable:
         return _refusal(None, "git-unavailable", applied=False, orphan_locks=locks)
+    if force_succeeded_dirty:
+        for w in items:
+            if (w.classification == "dirty" and w.status == "succeeded"
+                    and not w.active and w.exists):
+                w.action = "would-remove-force"
     remove_failed = 0
     lock_remove_failed = 0
     if apply:
         for w in items:
-            if w.classification != "prunable":
+            if w.classification == "prunable":
+                dec, refusal = _guarded_remove_worktree(w, repo, runs, include_failed, force=False)
+            elif force_succeeded_dirty and w.action == "would-remove-force":
+                dec, refusal = _guarded_remove_worktree(w, repo, runs, include_failed, force=True)
+            else:
                 continue
-            # Coordinator + fuse guard the destructive remove: a live-held dispatch (PG
-            # lock held by a runner, or its flock still held by a living process) is
-            # classified 'contended'/'preserved' and never removed. A LockUnavailable or
-            # transport error is fail-closed to a partial-apply refusal (never fail-open).
-            try:
-                with engine.review_worktree_lock(w.dispatch_id) as held:
-                    if not held:
-                        w.classification, w.action = "contended", "preserved"
-                        continue
-                    with agent_runner._worktree_flock(runs, w.dispatch_id) as fuse_ok:
-                        if not fuse_ok:
-                            w.classification, w.action = "contended", "preserved"
-                            continue
-                        with agent_runner._WORKTREE_LOCK:
-                            # recheck-before-remove: re-query THIS dispatch and re-enumerate its
-                            # git/fs facts, then FULLY re-classify -- remove only if it is STILL
-                            # prunable (still a review, allowed terminal status, not-active,
-                            # clean, not-locked, exists). This is the only DB call in the loop.
-                            # A refusal HERE is a PARTIAL apply (earlier items already removed)
-                            # -> applied=True so the summary never reads as a dry-run.
-                            try:
-                                snap = engine.review_dispatch_statuses([w.dispatch_id])
-                                cand = _fresh_candidate(repo, runs, w.dispatch_id)
-                            except (psycopg.OperationalError, psycopg.InterfaceError):
-                                return _refusal(items, "db-unreachable", applied=True,
-                                                remove_failed=remove_failed)
-                            except GitUnavailable:
-                                return _refusal(items, "git-unavailable", applied=True,
-                                                remove_failed=remove_failed)
-                            db = snap.get(w.dispatch_id)
-                            if cand is None:
-                                w.classification, w.action = "unknown", "preserved"
-                                continue
-                            cls, _act, status, claimed_at, finished_at, active = _classify_one(
-                                cand, db, include_failed)
-                            if cls != "prunable":
-                                w.classification, w.action = cls, "preserved"
-                                w.status, w.claimed_at, w.finished_at, w.active = (
-                                    status, claimed_at, finished_at, active)
-                                continue
-                            r = agent_runner._git("worktree", "remove", w.path, cwd=repo, check=False)
-                            if r.returncode == 0:
-                                w.action = "removed"
-                            else:
-                                w.classification, w.action = "remove-failed", "preserved"
-                                remove_failed += 1
-            except (engine.LockUnavailable, psycopg.Error, OSError):
-                # Fail-CLOSED on ANY lock/DB/fs error during a destructive apply (spec 4.6):
-                # a non-transport psycopg.Error (e.g. InsufficientPrivilege) or an OSError
-                # (e.g. git binary missing) becomes a db-unreachable refusal, never a raw
-                # traceback and never a fail-open remove.
-                return _refusal(items, "db-unreachable", applied=True, remove_failed=remove_failed)
+            remove_failed += dec
+            if refusal:
+                return _refusal(items, refusal, applied=True, remove_failed=remove_failed,
+                                orphan_locks=locks, lock_remove_failed=lock_remove_failed)
     return {"items": [_item_dict(w) for w in items], "counts": _counts(items),
             "buckets": _buckets(items, locks),
             "orphan_locks": [_orphan_dict(o) for o in locks],
