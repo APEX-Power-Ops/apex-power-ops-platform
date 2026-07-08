@@ -223,3 +223,62 @@ def test_prune_orphan_locks_db_error_refuses(prune_env, monkeypatch):
     res = prune.prune_review_worktrees(apply=True, prune_orphan_locks=True)
     assert res["refused"] is True and res["applied"] is True         # value-silent refusal, no traceback
     assert os.path.exists(_lockpath(runs, d))                        # not removed
+
+
+def test_orphan_lock_db_fail_preserves_items(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    dw = "review-e9e9e9e9"; jid = _enqueue_review(dw)
+    _seed_run(conn, jid, status="succeeded", attempt=1,
+              finished_at="2026-07-05T00:00:00+00:00")
+    _add_wt(runs, created, dw)                        # a registered worktree
+    dl = "review-fafafafa"; _touch_lock(runs, dl)     # + an orphan lock whose status query fails
+    real = engine.review_dispatch_statuses
+    def flaky(ids):
+        if list(ids) == [dl]:
+            raise psycopg.OperationalError("dropped")
+        return real(ids)
+    monkeypatch.setattr(engine, "review_dispatch_statuses", flaky)
+    res = prune.prune_review_worktrees()             # dry-run
+    assert res["refused"] is True
+    assert any(i["dispatch_id"] == dw for i in res["items"])   # classified worktrees NOT dropped
+
+
+def test_force_dirty_partial_refusal_relabels_would_remove_force(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    for name in ("review-ab010101", "review-ab020202"):
+        jid = _enqueue_review(name)
+        _seed_run(conn, jid, status="succeeded", attempt=1,
+                  finished_at="2026-07-05T00:00:00+00:00")
+        pp = _add_wt(runs, created, name)
+        open(os.path.join(pp, "x.txt"), "w").close()             # dirty+succeeded
+    real = engine.review_dispatch_statuses
+    calls = {"n": 0}
+    def flaky(ids):
+        calls["n"] += 1                              # classify(1) + recheck-removes(2) + recheck-drops(3)
+        if calls["n"] >= 3:
+            raise psycopg.OperationalError("dropped")
+        return real(ids)
+    monkeypatch.setattr(engine, "review_dispatch_statuses", flaky)
+    res = prune.prune_review_worktrees(apply=True, force_succeeded_dirty=True)
+    assert res["refused"] is True and res["applied"] is True
+    assert not any(i["action"] == "would-remove-force" for i in res["items"])   # relabeled
+    assert any(i["action"] == "refused" for i in res["items"])
+
+
+def test_orphan_lock_active_run_appears_after_classify(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    d = "review-cd010101"; _touch_lock(runs, d)      # stale at classify (no job row)
+    real = engine.review_dispatch_statuses
+    calls = {"n": 0}
+    def flaky(ids):
+        if list(ids) == [d]:
+            calls["n"] += 1
+            if calls["n"] >= 2:                      # after classify, before apply recheck: activate
+                jid = _enqueue_review(d)
+                _seed_run(conn, jid, status="running", attempt=1)
+        return real(ids)
+    monkeypatch.setattr(engine, "review_dispatch_statuses", flaky)
+    res = prune.prune_review_worktrees(apply=True, prune_orphan_locks=True)
+    o = [x for x in res["orphan_locks"] if x["dispatch_id"] == d][0]
+    assert o["preserve_reason"] == "active-run" and o["has_active_run"] is True   # consistent booleans
+    assert os.path.exists(_lockpath(runs, d))

@@ -275,7 +275,7 @@ def _refusal(items, reason, applied, remove_failed=0, orphan_locks=None,
     src = items or []
     locks = orphan_locks or []
     for w in src:
-        if w.action == "would-remove":
+        if w.action in ("would-remove", "would-remove-force"):
             w.action = "refused"
     return {"items": [_item_dict(x) for x in src], "counts": _counts(src),
             "buckets": _buckets(src, locks),
@@ -345,15 +345,16 @@ def prune_review_worktrees(apply=False, include_failed=False,
     `git worktree remove` (no --force). Returns a value-silent summary. On
     DbUnreachable, returns a refusal summary (caller maps to exit 3)."""
     repo, runs = agent_runner._repo(), agent_runner._runs_dir()
+    items = None
     locks = []
     try:
         items = classify_review_worktrees(include_failed=include_failed)
         registered_ids = [w.dispatch_id for w in items]
         locks = classify_orphan_locks(registered_ids)
     except DbUnreachable:
-        return _refusal(None, "db-unreachable", applied=False, orphan_locks=locks)
+        return _refusal(items, "db-unreachable", applied=False, orphan_locks=locks)
     except GitUnavailable:
-        return _refusal(None, "git-unavailable", applied=False, orphan_locks=locks)
+        return _refusal(items, "git-unavailable", applied=False, orphan_locks=locks)
     if force_succeeded_dirty:
         for w in items:
             if (w.classification == "dirty" and w.status == "succeeded"
@@ -402,16 +403,19 @@ def prune_review_worktrees(apply=False, include_failed=False,
             return _refusal(items, "db-unreachable", applied=True, remove_failed=remove_failed,
                             orphan_locks=locks, lock_remove_failed=lock_remove_failed)
         if cand is not None:
+            o.has_registered_worktree = True
             o.action, o.preserve_reason = "preserved", "has-registered-worktree"
             continue
         db = snap.get(o.dispatch_id)
         if db and db["any_running"]:
+            o.has_active_run = True
             o.action, o.preserve_reason = "preserved", "active-run"
             continue
         lp = os.path.join(runs_real, o.basename)
         try:
             with agent_runner._worktree_flock(runs_real, o.dispatch_id) as ok:
                 if not ok:
+                    o.held = True
                     o.action, o.preserve_reason = "preserved", "held"
                     continue
                 try:
