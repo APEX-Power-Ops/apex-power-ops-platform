@@ -217,7 +217,9 @@ def cmd_prune_review_worktrees(a):
     worktrees. Value-silent. Exit 0 clean, 2 if any remove-failed, 3 on
     db-unreachable refusal."""
     from . import prune
-    res = prune.prune_review_worktrees(apply=a.apply, include_failed=a.include_failed)
+    res = prune.prune_review_worktrees(apply=a.apply, include_failed=a.include_failed,
+                                       force_succeeded_dirty=a.force_succeeded_dirty,
+                                       prune_orphan_locks=a.prune_orphan_locks)
     if a.json:
         print(json.dumps(res, indent=2))
     else:
@@ -230,6 +232,14 @@ def cmd_prune_review_worktrees(a):
             print(f"{i['basename']}  {i['classification']:<12}  {i['action']:<12}  "
                   f"status={i['status']}  active={i['active']}  "
                   f"claimed={i['claimed_at']}  finished={i['finished_at']}")
+        for o in res.get("orphan_locks", []):
+            print(f"{o['basename']}  {o['action']:<16}  held={o['held']}  "
+                  f"active_run={o['has_active_run']}  reason={o['preserve_reason']}")
+        b = res.get("buckets", {})
+        print(f"buckets: registered={b.get('registered', 0)} "
+              f"dirty_succeeded={b.get('dirty_succeeded', 0)} "
+              f"orphan_locks={b.get('orphan_locks', 0)} "
+              f"registered_missing={b.get('registered_missing', 0)}")
         acts = {}
         for i in res["items"]:
             acts[i["action"]] = acts.get(i["action"], 0) + 1
@@ -240,7 +250,7 @@ def cmd_prune_review_worktrees(a):
               f"[{', '.join(f'{k}={v}' for k, v in sorted(res['counts'].items()))}]")
     if res["refused"]:
         return 3
-    if res["remove_failed"] > 0:
+    if res["remove_failed"] > 0 or res.get("lock_remove_failed", 0) > 0:
         return 2
     return 0
 
@@ -365,6 +375,12 @@ def build_parser():
     pw.add_argument("--include-failed", action="store_true", dest="include_failed",
                     help="also prune FAILED review worktrees. WARNING: a failed review "
                          "tree is detached (no branch ref); removal may be gc-unrecoverable")
+    pw.add_argument("--force-succeeded-dirty", action="store_true", dest="force_succeeded_dirty",
+                    help="also remove succeeded+inactive+DIRTY review worktrees (requires --apply; "
+                         "git worktree remove --force; does NOT imply --include-failed)")
+    pw.add_argument("--prune-orphan-locks", action="store_true", dest="prune_orphan_locks",
+                    help="also remove stale orphan review-*.lock sidecars (requires --apply) after "
+                         "proving: no registered worktree, no active DB run, non-blocking flock free")
     pw.add_argument("--json", action="store_true")
     pw.set_defaults(fn=cmd_prune_review_worktrees)
 

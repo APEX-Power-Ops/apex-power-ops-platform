@@ -177,3 +177,12 @@ def test_prune_orphan_locks_preserves_held(prune_env):
         res = prune.prune_review_worktrees(apply=True, prune_orphan_locks=True)
     o = [x for x in res["orphan_locks"] if x["dispatch_id"] == d][0]
     assert o["action"] == "preserved" and o["preserve_reason"] == "held"
+
+
+def test_cli_parser_accepts_new_flags():
+    from apex_jobs import cli
+    a = cli.build_parser().parse_args(
+        ["prune-review-worktrees", "--apply", "--force-succeeded-dirty", "--prune-orphan-locks"])
+    assert a.force_succeeded_dirty is True and a.prune_orphan_locks is True and a.apply is True
+    b = cli.build_parser().parse_args(["prune-review-worktrees"])
+    assert b.force_succeeded_dirty is False and b.prune_orphan_locks is False
