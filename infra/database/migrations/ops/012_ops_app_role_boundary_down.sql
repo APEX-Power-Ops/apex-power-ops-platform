@@ -151,7 +151,11 @@ begin
   if to_regnamespace('core') is not null then
     execute 'grant execute on all routines in schema core to public';
   end if;
-  if to_regnamespace('work') is not null then
+  -- A5/A7 (D8/managed): the UP only revokes work PUBLIC EXECUTE on the dedicated-DB (superuser)
+  -- path, so the DOWN only restores it there. On a managed shared DB, work is a co-tenant schema
+  -- 012 never modified and postgres does not own its routines (Codex/adversarial F3): a symmetric
+  -- v_super gate keeps the down from a non-owner grant into a co-tenant schema.
+  if to_regnamespace('work') is not null and (select rolsuper from pg_roles where rolname = current_user) then
     execute 'grant execute on all routines in schema work to public';
   end if;
   -- A5 (D8/managed): database-level CONNECT is only restored on the dedicated-DB path; on the

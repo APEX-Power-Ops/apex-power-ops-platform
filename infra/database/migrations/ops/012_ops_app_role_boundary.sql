@@ -136,13 +136,14 @@ end $$;
 do $$
 declare v_super boolean := (select rolsuper from pg_roles where rolname = current_user);
 begin
-  if to_regnamespace('work') is not null then
-    -- work.* PUBLIC hardening is out-of-lane on a shared DB (work belongs to another lane and
-    -- is not postgres-owned): only the dedicated-DB (superuser) path revokes PUBLIC there.
-    if v_super then
-      execute 'revoke execute on all routines in schema work from public';
-    end if;
-    -- ops-scoped: ensure the three ops roles hold NOTHING on work (no-op when they are fresh).
+  -- work.* is a CO-TENANT schema 012 does not manage on a shared DB. The dedicated-DB
+  -- (superuser) path revokes PUBLIC + any ops-role grants there as pre-012 hygiene; the managed
+  -- path issues NO statement against work at all -- postgres does not own it, the three ops
+  -- roles are freshly created and hold nothing (verified by the [2a] direct-ACE assert below),
+  -- and this also avoids non-owner REVOKE WARNINGs on the managed apply path (Codex/adversarial
+  -- F3/F4).
+  if to_regnamespace('work') is not null and v_super then
+    execute 'revoke execute on all routines in schema work from public';
     execute 'revoke all on all tables in schema work from ops_intake_writer, ops_api, ops_fn_owner';
     execute 'revoke usage on schema work from ops_intake_writer, ops_api, ops_fn_owner';
   end if;
@@ -177,18 +178,24 @@ begin
       raise exception '012 posture: admin lost CONNECT';
     end if;
   end if;
+  -- work.* is co-tenant on a shared DB. Verify no ops LOGIN role holds a DIRECT grant on a work
+  -- relation. has_table_privilege() is deliberately NOT used: it also returns true for a
+  -- privilege inherited from a grant to PUBLIC, which on the managed path (where 012 leaves the
+  -- work-PUBLIC ACL untouched) would false-fail and abort the apply if work grants DML to PUBLIC
+  -- (adversarial F1). A direct-ACE check (grantee = the role itself) tests exactly what 012 must
+  -- guarantee -- that 012 never grants an ops role anything on work -- on BOTH substrates.
   if to_regnamespace('work') is not null then
     if exists (
       select 1
-      from pg_class c join pg_namespace ns on ns.oid = c.relnamespace,
-           lateral (values ('ops_intake_writer'), ('ops_api')) roles(r)
+      from pg_class c
+      join pg_namespace ns on ns.oid = c.relnamespace,
+           lateral (values ('ops_intake_writer'), ('ops_api')) roles(r),
+           lateral aclexplode(c.relacl) a
       where ns.nspname = 'work' and c.relkind in ('r','v','m','p')
-        and (has_table_privilege(roles.r, c.oid, 'SELECT')
-          or has_table_privilege(roles.r, c.oid, 'INSERT')
-          or has_table_privilege(roles.r, c.oid, 'UPDATE')
-          or has_table_privilege(roles.r, c.oid, 'DELETE'))
+        and a.grantee = (select oid from pg_roles where rolname = roles.r)
+        and a.privilege_type in ('SELECT','INSERT','UPDATE','DELETE')
     ) then
-      raise exception '012 posture: a login role holds a work.* privilege';
+      raise exception '012 posture: a login role holds a DIRECT work.* privilege';
     end if;
   end if;
 end $$;
