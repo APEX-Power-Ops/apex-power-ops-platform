@@ -42,6 +42,7 @@ class ReviewWorktree:
     finished_at: object          # datetime or None
     active: bool                 # job has a running run
     exists: bool = True          # worktree dir present on disk
+    locked: bool = False         # git worktree lock held
 
 
 @dataclass
@@ -225,7 +226,8 @@ def classify_review_worktrees(include_failed=False):
         result.append(ReviewWorktree(
             path=c["path"], dispatch_id=c["dispatch_id"], classification=cls,
             action=action, status=status, claimed_at=claimed_at,
-            finished_at=finished_at, active=active, exists=c["exists"]))
+            finished_at=finished_at, active=active, exists=c["exists"],
+            locked=c["locked"]))
     return result
 
 
@@ -312,7 +314,8 @@ def _guarded_remove_worktree(w, repo, runs, include_failed, force):
                     cls, _act, status, claimed_at, finished_at, active = _classify_one(
                         cand, db, include_failed)
                     if force:
-                        removable = (cls == "dirty" and status == "succeeded" and not active)
+                        removable = (cls == "dirty" and status == "succeeded"
+                                     and not active and not cand["locked"])
                         label = "removed-force"
                     else:
                         removable = (cls == "prunable")
@@ -354,7 +357,7 @@ def prune_review_worktrees(apply=False, include_failed=False,
     if force_succeeded_dirty:
         for w in items:
             if (w.classification == "dirty" and w.status == "succeeded"
-                    and not w.active and w.exists):
+                    and not w.active and w.exists and not w.locked):
                 w.action = "would-remove-force"
     remove_failed = 0
     lock_remove_failed = 0
@@ -374,7 +377,6 @@ def prune_review_worktrees(apply=False, include_failed=False,
     # four proofs hold, with a FRESH recheck (registered-worktree + DB active-run + flock)
     # at apply time. Value-silent; fail-CLOSED (any failed proof -> preserve + reason).
     runs_real = agent_runner._runs_dir()
-    reg_now = None
     for o in locks:
         if o.has_registered_worktree:
             o.action, o.preserve_reason = "preserved", "has-registered-worktree"
@@ -388,16 +390,20 @@ def prune_review_worktrees(apply=False, include_failed=False,
         if not (apply and prune_orphan_locks):
             o.action = "would-remove-lock"
             continue
-        if reg_now is None:
-            reg_now = set(w.dispatch_id for w in items)
-        if o.dispatch_id in reg_now:
-            o.action, o.preserve_reason = "preserved", "has-registered-worktree"
-            continue
+        # FRESH proofs #2 (registered worktree) + #3 (active run) at removal time; fail-CLOSED
+        # to a partial-apply refusal on ANY git/DB error (mirrors the worktree destructive path).
         try:
+            cand = _fresh_candidate(repo, runs_real, o.dispatch_id)
             snap = engine.review_dispatch_statuses([o.dispatch_id])
-        except (psycopg.OperationalError, psycopg.InterfaceError):
+        except GitUnavailable:
+            return _refusal(items, "git-unavailable", applied=True, remove_failed=remove_failed,
+                            orphan_locks=locks, lock_remove_failed=lock_remove_failed)
+        except psycopg.Error:
             return _refusal(items, "db-unreachable", applied=True, remove_failed=remove_failed,
                             orphan_locks=locks, lock_remove_failed=lock_remove_failed)
+        if cand is not None:
+            o.action, o.preserve_reason = "preserved", "has-registered-worktree"
+            continue
         db = snap.get(o.dispatch_id)
         if db and db["any_running"]:
             o.action, o.preserve_reason = "preserved", "active-run"

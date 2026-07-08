@@ -4,6 +4,7 @@ helpers (test_prune.py stays byte-unchanged). Value-silent: labels/counts/boolea
 only. Fake review dirs + .lock files under a tmp runs dir; real orchestration_test."""
 import os
 
+import psycopg
 import pytest
 
 from apex_jobs import prune, agent_runner, engine
@@ -186,3 +187,39 @@ def test_cli_parser_accepts_new_flags():
     assert a.force_succeeded_dirty is True and a.prune_orphan_locks is True and a.apply is True
     b = cli.build_parser().parse_args(["prune-review-worktrees"])
     assert b.force_succeeded_dirty is False and b.prune_orphan_locks is False
+
+
+def test_force_dirty_preserves_locked(prune_env):
+    import subprocess as _sp
+    conn, runs, created = prune_env
+    d = "review-c7c7c7c7"; jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1,
+              finished_at="2026-07-05T00:00:00+00:00")
+    p = _add_wt(runs, created, d)
+    open(os.path.join(p, "x.txt"), "w").close()                      # dirty
+    _sp.run(["git", "-C", REPO, "worktree", "lock", p], check=True, capture_output=True)
+    try:
+        res = prune.prune_review_worktrees(apply=True, force_succeeded_dirty=True)
+        assert os.path.isdir(p)                                       # locked -> not removed
+        assert res["remove_failed"] == 0                             # not attempted (no spurious fail)
+        item = [i for i in res["items"] if i["dispatch_id"] == d][0]
+        assert item["action"] == "preserved" and item["classification"] != "remove-failed"
+    finally:
+        _sp.run(["git", "-C", REPO, "worktree", "unlock", p], capture_output=True)
+
+
+def test_prune_orphan_locks_db_error_refuses(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    d = "review-d8d8d8d8"; _touch_lock(runs, d)
+    real = engine.review_dispatch_statuses
+    seen = {"n": 0}
+    def flaky(ids):
+        if list(ids) == [d]:
+            seen["n"] += 1
+            if seen["n"] >= 2:               # classify ok; fail the apply-time recheck
+                raise psycopg.errors.InsufficientPrivilege("boom")
+        return real(ids)
+    monkeypatch.setattr(engine, "review_dispatch_statuses", flaky)
+    res = prune.prune_review_worktrees(apply=True, prune_orphan_locks=True)
+    assert res["refused"] is True and res["applied"] is True         # value-silent refusal, no traceback
+    assert os.path.exists(_lockpath(runs, d))                        # not removed
