@@ -22,9 +22,24 @@ begin
   end if;
 end $$;
 
-alter role ops_intake_writer with login  nosuperuser nocreatedb nocreaterole nobypassrls noreplication;
-alter role ops_api           with login  nosuperuser nocreatedb nocreaterole nobypassrls noreplication;
-alter role ops_fn_owner      with nologin nosuperuser nocreatedb nocreaterole nobypassrls noreplication;
+-- Attribute correction (M3). A1 (D8/managed): the SUPERUSER / BYPASSRLS / REPLICATION clauses
+-- are settable ONLY by a superuser; on managed non-super postgres they raise 42501 even though
+-- the target value is the default. A freshly created role already defaults to
+-- NOSUPERUSER / NOBYPASSRLS / NOREPLICATION, so on the managed path we set only the
+-- createrole-settable attributes (login/nologin, nocreatedb, nocreaterole); the [1a] assert
+-- below proves the full posture on BOTH substrates. On a superuser applier v_tail is the
+-- original full clause list (byte-equivalent behavior on ops_dev/ops_test).
+do $$
+declare
+  v_super boolean := (select rolsuper from pg_roles where rolname = current_user);
+  v_tail  text := case when v_super
+                       then 'nosuperuser nocreatedb nocreaterole nobypassrls noreplication'
+                       else 'nocreatedb nocreaterole' end;
+begin
+  execute format('alter role ops_intake_writer with login  %s', v_tail);
+  execute format('alter role ops_api           with login  %s', v_tail);
+  execute format('alter role ops_fn_owner      with nologin %s', v_tail);
+end $$;
 
 -- NOLOGIN alone does not stop a MEMBER from SET ROLE ops_fn_owner: revoke membership
 -- explicitly. (Membership cannot be granted to PUBLIC in PostgreSQL, so the spec's
@@ -59,8 +74,14 @@ begin
      or pg_has_role('ops_api', 'ops_fn_owner', 'member') then
     raise exception '012 posture: a login app role is a member of ops_fn_owner';
   end if;
+  -- A2 (D8/managed): exempt the applier (current_user). On managed non-super postgres the
+  -- applier holds a SET-capable ops_fn_owner membership so it can transfer ownership in [3];
+  -- that is the ratified trusted-applier edge (D8-2), analogous to the records postgres->
+  -- records_* edges. The serving roles (ops_intake_writer / ops_api) are still caught by the
+  -- pg_has_role checks above and here. On a superuser applier (ops_dev/ops_test) this added
+  -- predicate is a no-op: current_user is already excluded by `not rolsuper`.
   select rolname into bad from pg_roles
-   where rolcanlogin and not rolsuper
+   where rolcanlogin and not rolsuper and rolname <> current_user
      and pg_has_role(rolname, 'ops_fn_owner', 'member')
    limit 1;
   if bad is not null then
@@ -82,19 +103,46 @@ revoke execute on all routines in schema core from public;
 
 -- C3: current_database() is invalid in REVOKE grammar and a bare name would break the
 -- one-ladder-two-DBs invariant -> dynamic SQL.
+-- A3/A4 (D8/managed): database-level CONNECT hygiene and the public-schema CREATE revoke are a
+-- DEDICATED-DB posture (safe when the applier is a superuser owning a private ops DB). On a
+-- SHARED managed DB (non-super postgres; records/tcc/... co-tenant) they are both unpermitted
+-- (the database and the public schema are not postgres-owned) AND unsafe (revoking PUBLIC
+-- CONNECT would lock out co-tenant Supabase roles). The managed path NEVER changes database-
+-- level or public-schema ACLs; its else-branch asserts PUBLIC still holds CONNECT (the static
+-- and runtime regression guard for D8-3). The login roles reach the DB via the inherited
+-- PUBLIC CONNECT we deliberately leave in place; the boundary is schema-scoped (USAGE below).
 do $$
+declare v_super boolean := (select rolsuper from pg_roles where rolname = current_user);
 begin
-  execute format('revoke connect on database %I from public', current_database());
-  execute format('grant connect on database %I to ops_intake_writer, ops_api', current_database());
+  if v_super then
+    execute format('revoke connect on database %I from public', current_database());
+    execute format('grant connect on database %I to ops_intake_writer, ops_api', current_database());
+    execute 'revoke create on schema public from public';
+  else
+    -- managed shared-DB path: prove we did NOT run the dedicated-DB revoke. PUBLIC holds
+    -- CONNECT when datacl IS NULL (cluster default) or grants it explicitly.
+    if not (
+      (select datacl is null from pg_database where datname = current_database())
+      or exists (select 1 from pg_database d, aclexplode(d.datacl) a
+                 where d.datname = current_database()
+                   and a.grantee = 0 and a.privilege_type = 'CONNECT')
+    ) then
+      raise exception '012 managed: PUBLIC must retain CONNECT - database hygiene must not run on a shared DB';
+    end if;
+  end if;
 end $$;
-
-revoke create on schema public from public;
 
 -- D6/C1: work.* zero grants, presence-gated (work exists on ops_dev, absent on ops_test).
 do $$
+declare v_super boolean := (select rolsuper from pg_roles where rolname = current_user);
 begin
   if to_regnamespace('work') is not null then
-    execute 'revoke execute on all routines in schema work from public';
+    -- work.* PUBLIC hardening is out-of-lane on a shared DB (work belongs to another lane and
+    -- is not postgres-owned): only the dedicated-DB (superuser) path revokes PUBLIC there.
+    if v_super then
+      execute 'revoke execute on all routines in schema work from public';
+    end if;
+    -- ops-scoped: ensure the three ops roles hold NOTHING on work (no-op when they are fresh).
     execute 'revoke all on all tables in schema work from ops_intake_writer, ops_api, ops_fn_owner';
     execute 'revoke usage on schema work from ops_intake_writer, ops_api, ops_fn_owner';
   end if;
@@ -113,16 +161,21 @@ begin
   if n > 0 then
     raise exception '012 posture: % ops/core function(s) retain PUBLIC EXECUTE', n;
   end if;
-  if exists (select 1 from pg_database where datname = current_database() and datacl is null) then
-    raise exception '012 posture: datacl is NULL (default ACL includes PUBLIC CONNECT)';
-  end if;
-  if exists (select 1 from pg_database d, aclexplode(d.datacl) a
-             where d.datname = current_database()
-               and a.grantee = 0 and a.privilege_type = 'CONNECT') then
-    raise exception '012 posture: PUBLIC retains CONNECT on %', current_database();
-  end if;
-  if not has_database_privilege('postgres', current_database(), 'CONNECT') then
-    raise exception '012 posture: admin lost CONNECT';
+  -- Database-level CONNECT posture asserts apply ONLY to the dedicated-DB (superuser) path;
+  -- on the managed shared DB PUBLIC deliberately RETAINS CONNECT (A3), so these would
+  -- false-fail. The managed non-run of the revoke is asserted in the [2] else-branch above.
+  if (select rolsuper from pg_roles where rolname = current_user) then
+    if exists (select 1 from pg_database where datname = current_database() and datacl is null) then
+      raise exception '012 posture: datacl is NULL (default ACL includes PUBLIC CONNECT)';
+    end if;
+    if exists (select 1 from pg_database d, aclexplode(d.datacl) a
+               where d.datname = current_database()
+                 and a.grantee = 0 and a.privilege_type = 'CONNECT') then
+      raise exception '012 posture: PUBLIC retains CONNECT on %', current_database();
+    end if;
+    if not has_database_privilege('postgres', current_database(), 'CONNECT') then
+      raise exception '012 posture: admin lost CONNECT';
+    end if;
   end if;
   if to_regnamespace('work') is not null then
     if exists (
@@ -146,6 +199,7 @@ end $$;
 do $$
 declare
   sig text;
+  v_super boolean := (select rolsuper from pg_roles where rolname = current_user);
   sigs text[] := array[
     'ops.attest_apparatus_complete(uuid,uuid,text)',
     'ops.revoke_completion_attestation(uuid,uuid,text)',
@@ -158,6 +212,14 @@ declare
     'ops.void_billing_application(uuid,uuid,text)'
   ];
 begin
+  -- A2 (D8/managed): a non-super applier cannot ALTER ... OWNER TO ops_fn_owner without a
+  -- SET-capable membership in it. Grant it explicitly (deterministic across PG versions) and
+  -- KEEP it as the ratified trusted-applier edge (D8-2); the [1a] assert exempts the applier.
+  -- A superuser applier (ops_dev/ops_test) transfers ownership directly via superuser bypass,
+  -- so no edge is added there (dev posture unchanged).
+  if not v_super then
+    execute format('grant ops_fn_owner to %I', current_user);
+  end if;
   foreach sig in array sigs loop
     if to_regprocedure(sig) is null then
       raise exception '012: expected function % is missing - signature drift', sig;

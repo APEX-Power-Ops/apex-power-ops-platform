@@ -9,7 +9,7 @@
 # (SET ROLE permission is checked against session_user, which stays postgres); the
 # real-login SET ROLE denial lives in packages/ops-intake/tests (writer/api DSNs).
 # Here, non-membership is proven via pg_has_role.
-import os, pathlib, uuid
+import os, pathlib, re, uuid
 import psycopg, pytest
 from psycopg import errors
 from psycopg.conninfo import conninfo_to_dict
@@ -45,6 +45,33 @@ DOWN010 = HERE / "010_native_envelope_intake_down.sql"
 DOWN009 = HERE / "009_recognition_bridge_down.sql"
 DOWN008 = HERE / "008_core_equipment_models_down.sql"
 DOWN001 = HERE / "001_identity_skeleton_down.sql"
+
+
+# ---------- D8 static regression guard (no DB): shared-substrate database hygiene ----------
+
+def test_012_database_connect_ops_are_superuser_guarded():
+    """D8-3 regression guard (operator watchpoint). Every REVOKE/GRANT CONNECT ON DATABASE in
+    012 (up AND down) must be lexically inside a superuser-gated branch, so the managed
+    shared-DB path NEVER mutates database-level ACLs. Static text check -> impossible to
+    silently regress even though the managed path is only executed on the branch proof."""
+    guard = re.compile(
+        r"if\s+(?:v_super|\(\s*select\s+rolsuper\b[^\n]*current_user\s*\))\s+then", re.I
+    )
+    stmt = re.compile(r"(?:revoke|grant)\s+connect\s+on\s+database", re.I)
+    for path in (UP012, DOWN012):
+        sql = path.read_text(encoding="utf-8")
+        hits = list(stmt.finditer(sql))
+        assert hits, path.name + ": expected >=1 CONNECT-ON-DATABASE statement to guard"
+        for m in hits:
+            pre = sql[max(0, m.start() - 500):m.start()]
+            assert guard.search(pre), (
+                path.name + ": a CONNECT-ON-DATABASE statement near offset "
+                + str(m.start()) + " is not superuser-guarded (D8-3 regression)"
+            )
+    # the managed else-branch must keep its runtime PUBLIC-CONNECT assertion (defense in depth)
+    assert "PUBLIC must retain CONNECT" in UP012.read_text(encoding="utf-8"), (
+        "012 up: managed else-branch lost its runtime PUBLIC-CONNECT assertion"
+    )
 
 
 def _exec(path):

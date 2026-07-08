@@ -78,7 +78,11 @@ begin
       execute 'revoke all privileges on all routines in schema core from ops_intake_writer';
       execute 'revoke usage on schema core from ops_intake_writer';
     end if;
-    execute format('revoke connect on database %I from ops_intake_writer', current_database());
+    -- A5 (D8/managed): database-level CONNECT is only touched on the dedicated-DB path (on the
+    -- managed shared DB the login roles were never granted CONNECT: nothing to revoke).
+    if (select rolsuper from pg_roles where rolname = current_user) then
+      execute format('revoke connect on database %I from ops_intake_writer', current_database());
+    end if;
   end if;
   if exists (select 1 from pg_roles where rolname = 'ops_api') then
     if to_regnamespace('ops') is not null then
@@ -86,7 +90,9 @@ begin
       execute 'revoke all privileges on all routines in schema ops from ops_api';
       execute 'revoke usage on schema ops from ops_api';
     end if;
-    execute format('revoke connect on database %I from ops_api', current_database());
+    if (select rolsuper from pg_roles where rolname = current_user) then
+      execute format('revoke connect on database %I from ops_api', current_database());
+    end if;
   end if;
   -- ops_fn_owner: NOLOGIN, never granted CONNECT; DROP OWNED is safe + database-scoped
   -- ([d1] already reassigned its functions to postgres).
@@ -105,13 +111,26 @@ end $$;
 -- object survives. ops_fn_owner (NOLOGIN, no password) drops cleanly.
 -- Reading pg_authid requires superuser; the down runs as the admin identity.
 do $$
-declare r text;
+declare
+  r text;
+  v_super boolean := (select rolsuper from pg_roles where rolname = current_user);
 begin
   foreach r in array array['ops_intake_writer', 'ops_api', 'ops_fn_owner'] loop
     if exists (select 1 from pg_roles where rolname = r) then
-      if exists (select 1 from pg_authid where rolname = r and rolpassword is not null) then
-        raise notice '012_down: role % has an out-of-band password set; left in place (DEV-7)', r;
-        continue;
+      -- A5 (D8/managed): the DEV-7 password guard reads pg_authid.rolpassword, which requires
+      -- superuser. On a superuser applier (ops_dev/ops_test) keep the exact DEV-7 behavior. On
+      -- managed non-super postgres pg_authid is unreadable, so never drop a LOGIN role (it may
+      -- carry an out-of-band serving password); only the NOLOGIN ops_fn_owner is dropped.
+      if r <> 'ops_fn_owner' then
+        if v_super then
+          if exists (select 1 from pg_authid where rolname = r and rolpassword is not null) then
+            raise notice '012_down: role % has an out-of-band password set; left in place (DEV-7)', r;
+            continue;
+          end if;
+        else
+          raise notice '012_down: managed substrate - login role % left in place (cannot verify OOB password)', r;
+          continue;
+        end if;
       end if;
       begin
         execute format('drop role %I', r);
@@ -135,5 +154,9 @@ begin
   if to_regnamespace('work') is not null then
     execute 'grant execute on all routines in schema work to public';
   end if;
-  execute format('grant connect on database %I to public', current_database());
+  -- A5 (D8/managed): database-level CONNECT is only restored on the dedicated-DB path; on the
+  -- managed shared DB PUBLIC CONNECT was never revoked, so there is nothing to restore.
+  if (select rolsuper from pg_roles where rolname = current_user) then
+    execute format('grant connect on database %I to public', current_database());
+  end if;
 end $$;
