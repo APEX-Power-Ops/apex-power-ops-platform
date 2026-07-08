@@ -24,9 +24,12 @@ NOLOGIN cluster roles. That is a small, enumerable surface -- not the full recor
 - **Never `postgres`.** `postgres` has `rolbypassrls=TRUE` and is the migration applier; the
   serving path must use the non-bypass login roles so the grant matrix + RLS-if-any are enforced.
 - **Passwords are Vault/Infisical-first, NEVER minted in SQL.** 012 creates the two roles
-  passwordless (`create role ... ` + attribute correction only); the operator sets each role's
-  SCRAM password OUT-OF-BAND (Infisical prod), and the AI verifies the round-trip value-silently.
-  No migration, doc, or transcript ever contains a role password.
+  passwordless (`create role ... ` + attribute correction only). Infisical prod STORES the
+  intended `OPS_API_DSN` / `OPS_INTAKE_WRITER_DSN` (the credential of record), but storing a DSN
+  in Infisical does NOT set the SCRAM password inside Postgres -- a DB-side `alter role ...
+  password` arming action is still required after the roles exist (see section 1a). The AI
+  verifies the round-trip value-silently. No migration, doc, or transcript ever contains a role
+  password.
 - **Explicit `GRANT CONNECT` is part of serving-arming (F6).** On the managed path 012
   deliberately does NOT grant database CONNECT (it leaves inherited PUBLIC CONNECT untouched).
   Arming MUST therefore `GRANT CONNECT ON DATABASE postgres TO ops_api, ops_intake_writer`
@@ -40,6 +43,20 @@ NOLOGIN cluster roles. That is a small, enumerable surface -- not the full recor
   fabricate (INSERT apparatus/scopes) or execute deferred billing. Reuse the two-oracle method
   from `docs/operations/ops-role-pass-2026-07-08.py` (connect AS the role via the armed DSN --
   the real login path, not the SET-ROLE impersonation the branch used).
+
+### 1a. Serving arming is split (operator correction, 2026-07-08)
+Storing a credential in Infisical and arming the Postgres role are two distinct actions; the
+sequence is explicitly three-staged so nothing implies Infisical alone sets the SCRAM password:
+- **OOB (secret custody):** operator stores the intended `OPS_API_DSN` and `OPS_INTAKE_WRITER_DSN`
+  in Infisical prod, value-silent. This is the credential of record; no password value is ever
+  echoed, logged, or committed.
+- **DB arming (write packet):** after / proximate to prod role creation, run explicit
+  password + CONNECT arming as a DB-side action (`alter role <r> password <from-Infisical>` +
+  `grant connect on database postgres to <r>`) under an operator-approved write packet. The
+  password value flows Infisical -> the arming command value-silently; it is NOT set by Infisical
+  itself.
+- **Verification:** connect using the Infisical DSNs (the real login path) and run the boundary
+  round-trip (the section 1 arming round-trip).
 
 ## 2. Coexistence proof method (accounts for the 111-replay fidelity gap)
 The Supabase preview-branch replay stops at `supabase_migrations=111` (blocked at #112, a tcc
@@ -92,10 +109,14 @@ branch, AFTER a GREEN apply:
 - **G1 (branch, cost):** Option-B coexistence branch -> apply ops 001-012 -> identity + two-oracle
   boundary + advisors -> managed `012_down` proof -> up->down->up -> delete branch, zero residue.
   Closes the coexistence + managed-down gates. Commit a G1 evidence record.
-- **G2 (serving arming, OOB secret):** operator sets `ops_api` / `ops_intake_writer` SCRAM
-  passwords in Infisical prod; apply `GRANT CONNECT` to both; AI verifies the real-login round-trip
-  value-silently. NB: role creation + CONNECT grant happen at prod-apply time (G3); the PASSWORD is
-  the only OOB step.
+- **G2 (serving arming, split -- OOB secret + DB write):** (1) OOB: operator stores the intended
+  `OPS_API_DSN` / `OPS_INTAKE_WRITER_DSN` in Infisical prod, value-silent. (2) DB arming: after /
+  proximate to prod role creation, run explicit `alter role <r> password <from-Infisical>` +
+  `grant connect on database postgres to ops_api, ops_intake_writer` under an operator-approved
+  write packet -- storing in Infisical does NOT set the Postgres SCRAM password. (3) Verification:
+  connect via the Infisical DSNs and run the real-login boundary round-trip value-silently. NB:
+  role creation + CONNECT grant happen at/after prod-apply time (G3); the password value is the
+  OOB-custodied input to the DB-side arming command.
 - **G3 (prod apply, write):** GO-sequenced apply of ops 001-012 to prod `fxoyniqnrlkxfligbxmg`
   (evidence per step: pre-SHA / post-counts / post-posture / committed transcript), then the G2
   round-trip against live prod.
