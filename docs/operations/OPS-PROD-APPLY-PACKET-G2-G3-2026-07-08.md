@@ -41,20 +41,37 @@ string used as the password. Store the two components as their own value-silent 
 corresponding `OPS_*_DSN`. The password value is NEVER written literally into this file, any
 migration, any command line, or any transcript.
 
-Execution is value-silent and MANDATORY: run as the prod admin `postgres` via a host `psql` path
-with BOUND variables so no literal password appears on any command line or in any log -- explicitly
-NOT via MCP `execute_sql` / `apply_migration` (which would place the literal password inside a
-VISIBLE tool-call argument). Passwords are injected from Infisical into the process env for the
-single call and never echoed; capture + classify stderr and never dump it (psql parse/auth errors
-can echo connection-string fragments). Illustrative shape (values from injected env; run only AFTER
-ops 012 has created the two passwordless roles):
+Execution is value-silent and MANDATORY. Two rules keep it airtight; explicitly NOT via MCP
+`execute_sql` / `apply_migration` (which would place the literal password inside a VISIBLE tool-call
+argument):
+- **No secret on argv.** Both psql `-v pw=$X` and an inline-password conninfo put secrets in the
+  process argv (readable via `ps` / `/proc/<pid>/cmdline`). So authenticate the admin session via
+  `PGPASSWORD` (or a 0600 `.pgpass` / `PGSERVICE`) -- NEVER a password in the conninfo string -- and
+  pull the ROLE passwords from the process env INSIDE the SQL file via psql `\getenv`, not `-v`.
+- **In-band prod target guard on the WRITE channel.** The arming session (which mutates) must
+  self-assert it is the managed prod target BEFORE any ALTER ROLE -- the read-only drift gate + the
+  round-trip target guard do NOT cover this separate admin conninfo. Refuse if the session is not
+  managed-prod `postgres`.
+Passwords are injected from Infisical into the process env for the single call and never echoed;
+capture + classify stderr and never dump it (psql parse/auth errors can echo connection fragments).
+Illustrative shape (run only AFTER ops 012 has created the two passwordless roles):
 
-    psql "<postgres admin conninfo -- value-silent, never echoed>" -v ON_ERROR_STOP=1 \
-      -v ops_api_pw="$OPS_API_PASSWORD" -v ops_intake_pw="$OPS_INTAKE_WRITER_PASSWORD" \
-      -f arm_serving.sql   # 0600 temp, shredded after; stderr captured + redacted, never printed
+    # admin auth via PGPASSWORD in env (never on argv); NO password in the conninfo string:
+    PGPASSWORD="$OPS_ADMIN_PW" psql "host=<prod> port=<p> user=postgres dbname=postgres sslmode=require" \
+      -v ON_ERROR_STOP=1 -f arm_serving.sql   # 0600 temp, shredded after; stderr captured + redacted
 
-    -- arm_serving.sql (:'x' single-quote-escapes the bound value; no literal password in the file):
-    --   alter role ops_api            password :'ops_api_pw';
+    -- arm_serving.sql -- role passwords pulled from env via \getenv (NOT -v; nothing on argv):
+    --   \getenv ops_api_pw OPS_API_PASSWORD
+    --   \getenv ops_intake_pw OPS_INTAKE_WRITER_PASSWORD
+    --   -- in-band WRITE-channel target guard: refuse unless this is the managed prod postgres DB
+    --   do $$ begin
+    --     if current_database() <> 'postgres' or current_user <> 'postgres'
+    --        or (select rolsuper from pg_roles where rolname = current_user)
+    --        or (select count(*) from pg_roles where rolname like 'records\_%') <> 6 then
+    --       raise exception 'arm_serving: refusing -- session is not the managed prod postgres target';
+    --     end if;
+    --   end $$;
+    --   alter role ops_api            password :'ops_api_pw';   -- :'x' single-quote-escapes the bound value
     --   alter role ops_intake_writer  password :'ops_intake_pw';
     --   grant connect on database postgres to ops_api, ops_intake_writer;
 
@@ -89,7 +106,10 @@ for the records 001-049 apply: SHA-pinned inputs, value-silent, per-step evidenc
 0. **Pre-write drift gate (read-only, MANDATORY -- STOP on ANY drift).** The section-0 precheck
    records prod state at authoring time; it must be RE-CONFIRMED on a fresh read-only connection
    immediately before any write, because prod can move between authoring and apply. Re-confirm:
-   (a) target project ref is `fxoyniqnrlkxfligbxmg` (NOT a preview branch, NOT dev);
+   (a) the target is prod `fxoyniqnrlkxfligbxmg`, NOT a preview branch / dev -- the project ref is
+   a Supabase-platform concept not visible in a raw psql session, so on the psql write channel
+   assert the in-session equivalents (`current_database()='postgres'`, `inet_server_addr()` / server
+   identity, and prod-only markers such as the 6 `records_*` roles) rather than the ref string;
    (b) applier is managed non-super `postgres` (`rolsuper=false`) and `current_database()='postgres'`;
    (c) `ops` schema ABSENT and `ops_*` roles ABSENT (this packet is a first apply, not a re-apply);
    (d) `work` schema still has 0 tables, OR any present `work` relations are explicitly reviewed +
