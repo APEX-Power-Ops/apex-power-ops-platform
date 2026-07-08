@@ -136,3 +136,44 @@ def test_force_dirty_never_touches_failed_or_active(prune_env):
     pa = _add_wt(runs, created, da); open(os.path.join(pa, "x.txt"), "w").close()
     prune.prune_review_worktrees(apply=True, force_succeeded_dirty=True)
     assert os.path.isdir(pf) and os.path.isdir(pa)      # neither force-removed
+
+
+def _lockpath(runs, did):
+    return os.path.join(runs, did + ".lock")
+
+
+def test_prune_orphan_locks_removes_stale(prune_env):
+    conn, runs, created = prune_env
+    d = "review-c3c3c3c3"; _touch_lock(runs, d)        # no worktree, no run, unheld
+    res = prune.prune_review_worktrees(apply=True, prune_orphan_locks=True)
+    o = [x for x in res["orphan_locks"] if x["dispatch_id"] == d][0]
+    assert o["action"] == "removed-lock" and not os.path.exists(_lockpath(runs, d))
+
+
+def test_prune_orphan_locks_dry_run_labels_only(prune_env):
+    conn, runs, created = prune_env
+    d = "review-d4d4d4d4"; _touch_lock(runs, d)
+    res = prune.prune_review_worktrees(prune_orphan_locks=True)   # no --apply
+    o = [x for x in res["orphan_locks"] if x["dispatch_id"] == d][0]
+    assert o["action"] == "would-remove-lock" and os.path.exists(_lockpath(runs, d))
+
+
+def test_prune_orphan_locks_preserves_active_run(prune_env):
+    conn, runs, created = prune_env
+    d = "review-e5e5e5e5"; jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="running", attempt=1)
+    _touch_lock(runs, d)
+    res = prune.prune_review_worktrees(apply=True, prune_orphan_locks=True)
+    o = [x for x in res["orphan_locks"] if x["dispatch_id"] == d][0]
+    assert o["action"] == "preserved" and o["preserve_reason"] == "active-run"
+    assert os.path.exists(_lockpath(runs, d))
+
+
+def test_prune_orphan_locks_preserves_held(prune_env):
+    conn, runs, created = prune_env
+    d = "review-f6f6f6f6"; _touch_lock(runs, d)
+    with agent_runner._worktree_flock(runs, d) as ok:
+        assert ok is True
+        res = prune.prune_review_worktrees(apply=True, prune_orphan_locks=True)
+    o = [x for x in res["orphan_locks"] if x["dispatch_id"] == d][0]
+    assert o["action"] == "preserved" and o["preserve_reason"] == "held"

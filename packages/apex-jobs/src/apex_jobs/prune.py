@@ -370,6 +370,53 @@ def prune_review_worktrees(apply=False, include_failed=False,
             if refusal:
                 return _refusal(items, refusal, applied=True, remove_failed=remove_failed,
                                 orphan_locks=locks, lock_remove_failed=lock_remove_failed)
+    # Orphan-lock branch: label (dry-run) / remove (apply) each candidate only after the
+    # four proofs hold, with a FRESH recheck (registered-worktree + DB active-run + flock)
+    # at apply time. Value-silent; fail-CLOSED (any failed proof -> preserve + reason).
+    runs_real = agent_runner._runs_dir()
+    reg_now = None
+    for o in locks:
+        if o.has_registered_worktree:
+            o.action, o.preserve_reason = "preserved", "has-registered-worktree"
+            continue
+        if o.has_active_run:
+            o.action, o.preserve_reason = "preserved", "active-run"
+            continue
+        if o.held:
+            o.action, o.preserve_reason = "preserved", "held"
+            continue
+        if not (apply and prune_orphan_locks):
+            o.action = "would-remove-lock"
+            continue
+        if reg_now is None:
+            reg_now = set(w.dispatch_id for w in items)
+        if o.dispatch_id in reg_now:
+            o.action, o.preserve_reason = "preserved", "has-registered-worktree"
+            continue
+        try:
+            snap = engine.review_dispatch_statuses([o.dispatch_id])
+        except (psycopg.OperationalError, psycopg.InterfaceError):
+            return _refusal(items, "db-unreachable", applied=True, remove_failed=remove_failed,
+                            orphan_locks=locks, lock_remove_failed=lock_remove_failed)
+        db = snap.get(o.dispatch_id)
+        if db and db["any_running"]:
+            o.action, o.preserve_reason = "preserved", "active-run"
+            continue
+        lp = os.path.join(runs_real, o.basename)
+        try:
+            with agent_runner._worktree_flock(runs_real, o.dispatch_id) as ok:
+                if not ok:
+                    o.action, o.preserve_reason = "preserved", "held"
+                    continue
+                try:
+                    if os.path.exists(lp):
+                        os.remove(lp)
+                    o.action = "removed-lock"
+                except OSError:
+                    o.action, o.preserve_reason = "preserved", "remove-failed"
+                    lock_remove_failed += 1
+        except OSError:
+            o.action, o.preserve_reason = "preserved", "flock-error"
     return {"items": [_item_dict(w) for w in items], "counts": _counts(items),
             "buckets": _buckets(items, locks),
             "orphan_locks": [_orphan_dict(o) for o in locks],
