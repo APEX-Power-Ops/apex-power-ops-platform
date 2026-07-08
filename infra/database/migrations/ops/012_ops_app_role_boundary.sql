@@ -22,9 +22,24 @@ begin
   end if;
 end $$;
 
-alter role ops_intake_writer with login  nosuperuser nocreatedb nocreaterole nobypassrls noreplication;
-alter role ops_api           with login  nosuperuser nocreatedb nocreaterole nobypassrls noreplication;
-alter role ops_fn_owner      with nologin nosuperuser nocreatedb nocreaterole nobypassrls noreplication;
+-- Attribute correction (M3). A1 (D8/managed): the SUPERUSER / BYPASSRLS / REPLICATION clauses
+-- are settable ONLY by a superuser; on managed non-super postgres they raise 42501 even though
+-- the target value is the default. A freshly created role already defaults to
+-- NOSUPERUSER / NOBYPASSRLS / NOREPLICATION, so on the managed path we set only the
+-- createrole-settable attributes (login/nologin, nocreatedb, nocreaterole); the [1a] assert
+-- below proves the full posture on BOTH substrates. On a superuser applier v_tail is the
+-- original full clause list (byte-equivalent behavior on ops_dev/ops_test).
+do $$
+declare
+  v_super boolean := (select rolsuper from pg_roles where rolname = current_user);
+  v_tail  text := case when v_super
+                       then 'nosuperuser nocreatedb nocreaterole nobypassrls noreplication'
+                       else 'nocreatedb nocreaterole' end;
+begin
+  execute format('alter role ops_intake_writer with login  %s', v_tail);
+  execute format('alter role ops_api           with login  %s', v_tail);
+  execute format('alter role ops_fn_owner      with nologin %s', v_tail);
+end $$;
 
 -- NOLOGIN alone does not stop a MEMBER from SET ROLE ops_fn_owner: revoke membership
 -- explicitly. (Membership cannot be granted to PUBLIC in PostgreSQL, so the spec's
@@ -59,8 +74,14 @@ begin
      or pg_has_role('ops_api', 'ops_fn_owner', 'member') then
     raise exception '012 posture: a login app role is a member of ops_fn_owner';
   end if;
+  -- A2 (D8/managed): exempt the applier (current_user). On managed non-super postgres the
+  -- applier holds a SET-capable ops_fn_owner membership so it can transfer ownership in [3];
+  -- that is the ratified trusted-applier edge (D8-2), analogous to the records postgres->
+  -- records_* edges. The serving roles (ops_intake_writer / ops_api) are still caught by the
+  -- pg_has_role checks above and here. On a superuser applier (ops_dev/ops_test) this added
+  -- predicate is a no-op: current_user is already excluded by `not rolsuper`.
   select rolname into bad from pg_roles
-   where rolcanlogin and not rolsuper
+   where rolcanlogin and not rolsuper and rolname <> current_user
      and pg_has_role(rolname, 'ops_fn_owner', 'member')
    limit 1;
   if bad is not null then
@@ -82,18 +103,46 @@ revoke execute on all routines in schema core from public;
 
 -- C3: current_database() is invalid in REVOKE grammar and a bare name would break the
 -- one-ladder-two-DBs invariant -> dynamic SQL.
+-- A3/A4 (D8/managed): database-level CONNECT hygiene and the public-schema CREATE revoke are a
+-- DEDICATED-DB posture (safe when the applier is a superuser owning a private ops DB). On a
+-- SHARED managed DB (non-super postgres; records/tcc/... co-tenant) they are both unpermitted
+-- (the database and the public schema are not postgres-owned) AND unsafe (revoking PUBLIC
+-- CONNECT would lock out co-tenant Supabase roles). The managed path NEVER changes database-
+-- level or public-schema ACLs; its else-branch asserts PUBLIC still holds CONNECT (the static
+-- and runtime regression guard for D8-3). The login roles reach the DB via the inherited
+-- PUBLIC CONNECT we deliberately leave in place; the boundary is schema-scoped (USAGE below).
 do $$
+declare v_super boolean := (select rolsuper from pg_roles where rolname = current_user);
 begin
-  execute format('revoke connect on database %I from public', current_database());
-  execute format('grant connect on database %I to ops_intake_writer, ops_api', current_database());
+  if v_super then
+    execute format('revoke connect on database %I from public', current_database());
+    execute format('grant connect on database %I to ops_intake_writer, ops_api', current_database());
+    execute 'revoke create on schema public from public';
+  else
+    -- managed shared-DB path: prove we did NOT run the dedicated-DB revoke. PUBLIC holds
+    -- CONNECT when datacl IS NULL (cluster default) or grants it explicitly.
+    if not (
+      (select datacl is null from pg_database where datname = current_database())
+      or exists (select 1 from pg_database d, aclexplode(d.datacl) a
+                 where d.datname = current_database()
+                   and a.grantee = 0 and a.privilege_type = 'CONNECT')
+    ) then
+      raise exception '012 managed: PUBLIC must retain CONNECT - database hygiene must not run on a shared DB';
+    end if;
+  end if;
 end $$;
-
-revoke create on schema public from public;
 
 -- D6/C1: work.* zero grants, presence-gated (work exists on ops_dev, absent on ops_test).
 do $$
+declare v_super boolean := (select rolsuper from pg_roles where rolname = current_user);
 begin
-  if to_regnamespace('work') is not null then
+  -- work.* is a CO-TENANT schema 012 does not manage on a shared DB. The dedicated-DB
+  -- (superuser) path revokes PUBLIC + any ops-role grants there as pre-012 hygiene; the managed
+  -- path issues NO statement against work at all -- postgres does not own it, the three ops
+  -- roles are freshly created and hold nothing (verified by the [2a] direct-ACE assert below),
+  -- and this also avoids non-owner REVOKE WARNINGs on the managed apply path (Codex/adversarial
+  -- F3/F4).
+  if to_regnamespace('work') is not null and v_super then
     execute 'revoke execute on all routines in schema work from public';
     execute 'revoke all on all tables in schema work from ops_intake_writer, ops_api, ops_fn_owner';
     execute 'revoke usage on schema work from ops_intake_writer, ops_api, ops_fn_owner';
@@ -113,29 +162,40 @@ begin
   if n > 0 then
     raise exception '012 posture: % ops/core function(s) retain PUBLIC EXECUTE', n;
   end if;
-  if exists (select 1 from pg_database where datname = current_database() and datacl is null) then
-    raise exception '012 posture: datacl is NULL (default ACL includes PUBLIC CONNECT)';
+  -- Database-level CONNECT posture asserts apply ONLY to the dedicated-DB (superuser) path;
+  -- on the managed shared DB PUBLIC deliberately RETAINS CONNECT (A3), so these would
+  -- false-fail. The managed non-run of the revoke is asserted in the [2] else-branch above.
+  if (select rolsuper from pg_roles where rolname = current_user) then
+    if exists (select 1 from pg_database where datname = current_database() and datacl is null) then
+      raise exception '012 posture: datacl is NULL (default ACL includes PUBLIC CONNECT)';
+    end if;
+    if exists (select 1 from pg_database d, aclexplode(d.datacl) a
+               where d.datname = current_database()
+                 and a.grantee = 0 and a.privilege_type = 'CONNECT') then
+      raise exception '012 posture: PUBLIC retains CONNECT on %', current_database();
+    end if;
+    if not has_database_privilege('postgres', current_database(), 'CONNECT') then
+      raise exception '012 posture: admin lost CONNECT';
+    end if;
   end if;
-  if exists (select 1 from pg_database d, aclexplode(d.datacl) a
-             where d.datname = current_database()
-               and a.grantee = 0 and a.privilege_type = 'CONNECT') then
-    raise exception '012 posture: PUBLIC retains CONNECT on %', current_database();
-  end if;
-  if not has_database_privilege('postgres', current_database(), 'CONNECT') then
-    raise exception '012 posture: admin lost CONNECT';
-  end if;
+  -- work.* is co-tenant on a shared DB. Verify no ops LOGIN role holds a DIRECT grant on a work
+  -- relation. has_table_privilege() is deliberately NOT used: it also returns true for a
+  -- privilege inherited from a grant to PUBLIC, which on the managed path (where 012 leaves the
+  -- work-PUBLIC ACL untouched) would false-fail and abort the apply if work grants DML to PUBLIC
+  -- (adversarial F1). A direct-ACE check (grantee = the role itself) tests exactly what 012 must
+  -- guarantee -- that 012 never grants an ops role anything on work -- on BOTH substrates.
   if to_regnamespace('work') is not null then
     if exists (
       select 1
-      from pg_class c join pg_namespace ns on ns.oid = c.relnamespace,
-           lateral (values ('ops_intake_writer'), ('ops_api')) roles(r)
+      from pg_class c
+      join pg_namespace ns on ns.oid = c.relnamespace,
+           lateral (values ('ops_intake_writer'), ('ops_api')) roles(r),
+           lateral aclexplode(c.relacl) a
       where ns.nspname = 'work' and c.relkind in ('r','v','m','p')
-        and (has_table_privilege(roles.r, c.oid, 'SELECT')
-          or has_table_privilege(roles.r, c.oid, 'INSERT')
-          or has_table_privilege(roles.r, c.oid, 'UPDATE')
-          or has_table_privilege(roles.r, c.oid, 'DELETE'))
+        and a.grantee = (select oid from pg_roles where rolname = roles.r)
+        and a.privilege_type in ('SELECT','INSERT','UPDATE','DELETE')
     ) then
-      raise exception '012 posture: a login role holds a work.* privilege';
+      raise exception '012 posture: a login role holds a DIRECT work.* privilege';
     end if;
   end if;
 end $$;
@@ -146,6 +206,7 @@ end $$;
 do $$
 declare
   sig text;
+  v_super boolean := (select rolsuper from pg_roles where rolname = current_user);
   sigs text[] := array[
     'ops.attest_apparatus_complete(uuid,uuid,text)',
     'ops.revoke_completion_attestation(uuid,uuid,text)',
@@ -158,6 +219,18 @@ declare
     'ops.void_billing_application(uuid,uuid,text)'
   ];
 begin
+  -- A2 (D8/managed): a non-super applier cannot ALTER ... OWNER TO ops_fn_owner unless it has
+  -- BOTH (a) a SET-capable membership in ops_fn_owner AND (b) ops_fn_owner holds CREATE on the
+  -- function's schema (Postgres forbids giving an object to a role that could not have created
+  -- it there). Grant both transiently on the managed path. KEEP the membership as the ratified
+  -- trusted-applier edge (D8-2; [1a] exempts the applier); REVOKE the transient CREATE after
+  -- the loop so the durable owner posture is USAGE-only, identical to the superuser path (where
+  -- superuser bypass needs neither, so no edge and no CREATE are added). Branch-proof verified:
+  -- without the CREATE grant the transfer fails 42501 "permission denied for schema ops".
+  if not v_super then
+    execute format('grant ops_fn_owner to %I', current_user);
+    grant create on schema ops to ops_fn_owner;
+  end if;
   foreach sig in array sigs loop
     if to_regprocedure(sig) is null then
       raise exception '012: expected function % is missing - signature drift', sig;
@@ -165,6 +238,11 @@ begin
     execute format('alter function %s security definer set search_path = ops, pg_temp', sig);
     execute format('alter function %s owner to ops_fn_owner', sig);
   end loop;
+  -- A2 (D8/managed): restore USAGE-only durable posture (the CREATE was only needed to place
+  -- the reassigned functions). No-op on the superuser path (nothing was granted there).
+  if not v_super then
+    revoke create on schema ops from ops_fn_owner;
+  end if;
 end $$;
 
 -- Owner object grants: ONLY what the 9 fn bodies need (S5; read-surface verified against
