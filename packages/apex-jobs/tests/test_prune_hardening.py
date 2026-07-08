@@ -282,3 +282,48 @@ def test_orphan_lock_active_run_appears_after_classify(prune_env, monkeypatch):
     o = [x for x in res["orphan_locks"] if x["dispatch_id"] == d][0]
     assert o["preserve_reason"] == "active-run" and o["has_active_run"] is True   # consistent booleans
     assert os.path.exists(_lockpath(runs, d))
+
+
+def test_orphan_lock_recheck_oserror_refuses(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    d = "review-de010101"; _touch_lock(runs, d)
+    def boom(*a, **k):
+        raise OSError("cannot spawn git")            # _fresh_candidate git spawn failure
+    monkeypatch.setattr(prune, "_fresh_candidate", boom)
+    res = prune.prune_review_worktrees(apply=True, prune_orphan_locks=True)
+    assert res["refused"] is True and res["applied"] is True   # value-silent refusal, no traceback
+    assert os.path.exists(_lockpath(runs, d))
+
+
+def test_force_dirty_marked_before_orphan_lock_refusal(prune_env, monkeypatch):
+    conn, runs, created = prune_env
+    d = "review-df010101"; jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1,
+              finished_at="2026-07-05T00:00:00+00:00")
+    p = _add_wt(runs, created, d); open(os.path.join(p, "x.txt"), "w").close()   # dirty+succeeded
+    dl = "review-df020202"; _touch_lock(runs, dl)                                # + orphan lock
+    real = engine.review_dispatch_statuses
+    def flaky(ids):
+        if list(ids) == [dl]:
+            raise psycopg.OperationalError("dropped")     # fail the orphan status query
+        return real(ids)
+    monkeypatch.setattr(engine, "review_dispatch_statuses", flaky)
+    res = prune.prune_review_worktrees(apply=True, force_succeeded_dirty=True)
+    assert res["refused"] is True
+    item = [i for i in res["items"] if i["dispatch_id"] == d][0]
+    assert item["action"] == "refused"    # marked would-remove-force then relabeled, not "preserved"
+
+
+def test_cli_footer_counts_force_actions(prune_env, capsys):
+    conn, runs, created = prune_env
+    d = "review-e0010101"; jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1,
+              finished_at="2026-07-05T00:00:00+00:00")
+    p = _add_wt(runs, created, d); open(os.path.join(p, "x.txt"), "w").close()
+    from apex_jobs import cli
+    args = cli.build_parser().parse_args(
+        ["prune-review-worktrees", "--apply", "--force-succeeded-dirty"])
+    cli.cmd_prune_review_worktrees(args)
+    out = capsys.readouterr().out
+    assert "candidates: none" not in out              # force removal not misreported as none
+    assert "removed-force" in out

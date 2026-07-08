@@ -349,17 +349,17 @@ def prune_review_worktrees(apply=False, include_failed=False,
     locks = []
     try:
         items = classify_review_worktrees(include_failed=include_failed)
+        if force_succeeded_dirty:
+            for w in items:
+                if (w.classification == "dirty" and w.status == "succeeded"
+                        and not w.active and w.exists and not w.locked):
+                    w.action = "would-remove-force"
         registered_ids = [w.dispatch_id for w in items]
         locks = classify_orphan_locks(registered_ids)
     except DbUnreachable:
         return _refusal(items, "db-unreachable", applied=False, orphan_locks=locks)
     except GitUnavailable:
         return _refusal(items, "git-unavailable", applied=False, orphan_locks=locks)
-    if force_succeeded_dirty:
-        for w in items:
-            if (w.classification == "dirty" and w.status == "succeeded"
-                    and not w.active and w.exists and not w.locked):
-                w.action = "would-remove-force"
     remove_failed = 0
     lock_remove_failed = 0
     if apply:
@@ -400,6 +400,9 @@ def prune_review_worktrees(apply=False, include_failed=False,
             return _refusal(items, "git-unavailable", applied=True, remove_failed=remove_failed,
                             orphan_locks=locks, lock_remove_failed=lock_remove_failed)
         except psycopg.Error:
+            return _refusal(items, "db-unreachable", applied=True, remove_failed=remove_failed,
+                            orphan_locks=locks, lock_remove_failed=lock_remove_failed)
+        except OSError:
             return _refusal(items, "db-unreachable", applied=True, remove_failed=remove_failed,
                             orphan_locks=locks, lock_remove_failed=lock_remove_failed)
         if cand is not None:

@@ -244,7 +244,8 @@ def cmd_prune_review_worktrees(a):
         for i in res["items"]:
             acts[i["action"]] = acts.get(i["action"], 0) + 1
         parts = [f"{acts[k]} {k}"
-                 for k in ("removed", "would-remove", "preserved", "refused")
+                 for k in ("removed", "removed-force", "would-remove", "would-remove-force",
+                           "preserved", "refused")
                  if acts.get(k)]
         print(f"{len(res['items'])} candidates: {', '.join(parts) or 'none'}  "
               f"[{', '.join(f'{k}={v}' for k, v in sorted(res['counts'].items()))}]")
