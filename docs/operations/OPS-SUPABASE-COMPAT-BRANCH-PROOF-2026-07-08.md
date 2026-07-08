@@ -113,4 +113,39 @@ UNADAPTED = RED (42501). ADAPTED = GREEN on the real managed non-super `postgres
 defect caught + fixed mid-proof. Boundary holds under two agreeing oracles; advisors show zero
 `ops` ERROR; zero-residue teardown; prod untouched. The dual-substrate `012` is proven on the
 authoritative substrate for the CORE non-super adaptation. Forward gate for the prod-apply
-packet: full-coexistence re-run + serving-DSN arming.
+packet: full-coexistence re-run + serving-DSN arming (detailed below).
+
+## P4 -- Cross-engine review folded (Codex + adversarial Claude)
+Two independent reviews of the adaptation + this evidence:
+- **Codex** (`apex-jobs review-run`, dispatch `review-95425a07`): one [P2] -- the DOWN `[d5]`
+  work-PUBLIC grant was not superuser-gated (asymmetric with the up). FIXED (`df51f3a4`).
+- **Adversarial Claude** (refute-mode): no CRITICAL/HIGH; the core UP adaptation is sound.
+  - **F1 (MED)**: the up `[2a]` work assert used `has_table_privilege`, which returns true for a
+    privilege inherited via a grant to PUBLIC -> on the managed path (work-PUBLIC ACL untouched)
+    it would false-fail and ABORT the apply if any work table grants DML to PUBLIC. FIXED
+    `df51f3a4` (DIRECT-ACE check; validated on ops_dev, work present, ops roles have no direct
+    work grant).
+  - **F2 (MED)**: the managed DOWN has never run on a real non-super substrate (coverage gap, not
+    a proven bug) -> FORWARD GATE.
+  - **F3 (LOW)** = Codex [P2]; **F4 (LOW)** work warning-noise -> both FIXED `df51f3a4` (the
+    managed path now issues ZERO statements against the co-tenant work schema).
+  - **F5 (LOW)**: the static CONNECT-guard test uses a 500-char proximity heuristic (current file
+    correct) -> noted, no change.
+  - **F6 (LOW)**: managed serving roles reach the DB via inherited PUBLIC CONNECT (no explicit
+    grant) -> SERVING-DSN GATE.
+- Could NOT be refuted by either engine: A2 transient-CREATE sound; D8-2 trusted-applier edge
+  grants no serving-role escalation (serving roles are revoked + asserted non-member); A3 truly
+  blocks database-level ACL mutation on the managed path; login sweeps safe under coexistence
+  (`records_*` are NOLOGIN); ASCII clean; value-silent.
+
+## Forward gate (updated) -- required before any prod apply
+1. Create a FRESH branch on the full-coexistence substrate (records/tcc/work + their roles
+   present) and exercise the `[2a]` work DIRECT-ACE assert + the `v_super`-gated work paths on a
+   work-present DB.
+2. Prove the managed `012_down` on that coexistence branch (F2) before treating it as the prod
+   rollback.
+3. Serving-DSN arming: create `ops_api` / `ops_intake_writer` passwords OOB (Infisical) and GRANT
+   explicit CONNECT on the prod DB to both -- do NOT rely on inherited PUBLIC CONNECT (F6).
+4. Re-run identity + two-oracle boundary + advisors on the coexistence substrate; zero-residue.
+5. Pre-check (belt-and-suspenders): verify on prod that no `work.*` relation grants DML DIRECTLY
+   to the ops roles (the direct-ACE assert already tolerates PUBLIC grants).
