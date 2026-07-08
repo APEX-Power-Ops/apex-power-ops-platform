@@ -212,13 +212,17 @@ declare
     'ops.void_billing_application(uuid,uuid,text)'
   ];
 begin
-  -- A2 (D8/managed): a non-super applier cannot ALTER ... OWNER TO ops_fn_owner without a
-  -- SET-capable membership in it. Grant it explicitly (deterministic across PG versions) and
-  -- KEEP it as the ratified trusted-applier edge (D8-2); the [1a] assert exempts the applier.
-  -- A superuser applier (ops_dev/ops_test) transfers ownership directly via superuser bypass,
-  -- so no edge is added there (dev posture unchanged).
+  -- A2 (D8/managed): a non-super applier cannot ALTER ... OWNER TO ops_fn_owner unless it has
+  -- BOTH (a) a SET-capable membership in ops_fn_owner AND (b) ops_fn_owner holds CREATE on the
+  -- function's schema (Postgres forbids giving an object to a role that could not have created
+  -- it there). Grant both transiently on the managed path. KEEP the membership as the ratified
+  -- trusted-applier edge (D8-2; [1a] exempts the applier); REVOKE the transient CREATE after
+  -- the loop so the durable owner posture is USAGE-only, identical to the superuser path (where
+  -- superuser bypass needs neither, so no edge and no CREATE are added). Branch-proof verified:
+  -- without the CREATE grant the transfer fails 42501 "permission denied for schema ops".
   if not v_super then
     execute format('grant ops_fn_owner to %I', current_user);
+    grant create on schema ops to ops_fn_owner;
   end if;
   foreach sig in array sigs loop
     if to_regprocedure(sig) is null then
@@ -227,6 +231,11 @@ begin
     execute format('alter function %s security definer set search_path = ops, pg_temp', sig);
     execute format('alter function %s owner to ops_fn_owner', sig);
   end loop;
+  -- A2 (D8/managed): restore USAGE-only durable posture (the CREATE was only needed to place
+  -- the reassigned functions). No-op on the superuser path (nothing was granted there).
+  if not v_super then
+    revoke create on schema ops from ops_fn_owner;
+  end if;
 end $$;
 
 -- Owner object grants: ONLY what the 9 fn bodies need (S5; read-surface verified against
