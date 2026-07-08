@@ -149,7 +149,7 @@ def classify_orphan_locks(registered_ids):
     ids = [c["dispatch_id"] for c in cands]
     try:
         snap = engine.review_dispatch_statuses(ids)
-    except (psycopg.OperationalError, psycopg.InterfaceError):
+    except psycopg.Error:
         raise DbUnreachable()
     out = []
     for c in cands:
@@ -374,6 +374,21 @@ def prune_review_worktrees(apply=False, include_failed=False,
             if refusal:
                 return _refusal(items, refusal, applied=True, remove_failed=remove_failed,
                                 orphan_locks=locks, lock_remove_failed=lock_remove_failed)
+    # Combined mode: the worktree removals above open runs/<dispatch>.lock via the flock and
+    # leave it behind, so a just-removed worktree's sidecar is now orphaned. Recompute the
+    # orphan-lock set against the POST-removal registered worktrees so the SAME run prunes those
+    # new orphans (fail-CLOSED on any git/DB error, like the destructive worktree path).
+    if apply and prune_orphan_locks:
+        try:
+            reg_after = [w.dispatch_id
+                         for w in classify_review_worktrees(include_failed=include_failed)]
+            locks = classify_orphan_locks(reg_after)
+        except DbUnreachable:
+            return _refusal(items, "db-unreachable", applied=True, remove_failed=remove_failed,
+                            orphan_locks=locks, lock_remove_failed=lock_remove_failed)
+        except GitUnavailable:
+            return _refusal(items, "git-unavailable", applied=True, remove_failed=remove_failed,
+                            orphan_locks=locks, lock_remove_failed=lock_remove_failed)
     # Orphan-lock branch: label (dry-run) / remove (apply) each candidate only after the
     # four proofs hold, with a FRESH recheck (registered-worktree + DB active-run + flock)
     # at apply time. Value-silent; fail-CLOSED (any failed proof -> preserve + reason).

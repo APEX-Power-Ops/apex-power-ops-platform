@@ -327,3 +327,16 @@ def test_cli_footer_counts_force_actions(prune_env, capsys):
     out = capsys.readouterr().out
     assert "candidates: none" not in out              # force removal not misreported as none
     assert "removed-force" in out
+
+
+def test_combined_apply_prunes_lock_left_by_worktree_removal(prune_env):
+    conn, runs, created = prune_env
+    d = "review-01010101"; jid = _enqueue_review(d)
+    _seed_run(conn, jid, status="succeeded", attempt=1,
+              finished_at="2026-07-05T00:00:00+00:00")
+    _add_wt(runs, created, d)                          # clean prunable worktree, no lock yet
+    res = prune.prune_review_worktrees(apply=True, prune_orphan_locks=True)
+    item = [i for i in res["items"] if i["dispatch_id"] == d][0]
+    assert item["action"] == "removed"                # worktree removed
+    # the .lock the removal's flock created+left is now orphaned and pruned in the SAME run
+    assert not os.path.exists(os.path.join(runs, d + ".lock"))
