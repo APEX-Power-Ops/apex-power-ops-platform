@@ -128,8 +128,10 @@ holds and is not a serving path. "No memberships" means no serving-role membersh
 
 Writer can insert `ops.intake_runs` but cannot execute `attest_apparatus_complete`. API can read the
 recognition worklist and execute recognition SECDEF but cannot insert `apparatus`/`scopes` or execute
-billing. `apparatus.status` is denied to the writer; API provenance update is denied. ops/core PUBLIC
-EXECUTE count = 0.
+billing. The writer can read `ops.apparatus` including its `status` column but has NO INSERT and NO UPDATE on
+`status` (the D2 boundary is write-scoped, not read-scoped); API provenance update is denied. ops/core
+PUBLIC EXECUTE count = 0. [Corrected 2026-07-09; see the G3 Step 2/3 evidence, which superseded the
+prior imprecise wording "apparatus.status is denied to the writer".]
 
 ### Advisors
 
