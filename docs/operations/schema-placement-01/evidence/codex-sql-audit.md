@@ -6,28 +6,28 @@ BLOCK prod write-GO as written. I found no obvious PG16 syntax error in the thre
 
 **Findings**
 
-1. **high - Assertion can false-pass authenticated contract retirement**  
-   Area: correctness, assertion correctness, no unintended breakage.  
+1. **high - Assertion can false-pass authenticated contract retirement**
+   Area: correctness, assertion correctness, no unintended breakage.
    Action 2 revokes `ALL` and drops INSERT-capable authenticated policies, but its assert only checks `has_table_privilege('authenticated', obj, 'SELECT')` for the 8 objects ([draft SQL](/tmp/schema_placement_01_migration_draft.sql:132) lines 132-145). It would not catch retained `INSERT`, `UPDATE`, or `DELETE` through PUBLIC, membership, drifted grants, or the guarded 7th table. This matters because 000008 intentionally granted authenticated insert paths for review decisions and local action queue ([000008](/home/olares/code/apex/apex-power-ops-platform/apps/control-plane-api/supabase/migrations/20260328_000008_enable_control_plane_rls.sql:43) lines 43-49, [000008](/home/olares/code/apex/apex-power-ops-platform/apps/control-plane-api/supabase/migrations/20260328_000008_enable_control_plane_rls.sql:66) lines 66-72).
 
-2. **high - Definer-view allowlist assert does not enforce the allowlist**  
-   Area: assertion correctness, residual exposure/honesty.  
+2. **high - Definer-view allowlist assert does not enforce the allowlist**
+   Area: assertion correctness, residual exposure/honesty.
    The Action 1 allowlist block only counts whether the two named views are still definer ([draft SQL](/tmp/schema_placement_01_migration_draft.sql:73) lines 73-85). It does not fail on any additional `public` SECURITY DEFINER view, despite the spec requiring acceptance failure on any additional definer-view finding ([spec](/tmp/schema_placement_01_rescoped_spec.md:84) lines 84-87). `pg_options_to_table(c.reloptions)` on NULL reloptions is fine here, but the query's scope is too narrow.
 
-3. **high - Runtime DB role safety remains DB-only and unproven from repo**  
-   Area: no unintended breakage, privilege sufficiency.  
+3. **high - Runtime DB role safety remains DB-only and unproven from repo**
+   Area: no unintended breakage, privilege sufficiency.
    The control-plane uses SQLAlchemy direct DB sessions, not Supabase `.from('mcp_*')` Data API calls: DB URL resolution and engine setup are in [config.py](/home/olares/code/apex/apex-power-ops-platform/apps/control-plane-api/config.py:31) lines 31-80, and routes depend on `get_db` ([config.py](/home/olares/code/apex/apex-power-ops-platform/apps/control-plane-api/config.py:86) lines 86-92). The code then runs schema-qualified SQL against `public.mcp_*`, e.g. task summaries ([router.py](/home/olares/code/apex/apex-power-ops-platform/apps/control-plane-api/services/control_plane/router.py:670) lines 670-690), writes decisions/status ([router.py](/home/olares/code/apex/apex-power-ops-platform/apps/control-plane-api/services/control_plane/router.py:788) lines 788-820), and worker queue/job writes ([worker.py](/home/olares/code/apex/apex-power-ops-platform/apps/control-plane-api/services/control_plane/worker.py:793) lines 793-883). If the deployed DB role is `postgres` with bypassrls or a true `service_role`, A2 should not break it; if it is a non-bypass runtime role such as `apex_tcc_runtime`, RLS-on plus only `service_role_all` policies can block it. The spec itself requires actual deployed DSN role proof before write ([spec](/tmp/schema_placement_01_rescoped_spec.md:191) lines 191-194). Needs DB verification.
 
-4. **medium - Forward-hardening for `mcp_external_action_audits` is order-dependent**  
-   Area: idempotency, residual exposure/honesty.  
+4. **medium - Forward-hardening for `mcp_external_action_audits` is order-dependent**
+   Area: idempotency, residual exposure/honesty.
    A1/A2 guard the 7th table with `to_regclass` ([draft SQL](/tmp/schema_placement_01_migration_draft.sql:37) lines 37-43, [draft SQL](/tmp/schema_placement_01_migration_draft.sql:109) lines 109-114), but if this exact SQL is applied while the table is absent and repo migration 000009 is applied later, this migration will not automatically re-run. 000009 creates the table and only adds a service policy, with no explicit anon/auth revoke ([000009](/home/olares/code/apex/apex-power-ops-platform/apps/control-plane-api/supabase/migrations/20260407_000009_add_external_mcp_action_audits.sql:15) lines 15-43). The draft note saying to re-apply later is operationally fragile ([draft SQL](/tmp/schema_placement_01_migration_draft.sql:276) lines 276-277).
 
-5. **medium - Rollback is not exact**  
-   Area: rollback fidelity.  
+5. **medium - Rollback is not exact**
+   Area: rollback fidelity.
    Action 2 rollback recreates the eight policies with semantics matching 000008, but it does not restore the original table comments after forward comments are changed ([draft SQL](/tmp/schema_placement_01_migration_draft.sql:125) lines 125-130, rollback note [draft SQL](/tmp/schema_placement_01_migration_draft.sql:238) lines 238-260; originals in [000008](/home/olares/code/apex/apex-power-ops-platform/apps/control-plane-api/supabase/migrations/20260328_000008_enable_control_plane_rls.sql:123) lines 123-139). Rollback also omits guarded restore grants for `mcp_external_action_audits` if present, even though forward actions revoke it conditionally.
 
-6. **low - Action 3 is idempotent only after a successful first apply on the verified prod shape**  
-   Area: correctness/idempotency.  
+6. **low - Action 3 is idempotent only after a successful first apply on the verified prod shape**
+   Area: correctness/idempotency.
    The move is guarded ([draft SQL](/tmp/schema_placement_01_migration_draft.sql:180) lines 180-188), but the assert requires both tables to exist in `archive` ([draft SQL](/tmp/schema_placement_01_migration_draft.sql:201) lines 201-222). That is fine for the verified prod fact that both scratch tables exist, but it is not a no-op in an environment where either object was never present.
 
 **What Is Correct**
@@ -59,4 +59,3 @@ BLOCKING:
 NON-BLOCKING if explicitly accepted:
 - Action 3's absent-object portability gap, for this exact prod target where both scratch tables are verified present.
 - The SQL mechanics for `REVOKE`, `DROP POLICY IF EXISTS`, `COMMENT`, `ALTER DEFAULT PRIVILEGES`, and `ALTER TABLE ... SET SCHEMA`; I see no clear PG16 syntax blocker.
-

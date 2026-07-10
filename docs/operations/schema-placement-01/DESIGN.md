@@ -1,6 +1,7 @@
 # Schema-Placement Packet 01 (RE-SCOPED, rev 2): Public Exposure Hardening + Scratch Relocate - Design Spec
 
-- Date: 2026-07-10. Rev 2.1 = post technical-authority review (findings 1-5 folded in; see section 1b). GATE
+- Date: 2026-07-10. Rev 2.1 = post technical-authority review (findings 1-5 folded in; see section 1b). Rev 2.3
+  (2026-07-10) = post-HOLD delta-review fixes (HOLD-F1..F6) folded in; see section 9 + IRP-EVIDENCE section 7. GATE
   STATUS: APPROVED FOR READ-ONLY P0 ONLY; implementation/write gate HELD pending P0 evidence + exact-SQL review.
 - Status: DRAFT design material. NOT implementation-ready until technical-authority approval is recorded
   (PLATFORM-DATA-AND-SCHEMA-STRATEGY-2026-04-12 section 1.1 Technical Authority Gate).
@@ -81,6 +82,11 @@ schema_placement_01_IRP_synthesis.md.
 1b.4 Durable drift assertion: extend apps/control-plane-api/scripts/check_schema_drift.py with a focused ACL/view-
   posture check over the 6-or-7 tables + 2 views (assert anon has NO effective privilege; authenticated per the
   chosen 01b-auth outcome). Prevents a future grant silently undoing the pure-REVOKE boundary. Packet deliverable.
+  [DELIVERED 2026-07-10 (HOLD-F1): scripts/schema_drift_acl.py (pure, unit-tested evaluators) + check_schema_drift.py
+  live queries + tests/test_schema_drift_acl.py (12 tests). The anon/auth no-privilege assertion is boundary-gated
+  (enforced only once the RETIRED-01b-auth comment marker is present, so it does not false-alarm pre-apply); the 1b.5
+  definer-view allowlist (below) is delivered in the same pass as a standing invariant. Live PG16: pre-apply
+  boundary=f/leaks=64 (reported, not failed), post-apply boundary=t/leaks=0. See IRP-EVIDENCE section 7.]
 1b.5 Advisor residual allowlist: record the EXACT two accepted security_definer_view objects
   {public.mcp_job_run_summary_v, public.mcp_task_packet_summary_v}, expected count = 2. Acceptance FAILS on any
   ADDITIONAL security_definer_view finding OR any renewed effective anon privilege. (If the 1b.1 consumer-exists
@@ -260,6 +266,28 @@ P2 - acceptance (section 9).
   but is REVOKE-targeted defensively; effective-privilege asserts (has_table_privilege), not relacl. ADP on a fresh
   schema is a no-op; per-object REVOKE + off-exposed-list are the mechanism. `mcp_external_action_audits` absent on
   prod (6+2 live scope); its bootstrap-born-exposed drift flagged (6a).
+
+## 9. Delta Review (post-HOLD verdict, 2026-07-10)
+
+A focused final review of the reviewed SHA returned **HOLD merge** with 6 findings. All folded in (full mapping +
+evidence: IRP-EVIDENCE section 7). Summary: HOLD-F1 delivered the promised 1b.4 drift assertion (see 1b.4 above);
+HOLD-F2 made `evidence/tests/run_updownup_test.sh` self-contained (canonical path resolution, no uncommitted
+aliases); HOLD-F3 removed the speculative guarded-7th `GRANT ALL` from the A1/A2 rollbacks (fail-closed - a rollback
+can never re-expose); HOLD-F4 cleaned trailing whitespace so `git diff --check` passes; HOLD-F5 corrected the
+"byte-identical" claim to "tracked-object fingerprint match" (the empty `archive` schema + comment + default privs
+intentionally survive rollback); HOLD-F6 added `archive` schema-posture asserts (postgres-owned; anon/auth no USAGE)
+to A3.
+
+Consistency clarification for section 6a (raised by HOLD-F1): Packet 01 DOES deliver, for `mcp_external_action_audits`,
+(a) the guarded revoke in A1/A2 (hardens the 7th table IF it exists at apply) and (b) the 1b.4 ACL drift assertion.
+Packet 01 does NOT deliver the amendment of bootstrap migration 000009 to create the table born-hardened - that
+remains a NAMED control-plane-side follow-on. Net: a fresh apply of 000009 still creates the 7th born anon-exposed
+until that follow-on lands; A1/A2's guarded revoke plus the drift assertion are the interim boundary. This is a flagged
+capability/drift gap (OPERATING-ARCHITECTURE 2.7), not silently worked around.
+
+Delta scope/limitation: the delta was authored + self-verified (unit test + disposable-DB PG16 up/down/up proof +
+shellcheck rc 0 + compileall); it was not put through a fresh independent Codex pass (additive/mechanical over an
+already dual-IRP'd base). Production writes remain HELD pending per-action operator write-GO.
 
 ## Appendix A - verified object inventory (prod fxoyniqnrlkxfligbxmg, 2026-07-10)
 01b tables (6): mcp_job_runs, mcp_lane_priorities, mcp_local_action_queue, mcp_review_decisions, mcp_task_packets,

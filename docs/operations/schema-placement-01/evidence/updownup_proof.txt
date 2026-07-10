@@ -1,5 +1,7 @@
-### schema-placement A1/A2/A3 up-down-up proof  (pid=1701, container=apex-dev-pg)
-===== CASE 1: 6-table up/down/up  (db=sp01_udu_1701_c1) =====
+### schema-placement A1/A2/A3 up-down-up proof  (pid=24175, container=apex-sp01-pg16)
+### server_version: 16.13
+### repo_root: /home/olares/code/apex/apex-power-ops-platform
+===== CASE 1: 6-table up/down/up  (db=sp01_udu_24175_c1) =====
   ok:   fixture.sql loaded
   ok:   baseline fingerprint captured (102 lines)
   ok:   case1 A1 applied (exit 0)
@@ -12,17 +14,18 @@
   ok:   case1: 2 scratch tables now in schema archive (=2)
   ok:   case1: 0 scratch tables left in public (=0)
   ok:   case1: anon+auth NO privilege on archived scratch tables (=0)
+  ok:   case1: archive schema postgres-owned + anon/auth NO USAGE (A3 schema posture) (=t)
   ok:   case1: apex_tcc_runtime grants UNCHANGED (32/32) on 8 mcp objects (=32)
   ok:   case1 A3.rollback applied (exit 0)
   ok:   case1 A2.rollback applied (exit 0)
   ok:   case1 A1.rollback applied (exit 0)
-  ok:   case1 fingerprint BYTE-IDENTICAL after up->down
+  ok:   case1 tracked-object fingerprint MATCH after up->down (schema-level archive residue -- empty schema + comment + default privs -- intentionally retained by A3 rollback; out of tracked scope)
   ok:   case1 re-apply A1 applied (exit 0)
   ok:   case1 re-apply A2 applied (exit 0)
 NOTICE:  schema "archive" already exists, skipping
   ok:   case1 re-apply A3 applied (exit 0)
   ok:   case1 disposable DB dropped
-===== CASE 2: 7-table up/down/up  (db=sp01_uku_1701_c2) =====
+===== CASE 2: 7-table up/down/up  (db=sp01_uku_24175_c2) =====
   ok:   fixture_7th.sql loaded (7 tables)
   ok:   case2: 7th born-exposed (anon+auth 8/8) pre-up (=8)
   ok:   baseline fingerprint captured (111 lines)
@@ -36,21 +39,25 @@ NOTICE:  schema "archive" already exists, skipping
   ok:   case2: 2 scratch tables now in schema archive (=2)
   ok:   case2: 0 scratch tables left in public (=0)
   ok:   case2: anon+auth NO privilege on archived scratch tables (=0)
+  ok:   case2: archive schema postgres-owned + anon/auth NO USAGE (A3 schema posture) (=t)
   ok:   case2: apex_tcc_runtime grants UNCHANGED (32/32) on 8 mcp objects (=32)
   ok:   case2: guarded 7th HARDENED (anon+auth 0/8) after up (=0)
   ok:   case2 A3.rollback applied (exit 0)
+NOTICE:  A2 rollback: mcp_external_action_audits left HARDENED (fail-closed, review F3). Restore its pre-apply authenticated ACL from the captured snapshot ONLY if it was exposed before this packet applied.
   ok:   case2 A2.rollback applied (exit 0)
+NOTICE:  A1 rollback: mcp_external_action_audits left HARDENED (fail-closed, review F3). Restore its pre-apply anon ACL from the captured snapshot ONLY if it was exposed before this packet applied.
   ok:   case2 A1.rollback applied (exit 0)
-  ok:   case2: guarded 7th RESTORED (anon+auth 8/8) after down (=8)
-  ok:   case2 fingerprint BYTE-IDENTICAL after up->down (incl. 7th)
+  ok:   case2: guarded 7th STAYS hardened (anon+auth 0/8) after down [fail-closed] (=0)
+  ok:   case2 governed-surface tracked-object MATCH after up->down (7th intentionally stays hardened; archive residue retained by design)
+  ok:   case2 full-fingerprint delta is EXACTLY the 7th-table posture (16 lines, all mcp_external_action_audits)
   ok:   case2 re-apply A1 applied (exit 0)
   ok:   case2 re-apply A2 applied (exit 0)
 NOTICE:  schema "archive" already exists, skipping
   ok:   case2 re-apply A3 applied (exit 0)
   ok:   case2 disposable DB dropped
-===== CASE 3: NEGATIVE / atomicity  (db=sp01_neg_1701_c3) =====
+===== CASE 3: NEGATIVE / atomicity  (db=sp01_neg_24175_c3) =====
   ok:   fixture.sql loaded
-  ok:   case3 leak role seeded (sp01_leak_1701 -> anon)
+  ok:   case3 leak role seeded (sp01_leak_24175 -> anon)
   ok:   case3: leak active (anon inherits SELECT on mcp_task_packets) (=t)
   ok:   case3 A1 correctly ABORTED (rc=3; assert message present)
   ok:   case3: anon retains 4/4 verbs on mcp_job_runs (rolled back) (=4)
