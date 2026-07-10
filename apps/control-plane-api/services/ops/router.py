@@ -329,7 +329,7 @@ def master_operations_summary(
             text(
                 """
                 SELECT
-                    project_id,
+                    project_id::text AS project_id,
                     project_number,
                     project_name,
                     project_status,
@@ -429,10 +429,10 @@ def project_apparatus_summary(
             text(
                 """
                 SELECT
-                    project_id,
+                    project_id::text AS project_id,
                     project_number,
                     project_name,
-                    scope_id,
+                    scope_id::text AS scope_id,
                     scope_name,
                     total_apparatus,
                     total_completed,
@@ -480,9 +480,9 @@ def apparatus_by_category_summary(
             text(
                 """
                 SELECT
-                    project_id,
+                    project_id::text AS project_id,
                     project_number,
-                    scope_id,
+                    scope_id::text AS scope_id,
                     scope_name,
                     apparatus_category,
                     total_count,
@@ -551,10 +551,10 @@ def blockers_summary(
 
 REVENUE_RECOGNITION_SQL = """
 SELECT
-    p.id AS project_id,
+    p.id::text AS project_id,
     p.project_number,
     p.project_name,
-    s.id AS scope_id,
+    s.id::text AS scope_id,
     s.scope_name,
     COALESCE(SUM(a.quoted_revenue), 0) AS quoted_revenue,
     COALESCE(SUM(a.quoted_revenue) FILTER (WHERE a.status = 'Complete'::public.apparatus_status), 0) AS recognized_revenue,
