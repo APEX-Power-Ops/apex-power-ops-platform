@@ -260,18 +260,24 @@ def _receipt_pure():
     # the four CLI docs by path, plus every resolved decision-referenced evidence file.
     snap, dec, em, man, _sp = delete_bundle()
     with tempfile.TemporaryDirectory() as d:
-        paths = {}
+        doc_bytes, paths = {}, {}
         for nm, doc in (("snapshot", snap), ("decisions", dec), ("entity_map", em), ("manifest", man)):
             paths[nm] = os.path.join(d, nm + ".json")
-            with open(paths[nm], "w", encoding="utf-8") as fh:
-                json.dump(doc, fh)
-        rec = cd.build_receipt(mode="preapply", now_iso="2026-07-10T21:00:00Z",
-                               expect_project_ref="fxoyniqnrlkxfligbxmg", doc_paths=paths, roots=ROOTS, decisions=dec)
+            doc_bytes[nm] = json.dumps(doc).encode("utf-8")
+            with open(paths[nm], "wb") as fh:
+                fh.write(doc_bytes[nm])
+        # Codex P1b regression: corrupt the on-disk snapshot AFTER the validated bytes were captured;
+        # the receipt must hash the IN-HAND (validated) bytes, NOT a re-read of the tampered file.
+        with open(paths["snapshot"], "ab") as fh:
+            fh.write(b"TAMPER-AFTER-VALIDATION")
+        rec = cd.build_receipt(mode="preapply", now_iso="2026-07-10T21:00:00Z", expect_project_ref="fxoyniqnrlkxfligbxmg",
+                               doc_bytes=doc_bytes, doc_paths=paths, extra_paths={}, roots=ROOTS, decisions=dec)
         with open(paths["snapshot"], "rb") as fh:
-            snap_sha = hashlib.sha256(fh.read()).hexdigest()
+            tampered_sha = hashlib.sha256(fh.read()).hexdigest()
         ev = {e["ref"]: e["sha256"] for e in rec["evidence"]}
         return (rec["gate"] == "green"
-                and rec["inputs"]["snapshot"]["sha256"] == snap_sha
+                and rec["inputs"]["snapshot"]["sha256"] == hashlib.sha256(doc_bytes["snapshot"]).hexdigest()  # follows validated bytes
+                and rec["inputs"]["snapshot"]["sha256"] != tampered_sha        # NOT the tampered re-read
                 and ev.get("recovery.tar") == RECOVERY_SHA        # the backup bytes are pinned
                 and "restore-ok.log" in ev)                       # and the restore-validation proof
 

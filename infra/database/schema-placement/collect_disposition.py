@@ -545,20 +545,17 @@ def write_snapshot(path, snapshot, *, overwrite=False):
 
 
 def write_signed_snapshot(path, snapshot, *, sig_path, private_key, overwrite=False):
-    """Publish the snapshot AND its detached Ed25519 signature sidecar. The signature is over the
-    exact snapshot bytes (F1). Both files are written atomically. Fail-closed: if the sidecar write
-    fails, the just-published snapshot is removed so no UNSIGNED snapshot is ever left behind."""
+    """Publish the snapshot AND its detached Ed25519 signature sidecar, each atomically. The signature
+    is over the exact snapshot bytes (F1). The SIDECAR is published FIRST so a partial failure can
+    never leave a snapshot WITHOUT its signature (the dangerous state — the checker would then hold an
+    unsigned snapshot); a lone sidecar is inert (the checker requires BOTH). Neither destination is
+    ever deleted on failure, so an existing valid signed pair (overwrite mode) is never destroyed —
+    a failed snapshot replace leaves the old snapshot intact, and the new sidecar simply will not
+    verify against it, so the checker fails closed rather than losing data (Codex P2)."""
     message = _serialize_snapshot(snapshot)
     sidecar = json.dumps(ds.build_sig_sidecar(message, private_key), indent=2, sort_keys=True).encode("utf-8")
+    _write_bytes_atomic(sig_path, sidecar, overwrite=overwrite)
     _write_bytes_atomic(path, message, overwrite=overwrite)
-    try:
-        _write_bytes_atomic(sig_path, sidecar, overwrite=overwrite)
-    except Exception:
-        try:
-            os.remove(path)
-        except OSError:
-            pass
-        raise
 
 
 def _git_head_sha(repo_dir):

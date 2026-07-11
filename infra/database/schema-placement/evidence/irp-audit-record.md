@@ -104,8 +104,28 @@ An adversarial negative accompanies every reproduced bypass. `disposition_signin
 `cryptography` so `import collect_disposition` stays cheap and the offline core keeps its
 no-heavy-deps-on-import property.
 
+## Round-3 cross-engine re-audit (of the correction commit `53507c0f`)
+
+Codex `gpt-5.5` xhigh (`review --base a5bed80d`, detached worktree) found **3 real defects — all in the
+NEW tranche code**, and all the same class: a control meant to CLOSE a TOCTOU re-read the artifact at
+a different time than it was parsed/validated. (Claude grounded-audit `wf_c8d73f2a-f1f` ran the same
+lens in parallel; its memo is RECONCILED into this section when the workflow completes — any findings
+it adds beyond Codex's three will be listed and fixed before the census GO.)
+
+| Sev | Finding (Codex) | Resolution |
+|-----|-----------------|-----------|
+| P1 | SP026 verified the snapshot file RE-READ at verify time, not the bytes `load_doc()` already parsed — a file swapped between parse and verify lets a signed benign file satisfy SP026 while the gate trusts a different in-memory doc | checker main() reads each input's bytes ONCE, parses from that buffer, and verifies the sidecar against the in-hand snapshot bytes via new `verify_detached()`; +e2e already covers tamper |
+| P1 | `build_receipt` RE-READ the CLI inputs after `run()` validated the in-memory docs, so with `--receipt-out` it could pin hashes of unvalidated bytes | `build_receipt` now hashes the in-hand `doc_bytes` (the parsed+gated bytes), not a second read; `_receipt_pure` strengthened to corrupt the on-disk file after capture and assert the receipt follows the validated bytes |
+| P2 | `write_signed_snapshot` under `--overwrite` deleted the just-written snapshot on a sidecar-write failure — after `os.replace` had already destroyed the prior snapshot, leaving NO valid pair | sidecar is published FIRST, snapshot SECOND, and no destination is ever deleted on failure; a failed snapshot replace leaves the prior snapshot intact (the new sidecar simply won't verify → fail-closed). +collector regression test |
+
+All resolved on `53507c0f`'s successor; suites remain green (contract 57 / checker 58 / collector 36).
+The cross-engine pass earned its keep: three genuine TOCTOU/data-safety defects in the very controls
+added to close TOCTOU, none caught by the per-item TDD.
+
 ## Verdict
-Two adversarial cross-engine rounds drove 8 + 9 = 17 fixes; the operator-ratified correction tranche
+Adversarial cross-engine rounds drove 8 + 9 findings on earlier commits, 6 operator-ratified items in
+the correction tranche, and 3 more from the Codex re-audit of `53507c0f` (Claude re-audit reconciliation
+pending); the operator-ratified correction tranche
 adds 6 more (the 4 design decisions + 2 new Mediums), each with a negative test and no SQL change
 (PG16 proof still valid). The dominant F1 residual is now closed by a real Ed25519 signature gate.
 **Census GO, push, and PR remain HELD** — a fresh cross-engine IRP re-audit runs on the correction

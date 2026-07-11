@@ -100,14 +100,11 @@ def verify_sidecar(message: bytes, sidecar, public_key) -> tuple[bool, str]:
     return True, ""
 
 
-def verify_snapshot_files(snapshot_path, sig_path, pubkey_path) -> tuple[bool, str]:
-    """Read the snapshot bytes, the sidecar, and the public key from disk and verify. Fail-closed on
-    any read/parse/verify error. This is what the checker calls before trusting a snapshot."""
-    try:
-        with open(snapshot_path, "rb") as fh:
-            message = fh.read()
-    except OSError as exc:
-        return False, f"cannot read snapshot ({type(exc).__name__})"
+def verify_detached(message: bytes, sig_path, pubkey_path) -> tuple[bool, str]:
+    """Verify a detached signature over message bytes the caller ALREADY HAS IN HAND. Reads only the
+    sidecar and the public key from disk — never the message — so the bytes verified are EXACTLY the
+    bytes the caller parses/trusts, closing the verify-then-reparse TOCTOU (Codex P1). Fail-closed on
+    any read/parse/verify error."""
     try:
         with open(sig_path, "rb") as fh:
             sidecar = json.loads(fh.read())
@@ -119,3 +116,15 @@ def verify_snapshot_files(snapshot_path, sig_path, pubkey_path) -> tuple[bool, s
     except Exception as exc:  # noqa: BLE001 -- any key-load failure => cannot verify => fail closed
         return False, f"cannot load verify key ({type(exc).__name__})"
     return verify_sidecar(message, sidecar, public_key)
+
+
+def verify_snapshot_files(snapshot_path, sig_path, pubkey_path) -> tuple[bool, str]:
+    """Convenience wrapper: read the snapshot bytes from disk, then verify_detached. Used by tests and
+    any caller that has only the path. The checker's main gate uses verify_detached directly on the
+    bytes it already read, so it never reads the snapshot twice."""
+    try:
+        with open(snapshot_path, "rb") as fh:
+            message = fh.read()
+    except OSError as exc:
+        return False, f"cannot read snapshot ({type(exc).__name__})"
+    return verify_detached(message, sig_path, pubkey_path)

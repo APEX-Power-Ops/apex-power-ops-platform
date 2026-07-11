@@ -108,12 +108,18 @@ def _reject_nonfinite(const):
     raise ValueError(f"non-finite JSON constant {const!r} not allowed")
 
 
-def load_doc(path):
-    with open(path, encoding="utf-8") as fh:
-        text = fh.read()
+def load_doc_from_text(text, path):
+    """Parse an already-in-hand document string. Splitting this out lets main() read each input's
+    bytes ONCE and parse from that same buffer, so the bytes gated/verified/hashed are identical to
+    the bytes on disk at read time (no second read — Codex P1)."""
     if path.endswith(".json"):
         return json.loads(text, object_pairs_hook=_reject_dup_json_pairs, parse_constant=_reject_nonfinite)
     return yaml.load(text, Loader=NoDupSafeLoader)
+
+
+def load_doc(path):
+    with open(path, encoding="utf-8") as fh:
+        return load_doc_from_text(fh.read(), path)
 
 
 # ---- helpers ---------------------------------------------------------------
@@ -151,15 +157,21 @@ def _sha256_file(path):
         return hashlib.sha256(fh.read()).hexdigest()
 
 
-def build_receipt(*, mode, now_iso, expect_project_ref, doc_paths, roots, decisions):
+def build_receipt(*, mode, now_iso, expect_project_ref, doc_bytes, doc_paths, extra_paths, roots, decisions):
     """A gate receipt binds the EXACT bytes the gate validated so the apply runner can rehash every
     input immediately before executing SQL and fail on any mismatch (closes the check-time↔apply-time
-    TOCTOU). It records the four CLI documents (+ signature/verify-key) by sha256, and every resolved
+    TOCTOU). The four validated CLI documents are hashed from the IN-HAND bytes main() already parsed
+    and gated — NOT a second read (Codex P1) — so the receipt can never certify bytes different from
+    the ones that passed the gate. Verification inputs (signature / verify-key) and each resolved
     decision-referenced evidence file (recovery artifact, restore-validation proof, evidence_refs,
-    transform validation report, compat telemetry). Emitted ONLY on a GREEN gate."""
+    transform report, telemetry) are hashed from disk; the recovery artifact is additionally bound by
+    the decision-declared sha256, which itself lives in the hash-pinned decisions document. Emitted
+    ONLY on a GREEN gate."""
     receipt = {"kind": "disposition_gate_receipt", "gate": "green", "mode": mode, "now": now_iso,
                "expect_project_ref": expect_project_ref, "inputs": {}, "evidence": []}
-    for name, p in doc_paths.items():
+    for name, data in doc_bytes.items():
+        receipt["inputs"][name] = {"path": doc_paths.get(name), "sha256": hashlib.sha256(data).hexdigest()}
+    for name, p in extra_paths.items():
         if p and os.path.isfile(p):
             receipt["inputs"][name] = {"path": p, "sha256": _sha256_file(p)}
     seen = set()
@@ -527,13 +539,20 @@ def main(argv=None):
     ap.add_argument("--root", action="append", default=[], dest="roots", required=True, help="approved evidence root (repeatable, REQUIRED).")
     args = ap.parse_args(argv)
 
+    # Read every input's bytes ONCE and parse from that same buffer, so the bytes the gate verifies
+    # (SP026) and pins in the receipt are identical to the bytes it parsed and trusted (Codex P1).
     try:
-        snapshot = load_doc(args.snapshot)
-        decisions = load_doc(args.decisions)
-        entity_map = load_doc(args.entity_map)
-        manifest = load_doc(args.manifest)
+        doc_bytes = {}
+        for name, p in (("snapshot", args.snapshot), ("decisions", args.decisions),
+                        ("entity_map", args.entity_map), ("manifest", args.manifest)):
+            with open(p, "rb") as fh:
+                doc_bytes[name] = fh.read()
+        snapshot = load_doc_from_text(doc_bytes["snapshot"].decode("utf-8"), args.snapshot)
+        decisions = load_doc_from_text(doc_bytes["decisions"].decode("utf-8"), args.decisions)
+        entity_map = load_doc_from_text(doc_bytes["entity_map"].decode("utf-8"), args.entity_map)
+        manifest = load_doc_from_text(doc_bytes["manifest"].decode("utf-8"), args.manifest)
         now = parse_dt(args.now)
-    except (OSError, ValueError, yaml.YAMLError) as exc:
+    except (OSError, ValueError, yaml.YAMLError, UnicodeDecodeError) as exc:
         print(f"SP000 input: {exc}", file=sys.stderr)
         return 2
 
@@ -550,7 +569,7 @@ def main(argv=None):
             print(dg.render())
             print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ===")
             return 1
-        ok, reason = ds.verify_snapshot_files(os.path.abspath(args.snapshot), os.path.abspath(args.snapshot_sig), os.path.abspath(args.verify_key))
+        ok, reason = ds.verify_detached(doc_bytes["snapshot"], os.path.abspath(args.snapshot_sig), os.path.abspath(args.verify_key))
         if not ok:
             dg = Diagnostic("SP026", "snapshot", f"signature verification failed: {reason}")
             print(dg.render())
@@ -566,11 +585,11 @@ def main(argv=None):
         return 1
     if args.receipt_out:
         doc_paths = {"snapshot": os.path.abspath(args.snapshot), "decisions": os.path.abspath(args.decisions),
-                     "entity_map": os.path.abspath(args.entity_map), "manifest": os.path.abspath(args.manifest),
-                     "snapshot_sig": os.path.abspath(args.snapshot_sig) if args.snapshot_sig else None,
-                     "verify_key": os.path.abspath(args.verify_key) if args.verify_key else None}
+                     "entity_map": os.path.abspath(args.entity_map), "manifest": os.path.abspath(args.manifest)}
+        extra_paths = {"snapshot_sig": os.path.abspath(args.snapshot_sig) if args.snapshot_sig else None,
+                       "verify_key": os.path.abspath(args.verify_key) if args.verify_key else None}
         receipt = build_receipt(mode=args.mode, now_iso=args.now, expect_project_ref=args.expect_project_ref,
-                                doc_paths=doc_paths, roots=roots, decisions=decisions)
+                                doc_bytes=doc_bytes, doc_paths=doc_paths, extra_paths=extra_paths, roots=roots, decisions=decisions)
         with open(args.receipt_out, "w", encoding="utf-8") as fh:
             json.dump(receipt, fh, indent=2, sort_keys=True)
         print(f"=== gate receipt written: {args.receipt_out} ({len(receipt['evidence'])} evidence files pinned) ===")
