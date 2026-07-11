@@ -75,6 +75,7 @@ CODES = {
     "CN014": "empty census (zero relations) is not accepted",
     "CN015": "duplicate object_id (two relation records share an identity)",
     "CN016": "internal inconsistency: a top-level field disagrees with collection_scope (collector_version / repo_sha / query_bundle_sha256)",
+    "CN017": "verifier preflight: the acceptance gate is not running a clean checkout of reviewed source at --expect-repo-sha",
 }
 
 
@@ -242,9 +243,28 @@ def main(argv=None):
     ap.add_argument("--expect-schemas", required=True, dest="expect_schemas", help="comma-separated requested schemas.")
     ap.add_argument("--expect-repo-sha", required=True, dest="expect_repo_sha", help="the MERGED main commit the census must identify.")
     ap.add_argument("--require-role-markers", default="anon,authenticated,service_role", dest="require_role_markers")
-    ap.add_argument("--expect-query-bundle-sha256", default=None, dest="expect_query_bundle_sha256",
-                    help="override; default = this checkout's collect_disposition.query_bundle_sha256().")
+    ap.add_argument("--expect-query-bundle-sha256", required=True, dest="expect_query_bundle_sha256",
+                    help="REQUIRED: the reviewed collector query-bundle hash CN006 must match (removes the "
+                         "self-referential default; must equal collect_disposition.query_bundle_sha256() at the census commit).")
+    ap.add_argument("--require-clean-checkout", action="store_true", dest="require_clean_checkout",
+                    help="preflight: assert the verifier's OWN git checkout is clean AND at --expect-repo-sha before "
+                         "trusting TRUSTED_SIGNERS + keys/ (binds the acceptance gate to reviewed source). The runbook sets this.")
     args = ap.parse_args(argv)
+
+    # Verifier provenance preflight (opt-in; the runbook sets it): the trust anchor is verifier SOURCE
+    # (TRUSTED_SIGNERS) + the keys/ material it loads, so bind BOTH to the reviewed merged commit before
+    # trusting them. Fail-closed on a dirty / undeterminable / mismatched checkout.
+    if args.require_clean_checkout:
+        vdir = os.path.dirname(os.path.abspath(__file__))
+        head = cds._git_head_sha(vdir)
+        if not head or not cds._git_worktree_clean(vdir):
+            print(Diagnostic("CN017", "verifier", "verifier checkout is DIRTY or its git HEAD is undeterminable — run acceptance from a clean merged-main checkout so TRUSTED_SIGNERS + keys/ are reviewed source").render())
+            print("=== CENSUS ACCEPTANCE: 1 BLOCKING ===")
+            return 1
+        if head != args.expect_repo_sha:
+            print(Diagnostic("CN017", "verifier", f"verifier git HEAD {head[:12]} != --expect-repo-sha {args.expect_repo_sha[:12]} — the acceptance gate must run reviewed source at the expected merged commit").render())
+            print("=== CENSUS ACCEPTANCE: 1 BLOCKING ===")
+            return 1
 
     # Read the snapshot bytes ONCE and verify the signature BEFORE parsing (a forged/tampered snapshot
     # must never be parsed or trusted). The bytes verified are exactly the bytes parsed below.

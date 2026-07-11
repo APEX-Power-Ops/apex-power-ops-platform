@@ -91,10 +91,16 @@ uv run --project infra/database/schema-placement --locked \
     --expect-schemas public \
     --expect-repo-sha "$MAIN_SHA" \
     --require-role-markers anon,authenticated,service_role \
-    --expect-query-bundle-sha256 217ff3add2abdaca2fafa108f68e10490ee687ac9899b7762f1411d45e2de9db
+    --expect-query-bundle-sha256 217ff3add2abdaca2fafa108f68e10490ee687ac9899b7762f1411d45e2de9db \
+    --require-clean-checkout
 ```
 
-Pass `--expect-query-bundle-sha256` explicitly (D4) so CN006 binds the census SQL to a **reviewed** hash
+`--require-clean-checkout` is a preflight: it asserts the verifier's own git checkout is clean AND at
+`$MAIN_SHA` before it trusts `TRUSTED_SIGNERS` + `keys/` — binding the acceptance gate to reviewed source
+(a dirty or wrong-commit checkout fails CN017, no bypass). Run this step from the same clean merged-main
+worktree as the census.
+
+`--expect-query-bundle-sha256` is now REQUIRED (D4/RR-2): it binds CN006 to a **reviewed** hash
 rather than silently trusting the verifier's own checkout. The value MUST equal
 `collect_disposition.query_bundle_sha256()` at the census commit; update it in lockstep whenever the
 `QUERY_BUNDLE` changes (re-derive with `python -c "import collect_disposition as c; print(c.query_bundle_sha256())"`).

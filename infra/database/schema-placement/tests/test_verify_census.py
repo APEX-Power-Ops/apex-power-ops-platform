@@ -201,7 +201,8 @@ def _write_signed(snapshot, d, priv, pub_pem, fingerprint=None, key_id=KEY_ID):
 def _argv(snap_path, sig_path, keys_dir, key_id=KEY_ID):
     return ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--key-id", key_id, "--keys-dir", keys_dir,
             "--expect-project-ref", PROJECT, "--expect-database", "postgres", "--expect-schemas", "public",
-            "--expect-repo-sha", SHA, "--require-role-markers", ",".join(MARKERS)]
+            "--expect-repo-sha", SHA, "--require-role-markers", ",".join(MARKERS),
+            "--expect-query-bundle-sha256", QB]
 
 
 def test_main_green_e2e():
@@ -332,6 +333,41 @@ def test_verify_detached_with_key_crypto_is_sole_gate():
         assert ds.verify_detached_with_key(msg, sig3, K_obj)[0] is True
 
 
+def test_main_expect_query_bundle_required():
+    # RR-2: --expect-query-bundle-sha256 is REQUIRED at the CLI (no self-referential default); argparse errors.
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    with tempfile.TemporaryDirectory() as d:
+        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
+        argv = ["--snapshot", sp, "--snapshot-sig", sig, "--key-id", KEY_ID, "--keys-dir", kd,
+                "--expect-project-ref", PROJECT, "--expect-database", "postgres", "--expect-schemas", "public",
+                "--expect-repo-sha", SHA, "--require-role-markers", ",".join(MARKERS)]  # NO --expect-query-bundle-sha256
+        raised = False
+        try:
+            vc.main(argv)
+        except SystemExit as exc:
+            raised = (exc.code == 2)
+        assert raised
+
+
+def test_main_require_clean_checkout_preflight():
+    # Finding #3: --require-clean-checkout binds the acceptance gate to reviewed source — fail-closed on a
+    # dirty or mismatched verifier checkout, GREEN only when clean AND HEAD == --expect-repo-sha.
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    with tempfile.TemporaryDirectory() as d:
+        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
+        saved = (cds._git_head_sha, cds._git_worktree_clean)
+        try:
+            with _trusted(KEY_ID, _fp(pub_pem)):
+                cds._git_head_sha = lambda *a: SHA; cds._git_worktree_clean = lambda *a: False   # dirty
+                assert vc.main(_argv(sp, sig, kd) + ["--require-clean-checkout"]) == 1
+                cds._git_head_sha = lambda *a: "deadbeef1234"; cds._git_worktree_clean = lambda *a: True  # wrong HEAD
+                assert vc.main(_argv(sp, sig, kd) + ["--require-clean-checkout"]) == 1
+                cds._git_head_sha = lambda *a: SHA; cds._git_worktree_clean = lambda *a: True    # clean + match
+                assert vc.main(_argv(sp, sig, kd) + ["--require-clean-checkout"]) == 0
+        finally:
+            cds._git_head_sha, cds._git_worktree_clean = saved
+
+
 def test_key_id_traversal_rejected_even_with_planted_key():
     # F-3 guard (de3fa5de re-review): plant a LOADABLE forged key at the traversal destination and trust
     # the traversal id, so the rejection MUST come from the sanitize/containment defenses (_KEY_ID_RE /
@@ -378,6 +414,8 @@ ALL = [
     ("verify_uses_pinned_key_object_after_file_swap", test_verify_uses_pinned_key_object_after_file_swap),
     ("verify_detached_with_key_crypto_is_sole_gate", test_verify_detached_with_key_crypto_is_sole_gate),
     ("key_id_traversal_rejected_even_with_planted_key", test_key_id_traversal_rejected_even_with_planted_key),
+    ("main_expect_query_bundle_required", test_main_expect_query_bundle_required),
+    ("main_require_clean_checkout_preflight", test_main_require_clean_checkout_preflight),
 ]
 
 
