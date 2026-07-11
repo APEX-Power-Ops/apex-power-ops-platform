@@ -328,6 +328,10 @@ def _neg_delete_recovery_missing_sha():  # the recovery artifact must carry the 
     r = _row_delete(); del r["retention_disposition"]["recovery_proof"]["sha256"]; return _valid_decisions([r])
 
 
+def _neg_calendar_invalid_observed_at():  # F1: date-time format (rfc3339-validator) rejects calendar-invalid values the regex admits
+    s = _valid_snapshot(); s["observed_at"] = "2026-13-45T25:61:61Z"; return s
+
+
 NEGATIVES = {
     "01_observed_without_value": _neg_observed_without_value,
     "02_relation_without_facts": _neg_relation_without_facts,
@@ -375,6 +379,7 @@ NEGATIVES = {
     "44_compat_no_consumer": _neg_compat_no_consumer,
     "45_delete_string_recovery": _neg_delete_string_recovery,
     "46_delete_recovery_missing_sha": _neg_delete_recovery_missing_sha,
+    "47_calendar_invalid_observed_at": _neg_calendar_invalid_observed_at,
 }
 
 POSITIVES = {

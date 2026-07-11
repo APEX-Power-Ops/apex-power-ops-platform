@@ -108,9 +108,9 @@ no-heavy-deps-on-import property.
 
 Codex `gpt-5.5` xhigh (`review --base a5bed80d`, detached worktree) found **3 real defects — all in the
 NEW tranche code**, and all the same class: a control meant to CLOSE a TOCTOU re-read the artifact at
-a different time than it was parsed/validated. (Claude grounded-audit `wf_c8d73f2a-f1f` ran the same
-lens in parallel; its memo is RECONCILED into this section when the workflow completes — any findings
-it adds beyond Codex's three will be listed and fixed before the census GO.)
+a different time than it was parsed/validated. (The Claude grounded-audit's first invocation
+`wf_c8d73f2a-f1f` was mis-shaped — `probes` passed as strings, and this workflow's probe agents don't
+receive `subject` — so it was stopped and re-run correctly as `wf_9bf40060-b7a`; see the Claude section.)
 
 | Sev | Finding (Codex) | Resolution |
 |-----|-----------------|-----------|
@@ -118,16 +118,45 @@ it adds beyond Codex's three will be listed and fixed before the census GO.)
 | P1 | `build_receipt` RE-READ the CLI inputs after `run()` validated the in-memory docs, so with `--receipt-out` it could pin hashes of unvalidated bytes | `build_receipt` now hashes the in-hand `doc_bytes` (the parsed+gated bytes), not a second read; `_receipt_pure` strengthened to corrupt the on-disk file after capture and assert the receipt follows the validated bytes |
 | P2 | `write_signed_snapshot` under `--overwrite` deleted the just-written snapshot on a sidecar-write failure — after `os.replace` had already destroyed the prior snapshot, leaving NO valid pair | sidecar is published FIRST, snapshot SECOND, and no destination is ever deleted on failure; a failed snapshot replace leaves the prior snapshot intact (the new sidecar simply won't verify → fail-closed). +collector regression test |
 
-All resolved on `53507c0f`'s successor; suites remain green (contract 57 / checker 58 / collector 36).
-The cross-engine pass earned its keep: three genuine TOCTOU/data-safety defects in the very controls
-added to close TOCTOU, none caught by the per-item TDD.
+All three Codex defects resolved on commit `84eb2411`; the cross-engine pass earned its keep — three
+genuine TOCTOU/data-safety defects in the very controls added to close TOCTOU, none caught by the
+per-item TDD.
+
+### Claude grounded-audit (`wf_9bf40060-b7a`, Deep, 5 self-contained probes + adversarial + memo)
+
+**Verdict: SHIP-WITH-CONDITIONS — no FATAL, no primary-gate destructive false-green.** It VERIFIED
+sound: the three R3 TOCTOU repairs; manifest-independent compat consumer evidence; SP015 reachable for
+compat+promote; dependency_role↔found_consumers on the live path; a receipt cannot emit on a non-green
+gate. It found **F1 (IMPORTANT, missed by BOTH engines' probes)** plus a MEDIUM/LOW hardening tail.
+FIXED in commit `<this>` (contract 58 / checker 62 / collector 37; bundle hash unchanged; no PG16 re-run):
+
+| Finding | Sev | Resolution |
+|---------|-----|-----------|
+| F1 — `format: date-time` was INERT (rfc3339-validator not installed → jsonschema silently skips the format), so every timestamp check degraded to a regex that admits calendar-invalid values (month 13, hour 25). Consequences: a calendar-invalid future `captured_at` bypassed the SP014 ordering check (swallowed `except`); `observed_at`/window `parse_dt` crashed as a traceback not a clean SP0xx. **Execution-confirmed.** | IMPORTANT | Pinned `rfc3339-validator==0.1.4` → `date-time` now validates (calendar-invalid ⇒ SP001 at the schema layer, both checker + collector); `captured_at` parse failure now emits SP014 (never a silent pass); +schema negative with a real calendar-invalid value |
+| F2 — the recovery floor proved self-consistency, not recoverability: `restore_validation_ref` was existence-only (empty file / arbitrary file / `rvr==artifact_path` all passed); comments overstated the guarantee | MEDIUM | `restore_validation_ref` now must be non-empty AND distinct from `artifact_path`; schema + checker comments corrected to state the gate binds STRUCTURE not recoverability (real restore-success is an operator/apply-time attestation). Recency floor + deeper attestation SURFACED (D-below) |
+| F5 — SP026 keyed on `mode=='preapply'` (fail-OPEN for a future mode) | LOW | default-deny: gated for EVERY mode except an explicit (empty) exempt set |
+| F6 — `dependency_role` IFF `found_consumers` not enforced: an outbound edge flagged `_is_consumer` would be counted yet labeled `outbound_dependency` (unreachable on the live SQL, reachable via a future source/manual overlay) | LOW | `consumer_keys` now excludes outbound edges → `found_consumers == #external_consumer` by construction; +collector test |
+| F7 — `build_receipt` silently omitted a sig/verify-key entry if the file vanished before hashing | LOW | hard-error (FileNotFoundError) on a missing verification input; `main()` refuses to emit an incomplete receipt (returns 1) |
+| F8 — SP015 finiteness skipped for `required=false` contracts (inert today; forward risk) | LOW | finiteness checked whenever an `exit_condition` is present; +checker negative |
+
+**SURFACED as operator decisions (NOT unilaterally implemented — see the operator-decisions block):**
+F2 `captured_at` recency floor (needs a policy value); F3 threading `semantic_check`'s already-computed
+recovery-artifact hash into the receipt; F4 labeling receipt evidence entries + carrying the declared
+sha; the DEEPER recovery-recoverability attestation (inherently apply-time); the apply-runner
+re-validation contract (must re-run SP014 + `verify_detached`, not merely rehash the receipt — this
+single fact sets the residual severity of F3/F4/F5); the unsigned governance-doc asymmetry
+(decisions/manifest/entity_map are plain JSON, pinned by the receipt but not signed like the snapshot).
 
 ## Verdict
-Adversarial cross-engine rounds drove 8 + 9 findings on earlier commits, 6 operator-ratified items in
-the correction tranche, and 3 more from the Codex re-audit of `53507c0f` (Claude re-audit reconciliation
-pending); the operator-ratified correction tranche
-adds 6 more (the 4 design decisions + 2 new Mediums), each with a negative test and no SQL change
-(PG16 proof still valid). The dominant F1 residual is now closed by a real Ed25519 signature gate.
+Cross-engine adversarial review drove **8 + 9** findings on earlier commits, **6** operator-ratified
+items in the correction tranche, **3** from the Codex re-audit (TOCTOU in the new controls), and **6**
+from the Claude re-audit (F1 IMPORTANT + a hardening tail) — each with a negative test, no SQL change,
+PG16 proof still valid. Both re-audits agree there is **no FATAL and no primary-gate destructive
+false-green**; the F1 timestamp gap is closed. The remaining items are apply-time/policy design calls
+surfaced for the operator, not code defects. Per the fail-closed convergence rule, further code-only
+rounds show diminishing returns — the lane is at a **decision point, not a defect point**.
+**Census GO, push, and PR remain HELD** pending operator ratification, the production keypair custody,
+and the surfaced apply-time decisions (which gate the first DESTRUCTIVE apply, not the read-only census).
 **Census GO, push, and PR remain HELD** — a fresh cross-engine IRP re-audit runs on the correction
 commit before any read-only census, and the production signing keypair (Infisical custody) is a
 census precondition, not handled in this tranche.

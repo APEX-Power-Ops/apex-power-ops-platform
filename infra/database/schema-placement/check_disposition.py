@@ -30,6 +30,7 @@ import disposition_signing as ds
 SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "disposition.schema.json")
 DIMS = ("static_repo", "database_deps", "runtime_logs", "external_clients", "operator_declaration")
 _DELETE_MIN_WINDOW_HOURS = 720  # destructive-evidence floor: >= 30 days of consumer observation for a delete
+_SIGNATURE_EXEMPT_MODES = frozenset()  # default-deny: EVERY mode requires a verified snapshot signature unless listed here (F5)
 NON_PATH_SCHEMES = ("query", "sha", "ta", "telemetry", "urn", "ref", "http", "https")
 _SCHEME_RE = re.compile(r"^([a-z][a-z0-9+.\-]*):")
 
@@ -172,8 +173,13 @@ def build_receipt(*, mode, now_iso, expect_project_ref, doc_bytes, doc_paths, ex
     for name, data in doc_bytes.items():
         receipt["inputs"][name] = {"path": doc_paths.get(name), "sha256": hashlib.sha256(data).hexdigest()}
     for name, p in extra_paths.items():
-        if p and os.path.isfile(p):
-            receipt["inputs"][name] = {"path": p, "sha256": _sha256_file(p)}
+        if p is None:
+            continue
+        if not os.path.isfile(p):
+            # Do NOT silently omit a verification input that vanished/rotated between verify and
+            # receipt build — that would emit a receipt missing the sig/key binding (F7). Fail hard.
+            raise FileNotFoundError(f"gate-receipt input {name!r} is missing at receipt time: {p}")
+        receipt["inputs"][name] = {"path": p, "sha256": _sha256_file(p)}
     seen = set()
     for row in decisions.get("rows", []):
         refs = list(row.get("evidence_refs", []))
@@ -415,8 +421,12 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
         # YAML .inf/.nan loads as a float — so an infinite exit window would silently defeat any
         # downstream "metric below threshold for window_hours" evaluation. Reject non-finite here
         # (correction tranche), mirroring the threshold check.
+        # Check finiteness whenever an exit_condition is PRESENT — not only when required=true — so a
+        # required=false contract carrying a non-finite window/threshold cannot slip past to a
+        # downstream evaluator (F8). +inf enters via 1e999 overflow or YAML .inf, both passing the
+        # schema's exclusiveMinimum:0.
         cc = row.get("compatibility_contract")
-        if isinstance(cc, dict) and cc.get("required") and isinstance(cc.get("exit_condition"), dict):
+        if isinstance(cc, dict) and isinstance(cc.get("exit_condition"), dict):
             for numfield in ("threshold", "window_hours"):
                 val = cc["exit_condition"].get(numfield)
                 if not _finite(val):
@@ -424,9 +434,11 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
 
         # SP014 (finding #5, correction tranche): a destructive delete's recovery_proof is a STRUCTURED
         # recovery_artifact — the checker resolves artifact_path within an approved root, verifies the
-        # backup bytes hash to the declared sha256 (a named-but-nonexistent/altered backup no longer
-        # "proves" recovery), resolves the restore_validation_ref (proof a restore actually succeeded),
-        # and confirms the capture predates the census.
+        # backup bytes hash to the declared sha256, resolves + non-empty-checks a restore_validation_ref
+        # that is DISTINCT from artifact_path, and confirms the capture predates the census. This binds
+        # STRUCTURE, not recoverability: that the backup ACTUALLY restores is an operator/apply-time
+        # attestation the offline gate cannot verify (F2); the sha256 is author-declared, not an
+        # independent source of truth.
         if row.get("action_class") == "delete" and row.get("decision_status") == "accepted":
             art = (row.get("retention_disposition") or {}).get("recovery_proof")
             if not isinstance(art, dict):
@@ -447,19 +459,29 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                         if actual != art.get("sha256"):
                             d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery artifact sha256 {art.get('sha256')} does not match the actual bytes ({actual})"))
                 rvr = art.get("restore_validation_ref")
+                ap_declared = art.get("artifact_path")
                 if not (rvr and is_path_ref(rvr)):
                     d.append(Diagnostic("SP014", f"decision:{did}:restore_validation_ref", f"restore_validation_ref {rvr!r} must be a filesystem artifact under an approved root"))
+                elif ap_declared is not None and rvr == ap_declared:
+                    d.append(Diagnostic("SP014", f"decision:{did}:restore_validation_ref", "restore_validation_ref must be DISTINCT from artifact_path — a backup is not its own restore proof (F2)"))
                 else:
                     rvr_res, rvr_reason = resolve_within_roots(rvr, roots)
                     if rvr_res is None:
                         d.append(Diagnostic("SP014", f"decision:{did}:restore_validation_ref", f"restore_validation_ref {rvr}: {rvr_reason}"))
+                    elif os.path.getsize(rvr_res) == 0:
+                        d.append(Diagnostic("SP014", f"decision:{did}:restore_validation_ref", "restore_validation_ref is an EMPTY file — a restore-validation proof must have content (F2)"))
                 cap = art.get("captured_at")
                 if cap:
+                    # The schema's date-time format now rejects calendar-invalid values (rfc3339-validator),
+                    # but do NOT rely on that here (F1): a parse failure is a coded SP014, never a silent
+                    # pass and never an uncaught traceback.
                     try:
-                        if parse_dt(cap) > observed_at:
-                            d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery captured_at {cap} is after observed_at {snapshot['observed_at']}"))
+                        cap_dt = parse_dt(cap)
                     except (ValueError, TypeError):
-                        pass  # schema already enforces iso_datetime syntax
+                        cap_dt = None
+                        d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery captured_at {cap!r} is not a valid RFC3339 datetime"))
+                    if cap_dt is not None and cap_dt > observed_at:
+                        d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery captured_at {cap} is after observed_at {snapshot['observed_at']}"))
 
             # SP027 destructive-evidence floor: NO discretionary waiver to catalog + declaration alone.
             # database_deps/static_repo/runtime_logs/operator_declaration must be OBSERVED for EVERY
@@ -562,8 +584,10 @@ def main(argv=None):
     # self-attested snapshot (guard_passed/project_ref/target_identity/consumer_evidence are plain
     # JSON) to a genuine read-only census without verifying the collector's detached Ed25519
     # signature over the exact snapshot bytes (F1). preapply REQUIRES --snapshot-sig + --verify-key;
-    # a missing or non-verifying signature blocks and the semantic gate never runs.
-    if args.mode == "preapply":
+    # a missing or non-verifying signature blocks and the semantic gate never runs. Default-deny:
+    # gated for EVERY mode except an explicit exempt set (empty today), so a future --mode added to
+    # argparse choices cannot silently run the gate unsigned (F5).
+    if args.mode not in _SIGNATURE_EXEMPT_MODES:
         if not args.snapshot_sig or not args.verify_key:
             dg = Diagnostic("SP026", "snapshot", "preapply requires --snapshot-sig and --verify-key (an unsigned snapshot is not trusted)")
             print(dg.render())
@@ -588,10 +612,14 @@ def main(argv=None):
                      "entity_map": os.path.abspath(args.entity_map), "manifest": os.path.abspath(args.manifest)}
         extra_paths = {"snapshot_sig": os.path.abspath(args.snapshot_sig) if args.snapshot_sig else None,
                        "verify_key": os.path.abspath(args.verify_key) if args.verify_key else None}
-        receipt = build_receipt(mode=args.mode, now_iso=args.now, expect_project_ref=args.expect_project_ref,
-                                doc_bytes=doc_bytes, doc_paths=doc_paths, extra_paths=extra_paths, roots=roots, decisions=decisions)
-        with open(args.receipt_out, "w", encoding="utf-8") as fh:
-            json.dump(receipt, fh, indent=2, sort_keys=True)
+        try:
+            receipt = build_receipt(mode=args.mode, now_iso=args.now, expect_project_ref=args.expect_project_ref,
+                                    doc_bytes=doc_bytes, doc_paths=doc_paths, extra_paths=extra_paths, roots=roots, decisions=decisions)
+            with open(args.receipt_out, "w", encoding="utf-8") as fh:
+                json.dump(receipt, fh, indent=2, sort_keys=True)
+        except OSError as exc:
+            print(f"SP000: gate is GREEN but the receipt could not be produced ({type(exc).__name__}); refusing to emit an incomplete receipt", file=sys.stderr)
+            return 1
         print(f"=== gate receipt written: {args.receipt_out} ({len(receipt['evidence'])} evidence files pinned) ===")
     print(f"=== DISPOSITION GATE ({args.mode}): GREEN ===")
     return 0

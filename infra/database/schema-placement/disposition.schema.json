@@ -179,7 +179,7 @@
       "properties": { "source_def": { "type": ["string", "null"] }, "target_def": { "type": ["string", "null"] }, "transform_logic": { "type": ["string", "null"] }, "validation_report": { "type": ["string", "null"] }, "rollback_story": { "type": ["string", "null"] } }
     },
     "recovery_artifact": {
-      "$comment": "Structured backup evidence for a destructive delete (correction tranche: 'destructive recovery proof is not actually proved'). A bare path could name a file that does not restore. This binds the artifact bytes (sha256), when it was captured (captured_at), and a reference to a SUCCESSFUL restore validation — all checker-resolved: artifact_path + restore_validation_ref must resolve within an approved root and artifact_path's bytes must hash to sha256.",
+      "$comment": "Structured backup evidence for a destructive delete. The offline gate binds STRUCTURE, not recoverability: the checker verifies artifact_path resolves within an approved root and its bytes hash to the (decision-declared) sha256, that captured_at predates the census, and that restore_validation_ref is a DISTINCT, non-empty, in-root artifact. It CANNOT prove the backup actually restores — genuine restore-success is an operator/apply-time attestation. The sha256 binds the artifact to the decision (author-declared), not to an independent source of truth.",
       "type": "object", "additionalProperties": false,
       "required": ["artifact_path", "sha256", "captured_at", "restore_validation_ref"],
       "properties": {

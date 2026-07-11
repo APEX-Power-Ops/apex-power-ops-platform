@@ -210,6 +210,9 @@ NEG = {
     "SP027_delete_static_na": (delete_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["static_repo"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived"), "SP027"),  # delete floor: no not_applicable waiver
     "SP027_delete_short_window": (delete_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["observation_window"].update(started_at="2026-07-01T00:00:00Z"), "SP027"),  # < 30 days
     "SP027_delete_external_na_exposed": (delete_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["external_clients"].update(state="not_applicable", found_consumers=None, ref=None, detail="n/a"), "SP027"),  # external na while API-exposed
+    "SP014_delete_rvr_equals_artifact": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"]["recovery_proof"].update(restore_validation_ref="recovery.tar"), "SP014"),  # F2: restore proof must be DISTINCT from the backup
+    "SP014_delete_rvr_empty": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"]["recovery_proof"].update(restore_validation_ref="empty.sha256"), "SP014"),  # F2: restore proof must be non-empty
+    "SP015_required_false_infinite_window": (harden_bundle, lambda s, d, e, m: d["rows"][0].update(compatibility_contract={"required": False, "mechanism": None, "exit_condition": {"metric": "calls", "source": "pg_stat_statements", "operator": "<=", "threshold": 0, "window_hours": float("inf"), "minimum_samples": 30}, "telemetry_ref": None}), "SP015"),  # F8: finiteness checked even when required=false
     "SP012_compat_unapproved_schema": (compat_bundle, lambda s, d, e, m: d["rows"][0].update(target_schema="evil", target_objects=["evil.some_view"]), "SP012"),  # Codex R2: compat must target public
     "SP010_consumer_evidence_required": (compat_bundle, lambda s, d, e, m: (m["required_observations"].append("consumer_evidence"), s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_observed", found_consumers=None, ref=None, detail="pending")), "SP010"),  # Codex R2
     "SP015_nonfinite_staleness": (harden_bundle, lambda s, d, e, m: m.update(max_staleness_hours=float("nan")), "SP015"),  # Codex R2
@@ -284,6 +287,25 @@ def _receipt_pure():
 
 def test_gate_receipt_pure():
     assert _receipt_pure()
+
+
+def _receipt_missing_key_raises():
+    # F7: build_receipt must HARD-ERROR (not silently omit) if a verification input vanished before hashing
+    snap, dec, em, man, _sp = harden_bundle()
+    with tempfile.TemporaryDirectory() as d:
+        db = {"snapshot": json.dumps(snap).encode(), "decisions": json.dumps(dec).encode(),
+              "entity_map": json.dumps(em).encode(), "manifest": json.dumps(man).encode()}
+        dp = {k: os.path.join(d, k + ".json") for k in db}
+        try:
+            cd.build_receipt(mode="preapply", now_iso="2026-07-10T21:00:00Z", expect_project_ref="x",
+                             doc_bytes=db, doc_paths=dp, extra_paths={"verify_key": os.path.join(d, "gone.pub")}, roots=ROOTS, decisions=dec)
+            return False
+        except FileNotFoundError:
+            return True
+
+
+def test_receipt_missing_key_raises():
+    assert _receipt_missing_key_raises()
 
 
 def _delete_external_na_unexposed():
@@ -436,6 +458,7 @@ if __name__ == "__main__":
         ("sp024_missing_target_identity", _sp024_missing_ti),
         ("delete_external_na_when_unexposed", _delete_external_na_unexposed),
         ("gate_receipt_pure", _receipt_pure),
+        ("receipt_missing_key_raises", _receipt_missing_key_raises),
         ("signature_roundtrip", _sig_roundtrip),
         ("signature_gate_end_to_end", _sig_gate_e2e),
         ("wrong_kind_document", _wrong_kind),

@@ -169,6 +169,16 @@ def test_dependency_role_classification():
     assert n_ext == r["consumer_evidence"]["database_deps"]["found_consumers"]
 
 
+def test_dependency_role_outbound_consumer_not_counted():
+    # F6: an outbound edge flagged is_consumer must NOT be counted (outbound is never a consumer) and is
+    # labeled outbound_dependency — enforcing external_consumer IFF counted.
+    dep = _dep("constraint", "fk_weird -> public.x", direction="outbound", is_consumer=True)
+    r = _rel(_snap_with_deps([dep]), "public.projects")
+    vals = r["dependent_objects"]["value"]
+    assert len(vals) == 1 and vals[0]["dependency_role"] == "outbound_dependency"
+    assert r["consumer_evidence"]["database_deps"]["found_consumers"] == 0
+
+
 def test_dependency_role_or_across_duplicates():
     # pg_rewrite emits duplicate edges; if ANY twin is a consumer the stored role must be external_consumer
     dup_c = _dep("view", "public.v_dup", "inbound", True)
@@ -592,6 +602,7 @@ ALL = [
     ("dependents_function_and_outbound_direction", test_dependents_function_and_outbound_direction),
     ("consumer_count_excludes_self_owned_and_outbound", test_consumer_count_excludes_self_owned_and_outbound),
     ("dependency_role_classification", test_dependency_role_classification),
+    ("dependency_role_outbound_consumer_not_counted", test_dependency_role_outbound_consumer_not_counted),
     ("dependency_role_or_across_duplicates", test_dependency_role_or_across_duplicates),
     ("dsn_project_binding", test_dsn_project_binding),
     ("main_write_failure_fails_closed", test_main_write_failure_fails_closed),

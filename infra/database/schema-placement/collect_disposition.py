@@ -283,8 +283,8 @@ def build_relation_observation(census_row, privs, deps, failed_groups, now):
             if edge_key not in records_by_key:
                 records_by_key[edge_key] = {k: v for k, v in dep.items() if not k.startswith("_")}
                 order.append(edge_key)
-            if dep.get("_is_consumer"):
-                consumer_keys.add(edge_key)
+            if dep.get("_is_consumer") and dep["direction"] != "outbound":
+                consumer_keys.add(edge_key)  # an outbound edge is NEVER a consumer -> keeps found_consumers == #external_consumer (the documented IFF; F6)
         # Durable classification (finding: consumer status was discarded from the stored snapshot).
         # Computed AFTER the consumer-OR so a consumer edge is never masked by a non-consumer twin:
         # external_consumer IFF the (deduped) edge is counted toward found_consumers. Outbound edges
