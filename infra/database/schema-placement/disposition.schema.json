@@ -253,6 +253,7 @@
         "decision_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/decision_id" } },
         "evidence_snapshot": { "$ref": "#/$defs/nonempty_string" },
         "max_staleness_hours": { "type": "number", "minimum": 0 },
+        "minimum_consumer_window_hours": { "type": "number", "minimum": 0 },
         "required_observations": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/observation_field" } },
         "technical_authority_approval": { "type": ["string", "null"] },
         "notes": { "type": "string" }
