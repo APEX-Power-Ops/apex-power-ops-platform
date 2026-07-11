@@ -108,7 +108,7 @@ QUERY_BUNDLE = {
     """,
     "dependents": """
         with targets as (
-            select c.oid, c.relnamespace as nsoid, n.nspname || '.' || c.relname as object_id
+            select c.oid, c.relnamespace as nsoid, c.relkind::text as relkind, n.nspname || '.' || c.relname as object_id
             from pg_class c join pg_namespace n on n.oid = c.relnamespace
             where n.nspname = any(%(schemas)s) and c.relkind in ('r', 'v', 'm', 'p', 'f')
         ),
@@ -169,13 +169,14 @@ QUERY_BUNDLE = {
         pubs_all as (
             select t.object_id, 'publication' as dep_type, p.pubname as dep_identity, 'inbound' as direction, true as is_consumer
             from pg_publication p cross join targets t
-            where p.puballtables
+            where p.puballtables and t.relkind in ('r', 'p')
         ),
         pubs_schema as (
             select t.object_id, 'publication' as dep_type, p.pubname as dep_identity, 'inbound' as direction, true as is_consumer
             from pg_publication_namespace pns
             join pg_publication p on p.oid = pns.pnpubid
             join targets t on t.nsoid = pns.pnnspid
+            where t.relkind in ('r', 'p')
         ),
         seqs as (
             select t.object_id, 'sequence' as dep_type, dn.nspname || '.' || dc.relname as dep_identity, 'inbound' as direction, false as is_consumer
@@ -454,14 +455,19 @@ def _dsn_contains_project_ref(dsn, project_ref):
     ref = (project_ref or "").strip().lower()
     if not ref:
         return False
-    host, user = "", ""
+    host, user, hostaddr = "", "", ""
     try:
         from psycopg.conninfo import conninfo_to_dict  # noqa: PLC0415 -- live-only, PURE parse (no connection)
         info = conninfo_to_dict(dsn)
         host = str(info.get("host") or "").strip().lower()
         user = str(info.get("user") or "").strip().lower()
+        hostaddr = str(info.get("hostaddr") or "").strip()
     except Exception:  # noqa: BLE001 -- fall back to URL parsing; never surface the DSN
         pass
+    # hostaddr overrides host at connect time, so a DSN naming the right host but connecting to a
+    # different IP would pass a host-only bind. Refuse any hostaddr — the host must resolve normally.
+    if hostaddr:
+        return False
     if not host:
         try:
             from urllib.parse import urlsplit  # noqa: PLC0415
@@ -547,6 +553,9 @@ def main(argv=None):
         print("SP000 collector: could not derive repo SHA from git HEAD (pass --repo-sha)", file=sys.stderr)
         return 2
     schemas = [s.strip() for s in args.schemas.split(",") if s.strip()]
+    if not schemas:
+        print("SP000 collector: --schemas is empty (refusing to produce an empty census)", file=sys.stderr)
+        return 2
     markers = tuple(s.strip() for s in args.require_role_markers.split(",") if s.strip())
     try:
         snapshot = collect_from_db(dsn, schemas, project_ref=args.project_ref, repo_sha=repo_sha,

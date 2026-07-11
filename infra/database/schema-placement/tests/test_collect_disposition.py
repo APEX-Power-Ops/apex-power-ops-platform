@@ -150,6 +150,7 @@ def test_dsn_project_binding():
     assert not ok(f"postgresql://postgres.{ref}:pw@evil.example:5432/postgres", ref)         # pooler user, non-pooler host
     assert not ok("postgresql://postgres:pw@db.otherprojectref00000.supabase.co:5432/postgres", ref)  # wrong project
     assert not ok("postgresql://postgres:pw@127.0.0.1:5432/postgres", ref)                   # bare IP
+    assert not ok(f"host=db.{ref}.supabase.co hostaddr=1.2.3.4 user=postgres dbname=postgres", ref)  # hostaddr overrides host
     assert not ok("", ref) and not ok("postgresql://x/y", "")
 
 
@@ -171,6 +172,27 @@ def test_main_write_failure_fails_closed():
         assert rc == 2
     finally:
         cd.collect_from_db, cd.write_snapshot = orig_collect, orig_write
+        os.environ.pop("DISPOSITION_DSN", None)
+
+
+def test_main_empty_schemas_fails_closed():
+    # Claude R2: a blank/comma-only --schemas must fail closed BEFORE any DB work, not emit empty census
+    called = {"v": False}
+    orig_collect = cd.collect_from_db
+    os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
+
+    def _spy(*a, **k):
+        called["v"] = True
+        return {"target_identity": {"current_database": "postgres", "current_user": "x"}, "relation_count": 0, "query_bundle_sha256": "a" * 64}
+
+    cd.collect_from_db = _spy
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--repo-sha", SHA,
+                          "--schemas", " , ,", "--out", os.path.join(d, "o.json")])
+        assert rc == 2 and called["v"] is False  # short-circuited before any DB connection
+    finally:
+        cd.collect_from_db = orig_collect
         os.environ.pop("DISPOSITION_DSN", None)
 
 
@@ -413,6 +435,7 @@ ALL = [
     ("consumer_count_excludes_self_owned_and_outbound", test_consumer_count_excludes_self_owned_and_outbound),
     ("dsn_project_binding", test_dsn_project_binding),
     ("main_write_failure_fails_closed", test_main_write_failure_fails_closed),
+    ("main_empty_schemas_fails_closed", test_main_empty_schemas_fails_closed),
     ("workflow_dims_not_observed", test_workflow_dims_not_observed),
     ("sha256_deterministic_and_hex", test_sha256_deterministic_and_hex),
     ("self_validation_rejects_bad_now", test_self_validation_rejects_bad_now),

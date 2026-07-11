@@ -44,7 +44,46 @@ band from the three files and was surfaced by the Round-1 re-audit; it is a desi
 implemented. **Recommendation:** decide (a) vs (b) before the checker is trusted to authorize a
 destructive action; it does not block the read-only census GO itself.
 
+## Round-2 re-audit (against `212fca7b`)
+
+Same engines (Claude workflow `wf_4420a233-e48` + Codex `gpt-5.5` xhigh). Found **9 more** real
+defects — several were narrow variations of the null-vacuity class, and one (over-broad compat SP012
+exemption) was introduced BY the Round-1 correction. Codex proved the promote gap by executing a test.
+All resolved on `212fca7b`'s successor commit:
+
+| Finding (engine) | Resolution |
+|------------------|-----------|
+| promote + `has_consumers` + `compatibility_contract:null` false-greens (Codex, EXECUTED) | schema requires a real (type:object, required=true) compat for has_consumers promote; +neg |
+| promote allows `exposure_policy:null` (Claude adversarial) | promote requires a non-null exposure posture; +neg |
+| compat SP012-skip too broad — `target_schema:'evil'` passes (Codex + Claude, my Round-1 regression) | compat `target_schema` must equal `public`; +neg |
+| manifest `required_observations: consumer_evidence` silently dropped (Codex) | enforced: every consumer dim observed/N-A when required; +neg |
+| non-finite `max_staleness_hours`/`minimum_consumer_window_hours` (NaN/Inf) defeat SP008/SP009 (Codex) | SP015 rejects non-finite gate numbers; JSON loader rejects NaN/Inf; +neg |
+| delete `recovery_proof` = empty file passes (Claude) | checker requires a NON-EMPTY resolved artifact; +neg |
+| DSN `hostaddr` bypasses the host bind (Claude) | reject any DSN carrying `hostaddr`; +test |
+| `FOR ALL TABLES` publications over-count views/matviews/foreign tables (Claude) | `pubs_all`/`pubs_schema` filtered to relkind r/p; PG16-proven (v_foo → 0 pub edges) |
+| empty `--schemas` emits misleading empty census (Claude) | fail closed (exit 2) before any DB work; +test |
+| stale committed bundle hash in the dev transcript (Codex) | dev transcript marked superseded; PG16 transcript records current bundle `065d49e0…` |
+
+Regression-green under `uv.lock`: contract 51 / checker 47 / collector 29; PG16.13 re-validated.
+
+## Outstanding — OPERATOR DECISIONS (design; not unilaterally changed)
+
+1. **F1 — unsigned snapshot** (dominant residual): the offline checker cannot bind a snapshot to a
+   genuine read-only census without a collector SIGNATURE or an explicit pipeline-integrity guarantee.
+2. **Destructive-delete evidence floor:** SP022 lets the three compensating consumer dimensions
+   (static_repo / runtime_logs / external_clients) each be waived via `not_applicable`, so a delete
+   can green on database_deps(0) + operator_declaration alone. Decide how many dims must be *genuinely
+   observed* for an irreversible delete.
+3. **Evidence-file TOCTOU:** the gate validates `recovery_proof`/evidence files at CHECK time; the
+   later apply reads them. Binding the validated bytes (a pinned checksum) ties into the F1 signing
+   decision.
+4. **compat consumer gate:** compat does not require a `consumer_disposition`, so SP022/SP013 never
+   run for it (unlike archive, which forces `no_consumer`, and promote, which runs SP013). compat is
+   additive (a public compat view) and now destination-pinned to `public`, so risk is low — but
+   decide whether compat should require consumer evidence or at least an explicit conclusion.
+
 ## Verdict
-Round-1 correction closes findings 1–8 with adversarial negatives per bypass and a PG16 execution
-proof. The census GO, push, and PR remain HELD pending the operator's ratification and the F1
-decision. A Round-2 re-audit (Codex + Claude) runs against the correction commit before any census.
+Two adversarial cross-engine rounds drove 8 + 9 = 17 fixes with a negative test per reproduced
+bypass and PG16 execution proofs. The remaining items (1–3) are design decisions, not code defects.
+**Census GO, push, and PR remain HELD** pending the operator's ratification and those decisions.
+Further code-only rounds show diminishing returns until F1 and the delete-floor policy are decided.

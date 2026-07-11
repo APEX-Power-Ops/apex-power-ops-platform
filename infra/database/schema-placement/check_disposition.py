@@ -38,13 +38,13 @@ CODES = {
     "SP006": "manifest references an unknown decision_id",
     "SP007": "decision source_object is absent from the snapshot",
     "SP008": "snapshot is stale or observed in the future relative to --now",
-    "SP009": "consumer observation_window violates started<=ended<=observed_at",
+    "SP009": "consumer observation_window violates started<ended<=observed_at (strict; a census-default zero-width window must be overlaid before preapply)",
     "SP010": "a required observation is not freshly observed",
     "SP011": "target_entity does not resolve to an accepted entity_map entry",
     "SP012": "target_schema does not resolve to an accepted physical_schema",
     "SP013": "consumer conclusion contradicts an observed evidence dimension",
     "SP014": "evidence path is missing, escapes an approved root, or is not a regular file",
-    "SP015": "compat exit_condition threshold is not finite",
+    "SP015": "a gate number is not finite (compat exit_condition threshold / manifest staleness / consumer window)",
     "SP016": "cluster member decision is not accepted (required for preapply)",
     "SP017": "cluster is empty after resolution",
     "SP018": "manifest is not accepted with a cluster approval (required for preapply)",
@@ -98,11 +98,15 @@ def _reject_dup_json_pairs(pairs):
     return seen
 
 
+def _reject_nonfinite(const):
+    raise ValueError(f"non-finite JSON constant {const!r} not allowed")
+
+
 def load_doc(path):
     with open(path, encoding="utf-8") as fh:
         text = fh.read()
     if path.endswith(".json"):
-        return json.loads(text, object_pairs_hook=_reject_dup_json_pairs)
+        return json.loads(text, object_pairs_hook=_reject_dup_json_pairs, parse_constant=_reject_nonfinite)
     return yaml.load(text, Loader=NoDupSafeLoader)
 
 
@@ -194,14 +198,26 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                 d.append(Diagnostic("SP020", f"{label}:{i}", "duplicate identity"))
             seen.add(i)
 
+    # --- non-finite gate numbers (SP015): NaN/Infinity load from JSON/YAML and silently defeat the
+    #     SP008/SP009 comparisons (every comparison with NaN is False), so reject them before use
+    #     (Codex R2: max_staleness_hours: .nan/.inf disables the stale check). ---
+    def _finite(x):
+        return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+    for mfield in ("max_staleness_hours", "minimum_consumer_window_hours"):
+        mv = manifest.get(mfield)
+        if mv is not None and not _finite(mv):
+            d.append(Diagnostic("SP015", f"manifest:{mfield}", f"{mfield}={mv} is not finite"))
+
     # --- snapshot freshness (SP008) ---
     observed_at = parse_dt(snapshot["observed_at"])
     if observed_at > now:
         d.append(Diagnostic("SP008", "snapshot", f"observed_at {snapshot['observed_at']} is after --now"))
     max_stale = manifest.get("max_staleness_hours")
-    if max_stale is not None and (now - observed_at).total_seconds() / 3600.0 > max_stale:
+    if _finite(max_stale) and (now - observed_at).total_seconds() / 3600.0 > max_stale:
         d.append(Diagnostic("SP008", "snapshot", f"age exceeds max_staleness_hours {max_stale}"))
-    min_window = manifest.get("minimum_consumer_window_hours") or 0
+    _mw = manifest.get("minimum_consumer_window_hours")
+    min_window = _mw if _finite(_mw) else 0
 
     # --- manifest lifecycle for preapply (SP018) ---
     if mode == "preapply":
@@ -236,6 +252,7 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
         d.append(Diagnostic("SP017", "manifest", "cluster resolves to zero decisions"))
 
     req_obs = [f for f in manifest.get("required_observations", []) if f != "consumer_evidence"]
+    require_consumer_evidence = "consumer_evidence" in manifest.get("required_observations", [])
     m_action = manifest.get("action_class")
 
     for row in resolved_rows:
@@ -268,10 +285,15 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
             d.append(Diagnostic("SP019", f"decision:{did}", f"entity_map.approval={entity_map.get('approval')} (targets require accepted map)"))
         if te is not None and te not in accepted_entities:
             d.append(Diagnostic("SP011", f"decision:{did}", f"target_entity {te} not an accepted entity"))
-        # SP012 applies to promotion INTO a canonical schema; compat relocates to the public compat
-        # surface, whose schema is not (and need not be) an accepted physical_schema.
-        if ts is not None and row.get("action_class") != "compat" and ts not in accepted_schemas:
-            d.append(Diagnostic("SP012", f"decision:{did}", f"target_schema {ts} not an accepted physical_schema"))
+        # SP012: promotion INTO a canonical schema must resolve to an accepted physical_schema;
+        # compat relocates to the PUBLIC compat surface and must therefore target EXACTLY 'public'
+        # (Codex R2: exempting every compat let target_schema='evil' create objects in an unapproved schema).
+        if ts is not None:
+            if row.get("action_class") == "compat":
+                if ts != "public":
+                    d.append(Diagnostic("SP012", f"decision:{did}", f"compat target_schema {ts!r} must be the public compat surface"))
+            elif ts not in accepted_schemas:
+                d.append(Diagnostic("SP012", f"decision:{did}", f"target_schema {ts} not an accepted physical_schema"))
         if te in accepted_entities and ts is not None and accepted_entities[te].get("physical_schema") != ts:
             d.append(Diagnostic("SP023", f"decision:{did}", f"entity {te} maps to {accepted_entities[te].get('physical_schema')} but target_schema is {ts}"))
         # SP025: every target_object must live in the declared target_schema (relocation destination).
@@ -288,6 +310,17 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                 if not isinstance(fv, dict) or fv.get("state") != "observed":
                     st = fv.get("state") if isinstance(fv, dict) else "missing"
                     d.append(Diagnostic("SP010", f"decision:{did}:{r['object_id']}:{field}", f"state={st} (required observed)"))
+        # SP010: consumer_evidence is a nested object, so it is excluded from the generic loop above;
+        # if the manifest EXPLICITLY requires it, enforce every consumer dimension observed/N-A here
+        # (Codex R2: the requirement was silently dropped, letting a compat cluster green with
+        # not_observed dims since compat has no resolved consumer_disposition).
+        if require_consumer_evidence:
+            for r in src_rels:
+                ce = r.get("consumer_evidence", {})
+                for dimname in DIMS:
+                    st = ce.get(dimname, {}).get("state")
+                    if st not in ("observed", "not_applicable"):
+                        d.append(Diagnostic("SP010", f"decision:{did}:{r['object_id']}:consumer_evidence.{dimname}", f"state={st} (manifest required_observations includes consumer_evidence)"))
 
         # consumer conclusion — SP022 RESOLUTION applies to BOTH resolved conclusions (every dim
         # observed-or-not_applicable; operator_declaration observed); SP013 is the count agreement.
@@ -331,6 +364,12 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
             rp = (row.get("retention_disposition") or {}).get("recovery_proof")
             if not rp or not is_path_ref(rp):
                 d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"delete recovery_proof {rp!r} must be a filesystem artifact under an approved root, not a scheme reference"))
+            else:
+                _rp_resolved, _rp_reason = resolve_within_roots(rp, roots)
+                if _rp_resolved is None:
+                    d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"delete recovery_proof {rp}: {_rp_reason}"))
+                elif os.path.getsize(_rp_resolved) == 0:
+                    d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"delete recovery_proof {rp} is an EMPTY file — a recovery artifact must have content (Claude R2)"))
 
         # ALL path-capable references (SP014): evidence_refs + transform.validation_report +
         # compat.telemetry_ref + retention.recovery_proof + each source relation's consumer dim refs.

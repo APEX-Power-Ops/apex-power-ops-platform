@@ -8,7 +8,7 @@ and executes read-only** and that the dependency dedup + direction fixes behave 
 - **Server:** PostgreSQL 17.10 (dev). Prod is PG16; every catalog used (`pg_depend`, `pg_rewrite`,
   `pg_proc`, `pg_constraint`, `pg_trigger.tgisinternal`, `pg_policy`, `pg_publication_rel`,
   `pg_class.relkind='S'`, `pg_get_function_identity_arguments`) exists in PG16/17/18 identically.
-- **Committed query bundle:** `query_bundle_sha256 = aa7f657205329c4782696689eacdfa0785992914c1b5ebf0b9cbf91e9ca1b326`
+- **Query bundle at this transcript's time (Round-1, pre-expansion):** `aa7f657205329c4782696689eacdfa0785992914c1b5ebf0b9cbf91e9ca1b326`. **SUPERSEDED:** the dependents SQL was later expanded (pg_proc/outbound/direction/dedup, then FOR ALL TABLES / schema publications + inheritance + relkind-filtered `is_consumer`); the CURRENT bundle is `065d49e08c0ba8458aed25fc24bdacbfd8c3c69e2759a348b797fc496f3aa568`, validated on PG16 in `pg16-sql-validation-2026-07-11.md`. This dev transcript remains valid evidence for the Round-1 bundle only.
 - **Why dev, not prod:** this is a SQL syntax/execution + semantics check, not a census. The census
   itself stays behind a separate read-only prod GO. Note the target guard would **correctly REFUSE**
   this dev session (`transaction_read_only=false`, `current_database=ops_dev != postgres`, and the

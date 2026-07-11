@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://apex-power-ops/schema-placement/disposition.schema.json",
   "title": "Schema-Placement Disposition Ledger — contracts",
-  "$comment": "SCHEMA enforces single-document invariants: state/value consistency, TYPED observation values, required non-null fields, action-specific field combinations (incl. many-to-many target_objects), destructive/retain/archive restrictions, compatibility-contract structure, approval-reference presence, timestamp syntax, structured consumer windows. CHECKER (check_disposition.py, offline) enforces cross-document/time/context: relation_count == unique-by-object_id; object_id == schema+'.'+name; clusters select by decision_id; cluster action == each decision action; every source_object in snapshot (targets may be absent pre-creation); snapshot freshness vs max_staleness_hours; started_at <= ended_at <= observed_at; accepted entity/physical-schema resolution; required observations fresh-observed; consumer conclusion agrees with evidence dims; evidence paths inside approved roots (no traversal/symlink escape); compat telemetry satisfies exit expression. Grounding: docs/authority/PLATFORM-DATA-AND-SCHEMA-STRATEGY-2026-04-12.md.",
+  "$comment": "SCHEMA enforces single-document invariants: state/value consistency, TYPED observation values, required non-null fields, action-specific field combinations (incl. many-to-many target_objects), destructive/retain/archive restrictions, compatibility-contract structure, approval-reference presence, timestamp syntax, structured consumer windows. CHECKER (check_disposition.py, offline) enforces cross-document/time/context: relation_count == unique-by-object_id; object_id == schema+'.'+name; clusters select by decision_id; cluster action == each decision action; every source_object in snapshot (targets may be absent pre-creation); snapshot freshness vs max_staleness_hours; started_at < ended_at <= observed_at (strict; census-default zero-width windows must be overlaid before preapply); accepted entity/physical-schema resolution; required observations fresh-observed; consumer conclusion agrees with evidence dims; evidence paths inside approved roots (no traversal/symlink escape); compat telemetry satisfies exit expression. Grounding: docs/authority/PLATFORM-DATA-AND-SCHEMA-STRATEGY-2026-04-12.md.",
 
   "$defs": {
     "observation_state": { "enum": ["observed", "not_observed", "query_failed", "stale", "not_applicable"] },
@@ -222,8 +222,13 @@
           "if": { "required": ["decision_status", "action_class"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "const": "promote" } } },
           "then": {
             "required": ["target_objects", "target_entity", "target_schema", "transform", "consumer_disposition", "compatibility_contract", "exposure_policy"],
-            "properties": { "target_objects": { "minItems": 1 }, "target_entity": { "$ref": "#/$defs/nonempty_string" }, "target_schema": { "$ref": "#/$defs/nonempty_string" }, "meaning_disposition": { "not": { "const": "unresolved" } }, "consumer_disposition": { "enum": ["no_consumer", "has_consumers"] }, "transform": { "$ref": "#/$defs/transform_complete" } }
+            "properties": { "target_objects": { "minItems": 1 }, "target_entity": { "$ref": "#/$defs/nonempty_string" }, "target_schema": { "$ref": "#/$defs/nonempty_string" }, "meaning_disposition": { "not": { "const": "unresolved" } }, "consumer_disposition": { "enum": ["no_consumer", "has_consumers"] }, "exposure_policy": { "enum": ["none", "anon", "authenticated", "service_only", "api_facade"] }, "transform": { "$ref": "#/$defs/transform_complete" } }
           }
+        },
+        {
+          "$comment": "accepted promote with live consumers (has_consumers) needs a REAL compatibility contract (Codex R2: has_consumers + compatibility_contract:null false-greened a promotion with no shim). type:object + required=true.",
+          "if": { "required": ["decision_status", "action_class", "consumer_disposition"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "const": "promote" }, "consumer_disposition": { "const": "has_consumers" } } },
+          "then": { "required": ["compatibility_contract"], "properties": { "compatibility_contract": { "type": "object", "required": ["required"], "properties": { "required": { "const": true } } } } }
         },
         {
           "$comment": "accepted compat: relocation target (target_schema REQUIRED — finding #4) + required=true contract. type:object closes the null-vacuity bypass (finding #1).",

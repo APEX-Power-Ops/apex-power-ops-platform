@@ -288,6 +288,14 @@ def _neg_compat_missing_target_schema():  # compat now requires target_schema (f
     r = _row_compat(); del r["target_schema"]; return _valid_decisions([r])
 
 
+def _neg_promote_has_consumers_null_compat():  # Codex R2: has_consumers promote needs a real compat
+    r = _row_promote(); r["compatibility_contract"] = None; return _valid_decisions([r])
+
+
+def _neg_promote_null_exposure():  # Claude R2 adversarial: promote must declare a non-null exposure posture
+    r = _row_promote(); r["exposure_policy"] = None; return _valid_decisions([r])
+
+
 NEGATIVES = {
     "01_observed_without_value": _neg_observed_without_value,
     "02_relation_without_facts": _neg_relation_without_facts,
@@ -327,6 +335,8 @@ NEGATIVES = {
     "36_retain_null_retention": _neg_retain_null_retention,
     "37_compat_null_contract": _neg_compat_null_contract,
     "38_compat_missing_target_schema": _neg_compat_missing_target_schema,
+    "39_promote_has_consumers_null_compat": _neg_promote_has_consumers_null_compat,
+    "40_promote_null_exposure": _neg_promote_null_exposure,
 }
 
 POSITIVES = {

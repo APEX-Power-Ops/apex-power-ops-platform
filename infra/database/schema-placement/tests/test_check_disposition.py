@@ -24,6 +24,8 @@ _ROOT = tempfile.mkdtemp(prefix="sp01_evidence_")
 for _fn in ("prod.json", "prod2.json", "backup.sha256"):
     with open(os.path.join(_ROOT, _fn), "w", encoding="utf-8") as _fh:
         _fh.write("{}")
+with open(os.path.join(_ROOT, "empty.sha256"), "w", encoding="utf-8") as _fh:
+    _fh.write("")  # zero-byte recovery artifact (Claude R2 negative)
 ROOTS = [_ROOT]
 SNAP_PATH = os.path.join(_ROOT, "prod.json")
 
@@ -175,6 +177,10 @@ NEG = {
     "SP025_wrong_destination": (promote_bundle, lambda s, d, e, m: d["rows"][0].update(target_objects=["public.wrong_destination"]), "SP025"),
     "SP022_database_deps_na": (harden_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"].update(database_deps={"state": "not_applicable", "found_consumers": None, "ref": None, "detail": "neutralized"}), "SP022"),
     "SP014_delete_scheme_recovery": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"].update(recovery_proof="urn:not-a-real-backup"), "SP014"),
+    "SP012_compat_unapproved_schema": (compat_bundle, lambda s, d, e, m: d["rows"][0].update(target_schema="evil", target_objects=["evil.some_view"]), "SP012"),  # Codex R2: compat must target public
+    "SP010_consumer_evidence_required": (compat_bundle, lambda s, d, e, m: (m["required_observations"].append("consumer_evidence"), s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_observed", found_consumers=None, ref=None, detail="pending")), "SP010"),  # Codex R2
+    "SP015_nonfinite_staleness": (harden_bundle, lambda s, d, e, m: m.update(max_staleness_hours=float("nan")), "SP015"),  # Codex R2
+    "SP014_delete_empty_recovery": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"].update(recovery_proof="empty.sha256"), "SP014"),  # Claude R2: zero-byte artifact
 }
 
 
