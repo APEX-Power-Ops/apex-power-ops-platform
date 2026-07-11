@@ -57,11 +57,12 @@
     },
     "dependency_object_type": { "enum": ["table", "view", "materialized_view", "function", "procedure", "trigger", "policy", "constraint", "sequence", "index", "publication", "subscription", "foreign_table", "type", "source_reference"] },
     "dependency_direction": { "enum": ["inbound", "outbound"] },
+    "dependency_role": { "$comment": "Durable classification of a stored edge (finding: consumer classification discarded from snapshot). external_consumer = an edge the collector counts toward database_deps.found_consumers (views/matviews, function deps, inbound FKs from other tables, publications, inheritance children); outbound_dependency = the relation's own outbound FK (inventory, not a consumer); attached_object = the relation's own owned sequence/trigger/policy (inventory, not a consumer). external_consumer IFF the edge is counted.", "enum": ["external_consumer", "outbound_dependency", "attached_object"] },
     "dependency_evidence_type": { "enum": ["pg_depend", "information_schema", "source", "dynamic_sql", "manual"] },
     "dependency_record": {
       "$comment": "A dependency edge that may involve a NON-relation object (function w/ signature, trigger, policy, constraint, sequence, publication) or a source-only/dynamic-SQL reference (finding: closure gate). identity is free-form (e.g. 'public.handle_new_user()') — NOT constrained to schema.relation.",
-      "type": "object", "required": ["object_type", "identity", "direction", "evidence_type", "evidence_ref"], "additionalProperties": false,
-      "properties": { "object_type": { "$ref": "#/$defs/dependency_object_type" }, "identity": { "$ref": "#/$defs/nonempty_string" }, "direction": { "$ref": "#/$defs/dependency_direction" }, "evidence_type": { "$ref": "#/$defs/dependency_evidence_type" }, "evidence_ref": { "$ref": "#/$defs/nonempty_string" } }
+      "type": "object", "required": ["object_type", "identity", "direction", "evidence_type", "evidence_ref", "dependency_role"], "additionalProperties": false,
+      "properties": { "object_type": { "$ref": "#/$defs/dependency_object_type" }, "identity": { "$ref": "#/$defs/nonempty_string" }, "direction": { "$ref": "#/$defs/dependency_direction" }, "evidence_type": { "$ref": "#/$defs/dependency_evidence_type" }, "evidence_ref": { "$ref": "#/$defs/nonempty_string" }, "dependency_role": { "$ref": "#/$defs/dependency_role" } }
     },
     "observed_dependency_array": {
       "type": "object", "required": ["state"], "additionalProperties": false,
@@ -177,9 +178,20 @@
       "type": "object", "additionalProperties": false,
       "properties": { "source_def": { "type": ["string", "null"] }, "target_def": { "type": ["string", "null"] }, "transform_logic": { "type": ["string", "null"] }, "validation_report": { "type": ["string", "null"] }, "rollback_story": { "type": ["string", "null"] } }
     },
+    "recovery_artifact": {
+      "$comment": "Structured backup evidence for a destructive delete (correction tranche: 'destructive recovery proof is not actually proved'). A bare path could name a file that does not restore. This binds the artifact bytes (sha256), when it was captured (captured_at), and a reference to a SUCCESSFUL restore validation — all checker-resolved: artifact_path + restore_validation_ref must resolve within an approved root and artifact_path's bytes must hash to sha256.",
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_path", "sha256", "captured_at", "restore_validation_ref"],
+      "properties": {
+        "artifact_path": { "$ref": "#/$defs/nonempty_string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "captured_at": { "$ref": "#/$defs/iso_datetime" },
+        "restore_validation_ref": { "$ref": "#/$defs/nonempty_string" }
+      }
+    },
     "retention_disposition": {
       "type": "object", "required": ["policy"], "additionalProperties": false,
-      "properties": { "policy": { "enum": ["retain", "delete_after", "unresolved"] }, "recovery_proof": { "type": ["string", "null"] }, "detail": { "type": ["string", "null"] } }
+      "properties": { "policy": { "enum": ["retain", "delete_after", "unresolved"] }, "recovery_proof": { "oneOf": [{ "type": "null" }, { "type": "string" }, { "$ref": "#/$defs/recovery_artifact" }] }, "detail": { "type": ["string", "null"] } }
     },
 
     "decision_row": {
@@ -231,9 +243,9 @@
           "then": { "required": ["compatibility_contract"], "properties": { "compatibility_contract": { "type": "object", "required": ["required"], "properties": { "required": { "const": true } } } } }
         },
         {
-          "$comment": "accepted compat: relocation target (target_schema REQUIRED — finding #4) + required=true contract. type:object closes the null-vacuity bypass (finding #1).",
+          "$comment": "accepted compat: relocation target (target_schema REQUIRED — finding #4) + required=true contract. type:object closes the null-vacuity bypass (finding #1). consumer_disposition MUST be has_consumers (correction tranche): a compat facade exists ONLY to keep live consumers working, so an accepted compat asserts consumers exist; the checker then enforces OBSERVED consumer evidence (SP022/SP013) independent of the manifest. No consumer ⇒ the decision stays proposed (no unnecessary public facade).",
           "if": { "required": ["decision_status", "action_class"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "const": "compat" } } },
-          "then": { "required": ["target_objects", "target_schema", "compatibility_contract"], "properties": { "target_objects": { "minItems": 1 }, "target_schema": { "$ref": "#/$defs/nonempty_string" }, "compatibility_contract": { "type": "object", "required": ["required"], "properties": { "required": { "const": true } } } } }
+          "then": { "required": ["target_objects", "target_schema", "compatibility_contract", "consumer_disposition"], "properties": { "target_objects": { "minItems": 1 }, "target_schema": { "$ref": "#/$defs/nonempty_string" }, "consumer_disposition": { "const": "has_consumers" }, "compatibility_contract": { "type": "object", "required": ["required"], "properties": { "required": { "const": true } } } } }
         },
         {
           "$comment": "accepted archive: relocate; no live consumers in v1 (finding #5).",
@@ -251,9 +263,9 @@
           "then": { "required": ["retention_disposition"], "properties": { "meaning_disposition": { "const": "preserve" }, "retention_disposition": { "type": "object", "required": ["policy"], "properties": { "policy": { "const": "retain" } } } } }
         },
         {
-          "$comment": "accepted delete: fully constrained destructive state. type:object closes the null-vacuity bypass (finding #1); recovery_proof filesystem-resolution is enforced by the checker (finding #5).",
+          "$comment": "accepted delete: fully constrained destructive state. type:object closes the null-vacuity bypass (finding #1); recovery_proof MUST be a STRUCTURED recovery_artifact (correction tranche) whose sha256/paths the checker resolves and verifies (SP014); the checker also enforces the destructive-evidence floor (SP027).",
           "if": { "required": ["decision_status", "action_class"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "const": "delete" } } },
-          "then": { "required": ["consumer_disposition", "retention_disposition"], "properties": { "meaning_disposition": { "const": "retire" }, "consumer_disposition": { "const": "no_consumer" }, "retention_disposition": { "type": "object", "required": ["policy", "recovery_proof"], "properties": { "policy": { "const": "delete_after" }, "recovery_proof": { "$ref": "#/$defs/nonempty_string" } } } } }
+          "then": { "required": ["consumer_disposition", "retention_disposition"], "properties": { "meaning_disposition": { "const": "retire" }, "consumer_disposition": { "const": "no_consumer" }, "retention_disposition": { "type": "object", "required": ["policy", "recovery_proof"], "properties": { "policy": { "const": "delete_after" }, "recovery_proof": { "$ref": "#/$defs/recovery_artifact" } } } } }
         }
       ]
     },

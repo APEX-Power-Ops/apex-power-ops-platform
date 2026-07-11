@@ -7,6 +7,8 @@ tests for the dup-key loaders (YAML+JSON) and the path-safety helper.
 """
 
 import copy
+import hashlib
+import json
 import os
 import sys
 import tempfile
@@ -15,7 +17,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import check_disposition as cd  # noqa: E402
+import disposition_signing as ds  # noqa: E402
 import yaml  # noqa: E402
+
+
+def _ephemeral_keypair():
+    """A throwaway Ed25519 keypair for signature tests — the PRODUCTION key is generated out-of-band
+    and held in Infisical (operator custody); the checker/collector never embed a real key."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    priv = Ed25519PrivateKey.generate()
+    priv_pem = priv.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
+    pub_pem = priv.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+    return priv, priv_pem, pub_pem
 
 NOW = cd.parse_dt("2026-07-10T21:00:00Z")
 VALIDATOR = cd._validator()
@@ -26,8 +40,20 @@ for _fn in ("prod.json", "prod2.json", "backup.sha256"):
         _fh.write("{}")
 with open(os.path.join(_ROOT, "empty.sha256"), "w", encoding="utf-8") as _fh:
     _fh.write("")  # zero-byte recovery artifact (Claude R2 negative)
+# structured recovery-artifact evidence (correction tranche): a real backup file + its true sha256, and a restore-validation log
+_RECOVERY_BYTES = b"BACKUP: public._scratch_defunct @ 2026-07-09T00:00:00Z"
+with open(os.path.join(_ROOT, "recovery.tar"), "wb") as _fh:
+    _fh.write(_RECOVERY_BYTES)
+with open(os.path.join(_ROOT, "restore-ok.log"), "w", encoding="utf-8") as _fh:
+    _fh.write("restore validated OK 2026-07-09")
+RECOVERY_SHA = hashlib.sha256(_RECOVERY_BYTES).hexdigest()
+EMPTY_SHA = hashlib.sha256(b"").hexdigest()
 ROOTS = [_ROOT]
 SNAP_PATH = os.path.join(_ROOT, "prod.json")
+
+
+def _recovery_artifact(artifact_path="recovery.tar", sha256=None, restore_validation_ref="restore-ok.log", captured_at="2026-07-09T00:00:00Z"):
+    return {"artifact_path": artifact_path, "sha256": sha256 or RECOVERY_SHA, "captured_at": captured_at, "restore_validation_ref": restore_validation_ref}
 
 
 def _obs(v):
@@ -101,8 +127,8 @@ def promote_bundle():
 
 
 def compat_bundle():
-    d = {"decision_id": "D-c1", "source_objects": ["ops.project"], "target_objects": ["public.projects_compat_v"], "target_schema": "public", "meaning_disposition": "preserve", "action_class": "compat", "decision_status": "accepted", "compatibility_contract": {"required": True, "mechanism": "v", "exit_condition": _exit(), "telemetry_ref": "telemetry:x"}, "evidence_refs": ["query:x"], "technical_authority_approval": "TA-3"}
-    return _snapshot([_rel("ops.project", "ops", "project", "r")]), _decs([d]), _entity_map(), _manifest("compat", ["D-c1"]), SNAP_PATH
+    d = {"decision_id": "D-c1", "source_objects": ["ops.project"], "target_objects": ["public.projects_compat_v"], "target_schema": "public", "meaning_disposition": "preserve", "action_class": "compat", "decision_status": "accepted", "consumer_disposition": "has_consumers", "compatibility_contract": {"required": True, "mechanism": "v", "exit_condition": _exit(), "telemetry_ref": "telemetry:x"}, "evidence_refs": ["query:x"], "technical_authority_approval": "TA-3"}
+    return _snapshot([_rel("ops.project", "ops", "project", "r", static_n=1)]), _decs([d]), _entity_map(), _manifest("compat", ["D-c1"]), SNAP_PATH
 
 
 def archive_bundle():
@@ -111,8 +137,10 @@ def archive_bundle():
 
 
 def delete_bundle():
-    d = {"decision_id": "D-d1", "source_objects": ["public._scratch_defunct"], "meaning_disposition": "retire", "action_class": "delete", "decision_status": "accepted", "consumer_disposition": "no_consumer", "retention_disposition": {"policy": "delete_after", "recovery_proof": "backup.sha256"}, "evidence_refs": ["query:x"], "technical_authority_approval": "TA-5"}
-    return _snapshot([_rel("public._scratch_defunct", "public", "_scratch_defunct", "r")]), _decs([d]), _entity_map(), _manifest("delete", ["D-d1"]), SNAP_PATH
+    r = _rel("public._scratch_defunct", "public", "_scratch_defunct", "r")
+    r["consumer_evidence"]["observation_window"] = {"started_at": "2026-06-05T00:00:00Z", "ended_at": "2026-07-09T00:00:00Z"}  # 34d >= 30d destructive floor
+    d = {"decision_id": "D-d1", "source_objects": ["public._scratch_defunct"], "meaning_disposition": "retire", "action_class": "delete", "decision_status": "accepted", "consumer_disposition": "no_consumer", "retention_disposition": {"policy": "delete_after", "recovery_proof": _recovery_artifact()}, "evidence_refs": ["query:x"], "technical_authority_approval": "TA-5"}
+    return _snapshot([r]), _decs([d]), _entity_map(), _manifest("delete", ["D-d1"]), SNAP_PATH
 
 
 def retain_bundle():
@@ -176,11 +204,18 @@ NEG = {
     "SP023": (promote_bundle, lambda s, d, e, m: d["rows"][0].update(target_schema="archive"), "SP023"),
     "SP025_wrong_destination": (promote_bundle, lambda s, d, e, m: d["rows"][0].update(target_objects=["public.wrong_destination"]), "SP025"),
     "SP022_database_deps_na": (harden_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"].update(database_deps={"state": "not_applicable", "found_consumers": None, "ref": None, "detail": "neutralized"}), "SP022"),
-    "SP014_delete_scheme_recovery": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"].update(recovery_proof="urn:not-a-real-backup"), "SP014"),
+    "SP014_delete_scheme_recovery": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"]["recovery_proof"].update(artifact_path="urn:not-a-real-backup"), "SP014"),
+    "SP014_delete_sha_mismatch": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"]["recovery_proof"].update(sha256="b" * 64), "SP014"),  # correction tranche: artifact bytes must hash to the declared sha256
+    "SP014_delete_restore_ref_missing": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"]["recovery_proof"].update(restore_validation_ref="evidence/nope.log"), "SP014"),  # restore-validation proof must resolve
+    "SP027_delete_static_na": (delete_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["static_repo"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived"), "SP027"),  # delete floor: no not_applicable waiver
+    "SP027_delete_short_window": (delete_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["observation_window"].update(started_at="2026-07-01T00:00:00Z"), "SP027"),  # < 30 days
+    "SP027_delete_external_na_exposed": (delete_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["external_clients"].update(state="not_applicable", found_consumers=None, ref=None, detail="n/a"), "SP027"),  # external na while API-exposed
     "SP012_compat_unapproved_schema": (compat_bundle, lambda s, d, e, m: d["rows"][0].update(target_schema="evil", target_objects=["evil.some_view"]), "SP012"),  # Codex R2: compat must target public
     "SP010_consumer_evidence_required": (compat_bundle, lambda s, d, e, m: (m["required_observations"].append("consumer_evidence"), s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_observed", found_consumers=None, ref=None, detail="pending")), "SP010"),  # Codex R2
     "SP015_nonfinite_staleness": (harden_bundle, lambda s, d, e, m: m.update(max_staleness_hours=float("nan")), "SP015"),  # Codex R2
-    "SP014_delete_empty_recovery": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"].update(recovery_proof="empty.sha256"), "SP014"),  # Claude R2: zero-byte artifact
+    "SP015_compat_window_infinite": (promote_bundle, lambda s, d, e, m: d["rows"][0]["compatibility_contract"]["exit_condition"].update(window_hours=float("inf")), "SP015"),  # correction tranche: compat exit window must be finite (schema exclusiveMinimum lets +inf through)
+    "SP014_delete_empty_recovery": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"]["recovery_proof"].update(artifact_path="empty.sha256"), "SP014"),  # Claude R2: zero-byte artifact
+    "SP022_compat_unresolved_consumer": (compat_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["database_deps"].update(state="not_observed", found_consumers=None, ref=None, detail="pending"), "SP022"),  # correction tranche: accepted compat must carry OBSERVED consumer evidence, independent of manifest required_observations
 }
 
 
@@ -218,6 +253,99 @@ def _sp024_missing_expect():
 
 def _sp024_missing_ti():
     return "SP001" in codes(_mut(harden_bundle, lambda s, d, e, m: s.pop("target_identity", None)))
+
+
+def _receipt_pure():
+    # the gate receipt pins the bytes the apply runner must rehash before executing SQL (TOCTOU):
+    # the four CLI docs by path, plus every resolved decision-referenced evidence file.
+    snap, dec, em, man, _sp = delete_bundle()
+    with tempfile.TemporaryDirectory() as d:
+        paths = {}
+        for nm, doc in (("snapshot", snap), ("decisions", dec), ("entity_map", em), ("manifest", man)):
+            paths[nm] = os.path.join(d, nm + ".json")
+            with open(paths[nm], "w", encoding="utf-8") as fh:
+                json.dump(doc, fh)
+        rec = cd.build_receipt(mode="preapply", now_iso="2026-07-10T21:00:00Z",
+                               expect_project_ref="fxoyniqnrlkxfligbxmg", doc_paths=paths, roots=ROOTS, decisions=dec)
+        with open(paths["snapshot"], "rb") as fh:
+            snap_sha = hashlib.sha256(fh.read()).hexdigest()
+        ev = {e["ref"]: e["sha256"] for e in rec["evidence"]}
+        return (rec["gate"] == "green"
+                and rec["inputs"]["snapshot"]["sha256"] == snap_sha
+                and ev.get("recovery.tar") == RECOVERY_SHA        # the backup bytes are pinned
+                and "restore-ok.log" in ev)                       # and the restore-validation proof
+
+
+def test_gate_receipt_pure():
+    assert _receipt_pure()
+
+
+def _delete_external_na_unexposed():
+    # the ONE allowed external_clients waiver: not_applicable when API exposure is OBSERVED false
+    b = _mut(delete_bundle, lambda s, d, e, m: (
+        s["relations"][0].__setitem__("in_data_api_exposed_schema", {"state": "observed", "value": False}),
+        s["relations"][0]["consumer_evidence"]["external_clients"].update(state="not_applicable", found_consumers=None, ref=None, detail="not API-exposed")))
+    return codes(b) == []
+
+
+def test_delete_external_na_when_unexposed():
+    assert _delete_external_na_unexposed()
+
+
+def _sig_roundtrip():
+    priv, _priv_pem, pub_pem = _ephemeral_keypair()
+    pub = ds.load_public_key_pem(pub_pem)
+    msg = b'{"kind":"evidence_snapshot","project_ref":"fxoyniqnrlkxfligbxmg"}'
+    sidecar = ds.build_sig_sidecar(msg, priv)
+    ok, _r = ds.verify_sidecar(msg, sidecar, pub)
+    tampered, _r2 = ds.verify_sidecar(msg + b" ", sidecar, pub)          # payload changed
+    _p2, _pp2, pub2_pem = _ephemeral_keypair()
+    wrongkey, _r3 = ds.verify_sidecar(msg, sidecar, ds.load_public_key_pem(pub2_pem))  # different key
+    return ok and not tampered and not wrongkey
+
+
+def test_signature_roundtrip():
+    assert _sig_roundtrip()
+
+
+def _sig_gate_e2e():
+    """End-to-end SP026: a green harden bundle passes ONLY with a valid signature; a missing or
+    tampered signature blocks (exit 1). Proves the checker verifies before trusting the snapshot."""
+    snap, dec, em, man, _sp = harden_bundle()
+    man = copy.deepcopy(man)
+    with tempfile.TemporaryDirectory() as d:
+        snap_bytes = json.dumps(snap, indent=2, sort_keys=True).encode("utf-8")
+        snap_path = os.path.join(d, "snap.json")
+        with open(snap_path, "wb") as fh:
+            fh.write(snap_bytes)
+        man["evidence_snapshot"] = "snap.json"  # resolves within root d to snap_path (SP021)
+        paths = {}
+        for nm, doc in (("dec.json", dec), ("em.json", em), ("man.json", man)):
+            paths[nm] = os.path.join(d, nm)
+            with open(paths[nm], "w", encoding="utf-8") as fh:
+                json.dump(doc, fh)
+        priv, _priv_pem, pub_pem = _ephemeral_keypair()
+        sig_path = os.path.join(d, "snap.json.sig")
+        with open(sig_path, "w", encoding="utf-8") as fh:
+            json.dump(ds.build_sig_sidecar(snap_bytes, priv), fh)
+        pub_path = os.path.join(d, "verify.pub")
+        with open(pub_path, "wb") as fh:
+            fh.write(pub_pem)
+        base = ["--snapshot", snap_path, "--decisions", paths["dec.json"], "--entity-map", paths["em.json"],
+                "--manifest", paths["man.json"], "--now", "2026-07-10T21:00:00Z", "--root", d,
+                "--expect-project-ref", "fxoyniqnrlkxfligbxmg"]
+        receipt_path = os.path.join(d, "receipt.json")
+        green = cd.main(base + ["--snapshot-sig", sig_path, "--verify-key", pub_path, "--receipt-out", receipt_path]) == 0
+        green = green and os.path.isfile(receipt_path) and json.load(open(receipt_path, encoding="utf-8"))["gate"] == "green"  # receipt emitted on GREEN
+        missing = cd.main(base) == 1                                    # no sig/key supplied
+        with open(snap_path, "ab") as fh:
+            fh.write(b" ")                                              # tamper the signed bytes
+        tampered = cd.main(base + ["--snapshot-sig", sig_path, "--verify-key", pub_path]) == 1
+        return green and missing and tampered
+
+
+def test_signature_gate_end_to_end():
+    assert _sig_gate_e2e()
 
 
 def test_wrong_kind_document_rejected():
@@ -300,6 +428,10 @@ if __name__ == "__main__":
         ("sp024_project_mismatch", _sp024_mismatch),
         ("sp024_missing_expect", _sp024_missing_expect),
         ("sp024_missing_target_identity", _sp024_missing_ti),
+        ("delete_external_na_when_unexposed", _delete_external_na_unexposed),
+        ("gate_receipt_pure", _receipt_pure),
+        ("signature_roundtrip", _sig_roundtrip),
+        ("signature_gate_end_to_end", _sig_gate_e2e),
         ("wrong_kind_document", _wrong_kind),
         ("dup_yaml", lambda: _yaml_dup()),
         ("dup_json", lambda: _json_dup()),

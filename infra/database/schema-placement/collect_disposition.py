@@ -64,6 +64,8 @@ import sys
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+import disposition_signing as ds
+
 SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "disposition.schema.json")
 COLLECTOR_VERSION = "0.1.0"
 
@@ -283,6 +285,19 @@ def build_relation_observation(census_row, privs, deps, failed_groups, now):
                 order.append(edge_key)
             if dep.get("_is_consumer"):
                 consumer_keys.add(edge_key)
+        # Durable classification (finding: consumer status was discarded from the stored snapshot).
+        # Computed AFTER the consumer-OR so a consumer edge is never masked by a non-consumer twin:
+        # external_consumer IFF the (deduped) edge is counted toward found_consumers. Outbound edges
+        # are the relation's own outbound FKs (inventory); other non-counted edges are attached objects.
+        for edge_key in order:
+            direction = edge_key[2]
+            if direction == "outbound":
+                role = "outbound_dependency"
+            elif edge_key in consumer_keys:
+                role = "external_consumer"
+            else:
+                role = "attached_object"
+            records_by_key[edge_key]["dependency_role"] = role
         deps_fact = _obs([records_by_key[k] for k in order])
         ddeps_dim = _cdim_observed(len(consumer_keys), "query:dependents-v2")
 
@@ -497,16 +512,22 @@ def collect_from_db(dsn, schemas, *, project_ref, repo_sha, expect_database, req
 
 
 # ---- atomic output (F6 + no-overwrite race) ---------------------------------
-def write_snapshot(path, snapshot, *, overwrite=False):
-    """Publish atomically. No-overwrite uses os.link (atomic create-if-absent — raises
+def _serialize_snapshot(snapshot) -> bytes:
+    """The canonical on-disk bytes of a snapshot. The signature is computed over EXACTLY these bytes,
+    and the checker verifies over the raw file bytes, so this serialization is the signed message."""
+    return json.dumps(snapshot, indent=2, sort_keys=True).encode("utf-8")
+
+
+def _write_bytes_atomic(path, data, *, overwrite=False):
+    """Publish bytes atomically. No-overwrite uses os.link (atomic create-if-absent — raises
     FileExistsError if the destination exists, with NO check-then-act race). Overwrite uses
     os.replace. Either way the content is fully written + fsync'd to a sibling temp first, so a
     crash mid-write can never leave a partial destination."""
     directory = os.path.dirname(os.path.abspath(path))
     tmp = os.path.join(directory, f".{os.path.basename(path)}.tmp-{os.getpid()}")
     try:
-        with open(tmp, "w", encoding="utf-8") as fh:
-            json.dump(snapshot, fh, indent=2, sort_keys=True)
+        with open(tmp, "wb") as fh:
+            fh.write(data)
             fh.flush()
             os.fsync(fh.fileno())
         if overwrite:
@@ -516,6 +537,28 @@ def write_snapshot(path, snapshot, *, overwrite=False):
     finally:
         if os.path.exists(tmp):
             os.remove(tmp)
+
+
+def write_snapshot(path, snapshot, *, overwrite=False):
+    """Publish a snapshot atomically (unsigned — retained for the offline atomic-write tests)."""
+    _write_bytes_atomic(path, _serialize_snapshot(snapshot), overwrite=overwrite)
+
+
+def write_signed_snapshot(path, snapshot, *, sig_path, private_key, overwrite=False):
+    """Publish the snapshot AND its detached Ed25519 signature sidecar. The signature is over the
+    exact snapshot bytes (F1). Both files are written atomically. Fail-closed: if the sidecar write
+    fails, the just-published snapshot is removed so no UNSIGNED snapshot is ever left behind."""
+    message = _serialize_snapshot(snapshot)
+    sidecar = json.dumps(ds.build_sig_sidecar(message, private_key), indent=2, sort_keys=True).encode("utf-8")
+    _write_bytes_atomic(path, message, overwrite=overwrite)
+    try:
+        _write_bytes_atomic(sig_path, sidecar, overwrite=overwrite)
+    except Exception:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+        raise
 
 
 def _git_head_sha(repo_dir):
@@ -538,16 +581,23 @@ def main(argv=None):
     ap.add_argument("--require-role-markers", default="anon,authenticated,service_role",
                     help="comma-separated platform roles that MUST exist (target guard); empty to disable.")
     ap.add_argument("--out", required=True)
-    ap.add_argument("--overwrite", action="store_true", help="permit replacing an existing --out.")
+    ap.add_argument("--signing-key-env", default="DISPOSITION_SIGNING_KEY", dest="signing_key_env",
+                    help="env var holding the Ed25519 signing key PEM (value-silent; never argv). The"
+                         " snapshot is signed so the checker can bind it to a genuine census (F1).")
+    ap.add_argument("--sig-out", default=None, dest="sig_out", help="signature sidecar path (default: <out>.sig).")
+    ap.add_argument("--overwrite", action="store_true", help="permit replacing an existing --out (and sidecar).")
     args = ap.parse_args(argv)
 
     dsn = os.environ.get(args.dsn_env)
     if not dsn:
         print(f"SP000 collector: env var {args.dsn_env} is not set (DSN is never passed on the command line)", file=sys.stderr)
         return 2
-    if os.path.exists(args.out) and not args.overwrite:
-        print(f"SP000 collector: refusing to overwrite existing {args.out} (pass --overwrite)", file=sys.stderr)
-        return 2
+    sig_out = args.sig_out or (args.out + ".sig")
+    if not args.overwrite:
+        for p in (args.out, sig_out):
+            if os.path.exists(p):
+                print(f"SP000 collector: refusing to overwrite existing {p} (pass --overwrite)", file=sys.stderr)
+                return 2
     repo_sha = args.repo_sha or _git_head_sha(os.path.dirname(os.path.abspath(__file__)))
     if not repo_sha:
         print("SP000 collector: could not derive repo SHA from git HEAD (pass --repo-sha)", file=sys.stderr)
@@ -555,6 +605,18 @@ def main(argv=None):
     schemas = [s.strip() for s in args.schemas.split(",") if s.strip()]
     if not schemas:
         print("SP000 collector: --schemas is empty (refusing to produce an empty census)", file=sys.stderr)
+        return 2
+    # Signing key is MANDATORY and loaded BEFORE any DB work (fail fast; do not census prod if the
+    # result cannot be signed). Value-silent: the PEM comes from env, is never printed, and a load
+    # failure surfaces as a generic message (the key material never appears in output).
+    signing_pem = os.environ.get(args.signing_key_env)
+    if not signing_pem:
+        print(f"SP000 collector: env var {args.signing_key_env} is not set (snapshots must be signed; F1)", file=sys.stderr)
+        return 2
+    try:
+        private_key = ds.load_private_key_pem(signing_pem.encode("utf-8"))
+    except Exception:  # noqa: BLE001 -- never surface key material; report only that it is invalid
+        print(f"SP000 collector: {args.signing_key_env} is not a valid Ed25519 private key PEM", file=sys.stderr)
         return 2
     markers = tuple(s.strip() for s in args.require_role_markers.split(",") if s.strip())
     try:
@@ -567,7 +629,7 @@ def main(argv=None):
         print(f"SP000 collector failed: {type(exc).__name__}", file=sys.stderr)
         return 2
     try:
-        write_snapshot(args.out, snapshot, overwrite=args.overwrite)
+        write_signed_snapshot(args.out, snapshot, sig_path=sig_out, private_key=private_key, overwrite=args.overwrite)
     except Exception as exc:  # noqa: BLE001 -- fail closed on any publish error (finding #8); DSN-free by construction
         print(f"SP000 collector: failed to publish snapshot ({type(exc).__name__})", file=sys.stderr)
         return 2

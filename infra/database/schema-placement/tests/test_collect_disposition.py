@@ -19,10 +19,26 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import collect_disposition as cd  # noqa: E402
+import disposition_signing as ds  # noqa: E402
 
 NOW = "2026-07-11T00:00:00Z"
 PROJECT = "fxoyniqnrlkxfligbxmg"
 SHA = "8a4c37fc"
+
+
+def _ephemeral_keypair():
+    """Throwaway Ed25519 keypair for signing tests. The PRODUCTION key is generated out-of-band and
+    held in Infisical (operator custody); the collector never embeds a real key."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    priv = Ed25519PrivateKey.generate()
+    priv_pem = priv.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
+    pub_pem = priv.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
+    return priv, priv_pem, pub_pem
+
+
+_MINI_SNAP = {"target_identity": {"current_database": "postgres", "current_user": "x"},
+              "relation_count": 0, "query_bundle_sha256": "a" * 64}
 
 CENSUS_COLS = ["schema", "name", "relkind", "owner", "rls_enabled", "is_security_definer_view",
                "inbound_fk_count", "outbound_fk_count", "row_estimate"]
@@ -137,6 +153,31 @@ def test_consumer_count_excludes_self_owned_and_outbound():
     assert r["consumer_evidence"]["database_deps"]["found_consumers"] == 1  # only the function counts as a consumer
 
 
+def test_dependency_role_classification():
+    # durable classification: every stored edge carries dependency_role derived from (direction, is_consumer)
+    deps = [_dep("view", "public.v_x", "inbound", True),                 # external_consumer
+            _dep("sequence", "public.projects_id_seq", "inbound", False),  # attached_object (owned)
+            _dep("constraint", "fk_out -> public.scopes", "outbound", False)]  # outbound_dependency
+    r = _rel(_snap_with_deps(deps), "public.projects")
+    roles = {(v["object_type"], v["direction"]): v["dependency_role"] for v in r["dependent_objects"]["value"]}
+    assert roles == {("view", "inbound"): "external_consumer",
+                     ("sequence", "inbound"): "attached_object",
+                     ("constraint", "outbound"): "outbound_dependency"}
+    # role is durable; the external-consumer COUNT is unchanged (only external_consumer edges count)
+    assert r["consumer_evidence"]["database_deps"]["found_consumers"] == 1
+    n_ext = sum(1 for v in r["dependent_objects"]["value"] if v["dependency_role"] == "external_consumer")
+    assert n_ext == r["consumer_evidence"]["database_deps"]["found_consumers"]
+
+
+def test_dependency_role_or_across_duplicates():
+    # pg_rewrite emits duplicate edges; if ANY twin is a consumer the stored role must be external_consumer
+    dup_c = _dep("view", "public.v_dup", "inbound", True)
+    dup_n = _dep("view", "public.v_dup", "inbound", False)
+    r = _rel(_snap_with_deps([dup_n, dup_c]), "public.projects")  # non-consumer twin first
+    vals = r["dependent_objects"]["value"]
+    assert len(vals) == 1 and vals[0]["dependency_role"] == "external_consumer"
+
+
 def test_dsn_project_binding():
     ref = "fxoyniqnrlkxfligbxmg"
     ok = cd._dsn_contains_project_ref
@@ -156,23 +197,110 @@ def test_dsn_project_binding():
 
 def test_main_write_failure_fails_closed():
     # finding #8: a publish failure must map to fail-closed exit 2, not an uncaught traceback
-    orig_collect, orig_write = cd.collect_from_db, cd.write_snapshot
+    orig_collect, orig_write = cd.collect_from_db, cd.write_signed_snapshot
+    _priv, priv_pem, _pub = _ephemeral_keypair()
     os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
-    cd.collect_from_db = lambda *a, **k: {"target_identity": {"current_database": "postgres", "current_user": "x"},
-                                          "relation_count": 0, "query_bundle_sha256": "a" * 64}
+    os.environ["DISPOSITION_SIGNING_KEY"] = priv_pem.decode("utf-8")
+    cd.collect_from_db = lambda *a, **k: dict(_MINI_SNAP)
 
     def _boom(*a, **k):
         raise OSError("hardlink unsupported on this filesystem")
 
-    cd.write_snapshot = _boom
+    cd.write_signed_snapshot = _boom
     try:
         with tempfile.TemporaryDirectory() as d:
             rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres",
                           "--repo-sha", SHA, "--out", os.path.join(d, "out.json")])
         assert rc == 2
     finally:
-        cd.collect_from_db, cd.write_snapshot = orig_collect, orig_write
+        cd.collect_from_db, cd.write_signed_snapshot = orig_collect, orig_write
         os.environ.pop("DISPOSITION_DSN", None)
+        os.environ.pop("DISPOSITION_SIGNING_KEY", None)
+
+
+def test_write_signed_snapshot_roundtrip():
+    # the collector signs the exact snapshot bytes; the checker's file-verifier must accept them, and
+    # any tamper to the published snapshot must fail verification against the public key.
+    priv, _priv_pem, pub_pem = _ephemeral_keypair()
+    with tempfile.TemporaryDirectory() as d:
+        out = os.path.join(d, "snap.json")
+        sig = out + ".sig"
+        cd.write_signed_snapshot(out, _snap(), sig_path=sig, private_key=priv)
+        pub_path = os.path.join(d, "verify.pub")
+        with open(pub_path, "wb") as fh:
+            fh.write(pub_pem)
+        ok, _reason = ds.verify_snapshot_files(out, sig, pub_path)
+        assert ok
+        with open(out, "ab") as fh:
+            fh.write(b" ")  # tamper the signed bytes
+        bad, _reason2 = ds.verify_snapshot_files(out, sig, pub_path)
+        assert not bad
+
+
+def test_main_signs_and_publishes():
+    # end-to-end: main publishes BOTH the snapshot and a sidecar that verifies against the pubkey
+    orig_collect = cd.collect_from_db
+    priv, _priv_pem, pub_pem = _ephemeral_keypair()
+    os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
+    os.environ["DISPOSITION_SIGNING_KEY"] = _priv_pem.decode("utf-8")
+    cd.collect_from_db = lambda *a, **k: dict(_MINI_SNAP)
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            out = os.path.join(d, "prod.json")
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--repo-sha", SHA, "--out", out])
+            assert rc == 0 and os.path.exists(out) and os.path.exists(out + ".sig")
+            pub_path = os.path.join(d, "verify.pub")
+            with open(pub_path, "wb") as fh:
+                fh.write(pub_pem)
+            ok, reason = ds.verify_snapshot_files(out, out + ".sig", pub_path)
+            assert ok, reason
+    finally:
+        cd.collect_from_db = orig_collect
+        os.environ.pop("DISPOSITION_DSN", None)
+        os.environ.pop("DISPOSITION_SIGNING_KEY", None)
+
+
+def test_main_missing_signing_key_fails_closed():
+    # signing is mandatory (F1); a missing key fails closed BEFORE any DB work
+    called = {"v": False}
+    orig_collect = cd.collect_from_db
+    os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
+    os.environ.pop("DISPOSITION_SIGNING_KEY", None)
+
+    def _spy(*a, **k):
+        called["v"] = True
+        return dict(_MINI_SNAP)
+
+    cd.collect_from_db = _spy
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--repo-sha", SHA, "--out", os.path.join(d, "o.json")])
+        assert rc == 2 and called["v"] is False  # short-circuited before the census
+    finally:
+        cd.collect_from_db = orig_collect
+        os.environ.pop("DISPOSITION_DSN", None)
+
+
+def test_main_invalid_signing_key_fails_closed():
+    # a malformed key PEM fails closed (value-silent: the message never echoes key material)
+    called = {"v": False}
+    orig_collect = cd.collect_from_db
+    os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
+    os.environ["DISPOSITION_SIGNING_KEY"] = "-----BEGIN PRIVATE KEY-----\nnot-a-real-key\n-----END PRIVATE KEY-----\n"
+
+    def _spy(*a, **k):
+        called["v"] = True
+        return dict(_MINI_SNAP)
+
+    cd.collect_from_db = _spy
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--repo-sha", SHA, "--out", os.path.join(d, "o.json")])
+        assert rc == 2 and called["v"] is False
+    finally:
+        cd.collect_from_db = orig_collect
+        os.environ.pop("DISPOSITION_DSN", None)
+        os.environ.pop("DISPOSITION_SIGNING_KEY", None)
 
 
 def test_main_empty_schemas_fails_closed():
@@ -433,8 +561,14 @@ ALL = [
     ("dependents_dedup_counts_once", test_dependents_dedup_counts_once),
     ("dependents_function_and_outbound_direction", test_dependents_function_and_outbound_direction),
     ("consumer_count_excludes_self_owned_and_outbound", test_consumer_count_excludes_self_owned_and_outbound),
+    ("dependency_role_classification", test_dependency_role_classification),
+    ("dependency_role_or_across_duplicates", test_dependency_role_or_across_duplicates),
     ("dsn_project_binding", test_dsn_project_binding),
     ("main_write_failure_fails_closed", test_main_write_failure_fails_closed),
+    ("write_signed_snapshot_roundtrip", test_write_signed_snapshot_roundtrip),
+    ("main_signs_and_publishes", test_main_signs_and_publishes),
+    ("main_missing_signing_key_fails_closed", test_main_missing_signing_key_fails_closed),
+    ("main_invalid_signing_key_fails_closed", test_main_invalid_signing_key_fails_closed),
     ("main_empty_schemas_fails_closed", test_main_empty_schemas_fails_closed),
     ("workflow_dims_not_observed", test_workflow_dims_not_observed),
     ("sha256_deterministic_and_hex", test_sha256_deterministic_and_hex),

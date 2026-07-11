@@ -70,9 +70,9 @@ def _relation(oid="public.v_projects_full", schema="public", name="v_projects_fu
         "inbound_fk_count": _obs(0),
         "outbound_fk_count": _obs(0),
         "dependent_objects": _obs([
-            {"object_type": "function", "identity": "public.handle_new_user()", "direction": "inbound", "evidence_type": "pg_depend", "evidence_ref": "query:dependency-closure-v1"},
-            {"object_type": "trigger", "identity": "public.projects.trg_audit", "direction": "inbound", "evidence_type": "pg_depend", "evidence_ref": "query:dependency-closure-v1"},
-            {"object_type": "policy", "identity": "public.mcp_task_packets.service_all", "direction": "inbound", "evidence_type": "pg_depend", "evidence_ref": "query:dependency-closure-v1"},
+            {"object_type": "function", "identity": "public.handle_new_user()", "direction": "inbound", "evidence_type": "pg_depend", "evidence_ref": "query:dependency-closure-v1", "dependency_role": "external_consumer"},
+            {"object_type": "trigger", "identity": "public.projects.trg_audit", "direction": "inbound", "evidence_type": "pg_depend", "evidence_ref": "query:dependency-closure-v1", "dependency_role": "attached_object"},
+            {"object_type": "policy", "identity": "public.mcp_task_packets.service_all", "direction": "inbound", "evidence_type": "pg_depend", "evidence_ref": "query:dependency-closure-v1", "dependency_role": "attached_object"},
         ]),
         "row_estimate": _na("view — no row estimate"),
         "advisor_findings": _obs(["security_definer_view"]),
@@ -108,15 +108,19 @@ def _row_promote():
 
 
 def _row_compat():
-    return {"decision_id": "D-compat-1", "source_objects": ["ops.project"], "target_objects": ["public.projects_compat_v"], "target_schema": "public", "meaning_disposition": "preserve", "action_class": "compat", "decision_status": "accepted", "compatibility_contract": {"required": True, "mechanism": "public view over ops.project", "exit_condition": _exit(), "telemetry_ref": "telemetry/compat-projects.json"}, "technical_authority_approval": "TA-2026-07-10-003"}
+    return {"decision_id": "D-compat-1", "source_objects": ["ops.project"], "target_objects": ["public.projects_compat_v"], "target_schema": "public", "meaning_disposition": "preserve", "action_class": "compat", "decision_status": "accepted", "consumer_disposition": "has_consumers", "compatibility_contract": {"required": True, "mechanism": "public view over ops.project", "exit_condition": _exit(), "telemetry_ref": "telemetry/compat-projects.json"}, "technical_authority_approval": "TA-2026-07-10-003"}
 
 
 def _row_archive():
     return {"decision_id": "D-archive-1", "source_objects": ["public._009_rollback_snapshot"], "target_objects": ["archive._009_rollback_snapshot"], "meaning_disposition": "retire", "action_class": "archive", "decision_status": "accepted", "target_schema": "archive", "consumer_disposition": "no_consumer", "technical_authority_approval": "TA-2026-07-10-004"}
 
 
+def _recovery_artifact():
+    return {"artifact_path": "evidence/backup-2026-07-10.tar", "sha256": "a" * 64, "captured_at": "2026-07-09T00:00:00Z", "restore_validation_ref": "evidence/restore-check-2026-07-09.log"}
+
+
 def _row_delete():
-    return {"decision_id": "D-delete-1", "source_objects": ["public._scratch_defunct"], "meaning_disposition": "retire", "action_class": "delete", "decision_status": "accepted", "consumer_disposition": "no_consumer", "retention_disposition": {"policy": "delete_after", "recovery_proof": "evidence/backup-2026-07-10.sha256"}, "technical_authority_approval": "TA-2026-07-10-005"}
+    return {"decision_id": "D-delete-1", "source_objects": ["public._scratch_defunct"], "meaning_disposition": "retire", "action_class": "delete", "decision_status": "accepted", "consumer_disposition": "no_consumer", "retention_disposition": {"policy": "delete_after", "recovery_proof": _recovery_artifact()}, "technical_authority_approval": "TA-2026-07-10-005"}
 
 
 def _row_retain():
@@ -296,6 +300,34 @@ def _neg_promote_null_exposure():  # Claude R2 adversarial: promote must declare
     r = _row_promote(); r["exposure_policy"] = None; return _valid_decisions([r])
 
 
+def _neg_dependency_missing_role():  # correction tranche: every stored edge must carry dependency_role
+    s = _valid_snapshot()
+    s["relations"][0]["dependent_objects"] = _obs([{"object_type": "view", "identity": "public.v_x", "direction": "inbound", "evidence_type": "pg_depend", "evidence_ref": "query:x"}])
+    return s
+
+
+def _neg_dependency_bad_role():  # dependency_role is a closed enum
+    s = _valid_snapshot()
+    s["relations"][0]["dependent_objects"] = _obs([{"object_type": "view", "identity": "public.v_x", "direction": "inbound", "evidence_type": "pg_depend", "evidence_ref": "query:x", "dependency_role": "consumer"}])
+    return s
+
+
+def _neg_compat_missing_consumer_disposition():  # correction tranche: accepted compat must assert has_consumers
+    r = _row_compat(); del r["consumer_disposition"]; return _valid_decisions([r])
+
+
+def _neg_compat_no_consumer():  # a no_consumer compat is contradictory (no facade needed) -> must stay proposed
+    r = _row_compat(); r["consumer_disposition"] = "no_consumer"; return _valid_decisions([r])
+
+
+def _neg_delete_string_recovery():  # correction tranche: delete recovery_proof must be a structured artifact, not a bare path
+    r = _row_delete(); r["retention_disposition"]["recovery_proof"] = "evidence/backup.sha256"; return _valid_decisions([r])
+
+
+def _neg_delete_recovery_missing_sha():  # the recovery artifact must carry the sha256 of the backup bytes
+    r = _row_delete(); del r["retention_disposition"]["recovery_proof"]["sha256"]; return _valid_decisions([r])
+
+
 NEGATIVES = {
     "01_observed_without_value": _neg_observed_without_value,
     "02_relation_without_facts": _neg_relation_without_facts,
@@ -337,6 +369,12 @@ NEGATIVES = {
     "38_compat_missing_target_schema": _neg_compat_missing_target_schema,
     "39_promote_has_consumers_null_compat": _neg_promote_has_consumers_null_compat,
     "40_promote_null_exposure": _neg_promote_null_exposure,
+    "41_dependency_missing_role": _neg_dependency_missing_role,
+    "42_dependency_bad_role": _neg_dependency_bad_role,
+    "43_compat_missing_consumer_disposition": _neg_compat_missing_consumer_disposition,
+    "44_compat_no_consumer": _neg_compat_no_consumer,
+    "45_delete_string_recovery": _neg_delete_string_recovery,
+    "46_delete_recovery_missing_sha": _neg_delete_recovery_missing_sha,
 }
 
 POSITIVES = {

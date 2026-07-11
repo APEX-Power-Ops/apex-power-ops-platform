@@ -14,6 +14,7 @@ checks the schema cannot express. Deterministic: --now injected; diagnostics sor
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -24,8 +25,11 @@ from datetime import datetime, timezone
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
+import disposition_signing as ds
+
 SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "disposition.schema.json")
 DIMS = ("static_repo", "database_deps", "runtime_logs", "external_clients", "operator_declaration")
+_DELETE_MIN_WINDOW_HOURS = 720  # destructive-evidence floor: >= 30 days of consumer observation for a delete
 NON_PATH_SCHEMES = ("query", "sha", "ta", "telemetry", "urn", "ref", "http", "https")
 _SCHEME_RE = re.compile(r"^([a-z][a-z0-9+.\-]*):")
 
@@ -55,6 +59,8 @@ CODES = {
     "SP023": "target_entity's physical_schema disagrees with target_schema",
     "SP024": "evidence_snapshot target_identity is absent/not-guard-passed, or its project binding is unasserted/mismatched",
     "SP025": "a target_object does not live in the decision's target_schema (relocation destination binding)",
+    "SP026": "evidence_snapshot signature is missing or does not verify against --verify-key (preapply requires a signed snapshot)",
+    "SP027": "accepted delete does not meet the destructive-evidence floor (a consumer dimension is not observed, external_clients is not_applicable while API-exposed, or the observation window is < 30 days)",
 }
 
 
@@ -138,6 +144,48 @@ def resolve_within_roots(ref, roots):
                 return cand, ""
             within_but_bad = "not a regular file or missing"
     return None, within_but_bad or "escapes all approved roots"
+
+
+def _sha256_file(path):
+    with open(path, "rb") as fh:
+        return hashlib.sha256(fh.read()).hexdigest()
+
+
+def build_receipt(*, mode, now_iso, expect_project_ref, doc_paths, roots, decisions):
+    """A gate receipt binds the EXACT bytes the gate validated so the apply runner can rehash every
+    input immediately before executing SQL and fail on any mismatch (closes the check-time↔apply-time
+    TOCTOU). It records the four CLI documents (+ signature/verify-key) by sha256, and every resolved
+    decision-referenced evidence file (recovery artifact, restore-validation proof, evidence_refs,
+    transform validation report, compat telemetry). Emitted ONLY on a GREEN gate."""
+    receipt = {"kind": "disposition_gate_receipt", "gate": "green", "mode": mode, "now": now_iso,
+               "expect_project_ref": expect_project_ref, "inputs": {}, "evidence": []}
+    for name, p in doc_paths.items():
+        if p and os.path.isfile(p):
+            receipt["inputs"][name] = {"path": p, "sha256": _sha256_file(p)}
+    seen = set()
+    for row in decisions.get("rows", []):
+        refs = list(row.get("evidence_refs", []))
+        rd = row.get("retention_disposition")
+        if isinstance(rd, dict):
+            rp = rd.get("recovery_proof")
+            if isinstance(rp, dict):
+                refs.extend(rp.get(k) for k in ("artifact_path", "restore_validation_ref"))
+            elif isinstance(rp, str):
+                refs.append(rp)
+        tr = row.get("transform")
+        if isinstance(tr, dict) and tr.get("validation_report"):
+            refs.append(tr["validation_report"])
+        cc = row.get("compatibility_contract")
+        if isinstance(cc, dict) and cc.get("telemetry_ref"):
+            refs.append(cc["telemetry_ref"])
+        for ref in refs:
+            if isinstance(ref, str) and is_path_ref(ref):
+                resolved, _reason = resolve_within_roots(ref, roots)
+                if resolved and resolved not in seen:
+                    seen.add(resolved)
+                    receipt["evidence"].append({"ref": ref, "resolved": resolved, "sha256": _sha256_file(resolved)})
+    receipt["evidence"].sort(key=lambda e: e["resolved"])
+    return receipt
 
 
 def _validator():
@@ -350,26 +398,78 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                 if conclusion == "has_consumers" and not observed_positive:
                     d.append(Diagnostic("SP013", f"decision:{did}:{r['object_id']}", "has_consumers but no observed dimension found found_consumers>0"))
 
-        # compat threshold finite (SP015)
+        # compat exit-condition gate numbers finite (SP015): threshold AND window_hours. The schema's
+        # exclusiveMinimum:0 rejects NaN/-inf on window_hours but lets +inf through (inf > 0), and a
+        # YAML .inf/.nan loads as a float — so an infinite exit window would silently defeat any
+        # downstream "metric below threshold for window_hours" evaluation. Reject non-finite here
+        # (correction tranche), mirroring the threshold check.
         cc = row.get("compatibility_contract")
         if isinstance(cc, dict) and cc.get("required") and isinstance(cc.get("exit_condition"), dict):
-            thr = cc["exit_condition"].get("threshold")
-            if not isinstance(thr, (int, float)) or isinstance(thr, bool) or not math.isfinite(thr):
-                d.append(Diagnostic("SP015", f"decision:{did}", f"exit_condition threshold {thr} is not finite"))
+            for numfield in ("threshold", "window_hours"):
+                val = cc["exit_condition"].get(numfield)
+                if not _finite(val):
+                    d.append(Diagnostic("SP015", f"decision:{did}", f"exit_condition {numfield} {val} is not finite"))
 
-        # SP014 (finding #5): a destructive delete's recovery_proof must be a FILESYSTEM artifact
-        # under an approved root, NOT a scheme reference — a scheme token (urn:/ta:/sha:/query:...)
-        # would otherwise skip path resolution below and "prove" a backup that does not exist.
+        # SP014 (finding #5, correction tranche): a destructive delete's recovery_proof is a STRUCTURED
+        # recovery_artifact — the checker resolves artifact_path within an approved root, verifies the
+        # backup bytes hash to the declared sha256 (a named-but-nonexistent/altered backup no longer
+        # "proves" recovery), resolves the restore_validation_ref (proof a restore actually succeeded),
+        # and confirms the capture predates the census.
         if row.get("action_class") == "delete" and row.get("decision_status") == "accepted":
-            rp = (row.get("retention_disposition") or {}).get("recovery_proof")
-            if not rp or not is_path_ref(rp):
-                d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"delete recovery_proof {rp!r} must be a filesystem artifact under an approved root, not a scheme reference"))
+            art = (row.get("retention_disposition") or {}).get("recovery_proof")
+            if not isinstance(art, dict):
+                d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", "delete recovery_proof must be a structured recovery_artifact"))
             else:
-                _rp_resolved, _rp_reason = resolve_within_roots(rp, roots)
-                if _rp_resolved is None:
-                    d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"delete recovery_proof {rp}: {_rp_reason}"))
-                elif os.path.getsize(_rp_resolved) == 0:
-                    d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"delete recovery_proof {rp} is an EMPTY file — a recovery artifact must have content (Claude R2)"))
+                ap = art.get("artifact_path")
+                if not (ap and is_path_ref(ap)):
+                    d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery artifact_path {ap!r} must be a filesystem artifact under an approved root, not a scheme reference"))
+                else:
+                    resolved, reason = resolve_within_roots(ap, roots)
+                    if resolved is None:
+                        d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery artifact_path {ap}: {reason}"))
+                    elif os.path.getsize(resolved) == 0:
+                        d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery artifact {ap} is an EMPTY file — a recovery artifact must have content"))
+                    else:
+                        with open(resolved, "rb") as _fh:
+                            actual = hashlib.sha256(_fh.read()).hexdigest()
+                        if actual != art.get("sha256"):
+                            d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery artifact sha256 {art.get('sha256')} does not match the actual bytes ({actual})"))
+                rvr = art.get("restore_validation_ref")
+                if not (rvr and is_path_ref(rvr)):
+                    d.append(Diagnostic("SP014", f"decision:{did}:restore_validation_ref", f"restore_validation_ref {rvr!r} must be a filesystem artifact under an approved root"))
+                else:
+                    rvr_res, rvr_reason = resolve_within_roots(rvr, roots)
+                    if rvr_res is None:
+                        d.append(Diagnostic("SP014", f"decision:{did}:restore_validation_ref", f"restore_validation_ref {rvr}: {rvr_reason}"))
+                cap = art.get("captured_at")
+                if cap:
+                    try:
+                        if parse_dt(cap) > observed_at:
+                            d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery captured_at {cap} is after observed_at {snapshot['observed_at']}"))
+                    except (ValueError, TypeError):
+                        pass  # schema already enforces iso_datetime syntax
+
+            # SP027 destructive-evidence floor: NO discretionary waiver to catalog + declaration alone.
+            # database_deps/static_repo/runtime_logs/operator_declaration must be OBSERVED for EVERY
+            # source relation; external_clients OBSERVED, or not_applicable ONLY when the relation's API
+            # exposure is OBSERVED false; and the consumer observation window must span >= 30 days.
+            for r in src_rels:
+                ce = r.get("consumer_evidence", {})
+                for dimname in ("database_deps", "static_repo", "runtime_logs", "operator_declaration"):
+                    if ce.get(dimname, {}).get("state") != "observed":
+                        d.append(Diagnostic("SP027", f"decision:{did}:{r['object_id']}:{dimname}", f"delete floor requires {dimname} OBSERVED (got {ce.get(dimname, {}).get('state')})"))
+                ext = ce.get("external_clients", {})
+                if ext.get("state") == "not_applicable":
+                    exposed = r.get("in_data_api_exposed_schema", {})
+                    if not (isinstance(exposed, dict) and exposed.get("state") == "observed" and exposed.get("value") is False):
+                        d.append(Diagnostic("SP027", f"decision:{did}:{r['object_id']}:external_clients", "external_clients not_applicable requires in_data_api_exposed_schema OBSERVED false"))
+                elif ext.get("state") != "observed":
+                    d.append(Diagnostic("SP027", f"decision:{did}:{r['object_id']}:external_clients", f"delete floor requires external_clients observed (got {ext.get('state')})"))
+                w = ce.get("observation_window")
+                if isinstance(w, dict) and "started_at" in w and "ended_at" in w:
+                    hours = (parse_dt(w["ended_at"]) - parse_dt(w["started_at"])).total_seconds() / 3600.0
+                    if hours < _DELETE_MIN_WINDOW_HOURS:
+                        d.append(Diagnostic("SP027", f"decision:{did}:{r['object_id']}:runtime_logs", f"delete requires an observation window >= {_DELETE_MIN_WINDOW_HOURS}h (30d); got {hours:.1f}h"))
 
         # ALL path-capable references (SP014): evidence_refs + transform.validation_report +
         # compat.telemetry_ref + retention.recovery_proof + each source relation's consumer dim refs.
@@ -381,8 +481,8 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
         if isinstance(_cc, dict) and _cc.get("telemetry_ref"):
             path_refs.append(_cc["telemetry_ref"])
         _rd = row.get("retention_disposition")
-        if isinstance(_rd, dict) and _rd.get("recovery_proof"):
-            path_refs.append(_rd["recovery_proof"])
+        if isinstance(_rd, dict) and isinstance(_rd.get("recovery_proof"), str):
+            path_refs.append(_rd["recovery_proof"])  # legacy string form; the structured delete artifact is resolved above
         for r in src_rels:
             for dimname in DIMS:
                 _ref = r.get("consumer_evidence", {}).get(dimname, {}).get("ref")
@@ -421,6 +521,9 @@ def main(argv=None):
     ap.add_argument("--now", required=True, help="ISO-8601 timestamp; injected (no wall-clock).")
     ap.add_argument("--mode", default="preapply", choices=["preapply"])
     ap.add_argument("--expect-project-ref", default=None, dest="expect_project_ref", help="bind the snapshot's project_ref (REQUIRED for preapply; SP024).")
+    ap.add_argument("--snapshot-sig", default=None, dest="snapshot_sig", help="path to the snapshot's detached Ed25519 signature sidecar (REQUIRED for preapply; SP026).")
+    ap.add_argument("--verify-key", default=None, dest="verify_key", help="path to the committed Ed25519 public key that must have signed the snapshot (REQUIRED for preapply; SP026).")
+    ap.add_argument("--receipt-out", default=None, dest="receipt_out", help="on GREEN, write a gate receipt (input SHA-256 digests) here for the apply runner to rehash.")
     ap.add_argument("--root", action="append", default=[], dest="roots", required=True, help="approved evidence root (repeatable, REQUIRED).")
     args = ap.parse_args(argv)
 
@@ -435,6 +538,25 @@ def main(argv=None):
         return 2
 
     roots = [os.path.abspath(r) for r in args.roots]
+
+    # --- signature gate (SP026), BEFORE any semantic trust. The offline checker cannot bind a
+    # self-attested snapshot (guard_passed/project_ref/target_identity/consumer_evidence are plain
+    # JSON) to a genuine read-only census without verifying the collector's detached Ed25519
+    # signature over the exact snapshot bytes (F1). preapply REQUIRES --snapshot-sig + --verify-key;
+    # a missing or non-verifying signature blocks and the semantic gate never runs.
+    if args.mode == "preapply":
+        if not args.snapshot_sig or not args.verify_key:
+            dg = Diagnostic("SP026", "snapshot", "preapply requires --snapshot-sig and --verify-key (an unsigned snapshot is not trusted)")
+            print(dg.render())
+            print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ===")
+            return 1
+        ok, reason = ds.verify_snapshot_files(os.path.abspath(args.snapshot), os.path.abspath(args.snapshot_sig), os.path.abspath(args.verify_key))
+        if not ok:
+            dg = Diagnostic("SP026", "snapshot", f"signature verification failed: {reason}")
+            print(dg.render())
+            print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ===")
+            return 1
+
     diags = run(snapshot, decisions, entity_map, manifest, now, args.mode, roots, _validator(), os.path.abspath(args.snapshot), args.expect_project_ref)
 
     for dg in diags:
@@ -442,6 +564,16 @@ def main(argv=None):
     if diags:
         print(f"=== DISPOSITION GATE ({args.mode}): {len(diags)} BLOCKING ===")
         return 1
+    if args.receipt_out:
+        doc_paths = {"snapshot": os.path.abspath(args.snapshot), "decisions": os.path.abspath(args.decisions),
+                     "entity_map": os.path.abspath(args.entity_map), "manifest": os.path.abspath(args.manifest),
+                     "snapshot_sig": os.path.abspath(args.snapshot_sig) if args.snapshot_sig else None,
+                     "verify_key": os.path.abspath(args.verify_key) if args.verify_key else None}
+        receipt = build_receipt(mode=args.mode, now_iso=args.now, expect_project_ref=args.expect_project_ref,
+                                doc_paths=doc_paths, roots=roots, decisions=decisions)
+        with open(args.receipt_out, "w", encoding="utf-8") as fh:
+            json.dump(receipt, fh, indent=2, sort_keys=True)
+        print(f"=== gate receipt written: {args.receipt_out} ({len(receipt['evidence'])} evidence files pinned) ===")
     print(f"=== DISPOSITION GATE ({args.mode}): GREEN ===")
     return 0
 

@@ -82,8 +82,32 @@ Regression-green under `uv.lock`: contract 51 / checker 47 / collector 29; PG16.
    additive (a public compat view) and now destination-pinned to `public`, so risk is low — but
    decide whether compat should require consumer evidence or at least an explicit conclusion.
 
+## Round-3 correction tranche (operator-ratified decisions on the 4 residuals + 2 new Mediums)
+
+The operator RATIFIED Round-1 and Round-2 and returned decisions on the four outstanding design
+items, plus two further Medium findings from their own re-audit. Implemented in one bounded
+correction tranche (TDD; all suites regression-green under `uv.lock`: **contract 57 / checker 58 /
+collector 35**). The catalog SQL is UNCHANGED — `query_bundle_sha256` remains
+`065d49e08c0ba8458aed25fc24bdacbfd8c3c69e2759a348b797fc496f3aa568`, byte-identical to the committed
+PG16.13 transcript, so no PG16 re-run was required.
+
+| # | Item (source) | Resolution |
+|---|---------------|-----------|
+| 1 | New Medium: non-finite compat exit window (Codex) — `exit_condition.window_hours` = +inf slips past the schema's exclusiveMinimum:0 | checker SP015 now rejects non-finite `window_hours` as well as `threshold`; +neg |
+| 2 | New Medium: consumer classification discarded from the durable snapshot (Codex) | collector emits a required `dependency_role` per stored edge (external_consumer \| outbound_dependency \| attached_object), computed after the consumer-OR; schema adds the enum + requires it; +3 tests. No SQL change |
+| 3 | Decision F1 — signed evidence (Ed25519) | new `disposition_signing.py`; collector signs the exact snapshot bytes with an env-injected key (value-silent) → detached `.sig`; checker SP026 verifies before trusting (preapply REQUIRES `--snapshot-sig` + `--verify-key`; missing/invalid ⇒ block, semantics never run); `cryptography==49.0.0` pinned + relocked; ephemeral-key tests. Production key = operator custody (Infisical), never handled here |
+| 4 | Decision — destructive-delete evidence floor | new SP027: for an accepted delete, database_deps/static_repo/runtime_logs/operator_declaration must be OBSERVED (no `not_applicable` waiver); external_clients OBSERVED, or `not_applicable` ONLY when `in_data_api_exposed_schema` is OBSERVED false; observation window ≥ 30 days. Structured `recovery_artifact` {artifact_path, sha256, captured_at, restore_validation_ref}: checker resolves the path, verifies the backup bytes hash to the declared sha256, resolves the restore-validation proof, and confirms capture predates the census (SP014). +7 negs, +1 positive (the one allowed external waiver) |
+| 5 | Decision — gate receipt (TOCTOU) | checker `--receipt-out` emits, on a GREEN gate, a `disposition_gate_receipt` pinning the SHA-256 of the four CLI docs (+ signature/verify-key) and every resolved decision-referenced evidence file (recovery artifact, restore proof, evidence_refs, transform report, telemetry). Apply-runner contract = rehash-before-SQL, fail on mismatch. +2 tests |
+| 6 | Decision — mandatory compat consumer evidence | accepted compat now REQUIRES `consumer_disposition: has_consumers` (schema); the checker's consumer-evidence resolution (SP022/SP013) then runs for compat INDEPENDENT of the manifest's `required_observations`; no consumer ⇒ the decision cannot be accepted (stays proposed). +2 schema negs, +1 checker neg |
+
+An adversarial negative accompanies every reproduced bypass. `disposition_signing.py` lazy-imports
+`cryptography` so `import collect_disposition` stays cheap and the offline core keeps its
+no-heavy-deps-on-import property.
+
 ## Verdict
-Two adversarial cross-engine rounds drove 8 + 9 = 17 fixes with a negative test per reproduced
-bypass and PG16 execution proofs. The remaining items (1–3) are design decisions, not code defects.
-**Census GO, push, and PR remain HELD** pending the operator's ratification and those decisions.
-Further code-only rounds show diminishing returns until F1 and the delete-floor policy are decided.
+Two adversarial cross-engine rounds drove 8 + 9 = 17 fixes; the operator-ratified correction tranche
+adds 6 more (the 4 design decisions + 2 new Mediums), each with a negative test and no SQL change
+(PG16 proof still valid). The dominant F1 residual is now closed by a real Ed25519 signature gate.
+**Census GO, push, and PR remain HELD** — a fresh cross-engine IRP re-audit runs on the correction
+commit before any read-only census, and the production signing keypair (Infisical custody) is a
+census precondition, not handled in this tranche.
