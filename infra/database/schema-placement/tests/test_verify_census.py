@@ -308,6 +308,47 @@ def test_verify_uses_pinned_key_object_after_file_swap():
         assert ok is True  # verified against the in-hand pinned object, unaffected by the swap
 
 
+def test_verify_detached_with_key_crypto_is_sole_gate():
+    # F-1 guard (de3fa5de re-review): when the sidecar's public_key_sha256 is OMITTED or SPOOFED to
+    # fp(pinned), the boundary that rejects a foreign signature is the FINAL crypto verify against the
+    # PINNED key object. Locks the H1/H3 guarantee against a future refactor that conditions the crypto
+    # verify behind the (skippable) fingerprint cross-check.
+    K_priv, _kp, K_pub = _ephemeral_keypair()          # pinned key K
+    A_priv, _ap, _A_pub = _ephemeral_keypair()          # attacker key A
+    K_obj = ds.load_public_key_pem(K_pub)
+    with tempfile.TemporaryDirectory() as d:
+        msg = b'{"kind":"evidence_snapshot","n":1}'
+        # (i) foreign signature (A) + fingerprint OMITTED -> cross-check skipped -> crypto REJECTS
+        sc = ds.build_sig_sidecar(msg, A_priv); sc.pop("public_key_sha256")
+        sig1 = os.path.join(d, "a.sig"); open(sig1, "w", encoding="utf-8").write(json.dumps(sc))
+        assert ds.verify_detached_with_key(msg, sig1, K_obj)[0] is False
+        # (ii) foreign signature (A) + fingerprint SPOOFED to fp(K) -> cross-check passes -> crypto REJECTS
+        sc2 = ds.build_sig_sidecar(msg, A_priv); sc2["public_key_sha256"] = ds.public_key_fingerprint(K_obj)
+        sig2 = os.path.join(d, "b.sig"); open(sig2, "w", encoding="utf-8").write(json.dumps(sc2))
+        assert ds.verify_detached_with_key(msg, sig2, K_obj)[0] is False
+        # (iii) genuine signature (K) + fingerprint OMITTED -> crypto verify against K ACCEPTS
+        sc3 = ds.build_sig_sidecar(msg, K_priv); sc3.pop("public_key_sha256")
+        sig3 = os.path.join(d, "c.sig"); open(sig3, "w", encoding="utf-8").write(json.dumps(sc3))
+        assert ds.verify_detached_with_key(msg, sig3, K_obj)[0] is True
+
+
+def test_key_id_traversal_rejected_even_with_planted_key():
+    # F-3 guard (de3fa5de re-review): plant a LOADABLE forged key at the traversal destination and trust
+    # the traversal id, so the rejection MUST come from the sanitize/containment defenses (_KEY_ID_RE /
+    # commonpath), NOT from a file-not-found. If both defenses were removed the planted key would load and
+    # its SPKI would match the trusted fingerprint -> this test would then wrongly pass resolve.
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    with tempfile.TemporaryDirectory() as d:
+        _sp, _sig, kd = _write_signed(_snap(), d, priv, pub_pem)
+        planted = os.path.join(os.path.dirname(kd), "evil.pub.pem")  # == kd/../evil.pub.pem
+        with open(planted, "wb") as fh:
+            fh.write(pub_pem)  # a loadable key whose SPKI == the trusted fingerprint below
+        with _trusted("../evil", _fp(pub_pem)):
+            key, reason = vc.resolve_pinned_key(kd, "../evil")
+        assert key is None
+        assert ("bare identifier" in reason) or ("escapes the keys directory" in reason)  # NOT "cannot load"
+
+
 ALL = [
     ("green_baseline_accepts", test_green_baseline_accepts),
     ("wrong_scope_CN005", test_wrong_scope_CN005),
@@ -335,6 +376,8 @@ ALL = [
     ("main_key_id_traversal_rejected_CN013", test_main_key_id_traversal_rejected_CN013),
     ("resolve_pinned_key_returns_key_object", test_resolve_pinned_key_returns_key_object),
     ("verify_uses_pinned_key_object_after_file_swap", test_verify_uses_pinned_key_object_after_file_swap),
+    ("verify_detached_with_key_crypto_is_sole_gate", test_verify_detached_with_key_crypto_is_sole_gate),
+    ("key_id_traversal_rejected_even_with_planted_key", test_key_id_traversal_rejected_even_with_planted_key),
 ]
 
 
