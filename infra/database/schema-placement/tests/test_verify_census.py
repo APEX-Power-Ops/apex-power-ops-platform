@@ -5,6 +5,7 @@ overlays PASSES — unlike preapply), plus the operator's adversarial cases: wro
 hash, wrong repo SHA, mixed-schema output, query failure, missing signature, wrong key.
 """
 
+import contextlib
 import copy
 import json
 import os
@@ -158,7 +159,25 @@ def test_count_mismatch_CN009():
 KEY_ID = "test-ed25519"
 
 
-def _write_signed(snapshot, d, priv, pub_pem, fingerprint=None):
+@contextlib.contextmanager
+def _trusted(key_id, fingerprint):
+    """Temporarily pin a signer id -> SPKI fingerprint in the reviewed source-constant anchor, so an
+    ephemeral test key is treated as an authorized signer. Restores the real anchor afterward. Works
+    under both pytest and the __main__ runner (no fixtures)."""
+    prev = dict(vc.TRUSTED_SIGNERS)
+    vc.TRUSTED_SIGNERS[key_id] = fingerprint
+    try:
+        yield
+    finally:
+        vc.TRUSTED_SIGNERS.clear()
+        vc.TRUSTED_SIGNERS.update(prev)
+
+
+def _fp(pub_pem):
+    return ds.public_key_fingerprint(ds.load_public_key_pem(pub_pem))
+
+
+def _write_signed(snapshot, d, priv, pub_pem, fingerprint=None, key_id=KEY_ID):
     snap_bytes = json.dumps(snapshot, indent=2, sort_keys=True).encode("utf-8")
     snap_path = os.path.join(d, "prod.json")
     with open(snap_path, "wb") as fh:
@@ -168,10 +187,13 @@ def _write_signed(snapshot, d, priv, pub_pem, fingerprint=None):
         json.dump(ds.build_sig_sidecar(snap_bytes, priv), fh)
     keys_dir = os.path.join(d, "keys")
     os.makedirs(keys_dir, exist_ok=True)
-    with open(os.path.join(keys_dir, KEY_ID + ".pub.pem"), "wb") as fh:
+    with open(os.path.join(keys_dir, key_id + ".pub.pem"), "wb") as fh:
         fh.write(pub_pem)
+    # The sibling .spki-sha256 is INERT under the source-constant anchor (the trust anchor is
+    # vc.TRUSTED_SIGNERS, not this file); it is written only to prove a caller-supplied sibling
+    # fingerprint grants no trust.
     fp = fingerprint if fingerprint is not None else ds.public_key_fingerprint(ds.load_public_key_pem(pub_pem))
-    with open(os.path.join(keys_dir, KEY_ID + ".spki-sha256"), "w", encoding="utf-8") as fh:
+    with open(os.path.join(keys_dir, key_id + ".spki-sha256"), "w", encoding="utf-8") as fh:
         fh.write(fp + "\n")
     return snap_path, sig_path, keys_dir
 
@@ -186,7 +208,8 @@ def test_main_green_e2e():
     priv, _pp, pub_pem = _ephemeral_keypair()
     with tempfile.TemporaryDirectory() as d:
         sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
-        assert vc.main(_argv(sp, sig, kd)) == 0
+        with _trusted(KEY_ID, _fp(pub_pem)):  # authorize the ephemeral test key in the source anchor
+            assert vc.main(_argv(sp, sig, kd)) == 0
 
 
 def test_main_tampered_snapshot_CN001():
@@ -195,23 +218,26 @@ def test_main_tampered_snapshot_CN001():
         sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
         with open(sp, "ab") as fh:
             fh.write(b" ")  # tamper after signing
-        assert vc.main(_argv(sp, sig, kd)) == 1
+        with _trusted(KEY_ID, _fp(pub_pem)):  # key is authorized; the SIGNATURE must fail (CN001)
+            assert vc.main(_argv(sp, sig, kd)) == 1
 
 
 def test_main_wrong_key_CN001():
     priv, _pp, _pub = _ephemeral_keypair()
-    _priv2, _pp2, other_pub = _ephemeral_keypair()  # pinned key is a DIFFERENT (fingerprint-consistent) key
+    _priv2, _pp2, other_pub = _ephemeral_keypair()  # pinned key is a DIFFERENT (authorized) key
     with tempfile.TemporaryDirectory() as d:
         sp, sig, kd = _write_signed(_snap(), d, priv, other_pub)  # signed by priv, pinned key = other
-        assert vc.main(_argv(sp, sig, kd)) == 1
+        with _trusted(KEY_ID, _fp(other_pub)):  # other_pub is the authorized signer; priv's sig fails
+            assert vc.main(_argv(sp, sig, kd)) == 1
 
 
 def test_main_fingerprint_mismatch_CN013():
-    # Q1: the committed fingerprint must match the pinned public key — a forged fingerprint fails closed
+    # the pinned SPKI fingerprint (source anchor) must match the supplied public key — a wrong pin fails closed
     priv, _pp, pub_pem = _ephemeral_keypair()
     with tempfile.TemporaryDirectory() as d:
-        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem, fingerprint="00" * 32)
-        assert vc.main(_argv(sp, sig, kd)) == 1
+        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
+        with _trusted(KEY_ID, "00" * 32):  # pinned fingerprint != the real pubkey's SPKI
+            assert vc.main(_argv(sp, sig, kd)) == 1
 
 
 def test_main_unknown_key_id_CN013():
@@ -219,6 +245,67 @@ def test_main_unknown_key_id_CN013():
     with tempfile.TemporaryDirectory() as d:
         sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
         assert vc.main(_argv(sp, sig, kd, key_id="does-not-exist")) == 1
+
+
+def test_main_forged_keys_dir_rejected_CN013():
+    # H1 (Codex PROVEN GREEN): a self-consistent forged keypair in a caller-controlled --keys-dir must
+    # now be REJECTED. The trust anchor is the reviewed TRUSTED_SIGNERS source constant, NOT the sibling
+    # fingerprint file — an ephemeral key whose SPKI is not pinned cannot validate a census.
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    with tempfile.TemporaryDirectory() as d:
+        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)  # sibling fingerprint self-consistent
+        assert vc.main(_argv(sp, sig, kd)) == 1  # KEY_ID is not an authorized signer
+
+
+def test_main_forged_key_under_real_key_id_rejected_CN013():
+    # H1: even using the REAL production key-id, a forged public key whose SPKI != the pinned constant
+    # is rejected (the anchor is the source fingerprint, not the supplied key material).
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    real_id = "prod-disposition-ed25519-2026-07"
+    with tempfile.TemporaryDirectory() as d:
+        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem, key_id=real_id)
+        assert vc.main(_argv(sp, sig, kd, key_id=real_id)) == 1
+
+
+def test_main_key_id_traversal_rejected_CN013():
+    # H1/F3: a path-traversal / absolute key-id is refused even if it were (contrived) a trusted id —
+    # key_id must be a bare identifier and the resolved key path must stay within keys_dir.
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    with tempfile.TemporaryDirectory() as d:
+        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
+        with _trusted("../evil", _fp(pub_pem)):
+            assert vc.main(_argv(sp, sig, kd, key_id="../evil")) == 1
+
+
+def test_resolve_pinned_key_returns_key_object():
+    # H3: resolve_pinned_key returns a loaded public-key OBJECT (not a path), so the caller verifies the
+    # signature against the exact key it fingerprint-checked (no verify-then-reopen TOCTOU).
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    with tempfile.TemporaryDirectory() as d:
+        _sp, _sig, kd = _write_signed(_snap(), d, priv, pub_pem)
+        with _trusted(KEY_ID, _fp(pub_pem)):
+            key, reason = vc.resolve_pinned_key(kd, KEY_ID)
+        assert reason == "" and key is not None
+        assert not isinstance(key, (str, bytes, os.PathLike))
+        assert hasattr(key, "public_bytes")  # an Ed25519 public key object
+
+
+def test_verify_uses_pinned_key_object_after_file_swap():
+    # H3 regression: swapping the on-disk pubkey AFTER resolve must not change verification — the pinned
+    # key OBJECT is used, never re-read from disk.
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    with tempfile.TemporaryDirectory() as d:
+        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
+        with open(sp, "rb") as fh:
+            snap_bytes = fh.read()
+        with _trusted(KEY_ID, _fp(pub_pem)):
+            key, reason = vc.resolve_pinned_key(kd, KEY_ID)
+        assert reason == ""
+        _p2, _pp2, other_pub = _ephemeral_keypair()
+        with open(os.path.join(kd, KEY_ID + ".pub.pem"), "wb") as fh:
+            fh.write(other_pub)  # swap the file to a DIFFERENT key after resolve
+        ok, _r = ds.verify_detached_with_key(snap_bytes, sig, key)
+        assert ok is True  # verified against the in-hand pinned object, unaffected by the swap
 
 
 ALL = [
@@ -243,6 +330,11 @@ ALL = [
     ("main_wrong_key_CN001", test_main_wrong_key_CN001),
     ("main_fingerprint_mismatch_CN013", test_main_fingerprint_mismatch_CN013),
     ("main_unknown_key_id_CN013", test_main_unknown_key_id_CN013),
+    ("main_forged_keys_dir_rejected_CN013", test_main_forged_keys_dir_rejected_CN013),
+    ("main_forged_key_under_real_key_id_rejected_CN013", test_main_forged_key_under_real_key_id_rejected_CN013),
+    ("main_key_id_traversal_rejected_CN013", test_main_key_id_traversal_rejected_CN013),
+    ("resolve_pinned_key_returns_key_object", test_resolve_pinned_key_returns_key_object),
+    ("verify_uses_pinned_key_object_after_file_swap", test_verify_uses_pinned_key_object_after_file_swap),
 ]
 
 

@@ -209,9 +209,24 @@ def test_dsn_project_binding():
     assert not ok("", ref) and not ok("postgresql://x/y", "")
 
 
+def _stub_git_provenance(head=SHA, clean=True):
+    """Patch the collector's git provenance helpers so main() runs without a real merged-main checkout.
+    Production has NO --repo-sha bypass (D1); tests inject provenance here and pass --expect-repo-sha.
+    Returns the saved originals for _restore_git_provenance."""
+    saved = (cd._git_head_sha, cd._git_worktree_clean)
+    cd._git_head_sha = lambda *a: head
+    cd._git_worktree_clean = lambda *a: clean
+    return saved
+
+
+def _restore_git_provenance(saved):
+    cd._git_head_sha, cd._git_worktree_clean = saved
+
+
 def test_main_write_failure_fails_closed():
     # finding #8: a publish failure must map to fail-closed exit 2, not an uncaught traceback
     orig_collect, orig_write = cd.collect_from_db, cd.write_signed_snapshot
+    git_saved = _stub_git_provenance()
     _priv, priv_pem, _pub = _ephemeral_keypair()
     os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
     os.environ["DISPOSITION_SIGNING_KEY"] = priv_pem.decode("utf-8")
@@ -224,10 +239,11 @@ def test_main_write_failure_fails_closed():
     try:
         with tempfile.TemporaryDirectory() as d:
             rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres",
-                          "--repo-sha", SHA, "--out", os.path.join(d, "out.json")])
+                          "--expect-repo-sha", SHA, "--out", os.path.join(d, "out.json")])
         assert rc == 2
     finally:
         cd.collect_from_db, cd.write_signed_snapshot = orig_collect, orig_write
+        _restore_git_provenance(git_saved)
         os.environ.pop("DISPOSITION_DSN", None)
         os.environ.pop("DISPOSITION_SIGNING_KEY", None)
 
@@ -273,6 +289,7 @@ def test_signed_snapshot_no_clobber():
 def test_main_signs_and_publishes():
     # end-to-end: main publishes BOTH the snapshot and a sidecar that verifies against the pubkey
     orig_collect = cd.collect_from_db
+    git_saved = _stub_git_provenance()
     priv, _priv_pem, pub_pem = _ephemeral_keypair()
     os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
     os.environ["DISPOSITION_SIGNING_KEY"] = _priv_pem.decode("utf-8")
@@ -280,7 +297,7 @@ def test_main_signs_and_publishes():
     try:
         with tempfile.TemporaryDirectory() as d:
             out = os.path.join(d, "prod.json")
-            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--repo-sha", SHA, "--out", out])
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--expect-repo-sha", SHA, "--out", out])
             assert rc == 0 and os.path.exists(out) and os.path.exists(out + ".sig")
             pub_path = os.path.join(d, "verify.pub")
             with open(pub_path, "wb") as fh:
@@ -289,6 +306,7 @@ def test_main_signs_and_publishes():
             assert ok, reason
     finally:
         cd.collect_from_db = orig_collect
+        _restore_git_provenance(git_saved)
         os.environ.pop("DISPOSITION_DSN", None)
         os.environ.pop("DISPOSITION_SIGNING_KEY", None)
 
@@ -297,6 +315,7 @@ def test_main_missing_signing_key_fails_closed():
     # signing is mandatory (F1); a missing key fails closed BEFORE any DB work
     called = {"v": False}
     orig_collect = cd.collect_from_db
+    git_saved = _stub_git_provenance()
     os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
     os.environ.pop("DISPOSITION_SIGNING_KEY", None)
 
@@ -307,10 +326,11 @@ def test_main_missing_signing_key_fails_closed():
     cd.collect_from_db = _spy
     try:
         with tempfile.TemporaryDirectory() as d:
-            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--repo-sha", SHA, "--out", os.path.join(d, "o.json")])
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--expect-repo-sha", SHA, "--out", os.path.join(d, "o.json")])
         assert rc == 2 and called["v"] is False  # short-circuited before the census
     finally:
         cd.collect_from_db = orig_collect
+        _restore_git_provenance(git_saved)
         os.environ.pop("DISPOSITION_DSN", None)
 
 
@@ -318,6 +338,7 @@ def test_main_invalid_signing_key_fails_closed():
     # a malformed key PEM fails closed (value-silent: the message never echoes key material)
     called = {"v": False}
     orig_collect = cd.collect_from_db
+    git_saved = _stub_git_provenance()
     os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
     os.environ["DISPOSITION_SIGNING_KEY"] = "-----BEGIN PRIVATE KEY-----\nnot-a-real-key\n-----END PRIVATE KEY-----\n"
 
@@ -328,10 +349,11 @@ def test_main_invalid_signing_key_fails_closed():
     cd.collect_from_db = _spy
     try:
         with tempfile.TemporaryDirectory() as d:
-            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--repo-sha", SHA, "--out", os.path.join(d, "o.json")])
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--expect-repo-sha", SHA, "--out", os.path.join(d, "o.json")])
         assert rc == 2 and called["v"] is False
     finally:
         cd.collect_from_db = orig_collect
+        _restore_git_provenance(git_saved)
         os.environ.pop("DISPOSITION_DSN", None)
         os.environ.pop("DISPOSITION_SIGNING_KEY", None)
 
@@ -340,6 +362,7 @@ def test_main_empty_schemas_fails_closed():
     # Claude R2: a blank/comma-only --schemas must fail closed BEFORE any DB work, not emit empty census
     called = {"v": False}
     orig_collect = cd.collect_from_db
+    git_saved = _stub_git_provenance()
     os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
 
     def _spy(*a, **k):
@@ -349,11 +372,12 @@ def test_main_empty_schemas_fails_closed():
     cd.collect_from_db = _spy
     try:
         with tempfile.TemporaryDirectory() as d:
-            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--repo-sha", SHA,
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--expect-repo-sha", SHA,
                           "--schemas", " , ,", "--out", os.path.join(d, "o.json")])
         assert rc == 2 and called["v"] is False  # short-circuited before any DB connection
     finally:
         cd.collect_from_db = orig_collect
+        _restore_git_provenance(git_saved)
         os.environ.pop("DISPOSITION_DSN", None)
 
 
@@ -376,11 +400,12 @@ def _restore_provenance_env(saved):
 
 
 def test_main_dirty_worktree_fails_closed():
-    # Q2: a census from a DIRTY worktree fails closed BEFORE any DB work
+    # Q2: a census from a DIRTY worktree fails closed BEFORE any DB work (the clean check precedes the
+    # HEAD==expect check, so any --expect-repo-sha value reaches it)
     saved, called = _prep_provenance_env("abc1234", clean=False)
     try:
         with tempfile.TemporaryDirectory() as d:
-            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--out", os.path.join(d, "o.json")])
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--expect-repo-sha", "abc1234", "--out", os.path.join(d, "o.json")])
         assert rc == 2 and called["v"] is False
     finally:
         _restore_provenance_env(saved)
@@ -395,6 +420,34 @@ def test_main_wrong_head_fails_closed():
         assert rc == 2 and called["v"] is False
     finally:
         _restore_provenance_env(saved)
+
+
+def test_main_repo_sha_flag_removed():
+    # D1: --repo-sha is GONE from the production CLI (no runtime provenance bypass); argparse rejects it.
+    os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
+    raised = False
+    try:
+        cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--repo-sha", SHA,
+                 "--expect-repo-sha", SHA, "--out", os.path.join(tempfile.gettempdir(), "x.json")])
+    except SystemExit as exc:
+        raised = (exc.code == 2)
+    finally:
+        os.environ.pop("DISPOSITION_DSN", None)
+    assert raised
+
+
+def test_main_expect_repo_sha_required():
+    # D2: --expect-repo-sha is REQUIRED; the collector refuses to run without the merged-main binding.
+    os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
+    raised = False
+    try:
+        cd.main(["--project-ref", PROJECT, "--expect-database", "postgres",
+                 "--out", os.path.join(tempfile.gettempdir(), "x.json")])
+    except SystemExit as exc:
+        raised = (exc.code == 2)
+    finally:
+        os.environ.pop("DISPOSITION_DSN", None)
+    assert raised
 
 
 def test_workflow_dims_not_observed():
@@ -660,6 +713,8 @@ ALL = [
     ("main_invalid_signing_key_fails_closed", test_main_invalid_signing_key_fails_closed),
     ("main_dirty_worktree_fails_closed", test_main_dirty_worktree_fails_closed),
     ("main_wrong_head_fails_closed", test_main_wrong_head_fails_closed),
+    ("main_repo_sha_flag_removed", test_main_repo_sha_flag_removed),
+    ("main_expect_repo_sha_required", test_main_expect_repo_sha_required),
     ("main_empty_schemas_fails_closed", test_main_empty_schemas_fails_closed),
     ("workflow_dims_not_observed", test_workflow_dims_not_observed),
     ("sha256_deterministic_and_hex", test_sha256_deterministic_and_hex),

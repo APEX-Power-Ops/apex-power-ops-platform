@@ -532,6 +532,10 @@ def collect_from_db(dsn, schemas, *, project_ref, repo_sha, expect_database, req
 
     with psycopg.connect(dsn) as conn:
         conn.read_only = True
+        # F10: the census sweep and the INDEPENDENT census_count run in ONE REPEATABLE READ snapshot, so
+        # a catalog DDL committed between the two statements cannot make catalog_relation_count disagree
+        # with the emitted list (which would otherwise spuriously trip verify_census CN009).
+        conn.isolation_level = psycopg.IsolationLevel.REPEATABLE_READ
         with conn.cursor() as cur:
             return _collect(cur, schemas, db_error=psycopg.Error, project_ref=project_ref, repo_sha=repo_sha,
                             expect_database=expect_database, required_role_markers=required_role_markers)
@@ -611,8 +615,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Read-only, target-bound census collector for the disposition ledger.")
     ap.add_argument("--dsn-env", default="DISPOSITION_DSN", help="env var holding the DSN (value-silent; never argv).")
     ap.add_argument("--project-ref", required=True)
-    ap.add_argument("--repo-sha", default=None, help="explicit override (tests only); bypasses the git HEAD + clean-worktree provenance check.")
-    ap.add_argument("--expect-repo-sha", default=None, dest="expect_repo_sha", help="the MERGED main commit the census must run from; git HEAD must equal it and the worktree must be clean.")
+    ap.add_argument("--expect-repo-sha", required=True, dest="expect_repo_sha",
+                    help="REQUIRED: the MERGED main commit the census must run from. git HEAD must equal it AND the "
+                         "worktree must be clean, asserted before the signing key is read or the DB is opened. There "
+                         "is no runtime bypass (tests inject provenance by patching _git_head_sha / _git_worktree_clean).")
     ap.add_argument("--schemas", default="public", help="comma-separated schema list.")
     ap.add_argument("--expect-database", required=True, help="fail closed unless current_database() matches (e.g. postgres).")
     ap.add_argument("--require-role-markers", default="anon,authenticated,service_role",
@@ -636,22 +642,21 @@ def main(argv=None):
         if os.path.exists(p):
             print(f"SP000 collector: refusing to overwrite existing {p} (a signed census writes a unique path)", file=sys.stderr)
             return 2
-    # Provenance (operator finding): a census's repo_sha must identify a CLEAN, expected merged commit,
-    # verified BEFORE any secret injection or DB access. --repo-sha is a test-only bypass.
-    if args.repo_sha:
-        repo_sha = args.repo_sha
-    else:
-        repo_dir = os.path.dirname(os.path.abspath(__file__))
-        repo_sha = _git_head_sha(repo_dir)
-        if not repo_sha:
-            print("SP000 collector: could not derive repo SHA from git HEAD (pass --repo-sha)", file=sys.stderr)
-            return 2
-        if not _git_worktree_clean(repo_dir):
-            print("SP000 collector: refusing to census from a DIRTY worktree (tracked or untracked changes) — run from a clean merged-main checkout so repo_sha identifies exactly that commit", file=sys.stderr)
-            return 2
-        if args.expect_repo_sha and repo_sha != args.expect_repo_sha:
-            print(f"SP000 collector: git HEAD {repo_sha[:12]} != --expect-repo-sha {args.expect_repo_sha[:12]} (not the expected merged commit)", file=sys.stderr)
-            return 2
+    # Provenance (operator finding, D1/D2): a census's repo_sha MUST identify a CLEAN, expected merged
+    # commit, verified BEFORE the signing key is read and BEFORE any DB access. There is NO runtime
+    # bypass — --expect-repo-sha is required, and git HEAD == expect AND a clean worktree are ALWAYS
+    # enforced. Tests inject provenance by patching _git_head_sha / _git_worktree_clean, never a flag.
+    repo_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_sha = _git_head_sha(repo_dir)
+    if not repo_sha:
+        print("SP000 collector: could not derive repo SHA from git HEAD (run from a clean merged-main checkout)", file=sys.stderr)
+        return 2
+    if not _git_worktree_clean(repo_dir):
+        print("SP000 collector: refusing to census from a DIRTY worktree (tracked or untracked changes) — run from a clean merged-main checkout so repo_sha identifies exactly that commit", file=sys.stderr)
+        return 2
+    if repo_sha != args.expect_repo_sha:
+        print(f"SP000 collector: git HEAD {repo_sha[:12]} != --expect-repo-sha {args.expect_repo_sha[:12]} (not the expected merged commit)", file=sys.stderr)
+        return 2
     schemas = [s.strip() for s in args.schemas.split(",") if s.strip()]
     if not schemas:
         print("SP000 collector: --schemas is empty (refusing to produce an empty census)", file=sys.stderr)

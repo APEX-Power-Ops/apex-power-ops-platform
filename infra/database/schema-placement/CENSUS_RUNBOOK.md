@@ -15,12 +15,14 @@ Prod project: `fxoyniqnrlkxfligbxmg` (Supabase, managed non-super `postgres`, PG
    `openssl pkey -in census.key -pubout -out census.pub`
 2. Store the **private** key in Infisical as `DISPOSITION_SIGNING_KEY` (PKCS8 PEM). It never enters the
    repo, argv, logs, or this runbook.
-3. Add **only** the **public** key + a fingerprint/rotation id to the branch. Committed for this cycle
-   (through your own governed keypair commit, NOT the tooling commit):
-   - public key: `infra/database/schema-placement/keys/prod-disposition-ed25519-2026-07.pub.pem`
-   - fingerprint (rotation id): `infra/database/schema-placement/keys/prod-disposition-ed25519-2026-07.spki-sha256`
-     = the SPKI SHA-256 `c75785cd002977f3ce4794f55ea3b1437be5c60a07c36727372c53bd3dc592ca`
-     (verified to match the committed public key).
+3. Add **only** the **public** key to the branch (through your own governed keypair commit, NOT the
+   tooling commit): `infra/database/schema-placement/keys/prod-disposition-ed25519-2026-07.pub.pem`.
+   The trust anchor is the `TRUSTED_SIGNERS` constant in `verify_census.py` (reviewed verifier source),
+   which pins this signer id to SPKI SHA-256
+   `c75785cd002977f3ce4794f55ea3b1437be5c60a07c36727372c53bd3dc592ca`. The committed public key MUST
+   have exactly that SPKI fingerprint or `verify_census` fails closed (CN013). (An optional
+   `.spki-sha256` sidecar may accompany the key for humans, but it is NOT the anchor — the verifier
+   ignores it and reads the fingerprint from source.)
 4. Open the governed PR (collector + verify_census + the public key), pass CI, **merge to `main`**.
 5. Refresh a **clean `main`** checkout and record its commit: `MAIN_SHA=$(git rev-parse HEAD)`. The
    census must run from this checkout so the snapshot's `repo_sha` == `MAIN_SHA`.
@@ -88,12 +90,20 @@ uv run --project infra/database/schema-placement --locked \
     --expect-database postgres \
     --expect-schemas public \
     --expect-repo-sha "$MAIN_SHA" \
-    --require-role-markers anon,authenticated,service_role
+    --require-role-markers anon,authenticated,service_role \
+    --expect-query-bundle-sha256 217ff3add2abdaca2fafa108f68e10490ee687ac9899b7762f1411d45e2de9db
 ```
 
-Exit 0 = `=== CENSUS ACCEPTANCE: GREEN ===`. `--key-id` resolves the REPO-PINNED public key + fingerprint
-from `keys/` (`--keys-dir` defaults there) and requires the public key's SPKI SHA-256 to equal the
-committed `.spki-sha256` — the trust anchor is repo-owned, not a caller-supplied path. It then verifies
+Pass `--expect-query-bundle-sha256` explicitly (D4) so CN006 binds the census SQL to a **reviewed** hash
+rather than silently trusting the verifier's own checkout. The value MUST equal
+`collect_disposition.query_bundle_sha256()` at the census commit; update it in lockstep whenever the
+`QUERY_BUNDLE` changes (re-derive with `python -c "import collect_disposition as c; print(c.query_bundle_sha256())"`).
+
+Exit 0 = `=== CENSUS ACCEPTANCE: GREEN ===`. `--key-id` must name a signer pinned in the
+`TRUSTED_SIGNERS` source constant; `keys/<key-id>.pub.pem` (`--keys-dir` defaults to `keys/`) is loaded
+as public key MATERIAL and accepted only if its SPKI SHA-256 equals the pinned value — the trust anchor
+is REVIEWED VERIFIER SOURCE, not a caller-supplied path or keys-dir (`--key-id` is sanitized and the
+resolved key path is contained within `--keys-dir`). It then verifies
 the detached signature **before parsing**; asserts project ref / database (incl. `target_identity`
 expected_database) / schema scope / query-bundle hash / merged repo SHA / role markers; validates
 structure + internal consistency + relation-count (emitted list == relation_count == INDEPENDENT catalog

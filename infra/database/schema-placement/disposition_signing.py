@@ -118,6 +118,20 @@ def verify_detached(message: bytes, sig_path, pubkey_path) -> tuple[bool, str]:
     return verify_sidecar(message, sidecar, public_key)
 
 
+def verify_detached_with_key(message: bytes, sig_path, public_key) -> tuple[bool, str]:
+    """Like verify_detached, but verifies against a public key OBJECT the caller ALREADY loaded and
+    pinned (e.g. via verify_census.resolve_pinned_key). Reads ONLY the sidecar from disk — never the
+    public key — so the key whose fingerprint was checked and the key the signature is verified against
+    are guaranteed to be the same bytes (closes the resolve->re-open key TOCTOU, H3). Fail-closed on
+    any read/parse/verify error."""
+    try:
+        with open(sig_path, "rb") as fh:
+            sidecar = json.loads(fh.read())
+    except (OSError, ValueError) as exc:
+        return False, f"cannot read/parse signature sidecar ({type(exc).__name__})"
+    return verify_sidecar(message, sidecar, public_key)
+
+
 def verify_snapshot_files(snapshot_path, sig_path, pubkey_path) -> tuple[bool, str]:
     """Convenience wrapper: read the snapshot bytes from disk, then verify_detached. Used by tests and
     any caller that has only the path. The checker's main gate uses verify_detached directly on the

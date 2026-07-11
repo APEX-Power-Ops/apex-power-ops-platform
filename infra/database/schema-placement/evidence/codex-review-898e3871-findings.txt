@@ -1,0 +1,38 @@
+Codex cross-engine review — census-hardening tranche (codex exec review --base 588da50b @ 898e3871)
+model: gpt-5.5, reasoning effort xhigh. Full log: codex-review-898e3871-full.log.
+
+Summary (codex): "The hardening still leaves caller-controlled trust-anchor and provenance bypass paths,
+and the pinned key is not the exact key used for verification. These issues can allow forged or
+dirty-worktree census evidence to be accepted despite the intended gates."
+
+[P1] Constrain key IDs to the repo keyring — verify_census.py:97-98
+  When --key-id is absolute or contains '../', os.path.join resolves the public key + fingerprint
+  OUTSIDE the committed keys/ dir; --keys-dir can likewise point at an attacker-controlled directory.
+  A forged snapshot signed by an arbitrary key + a matching .spki-sha256 still passes CN013, so the
+  trust anchor remains caller-selected. Codex PROVED it with a runnable exploit: forged ephemeral
+  keypair in a tmp keys-dir + absolute --key-id -> "=== CENSUS ACCEPTANCE: GREEN ===", rc 0.
+
+[P1] Remove the repo SHA override bypass — collect_disposition.py:641-642
+  When --repo-sha is supplied, the clean-worktree and --expect-repo-sha checks are skipped entirely,
+  so a dirty/different checkout can stamp the expected merged SHA and later satisfy verify_census
+  --expect-repo-sha. Ungated public CLI path — provenance gate bypassable.
+
+[P2] Verify the same key bytes that were pinned — verify_census.py:229
+  After resolve_pinned_key verifies the fingerprint, verify_detached REOPENS pub_path; a swap between
+  the two reads separates "fingerprint-checked key" from "signature-verification key". Return the loaded
+  key object and verify against it.
+
+RESOLUTION (correction tranche, ratified source-constant anchor):
+- P1 (trust anchor): TRUSTED_SIGNERS source constant in verify_census.py is the anchor; the pubkey PEM
+  is material only, accepted iff its SPKI == the pinned value; --key-id sanitized + keys_dir containment.
+  Codex's exact exploit (absolute --key-id + forged key) now returns rc 1 / CN013 "not an authorized
+  signer" (verified). Both bare-forged and absolute-key-id shapes rejected.
+- P1 (repo-sha): --repo-sha removed from the production CLI; --expect-repo-sha REQUIRED; clean-worktree
+  + HEAD==expect always enforced before key read / DB open (no runtime bypass). argparse rejects
+  --repo-sha; omitting --expect-repo-sha errors.
+- P2 (TOCTOU): resolve_pinned_key returns the loaded public-key OBJECT; verify via new
+  disposition_signing.verify_detached_with_key (sidecar-only read) — the pinned key IS the verify key.
+
+Cross-engine delta: Claude grounded-audit (wf_aad098e8-791) independently found P1 (both the caller-
+selectable anchor and the --repo-sha bypass); Codex uniquely caught the intra-verify re-open TOCTOU (P2).
+See irp-cross-engine-898e3871.md for the full synthesis (F1-F11 + verified-good + operator decisions).

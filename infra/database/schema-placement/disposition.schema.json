@@ -142,7 +142,7 @@
     },
 
     "collection_scope": {
-      "$comment": "The census PARAMETERS bound by the signature (operator finding: query_bundle_sha256 binds SQL TEXT, not --schemas/database/role-markers). A census-acceptance verifier asserts these equal the expected scope, so a signed snapshot of one scope cannot be passed off as another.",
+      "$comment": "The census PARAMETERS bound by the signature (operator finding: query_bundle_sha256 binds SQL TEXT, not --schemas/database/role-markers). The census-acceptance verifier asserts the SCOPE-DEFINING fields equal the expected scope (schemas CN005, expected_database CN004, required_role_markers CN008, repo_sha CN007, query_bundle_sha256 CN006), so a signed snapshot of one scope cannot be passed off as another. collector_version is checked ONLY for internal top-level/scope consistency (CN016), not pinned to an expected value — it is a provenance LABEL, not a trust anchor.",
       "type": "object", "additionalProperties": false,
       "required": ["schemas", "expected_database", "required_role_markers", "repo_sha", "query_bundle_sha256", "collector_version"],
       "properties": {
