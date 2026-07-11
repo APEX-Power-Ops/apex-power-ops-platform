@@ -326,16 +326,28 @@ def build_relation_observation(census_row, privs, deps, failed_groups, now):
 
 
 def build_snapshot(census_rows, privs_by_oid, deps_by_oid, failed_groups, *,
-                   project_ref, repo_sha, now, target_identity, validate=True):
+                   project_ref, repo_sha, now, target_identity, schemas, expected_database,
+                   required_role_markers, validate=True):
     relations = []
     for row in census_rows:
         oid = f"{row['schema']}.{row['name']}"
         relations.append(build_relation_observation(row, privs_by_oid.get(oid), deps_by_oid.get(oid), failed_groups, now))
+    # collection_scope records the census PARAMETERS inside the SIGNED document, so the signature
+    # binds --schemas / --expect-database / --require-role-markers (not just the SQL text). A
+    # census-acceptance verifier asserts these equal the expected scope.
+    collection_scope = {
+        "schemas": sorted(schemas),
+        "expected_database": expected_database,
+        "required_role_markers": sorted(required_role_markers),
+        "repo_sha": repo_sha,
+        "query_bundle_sha256": query_bundle_sha256(),
+        "collector_version": COLLECTOR_VERSION,
+    }
     snapshot = {
         "kind": "evidence_snapshot", "project_ref": project_ref, "observed_at": now, "repo_sha": repo_sha,
         "collector_version": COLLECTOR_VERSION, "query_bundle_sha256": query_bundle_sha256(),
         "relation_count": len(relations), "generator": f"collect_disposition/{COLLECTOR_VERSION}",
-        "target_identity": target_identity, "relations": relations,
+        "collection_scope": collection_scope, "target_identity": target_identity, "relations": relations,
     }
     if validate:
         errs = _validate(snapshot)
@@ -457,7 +469,8 @@ def _collect(cur, schemas, *, db_error, project_ref, repo_sha, expect_database, 
 
     return build_snapshot(census_rows, privs_by_oid, deps_by_oid, failed,
                           project_ref=project_ref, repo_sha=repo_sha, now=observed_at,
-                          target_identity=target_identity)
+                          target_identity=target_identity, schemas=schemas,
+                          expected_database=expect_database, required_role_markers=required_role_markers)
 
 
 def _dsn_contains_project_ref(dsn, project_ref):

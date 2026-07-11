@@ -141,9 +141,23 @@
       }
     },
 
+    "collection_scope": {
+      "$comment": "The census PARAMETERS bound by the signature (operator finding: query_bundle_sha256 binds SQL TEXT, not --schemas/database/role-markers). A census-acceptance verifier asserts these equal the expected scope, so a signed snapshot of one scope cannot be passed off as another.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schemas", "expected_database", "required_role_markers", "repo_sha", "query_bundle_sha256", "collector_version"],
+      "properties": {
+        "schemas": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/nonempty_string" } },
+        "expected_database": { "$ref": "#/$defs/nonempty_string" },
+        "required_role_markers": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/nonempty_string" } },
+        "repo_sha": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+        "query_bundle_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "collector_version": { "$ref": "#/$defs/nonempty_string" }
+      }
+    },
+
     "evidence_snapshot": {
       "type": "object",
-      "required": ["kind", "project_ref", "observed_at", "repo_sha", "collector_version", "query_bundle_sha256", "relation_count", "target_identity", "relations"],
+      "required": ["kind", "project_ref", "observed_at", "repo_sha", "collector_version", "query_bundle_sha256", "relation_count", "collection_scope", "target_identity", "relations"],
       "additionalProperties": false,
       "properties": {
         "kind": { "const": "evidence_snapshot" },
@@ -154,6 +168,7 @@
         "query_bundle_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "relation_count": { "type": "integer", "minimum": 0 },
         "generator": { "type": "string" },
+        "collection_scope": { "$ref": "#/$defs/collection_scope" },
         "target_identity": { "$ref": "#/$defs/target_identity" },
         "relations": { "type": "array", "items": { "$ref": "#/$defs/relation_observation" }, "uniqueItems": true }
       }

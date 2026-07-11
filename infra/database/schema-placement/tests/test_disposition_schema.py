@@ -86,9 +86,13 @@ def _target_identity():
             "platform_role_markers": ["anon", "authenticated", "service_role"], "guard_passed": True}
 
 
+def _collection_scope():
+    return {"schemas": ["public"], "expected_database": "postgres", "required_role_markers": ["anon", "authenticated", "service_role"], "repo_sha": "8a4c37fc", "query_bundle_sha256": SHA64, "collector_version": "0.1.0"}
+
+
 def _valid_snapshot(relations=None):
     rels = relations if relations is not None else [_relation()]
-    return {"kind": "evidence_snapshot", "project_ref": "fxoyniqnrlkxfligbxmg", "observed_at": "2026-07-10T20:00:00Z", "repo_sha": "8a4c37fc", "collector_version": "0.1.0", "query_bundle_sha256": SHA64, "relation_count": len(rels), "target_identity": _target_identity(), "relations": rels}
+    return {"kind": "evidence_snapshot", "project_ref": "fxoyniqnrlkxfligbxmg", "observed_at": "2026-07-10T20:00:00Z", "repo_sha": "8a4c37fc", "collector_version": "0.1.0", "query_bundle_sha256": SHA64, "relation_count": len(rels), "collection_scope": _collection_scope(), "target_identity": _target_identity(), "relations": rels}
 
 
 def _exit():
@@ -332,6 +336,10 @@ def _neg_calendar_invalid_observed_at():  # F1: date-time format (rfc3339-valida
     s = _valid_snapshot(); s["observed_at"] = "2026-13-45T25:61:61Z"; return s
 
 
+def _neg_snapshot_without_collection_scope():  # census-enablement: the signed snapshot must bind its query scope
+    s = _valid_snapshot(); del s["collection_scope"]; return s
+
+
 NEGATIVES = {
     "01_observed_without_value": _neg_observed_without_value,
     "02_relation_without_facts": _neg_relation_without_facts,
@@ -380,6 +388,7 @@ NEGATIVES = {
     "45_delete_string_recovery": _neg_delete_string_recovery,
     "46_delete_recovery_missing_sha": _neg_delete_recovery_missing_sha,
     "47_calendar_invalid_observed_at": _neg_calendar_invalid_observed_at,
+    "48_snapshot_without_collection_scope": _neg_snapshot_without_collection_scope,
 }
 
 POSITIVES = {

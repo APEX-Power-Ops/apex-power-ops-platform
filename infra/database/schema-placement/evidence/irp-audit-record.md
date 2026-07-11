@@ -183,6 +183,34 @@ access. Pre-census fixes applied in the pre-census commit (suites 58/63/37; bund
 - **Unsigned governance docs:** acceptable only if the runner requires a clean, reviewed Git commit and verifies each doc against its Git blob/hash; reject arbitrary working-tree files.
 
 **Pre-census GO checklist (operator):** (1) restore-proof alias detection ✅; (2) remove signed `--overwrite` ✅; (3) clean the evidence memo ✅; (4) generate the production Ed25519 keypair out-of-band (private → Infisical, commit the public key) — OPERATOR. Then: the read-only census GO for a unique `evidence/prod-<ts>.json`. The apply gate remains HELD.
+
+## Census-enablement packet (operator-directed; final packet before the census)
+
+The operator's three remaining gaps (tooling local-only; `preapply` is the wrong post-census
+verifier; the signature doesn't bind `--schemas`) are closed. Suites green: schema 59 / checker 63 /
+collector 38 / **census-acceptance 14**; bundle hash unchanged (`065d49e0`).
+
+- **Gap 3 — signed `collection_scope`:** the collector now bakes `collection_scope`
+  {schemas(sorted), expected_database, required_role_markers(sorted), repo_sha, query_bundle_sha256,
+  collector_version} into the signed snapshot (schema-required), so the signature binds the query
+  PARAMETERS, not just the SQL text. +schema negative +collector test.
+- **Gap 2 — `verify_census.py` (census-acceptance gate), distinct from preapply:** verifies the
+  detached signature vs the repo-pinned public key BEFORE parsing (CN001); asserts project_ref /
+  database / schema-scope / query-bundle hash / **merged repo SHA** / role markers; validates
+  structure + relation_count + object_id; rejects any `query_failed` group (CN011); confirms every
+  relation is in the requested scope (CN012); PERMITS the expected zero-width windows + `not_observed`
+  overlays; requires NO decisions/entity-map/manifest. Codes CN0xx. +14 tests incl. the operator's
+  adversarial set (wrong scope, wrong bundle hash, wrong repo SHA, mixed-schema, query failure,
+  missing signature, wrong key).
+- **Gap 1 — local-only tooling:** addressed by process — `CENSUS_RUNBOOK.md` mandates running from a
+  **merged `main`** checkout so `repo_sha` == the merged commit, which `verify_census --expect-repo-sha`
+  asserts. The collector + verify_census + public key go through a governed PR + merge BEFORE the census.
+- **Runbook:** `CENSUS_RUNBOOK.md` — the exact value-silent census + acceptance procedure (secrets
+  from env only, unique `prod-<UTC>.json` + `.sig`, no-overwrite, redacted transcript, evidence PR).
+  **Prepared only — not run.**
+
+**Ratified-for-later (unchanged):** signed-overlay contract, apply-runner (revalidate-everything incl.
+restore-test), recovery-recency (`max_recovery_age_hours` 24h), receipt hardening — all after the census.
 **Census GO, push, and PR remain HELD** — a fresh cross-engine IRP re-audit runs on the correction
 commit before any read-only census, and the production signing keypair (Infisical custody) is a
 census precondition, not handled in this tranche.

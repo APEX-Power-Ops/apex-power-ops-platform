@@ -63,7 +63,8 @@ DEPS = {"public.projects": [
 def _snap(failed=frozenset(), rows=None, now=NOW, ti=None):
     rows = rows if rows is not None else [dict(zip(CENSUS_COLS, VIEW)), dict(zip(CENSUS_COLS, TABLE))]
     return cd.build_snapshot(rows, PRIVS, DEPS, set(failed), project_ref=PROJECT, repo_sha=SHA,
-                             now=now, target_identity=ti or TI_DICT)
+                             now=now, target_identity=ti or TI_DICT, schemas=["public"],
+                             expected_database="postgres", required_role_markers=("anon", "authenticated", "service_role"))
 
 
 def _rel(snap, oid):
@@ -79,7 +80,8 @@ def _snap_with_deps(deps_list):
     rows = [dict(zip(CENSUS_COLS, TABLE))]
     return cd.build_snapshot(rows, {"public.projects": {"anon": [], "authenticated": []}},
                              {"public.projects": deps_list}, set(),
-                             project_ref=PROJECT, repo_sha=SHA, now=NOW, target_identity=TI_DICT)
+                             project_ref=PROJECT, repo_sha=SHA, now=NOW, target_identity=TI_DICT,
+                             schemas=["public"], expected_database="postgres", required_role_markers=("anon", "authenticated", "service_role"))
 
 
 # ==== pure state-mapping core ================================================
@@ -479,7 +481,7 @@ def _script(**over):
     return base
 
 
-def _run_fake(script, expect_database=None, required_role_markers=()):
+def _run_fake(script, expect_database="postgres", required_role_markers=()):
     return cd._collect(FakeCursor(script), ["public"], db_error=FakeDBError, project_ref=PROJECT,
                        repo_sha=SHA, expect_database=expect_database, required_role_markers=required_role_markers)
 
@@ -490,6 +492,18 @@ def test_fake_happy_path_valid_and_bound():
     assert snap["observed_at"] == NOW  # observed_at comes from the DB clock, not a caller value
     assert snap["target_identity"]["current_database"] == "postgres"
     assert snap["target_identity"]["guard_passed"] is True
+
+
+def test_collection_scope_binds_parameters():
+    # the signature must bind the query PARAMETERS (schemas / db / role markers), not just SQL text
+    snap = _run_fake(_script(), expect_database="postgres", required_role_markers=("authenticated", "anon"))
+    cs = snap["collection_scope"]
+    assert cs["schemas"] == ["public"]                                  # sorted requested schemas
+    assert cs["expected_database"] == "postgres"
+    assert cs["required_role_markers"] == ["anon", "authenticated"]     # sorted
+    assert cs["repo_sha"] == SHA
+    assert cs["query_bundle_sha256"] == cd.query_bundle_sha256()
+    assert cs["collector_version"] == cd.COLLECTOR_VERSION
 
 
 def test_fake_read_only_assertion_blocks():
@@ -609,6 +623,7 @@ ALL = [
     ("guard_fails_wrong_database", test_guard_fails_wrong_database),
     ("guard_fails_missing_marker", test_guard_fails_missing_marker),
     ("fake_happy_path_valid_and_bound", test_fake_happy_path_valid_and_bound),
+    ("collection_scope_binds_parameters", test_collection_scope_binds_parameters),
     ("fake_read_only_assertion_blocks", test_fake_read_only_assertion_blocks),
     ("fake_target_guard_failure_blocks", test_fake_target_guard_failure_blocks),
     ("fake_query_group_recovery", test_fake_query_group_recovery),

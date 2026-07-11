@@ -94,10 +94,15 @@ def _target_identity():
             "platform_role_markers": ["anon", "authenticated", "service_role"], "guard_passed": True}
 
 
+def _collection_scope():
+    return {"schemas": ["public"], "expected_database": "postgres", "required_role_markers": ["anon", "authenticated", "service_role"],
+            "repo_sha": "8a4c37fc", "query_bundle_sha256": "a" * 64, "collector_version": "0.1.0"}
+
+
 def _snapshot(rels):
     return {"kind": "evidence_snapshot", "project_ref": "fxoyniqnrlkxfligbxmg", "observed_at": "2026-07-10T20:00:00Z",
             "repo_sha": "8a4c37fc", "collector_version": "0.1.0", "query_bundle_sha256": "a" * 64,
-            "relation_count": len(rels), "target_identity": _target_identity(), "relations": rels}
+            "relation_count": len(rels), "collection_scope": _collection_scope(), "target_identity": _target_identity(), "relations": rels}
 
 
 def _entity_map():
