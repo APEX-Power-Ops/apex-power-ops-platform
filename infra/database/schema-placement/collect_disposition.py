@@ -544,18 +544,18 @@ def write_snapshot(path, snapshot, *, overwrite=False):
     _write_bytes_atomic(path, _serialize_snapshot(snapshot), overwrite=overwrite)
 
 
-def write_signed_snapshot(path, snapshot, *, sig_path, private_key, overwrite=False):
-    """Publish the snapshot AND its detached Ed25519 signature sidecar, each atomically. The signature
-    is over the exact snapshot bytes (F1). The SIDECAR is published FIRST so a partial failure can
-    never leave a snapshot WITHOUT its signature (the dangerous state — the checker would then hold an
-    unsigned snapshot); a lone sidecar is inert (the checker requires BOTH). Neither destination is
-    ever deleted on failure, so an existing valid signed pair (overwrite mode) is never destroyed —
-    a failed snapshot replace leaves the old snapshot intact, and the new sidecar simply will not
-    verify against it, so the checker fails closed rather than losing data (Codex P2)."""
+def write_signed_snapshot(path, snapshot, *, sig_path, private_key):
+    """Publish the snapshot AND its detached Ed25519 signature sidecar, each atomically and NO-CLOBBER
+    (os.link raises FileExistsError if either already exists). A signed census writes a UNIQUE
+    (timestamped) path and NEVER overwrites: two files cannot be replaced atomically AS A PAIR, so a
+    failed overwrite could leave the old snapshot beside a new, non-verifying sidecar (operator
+    finding). The SIDECAR is published FIRST so a partial failure never leaves a snapshot WITHOUT a
+    signature (a lone sidecar is inert — the checker requires both). The signature is over the exact
+    snapshot bytes (F1)."""
     message = _serialize_snapshot(snapshot)
     sidecar = json.dumps(ds.build_sig_sidecar(message, private_key), indent=2, sort_keys=True).encode("utf-8")
-    _write_bytes_atomic(sig_path, sidecar, overwrite=overwrite)
-    _write_bytes_atomic(path, message, overwrite=overwrite)
+    _write_bytes_atomic(sig_path, sidecar, overwrite=False)
+    _write_bytes_atomic(path, message, overwrite=False)
 
 
 def _git_head_sha(repo_dir):
@@ -582,19 +582,20 @@ def main(argv=None):
                     help="env var holding the Ed25519 signing key PEM (value-silent; never argv). The"
                          " snapshot is signed so the checker can bind it to a genuine census (F1).")
     ap.add_argument("--sig-out", default=None, dest="sig_out", help="signature sidecar path (default: <out>.sig).")
-    ap.add_argument("--overwrite", action="store_true", help="permit replacing an existing --out (and sidecar).")
     args = ap.parse_args(argv)
 
     dsn = os.environ.get(args.dsn_env)
     if not dsn:
         print(f"SP000 collector: env var {args.dsn_env} is not set (DSN is never passed on the command line)", file=sys.stderr)
         return 2
+    # A signed census NEVER overwrites: it writes a unique (timestamped) path so the signed snapshot
+    # and its sidecar are published no-clobber as a fresh pair (operator finding — a two-file overwrite
+    # cannot be atomic as a pair).
     sig_out = args.sig_out or (args.out + ".sig")
-    if not args.overwrite:
-        for p in (args.out, sig_out):
-            if os.path.exists(p):
-                print(f"SP000 collector: refusing to overwrite existing {p} (pass --overwrite)", file=sys.stderr)
-                return 2
+    for p in (args.out, sig_out):
+        if os.path.exists(p):
+            print(f"SP000 collector: refusing to overwrite existing {p} (a signed census writes a unique path)", file=sys.stderr)
+            return 2
     repo_sha = args.repo_sha or _git_head_sha(os.path.dirname(os.path.abspath(__file__)))
     if not repo_sha:
         print("SP000 collector: could not derive repo SHA from git HEAD (pass --repo-sha)", file=sys.stderr)
@@ -626,7 +627,7 @@ def main(argv=None):
         print(f"SP000 collector failed: {type(exc).__name__}", file=sys.stderr)
         return 2
     try:
-        write_signed_snapshot(args.out, snapshot, sig_path=sig_out, private_key=private_key, overwrite=args.overwrite)
+        write_signed_snapshot(args.out, snapshot, sig_path=sig_out, private_key=private_key)
     except Exception as exc:  # noqa: BLE001 -- fail closed on any publish error (finding #8); DSN-free by construction
         print(f"SP000 collector: failed to publish snapshot ({type(exc).__name__})", file=sys.stderr)
         return 2

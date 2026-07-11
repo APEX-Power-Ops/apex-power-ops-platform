@@ -157,6 +157,32 @@ surfaced for the operator, not code defects. Per the fail-closed convergence rul
 rounds show diminishing returns — the lane is at a **decision point, not a defect point**.
 **Census GO, push, and PR remain HELD** pending operator ratification, the production keypair custody,
 and the surfaced apply-time decisions (which gate the first DESTRUCTIVE apply, not the read-only census).
+
+## Operator adversarial audit of `382dec9a` — CONDITIONAL census ratification
+
+The operator ran an independent adversarial pass on `382dec9a` and **conditionally ratified the
+collector/signature path for the first UNIQUE, no-overwrite, read-only census**, gated on four
+pre-census fixes; the apply gate stays HELD, and the signed-overlay contract + apply-runner become the
+NEXT PACKET (not another checker-only round). Two findings were real bugs in the immediately-preceding
+fixes. Independently verified by the operator: suites 58/62/37, RFC3339 active, SP015 on inf windows,
+in-hand-bytes verify + receipt, fail-closed key disappearance, bundle `065d49e0`, branch clean, no prod
+access. Pre-census fixes applied in the pre-census commit (suites 58/63/37; bundle hash unchanged):
+
+| # | Sev | Finding | Resolution |
+|---|-----|---------|-----------|
+| 1 | High | the "distinct restore proof" check compared declared path STRINGS, so a symlink `restore-alias.log`→`recovery.tar` false-greened (same inode) | compare the RESOLVED files with `os.path.samefile`, not strings; +symlink-alias negative |
+| 2 | Medium | signed-pair `--overwrite` is not atomic AS A PAIR — a failed snapshot replace left the old snapshot beside a new, non-verifying sidecar | removed `--overwrite` from the signed path entirely; a signed census writes a UNIQUE path, no-clobber (os.link) for both files; the overwrite test became a no-clobber test |
+| 4 | Medium | the receipt was described as "closing TOCTOU"/authorizing SQL, but it re-reads sig/key/evidence after validation | `build_receipt` docstring corrected: the receipt is ADVISORY and records validated hashes; the apply runner is the authority and MUST independently re-read/re-verify/re-check/rehash/restore-test |
+| 5 | Low | committed evidence memo had trailing whitespace (`git diff --check`) | stripped trailing whitespace from `evidence/*.md` |
+
+**Ratified for the NEXT PACKET (apply-runner + signed overlays), NOT implemented now:**
+- **Recovery recency:** a dedicated manifest `max_recovery_age_hours` (recommend 24h at checker time), NOT `max_staleness_hours` (different fact); the apply runner must create + restore-test a FRESH backup immediately before the destructive SQL.
+- **Apply-runner = revalidate everything** (7 steps): read each input once; verify snapshot + overlay signatures vs the repo-pinned key; re-run schema/semantic/target/SP014; verify receipt hashes; bind + hash the exact migration SQL; restore-test the backup in disposable PostgreSQL; recheck target identity + drift immediately before executing that exact SQL.
+- **Receipt hardening (F3/F4):** build WITH the apply runner (interface known there) — thread validated evidence bytes/hashes forward in memory, label each evidence role, record the verified key fingerprint, include the migration hash. No standalone receipt revision first.
+- **Signed overlays (design gap #3):** the collector signs the WHOLE raw snapshot, but static_repo/runtime/external_clients/operator/exposure/advisor ship as `not_observed` and are meant to be filled later — editing them invalidates the signature. Keep the census IMMUTABLE; define separately-signed overlay documents bound to the base snapshot SHA-256.
+- **Unsigned governance docs:** acceptable only if the runner requires a clean, reviewed Git commit and verifies each doc against its Git blob/hash; reject arbitrary working-tree files.
+
+**Pre-census GO checklist (operator):** (1) restore-proof alias detection ✅; (2) remove signed `--overwrite` ✅; (3) clean the evidence memo ✅; (4) generate the production Ed25519 keypair out-of-band (private → Infisical, commit the public key) — OPERATOR. Then: the read-only census GO for a unique `evidence/prod-<ts>.json`. The apply gate remains HELD.
 **Census GO, push, and PR remain HELD** — a fresh cross-engine IRP re-audit runs on the correction
 commit before any read-only census, and the production signing keypair (Infisical custody) is a
 census precondition, not handled in this tranche.

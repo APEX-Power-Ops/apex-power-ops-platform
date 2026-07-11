@@ -159,15 +159,18 @@ def _sha256_file(path):
 
 
 def build_receipt(*, mode, now_iso, expect_project_ref, doc_bytes, doc_paths, extra_paths, roots, decisions):
-    """A gate receipt binds the EXACT bytes the gate validated so the apply runner can rehash every
-    input immediately before executing SQL and fail on any mismatch (closes the check-time↔apply-time
-    TOCTOU). The four validated CLI documents are hashed from the IN-HAND bytes main() already parsed
-    and gated — NOT a second read (Codex P1) — so the receipt can never certify bytes different from
-    the ones that passed the gate. Verification inputs (signature / verify-key) and each resolved
-    decision-referenced evidence file (recovery artifact, restore-validation proof, evidence_refs,
-    transform report, telemetry) are hashed from disk; the recovery artifact is additionally bound by
-    the decision-declared sha256, which itself lives in the hash-pinned decisions document. Emitted
-    ONLY on a GREEN gate."""
+    """A gate receipt RECORDS the SHA-256 of the exact bytes the gate validated: the four CLI documents
+    hashed from the IN-HAND bytes main() already parsed and gated (NOT a second read — Codex P1), plus
+    the verification inputs (signature / verify-key) and each resolved decision-referenced evidence
+    file (recovery artifact, restore-validation proof, evidence_refs, transform report, telemetry).
+
+    The receipt is ADVISORY. It does NOT by itself close the check→apply TOCTOU or authorize SQL: the
+    verification-input and evidence-file hashes are second reads from disk, and no apply runner exists
+    yet. The apply runner is the authority and MUST independently re-read every input once, re-verify
+    the snapshot (and future overlay) signatures against the repo-pinned public key, re-run the
+    schema/semantic/target/SP014 checks, rehash, and restore-test the backup before executing the exact
+    bound SQL — the receipt is the reference it checks against, not a substitute for that
+    re-validation. Emitted ONLY on a GREEN gate."""
     receipt = {"kind": "disposition_gate_receipt", "gate": "green", "mode": mode, "now": now_iso,
                "expect_project_ref": expect_project_ref, "inputs": {}, "evidence": []}
     for name, data in doc_bytes.items():
@@ -444,6 +447,7 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
             if not isinstance(art, dict):
                 d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", "delete recovery_proof must be a structured recovery_artifact"))
             else:
+                art_resolved = None
                 ap = art.get("artifact_path")
                 if not (ap and is_path_ref(ap)):
                     d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery artifact_path {ap!r} must be a filesystem artifact under an approved root, not a scheme reference"))
@@ -454,22 +458,25 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                     elif os.path.getsize(resolved) == 0:
                         d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery artifact {ap} is an EMPTY file — a recovery artifact must have content"))
                     else:
+                        art_resolved = resolved
                         with open(resolved, "rb") as _fh:
                             actual = hashlib.sha256(_fh.read()).hexdigest()
                         if actual != art.get("sha256"):
                             d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"recovery artifact sha256 {art.get('sha256')} does not match the actual bytes ({actual})"))
                 rvr = art.get("restore_validation_ref")
-                ap_declared = art.get("artifact_path")
                 if not (rvr and is_path_ref(rvr)):
                     d.append(Diagnostic("SP014", f"decision:{did}:restore_validation_ref", f"restore_validation_ref {rvr!r} must be a filesystem artifact under an approved root"))
-                elif ap_declared is not None and rvr == ap_declared:
-                    d.append(Diagnostic("SP014", f"decision:{did}:restore_validation_ref", "restore_validation_ref must be DISTINCT from artifact_path — a backup is not its own restore proof (F2)"))
                 else:
                     rvr_res, rvr_reason = resolve_within_roots(rvr, roots)
                     if rvr_res is None:
                         d.append(Diagnostic("SP014", f"decision:{did}:restore_validation_ref", f"restore_validation_ref {rvr}: {rvr_reason}"))
                     elif os.path.getsize(rvr_res) == 0:
                         d.append(Diagnostic("SP014", f"decision:{did}:restore_validation_ref", "restore_validation_ref is an EMPTY file — a restore-validation proof must have content (F2)"))
+                    # Compare the RESOLVED files, not the declared path strings: a symlink/hardlink/path
+                    # alias pointing restore_validation_ref at the backup would pass a string-inequality
+                    # check yet be the same inode (operator finding). os.path.samefile catches it.
+                    elif art_resolved is not None and os.path.samefile(rvr_res, art_resolved):
+                        d.append(Diagnostic("SP014", f"decision:{did}:restore_validation_ref", "restore_validation_ref resolves to the SAME file as artifact_path (alias/symlink) — a backup is not its own restore proof (F2)"))
                 cap = art.get("captured_at")
                 if cap:
                     # The schema's date-time format now rejects calendar-invalid values (rfc3339-validator),

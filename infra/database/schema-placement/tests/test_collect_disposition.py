@@ -247,10 +247,9 @@ def test_write_signed_snapshot_roundtrip():
         assert not bad
 
 
-def test_signed_snapshot_overwrite_failure_preserves_prior():
-    # Codex P2: if the snapshot write fails during an --overwrite refresh, the PRIOR valid snapshot
-    # must survive (no destructive removal). Sidecar is published first, so we never leave a snapshot
-    # without a signature either.
+def test_signed_snapshot_no_clobber():
+    # operator finding: a signed census NEVER overwrites (a two-file overwrite cannot be atomic as a
+    # pair). write_signed_snapshot refuses to clobber an existing snapshot/sidecar and leaves it intact.
     priv, _pp, _pub = _ephemeral_keypair()
     with tempfile.TemporaryDirectory() as d:
         out = os.path.join(d, "snap.json")
@@ -258,23 +257,13 @@ def test_signed_snapshot_overwrite_failure_preserves_prior():
         cd.write_signed_snapshot(out, {"kind": "evidence_snapshot", "v": 1}, sig_path=sig, private_key=priv)
         with open(out, encoding="utf-8") as fh:
             first = fh.read()
-        orig = cd._write_bytes_atomic
-
-        def _selective(path, data, *, overwrite=False):
-            if os.path.abspath(path) == os.path.abspath(out):
-                raise OSError("disk full writing snapshot")
-            return orig(path, data, overwrite=overwrite)
-
-        cd._write_bytes_atomic = _selective
         try:
-            cd.write_signed_snapshot(out, {"kind": "evidence_snapshot", "v": 2}, sig_path=sig, private_key=priv, overwrite=True)
-            raise AssertionError("snapshot write failure did not raise")
-        except OSError:
+            cd.write_signed_snapshot(out, {"kind": "evidence_snapshot", "v": 2}, sig_path=sig, private_key=priv)
+            raise AssertionError("signed snapshot clobbered an existing path")
+        except FileExistsError:
             pass
-        finally:
-            cd._write_bytes_atomic = orig
         with open(out, encoding="utf-8") as fh:
-            assert fh.read() == first  # prior snapshot intact — never deleted
+            assert fh.read() == first  # prior snapshot untouched
 
 
 def test_main_signs_and_publishes():
@@ -607,7 +596,7 @@ ALL = [
     ("dsn_project_binding", test_dsn_project_binding),
     ("main_write_failure_fails_closed", test_main_write_failure_fails_closed),
     ("write_signed_snapshot_roundtrip", test_write_signed_snapshot_roundtrip),
-    ("signed_snapshot_overwrite_failure_preserves_prior", test_signed_snapshot_overwrite_failure_preserves_prior),
+    ("signed_snapshot_no_clobber", test_signed_snapshot_no_clobber),
     ("main_signs_and_publishes", test_main_signs_and_publishes),
     ("main_missing_signing_key_fails_closed", test_main_missing_signing_key_fails_closed),
     ("main_invalid_signing_key_fails_closed", test_main_invalid_signing_key_fails_closed),
