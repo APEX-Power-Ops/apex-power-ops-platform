@@ -54,6 +54,18 @@ def _rel(snap, oid):
     return next(r for r in snap["relations"] if r["object_id"] == oid)
 
 
+def _dep(object_type, identity, direction="inbound"):
+    return {"object_type": object_type, "identity": identity, "direction": direction,
+            "evidence_type": "pg_depend", "evidence_ref": "query:dependents-v2"}
+
+
+def _snap_with_deps(deps_list):
+    rows = [dict(zip(CENSUS_COLS, TABLE))]
+    return cd.build_snapshot(rows, {"public.projects": {"anon": [], "authenticated": []}},
+                             {"public.projects": deps_list}, set(),
+                             project_ref=PROJECT, repo_sha=SHA, now=NOW, target_identity=TI_DICT)
+
+
 # ==== pure state-mapping core ================================================
 def test_snapshot_is_schema_valid():
     s = _snap()  # build_snapshot validates internally; raises on invalid
@@ -94,6 +106,30 @@ def test_dependents_sorted_and_database_deps():
     rf = _rel(_snap(failed={"dependents"}), "public.projects")
     assert rf["dependent_objects"]["state"] == "query_failed"
     assert rf["consumer_evidence"]["database_deps"]["state"] == "query_failed"
+
+
+def test_dependents_dedup_counts_once():
+    # pg_rewrite emits one pg_depend row per column reference; a duplicated edge must count once
+    dup = _dep("view", "public.v_x")
+    r = _rel(_snap_with_deps([dup, dict(dup)]), "public.projects")
+    assert len(r["dependent_objects"]["value"]) == 1
+    assert r["consumer_evidence"]["database_deps"]["found_consumers"] == 1
+
+
+def test_dependents_function_and_outbound_direction():
+    deps = [_dep("function", "public.f()", "inbound"), _dep("constraint", "fk_out -> public.scopes", "outbound")]
+    vals = _rel(_snap_with_deps(deps), "public.projects")["dependent_objects"]["value"]
+    assert [(v["object_type"], v["direction"]) for v in vals] == [("constraint", "outbound"), ("function", "inbound")]
+    assert _rel(_snap_with_deps(deps), "public.projects")["consumer_evidence"]["database_deps"]["found_consumers"] == 2
+
+
+def test_dsn_project_binding():
+    ref = "fxoyniqnrlkxfligbxmg"
+    assert cd._dsn_contains_project_ref(f"postgresql://postgres:pw@db.{ref}.supabase.co:5432/postgres", ref)          # direct host
+    assert cd._dsn_contains_project_ref(f"postgresql://postgres.{ref}:pw@aws-0-us-west-1.pooler.supabase.com:6543/postgres", ref)  # pooler user
+    assert not cd._dsn_contains_project_ref("postgresql://postgres:pw@db.otherprojectref00000.supabase.co:5432/postgres", ref)  # wrong project, SAME db name
+    assert not cd._dsn_contains_project_ref("postgresql://postgres:pw@127.0.0.1:5432/postgres", ref)                  # bare IP
+    assert not cd._dsn_contains_project_ref("", ref) and not cd._dsn_contains_project_ref("postgresql://x/y", "")
 
 
 def test_workflow_dims_not_observed():
@@ -213,10 +249,10 @@ def _script(**over):
             ("public.v_scope_financials", "authenticated", "SELECT", True),
         ], "cols": ["object_id", "grantee", "verb", "has_priv"]},
         "dependents": {"rows": [
-            ("public.projects", "trigger", "trg_z on public.projects"),
-            ("public.projects", "constraint", "fk_a on public.scopes"),
-            ("public.projects", "view", "public.v_scope_financials"),
-        ], "cols": ["object_id", "dep_type", "dep_identity"]},
+            ("public.projects", "trigger", "trg_z on public.projects", "inbound"),
+            ("public.projects", "constraint", "fk_a on public.scopes", "inbound"),
+            ("public.projects", "view", "public.v_scope_financials", "inbound"),
+        ], "cols": ["object_id", "dep_type", "dep_identity", "direction"]},
     }
     base.update(over)
     return base
@@ -282,6 +318,16 @@ def test_fake_deterministic_dependency_ordering():
     assert [d["object_type"] for d in proj["dependent_objects"]["value"]] == ["constraint", "trigger", "view"]
 
 
+def test_fake_preserves_edge_direction():
+    script = _script(dependents={"rows": [
+        ("public.projects", "constraint", "fk_out -> public.scopes", "outbound"),
+        ("public.projects", "view", "public.v_x", "inbound"),
+    ], "cols": ["object_id", "dep_type", "dep_identity", "direction"]})
+    vals = _rel(_run_fake(script), "public.projects")["dependent_objects"]["value"]
+    dirs = {(v["object_type"], v["direction"]) for v in vals}
+    assert dirs == {("constraint", "outbound"), ("view", "inbound")}
+
+
 # ==== atomic output (F6) =====================================================
 def test_atomic_write_and_refuse_and_overwrite():
     with tempfile.TemporaryDirectory() as d:
@@ -320,6 +366,9 @@ ALL = [
     ("privileges_observed_empty_and_failed", test_privileges_observed_empty_and_failed),
     ("in_data_api_exposed_is_not_observed", test_in_data_api_exposed_is_not_observed),
     ("dependents_sorted_and_database_deps", test_dependents_sorted_and_database_deps),
+    ("dependents_dedup_counts_once", test_dependents_dedup_counts_once),
+    ("dependents_function_and_outbound_direction", test_dependents_function_and_outbound_direction),
+    ("dsn_project_binding", test_dsn_project_binding),
     ("workflow_dims_not_observed", test_workflow_dims_not_observed),
     ("sha256_deterministic_and_hex", test_sha256_deterministic_and_hex),
     ("self_validation_rejects_bad_now", test_self_validation_rejects_bad_now),
@@ -333,6 +382,7 @@ ALL = [
     ("fake_query_group_recovery", test_fake_query_group_recovery),
     ("fake_absent_role_not_observed", test_fake_absent_role_not_observed),
     ("fake_deterministic_dependency_ordering", test_fake_deterministic_dependency_ordering),
+    ("fake_preserves_edge_direction", test_fake_preserves_edge_direction),
     ("atomic_write_and_refuse_and_overwrite", test_atomic_write_and_refuse_and_overwrite),
     ("atomic_write_failure_preserves_original", test_atomic_write_failure_preserves_original),
 ]

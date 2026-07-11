@@ -53,6 +53,7 @@ CODES = {
     "SP021": "manifest evidence_snapshot differs from the supplied --snapshot",
     "SP022": "unresolved consumer-evidence dimension for a no_consumer conclusion",
     "SP023": "target_entity's physical_schema disagrees with target_schema",
+    "SP024": "evidence_snapshot target_identity is absent/not-guard-passed, or its project binding is unasserted/mismatched",
 }
 
 
@@ -151,12 +152,26 @@ def schema_validate(docs, validator):
 
 
 # ---- semantic checks -------------------------------------------------------
-def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path):
+def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref=None):
     d = []
     relations = snapshot.get("relations", [])
     rel_by_oid = {}
     for r in relations:
         rel_by_oid.setdefault(r["object_id"], []).append(r)
+
+    # --- target-identity + project binding (SP024) ---
+    # Schema already requires target_identity with guard_passed/transaction_read_only const true;
+    # SP024 gives a coded gate for it AND binds the snapshot's project_ref to the expected project
+    # (the checker cannot re-verify the DSN offline, so preapply MUST declare --expect-project-ref).
+    ti = snapshot.get("target_identity")
+    if not isinstance(ti, dict) or ti.get("guard_passed") is not True or ti.get("transaction_read_only") is not True:
+        d.append(Diagnostic("SP024", "snapshot", f"target_identity absent or not guard-passed/read-only ({ti if not isinstance(ti, dict) else {'guard_passed': ti.get('guard_passed'), 'transaction_read_only': ti.get('transaction_read_only')}})"))
+    if mode == "preapply":
+        proj = snapshot.get("project_ref")
+        if expect_project_ref is None:
+            d.append(Diagnostic("SP024", "snapshot", "project binding not asserted; preapply requires --expect-project-ref"))
+        elif proj != expect_project_ref:
+            d.append(Diagnostic("SP024", "snapshot", f"project_ref {proj!r} != --expect-project-ref {expect_project_ref!r}"))
 
     # --- global census integrity (SP002-SP004) ---
     if snapshot.get("relation_count") != len(relations):
@@ -323,12 +338,12 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
     return d
 
 
-def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, snapshot_path=None):
+def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, snapshot_path=None, expect_project_ref=None):
     docs = {"evidence_snapshot": snapshot, "decisions_file": decisions, "entity_map": entity_map, "cluster_manifest": manifest}
     diags = schema_validate(docs, validator)
     if diags:
         return sorted(diags, key=lambda x: x.key())
-    diags = semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path)
+    diags = semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref)
     return sorted(diags, key=lambda x: x.key())
 
 
@@ -340,6 +355,7 @@ def main(argv=None):
     ap.add_argument("--manifest", required=True)
     ap.add_argument("--now", required=True, help="ISO-8601 timestamp; injected (no wall-clock).")
     ap.add_argument("--mode", default="preapply", choices=["preapply"])
+    ap.add_argument("--expect-project-ref", default=None, dest="expect_project_ref", help="bind the snapshot's project_ref (REQUIRED for preapply; SP024).")
     ap.add_argument("--root", action="append", default=[], dest="roots", required=True, help="approved evidence root (repeatable, REQUIRED).")
     args = ap.parse_args(argv)
 
@@ -354,7 +370,7 @@ def main(argv=None):
         return 2
 
     roots = [os.path.abspath(r) for r in args.roots]
-    diags = run(snapshot, decisions, entity_map, manifest, now, args.mode, roots, _validator(), os.path.abspath(args.snapshot))
+    diags = run(snapshot, decisions, entity_map, manifest, now, args.mode, roots, _validator(), os.path.abspath(args.snapshot), args.expect_project_ref)
 
     for dg in diags:
         print(dg.render())

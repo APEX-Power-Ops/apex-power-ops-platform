@@ -55,10 +55,16 @@ def _rel(oid, schema, name, relkind="v", static_n=0):
             "consumer_evidence": _consumer(static_n)}
 
 
+def _target_identity():
+    return {"current_database": "postgres", "current_user": "authenticator", "server_version": "PostgreSQL 16.13",
+            "server_version_num": 160013, "transaction_read_only": True, "expected_database": "postgres",
+            "platform_role_markers": ["anon", "authenticated", "service_role"], "guard_passed": True}
+
+
 def _snapshot(rels):
     return {"kind": "evidence_snapshot", "project_ref": "fxoyniqnrlkxfligbxmg", "observed_at": "2026-07-10T20:00:00Z",
             "repo_sha": "8a4c37fc", "collector_version": "0.1.0", "query_bundle_sha256": "a" * 64,
-            "relation_count": len(rels), "relations": rels}
+            "relation_count": len(rels), "target_identity": _target_identity(), "relations": rels}
 
 
 def _entity_map():
@@ -115,9 +121,9 @@ def retain_bundle():
 BASELINES = {"harden": harden_bundle, "promote": promote_bundle, "compat": compat_bundle, "archive": archive_bundle, "delete": delete_bundle, "retain": retain_bundle}
 
 
-def codes(bundle, now=NOW):
+def codes(bundle, now=NOW, expect_project_ref="fxoyniqnrlkxfligbxmg"):
     snap, dec, em, man, sp = bundle
-    return [d.code for d in cd.run(snap, dec, em, man, now, "preapply", ROOTS, VALIDATOR, sp)]
+    return [d.code for d in cd.run(snap, dec, em, man, now, "preapply", ROOTS, VALIDATOR, sp, expect_project_ref)]
 
 
 def _mut(builder, fn):
@@ -177,6 +183,32 @@ def test_negatives_one_per_code():
 
 def test_sp008_stale():
     assert "SP008" in codes(harden_bundle(), now=cd.parse_dt("2026-07-20T21:00:00Z"))
+
+
+def test_sp024_project_mismatch():
+    assert "SP024" in codes(harden_bundle(), expect_project_ref="wrong-project-ref")
+
+
+def test_sp024_missing_expect():
+    assert "SP024" in codes(harden_bundle(), expect_project_ref=None)
+
+
+def test_sp024_missing_target_identity():
+    # schema now REQUIRES target_identity -> its removal is a hard SP001 gate at the boundary
+    b = _mut(harden_bundle, lambda s, d, e, m: s.pop("target_identity", None))
+    assert "SP001" in codes(b)
+
+
+def _sp024_mismatch():
+    return "SP024" in codes(harden_bundle(), expect_project_ref="wrong-project-ref")
+
+
+def _sp024_missing_expect():
+    return "SP024" in codes(harden_bundle(), expect_project_ref=None)
+
+
+def _sp024_missing_ti():
+    return "SP001" in codes(_mut(harden_bundle, lambda s, d, e, m: s.pop("target_identity", None)))
 
 
 # ---- unit: dup-key loaders + path safety -----------------------------------
@@ -244,6 +276,9 @@ if __name__ == "__main__":
     print("== units ==")
     for name, fn in [
         ("sp008_stale", lambda: "SP008" in codes(harden_bundle(), now=cd.parse_dt("2026-07-20T21:00:00Z"))),
+        ("sp024_project_mismatch", _sp024_mismatch),
+        ("sp024_missing_expect", _sp024_missing_expect),
+        ("sp024_missing_target_identity", _sp024_missing_ti),
         ("dup_yaml", lambda: _yaml_dup()),
         ("dup_json", lambda: _json_dup()),
         ("path_safety", lambda: _path()),

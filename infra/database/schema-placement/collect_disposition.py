@@ -13,23 +13,28 @@ Discipline / hardening (review findings):
     printed and never embedded in the snapshot (generator carries only tool + version). Driver
     errors surface as the exception TYPE only (they can embed connection info); guard failures
     surface their message (DSN-free by construction).
-  * Target-bound (F2): every run first reads current_database/current_user/server version/
-    transaction_read_only + platform role markers and passes them through evaluate_target_guard.
-    A mismatch (wrong DB, not read-only, missing markers) RAISES before any snapshot is built —
-    a persisted snapshot is bound to the DB it was actually taken from. observed_at comes from
-    the database clock (now()), never a caller value; repo_sha derives from git HEAD by default.
+  * Target-bound (F2): the DSN is first bound to --project-ref via parsed host/user identity
+    (db.<ref>.supabase.co OR pooler user postgres.<ref>) — a DSN that does not carry the ref is
+    REFUSED before connecting. Then every run reads current_database/current_user/server version/
+    transaction_read_only + platform role markers and passes them through evaluate_target_guard;
+    a mismatch (wrong DB, not read-only, missing markers) RAISES before any snapshot is built.
+    --expect-database is required. observed_at comes from the database clock (now()), never a
+    caller value; repo_sha derives from git HEAD by default.
   * Read-only (F2/F3): the session is opened read_only and the guard asserts it; only SELECTs run.
   * Transaction isolation (F3): each OPTIONAL query group runs under its own SAVEPOINT, so a
     failure rolls back just that group (never poisoning later groups in the aborted transaction)
     and is recorded as query_failed.
   * Role existence (F4): missing anon/authenticated roles yield `not_observed` privileges — an
     absent role is NOT manufactured into an observed-empty grant set.
-  * Dependency closure (F1): the dependents query covers ALL pg_depend-representable dependents
-    (views/rules, FK constraints, triggers, RLS policies, publications, owned sequences), not just
-    view rewrites. It still does NOT see function/procedure BODY references, dynamic SQL, or app
-    code — those consumer classes are supplied later (source/dynamic_sql/manual evidence) by the
-    consumer-evidence workflow. database_deps is therefore the database-internal closure, never a
-    complete consumer census; no consumer CONCLUSION is drawn here.
+  * Enumerated catalog closure (F1/F3): the dependents query enumerates the pg_depend-tracked
+    dependents it names — view/matview rewrites, pg_proc-tracked function deps, INBOUND and
+    OUTBOUND FK constraints (direction preserved per edge), triggers, RLS policies, publications,
+    owned sequences — de-duplicated (SQL `union` + a Python edge-key dedup so pg_rewrite's
+    per-column-reference rows cannot inflate the count). It does NOT see function/procedure BODY
+    references, dynamic SQL, or application code (pg_depend does not track those); those consumer
+    classes are supplied later (source/dynamic_sql/manual evidence) by the consumer-evidence
+    workflow. database_deps is the ENUMERATED CATALOG closure, never a complete consumer census;
+    no consumer CONCLUSION is drawn here.
   * Atomic output (F6): the snapshot is written to a sibling temp file, fsync'd, then os.replace'd;
     an existing output is refused unless --overwrite.
   * Observation states: a fact whose query group FAILED is `query_failed` (never a dropped field);
@@ -107,7 +112,7 @@ QUERY_BUNDLE = {
         rules as (
             select t.object_id,
                    case dc.relkind when 'm' then 'materialized_view' else 'view' end as dep_type,
-                   dn.nspname || '.' || dc.relname as dep_identity
+                   dn.nspname || '.' || dc.relname as dep_identity, 'inbound' as direction
             from pg_depend d
             join targets t on t.oid = d.refobjid and d.refclassid = 'pg_class'::regclass
             join pg_rewrite rw on rw.oid = d.objid and d.classid = 'pg_rewrite'::regclass
@@ -115,44 +120,64 @@ QUERY_BUNDLE = {
             join pg_namespace dn on dn.oid = dc.relnamespace
             where dc.oid <> t.oid
         ),
-        fks as (
+        funcs as (
+            select t.object_id, 'function' as dep_type,
+                   pn.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' as dep_identity,
+                   'inbound' as direction
+            from pg_depend d
+            join targets t on t.oid = d.refobjid and d.refclassid = 'pg_class'::regclass
+            join pg_proc p on p.oid = d.objid and d.classid = 'pg_proc'::regclass
+            join pg_namespace pn on pn.oid = p.pronamespace
+        ),
+        in_fks as (
             select t.object_id, 'constraint' as dep_type,
-                   con.conname || ' on ' || rn.nspname || '.' || rc.relname as dep_identity
+                   con.conname || ' on ' || rn.nspname || '.' || rc.relname as dep_identity, 'inbound' as direction
             from pg_constraint con
             join targets t on t.oid = con.confrelid
             join pg_class rc on rc.oid = con.conrelid
             join pg_namespace rn on rn.oid = rc.relnamespace
             where con.contype = 'f'
         ),
+        out_fks as (
+            select t.object_id, 'constraint' as dep_type,
+                   con.conname || ' -> ' || fn.nspname || '.' || fc.relname as dep_identity, 'outbound' as direction
+            from pg_constraint con
+            join targets t on t.oid = con.conrelid
+            join pg_class fc on fc.oid = con.confrelid
+            join pg_namespace fn on fn.oid = fc.relnamespace
+            where con.contype = 'f'
+        ),
         trigs as (
-            select t.object_id, 'trigger' as dep_type, tg.tgname || ' on ' || t.object_id as dep_identity
+            select t.object_id, 'trigger' as dep_type, tg.tgname || ' on ' || t.object_id as dep_identity, 'inbound' as direction
             from pg_trigger tg join targets t on t.oid = tg.tgrelid
             where not tg.tgisinternal
         ),
         pols as (
-            select t.object_id, 'policy' as dep_type, pol.polname || ' on ' || t.object_id as dep_identity
+            select t.object_id, 'policy' as dep_type, pol.polname || ' on ' || t.object_id as dep_identity, 'inbound' as direction
             from pg_policy pol join targets t on t.oid = pol.polrelid
         ),
         pubs as (
-            select t.object_id, 'publication' as dep_type, p.pubname as dep_identity
+            select t.object_id, 'publication' as dep_type, p.pubname as dep_identity, 'inbound' as direction
             from pg_publication_rel pr
             join targets t on t.oid = pr.prrelid
             join pg_publication p on p.oid = pr.prpubid
         ),
         seqs as (
-            select t.object_id, 'sequence' as dep_type, dn.nspname || '.' || dc.relname as dep_identity
+            select t.object_id, 'sequence' as dep_type, dn.nspname || '.' || dc.relname as dep_identity, 'inbound' as direction
             from pg_depend d
             join targets t on t.oid = d.refobjid and d.refclassid = 'pg_class'::regclass
             join pg_class dc on dc.oid = d.objid and d.classid = 'pg_class'::regclass and dc.relkind = 'S'
             join pg_namespace dn on dn.oid = dc.relnamespace
         )
-        select object_id, dep_type, dep_identity from rules
-        union all select object_id, dep_type, dep_identity from fks
-        union all select object_id, dep_type, dep_identity from trigs
-        union all select object_id, dep_type, dep_identity from pols
-        union all select object_id, dep_type, dep_identity from pubs
-        union all select object_id, dep_type, dep_identity from seqs
-        order by object_id, dep_type, dep_identity
+        select object_id, dep_type, dep_identity, direction from rules
+        union select object_id, dep_type, dep_identity, direction from funcs
+        union select object_id, dep_type, dep_identity, direction from in_fks
+        union select object_id, dep_type, dep_identity, direction from out_fks
+        union select object_id, dep_type, dep_identity, direction from trigs
+        union select object_id, dep_type, dep_identity, direction from pols
+        union select object_id, dep_type, dep_identity, direction from pubs
+        union select object_id, dep_type, dep_identity, direction from seqs
+        order by object_id, dep_type, dep_identity, direction
     """,
 }
 _DEP_TYPES = {"table", "view", "materialized_view", "function", "procedure", "trigger", "policy",
@@ -216,9 +241,17 @@ def build_relation_observation(census_row, privs, deps, failed_groups, now):
         deps_fact = _qf("dependents query failed")
         ddeps_dim = _cdim("query_failed", "dependents query failed")
     else:
-        deps_sorted = sorted(deps or [], key=lambda d: (d["object_type"], d["identity"], d["direction"]))
-        deps_fact = _obs(deps_sorted)
-        ddeps_dim = _cdim_observed(len(deps_sorted), "query:dependents-v2")
+        # Deduplicate edges by (object_type, identity, direction) BEFORE counting: pg_rewrite
+        # emits one pg_depend row per column reference, so a view that reads a table N times
+        # would otherwise inflate found_consumers. Deterministic sorted order.
+        seen, deduped = set(), []
+        for dep in sorted(deps or [], key=lambda x: (x["object_type"], x["identity"], x["direction"])):
+            edge_key = (dep["object_type"], dep["identity"], dep["direction"])
+            if edge_key not in seen:
+                seen.add(edge_key)
+                deduped.append(dep)
+        deps_fact = _obs(deduped)
+        ddeps_dim = _cdim_observed(len(deduped), "query:dependents-v2")
 
     return {
         "object_id": oid, "schema": schema, "name": name, "relkind": relkind,
@@ -360,14 +393,15 @@ def _collect(cur, schemas, *, db_error, project_ref, repo_sha, expect_database, 
                 if role in init_roles:
                     entry.setdefault(role, [])
 
-    # 5. Dependents (optional): full pg_depend closure (F1).
+    # 5. Dependents (optional): enumerated pg_depend catalog closure (F1); direction per edge.
     dep_rows = _execute_group(cur, "dependents", QUERY_BUNDLE["dependents"], {"schemas": schemas}, db_error, failed)
     deps_by_oid = {}
     if "dependents" not in failed:
-        for oid, dep_type, dep_identity in dep_rows:
+        for oid, dep_type, dep_identity, direction in dep_rows:
             deps_by_oid.setdefault(oid, []).append({
                 "object_type": dep_type if dep_type in _DEP_TYPES else "source_reference",
-                "identity": dep_identity, "direction": "inbound",
+                "identity": dep_identity,
+                "direction": direction if direction in ("inbound", "outbound") else "inbound",
                 "evidence_type": "pg_depend", "evidence_ref": "query:dependents-v2",
             })
 
@@ -376,7 +410,32 @@ def _collect(cur, schemas, *, db_error, project_ref, repo_sha, expect_database, 
                           target_identity=target_identity)
 
 
-def collect_from_db(dsn, schemas, *, project_ref, repo_sha, expect_database=None, required_role_markers=()):
+def _dsn_contains_project_ref(dsn, project_ref):
+    """Bind the DSN to the Supabase project ref via parsed host/user identity — the ref is a
+    dot-delimited label of the host (db.<ref>.supabase.co) OR the pooler user (postgres.<ref>).
+    Value-silent: only host/user LABELS are inspected; the password is never touched or logged.
+    The project ref is a public identifier, not a secret. Returns False (=> fail closed) on any
+    parse failure or absence."""
+    from urllib.parse import urlsplit  # noqa: PLC0415 -- live-only
+    ref = (project_ref or "").strip().lower()
+    if not ref:
+        return False
+    try:
+        parts = urlsplit(dsn)
+        host = (parts.hostname or "").lower()
+        user = (parts.username or "").lower()
+    except Exception:  # noqa: BLE001
+        return False
+    labels = set(host.split(".")) | set(user.split("."))
+    return ref in labels
+
+
+def collect_from_db(dsn, schemas, *, project_ref, repo_sha, expect_database, required_role_markers=()):
+    if not _dsn_contains_project_ref(dsn, project_ref):
+        raise RuntimeError(f"DSN host/user identity is not bound to project_ref {project_ref} (refusing to census an unidentified target)")
+    if not (expect_database or "").strip():
+        raise RuntimeError("expect_database is required (the target guard must assert current_database)")
+
     import psycopg  # lazy: only needed for the live census run
 
     with psycopg.connect(dsn) as conn:
@@ -386,10 +445,12 @@ def collect_from_db(dsn, schemas, *, project_ref, repo_sha, expect_database=None
                             expect_database=expect_database, required_role_markers=required_role_markers)
 
 
-# ---- atomic output (F6) -----------------------------------------------------
+# ---- atomic output (F6 + no-overwrite race) ---------------------------------
 def write_snapshot(path, snapshot, *, overwrite=False):
-    if os.path.exists(path) and not overwrite:
-        raise FileExistsError(f"refusing to overwrite existing snapshot {path} (pass overwrite=True)")
+    """Publish atomically. No-overwrite uses os.link (atomic create-if-absent — raises
+    FileExistsError if the destination exists, with NO check-then-act race). Overwrite uses
+    os.replace. Either way the content is fully written + fsync'd to a sibling temp first, so a
+    crash mid-write can never leave a partial destination."""
     directory = os.path.dirname(os.path.abspath(path))
     tmp = os.path.join(directory, f".{os.path.basename(path)}.tmp-{os.getpid()}")
     try:
@@ -397,7 +458,10 @@ def write_snapshot(path, snapshot, *, overwrite=False):
             json.dump(snapshot, fh, indent=2, sort_keys=True)
             fh.flush()
             os.fsync(fh.fileno())
-        os.replace(tmp, path)
+        if overwrite:
+            os.replace(tmp, path)          # atomic overwrite
+        else:
+            os.link(tmp, path)             # atomic no-clobber publish; raises FileExistsError if present
     finally:
         if os.path.exists(tmp):
             os.remove(tmp)
@@ -419,7 +483,7 @@ def main(argv=None):
     ap.add_argument("--project-ref", required=True)
     ap.add_argument("--repo-sha", default=None, help="override; default derives from git HEAD of the collector's repo.")
     ap.add_argument("--schemas", default="public", help="comma-separated schema list.")
-    ap.add_argument("--expect-database", default=None, help="fail closed unless current_database() matches (e.g. postgres).")
+    ap.add_argument("--expect-database", required=True, help="fail closed unless current_database() matches (e.g. postgres).")
     ap.add_argument("--require-role-markers", default="anon,authenticated,service_role",
                     help="comma-separated platform roles that MUST exist (target guard); empty to disable.")
     ap.add_argument("--out", required=True)

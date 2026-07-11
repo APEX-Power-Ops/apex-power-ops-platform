@@ -80,9 +80,15 @@ def _relation(oid="public.v_projects_full", schema="public", name="v_projects_fu
     }
 
 
+def _target_identity():
+    return {"current_database": "postgres", "current_user": "authenticator", "server_version": "PostgreSQL 16.13",
+            "server_version_num": 160013, "transaction_read_only": True, "expected_database": "postgres",
+            "platform_role_markers": ["anon", "authenticated", "service_role"], "guard_passed": True}
+
+
 def _valid_snapshot(relations=None):
     rels = relations if relations is not None else [_relation()]
-    return {"kind": "evidence_snapshot", "project_ref": "fxoyniqnrlkxfligbxmg", "observed_at": "2026-07-10T20:00:00Z", "repo_sha": "8a4c37fc", "collector_version": "0.1.0", "query_bundle_sha256": SHA64, "relation_count": len(rels), "relations": rels}
+    return {"kind": "evidence_snapshot", "project_ref": "fxoyniqnrlkxfligbxmg", "observed_at": "2026-07-10T20:00:00Z", "repo_sha": "8a4c37fc", "collector_version": "0.1.0", "query_bundle_sha256": SHA64, "relation_count": len(rels), "target_identity": _target_identity(), "relations": rels}
 
 
 def _exit():
@@ -262,6 +268,10 @@ def _neg_dependency_missing_evidence():
     s = _valid_snapshot(); s["relations"][0]["dependent_objects"] = _obs([{"object_type": "function", "identity": "public.f()", "direction": "inbound", "evidence_type": "pg_depend"}]); return s
 
 
+def _neg_snapshot_without_target_identity():
+    s = _valid_snapshot(); del s["target_identity"]; return s
+
+
 NEGATIVES = {
     "01_observed_without_value": _neg_observed_without_value,
     "02_relation_without_facts": _neg_relation_without_facts,
@@ -296,6 +306,7 @@ NEGATIVES = {
     "31_compat_zero_window": _neg_compat_zero_window,
     "32_compat_zero_samples": _neg_compat_zero_samples,
     "33_dependency_missing_evidence": _neg_dependency_missing_evidence,
+    "34_snapshot_without_target_identity": _neg_snapshot_without_target_identity,
 }
 
 POSITIVES = {
