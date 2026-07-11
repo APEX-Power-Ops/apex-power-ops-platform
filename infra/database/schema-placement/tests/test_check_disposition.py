@@ -21,7 +21,7 @@ NOW = cd.parse_dt("2026-07-10T21:00:00Z")
 VALIDATOR = cd._validator()
 
 _ROOT = tempfile.mkdtemp(prefix="sp01_evidence_")
-for _fn in ("prod.json", "prod2.json"):
+for _fn in ("prod.json", "prod2.json", "backup.sha256"):
     with open(os.path.join(_ROOT, _fn), "w", encoding="utf-8") as _fh:
         _fh.write("{}")
 ROOTS = [_ROOT]
@@ -99,7 +99,7 @@ def promote_bundle():
 
 
 def compat_bundle():
-    d = {"decision_id": "D-c1", "source_objects": ["ops.project"], "target_objects": ["public.projects_compat_v"], "meaning_disposition": "preserve", "action_class": "compat", "decision_status": "accepted", "compatibility_contract": {"required": True, "mechanism": "v", "exit_condition": _exit(), "telemetry_ref": "telemetry:x"}, "evidence_refs": ["query:x"], "technical_authority_approval": "TA-3"}
+    d = {"decision_id": "D-c1", "source_objects": ["ops.project"], "target_objects": ["public.projects_compat_v"], "target_schema": "public", "meaning_disposition": "preserve", "action_class": "compat", "decision_status": "accepted", "compatibility_contract": {"required": True, "mechanism": "v", "exit_condition": _exit(), "telemetry_ref": "telemetry:x"}, "evidence_refs": ["query:x"], "technical_authority_approval": "TA-3"}
     return _snapshot([_rel("ops.project", "ops", "project", "r")]), _decs([d]), _entity_map(), _manifest("compat", ["D-c1"]), SNAP_PATH
 
 
@@ -109,7 +109,7 @@ def archive_bundle():
 
 
 def delete_bundle():
-    d = {"decision_id": "D-d1", "source_objects": ["public._scratch_defunct"], "meaning_disposition": "retire", "action_class": "delete", "decision_status": "accepted", "consumer_disposition": "no_consumer", "retention_disposition": {"policy": "delete_after", "recovery_proof": "query:backup"}, "evidence_refs": ["query:x"], "technical_authority_approval": "TA-5"}
+    d = {"decision_id": "D-d1", "source_objects": ["public._scratch_defunct"], "meaning_disposition": "retire", "action_class": "delete", "decision_status": "accepted", "consumer_disposition": "no_consumer", "retention_disposition": {"policy": "delete_after", "recovery_proof": "backup.sha256"}, "evidence_refs": ["query:x"], "technical_authority_approval": "TA-5"}
     return _snapshot([_rel("public._scratch_defunct", "public", "_scratch_defunct", "r")]), _decs([d]), _entity_map(), _manifest("delete", ["D-d1"]), SNAP_PATH
 
 
@@ -172,6 +172,9 @@ NEG = {
     "SP022": (harden_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["operator_declaration"].update(state="not_observed", found_consumers=None, ref=None, detail="pending"), "SP022"),
     "SP022_has_consumers_unresolved": (promote_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["external_clients"].update(state="not_observed", found_consumers=None, ref=None, detail="pending"), "SP022"),
     "SP023": (promote_bundle, lambda s, d, e, m: d["rows"][0].update(target_schema="archive"), "SP023"),
+    "SP025_wrong_destination": (promote_bundle, lambda s, d, e, m: d["rows"][0].update(target_objects=["public.wrong_destination"]), "SP025"),
+    "SP022_database_deps_na": (harden_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"].update(database_deps={"state": "not_applicable", "found_consumers": None, "ref": None, "detail": "neutralized"}), "SP022"),
+    "SP014_delete_scheme_recovery": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"].update(recovery_proof="urn:not-a-real-backup"), "SP014"),
 }
 
 
@@ -209,6 +212,18 @@ def _sp024_missing_expect():
 
 def _sp024_missing_ti():
     return "SP001" in codes(_mut(harden_bundle, lambda s, d, e, m: s.pop("target_identity", None)))
+
+
+def test_wrong_kind_document_rejected():
+    # a decisions_file passed in the --snapshot slot must be SP001-rejected, not crash mid-check
+    snap, dec, em, man, sp = harden_bundle()
+    got = [d.code for d in cd.run(dec, dec, em, man, NOW, "preapply", ROOTS, VALIDATOR, sp, "fxoyniqnrlkxfligbxmg")]
+    assert "SP001" in got
+
+
+def _wrong_kind():
+    snap, dec, em, man, sp = harden_bundle()
+    return "SP001" in [d.code for d in cd.run(dec, dec, em, man, NOW, "preapply", ROOTS, VALIDATOR, sp, "fxoyniqnrlkxfligbxmg")]
 
 
 # ---- unit: dup-key loaders + path safety -----------------------------------
@@ -279,6 +294,7 @@ if __name__ == "__main__":
         ("sp024_project_mismatch", _sp024_mismatch),
         ("sp024_missing_expect", _sp024_missing_expect),
         ("sp024_missing_target_identity", _sp024_missing_ti),
+        ("wrong_kind_document", _wrong_kind),
         ("dup_yaml", lambda: _yaml_dup()),
         ("dup_json", lambda: _json_dup()),
         ("path_safety", lambda: _path()),

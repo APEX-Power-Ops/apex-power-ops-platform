@@ -38,9 +38,9 @@ PRIVS = {"public.v_scope_financials": {"anon": ["SELECT"], "authenticated": ["SE
          "public.projects": {"anon": [], "authenticated": ["SELECT"]}}
 DEPS = {"public.projects": [
     {"object_type": "view", "identity": "public.v_scope_financials", "direction": "inbound",
-     "evidence_type": "pg_depend", "evidence_ref": "query:dependents-v2"},
+     "evidence_type": "pg_depend", "evidence_ref": "query:dependents-v2", "_is_consumer": True},
     {"object_type": "constraint", "identity": "fk_a on public.scopes", "direction": "inbound",
-     "evidence_type": "pg_depend", "evidence_ref": "query:dependents-v2"},
+     "evidence_type": "pg_depend", "evidence_ref": "query:dependents-v2", "_is_consumer": True},
 ]}
 
 
@@ -54,9 +54,9 @@ def _rel(snap, oid):
     return next(r for r in snap["relations"] if r["object_id"] == oid)
 
 
-def _dep(object_type, identity, direction="inbound"):
+def _dep(object_type, identity, direction="inbound", is_consumer=True):
     return {"object_type": object_type, "identity": identity, "direction": direction,
-            "evidence_type": "pg_depend", "evidence_ref": "query:dependents-v2"}
+            "evidence_type": "pg_depend", "evidence_ref": "query:dependents-v2", "_is_consumer": is_consumer}
 
 
 def _snap_with_deps(deps_list):
@@ -117,19 +117,61 @@ def test_dependents_dedup_counts_once():
 
 
 def test_dependents_function_and_outbound_direction():
-    deps = [_dep("function", "public.f()", "inbound"), _dep("constraint", "fk_out -> public.scopes", "outbound")]
-    vals = _rel(_snap_with_deps(deps), "public.projects")["dependent_objects"]["value"]
-    assert [(v["object_type"], v["direction"]) for v in vals] == [("constraint", "outbound"), ("function", "inbound")]
-    assert _rel(_snap_with_deps(deps), "public.projects")["consumer_evidence"]["database_deps"]["found_consumers"] == 2
+    deps = [_dep("function", "public.f()", "inbound", is_consumer=True),
+            _dep("constraint", "fk_out -> public.scopes", "outbound", is_consumer=False)]
+    r = _rel(_snap_with_deps(deps), "public.projects")
+    vals = r["dependent_objects"]["value"]
+    assert [(v["object_type"], v["direction"]) for v in vals] == [("constraint", "outbound"), ("function", "inbound")]  # FULL inventory
+    assert r["consumer_evidence"]["database_deps"]["found_consumers"] == 1  # only the function is an external consumer
+
+
+def test_consumer_count_excludes_self_owned_and_outbound():
+    # finding #2: owned sequences/triggers/policies and outbound FKs are inventory, not consumers
+    deps = [_dep("function", "public.f()", "inbound", True),
+            _dep("sequence", "public.projects_id_seq", "inbound", False),
+            _dep("trigger", "trg on public.projects", "inbound", False),
+            _dep("policy", "pol on public.projects", "inbound", False),
+            _dep("constraint", "fk_out -> public.scopes", "outbound", False)]
+    r = _rel(_snap_with_deps(deps), "public.projects")
+    assert len(r["dependent_objects"]["value"]) == 5  # everything is inventoried
+    assert r["consumer_evidence"]["database_deps"]["found_consumers"] == 1  # only the function counts as a consumer
 
 
 def test_dsn_project_binding():
     ref = "fxoyniqnrlkxfligbxmg"
-    assert cd._dsn_contains_project_ref(f"postgresql://postgres:pw@db.{ref}.supabase.co:5432/postgres", ref)          # direct host
-    assert cd._dsn_contains_project_ref(f"postgresql://postgres.{ref}:pw@aws-0-us-west-1.pooler.supabase.com:6543/postgres", ref)  # pooler user
-    assert not cd._dsn_contains_project_ref("postgresql://postgres:pw@db.otherprojectref00000.supabase.co:5432/postgres", ref)  # wrong project, SAME db name
-    assert not cd._dsn_contains_project_ref("postgresql://postgres:pw@127.0.0.1:5432/postgres", ref)                  # bare IP
-    assert not cd._dsn_contains_project_ref("", ref) and not cd._dsn_contains_project_ref("postgresql://x/y", "")
+    ok = cd._dsn_contains_project_ref
+    # ACCEPTED: canonical direct host, pooler user, and a libpq keyword DSN (finding #6)
+    assert ok(f"postgresql://postgres:pw@db.{ref}.supabase.co:5432/postgres", ref)
+    assert ok(f"postgresql://postgres.{ref}:pw@aws-0-us-west-1.pooler.supabase.com:6543/postgres", ref)
+    assert ok(f"host=db.{ref}.supabase.co user=postgres dbname=postgres password=pw", ref)  # keyword DSN
+    # REJECTED: the label-collision decoys the OLD `ref in labels` binding wrongly accepted
+    assert not ok(f"postgresql://postgres:pw@db.{ref}.attacker.example:5432/postgres", ref)  # ref is a label, wrong domain
+    assert not ok(f"postgresql://postgres.{ref}:pw@127.0.0.1:6543/postgres", ref)            # pooler user, non-pooler host
+    assert not ok(f"postgresql://postgres.{ref}:pw@evil.example:5432/postgres", ref)         # pooler user, non-pooler host
+    assert not ok("postgresql://postgres:pw@db.otherprojectref00000.supabase.co:5432/postgres", ref)  # wrong project
+    assert not ok("postgresql://postgres:pw@127.0.0.1:5432/postgres", ref)                   # bare IP
+    assert not ok("", ref) and not ok("postgresql://x/y", "")
+
+
+def test_main_write_failure_fails_closed():
+    # finding #8: a publish failure must map to fail-closed exit 2, not an uncaught traceback
+    orig_collect, orig_write = cd.collect_from_db, cd.write_snapshot
+    os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
+    cd.collect_from_db = lambda *a, **k: {"target_identity": {"current_database": "postgres", "current_user": "x"},
+                                          "relation_count": 0, "query_bundle_sha256": "a" * 64}
+
+    def _boom(*a, **k):
+        raise OSError("hardlink unsupported on this filesystem")
+
+    cd.write_snapshot = _boom
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres",
+                          "--repo-sha", SHA, "--out", os.path.join(d, "out.json")])
+        assert rc == 2
+    finally:
+        cd.collect_from_db, cd.write_snapshot = orig_collect, orig_write
+        os.environ.pop("DISPOSITION_DSN", None)
 
 
 def test_workflow_dims_not_observed():
@@ -249,10 +291,10 @@ def _script(**over):
             ("public.v_scope_financials", "authenticated", "SELECT", True),
         ], "cols": ["object_id", "grantee", "verb", "has_priv"]},
         "dependents": {"rows": [
-            ("public.projects", "trigger", "trg_z on public.projects", "inbound"),
-            ("public.projects", "constraint", "fk_a on public.scopes", "inbound"),
-            ("public.projects", "view", "public.v_scope_financials", "inbound"),
-        ], "cols": ["object_id", "dep_type", "dep_identity", "direction"]},
+            ("public.projects", "trigger", "trg_z on public.projects", "inbound", False),
+            ("public.projects", "constraint", "fk_a on public.scopes", "inbound", True),
+            ("public.projects", "view", "public.v_scope_financials", "inbound", True),
+        ], "cols": ["object_id", "dep_type", "dep_identity", "direction", "is_consumer"]},
     }
     base.update(over)
     return base
@@ -320,9 +362,9 @@ def test_fake_deterministic_dependency_ordering():
 
 def test_fake_preserves_edge_direction():
     script = _script(dependents={"rows": [
-        ("public.projects", "constraint", "fk_out -> public.scopes", "outbound"),
-        ("public.projects", "view", "public.v_x", "inbound"),
-    ], "cols": ["object_id", "dep_type", "dep_identity", "direction"]})
+        ("public.projects", "constraint", "fk_out -> public.scopes", "outbound", False),
+        ("public.projects", "view", "public.v_x", "inbound", True),
+    ], "cols": ["object_id", "dep_type", "dep_identity", "direction", "is_consumer"]})
     vals = _rel(_run_fake(script), "public.projects")["dependent_objects"]["value"]
     dirs = {(v["object_type"], v["direction"]) for v in vals}
     assert dirs == {("constraint", "outbound"), ("view", "inbound")}
@@ -368,7 +410,9 @@ ALL = [
     ("dependents_sorted_and_database_deps", test_dependents_sorted_and_database_deps),
     ("dependents_dedup_counts_once", test_dependents_dedup_counts_once),
     ("dependents_function_and_outbound_direction", test_dependents_function_and_outbound_direction),
+    ("consumer_count_excludes_self_owned_and_outbound", test_consumer_count_excludes_self_owned_and_outbound),
     ("dsn_project_binding", test_dsn_project_binding),
+    ("main_write_failure_fails_closed", test_main_write_failure_fails_closed),
     ("workflow_dims_not_observed", test_workflow_dims_not_observed),
     ("sha256_deterministic_and_hex", test_sha256_deterministic_and_hex),
     ("self_validation_rejects_bad_now", test_self_validation_rejects_bad_now),

@@ -108,7 +108,7 @@ def _row_promote():
 
 
 def _row_compat():
-    return {"decision_id": "D-compat-1", "source_objects": ["ops.project"], "target_objects": ["public.projects_compat_v"], "meaning_disposition": "preserve", "action_class": "compat", "decision_status": "accepted", "compatibility_contract": {"required": True, "mechanism": "public view over ops.project", "exit_condition": _exit(), "telemetry_ref": "telemetry/compat-projects.json"}, "technical_authority_approval": "TA-2026-07-10-003"}
+    return {"decision_id": "D-compat-1", "source_objects": ["ops.project"], "target_objects": ["public.projects_compat_v"], "target_schema": "public", "meaning_disposition": "preserve", "action_class": "compat", "decision_status": "accepted", "compatibility_contract": {"required": True, "mechanism": "public view over ops.project", "exit_condition": _exit(), "telemetry_ref": "telemetry/compat-projects.json"}, "technical_authority_approval": "TA-2026-07-10-003"}
 
 
 def _row_archive():
@@ -272,6 +272,22 @@ def _neg_snapshot_without_target_identity():
     s = _valid_snapshot(); del s["target_identity"]; return s
 
 
+def _neg_delete_null_retention():  # null-vacuity bypass (finding #1)
+    r = _row_delete(); r["retention_disposition"] = None; return _valid_decisions([r])
+
+
+def _neg_retain_null_retention():
+    r = _row_retain(); r["retention_disposition"] = None; return _valid_decisions([r])
+
+
+def _neg_compat_null_contract():
+    r = _row_compat(); r["compatibility_contract"] = None; return _valid_decisions([r])
+
+
+def _neg_compat_missing_target_schema():  # compat now requires target_schema (finding #4)
+    r = _row_compat(); del r["target_schema"]; return _valid_decisions([r])
+
+
 NEGATIVES = {
     "01_observed_without_value": _neg_observed_without_value,
     "02_relation_without_facts": _neg_relation_without_facts,
@@ -307,6 +323,10 @@ NEGATIVES = {
     "32_compat_zero_samples": _neg_compat_zero_samples,
     "33_dependency_missing_evidence": _neg_dependency_missing_evidence,
     "34_snapshot_without_target_identity": _neg_snapshot_without_target_identity,
+    "35_delete_null_retention": _neg_delete_null_retention,
+    "36_retain_null_retention": _neg_retain_null_retention,
+    "37_compat_null_contract": _neg_compat_null_contract,
+    "38_compat_missing_target_schema": _neg_compat_missing_target_schema,
 }
 
 POSITIVES = {

@@ -26,15 +26,18 @@ Discipline / hardening (review findings):
     and is recorded as query_failed.
   * Role existence (F4): missing anon/authenticated roles yield `not_observed` privileges — an
     absent role is NOT manufactured into an observed-empty grant set.
-  * Enumerated catalog closure (F1/F3): the dependents query enumerates the pg_depend-tracked
-    dependents it names — view/matview rewrites, pg_proc-tracked function deps, INBOUND and
-    OUTBOUND FK constraints (direction preserved per edge), triggers, RLS policies, publications,
-    owned sequences — de-duplicated (SQL `union` + a Python edge-key dedup so pg_rewrite's
-    per-column-reference rows cannot inflate the count). It does NOT see function/procedure BODY
-    references, dynamic SQL, or application code (pg_depend does not track those); those consumer
-    classes are supplied later (source/dynamic_sql/manual evidence) by the consumer-evidence
-    workflow. database_deps is the ENUMERATED CATALOG closure, never a complete consumer census;
-    no consumer CONCLUSION is drawn here.
+  * Enumerated one-hop catalog inventory (F1/F3, findings #2/#7): dependent_objects enumerates the
+    DIRECT (one-hop) pg_depend-representable relationships — view/matview rewrites, pg_proc function
+    deps, INBOUND and OUTBOUND FK constraints (direction per edge), triggers, RLS policies,
+    publications (explicit membership AND FOR ALL TABLES / FOR TABLES IN SCHEMA), owned sequences,
+    and inheritance/partition children — de-duplicated (SQL `union` + a Python edge-key dedup).
+    database_deps.found_consumers counts ONLY EXTERNAL CONSUMERS (edges the SQL flags is_consumer:
+    views/matviews, function deps, inbound FKs from OTHER tables, publications, inheritance
+    children); it EXCLUDES the relation's OWN sequences/triggers/policies and its OUTBOUND FKs,
+    which are inventory but not consumers. It is ONE-HOP (not transitive) and does NOT see
+    function/procedure BODY references, dynamic SQL, or application code (pg_depend does not track
+    those); those consumer classes are supplied later (source/dynamic_sql/manual evidence) by the
+    consumer-evidence workflow. No consumer CONCLUSION is drawn here.
   * Atomic output (F6): the snapshot is written to a sibling temp file, fsync'd, then os.replace'd;
     an existing output is refused unless --overwrite.
   * Observation states: a fact whose query group FAILED is `query_failed` (never a dropped field);
@@ -105,14 +108,14 @@ QUERY_BUNDLE = {
     """,
     "dependents": """
         with targets as (
-            select c.oid, n.nspname || '.' || c.relname as object_id
+            select c.oid, c.relnamespace as nsoid, n.nspname || '.' || c.relname as object_id
             from pg_class c join pg_namespace n on n.oid = c.relnamespace
             where n.nspname = any(%(schemas)s) and c.relkind in ('r', 'v', 'm', 'p', 'f')
         ),
         rules as (
             select t.object_id,
                    case dc.relkind when 'm' then 'materialized_view' else 'view' end as dep_type,
-                   dn.nspname || '.' || dc.relname as dep_identity, 'inbound' as direction
+                   dn.nspname || '.' || dc.relname as dep_identity, 'inbound' as direction, true as is_consumer
             from pg_depend d
             join targets t on t.oid = d.refobjid and d.refclassid = 'pg_class'::regclass
             join pg_rewrite rw on rw.oid = d.objid and d.classid = 'pg_rewrite'::regclass
@@ -123,7 +126,7 @@ QUERY_BUNDLE = {
         funcs as (
             select t.object_id, 'function' as dep_type,
                    pn.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' as dep_identity,
-                   'inbound' as direction
+                   'inbound' as direction, true as is_consumer
             from pg_depend d
             join targets t on t.oid = d.refobjid and d.refclassid = 'pg_class'::regclass
             join pg_proc p on p.oid = d.objid and d.classid = 'pg_proc'::regclass
@@ -131,7 +134,8 @@ QUERY_BUNDLE = {
         ),
         in_fks as (
             select t.object_id, 'constraint' as dep_type,
-                   con.conname || ' on ' || rn.nspname || '.' || rc.relname as dep_identity, 'inbound' as direction
+                   con.conname || ' on ' || rn.nspname || '.' || rc.relname as dep_identity, 'inbound' as direction,
+                   (con.conrelid <> con.confrelid) as is_consumer
             from pg_constraint con
             join targets t on t.oid = con.confrelid
             join pg_class rc on rc.oid = con.conrelid
@@ -140,7 +144,7 @@ QUERY_BUNDLE = {
         ),
         out_fks as (
             select t.object_id, 'constraint' as dep_type,
-                   con.conname || ' -> ' || fn.nspname || '.' || fc.relname as dep_identity, 'outbound' as direction
+                   con.conname || ' -> ' || fn.nspname || '.' || fc.relname as dep_identity, 'outbound' as direction, false as is_consumer
             from pg_constraint con
             join targets t on t.oid = con.conrelid
             join pg_class fc on fc.oid = con.confrelid
@@ -148,35 +152,56 @@ QUERY_BUNDLE = {
             where con.contype = 'f'
         ),
         trigs as (
-            select t.object_id, 'trigger' as dep_type, tg.tgname || ' on ' || t.object_id as dep_identity, 'inbound' as direction
+            select t.object_id, 'trigger' as dep_type, tg.tgname || ' on ' || t.object_id as dep_identity, 'inbound' as direction, false as is_consumer
             from pg_trigger tg join targets t on t.oid = tg.tgrelid
             where not tg.tgisinternal
         ),
         pols as (
-            select t.object_id, 'policy' as dep_type, pol.polname || ' on ' || t.object_id as dep_identity, 'inbound' as direction
+            select t.object_id, 'policy' as dep_type, pol.polname || ' on ' || t.object_id as dep_identity, 'inbound' as direction, false as is_consumer
             from pg_policy pol join targets t on t.oid = pol.polrelid
         ),
         pubs as (
-            select t.object_id, 'publication' as dep_type, p.pubname as dep_identity, 'inbound' as direction
+            select t.object_id, 'publication' as dep_type, p.pubname as dep_identity, 'inbound' as direction, true as is_consumer
             from pg_publication_rel pr
             join targets t on t.oid = pr.prrelid
             join pg_publication p on p.oid = pr.prpubid
         ),
+        pubs_all as (
+            select t.object_id, 'publication' as dep_type, p.pubname as dep_identity, 'inbound' as direction, true as is_consumer
+            from pg_publication p cross join targets t
+            where p.puballtables
+        ),
+        pubs_schema as (
+            select t.object_id, 'publication' as dep_type, p.pubname as dep_identity, 'inbound' as direction, true as is_consumer
+            from pg_publication_namespace pns
+            join pg_publication p on p.oid = pns.pnpubid
+            join targets t on t.nsoid = pns.pnnspid
+        ),
         seqs as (
-            select t.object_id, 'sequence' as dep_type, dn.nspname || '.' || dc.relname as dep_identity, 'inbound' as direction
+            select t.object_id, 'sequence' as dep_type, dn.nspname || '.' || dc.relname as dep_identity, 'inbound' as direction, false as is_consumer
             from pg_depend d
             join targets t on t.oid = d.refobjid and d.refclassid = 'pg_class'::regclass
             join pg_class dc on dc.oid = d.objid and d.classid = 'pg_class'::regclass and dc.relkind = 'S'
             join pg_namespace dn on dn.oid = dc.relnamespace
+        ),
+        inherits_children as (
+            select t.object_id, 'table' as dep_type, cn.nspname || '.' || cc.relname as dep_identity, 'inbound' as direction, true as is_consumer
+            from pg_inherits inh
+            join targets t on t.oid = inh.inhparent
+            join pg_class cc on cc.oid = inh.inhrelid
+            join pg_namespace cn on cn.oid = cc.relnamespace
         )
-        select object_id, dep_type, dep_identity, direction from rules
-        union select object_id, dep_type, dep_identity, direction from funcs
-        union select object_id, dep_type, dep_identity, direction from in_fks
-        union select object_id, dep_type, dep_identity, direction from out_fks
-        union select object_id, dep_type, dep_identity, direction from trigs
-        union select object_id, dep_type, dep_identity, direction from pols
-        union select object_id, dep_type, dep_identity, direction from pubs
-        union select object_id, dep_type, dep_identity, direction from seqs
+        select object_id, dep_type, dep_identity, direction, is_consumer from rules
+        union select object_id, dep_type, dep_identity, direction, is_consumer from funcs
+        union select object_id, dep_type, dep_identity, direction, is_consumer from in_fks
+        union select object_id, dep_type, dep_identity, direction, is_consumer from out_fks
+        union select object_id, dep_type, dep_identity, direction, is_consumer from trigs
+        union select object_id, dep_type, dep_identity, direction, is_consumer from pols
+        union select object_id, dep_type, dep_identity, direction, is_consumer from pubs
+        union select object_id, dep_type, dep_identity, direction, is_consumer from pubs_all
+        union select object_id, dep_type, dep_identity, direction, is_consumer from pubs_schema
+        union select object_id, dep_type, dep_identity, direction, is_consumer from seqs
+        union select object_id, dep_type, dep_identity, direction, is_consumer from inherits_children
         order by object_id, dep_type, dep_identity, direction
     """,
 }
@@ -241,17 +266,24 @@ def build_relation_observation(census_row, privs, deps, failed_groups, now):
         deps_fact = _qf("dependents query failed")
         ddeps_dim = _cdim("query_failed", "dependents query failed")
     else:
-        # Deduplicate edges by (object_type, identity, direction) BEFORE counting: pg_rewrite
-        # emits one pg_depend row per column reference, so a view that reads a table N times
-        # would otherwise inflate found_consumers. Deterministic sorted order.
-        seen, deduped = set(), []
+        # dependent_objects = the FULL enumerated catalog inventory (every edge, deduped by
+        # (object_type, identity, direction)). database_deps.found_consumers counts ONLY external
+        # CONSUMERS — edges flagged _is_consumer by the SQL: views/matviews, pg_proc deps, inbound
+        # FKs from OTHER tables (self-referential FKs excluded), publications (incl. FOR ALL TABLES
+        # / schema-level), inheritance children. It EXCLUDES the relation's OWN owned sequences,
+        # triggers, policies and its OUTBOUND FKs — inventory, not consumers (finding #2). pg_rewrite
+        # emits one row per column reference, so dedup precedes counting; consumer status is OR-ed
+        # across duplicate keys so a consumer edge is never masked by a non-consumer twin.
+        records_by_key, consumer_keys, order = {}, set(), []
         for dep in sorted(deps or [], key=lambda x: (x["object_type"], x["identity"], x["direction"])):
             edge_key = (dep["object_type"], dep["identity"], dep["direction"])
-            if edge_key not in seen:
-                seen.add(edge_key)
-                deduped.append(dep)
-        deps_fact = _obs(deduped)
-        ddeps_dim = _cdim_observed(len(deduped), "query:dependents-v2")
+            if edge_key not in records_by_key:
+                records_by_key[edge_key] = {k: v for k, v in dep.items() if not k.startswith("_")}
+                order.append(edge_key)
+            if dep.get("_is_consumer"):
+                consumer_keys.add(edge_key)
+        deps_fact = _obs([records_by_key[k] for k in order])
+        ddeps_dim = _cdim_observed(len(consumer_keys), "query:dependents-v2")
 
     return {
         "object_id": oid, "schema": schema, "name": name, "relkind": relkind,
@@ -393,16 +425,18 @@ def _collect(cur, schemas, *, db_error, project_ref, repo_sha, expect_database, 
                 if role in init_roles:
                     entry.setdefault(role, [])
 
-    # 5. Dependents (optional): enumerated pg_depend catalog closure (F1); direction per edge.
+    # 5. Dependents (optional): enumerated pg_depend catalog inventory (F1); direction + external-
+    #    consumer flag per edge (finding #2 — the flag drives found_consumers, not raw edge count).
     dep_rows = _execute_group(cur, "dependents", QUERY_BUNDLE["dependents"], {"schemas": schemas}, db_error, failed)
     deps_by_oid = {}
     if "dependents" not in failed:
-        for oid, dep_type, dep_identity, direction in dep_rows:
+        for oid, dep_type, dep_identity, direction, is_consumer in dep_rows:
             deps_by_oid.setdefault(oid, []).append({
                 "object_type": dep_type if dep_type in _DEP_TYPES else "source_reference",
                 "identity": dep_identity,
                 "direction": direction if direction in ("inbound", "outbound") else "inbound",
                 "evidence_type": "pg_depend", "evidence_ref": "query:dependents-v2",
+                "_is_consumer": bool(is_consumer),
             })
 
     return build_snapshot(census_rows, privs_by_oid, deps_by_oid, failed,
@@ -411,23 +445,34 @@ def _collect(cur, schemas, *, db_error, project_ref, repo_sha, expect_database, 
 
 
 def _dsn_contains_project_ref(dsn, project_ref):
-    """Bind the DSN to the Supabase project ref via parsed host/user identity — the ref is a
-    dot-delimited label of the host (db.<ref>.supabase.co) OR the pooler user (postgres.<ref>).
-    Value-silent: only host/user LABELS are inspected; the password is never touched or logged.
-    The project ref is a public identifier, not a secret. Returns False (=> fail closed) on any
-    parse failure or absence."""
-    from urllib.parse import urlsplit  # noqa: PLC0415 -- live-only
+    """Bind the DSN to the Supabase project ref with a STRICTLY ANCHORED host/user check
+    (finding #6): a DIRECT connection host must be exactly db.<ref>.supabase.co, or a POOLED
+    connection must use an approved *.pooler.supabase.com host with user postgres.<ref>. Both URL
+    and libpq keyword DSNs are parsed via psycopg's conninfo parser. Value-silent: only host and
+    user are inspected; the password is never read or logged. The project ref is a public
+    identifier, not a secret. Returns False (=> fail closed) on any parse failure or non-match."""
     ref = (project_ref or "").strip().lower()
     if not ref:
         return False
+    host, user = "", ""
     try:
-        parts = urlsplit(dsn)
-        host = (parts.hostname or "").lower()
-        user = (parts.username or "").lower()
-    except Exception:  # noqa: BLE001
-        return False
-    labels = set(host.split(".")) | set(user.split("."))
-    return ref in labels
+        from psycopg.conninfo import conninfo_to_dict  # noqa: PLC0415 -- live-only, PURE parse (no connection)
+        info = conninfo_to_dict(dsn)
+        host = str(info.get("host") or "").strip().lower()
+        user = str(info.get("user") or "").strip().lower()
+    except Exception:  # noqa: BLE001 -- fall back to URL parsing; never surface the DSN
+        pass
+    if not host:
+        try:
+            from urllib.parse import urlsplit  # noqa: PLC0415
+            parts = urlsplit(dsn)
+            host = (parts.hostname or "").strip().lower()
+            user = (parts.username or "").strip().lower()
+        except Exception:  # noqa: BLE001
+            return False
+    direct = host == f"db.{ref}.supabase.co"
+    pooled = host.endswith(".pooler.supabase.com") and user == f"postgres.{ref}"
+    return direct or pooled
 
 
 def collect_from_db(dsn, schemas, *, project_ref, repo_sha, expect_database, required_role_markers=()):
@@ -512,7 +557,11 @@ def main(argv=None):
     except Exception as exc:  # noqa: BLE001 -- driver/connection errors may embed connection info; print TYPE only
         print(f"SP000 collector failed: {type(exc).__name__}", file=sys.stderr)
         return 2
-    write_snapshot(args.out, snapshot, overwrite=args.overwrite)
+    try:
+        write_snapshot(args.out, snapshot, overwrite=args.overwrite)
+    except Exception as exc:  # noqa: BLE001 -- fail closed on any publish error (finding #8); DSN-free by construction
+        print(f"SP000 collector: failed to publish snapshot ({type(exc).__name__})", file=sys.stderr)
+        return 2
     ti = snapshot["target_identity"]
     print(f"=== CENSUS: {snapshot['relation_count']} relations -> {args.out} "
           f"(db={ti['current_database']} user={ti['current_user']} bundle {snapshot['query_bundle_sha256'][:12]}) ===")

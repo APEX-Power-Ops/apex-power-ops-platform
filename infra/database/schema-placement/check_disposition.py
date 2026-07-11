@@ -54,6 +54,7 @@ CODES = {
     "SP022": "unresolved consumer-evidence dimension for a no_consumer conclusion",
     "SP023": "target_entity's physical_schema disagrees with target_schema",
     "SP024": "evidence_snapshot target_identity is absent/not-guard-passed, or its project binding is unasserted/mismatched",
+    "SP025": "a target_object does not live in the decision's target_schema (relocation destination binding)",
 }
 
 
@@ -261,16 +262,24 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                 elif (e - s).total_seconds() / 3600.0 < min_window:
                     d.append(Diagnostic("SP009", f"decision:{did}:{r['object_id']}", f"window duration {(e - s).total_seconds() / 3600.0:.2f}h < minimum_consumer_window_hours {min_window}"))
 
-        # target resolution (SP019/SP011/SP012/SP023)
+        # target resolution (SP019/SP011/SP012/SP023) + destination binding (SP025)
         te, ts = row.get("target_entity"), row.get("target_schema")
         if (te is not None or ts is not None) and not entity_map_accepted:
             d.append(Diagnostic("SP019", f"decision:{did}", f"entity_map.approval={entity_map.get('approval')} (targets require accepted map)"))
         if te is not None and te not in accepted_entities:
             d.append(Diagnostic("SP011", f"decision:{did}", f"target_entity {te} not an accepted entity"))
-        if ts is not None and ts not in accepted_schemas:
+        # SP012 applies to promotion INTO a canonical schema; compat relocates to the public compat
+        # surface, whose schema is not (and need not be) an accepted physical_schema.
+        if ts is not None and row.get("action_class") != "compat" and ts not in accepted_schemas:
             d.append(Diagnostic("SP012", f"decision:{did}", f"target_schema {ts} not an accepted physical_schema"))
         if te in accepted_entities and ts is not None and accepted_entities[te].get("physical_schema") != ts:
             d.append(Diagnostic("SP023", f"decision:{did}", f"entity {te} maps to {accepted_entities[te].get('physical_schema')} but target_schema is {ts}"))
+        # SP025: every target_object must live in the declared target_schema (relocation destination).
+        if ts is not None:
+            for tobj in row.get("target_objects", []):
+                tschema = tobj.split(".", 1)[0]
+                if tschema != ts:
+                    d.append(Diagnostic("SP025", f"decision:{did}:{tobj}", f"target_object schema {tschema!r} != target_schema {ts!r}"))
 
         # required observations fresh for source relations (SP010)
         for r in src_rels:
@@ -293,6 +302,9 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                     if dimname == "operator_declaration" and st != "observed":
                         d.append(Diagnostic("SP022", f"decision:{did}:{r['object_id']}:operator_declaration", f"state={st} (operator declaration must be observed)"))
                         continue
+                    if dimname == "database_deps" and st != "observed":
+                        d.append(Diagnostic("SP022", f"decision:{did}:{r['object_id']}:database_deps", f"state={st} (the machine dependency signal must be OBSERVED for a resolved conclusion; not_applicable is not permitted — finding #3)"))
+                        continue
                     if st == "not_applicable":
                         continue
                     if st != "observed":
@@ -311,6 +323,14 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
             thr = cc["exit_condition"].get("threshold")
             if not isinstance(thr, (int, float)) or isinstance(thr, bool) or not math.isfinite(thr):
                 d.append(Diagnostic("SP015", f"decision:{did}", f"exit_condition threshold {thr} is not finite"))
+
+        # SP014 (finding #5): a destructive delete's recovery_proof must be a FILESYSTEM artifact
+        # under an approved root, NOT a scheme reference — a scheme token (urn:/ta:/sha:/query:...)
+        # would otherwise skip path resolution below and "prove" a backup that does not exist.
+        if row.get("action_class") == "delete" and row.get("decision_status") == "accepted":
+            rp = (row.get("retention_disposition") or {}).get("recovery_proof")
+            if not rp or not is_path_ref(rp):
+                d.append(Diagnostic("SP014", f"decision:{did}:recovery_proof", f"delete recovery_proof {rp!r} must be a filesystem artifact under an approved root, not a scheme reference"))
 
         # ALL path-capable references (SP014): evidence_refs + transform.validation_report +
         # compat.telemetry_ref + retention.recovery_proof + each source relation's consumer dim refs.
@@ -341,6 +361,12 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
 def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, snapshot_path=None, expect_project_ref=None):
     docs = {"evidence_snapshot": snapshot, "decisions_file": decisions, "entity_map": entity_map, "cluster_manifest": manifest}
     diags = schema_validate(docs, validator)
+    # Pin each CLI input to its EXPECTED kind (finding #8): the top-level oneOf accepts any of the
+    # four document types, so a wrong-kind file (e.g. a decisions_file passed as --snapshot) would
+    # otherwise pass schema validation and then crash on a missing field mid-semantic-check.
+    for expected, doc in docs.items():
+        if isinstance(doc, dict) and doc.get("kind") != expected:
+            diags.append(Diagnostic("SP001", f"{expected}:kind", f"expected kind={expected!r}, got {doc.get('kind')!r}"))
     if diags:
         return sorted(diags, key=lambda x: x.key())
     diags = semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref)

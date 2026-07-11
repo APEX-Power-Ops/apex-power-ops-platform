@@ -1,0 +1,18 @@
+The new schema-placement gate can approve accepted production-write decisions while required destructive/compatibility fields are null, and it does not verify target object schemas against declared target_schema. These are correctness gaps in the safety gate.
+
+Full review comments:
+
+- [P1] Require object shape for destructive dispositions — /home/olares/code/apex/_codex-disp/infra/database/schema-placement/disposition.schema.json:251-251
+  For accepted `delete` rows, `retention_disposition: null` still passes because the base property allows null and the nested `required` keywords here are ignored for non-object instances. That lets a preapply gate approve a destructive delete without `policy: delete_after` or `recovery_proof`; the same nullable override pattern also affects nearby accepted `retain`/`compat` contract checks, so these branches should force the referenced object schema rather than only requiring the property name.
+
+- [P2] Bind target objects to target_schema — /home/olares/code/apex/_codex-disp/infra/database/schema-placement/check_disposition.py:270-273
+  When a decision declares `target_schema`, this block only checks that the schema name is accepted and matches the entity map; it never validates the schemas of `target_objects`. An accepted archive/promote decision can therefore use `target_schema: archive` with `target_objects: ["public.foo"]` and still go green, so the gate does not actually enforce the relocation destination.
+The new schema-placement gate can approve accepted production-write decisions while required destructive/compatibility fields are null, and it does not verify target object schemas against declared target_schema. These are correctness gaps in the safety gate.
+
+Full review comments:
+
+- [P1] Require object shape for destructive dispositions — /home/olares/code/apex/_codex-disp/infra/database/schema-placement/disposition.schema.json:251-251
+  For accepted `delete` rows, `retention_disposition: null` still passes because the base property allows null and the nested `required` keywords here are ignored for non-object instances. That lets a preapply gate approve a destructive delete without `policy: delete_after` or `recovery_proof`; the same nullable override pattern also affects nearby accepted `retain`/`compat` contract checks, so these branches should force the referenced object schema rather than only requiring the property name.
+
+- [P2] Bind target objects to target_schema — /home/olares/code/apex/_codex-disp/infra/database/schema-placement/check_disposition.py:270-273
+  When a decision declares `target_schema`, this block only checks that the schema name is accepted and matches the entity map; it never validates the schemas of `target_objects`. An accepted archive/promote decision can therefore use `target_schema: archive` with `target_objects: ["public.foo"]` and still go green, so the gate does not actually enforce the relocation destination.
