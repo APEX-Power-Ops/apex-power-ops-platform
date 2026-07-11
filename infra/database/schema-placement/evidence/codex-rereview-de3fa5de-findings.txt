@@ -1,0 +1,18 @@
+Codex cross-engine RE-REVIEW — correction tranche (codex exec review --base 898e3871 @ de3fa5de)
+model: gpt-5.5, reasoning effort xhigh. Full log: codex-rereview-de3fa5de-full.log (scratch).
+
+VERDICT: CLEAN — no inline findings.
+
+Codex (verbatim): "The changes harden the census collector and verifier as intended, and the targeted
+offline suites pass under the locked uv environment. I did not find an introduced correctness, security,
+or operational issue that warrants an inline finding."
+
+Codex independently: re-derived collect_disposition.query_bundle_sha256() = 217ff3add2abdaca2fafa108f68e
+10490ee687ac9899b7762f1411d45e2de9db (matches the runbook D4 pin); confirmed no stale --repo-sha in the
+runbook/CLI (only the intentional D1 rejection test + evidence records).
+
+Cross-engine delta: Claude grounded-audit (wf_4ae3ef43-96a) concurred (HOLDS, no new defect) and, via the
+deeper structural pass, surfaced LOW test-coverage gaps (F-1 crypto-sole-gate, F-3 traversal isolation —
+both CLOSED this session with regression guards) plus the pre-existing RR-1 parity gap on the
+higher-consequence SP026 apply-gate in check_disposition.py (a follow-up packet, out of this tranche's
+scope). See irp-cross-engine-de3fa5de.md for the full synthesis + operator decisions.

@@ -1,0 +1,25 @@
+codex
+The signature and receipt controls are intended to close trust/TOCTOU gaps, but they re-read files after parsing or validation, so they can certify bytes different from the documents actually checked. The signed snapshot writer also fails to preserve an existing valid output pair on sidecar publish failure.
+
+Full review comments:
+
+- [P1] Verify the parsed snapshot bytes — /tmp/_codex-disp-r3/infra/database/schema-placement/check_disposition.py:553-553
+  Because `snapshot` is parsed before this call, SP026 verifies whatever bytes are at `--snapshot` at verification time, not necessarily the in-memory document that `semantic_check` will trust. If the snapshot file is swapped between `load_doc()` and this verification, a signed benign file can satisfy SP026 while the gate evaluates a different unsigned/forged snapshot. Read the snapshot bytes once, verify the sidecar against those bytes, and parse that same buffer.
+
+- [P1] Hash receipt inputs from validated bytes — /tmp/_codex-disp-r3/infra/database/schema-placement/check_disposition.py:162-164
+  `build_receipt` rereads each CLI input after the gate has already validated the in-memory documents. With `--receipt-out`, if decisions/manifest/entity-map/snapshot are modified after `load_doc()`/`run()` but before these hashes are computed, the receipt records hashes for unvalidated bytes and an apply runner can accept the changed files. Carry hashes from the original read, or fail if a final rehash differs, before emitting the green receipt.
+
+- [P2] Keep existing signed snapshot on sidecar failure — /tmp/_codex-disp-r3/infra/database/schema-placement/collect_disposition.py:553-558
+  When `--overwrite` refreshes an existing signed snapshot, this replaces the snapshot before the sidecar is safely published; if writing `sig_path` fails due to permissions, disk space, or a bad path, the exception handler removes `path`, deleting the previous valid snapshot instead of leaving the old signed pair intact. Stage both outputs before replacing either destination, or publish the sidecar safely before replacing the snapshot.
+The signature and receipt controls are intended to close trust/TOCTOU gaps, but they re-read files after parsing or validation, so they can certify bytes different from the documents actually checked. The signed snapshot writer also fails to preserve an existing valid output pair on sidecar publish failure.
+
+Full review comments:
+
+- [P1] Verify the parsed snapshot bytes — /tmp/_codex-disp-r3/infra/database/schema-placement/check_disposition.py:553-553
+  Because `snapshot` is parsed before this call, SP026 verifies whatever bytes are at `--snapshot` at verification time, not necessarily the in-memory document that `semantic_check` will trust. If the snapshot file is swapped between `load_doc()` and this verification, a signed benign file can satisfy SP026 while the gate evaluates a different unsigned/forged snapshot. Read the snapshot bytes once, verify the sidecar against those bytes, and parse that same buffer.
+
+- [P1] Hash receipt inputs from validated bytes — /tmp/_codex-disp-r3/infra/database/schema-placement/check_disposition.py:162-164
+  `build_receipt` rereads each CLI input after the gate has already validated the in-memory documents. With `--receipt-out`, if decisions/manifest/entity-map/snapshot are modified after `load_doc()`/`run()` but before these hashes are computed, the receipt records hashes for unvalidated bytes and an apply runner can accept the changed files. Carry hashes from the original read, or fail if a final rehash differs, before emitting the green receipt.
+
+- [P2] Keep existing signed snapshot on sidecar failure — /tmp/_codex-disp-r3/infra/database/schema-placement/collect_disposition.py:553-558
+  When `--overwrite` refreshes an existing signed snapshot, this replaces the snapshot before the sidecar is safely published; if writing `sig_path` fails due to permissions, disk space, or a bad path, the exception handler removes `path`, deleting the previous valid snapshot instead of leaving the old signed pair intact. Stage both outputs before replacing either destination, or publish the sidecar safely before replacing the snapshot.

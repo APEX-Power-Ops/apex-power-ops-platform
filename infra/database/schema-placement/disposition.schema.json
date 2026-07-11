@@ -1,0 +1,339 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-power-ops/schema-placement/disposition.schema.json",
+  "title": "Schema-Placement Disposition Ledger — contracts",
+  "$comment": "SCHEMA enforces single-document invariants: state/value consistency, TYPED observation values, required non-null fields, action-specific field combinations (incl. many-to-many target_objects), destructive/retain/archive restrictions, compatibility-contract structure, approval-reference presence, timestamp syntax, structured consumer windows. CHECKER (check_disposition.py, offline) enforces cross-document/time/context: relation_count == unique-by-object_id; object_id == schema+'.'+name; clusters select by decision_id; cluster action == each decision action; every source_object in snapshot (targets may be absent pre-creation); snapshot freshness vs max_staleness_hours; started_at < ended_at <= observed_at (strict; census-default zero-width windows must be overlaid before preapply); accepted entity/physical-schema resolution; required observations fresh-observed; consumer conclusion agrees with evidence dims; evidence paths inside approved roots (no traversal/symlink escape); compat telemetry satisfies exit expression. Grounding: docs/authority/PLATFORM-DATA-AND-SCHEMA-STRATEGY-2026-04-12.md.",
+
+  "$defs": {
+    "observation_state": { "enum": ["observed", "not_observed", "query_failed", "stale", "not_applicable"] },
+    "meaning_disposition": { "enum": ["preserve", "transform", "retire", "unresolved"] },
+    "action_class": { "enum": ["harden", "promote", "compat", "archive", "delete", "retain"] },
+    "decision_status": { "enum": ["proposed", "accepted", "rejected", "unknown"] },
+    "consumer_conclusion": { "enum": ["no_consumer", "has_consumers", "unresolved"] },
+    "logical_domain": { "enum": ["identity", "org", "work", "safety", "asset", "engineering", "knowledge", "document", "automation", "integration", "audit"] },
+    "database_layer": { "enum": ["apex_core", "apex_lab"] },
+    "privilege": { "$comment": "v1 = PostgreSQL 16 grantable table privileges. MAINTAIN (PG17+) deliberately EXCLUDED until a server-major-aware collector ships (finding: PG16.13 'unrecognized privilege type: MAINTAIN').", "enum": ["SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER"] },
+    "observation_field": { "enum": ["owner", "rls_enabled", "is_security_definer_view", "in_data_api_exposed_schema", "anon_effective_privs", "authenticated_effective_privs", "inbound_fk_count", "outbound_fk_count", "dependent_objects", "row_estimate", "advisor_findings", "consumer_evidence"] },
+    "object_id": { "type": "string", "pattern": "^[a-z_][a-z0-9_]*\\.[a-z_][a-z0-9_]*$" },
+    "decision_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,}$" },
+    "iso_datetime": { "type": "string", "format": "date-time", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$" },
+    "nonempty_string": { "type": "string", "minLength": 1 },
+
+    "observed_state_rule": {
+      "$comment": "Shared state machine: observed ⇒ value present; every other state ⇒ value FORBIDDEN and detail required. Typed wrappers set properties.value.",
+      "if": { "required": ["state"], "properties": { "state": { "const": "observed" } } },
+      "then": { "required": ["value"] },
+      "else": { "required": ["detail"], "not": { "required": ["value"] }, "properties": { "detail": { "$ref": "#/$defs/nonempty_string" } } }
+    },
+    "observed_bool": {
+      "type": "object", "required": ["state"], "additionalProperties": false,
+      "properties": { "state": { "$ref": "#/$defs/observation_state" }, "value": { "type": "boolean" }, "detail": { "type": "string" } },
+      "allOf": [{ "$ref": "#/$defs/observed_state_rule" }]
+    },
+    "observed_nonneg_int": {
+      "type": "object", "required": ["state"], "additionalProperties": false,
+      "properties": { "state": { "$ref": "#/$defs/observation_state" }, "value": { "type": "integer", "minimum": 0 }, "detail": { "type": "string" } },
+      "allOf": [{ "$ref": "#/$defs/observed_state_rule" }]
+    },
+    "observed_string": {
+      "type": "object", "required": ["state"], "additionalProperties": false,
+      "properties": { "state": { "$ref": "#/$defs/observation_state" }, "value": { "$ref": "#/$defs/nonempty_string" }, "detail": { "type": "string" } },
+      "allOf": [{ "$ref": "#/$defs/observed_state_rule" }]
+    },
+    "observed_object_id_array": {
+      "type": "object", "required": ["state"], "additionalProperties": false,
+      "properties": { "state": { "$ref": "#/$defs/observation_state" }, "value": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/object_id" } }, "detail": { "type": "string" } },
+      "allOf": [{ "$ref": "#/$defs/observed_state_rule" }]
+    },
+    "observed_priv_array": {
+      "type": "object", "required": ["state"], "additionalProperties": false,
+      "properties": { "state": { "$ref": "#/$defs/observation_state" }, "value": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/privilege" } }, "detail": { "type": "string" } },
+      "allOf": [{ "$ref": "#/$defs/observed_state_rule" }]
+    },
+    "observed_advisor_array": {
+      "type": "object", "required": ["state"], "additionalProperties": false,
+      "properties": { "state": { "$ref": "#/$defs/observation_state" }, "value": { "type": "array", "items": { "$ref": "#/$defs/nonempty_string" } }, "detail": { "type": "string" } },
+      "allOf": [{ "$ref": "#/$defs/observed_state_rule" }]
+    },
+    "dependency_object_type": { "enum": ["table", "view", "materialized_view", "function", "procedure", "trigger", "policy", "constraint", "sequence", "index", "publication", "subscription", "foreign_table", "type", "source_reference"] },
+    "dependency_direction": { "enum": ["inbound", "outbound"] },
+    "dependency_role": { "$comment": "Durable classification of a stored edge (finding: consumer classification discarded from snapshot). external_consumer = an edge the collector counts toward database_deps.found_consumers (views/matviews, function deps, inbound FKs from other tables, publications, inheritance children); outbound_dependency = the relation's own outbound FK (inventory, not a consumer); attached_object = the relation's own owned sequence/trigger/policy (inventory, not a consumer). external_consumer IFF the edge is counted.", "enum": ["external_consumer", "outbound_dependency", "attached_object"] },
+    "dependency_evidence_type": { "enum": ["pg_depend", "information_schema", "source", "dynamic_sql", "manual"] },
+    "dependency_record": {
+      "$comment": "A dependency edge that may involve a NON-relation object (function w/ signature, trigger, policy, constraint, sequence, publication) or a source-only/dynamic-SQL reference (finding: closure gate). identity is free-form (e.g. 'public.handle_new_user()') — NOT constrained to schema.relation.",
+      "type": "object", "required": ["object_type", "identity", "direction", "evidence_type", "evidence_ref", "dependency_role"], "additionalProperties": false,
+      "properties": { "object_type": { "$ref": "#/$defs/dependency_object_type" }, "identity": { "$ref": "#/$defs/nonempty_string" }, "direction": { "$ref": "#/$defs/dependency_direction" }, "evidence_type": { "$ref": "#/$defs/dependency_evidence_type" }, "evidence_ref": { "$ref": "#/$defs/nonempty_string" }, "dependency_role": { "$ref": "#/$defs/dependency_role" } }
+    },
+    "observed_dependency_array": {
+      "type": "object", "required": ["state"], "additionalProperties": false,
+      "properties": { "state": { "$ref": "#/$defs/observation_state" }, "value": { "type": "array", "items": { "$ref": "#/$defs/dependency_record" } }, "detail": { "type": "string" } },
+      "allOf": [{ "$ref": "#/$defs/observed_state_rule" }]
+    },
+
+    "consumer_evidence_dim": {
+      "$comment": "Canonical shape (finding #8): observed ⇒ non-negative found_consumers + non-empty ref; every other state ⇒ found_consumers=null AND ref=null AND detail.",
+      "type": "object", "required": ["state"], "additionalProperties": false,
+      "properties": { "state": { "$ref": "#/$defs/observation_state" }, "found_consumers": { "type": ["integer", "null"], "minimum": 0 }, "ref": { "type": ["string", "null"] }, "detail": { "type": "string" } },
+      "allOf": [
+        {
+          "if": { "required": ["state"], "properties": { "state": { "const": "observed" } } },
+          "then": { "required": ["found_consumers", "ref"], "properties": { "found_consumers": { "type": "integer", "minimum": 0 }, "ref": { "$ref": "#/$defs/nonempty_string" } } },
+          "else": { "required": ["found_consumers", "ref", "detail"], "properties": { "found_consumers": { "type": "null" }, "ref": { "type": "null" }, "detail": { "$ref": "#/$defs/nonempty_string" } } }
+        }
+      ]
+    },
+    "observation_window": {
+      "type": "object", "required": ["started_at", "ended_at"], "additionalProperties": false,
+      "properties": { "started_at": { "$ref": "#/$defs/iso_datetime" }, "ended_at": { "$ref": "#/$defs/iso_datetime" } }
+    },
+    "consumer_evidence": {
+      "type": "object",
+      "required": ["observation_window", "static_repo", "database_deps", "runtime_logs", "external_clients", "operator_declaration"],
+      "additionalProperties": false,
+      "properties": {
+        "observation_window": { "$ref": "#/$defs/observation_window" },
+        "static_repo": { "$ref": "#/$defs/consumer_evidence_dim" },
+        "database_deps": { "$ref": "#/$defs/consumer_evidence_dim" },
+        "runtime_logs": { "$ref": "#/$defs/consumer_evidence_dim" },
+        "external_clients": { "$ref": "#/$defs/consumer_evidence_dim" },
+        "operator_declaration": { "$ref": "#/$defs/consumer_evidence_dim" }
+      }
+    },
+
+    "relation_observation": {
+      "type": "object",
+      "required": ["object_id", "schema", "name", "relkind", "owner", "rls_enabled", "is_security_definer_view", "in_data_api_exposed_schema", "anon_effective_privs", "authenticated_effective_privs", "inbound_fk_count", "outbound_fk_count", "dependent_objects", "row_estimate", "advisor_findings", "consumer_evidence"],
+      "additionalProperties": false,
+      "properties": {
+        "object_id": { "$ref": "#/$defs/object_id" },
+        "schema": { "type": "string" },
+        "name": { "type": "string" },
+        "relkind": { "enum": ["r", "v", "m", "p", "f"] },
+        "owner": { "$ref": "#/$defs/observed_string" },
+        "rls_enabled": { "$ref": "#/$defs/observed_bool" },
+        "is_security_definer_view": { "$ref": "#/$defs/observed_bool" },
+        "in_data_api_exposed_schema": { "$ref": "#/$defs/observed_bool" },
+        "anon_effective_privs": { "$ref": "#/$defs/observed_priv_array" },
+        "authenticated_effective_privs": { "$ref": "#/$defs/observed_priv_array" },
+        "inbound_fk_count": { "$ref": "#/$defs/observed_nonneg_int" },
+        "outbound_fk_count": { "$ref": "#/$defs/observed_nonneg_int" },
+        "dependent_objects": { "$ref": "#/$defs/observed_dependency_array" },
+        "row_estimate": { "$ref": "#/$defs/observed_nonneg_int" },
+        "advisor_findings": { "$ref": "#/$defs/observed_advisor_array" },
+        "consumer_evidence": { "$ref": "#/$defs/consumer_evidence" }
+      }
+    },
+
+    "target_identity": {
+      "$comment": "In-band binding of a snapshot to the database ACTUALLY queried (finding: evidence not bound to target). transaction_read_only and guard_passed are const true, so a persisted snapshot that validates PROVES a read-only session AND a passed target guard — a guard-failed run raises before any snapshot is built (the collector never emits guard_passed=false). REQUIRED on evidence_snapshot; the checker additionally binds project_ref to an expected value (SP024). Note: guard_passed only attests DB name + read-only + platform role markers + DSN-host/user project-ref binding; it is NOT proof the target is a specific project unless the DSN carried the ref.",
+      "type": "object",
+      "required": ["current_database", "current_user", "server_version", "transaction_read_only", "guard_passed"],
+      "additionalProperties": false,
+      "properties": {
+        "current_database": { "$ref": "#/$defs/nonempty_string" },
+        "current_user": { "$ref": "#/$defs/nonempty_string" },
+        "server_version": { "$ref": "#/$defs/nonempty_string" },
+        "server_version_num": { "type": ["integer", "null"] },
+        "transaction_read_only": { "const": true },
+        "expected_database": { "type": ["string", "null"] },
+        "platform_role_markers": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/nonempty_string" } },
+        "guard_passed": { "const": true }
+      }
+    },
+
+    "collection_scope": {
+      "$comment": "The census PARAMETERS bound by the signature (operator finding: query_bundle_sha256 binds SQL TEXT, not --schemas/database/role-markers). The census-acceptance verifier asserts the SCOPE-DEFINING fields equal the expected scope (schemas CN005, expected_database CN004, required_role_markers CN008, repo_sha CN007, query_bundle_sha256 CN006), so a signed snapshot of one scope cannot be passed off as another. collector_version is checked ONLY for internal top-level/scope consistency (CN016), not pinned to an expected value — it is a provenance LABEL, not a trust anchor.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schemas", "expected_database", "required_role_markers", "repo_sha", "query_bundle_sha256", "collector_version"],
+      "properties": {
+        "schemas": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/nonempty_string" } },
+        "expected_database": { "$ref": "#/$defs/nonempty_string" },
+        "required_role_markers": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/nonempty_string" } },
+        "repo_sha": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+        "query_bundle_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "collector_version": { "$ref": "#/$defs/nonempty_string" }
+      }
+    },
+
+    "evidence_snapshot": {
+      "type": "object",
+      "required": ["kind", "project_ref", "observed_at", "repo_sha", "collector_version", "query_bundle_sha256", "relation_count", "catalog_relation_count", "collection_scope", "target_identity", "relations"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "const": "evidence_snapshot" },
+        "project_ref": { "$ref": "#/$defs/nonempty_string" },
+        "observed_at": { "$ref": "#/$defs/iso_datetime" },
+        "repo_sha": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+        "collector_version": { "$ref": "#/$defs/nonempty_string" },
+        "query_bundle_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "relation_count": { "type": "integer", "minimum": 0 },
+        "catalog_relation_count": { "$comment": "independent DB-sourced count; the census-acceptance gate requires it == relation_count == len(relations).", "type": "integer", "minimum": 0 },
+        "generator": { "type": "string" },
+        "collection_scope": { "$ref": "#/$defs/collection_scope" },
+        "target_identity": { "$ref": "#/$defs/target_identity" },
+        "relations": { "type": "array", "items": { "$ref": "#/$defs/relation_observation" }, "uniqueItems": true }
+      }
+    },
+
+    "compat_exit_condition": {
+      "type": "object", "required": ["metric", "source", "operator", "threshold", "window_hours", "minimum_samples"], "additionalProperties": false,
+      "properties": { "metric": { "$ref": "#/$defs/nonempty_string" }, "source": { "$ref": "#/$defs/nonempty_string" }, "operator": { "enum": ["<", "<=", "==", ">=", ">"] }, "threshold": { "type": "number" }, "window_hours": { "type": "number", "exclusiveMinimum": 0 }, "minimum_samples": { "type": "integer", "minimum": 1 } }
+    },
+    "compatibility_contract": {
+      "type": "object", "required": ["required"], "additionalProperties": false,
+      "properties": { "required": { "type": "boolean" }, "mechanism": { "type": ["string", "null"] }, "exit_condition": { "oneOf": [{ "$ref": "#/$defs/compat_exit_condition" }, { "type": "null" }] }, "telemetry_ref": { "type": ["string", "null"] } },
+      "allOf": [
+        { "if": { "required": ["required"], "properties": { "required": { "const": true } } }, "then": { "required": ["mechanism", "exit_condition", "telemetry_ref"], "properties": { "mechanism": { "$ref": "#/$defs/nonempty_string" }, "exit_condition": { "$ref": "#/$defs/compat_exit_condition" }, "telemetry_ref": { "$ref": "#/$defs/nonempty_string" } } } }
+      ]
+    },
+    "transform_complete": {
+      "type": "object", "required": ["source_def", "target_def", "transform_logic", "validation_report", "rollback_story"], "additionalProperties": false,
+      "properties": { "source_def": { "$ref": "#/$defs/nonempty_string" }, "target_def": { "$ref": "#/$defs/nonempty_string" }, "transform_logic": { "$ref": "#/$defs/nonempty_string" }, "validation_report": { "$ref": "#/$defs/nonempty_string" }, "rollback_story": { "$ref": "#/$defs/nonempty_string" } }
+    },
+    "transform": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "source_def": { "type": ["string", "null"] }, "target_def": { "type": ["string", "null"] }, "transform_logic": { "type": ["string", "null"] }, "validation_report": { "type": ["string", "null"] }, "rollback_story": { "type": ["string", "null"] } }
+    },
+    "recovery_artifact": {
+      "$comment": "Structured backup evidence for a destructive delete. The offline gate binds STRUCTURE, not recoverability: the checker verifies artifact_path resolves within an approved root and its bytes hash to the (decision-declared) sha256, that captured_at predates the census, and that restore_validation_ref is a DISTINCT, non-empty, in-root artifact. It CANNOT prove the backup actually restores — genuine restore-success is an operator/apply-time attestation. The sha256 binds the artifact to the decision (author-declared), not to an independent source of truth.",
+      "type": "object", "additionalProperties": false,
+      "required": ["artifact_path", "sha256", "captured_at", "restore_validation_ref"],
+      "properties": {
+        "artifact_path": { "$ref": "#/$defs/nonempty_string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "captured_at": { "$ref": "#/$defs/iso_datetime" },
+        "restore_validation_ref": { "$ref": "#/$defs/nonempty_string" }
+      }
+    },
+    "retention_disposition": {
+      "type": "object", "required": ["policy"], "additionalProperties": false,
+      "properties": { "policy": { "enum": ["retain", "delete_after", "unresolved"] }, "recovery_proof": { "oneOf": [{ "type": "null" }, { "type": "string" }, { "$ref": "#/$defs/recovery_artifact" }] }, "detail": { "type": ["string", "null"] } }
+    },
+
+    "decision_row": {
+      "$comment": "Identity: decision_id + source_objects (must resolve to census) + target_objects[] (many-to-many; may not yet exist). No machine facts here.",
+      "type": "object",
+      "required": ["decision_id", "source_objects", "meaning_disposition", "action_class", "decision_status"],
+      "additionalProperties": false,
+      "properties": {
+        "decision_id": { "$ref": "#/$defs/decision_id" },
+        "source_objects": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/object_id" } },
+        "target_objects": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/object_id" } },
+        "meaning_disposition": { "$ref": "#/$defs/meaning_disposition" },
+        "action_class": { "$ref": "#/$defs/action_class" },
+        "target_entity": { "type": ["string", "null"] },
+        "target_schema": { "type": ["string", "null"] },
+        "authority_owner": { "type": ["string", "null"] },
+        "consumer_disposition": { "oneOf": [{ "$ref": "#/$defs/consumer_conclusion" }, { "type": "null" }] },
+        "compatibility_contract": { "oneOf": [{ "$ref": "#/$defs/compatibility_contract" }, { "type": "null" }] },
+        "exposure_policy": { "enum": ["none", "anon", "authenticated", "service_only", "api_facade", null] },
+        "retention_disposition": { "oneOf": [{ "$ref": "#/$defs/retention_disposition" }, { "type": "null" }] },
+        "transform": { "oneOf": [{ "$ref": "#/$defs/transform" }, { "type": "null" }] },
+        "decision_status": { "$ref": "#/$defs/decision_status" },
+        "technical_authority_approval": { "type": ["string", "null"] },
+        "evidence_refs": { "type": "array", "items": { "type": "string" } },
+        "notes": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "$comment": "target_objects forbidden for harden/retain/delete (relocation-free actions, finding #2).",
+          "if": { "required": ["action_class"], "properties": { "action_class": { "enum": ["harden", "retain", "delete"] } } },
+          "then": { "properties": { "target_objects": { "maxItems": 0 } } }
+        },
+        {
+          "$comment": "TA approval non-empty for every accepted prod-write action.",
+          "if": { "required": ["decision_status", "action_class"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "enum": ["harden", "promote", "compat", "archive", "delete"] } } },
+          "then": { "required": ["technical_authority_approval"], "properties": { "technical_authority_approval": { "$ref": "#/$defs/nonempty_string" } } }
+        },
+        {
+          "$comment": "accepted promote.",
+          "if": { "required": ["decision_status", "action_class"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "const": "promote" } } },
+          "then": {
+            "required": ["target_objects", "target_entity", "target_schema", "transform", "consumer_disposition", "compatibility_contract", "exposure_policy"],
+            "properties": { "target_objects": { "minItems": 1 }, "target_entity": { "$ref": "#/$defs/nonempty_string" }, "target_schema": { "$ref": "#/$defs/nonempty_string" }, "meaning_disposition": { "not": { "const": "unresolved" } }, "consumer_disposition": { "enum": ["no_consumer", "has_consumers"] }, "exposure_policy": { "enum": ["none", "anon", "authenticated", "service_only", "api_facade"] }, "transform": { "$ref": "#/$defs/transform_complete" } }
+          }
+        },
+        {
+          "$comment": "accepted promote with live consumers (has_consumers) needs a REAL compatibility contract (Codex R2: has_consumers + compatibility_contract:null false-greened a promotion with no shim). type:object + required=true.",
+          "if": { "required": ["decision_status", "action_class", "consumer_disposition"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "const": "promote" }, "consumer_disposition": { "const": "has_consumers" } } },
+          "then": { "required": ["compatibility_contract"], "properties": { "compatibility_contract": { "type": "object", "required": ["required"], "properties": { "required": { "const": true } } } } }
+        },
+        {
+          "$comment": "accepted compat: relocation target (target_schema REQUIRED — finding #4) + required=true contract. type:object closes the null-vacuity bypass (finding #1). consumer_disposition MUST be has_consumers (correction tranche): a compat facade exists ONLY to keep live consumers working, so an accepted compat asserts consumers exist; the checker then enforces OBSERVED consumer evidence (SP022/SP013) independent of the manifest. No consumer ⇒ the decision stays proposed (no unnecessary public facade).",
+          "if": { "required": ["decision_status", "action_class"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "const": "compat" } } },
+          "then": { "required": ["target_objects", "target_schema", "compatibility_contract", "consumer_disposition"], "properties": { "target_objects": { "minItems": 1 }, "target_schema": { "$ref": "#/$defs/nonempty_string" }, "consumer_disposition": { "const": "has_consumers" }, "compatibility_contract": { "type": "object", "required": ["required"], "properties": { "required": { "const": true } } } } }
+        },
+        {
+          "$comment": "accepted archive: relocate; no live consumers in v1 (finding #5).",
+          "if": { "required": ["decision_status", "action_class"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "const": "archive" } } },
+          "then": { "required": ["target_objects", "target_schema", "consumer_disposition"], "properties": { "target_objects": { "minItems": 1 }, "target_schema": { "$ref": "#/$defs/nonempty_string" }, "meaning_disposition": { "not": { "const": "unresolved" } }, "consumer_disposition": { "const": "no_consumer" } } }
+        },
+        {
+          "$comment": "accepted harden: consumer conclusion + evidence refs required (finding #7).",
+          "if": { "required": ["decision_status", "action_class"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "const": "harden" } } },
+          "then": { "required": ["exposure_policy", "consumer_disposition", "evidence_refs"], "properties": { "exposure_policy": { "type": "string" }, "consumer_disposition": { "enum": ["no_consumer", "has_consumers"] }, "evidence_refs": { "minItems": 1 } } }
+        },
+        {
+          "$comment": "accepted retain: preserve + retain policy. type:object closes the null-vacuity bypass (finding #1).",
+          "if": { "required": ["decision_status", "action_class"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "const": "retain" } } },
+          "then": { "required": ["retention_disposition"], "properties": { "meaning_disposition": { "const": "preserve" }, "retention_disposition": { "type": "object", "required": ["policy"], "properties": { "policy": { "const": "retain" } } } } }
+        },
+        {
+          "$comment": "accepted delete: fully constrained destructive state. type:object closes the null-vacuity bypass (finding #1); recovery_proof MUST be a STRUCTURED recovery_artifact (correction tranche) whose sha256/paths the checker resolves and verifies (SP014); the checker also enforces the destructive-evidence floor (SP027).",
+          "if": { "required": ["decision_status", "action_class"], "properties": { "decision_status": { "const": "accepted" }, "action_class": { "const": "delete" } } },
+          "then": { "required": ["consumer_disposition", "retention_disposition"], "properties": { "meaning_disposition": { "const": "retire" }, "consumer_disposition": { "const": "no_consumer" }, "retention_disposition": { "type": "object", "required": ["policy", "recovery_proof"], "properties": { "policy": { "const": "delete_after" }, "recovery_proof": { "$ref": "#/$defs/recovery_artifact" } } } } }
+        }
+      ]
+    },
+    "decisions_file": {
+      "type": "object", "required": ["kind", "rows"], "additionalProperties": false,
+      "properties": { "kind": { "const": "decisions_file" }, "version": { "type": "string" }, "rows": { "type": "array", "items": { "$ref": "#/$defs/decision_row" } } }
+    },
+
+    "cluster_manifest": {
+      "$comment": "Cluster membership is by decision_id (finding #1); the checker derives the union of affected source/target objects.",
+      "type": "object",
+      "required": ["kind", "cluster_id", "status", "action_class", "decision_ids", "evidence_snapshot", "max_staleness_hours", "required_observations"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "const": "cluster_manifest" },
+        "cluster_id": { "$ref": "#/$defs/nonempty_string" },
+        "title": { "type": "string" },
+        "status": { "enum": ["proposed", "accepted", "applied", "verified"] },
+        "action_class": { "$ref": "#/$defs/action_class" },
+        "decision_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/decision_id" } },
+        "evidence_snapshot": { "$ref": "#/$defs/nonempty_string" },
+        "max_staleness_hours": { "type": "number", "minimum": 0 },
+        "minimum_consumer_window_hours": { "type": "number", "minimum": 0 },
+        "required_observations": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/observation_field" } },
+        "technical_authority_approval": { "type": ["string", "null"] },
+        "notes": { "type": "string" }
+      },
+      "allOf": [
+        { "if": { "required": ["status"], "properties": { "status": { "enum": ["accepted", "applied", "verified"] } } }, "then": { "required": ["technical_authority_approval"], "properties": { "technical_authority_approval": { "$ref": "#/$defs/nonempty_string" } } } }
+      ]
+    },
+
+    "physical_schema": {
+      "type": "object", "required": ["name", "status"], "additionalProperties": false,
+      "properties": { "name": { "$ref": "#/$defs/nonempty_string" }, "status": { "enum": ["proposed", "accepted"] }, "approval_ref": { "type": ["string", "null"] } },
+      "allOf": [{ "if": { "required": ["status"], "properties": { "status": { "const": "accepted" } } }, "then": { "required": ["approval_ref"], "properties": { "approval_ref": { "$ref": "#/$defs/nonempty_string" } } } }]
+    },
+    "entity_entry": {
+      "type": "object", "required": ["entity_id", "database_layer", "logical_domain", "physical_schema", "decision_status"], "additionalProperties": false,
+      "properties": { "entity_id": { "$ref": "#/$defs/nonempty_string" }, "database_layer": { "$ref": "#/$defs/database_layer" }, "logical_domain": { "$ref": "#/$defs/logical_domain" }, "physical_schema": { "$ref": "#/$defs/nonempty_string" }, "decision_status": { "$ref": "#/$defs/decision_status" }, "source_refs": { "type": "array", "items": { "type": "string" } } }
+    },
+    "entity_map": {
+      "type": "object", "required": ["kind", "approval", "physical_schemas", "entities"], "additionalProperties": false,
+      "properties": { "kind": { "const": "entity_map" }, "approval": { "$ref": "#/$defs/decision_status" }, "approval_ref": { "type": ["string", "null"] }, "physical_schemas": { "type": "array", "items": { "$ref": "#/$defs/physical_schema" } }, "entities": { "type": "array", "items": { "$ref": "#/$defs/entity_entry" } } },
+      "allOf": [{ "if": { "required": ["approval"], "properties": { "approval": { "const": "accepted" } } }, "then": { "required": ["approval_ref"], "properties": { "approval_ref": { "$ref": "#/$defs/nonempty_string" } } } }]
+    }
+  },
+
+  "oneOf": [
+    { "$ref": "#/$defs/evidence_snapshot" },
+    { "$ref": "#/$defs/decisions_file" },
+    { "$ref": "#/$defs/cluster_manifest" },
+    { "$ref": "#/$defs/entity_map" }
+  ]
+}

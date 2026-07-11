@@ -1,0 +1,36 @@
+The new gate has multiple false-green paths for production-bound schema decisions, including promoted live consumers without a real compatibility contract and explicitly required consumer evidence being skipped. The bundled SQL validation evidence is also stale relative to the current query bundle.
+
+Full review comments:
+
+- [P1] Require a real contract for promoted live consumers — /home/olares/code/apex/_codex-disp2/infra/database/schema-placement/disposition.schema.json:224-225
+  When an accepted `promote` decision has `consumer_disposition: "has_consumers"`, `compatibility_contract: null` still passes because this branch only requires the property name while the base property allows null. That lets the preapply gate approve a promotion with observed live consumers but no compatibility mechanism, exit condition, or telemetry contract.
+
+- [P2] Enforce required consumer-evidence observations — /home/olares/code/apex/_codex-disp2/infra/database/schema-placement/check_disposition.py:238-238
+  If a manifest lists `consumer_evidence` in `required_observations`, this filter drops it before SP010, so an accepted compat cluster can go green even when `database_deps` or `operator_declaration` are still `not_observed` because compat rows do not require a resolved `consumer_disposition`. The manifest's explicit required observation should not be silently ignored.
+
+- [P2] Constrain compat destinations to the public surface — /home/olares/code/apex/_codex-disp2/infra/database/schema-placement/check_disposition.py:273-273
+  This exempts every compat decision from accepted-schema resolution, not just the documented public compat surface. An accepted compat row with `target_schema: "evil"` and `target_objects: ["evil.some_view"]` currently passes SP012/SP025, so the gate can approve creating compatibility objects in an unapproved schema.
+
+- [P2] Reject non-finite manifest thresholds — /home/olares/code/apex/_codex-disp2/infra/database/schema-placement/check_disposition.py:201-204
+  JSON/YAML inputs can load `NaN` or `Infinity` for `max_staleness_hours` and `minimum_consumer_window_hours`, and these comparisons do not check finiteness; `max_staleness_hours: .nan` or `.inf` prevents stale snapshots from raising SP008, while `.nan` on the consumer window bypasses the minimum-window check. The checker should reject non-finite values before using them in gate comparisons.
+
+- [P2] Refresh the pinned query-bundle hash — /home/olares/code/apex/_codex-disp2/infra/database/schema-placement/evidence/dev-sql-validation-2026-07-11.md:11-11
+  The evidence claims this hash pins the committed query bundle, but the current `collect_disposition.query_bundle_sha256()` evaluates to `ea839cd7ea06e0512912cb32e60f0edad5e94364fb77a0248352c2ab2ff5b1c7`, not the `aa7f...` value recorded here. That means the validation transcript no longer proves the exact SQL now in the patch, which matters before using it as prod-census evidence.
+The new gate has multiple false-green paths for production-bound schema decisions, including promoted live consumers without a real compatibility contract and explicitly required consumer evidence being skipped. The bundled SQL validation evidence is also stale relative to the current query bundle.
+
+Full review comments:
+
+- [P1] Require a real contract for promoted live consumers — /home/olares/code/apex/_codex-disp2/infra/database/schema-placement/disposition.schema.json:224-225
+  When an accepted `promote` decision has `consumer_disposition: "has_consumers"`, `compatibility_contract: null` still passes because this branch only requires the property name while the base property allows null. That lets the preapply gate approve a promotion with observed live consumers but no compatibility mechanism, exit condition, or telemetry contract.
+
+- [P2] Enforce required consumer-evidence observations — /home/olares/code/apex/_codex-disp2/infra/database/schema-placement/check_disposition.py:238-238
+  If a manifest lists `consumer_evidence` in `required_observations`, this filter drops it before SP010, so an accepted compat cluster can go green even when `database_deps` or `operator_declaration` are still `not_observed` because compat rows do not require a resolved `consumer_disposition`. The manifest's explicit required observation should not be silently ignored.
+
+- [P2] Constrain compat destinations to the public surface — /home/olares/code/apex/_codex-disp2/infra/database/schema-placement/check_disposition.py:273-273
+  This exempts every compat decision from accepted-schema resolution, not just the documented public compat surface. An accepted compat row with `target_schema: "evil"` and `target_objects: ["evil.some_view"]` currently passes SP012/SP025, so the gate can approve creating compatibility objects in an unapproved schema.
+
+- [P2] Reject non-finite manifest thresholds — /home/olares/code/apex/_codex-disp2/infra/database/schema-placement/check_disposition.py:201-204
+  JSON/YAML inputs can load `NaN` or `Infinity` for `max_staleness_hours` and `minimum_consumer_window_hours`, and these comparisons do not check finiteness; `max_staleness_hours: .nan` or `.inf` prevents stale snapshots from raising SP008, while `.nan` on the consumer window bypasses the minimum-window check. The checker should reject non-finite values before using them in gate comparisons.
+
+- [P2] Refresh the pinned query-bundle hash — /home/olares/code/apex/_codex-disp2/infra/database/schema-placement/evidence/dev-sql-validation-2026-07-11.md:11-11
+  The evidence claims this hash pins the committed query bundle, but the current `collect_disposition.query_bundle_sha256()` evaluates to `ea839cd7ea06e0512912cb32e60f0edad5e94364fb77a0248352c2ab2ff5b1c7`, not the `aa7f...` value recorded here. That means the validation transcript no longer proves the exact SQL now in the patch, which matters before using it as prod-census evidence.

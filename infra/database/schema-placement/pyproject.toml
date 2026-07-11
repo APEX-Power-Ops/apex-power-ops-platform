@@ -1,0 +1,15 @@
+[project]
+name = "apex-schema-placement-tools"
+version = "0.1.0"
+description = "Schema-placement disposition-ledger tooling: collector, checker, and contract tests. Deps locked via uv.lock for deterministic CI (finding #9)."
+requires-python = ">=3.11"
+dependencies = [
+    "jsonschema==4.23.0",
+    "PyYAML==6.0.2",
+    "psycopg[binary]==3.2.9",
+    "cryptography==49.0.0",
+    "rfc3339-validator==0.1.4",
+]
+
+[tool.uv]
+package = false
