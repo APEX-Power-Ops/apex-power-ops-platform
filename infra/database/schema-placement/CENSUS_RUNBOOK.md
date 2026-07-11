@@ -36,37 +36,45 @@ Prod project: `fxoyniqnrlkxfligbxmg` (Supabase, managed non-super `postgres`, PG
   driver errors surface the exception **type** only.
 - Redact any transcript before committing it (no DSN, no key, no `env` dumps).
 
-## 2. Inject secrets (value-silent) + set the timestamp
+## 2. Set the provenance + a unique OUT path OUTSIDE the repo
 
 ```sh
 set +x
-# from Infisical (adapt to your CLI); values never printed:
-export DISPOSITION_DSN="$(infisical secrets get SUPABASE_PROD_DSN --plain)"
-export DISPOSITION_SIGNING_KEY="$(infisical secrets get DISPOSITION_SIGNING_KEY --plain)"
-TS=$(date -u +%Y%m%dT%H%M%SZ)          # unique UTC stamp (no overwrite)
-OUT=infra/database/schema-placement/evidence/prod-$TS.json
+MAIN_SHA=$(git -C . rev-parse HEAD)          # MUST be the merged-main commit; worktree MUST be clean
+TS=$(date -u +%Y%m%dT%H%M%SZ)                # unique UTC stamp
+OUT="$HOME/census-evidence/prod-$TS.json"; mkdir -p "$HOME/census-evidence"
 ```
 
-## 3. Run the read-only census  →  unique `prod-<UTC>.json` + `.sig`
+Write the census OUTSIDE the repo: the collector refuses to census a DIRTY worktree, and provenance is
+only meaningful against a clean tree — so the evidence is produced out-of-tree and committed later via an
+evidence PR (step 5). Do NOT `export` any secret into this shell.
+
+## 3. Run the read-only census under the injection wrapper  →  `prod-<UTC>.json` + `.sig`
+
+Secrets stay in the CHILD process only. `infra/infisical/inject.sh prod` injects apex-platform/prod
+secrets (`SUPABASE_PROD_DSN`, `DISPOSITION_SIGNING_KEY`) into the census command; nothing lands in the
+operator shell. Run from the merged-main worktree (it holds `infra/infisical/.env.agent`).
 
 ```sh
-uv run --project infra/database/schema-placement --locked \
-  python infra/database/schema-placement/collect_disposition.py \
-    --dsn-env DISPOSITION_DSN \
-    --signing-key-env DISPOSITION_SIGNING_KEY \
-    --project-ref fxoyniqnrlkxfligbxmg \
-    --expect-database postgres \
-    --require-role-markers anon,authenticated,service_role \
-    --schemas public \
-    --out "$OUT"
+infra/infisical/inject.sh prod -- \
+  uv run --project infra/database/schema-placement --locked \
+    python infra/database/schema-placement/collect_disposition.py \
+      --dsn-env SUPABASE_PROD_DSN \
+      --signing-key-env DISPOSITION_SIGNING_KEY \
+      --project-ref fxoyniqnrlkxfligbxmg \
+      --expect-database postgres \
+      --expect-repo-sha "$MAIN_SHA" \
+      --require-role-markers anon,authenticated,service_role \
+      --schemas public \
+      --out "$OUT"
 ```
 
-The collector: binds the DSN to the project ref (refuses an unbound DSN / any `hostaddr`); opens a
-read-only session; asserts current_database / read-only / role markers **in-band** (raises before any
-snapshot); records `observed_at` from the DB clock and `repo_sha` from `git HEAD` (= `MAIN_SHA`); bakes
+The collector: refuses a DIRTY worktree and asserts `git HEAD == $MAIN_SHA` BEFORE connecting; binds the
+DSN to the project ref (refuses an unbound DSN / any `hostaddr`); opens a read-only session; asserts
+current_database / read-only / role markers **in-band** (raises before any snapshot); records
+`observed_at` from the DB clock and `repo_sha` from HEAD; runs an INDEPENDENT catalog count; bakes
 `collection_scope` (schemas / db / role markers / repo_sha / query-bundle hash) into the document; then
-**signs the exact snapshot bytes** and publishes `$OUT` + `$OUT.sig` no-clobber (unique path). It never
-overwrites.
+**signs the exact snapshot bytes** and publishes `$OUT` + `$OUT.sig` no-clobber. It never overwrites.
 
 ## 4. Census acceptance  (offline; the gate that makes the census authoritative)
 
@@ -75,7 +83,7 @@ uv run --project infra/database/schema-placement --locked \
   python infra/database/schema-placement/verify_census.py \
     --snapshot "$OUT" \
     --snapshot-sig "$OUT.sig" \
-    --verify-key infra/database/schema-placement/keys/prod-disposition-ed25519-2026-07.pub.pem \
+    --key-id prod-disposition-ed25519-2026-07 \
     --expect-project-ref fxoyniqnrlkxfligbxmg \
     --expect-database postgres \
     --expect-schemas public \
@@ -83,18 +91,23 @@ uv run --project infra/database/schema-placement --locked \
     --require-role-markers anon,authenticated,service_role
 ```
 
-Exit 0 = `=== CENSUS ACCEPTANCE: GREEN ===`. It verifies the detached signature against the pinned
-public key **before parsing**; asserts project ref / database / schema scope / query-bundle hash /
-merged repo SHA / role markers; validates structure + relation-count + object-id integrity; rejects any
-`query_failed` catalog group; confirms every relation is within the requested scope; and permits the
-expected zero-width windows + `not_observed` overlays. It requires **no** decisions / entity-map /
-manifest (a raw census legitimately has none — it must NOT be run through `check_disposition --mode
-preapply`).
+Exit 0 = `=== CENSUS ACCEPTANCE: GREEN ===`. `--key-id` resolves the REPO-PINNED public key + fingerprint
+from `keys/` (`--keys-dir` defaults there) and requires the public key's SPKI SHA-256 to equal the
+committed `.spki-sha256` — the trust anchor is repo-owned, not a caller-supplied path. It then verifies
+the detached signature **before parsing**; asserts project ref / database (incl. `target_identity`
+expected_database) / schema scope / query-bundle hash / merged repo SHA / role markers; validates
+structure + internal consistency + relation-count (emitted list == relation_count == INDEPENDENT catalog
+count) + object-id integrity; rejects an EMPTY census, DUPLICATE object_ids, and any `query_failed`
+catalog group; confirms every relation is within the requested scope; and permits the expected zero-width
+windows + `not_observed` overlays. It requires **no** decisions / entity-map / manifest (a raw census
+legitimately has none — it must NOT be run through `check_disposition --mode preapply`).
 
 ## 5. Commit the evidence (governed PR)
 
-Commit `prod-$TS.json`, `prod-$TS.json.sig`, and a **redacted** transcript through an evidence PR.
-`unset DISPOSITION_DSN DISPOSITION_SIGNING_KEY` when done.
+Copy `$OUT` + `$OUT.sig` from `$HOME/census-evidence/` into
+`infra/database/schema-placement/evidence/`, add a **redacted** transcript, and commit through a governed
+evidence PR (this is the first time the worktree gains untracked evidence — the census run itself kept it
+clean). No secret ever entered the operator shell, so there is nothing to `unset`.
 
 ---
 

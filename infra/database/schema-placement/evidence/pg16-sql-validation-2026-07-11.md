@@ -5,8 +5,10 @@ Validates the collector's committed dependents SQL on **PostgreSQL 16** (prod's 
 access. Server reported **PostgreSQL 16.13** (`server_version_num = 160013`). All statements ran to
 `EXIT=0`; the container was removed after the run.
 
-- **Current committed query bundle:** `query_bundle_sha256 = 065d49e08c0ba8458aed25fc24bdacbfd8c3c69e2759a348b797fc496f3aa568`
-  (pins the exact SQL now in the patch — supersedes the Round-1 `aa7f…` recorded in
+- **Current committed query bundle:** `query_bundle_sha256 = 217ff3add2abdaca2fafa108f68e10490ee687ac9899b7762f1411d45e2de9db`
+  (census-enablement Q3: added the `census_count` independent count query; re-validated on PG16.13 —
+  `select count(*) … where nspname = any(schemas) and relkind in (r,v,m,p,f)` returned a count, EXIT=0.
+  Supersedes the prior `065d49e0…` bundle, which itself superseded the Round-1 `aa7f…` in
   `dev-sql-validation-2026-07-11.md`).
 
 ## Objects built

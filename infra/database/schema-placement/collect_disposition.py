@@ -84,6 +84,11 @@ QUERY_BUNDLE = {
                      order by rolname) as platform_role_markers
     """,
     "roles": "select rolname from pg_roles where rolname in ('anon', 'authenticated')",
+    "census_count": """
+        select count(*)::bigint as n
+        from pg_class c join pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = any(%(schemas)s) and c.relkind in ('r', 'v', 'm', 'p', 'f')
+    """,
     "census": """
         select n.nspname as schema, c.relname as name, c.relkind::text as relkind,
                pg_get_userbyid(c.relowner) as owner,
@@ -327,7 +332,7 @@ def build_relation_observation(census_row, privs, deps, failed_groups, now):
 
 def build_snapshot(census_rows, privs_by_oid, deps_by_oid, failed_groups, *,
                    project_ref, repo_sha, now, target_identity, schemas, expected_database,
-                   required_role_markers, validate=True):
+                   required_role_markers, catalog_relation_count, validate=True):
     relations = []
     for row in census_rows:
         oid = f"{row['schema']}.{row['name']}"
@@ -346,7 +351,8 @@ def build_snapshot(census_rows, privs_by_oid, deps_by_oid, failed_groups, *,
     snapshot = {
         "kind": "evidence_snapshot", "project_ref": project_ref, "observed_at": now, "repo_sha": repo_sha,
         "collector_version": COLLECTOR_VERSION, "query_bundle_sha256": query_bundle_sha256(),
-        "relation_count": len(relations), "generator": f"collect_disposition/{COLLECTOR_VERSION}",
+        "relation_count": len(relations), "catalog_relation_count": int(catalog_relation_count),
+        "generator": f"collect_disposition/{COLLECTOR_VERSION}",
         "collection_scope": collection_scope, "target_identity": target_identity, "relations": relations,
     }
     if validate:
@@ -439,6 +445,12 @@ def _collect(cur, schemas, *, db_error, project_ref, repo_sha, expect_database, 
     census_rows = [dict(zip(c_cols, r)) for r in cur.fetchall()]
     censused_oids = [f"{r['schema']}.{r['name']}" for r in census_rows]
 
+    # 3b. Independent catalog count (MANDATORY): a DB-sourced count that the census-acceptance gate
+    #     cross-checks against the emitted relation list, so a collector that silently drops rows
+    #     between the query and the emit cannot pass acceptance (operator finding).
+    cur.execute(QUERY_BUNDLE["census_count"], {"schemas": schemas})
+    catalog_relation_count = int(cur.fetchone()[0])
+
     # 4. Privileges (optional). Manufacture observed-empty ONLY for roles proven to exist (F4).
     priv_rows = _execute_group(cur, "privileges", QUERY_BUNDLE["privileges"], {"schemas": schemas}, db_error, failed)
     privs_by_oid = {}
@@ -470,7 +482,8 @@ def _collect(cur, schemas, *, db_error, project_ref, repo_sha, expect_database, 
     return build_snapshot(census_rows, privs_by_oid, deps_by_oid, failed,
                           project_ref=project_ref, repo_sha=repo_sha, now=observed_at,
                           target_identity=target_identity, schemas=schemas,
-                          expected_database=expect_database, required_role_markers=required_role_markers)
+                          expected_database=expect_database, required_role_markers=required_role_markers,
+                          catalog_relation_count=catalog_relation_count)
 
 
 def _dsn_contains_project_ref(dsn, project_ref):
@@ -581,11 +594,25 @@ def _git_head_sha(repo_dir):
         return None
 
 
+def _git_worktree_clean(repo_dir):
+    """True only if the git worktree has NO tracked-modified AND NO untracked changes. Fail-closed:
+    any error => treated as dirty. A census's repo_sha only identifies the merged commit if the tree
+    is clean — a dirty tree could census modified tooling yet stamp the clean commit (operator finding)."""
+    import subprocess  # noqa: PLC0415
+    try:
+        out = subprocess.run(["git", "-C", repo_dir, "status", "--porcelain"],
+                             capture_output=True, text=True, check=True, timeout=10)
+        return out.stdout.strip() == ""
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Read-only, target-bound census collector for the disposition ledger.")
     ap.add_argument("--dsn-env", default="DISPOSITION_DSN", help="env var holding the DSN (value-silent; never argv).")
     ap.add_argument("--project-ref", required=True)
-    ap.add_argument("--repo-sha", default=None, help="override; default derives from git HEAD of the collector's repo.")
+    ap.add_argument("--repo-sha", default=None, help="explicit override (tests only); bypasses the git HEAD + clean-worktree provenance check.")
+    ap.add_argument("--expect-repo-sha", default=None, dest="expect_repo_sha", help="the MERGED main commit the census must run from; git HEAD must equal it and the worktree must be clean.")
     ap.add_argument("--schemas", default="public", help="comma-separated schema list.")
     ap.add_argument("--expect-database", required=True, help="fail closed unless current_database() matches (e.g. postgres).")
     ap.add_argument("--require-role-markers", default="anon,authenticated,service_role",
@@ -609,10 +636,22 @@ def main(argv=None):
         if os.path.exists(p):
             print(f"SP000 collector: refusing to overwrite existing {p} (a signed census writes a unique path)", file=sys.stderr)
             return 2
-    repo_sha = args.repo_sha or _git_head_sha(os.path.dirname(os.path.abspath(__file__)))
-    if not repo_sha:
-        print("SP000 collector: could not derive repo SHA from git HEAD (pass --repo-sha)", file=sys.stderr)
-        return 2
+    # Provenance (operator finding): a census's repo_sha must identify a CLEAN, expected merged commit,
+    # verified BEFORE any secret injection or DB access. --repo-sha is a test-only bypass.
+    if args.repo_sha:
+        repo_sha = args.repo_sha
+    else:
+        repo_dir = os.path.dirname(os.path.abspath(__file__))
+        repo_sha = _git_head_sha(repo_dir)
+        if not repo_sha:
+            print("SP000 collector: could not derive repo SHA from git HEAD (pass --repo-sha)", file=sys.stderr)
+            return 2
+        if not _git_worktree_clean(repo_dir):
+            print("SP000 collector: refusing to census from a DIRTY worktree (tracked or untracked changes) — run from a clean merged-main checkout so repo_sha identifies exactly that commit", file=sys.stderr)
+            return 2
+        if args.expect_repo_sha and repo_sha != args.expect_repo_sha:
+            print(f"SP000 collector: git HEAD {repo_sha[:12]} != --expect-repo-sha {args.expect_repo_sha[:12]} (not the expected merged commit)", file=sys.stderr)
+            return 2
     schemas = [s.strip() for s in args.schemas.split(",") if s.strip()]
     if not schemas:
         print("SP000 collector: --schemas is empty (refusing to produce an empty census)", file=sys.stderr)

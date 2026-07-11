@@ -64,7 +64,8 @@ def _snap(failed=frozenset(), rows=None, now=NOW, ti=None):
     rows = rows if rows is not None else [dict(zip(CENSUS_COLS, VIEW)), dict(zip(CENSUS_COLS, TABLE))]
     return cd.build_snapshot(rows, PRIVS, DEPS, set(failed), project_ref=PROJECT, repo_sha=SHA,
                              now=now, target_identity=ti or TI_DICT, schemas=["public"],
-                             expected_database="postgres", required_role_markers=("anon", "authenticated", "service_role"))
+                             expected_database="postgres", required_role_markers=("anon", "authenticated", "service_role"),
+                             catalog_relation_count=len(rows))
 
 
 def _rel(snap, oid):
@@ -81,7 +82,8 @@ def _snap_with_deps(deps_list):
     return cd.build_snapshot(rows, {"public.projects": {"anon": [], "authenticated": []}},
                              {"public.projects": deps_list}, set(),
                              project_ref=PROJECT, repo_sha=SHA, now=NOW, target_identity=TI_DICT,
-                             schemas=["public"], expected_database="postgres", required_role_markers=("anon", "authenticated", "service_role"))
+                             schemas=["public"], expected_database="postgres", required_role_markers=("anon", "authenticated", "service_role"),
+                             catalog_relation_count=len(rows))
 
 
 # ==== pure state-mapping core ================================================
@@ -355,6 +357,46 @@ def test_main_empty_schemas_fails_closed():
         os.environ.pop("DISPOSITION_DSN", None)
 
 
+def _prep_provenance_env(head, clean):
+    _priv, priv_pem, _pub = _ephemeral_keypair()
+    os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
+    os.environ["DISPOSITION_SIGNING_KEY"] = priv_pem.decode("utf-8")
+    saved = (cd._git_head_sha, cd._git_worktree_clean, cd.collect_from_db)
+    cd._git_head_sha = lambda *a: head
+    cd._git_worktree_clean = lambda *a: clean
+    called = {"v": False}
+    cd.collect_from_db = lambda *a, **k: (called.__setitem__("v", True), dict(_MINI_SNAP))[1]
+    return saved, called
+
+
+def _restore_provenance_env(saved):
+    cd._git_head_sha, cd._git_worktree_clean, cd.collect_from_db = saved
+    os.environ.pop("DISPOSITION_DSN", None)
+    os.environ.pop("DISPOSITION_SIGNING_KEY", None)
+
+
+def test_main_dirty_worktree_fails_closed():
+    # Q2: a census from a DIRTY worktree fails closed BEFORE any DB work
+    saved, called = _prep_provenance_env("abc1234", clean=False)
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--out", os.path.join(d, "o.json")])
+        assert rc == 2 and called["v"] is False
+    finally:
+        _restore_provenance_env(saved)
+
+
+def test_main_wrong_head_fails_closed():
+    # Q2: git HEAD must equal --expect-repo-sha (on a clean tree)
+    saved, called = _prep_provenance_env("aaaaaaa", clean=True)
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            rc = cd.main(["--project-ref", PROJECT, "--expect-database", "postgres", "--expect-repo-sha", "bbbbbbb", "--out", os.path.join(d, "o.json")])
+        assert rc == 2 and called["v"] is False
+    finally:
+        _restore_provenance_env(saved)
+
+
 def test_workflow_dims_not_observed():
     r = _rel(_snap(), "public.projects")
     assert r["advisor_findings"]["state"] == "not_observed"
@@ -465,6 +507,7 @@ def _script(**over):
         "target_identity": {"rows": TI_ROWS, "cols": TI_SCRIPT_COLS},
         "roles": {"rows": [("anon",), ("authenticated",)], "cols": ["rolname"]},
         "census": {"rows": [VIEW, TABLE], "cols": CENSUS_COLS},
+        "census_count": {"rows": [(2,)], "cols": ["n"]},
         "privileges": {"rows": [
             ("public.projects", "anon", "SELECT", False),
             ("public.projects", "authenticated", "SELECT", True),
@@ -539,6 +582,7 @@ def test_fake_absent_role_not_observed():
     script = _script(
         roles={"rows": [("authenticated",)], "cols": ["rolname"]},
         census={"rows": [TABLE], "cols": CENSUS_COLS},
+        census_count={"rows": [(1,)], "cols": ["n"]},
         privileges={"rows": [("public.projects", "authenticated", "SELECT", True)], "cols": ["object_id", "grantee", "verb", "has_priv"]},
     )
     proj = _rel(_run_fake(script), "public.projects")
@@ -614,6 +658,8 @@ ALL = [
     ("main_signs_and_publishes", test_main_signs_and_publishes),
     ("main_missing_signing_key_fails_closed", test_main_missing_signing_key_fails_closed),
     ("main_invalid_signing_key_fails_closed", test_main_invalid_signing_key_fails_closed),
+    ("main_dirty_worktree_fails_closed", test_main_dirty_worktree_fails_closed),
+    ("main_wrong_head_fails_closed", test_main_wrong_head_fails_closed),
     ("main_empty_schemas_fails_closed", test_main_empty_schemas_fails_closed),
     ("workflow_dims_not_observed", test_workflow_dims_not_observed),
     ("sha256_deterministic_and_hex", test_sha256_deterministic_and_hex),

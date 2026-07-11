@@ -92,7 +92,7 @@ def _collection_scope():
 
 def _valid_snapshot(relations=None):
     rels = relations if relations is not None else [_relation()]
-    return {"kind": "evidence_snapshot", "project_ref": "fxoyniqnrlkxfligbxmg", "observed_at": "2026-07-10T20:00:00Z", "repo_sha": "8a4c37fc", "collector_version": "0.1.0", "query_bundle_sha256": SHA64, "relation_count": len(rels), "collection_scope": _collection_scope(), "target_identity": _target_identity(), "relations": rels}
+    return {"kind": "evidence_snapshot", "project_ref": "fxoyniqnrlkxfligbxmg", "observed_at": "2026-07-10T20:00:00Z", "repo_sha": "8a4c37fc", "collector_version": "0.1.0", "query_bundle_sha256": SHA64, "relation_count": len(rels), "catalog_relation_count": len(rels), "collection_scope": _collection_scope(), "target_identity": _target_identity(), "relations": rels}
 
 
 def _exit():

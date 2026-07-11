@@ -58,7 +58,7 @@ def _snap(relations=None, repo_sha=SHA, schemas=("public",)):
     rels = relations if relations is not None else [_rel()]
     return {"kind": "evidence_snapshot", "project_ref": PROJECT, "observed_at": "2026-07-11T00:00:00Z",
             "repo_sha": repo_sha, "collector_version": "0.1.0", "query_bundle_sha256": QB,
-            "relation_count": len(rels),
+            "relation_count": len(rels), "catalog_relation_count": len(rels),
             "collection_scope": {"schemas": sorted(schemas), "expected_database": "postgres",
                                  "required_role_markers": list(MARKERS), "repo_sha": repo_sha,
                                  "query_bundle_sha256": QB, "collector_version": "0.1.0"},
@@ -128,8 +128,37 @@ def test_relation_count_CN009():
     assert "CN009" in _codes(s)
 
 
+def test_empty_census_CN014():
+    s = _snap(relations=[]); s["relation_count"] = 0
+    assert "CN014" in _codes(s)
+
+
+def test_duplicate_object_id_CN015():
+    r1 = _rel(name="v_dup")
+    r2 = _rel(name="v_dup"); r2["owner"] = {"state": "observed", "value": "other"}  # same identity, differing record
+    assert "CN015" in _codes(_snap(relations=[r1, r2]))
+
+
+def test_ti_expected_database_CN004():
+    s = _snap(); s["target_identity"]["expected_database"] = "dev_db"
+    assert "CN004" in _codes(s)
+
+
+def test_internal_inconsistency_CN016():
+    s = _snap(); s["collector_version"] = "9.9.9"  # top-level disagrees with collection_scope
+    assert "CN016" in _codes(s)
+
+
+def test_count_mismatch_CN009():
+    s = _snap(); s["catalog_relation_count"] = 99  # independent DB count disagrees with the emitted list
+    assert "CN009" in _codes(s)
+
+
 # ---- main() with real signatures ===========================================
-def _write_signed(snapshot, d, priv, pub_pem):
+KEY_ID = "test-ed25519"
+
+
+def _write_signed(snapshot, d, priv, pub_pem, fingerprint=None):
     snap_bytes = json.dumps(snapshot, indent=2, sort_keys=True).encode("utf-8")
     snap_path = os.path.join(d, "prod.json")
     with open(snap_path, "wb") as fh:
@@ -137,14 +166,18 @@ def _write_signed(snapshot, d, priv, pub_pem):
     sig_path = snap_path + ".sig"
     with open(sig_path, "w", encoding="utf-8") as fh:
         json.dump(ds.build_sig_sidecar(snap_bytes, priv), fh)
-    pub_path = os.path.join(d, "verify.pub")
-    with open(pub_path, "wb") as fh:
+    keys_dir = os.path.join(d, "keys")
+    os.makedirs(keys_dir, exist_ok=True)
+    with open(os.path.join(keys_dir, KEY_ID + ".pub.pem"), "wb") as fh:
         fh.write(pub_pem)
-    return snap_path, sig_path, pub_path
+    fp = fingerprint if fingerprint is not None else ds.public_key_fingerprint(ds.load_public_key_pem(pub_pem))
+    with open(os.path.join(keys_dir, KEY_ID + ".spki-sha256"), "w", encoding="utf-8") as fh:
+        fh.write(fp + "\n")
+    return snap_path, sig_path, keys_dir
 
 
-def _argv(snap_path, sig_path, pub_path):
-    return ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--verify-key", pub_path,
+def _argv(snap_path, sig_path, keys_dir, key_id=KEY_ID):
+    return ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--key-id", key_id, "--keys-dir", keys_dir,
             "--expect-project-ref", PROJECT, "--expect-database", "postgres", "--expect-schemas", "public",
             "--expect-repo-sha", SHA, "--require-role-markers", ",".join(MARKERS)]
 
@@ -152,25 +185,40 @@ def _argv(snap_path, sig_path, pub_path):
 def test_main_green_e2e():
     priv, _pp, pub_pem = _ephemeral_keypair()
     with tempfile.TemporaryDirectory() as d:
-        sp, sig, pub = _write_signed(_snap(), d, priv, pub_pem)
-        assert vc.main(_argv(sp, sig, pub)) == 0
+        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
+        assert vc.main(_argv(sp, sig, kd)) == 0
 
 
 def test_main_tampered_snapshot_CN001():
     priv, _pp, pub_pem = _ephemeral_keypair()
     with tempfile.TemporaryDirectory() as d:
-        sp, sig, pub = _write_signed(_snap(), d, priv, pub_pem)
+        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
         with open(sp, "ab") as fh:
             fh.write(b" ")  # tamper after signing
-        assert vc.main(_argv(sp, sig, pub)) == 1
+        assert vc.main(_argv(sp, sig, kd)) == 1
 
 
 def test_main_wrong_key_CN001():
     priv, _pp, _pub = _ephemeral_keypair()
-    _priv2, _pp2, other_pub = _ephemeral_keypair()  # verify against a DIFFERENT key
+    _priv2, _pp2, other_pub = _ephemeral_keypair()  # pinned key is a DIFFERENT (fingerprint-consistent) key
     with tempfile.TemporaryDirectory() as d:
-        sp, sig, pub = _write_signed(_snap(), d, priv, other_pub)
-        assert vc.main(_argv(sp, sig, pub)) == 1
+        sp, sig, kd = _write_signed(_snap(), d, priv, other_pub)  # signed by priv, pinned key = other
+        assert vc.main(_argv(sp, sig, kd)) == 1
+
+
+def test_main_fingerprint_mismatch_CN013():
+    # Q1: the committed fingerprint must match the pinned public key — a forged fingerprint fails closed
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    with tempfile.TemporaryDirectory() as d:
+        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem, fingerprint="00" * 32)
+        assert vc.main(_argv(sp, sig, kd)) == 1
+
+
+def test_main_unknown_key_id_CN013():
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    with tempfile.TemporaryDirectory() as d:
+        sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
+        assert vc.main(_argv(sp, sig, kd, key_id="does-not-exist")) == 1
 
 
 ALL = [
@@ -185,9 +233,16 @@ ALL = [
     ("database_mismatch_CN004", test_database_mismatch_CN004),
     ("role_markers_CN008", test_role_markers_CN008),
     ("relation_count_CN009", test_relation_count_CN009),
+    ("empty_census_CN014", test_empty_census_CN014),
+    ("duplicate_object_id_CN015", test_duplicate_object_id_CN015),
+    ("ti_expected_database_CN004", test_ti_expected_database_CN004),
+    ("internal_inconsistency_CN016", test_internal_inconsistency_CN016),
+    ("count_mismatch_CN009", test_count_mismatch_CN009),
     ("main_green_e2e", test_main_green_e2e),
     ("main_tampered_snapshot_CN001", test_main_tampered_snapshot_CN001),
     ("main_wrong_key_CN001", test_main_wrong_key_CN001),
+    ("main_fingerprint_mismatch_CN013", test_main_fingerprint_mismatch_CN013),
+    ("main_unknown_key_id_CN013", test_main_unknown_key_id_CN013),
 ]
 
 

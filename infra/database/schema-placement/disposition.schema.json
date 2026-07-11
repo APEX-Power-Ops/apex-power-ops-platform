@@ -157,7 +157,7 @@
 
     "evidence_snapshot": {
       "type": "object",
-      "required": ["kind", "project_ref", "observed_at", "repo_sha", "collector_version", "query_bundle_sha256", "relation_count", "collection_scope", "target_identity", "relations"],
+      "required": ["kind", "project_ref", "observed_at", "repo_sha", "collector_version", "query_bundle_sha256", "relation_count", "catalog_relation_count", "collection_scope", "target_identity", "relations"],
       "additionalProperties": false,
       "properties": {
         "kind": { "const": "evidence_snapshot" },
@@ -167,6 +167,7 @@
         "collector_version": { "$ref": "#/$defs/nonempty_string" },
         "query_bundle_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "relation_count": { "type": "integer", "minimum": 0 },
+        "catalog_relation_count": { "$comment": "independent DB-sourced count; the census-acceptance gate requires it == relation_count == len(relations).", "type": "integer", "minimum": 0 },
         "generator": { "type": "string" },
         "collection_scope": { "$ref": "#/$defs/collection_scope" },
         "target_identity": { "$ref": "#/$defs/target_identity" },

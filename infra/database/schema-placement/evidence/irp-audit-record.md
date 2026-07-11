@@ -211,6 +211,25 @@ collector 38 / **census-acceptance 14**; bundle hash unchanged (`065d49e0`).
 
 **Ratified-for-later (unchanged):** signed-overlay contract, apply-runner (revalidate-everything incl.
 restore-test), recovery-recency (`max_recovery_age_hours` 24h), receipt hardening — all after the census.
+
+## Census-hardening tranche (operator audit of `588da50b` — 5 false-green paths)
+
+The operator's adversarial pass found 5 acceptance-gate false-greens; HELD census GO + PR. All fixed;
+suites green (schema 59 / checker 63 / collector 40 / census-acceptance 21); catalog SQL RE-VALIDATED on
+PG16.13 (bundle `217ff3ad…`, census_count added).
+
+| # | Sev | Finding | Fix |
+|---|-----|---------|-----|
+| 1 | High | merged-main provenance not enforced — the collector records `git HEAD` even from a DIRTY tree, so modified tooling could stamp the clean commit | collector refuses a DIRTY worktree (`_git_worktree_clean`) and `--expect-repo-sha` asserts HEAD==expected BEFORE any secret injection / DB access; runbook writes evidence OUTSIDE the repo so the tree stays clean; +2 collector tests |
+| 2 | High | trust anchor is caller-selected — `verify_census --verify-key` accepts any matching key; the fingerprint file is never consumed | replaced with `--key-id` (+`--keys-dir`): resolves the pinned `keys/<id>.pub.pem` + `.spki-sha256`, requires the pubkey's SPKI sha256 to equal the committed fingerprint (CN013), THEN verifies; +fingerprint-mismatch + unknown-key-id tests |
+| 3 | Med | an EMPTY census and two DIFFERING records sharing an object_id both passed (`uniqueItems` only catches identical JSON) | verify_census rejects empty (CN014) + duplicate object_ids (CN015); collector adds an INDEPENDENT DB `census_count` → `catalog_relation_count` (schema-required); CN009 now requires emitted-list == relation_count == catalog count; +tests + PG16 re-validation |
+| 4 | Med | mismatched top-level vs scope `collector_version`, and a mismatched `target_identity.expected_database`, both passed | verify_census asserts internal consistency of collector_version/repo_sha/query_bundle_sha256 (CN016) and `target_identity.expected_database == --expect-database` (CN004); +tests |
+| 5 | Med | the runbook exported secrets into the operator shell, bypassing the injection contract | runbook uses `infra/infisical/inject.sh prod -- <collector>` (`--dsn-env SUPABASE_PROD_DSN`, secrets in child only); run from the merged-main worktree; evidence written out-of-tree |
+
+Independently confirmed by the operator: the two public artifacts are valid, contain no private key, the
+SPKI fingerprint matches, and the Infisical private key was verified against that public key without
+exposing either. Trust-anchor keys committed separately (dedicated, exact-path commit; no broad add).
+One focused cross-engine review runs on this tranche before the census GO.
 **Census GO, push, and PR remain HELD** — a fresh cross-engine IRP re-audit runs on the correction
 commit before any read-only census, and the production signing keypair (Infisical custody) is a
 census precondition, not handled in this tranche.
