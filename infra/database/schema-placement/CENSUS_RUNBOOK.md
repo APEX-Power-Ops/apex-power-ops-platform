@@ -42,10 +42,20 @@ Prod project: `fxoyniqnrlkxfligbxmg` (Supabase, managed non-super `postgres`, PG
 
 ```sh
 set +x
-MAIN_SHA=$(git -C . rev-parse HEAD)          # MUST be the merged-main commit; worktree MUST be clean
-TS=$(date -u +%Y%m%dT%H%M%SZ)                # unique UTC stamp
+git fetch --quiet origin main                          # refresh the remote ref first
+MAIN_SHA=$(git rev-parse origin/main)                  # expected SHA = the MERGED main tip, NOT the local checkout
+# Fail closed unless we are ON main, our HEAD *is* origin/main, and the worktree is clean — so a clean but
+# UNMERGED (or stale) feature branch cannot be censused (self-attestation gap, operator finding).
+test "$(git rev-parse --abbrev-ref HEAD)" = "main" || { echo "refusing: not on the main branch"; exit 1; }
+test "$(git rev-parse HEAD)" = "$MAIN_SHA"         || { echo "refusing: local HEAD != origin/main (unmerged or stale)"; exit 1; }
+test -z "$(git status --porcelain)"                || { echo "refusing: dirty worktree"; exit 1; }
+TS=$(date -u +%Y%m%dT%H%M%SZ)                          # unique UTC stamp
 OUT="$HOME/census-evidence/prod-$TS.json"; mkdir -p "$HOME/census-evidence"
 ```
+
+`MAIN_SHA` is the **merged** main tip (`origin/main`), and the census is refused unless the local checkout
+is exactly that commit on `main` and clean — the collector's `--expect-repo-sha` and the verifier's
+`--require-clean-checkout` then bind to a genuinely merged SHA, not a self-attested branch head.
 
 Write the census OUTSIDE the repo: the collector refuses to census a DIRTY worktree, and provenance is
 only meaningful against a clean tree — so the evidence is produced out-of-tree and committed later via an
@@ -103,7 +113,8 @@ worktree as the census.
 `--expect-query-bundle-sha256` is now REQUIRED (D4/RR-2): it binds CN006 to a **reviewed** hash
 rather than silently trusting the verifier's own checkout. The value MUST equal
 `collect_disposition.query_bundle_sha256()` at the census commit; update it in lockstep whenever the
-`QUERY_BUNDLE` changes (re-derive with `python -c "import collect_disposition as c; print(c.query_bundle_sha256())"`).
+`QUERY_BUNDLE` changes. Re-derive it from the package directory (the bare `python -c` fails from repo root):
+`(cd infra/database/schema-placement && uv run --project . --locked python -c "import collect_disposition as c; print(c.query_bundle_sha256())")`.
 
 Exit 0 = `=== CENSUS ACCEPTANCE: GREEN ===`. `--key-id` must name a signer pinned in the
 `TRUSTED_SIGNERS` source constant; `keys/<key-id>.pub.pem` (`--keys-dir` defaults to `keys/`) is loaded

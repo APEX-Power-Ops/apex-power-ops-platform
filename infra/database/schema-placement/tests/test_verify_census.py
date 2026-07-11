@@ -157,6 +157,7 @@ def test_count_mismatch_CN009():
 
 # ---- main() with real signatures ===========================================
 KEY_ID = "test-ed25519"
+PROD_KEY_ID = "prod-disposition-ed25519-2026-07"
 
 
 @contextlib.contextmanager
@@ -333,6 +334,19 @@ def test_verify_detached_with_key_crypto_is_sole_gate():
         assert ds.verify_detached_with_key(msg, sig3, K_obj)[0] is True
 
 
+def test_committed_prod_key_resolves_and_no_private_material():
+    # Finding #2: the COMMITTED production pubkey resolves through the REAL source anchor (no monkeypatch),
+    # proving keys/<prod-id>.pub.pem matches the source-pinned TRUSTED_SIGNERS fingerprint; and keys/ holds
+    # NO private-key material.
+    assert PROD_KEY_ID in vc.TRUSTED_SIGNERS
+    key, reason = vc.resolve_pinned_key(vc.DEFAULT_KEYS_DIR, PROD_KEY_ID)   # real TRUSTED_SIGNERS, real keys/
+    assert reason == "" and key is not None and hasattr(key, "public_bytes")
+    for root, _dirs, files in os.walk(vc.DEFAULT_KEYS_DIR):
+        for fn in files:
+            with open(os.path.join(root, fn), "rb") as fh:
+                assert b"PRIVATE KEY" not in fh.read(), f"private key material found under keys/: {fn}"
+
+
 def test_main_expect_query_bundle_required():
     # RR-2: --expect-query-bundle-sha256 is REQUIRED at the CLI (no self-referential default); argparse errors.
     priv, _pp, pub_pem = _ephemeral_keypair()
@@ -414,6 +428,7 @@ ALL = [
     ("verify_uses_pinned_key_object_after_file_swap", test_verify_uses_pinned_key_object_after_file_swap),
     ("verify_detached_with_key_crypto_is_sole_gate", test_verify_detached_with_key_crypto_is_sole_gate),
     ("key_id_traversal_rejected_even_with_planted_key", test_key_id_traversal_rejected_even_with_planted_key),
+    ("committed_prod_key_resolves_and_no_private_material", test_committed_prod_key_resolves_and_no_private_material),
     ("main_expect_query_bundle_required", test_main_expect_query_bundle_required),
     ("main_require_clean_checkout_preflight", test_main_require_clean_checkout_preflight),
 ]
