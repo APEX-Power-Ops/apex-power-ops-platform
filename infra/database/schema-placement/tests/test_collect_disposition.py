@@ -1,0 +1,353 @@
+"""Offline tests for the census collector (no DB, no psycopg).
+
+Two layers, both driver-free:
+  * pure state-mapping core: synthetic catalog rows -> schema-valid evidence_snapshot, with the
+    observation-state semantics asserted per fact.
+  * DB orchestration (_collect) driven through a FAKE cursor: read-only/target guard, query-group
+    savepoint recovery, absent-role handling, deterministic dependency ordering, atomic output.
+
+The live census (collect_from_db, which lazily imports psycopg and connects read-only to prod) is
+GO-gated and NOT exercised here.
+"""
+
+import json
+import os
+import sys
+import tempfile
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import collect_disposition as cd  # noqa: E402
+
+NOW = "2026-07-11T00:00:00Z"
+PROJECT = "fxoyniqnrlkxfligbxmg"
+SHA = "8a4c37fc"
+
+CENSUS_COLS = ["schema", "name", "relkind", "owner", "rls_enabled", "is_security_definer_view",
+               "inbound_fk_count", "outbound_fk_count", "row_estimate"]
+VIEW = ("public", "v_scope_financials", "v", "postgres", False, True, 0, 0, None)
+TABLE = ("public", "projects", "r", "postgres", True, None, 2, 1, 1500)
+
+TI_DICT = {
+    "current_database": "postgres", "current_user": "authenticator", "server_version": "PostgreSQL 16.13",
+    "server_version_num": 160013, "transaction_read_only": True, "expected_database": "postgres",
+    "platform_role_markers": ["anon", "authenticated", "service_role"], "guard_passed": True,
+}
+PRIVS = {"public.v_scope_financials": {"anon": ["SELECT"], "authenticated": ["SELECT"]},
+         "public.projects": {"anon": [], "authenticated": ["SELECT"]}}
+DEPS = {"public.projects": [
+    {"object_type": "view", "identity": "public.v_scope_financials", "direction": "inbound",
+     "evidence_type": "pg_depend", "evidence_ref": "query:dependents-v2"},
+    {"object_type": "constraint", "identity": "fk_a on public.scopes", "direction": "inbound",
+     "evidence_type": "pg_depend", "evidence_ref": "query:dependents-v2"},
+]}
+
+
+def _snap(failed=frozenset(), rows=None, now=NOW, ti=None):
+    rows = rows if rows is not None else [dict(zip(CENSUS_COLS, VIEW)), dict(zip(CENSUS_COLS, TABLE))]
+    return cd.build_snapshot(rows, PRIVS, DEPS, set(failed), project_ref=PROJECT, repo_sha=SHA,
+                             now=now, target_identity=ti or TI_DICT)
+
+
+def _rel(snap, oid):
+    return next(r for r in snap["relations"] if r["object_id"] == oid)
+
+
+# ==== pure state-mapping core ================================================
+def test_snapshot_is_schema_valid():
+    s = _snap()  # build_snapshot validates internally; raises on invalid
+    assert s["relation_count"] == 2 and cd._validate(s) == []
+    assert s["target_identity"]["guard_passed"] is True
+
+
+def test_view_is_definer_observed():
+    assert _rel(_snap(), "public.v_scope_financials")["is_security_definer_view"] == {"state": "observed", "value": True}
+
+
+def test_table_is_definer_not_applicable():
+    assert _rel(_snap(), "public.projects")["is_security_definer_view"]["state"] == "not_applicable"
+
+
+def test_row_estimate_states():
+    assert _rel(_snap(), "public.v_scope_financials")["row_estimate"]["state"] == "not_applicable"
+    assert _rel(_snap(), "public.projects")["row_estimate"] == {"state": "observed", "value": 1500}
+
+
+def test_privileges_observed_empty_and_failed():
+    # role exists, no grant -> observed EMPTY (not not_observed); group failed -> query_failed
+    assert _rel(_snap(), "public.projects")["anon_effective_privs"] == {"state": "observed", "value": []}
+    fq = _rel(_snap(failed={"privileges"}), "public.projects")["anon_effective_privs"]
+    assert fq["state"] == "query_failed"
+
+
+def test_in_data_api_exposed_is_not_observed():
+    # F7: exposure is not derived authoritatively from the runtime GUC
+    assert _rel(_snap(), "public.projects")["in_data_api_exposed_schema"]["state"] == "not_observed"
+
+
+def test_dependents_sorted_and_database_deps():
+    r = _rel(_snap(), "public.projects")
+    # DEPS given view-first; emitted sorted by (object_type, identity, direction) -> constraint first
+    assert [d["object_type"] for d in r["dependent_objects"]["value"]] == ["constraint", "view"]
+    assert r["consumer_evidence"]["database_deps"] == {"state": "observed", "found_consumers": 2, "ref": "query:dependents-v2"}
+    rf = _rel(_snap(failed={"dependents"}), "public.projects")
+    assert rf["dependent_objects"]["state"] == "query_failed"
+    assert rf["consumer_evidence"]["database_deps"]["state"] == "query_failed"
+
+
+def test_workflow_dims_not_observed():
+    r = _rel(_snap(), "public.projects")
+    assert r["advisor_findings"]["state"] == "not_observed"
+    for dim in ("static_repo", "runtime_logs", "external_clients", "operator_declaration"):
+        cell = r["consumer_evidence"][dim]
+        assert cell["state"] == "not_observed" and cell["found_consumers"] is None and cell["ref"] is None
+
+
+def test_sha256_deterministic_and_hex():
+    h = cd.query_bundle_sha256()
+    assert len(h) == 64 and all(ch in "0123456789abcdef" for ch in h) and h == cd.query_bundle_sha256()
+
+
+def test_self_validation_rejects_bad_now():
+    try:
+        _snap(now="not-a-date")
+        raise AssertionError("bad observed_at was not rejected")
+    except ValueError:
+        pass
+
+
+# ==== target guard (pure) ====================================================
+def _ti_row(**over):
+    base = {"current_database": "postgres", "current_user": "authenticator", "server_version": "PostgreSQL 16.13",
+            "server_version_num": 160013, "transaction_read_only": True, "db_now": NOW,
+            "platform_role_markers": ["anon", "authenticated", "service_role"]}
+    base.update(over)
+    return base
+
+
+def test_guard_passes_clean():
+    ti, ok, reasons = cd.evaluate_target_guard(_ti_row(), expect_database="postgres",
+                                               required_role_markers=("anon", "authenticated", "service_role"))
+    assert ok and reasons == [] and ti["guard_passed"] is True and ti["transaction_read_only"] is True
+
+
+def test_guard_fails_not_read_only():
+    ti, ok, reasons = cd.evaluate_target_guard(_ti_row(transaction_read_only=False))
+    assert not ok and any("read-only" in r for r in reasons) and ti["guard_passed"] is False
+
+
+def test_guard_fails_wrong_database():
+    _ti, ok, reasons = cd.evaluate_target_guard(_ti_row(current_database="dev_db"), expect_database="postgres")
+    assert not ok and any("current_database" in r for r in reasons)
+
+
+def test_guard_fails_missing_marker():
+    _ti, ok, reasons = cd.evaluate_target_guard(_ti_row(platform_role_markers=["anon"]),
+                                                required_role_markers=("anon", "authenticated", "service_role"))
+    assert not ok and any("marker" in r for r in reasons)
+
+
+# ==== fake-cursor DB orchestration ===========================================
+class FakeDBError(Exception):
+    pass
+
+
+class _Col:
+    def __init__(self, name):
+        self.name = name
+
+
+class FakeCursor:
+    """Scripts cd.QUERY_BUNDLE by exact SQL string. A script value that is an Exception subclass is
+    raised (to drive savepoint recovery); SAVEPOINT/RELEASE/ROLLBACK statements are recorded no-ops."""
+
+    def __init__(self, script):
+        self.script = script
+        self._reverse = {v: k for k, v in cd.QUERY_BUNDLE.items()}
+        self._rows = None
+        self._cols = None
+        self.executed = []
+
+    def execute(self, sql, params=None):
+        head = sql.split()[0] if sql else ""
+        if head in ("SAVEPOINT", "RELEASE", "ROLLBACK"):
+            self.executed.append(sql.strip())
+            return
+        key = self._reverse.get(sql)
+        self.executed.append(key or "UNKNOWN")
+        if key not in self.script:
+            raise AssertionError(f"unscripted query: {key!r}")
+        spec = self.script[key]
+        if isinstance(spec, type) and issubclass(spec, Exception):
+            raise spec("scripted failure")
+        self._rows = spec["rows"]
+        self._cols = [_Col(c) for c in spec["cols"]]
+
+    def fetchall(self):
+        return self._rows
+
+    def fetchone(self):
+        return self._rows[0] if self._rows else None
+
+    @property
+    def description(self):
+        return self._cols
+
+
+TI_ROWS = [("postgres", "authenticator", "PostgreSQL 16.13", 160013, True, NOW,
+            ["anon", "authenticated", "service_role"])]
+TI_SCRIPT_COLS = ["current_database", "current_user", "server_version", "server_version_num",
+                  "transaction_read_only", "db_now", "platform_role_markers"]
+
+
+def _script(**over):
+    base = {
+        "target_identity": {"rows": TI_ROWS, "cols": TI_SCRIPT_COLS},
+        "roles": {"rows": [("anon",), ("authenticated",)], "cols": ["rolname"]},
+        "census": {"rows": [VIEW, TABLE], "cols": CENSUS_COLS},
+        "privileges": {"rows": [
+            ("public.projects", "anon", "SELECT", False),
+            ("public.projects", "authenticated", "SELECT", True),
+            ("public.v_scope_financials", "anon", "SELECT", True),
+            ("public.v_scope_financials", "authenticated", "SELECT", True),
+        ], "cols": ["object_id", "grantee", "verb", "has_priv"]},
+        "dependents": {"rows": [
+            ("public.projects", "trigger", "trg_z on public.projects"),
+            ("public.projects", "constraint", "fk_a on public.scopes"),
+            ("public.projects", "view", "public.v_scope_financials"),
+        ], "cols": ["object_id", "dep_type", "dep_identity"]},
+    }
+    base.update(over)
+    return base
+
+
+def _run_fake(script, expect_database=None, required_role_markers=()):
+    return cd._collect(FakeCursor(script), ["public"], db_error=FakeDBError, project_ref=PROJECT,
+                       repo_sha=SHA, expect_database=expect_database, required_role_markers=required_role_markers)
+
+
+def test_fake_happy_path_valid_and_bound():
+    snap = _run_fake(_script(), expect_database="postgres", required_role_markers=("anon", "authenticated"))
+    assert cd._validate(snap) == [] and snap["relation_count"] == 2
+    assert snap["observed_at"] == NOW  # observed_at comes from the DB clock, not a caller value
+    assert snap["target_identity"]["current_database"] == "postgres"
+    assert snap["target_identity"]["guard_passed"] is True
+
+
+def test_fake_read_only_assertion_blocks():
+    ro_off = list(TI_ROWS[0]); ro_off[4] = False
+    try:
+        _run_fake(_script(target_identity={"rows": [tuple(ro_off)], "cols": TI_SCRIPT_COLS}))
+        raise AssertionError("non-read-only session was not blocked")
+    except RuntimeError as exc:
+        assert "read-only" in str(exc)
+
+
+def test_fake_target_guard_failure_blocks():
+    dev = list(TI_ROWS[0]); dev[0] = "dev_db"
+    try:
+        _run_fake(_script(target_identity={"rows": [tuple(dev)], "cols": TI_SCRIPT_COLS}), expect_database="postgres")
+        raise AssertionError("wrong-database target was not blocked")
+    except RuntimeError as exc:
+        assert "target guard failed" in str(exc)
+
+
+def test_fake_query_group_recovery():
+    # privileges group raises -> dependents STILL runs; privileges recorded query_failed
+    snap = _run_fake(_script(privileges=FakeDBError))
+    proj = _rel(snap, "public.projects")
+    assert proj["anon_effective_privs"]["state"] == "query_failed"
+    assert proj["authenticated_effective_privs"]["state"] == "query_failed"
+    assert proj["dependent_objects"]["state"] == "observed"  # later group unaffected
+    assert snap["relation_count"] == 2
+
+
+def test_fake_absent_role_not_observed():
+    # anon role absent from pg_roles AND no anon grant -> not_observed (not observed-empty)
+    script = _script(
+        roles={"rows": [("authenticated",)], "cols": ["rolname"]},
+        census={"rows": [TABLE], "cols": CENSUS_COLS},
+        privileges={"rows": [("public.projects", "authenticated", "SELECT", True)], "cols": ["object_id", "grantee", "verb", "has_priv"]},
+    )
+    proj = _rel(_run_fake(script), "public.projects")
+    assert proj["anon_effective_privs"]["state"] == "not_observed"
+    assert proj["authenticated_effective_privs"] == {"state": "observed", "value": ["SELECT"]}
+
+
+def test_fake_deterministic_dependency_ordering():
+    proj = _rel(_run_fake(_script()), "public.projects")
+    got = [(d["object_type"], d["identity"]) for d in proj["dependent_objects"]["value"]]
+    assert got == sorted(got)  # stable order regardless of fetch order
+    assert [d["object_type"] for d in proj["dependent_objects"]["value"]] == ["constraint", "trigger", "view"]
+
+
+# ==== atomic output (F6) =====================================================
+def test_atomic_write_and_refuse_and_overwrite():
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "snap.json")
+        cd.write_snapshot(path, {"kind": "x", "n": 1})
+        assert json.load(open(path, encoding="utf-8"))["n"] == 1
+        try:
+            cd.write_snapshot(path, {"kind": "x", "n": 2})
+            raise AssertionError("existing output was overwritten without overwrite=True")
+        except FileExistsError:
+            pass
+        assert json.load(open(path, encoding="utf-8"))["n"] == 1  # untouched
+        cd.write_snapshot(path, {"kind": "x", "n": 3}, overwrite=True)
+        assert json.load(open(path, encoding="utf-8"))["n"] == 3
+        assert [f for f in os.listdir(d) if ".tmp-" in f] == []  # no temp leftovers
+
+
+def test_atomic_write_failure_preserves_original():
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "snap.json")
+        cd.write_snapshot(path, {"kind": "x", "n": 1})
+        try:
+            cd.write_snapshot(path, {"bad": {1, 2, 3}}, overwrite=True)  # set is not JSON-serializable
+            raise AssertionError("serialization failure did not raise")
+        except TypeError:
+            pass
+        assert json.load(open(path, encoding="utf-8"))["n"] == 1  # original intact
+        assert [f for f in os.listdir(d) if ".tmp-" in f] == []  # temp cleaned up
+
+
+ALL = [
+    ("snapshot_is_schema_valid", test_snapshot_is_schema_valid),
+    ("view_is_definer_observed", test_view_is_definer_observed),
+    ("table_is_definer_not_applicable", test_table_is_definer_not_applicable),
+    ("row_estimate_states", test_row_estimate_states),
+    ("privileges_observed_empty_and_failed", test_privileges_observed_empty_and_failed),
+    ("in_data_api_exposed_is_not_observed", test_in_data_api_exposed_is_not_observed),
+    ("dependents_sorted_and_database_deps", test_dependents_sorted_and_database_deps),
+    ("workflow_dims_not_observed", test_workflow_dims_not_observed),
+    ("sha256_deterministic_and_hex", test_sha256_deterministic_and_hex),
+    ("self_validation_rejects_bad_now", test_self_validation_rejects_bad_now),
+    ("guard_passes_clean", test_guard_passes_clean),
+    ("guard_fails_not_read_only", test_guard_fails_not_read_only),
+    ("guard_fails_wrong_database", test_guard_fails_wrong_database),
+    ("guard_fails_missing_marker", test_guard_fails_missing_marker),
+    ("fake_happy_path_valid_and_bound", test_fake_happy_path_valid_and_bound),
+    ("fake_read_only_assertion_blocks", test_fake_read_only_assertion_blocks),
+    ("fake_target_guard_failure_blocks", test_fake_target_guard_failure_blocks),
+    ("fake_query_group_recovery", test_fake_query_group_recovery),
+    ("fake_absent_role_not_observed", test_fake_absent_role_not_observed),
+    ("fake_deterministic_dependency_ordering", test_fake_deterministic_dependency_ordering),
+    ("atomic_write_and_refuse_and_overwrite", test_atomic_write_and_refuse_and_overwrite),
+    ("atomic_write_failure_preserves_original", test_atomic_write_failure_preserves_original),
+]
+
+
+if __name__ == "__main__":
+    ok = True
+    for name, fn in ALL:
+        try:
+            fn()
+            r = True
+        except Exception as exc:  # noqa: BLE001
+            r = False
+            name = f"{name} ({type(exc).__name__}: {exc})"
+        ok = ok and r
+        print(f"  {'ok  ' if r else 'FAIL'}: {name}")
+    print("\n=== COLLECTOR OFFLINE SUITE: {} ===".format("ALL PASS" if ok else "FAILURES PRESENT"))
+    raise SystemExit(0 if ok else 1)

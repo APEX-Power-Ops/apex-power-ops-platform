@@ -123,6 +123,23 @@
       }
     },
 
+    "target_identity": {
+      "$comment": "In-band binding of a snapshot to the database ACTUALLY queried (finding: evidence not bound to target). transaction_read_only and guard_passed are const true, so a persisted snapshot that validates PROVES a read-only session AND a passed target guard — a guard-failed run raises before any snapshot is built (the collector never emits guard_passed=false). ADDITIVE + optional on evidence_snapshot (contract regression-green); the collector always emits it. Promoting to required + a preapply checker binding is a scoped follow-up.",
+      "type": "object",
+      "required": ["current_database", "current_user", "server_version", "transaction_read_only", "guard_passed"],
+      "additionalProperties": false,
+      "properties": {
+        "current_database": { "$ref": "#/$defs/nonempty_string" },
+        "current_user": { "$ref": "#/$defs/nonempty_string" },
+        "server_version": { "$ref": "#/$defs/nonempty_string" },
+        "server_version_num": { "type": ["integer", "null"] },
+        "transaction_read_only": { "const": true },
+        "expected_database": { "type": ["string", "null"] },
+        "platform_role_markers": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/nonempty_string" } },
+        "guard_passed": { "const": true }
+      }
+    },
+
     "evidence_snapshot": {
       "type": "object",
       "required": ["kind", "project_ref", "observed_at", "repo_sha", "collector_version", "query_bundle_sha256", "relation_count", "relations"],
@@ -136,6 +153,7 @@
         "query_bundle_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
         "relation_count": { "type": "integer", "minimum": 0 },
         "generator": { "type": "string" },
+        "target_identity": { "$ref": "#/$defs/target_identity" },
         "relations": { "type": "array", "items": { "$ref": "#/$defs/relation_observation" }, "uniqueItems": true }
       }
     },
