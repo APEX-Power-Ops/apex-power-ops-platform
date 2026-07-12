@@ -118,18 +118,29 @@ def verify_detached(message: bytes, sig_path, pubkey_path) -> tuple[bool, str]:
     return verify_sidecar(message, sidecar, public_key)
 
 
+def verify_sidecar_bytes_with_key(message: bytes, sidecar_bytes: bytes, public_key) -> tuple[bool, str]:
+    """Verify a detached signature from sidecar bytes the caller ALREADY HAS IN HAND, against a public
+    key OBJECT the caller already loaded and pinned. Parses the sidecar bytes (fail-closed) and
+    delegates to verify_sidecar. Reads NOTHING from disk — the bytes verified are exactly the bytes the
+    caller hashes into its receipt (SP026)."""
+    try:
+        sidecar = json.loads(sidecar_bytes)
+    except ValueError as exc:
+        return False, f"cannot parse signature sidecar bytes ({type(exc).__name__})"
+    return verify_sidecar(message, sidecar, public_key)
+
+
 def verify_detached_with_key(message: bytes, sig_path, public_key) -> tuple[bool, str]:
-    """Like verify_detached, but verifies against a public key OBJECT the caller ALREADY loaded and
-    pinned (e.g. via verify_census.resolve_pinned_key). Reads ONLY the sidecar from disk — never the
-    public key — so the key whose fingerprint was checked and the key the signature is verified against
-    are guaranteed to be the same bytes (closes the resolve->re-open key TOCTOU, H3). Fail-closed on
-    any read/parse/verify error."""
+    """Path-based convenience wrapper: read the sidecar bytes once, then verify_sidecar_bytes_with_key.
+    Verifies against a public key OBJECT the caller already loaded and pinned; reads ONLY the sidecar
+    (never the key), so the fingerprint-checked key IS the verify key (closes the resolve->re-open
+    TOCTOU, H3). Fail-closed on any read/parse/verify error."""
     try:
         with open(sig_path, "rb") as fh:
-            sidecar = json.loads(fh.read())
-    except (OSError, ValueError) as exc:
-        return False, f"cannot read/parse signature sidecar ({type(exc).__name__})"
-    return verify_sidecar(message, sidecar, public_key)
+            sidecar_bytes = fh.read()
+    except OSError as exc:
+        return False, f"cannot read signature sidecar ({type(exc).__name__})"
+    return verify_sidecar_bytes_with_key(message, sidecar_bytes, public_key)
 
 
 def verify_snapshot_files(snapshot_path, sig_path, pubkey_path) -> tuple[bool, str]:

@@ -387,6 +387,22 @@ def test_signature_gate_end_to_end():
     assert _sig_gate_e2e()
 
 
+def _sidecar_bytes_agree():
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    pub = ds.load_public_key_pem(pub_pem)
+    msg = b'{"kind":"evidence_snapshot"}'
+    sidecar_bytes = json.dumps(ds.build_sig_sidecar(msg, priv)).encode("utf-8")
+    ok, _ = ds.verify_sidecar_bytes_with_key(msg, sidecar_bytes, pub)
+    return ok is True
+
+
+def _sidecar_bytes_bad_json_fails_closed():
+    _priv, _pp, pub_pem = _ephemeral_keypair()
+    pub = ds.load_public_key_pem(pub_pem)
+    ok, reason = ds.verify_sidecar_bytes_with_key(b"msg", b"{not json", pub)
+    return ok is False and "sidecar" in reason
+
+
 def test_wrong_kind_document_rejected():
     # a decisions_file passed in the --snapshot slot must be SP001-rejected, not crash mid-check
     snap, dec, em, man, sp = harden_bundle()
@@ -472,6 +488,8 @@ if __name__ == "__main__":
         ("receipt_missing_key_raises", _receipt_missing_key_raises),
         ("signature_roundtrip", _sig_roundtrip),
         ("signature_gate_end_to_end", _sig_gate_e2e),
+        ("verify_sidecar_bytes_ok", _sidecar_bytes_agree),
+        ("verify_sidecar_bytes_bad_json", _sidecar_bytes_bad_json_fails_closed),
         ("wrong_kind_document", _wrong_kind),
         ("dup_yaml", lambda: _yaml_dup()),
         ("dup_json", lambda: _json_dup()),
