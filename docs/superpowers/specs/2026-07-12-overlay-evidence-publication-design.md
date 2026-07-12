@@ -1,360 +1,368 @@
-# Overlay Evidence Publication Packet — Design
+# Overlay Evidence Publication Packet — Design (rev 2)
 
 **Status:** design (spec only). Phase 2 of the disposition-ledger gated roadmap. Authoring this design
 authorizes NO implementation, evidence collection, signing, DB access, external access, or production
 action. All downstream phases remain HELD, each behind a fresh explicit operator GO.
 
-**Goal:** Give the disposition-ledger lane the *producer* tooling that the signed-overlay *consumer*
-(`disposition_overlay.py`, merged @ `a47161fc`) already assumes exists but that was deliberately left
-out of the consumer packet: a value-silent, no-clobber **overlay author/sign command**, a **standalone
-committed-artifact verifier**, an **`overlay-evidence` CI gate**, a **six-dimension collection runbook**,
-and **corrections to `CENSUS_RUNBOOK.md`**. Per census-runbook §"After the census", the overlay tooling
-lands *before* any evidence is collected (Phase 6+).
+**rev 2** folds the round-1 cross-engine IRP (Codex + Claude grounded-audit panel + operator audit); the
+review record is `evidence/irp-cross-engine-overlay-publication.md`. Operator ratifications carried here:
+**D1** reuse `disposition_overlay`'s own checks; **D2** the module names below; **D3** replicate the atomic
+publish helper in this packet (with equivalent adversarial tests) and leave the census collector
+untouched; **D4** author provenance is a **mandatory** clean merged-main checkout + required expected SHA.
 
-**Architecture (one line):** three small sibling modules + one CI script + two runbook docs, all
-**reusing** the frozen consumption contract in `disposition_overlay.py` so *what the author accepts and
-signs is exactly what the consumer will accept* — no re-implemented, drift-prone second copy of the
-overlay rules.
+**Goal:** the *producer* tooling the merged signed-overlay *consumer* (`disposition_overlay.py` @
+`a47161fc`) assumes but omits: a value-silent, no-clobber **overlay author/sign command**, a **standalone
+committed-artifact verifier**, an **`overlay-evidence` CI gate**, a **committed source-evidence record**, a
+**six-dimension collection runbook**, and **`CENSUS_RUNBOOK.md` corrections**. Per the census runbook, the
+overlay tooling lands *before* any evidence is collected.
+
+**Architecture (one line):** three sibling modules + one CI script + a committed source-evidence record +
+two runbook docs, all **reusing** the frozen consumption contract (`disposition_overlay`) and the census
+acceptance gate (`verify_census.check_census`) so *what the author signs is exactly what the consumer and
+the census gate accept* — with the artifact tooling additionally enforcing evidence **immutability** and
+**source rehashability** that the per-cluster consumer does not.
 
 ---
 
 ## Global Constraints (bind every task)
 
-- **Schemas FROZEN.** `disposition.schema.json` and `overlay.schema.json` are read-only inputs. This
-  design requires **no** schema change — the overlay contract already carries every field the author
-  computes. (Justification in §9.) If a plan task believes a schema edit is necessary, that is an
-  escalation, not a task.
-- **Value-silence.** The Ed25519 private key is read **only** from `DISPOSITION_SIGNING_KEY` (env,
-  Infisical-injected), never argv, never printed, never embedded in any artifact. A key-load failure
-  surfaces as a generic message (the PEM never appears in output). No DSN is involved (the author is
-  offline; it needs no database).
+- **Schemas FROZEN.** `disposition.schema.json` / `overlay.schema.json` are read-only inputs; this design
+  needs no schema change (§10). `source_locator` (already a free string) is *defined* by this packet to be
+  a repo-relative path — a semantic tightening, not a schema edit.
+- **Value-silence (extended).** The Ed25519 private key is read only from `DISPOSITION_SIGNING_KEY` (env,
+  Infisical-injected), never argv/printed/embedded. **The `--source-file` content is also secret-bearing**
+  (runtime logs, advisor JSON may embed DSN fragments): the author only `read → sha256`s it and copies it,
+  **never** prints or parses its content; a source read/hash failure is the dedicated fail-closed `AO009`
+  reporting **only** the path + `type(exc).__name__` (never content, never a stack trace). No DSN is used
+  (the author is offline).
 - **COMPUTED, never typed.** Every binding value — `base_snapshot_sha256`, `disposition_schema_sha256`,
-  `overlay_schema_sha256`, `project_ref`, `captured_at`, `producing_repo_sha`, `source_hash` — is
-  computed by the tool from the census bytes / schema bytes / git / clock / source file. The operator
-  supplies only *semantics* (which objects, what values, what window, what authority).
-- **No-clobber, sidecar-first, atomic, unique path.** Mirror `collect_disposition.write_signed_snapshot`:
-  the `.sig` is written first, then the overlay, each via temp-file + fsync + `os.link` (atomic
-  create-if-absent; `FileExistsError` if present). A signed artifact NEVER overwrites.
-- **Source-pinned trust anchor.** The verifier resolves the signer through the reviewed source constant
-  `disposition_trust.TRUSTED_SIGNERS` (`resolve_pinned_key`), exactly as `verify_census.py` does. A
-  caller-supplied keys dir cannot substitute its own key.
-- **Acyclic module DAG preserved.** `disposition_overlay.py` stays a LEAF (imports only
-  `disposition_signing`). New producer modules may import `disposition_overlay` (leaf),
-  `disposition_signing`, `disposition_provenance`; they MUST NOT import `check_disposition`.
-- **pytest is NOT a locked dependency.** Tests are script `__main__` runners executed via
-  `uv run --project . --locked python tests/<file>.py`, registered in the CI `suites` loop — same as
-  every existing schema-placement suite.
-- **Offline + read-only.** The author, verifier, and CI touch no database and no network. The author
-  reads the census file, the schema files, the source-evidence file, and git; it writes only the overlay
-  + sidecar.
+  `overlay_schema_sha256`, `project_ref`, `captured_at`, `producing_repo_sha`, `source_hash`,
+  `source_locator` — is computed by the tool. The operator supplies only *semantics* (objects, values,
+  window, authority) and the raw evidence.
+- **No-clobber, sidecar-first, atomic, unique path** (mirror `collect_disposition.write_signed_snapshot`):
+  temp-file + fsync + `os.link` (atomic create-if-absent; `FileExistsError` if present), with the
+  collector's `finally` temp-unlink. A signed artifact NEVER overwrites.
+- **Source-pinned trust anchor.** The signer resolves through `disposition_trust.TRUSTED_SIGNERS`
+  (`resolve_pinned_key`), as `verify_census.py` does. A caller keys-dir cannot substitute its own key.
+- **Acyclic DAG.** `disposition_overlay` stays a LEAF. New producer modules may import
+  `disposition_overlay`, `verify_census` (which imports only the collector + leaves), `disposition_signing`,
+  `disposition_trust`, `disposition_provenance`; they MUST NOT import `check_disposition`. (`verify_census`
+  imports none of the new modules → acyclic.)
+- **pytest is NOT locked.** Tests are script `__main__` runners via `uv run --project . --locked python
+  tests/<file>.py`, registered in the CI `suites` loop.
+- **Offline + read-only.** Author/verifier/CI touch no database and no network. The author reads census,
+  schema, source-evidence, and git; it writes only the overlay + sidecar + source record.
 
 ---
 
-## 1. Ground truth (what the merged consumer already fixes)
+## 1. Ground truth (the merged consumer + census gate this packet produces to)
 
-The consumer (`disposition_overlay.py`) defines the overlay contract this packet must produce *to*. The
-producer tooling is correct **iff** an overlay it signs passes the consumer's own checks. The relevant
-frozen facts:
+Producer tooling is correct **iff** an overlay it signs passes the consumer's own per-artifact checks and
+its base census passes the census gate. Frozen facts (grounded in `disposition_overlay.py` /
+`verify_census.py`):
 
-- **Overlay document** (`overlay.schema.json`, `additionalProperties:false`): required `kind`
-  (`"evidence_overlay"`), `overlay_version` (`"1"`), `dimension` (6-enum), `source_type` (6-enum),
-  `authority`, `collection_method`, `source_locator`, `source_hash` (64-hex or null),
-  `base_snapshot_sha256` (64-hex), `disposition_schema_sha256` (64-hex), `overlay_schema_sha256`
-  (64-hex), `project_ref`, `captured_at` (iso), `observation_window` (`{started_at, ended_at}`),
-  `producing_repo_sha` (40-hex or null), `assignments` (≥1 × `{object_id, value}`). Optional:
-  `source_hash_not_applicable_reason`, `producing_repo_sha_not_applicable_reason`, `operator_identity`,
-  `attestation_ref`. Per-dimension `allOf` fixes `source_type` and the `value` shape; the
-  `operator_declaration` dimension additionally requires `operator_identity` + `attestation_ref`.
-- **Signature** (OV001): detached Ed25519 over the **exact raw overlay bytes**, via
-  `disposition_signing.build_sig_sidecar` / `verify_sidecar_bytes_with_key` — same primitive and same
-  anchor as the census.
-- **Binding** (`check_binding`): OV002 `base_snapshot_sha256 == sha256(census file bytes)`; OV003
-  `project_ref == census.project_ref == --expect-project-ref` (three-way); OV020
-  `disposition_schema_sha256`/`overlay_schema_sha256 == on-disk schema bytes`.
-- **Target** (`check_target`): OV004 dimension ∈ 6; OV013 `source_type == DIMENSIONS[dimension]` fixed;
-  OV019 `source_hash` null ⇔ reason present; OV012 `producing_repo_sha` three categories —
-  REQUIRED{`in_data_api_exposed_schema`,`consumer_evidence.static_repo`} (non-null, no reason),
+- **Overlay document** (`overlay.schema.json`, `additionalProperties:false`): `kind`(`evidence_overlay`),
+  `overlay_version`(`1`), `dimension`(6-enum), `source_type`(6-enum), `authority`, `collection_method`,
+  `source_locator`, `source_hash`(64-hex|null), `base_snapshot_sha256`(64-hex),
+  `disposition_schema_sha256`(64-hex), `overlay_schema_sha256`(64-hex), `project_ref`, `captured_at`(iso),
+  `observation_window`(`{started_at,ended_at}`), `producing_repo_sha`(40-hex|null), `assignments`(≥1 ×
+  `{object_id,value}`); optional `source_hash_not_applicable_reason`,
+  `producing_repo_sha_not_applicable_reason`, `operator_identity`, `attestation_ref`.
+- **Per-artifact consumer checks** (the subset an artifact can be judged by, in isolation):
+  OV001 signature (detached Ed25519 over exact raw bytes); OV002 `base_snapshot_sha256 == sha256(census
+  bytes)`; OV003 three-way `project_ref`; OV020 schema-sha drift; OV004 dimension∈6; OV013 `source_type`
+  fixed by `DIMENSIONS[dim]`; OV019 `source_hash` null⇔reason; OV012 `producing_repo_sha` three categories
+  (REQUIRED{`in_data_api_exposed_schema`,`consumer_evidence.static_repo`} non-null/no-reason;
   FORBIDDEN{`advisor_findings`,`consumer_evidence.runtime_logs`,`consumer_evidence.operator_declaration`}
-  (null + reason), CONDITIONAL{`consumer_evidence.external_clients`} (non-null xor reason); OV014
-  operator_declaration provenance; OV005 every `object_id` present in the census; OV006 the target base
-  slot is `not_observed`.
-- **Window** (`check_observation_window`, OV009): `started_at < ended_at ≤ captured_at ≤ now`.
-- **Value shapes** (per dimension, from `disposition.schema.json $defs`):
-  `in_data_api_exposed_schema` → `observed_bool` `{state:"observed", value:<bool>}`;
-  `advisor_findings` → `observed_advisor_array` `{state:"observed", value:[str,…]}`;
-  the four `consumer_evidence.*` → `consumer_evidence_dim` — observed ⇒
-  `{state:"observed", found_consumers:<int≥0>, ref:<nonempty>}`, any other state ⇒
-  `{state:…, found_consumers:null, ref:null, detail:<nonempty>}`.
-- **Author/verifier patterns to mirror:** `collect_disposition._write_bytes_atomic` /
-  `write_signed_snapshot` (atomic sidecar-first no-clobber; unique timestamped path; refuse to overwrite),
-  its value-silent env-key handling and provenance gate (`disposition_provenance.git_head_sha` +
-  `git_worktree_clean`, `--expect-repo-sha`); and `verify_census.py` (read bytes once → resolve pinned
-  key → verify sig before parse → semantic checks with stable codes → exit 0 only when clean).
-- **Consumer-side cluster checks NOT in scope for the artifact producer:** OV007 (cross-overlay dup),
-  OV011/OV016/OV017/OV018 (window derivation), OV015 (cluster completeness), OV021/OV022 (base-window /
-  delete-floor) are evaluated by `check_disposition --mode preapply` over the *whole cluster* (Phase 11).
-  This packet enforces the *per-artifact* subset (OV001–OV006, OV008–OV010, OV012–OV014, OV019–OV020) at
-  author and verify time, and OV007 across the *committed set* in CI (§4).
+  null+reason; CONDITIONAL{`consumer_evidence.external_clients`} non-null xor reason); OV014
+  operator_declaration provenance; OV005 object_id∈census; OV006 base slot `not_observed`; OV008 schema+
+  format; **OV007** duplicate `(dimension,object_id)` *within or across* overlays (flat key list).
+- **OV009 vs OV010 (corrected attribution).** `check_observation_window` (OV009) enforces
+  `started_at < ended_at`, `ended_at ≤ captured_at`, and `ended_at ≤ now` — it does **not** bound
+  `captured_at ≤ now`. The `captured_at > now` (future) guard and the `> max_staleness_hours` guard are
+  **OV010**, wired only into the cluster `load_and_merge` (staleness needs the manifest). So the artifact
+  tooling can enforce the manifest-independent half (`captured_at ≤ now`) but NOT the manifest staleness.
+- **Cluster-only checks (NOT artifact-judgeable):** window derivation OV011/OV016/OV017/OV018, cluster
+  completeness OV015, base-window OV021, delete-floor OV022 — all in `check_disposition --mode preapply`
+  over the whole cluster (Phase 11). OV016 freshness is evaluated at preapply `now` against
+  **E = min(ended)** across the observed consumer overlays (the earliest-ending window), not `captured_at`.
+- **Census acceptance** (`verify_census.check_census`): the full contract — schema+`kind`, project_ref,
+  database (current/scope/target), collection_scope (schemas, role markers, collector_version/repo_sha/
+  query-bundle internal consistency), query-bundle hash, repo_sha, relation/catalog counts, object_id
+  integrity, empty/dup rejection, `query_failed` rejection, scope containment. A signed-but-out-of-scope /
+  malformed / query-failed census must NOT become an overlay base.
+- **Value shapes** (`disposition.schema.json $defs`): `in_data_api_exposed_schema`→`observed_bool`
+  `{state:"observed",value:<bool>}`; `advisor_findings`→`observed_advisor_array`
+  `{state:"observed",value:[str,…]}`; the four `consumer_evidence.*`→`consumer_evidence_dim` (observed ⇒
+  `{state:"observed",found_consumers:<int≥0>,ref:<nonempty>}`, else `{state,found_consumers:null,ref:null,
+  detail:<nonempty>}`).
 
 ---
 
-## 2. Components overview
+## 2. Components
 
 | # | Unit | Responsibility | Imports (new edges) |
 |---|------|----------------|---------------------|
-| A | `author_overlay.py` | Assemble → validate (consumer checks) → sign (value-silent) → publish (atomic sidecar-first no-clobber, unique path) one overlay for one dimension. | `disposition_overlay`, `disposition_signing`, `disposition_provenance` |
-| B | `verify_overlay_artifact.py` | Standalone: verify a committed overlay+sidecar against the pinned signer and its bound census (integrity + binding + target). | `disposition_overlay`, `disposition_signing`, `disposition_trust`, `disposition_provenance` |
-| C | `ci/verify_committed_overlays.sh` + `overlay-evidence` job | Verify every overlay ADDED on a branch: sidecar present, bound to a committed census, tooling-consistent, signer-valid, and no cross-overlay OV007 duplicate. | (shell → B) |
-| D | `OVERLAY_COLLECTION_RUNBOOK.md` | Per-dimension authoritative source, method, value shape, window, applicability, failure behavior, redaction, evidence-PR procedure. | (doc) |
+| A | `author_overlay.py` | Publish the source record; assemble → validate (consumer checks on the exact signed bytes) → signer-parity + in-memory sidecar verify → publish (atomic sidecar-first no-clobber) one overlay for one dimension. | `disposition_overlay`, `verify_census`, `disposition_signing`, `disposition_trust`, `disposition_provenance` |
+| B | `verify_overlay_artifact.py` | Standalone: verify a committed overlay+sidecar against the pinned signer, its bound census (full `verify_census` acceptance), the schema/binding/target contract, `captured_at ≤ now`, and the flat OV007. | same as A |
+| C | `ci/verify_committed_overlays.sh` + `overlay-evidence` job | Immutability (reject MODIFY/DELETE of committed census+overlay pairs), canonical-path + orphan-sidecar guards, exactly-one-census binding, source rehash, committed-set OV007, per-overlay verify. | (shell → B) |
+| S | committed **source-evidence record** per overlay | Durable, rehashable evidence the `overlay.source_locator` points to and CI re-hashes to `source_hash`. | (data) |
+| D | `OVERLAY_COLLECTION_RUNBOOK.md` | Per-dimension source/method/value/window/applicability + freshness discipline + redaction + evidence-PR. | (doc) |
 | E | `CENSUS_RUNBOOK.md` corrections | PG17.6; `disposition_trust.py` anchor; current post-census sequence. | (doc) |
 
-All three modules are **peers of the collector**, invoked as CLIs; none is imported by the consumer, so
-the leaf DAG is preserved.
-
 ---
 
-## 3. Component A — `author_overlay.py` (author + sign)
+## 3. Component A — `author_overlay.py`
 
-**One overlay, one dimension, per invocation** (Phase 9 issues source-specific GOs per dimension). The
-command is a mechanical *binder + validator + signer + publisher* — it does not collect evidence; the
-operator/collection-runbook supplies the raw evidence and the semantic core.
+One overlay, one dimension, per invocation. A mechanical *binder + validator + signer + publisher*; it
+does not collect evidence.
 
 ### 3.1 Inputs
+- `--census` + `--census-sig` — the fresh signed census the overlay binds to.
+- **Census-acceptance params** (mirroring `verify_census`, so the base is fully accepted, not just
+  signature-checked): `--expect-project-ref`, `--expect-database`, `--expect-schemas`,
+  `--expect-census-repo-sha`, `--require-role-markers`, `--expect-query-bundle-sha256`.
+- `--key-id` + `--keys-dir` — the pinned signer (public anchor).
+- `--input <overlay-core.json>` — operator **semantics only**: `{dimension, assignments:[{object_id,
+  value}…], observation_window, authority, collection_method, [operator_identity], [attestation_ref]}`.
+- `--source-file <path>` **xor** `--source-hash-na-reason <str>` — the source-evidence record content (→
+  published as the committed source record, §S) or the NA reason.
+- `--producing-repo-sha-na-reason <str>` — for FORBIDDEN dims and the null case of the CONDITIONAL dim.
+- `--expect-gate-repo-sha <sha>` — **REQUIRED (D4)**: the author's own merged-main HEAD; asserted with a
+  clean-worktree check before the signing key or any evidence input is read (no runtime bypass; tests patch
+  `disposition_provenance`).
+- `--out` / `--sig-out` / `--source-out` — unique publish paths (§3.5).
+- `--signing-key-env DISPOSITION_SIGNING_KEY`.
 
-- `--census <path>` + `--census-sig <path>` — the fresh signed census the overlay binds to.
-- `--key-id <id>` + `--keys-dir <dir>` (default `keys/`) — the pinned signer (for verifying the census
-  before authoring against it; the *public* anchor, not the signing key).
-- `--input <overlay-core.json>` — operator-supplied **semantics only**:
-  `{dimension, assignments:[{object_id, value}…], observation_window:{started_at, ended_at},
-  authority, collection_method, source_locator, [operator_identity], [attestation_ref]}`.
-- `--source-file <path>` **xor** `--source-hash-na-reason <str>` — source evidence bytes (→
-  `source_hash = sha256(bytes)`) or the not-applicable reason.
-- `--producing-repo-sha-na-reason <str>` — required for the FORBIDDEN dims and the CONDITIONAL dim when
-  no repo produced the evidence; ignored (must be absent) for REQUIRED dims.
-- `--expect-project-ref <ref>` — asserted `== census.project_ref` (fail-closed).
-- `--out <path>` (+ `--sig-out`, default `<out>.sig`) — unique publish path (§3.5).
-- `--signing-key-env DISPOSITION_SIGNING_KEY` — env var holding the PEM (value-silent).
+### 3.2 Provenance gate FIRST (D4, mandatory, all dimensions)
+Before reading the signing key or any evidence input: `git_head_sha(repo) == --expect-gate-repo-sha` AND
+`git_worktree_clean(repo)`; else `AO010` and stop. This makes the author's `producing_repo_sha` (§3.3) an
+ancestor of the eventual evidence-PR HEAD, so the CI's ancestor/tooling-diff assertion holds.
 
-### 3.2 Computed binding (never typed)
+### 3.3 Computed binding
+`base_snapshot_sha256 = sha256(census bytes)`; `disposition_schema_sha256`/`overlay_schema_sha256` from the
+read-once `OverlayContract`; `project_ref = census.project_ref` (asserted `== --expect-project-ref`, else
+`AO003`); `captured_at = now` (single UTC clock read, also used for the `<UTC>` path); `source_type =
+DIMENSIONS[dim][1]`; `kind`/`overlay_version` constants; `source_hash = sha256(published source-record
+bytes)` (or null+reason); `source_locator = the repo-relative path of the published source record` (§S).
+**`producing_repo_sha` = the AUTHOR's `--expect-gate-repo-sha` (schema-pub clean merged-main HEAD)** for
+REQUIRED dims — NOT the external scanned-repo commit (that lives in the source record, §S). FORBIDDEN dims:
+`null` + reason. CONDITIONAL (`external_clients`): the author's HEAD if a repo-committed inventory backed it,
+else `null` + reason.
 
-`base_snapshot_sha256 = sha256(census file bytes)`; `disposition_schema_sha256` /
-`overlay_schema_sha256 = OverlayContract.disp_sha256 / .overlay_sha256`; `project_ref = census.project_ref`;
-`captured_at = now (UTC, tool clock)`; `source_type = disposition_overlay.DIMENSIONS[dimension][1]`
-(fixed — so OV013 cannot fire); `kind="evidence_overlay"`, `overlay_version="1"`;
-`producing_repo_sha` per the OV012 category table —
-REQUIRED dims: `disposition_provenance.git_head_sha(repo)` (and a **clean-worktree assertion** so the SHA
-identifies a real commit; `--expect-repo-sha` optional but recommended, mirroring the collector);
-FORBIDDEN dims: `null` + `--producing-repo-sha-na-reason`; CONDITIONAL (`external_clients`): git HEAD if
-a repo produced it, else `null` + reason.
+### 3.4 Census acceptance (not just signature)
+`resolve_pinned_key` → `verify_detached_with_key(census_bytes, census_sig, signer.public_key)` (else
+`AO001`), then **run the full `verify_census.check_census`** with the §3.1 census-acceptance params. Any
+`CN0xx` → `AO011` (prints the underlying `CN0xx`) and stop. You cannot author against a forged **or**
+out-of-scope/malformed census.
 
-### 3.3 Validate-before-sign (the correctness guarantee)
+### 3.5 Assemble → validate the SIGNED BYTES → signer-parity → publish
+Assemble the doc; serialize canonically (`json.dumps(doc, indent=2, sort_keys=True).encode()`) → the
+**signed message**. Validate by round-tripping the *serialized bytes*: `parse_overlay(message)` (exercises
+the dup-key/non-finite guard) → `validate_overlay` (OV008) → `check_binding` (OV002/003/020) →
+`check_observation_window` (OV009) → **`captured_at ≤ now`** (OV010 future-half) → `check_target`
+(OV004/005/006/012/013/014/019) with the census `rel_index` → **flat OV007** over this overlay's
+assignments (intra-overlay dup). Any code → `AO005` (prints the underlying `OV0xx`) and refuse to sign.
+**Signer-parity:** load the private key; assert `public_key_fingerprint(key.public_key()) ==
+signer.spki_sha256` (else `AO007` — the env key is not the pinned signer); build the sidecar
+(`sidecar_bytes = json.dumps(build_sig_sidecar(message, key), indent=2, sort_keys=True).encode()`);
+**verify the sidecar in-memory** (`verify_sidecar_bytes_with_key(message, sidecar_bytes, signer.public_key)`)
+before writing anything (else `AO012`). Publish **source-record first, then sidecar, then overlay**, each
+atomic + no-clobber (temp+fsync+`os.link`, with `finally` temp-unlink). Refuse up front if any path exists.
 
-After assembly, the author runs the consumer's **own** per-artifact checks against the census —
-`load_overlay_contract()` → `validate_overlay` (OV008) → `check_binding` (OV002/003/020) →
-`check_observation_window` (OV009) → `check_target` (OV004/005/006/012/013/014/019) with the census
-`rel_index` — plus an **intra-overlay duplicate `object_id`** check (a single overlay assigning the same
-object twice). If ANY check yields an `OV0xx`/`AO0xx`, the author prints the codes and **refuses to
-sign or publish**. Because these are the *identical functions* the consumer enforces, an authored-and-
-published overlay is guaranteed to pass the consumer's per-artifact gate (the cluster-level checks remain
-the preapply gate's job).
+### 3.6 Naming
+`evidence/overlay-<dim-slug>-<census12>-<UTC>.json` (+ `.json.sig`); source record
+`evidence/source/overlay-<dim-slug>-<census12>-<UTC>.source.<ext>`. `<dim-slug>` = dimension with `.`→`_`;
+`<census12>` = first 12 hex of `base_snapshot_sha256`; `<UTC>` = `captured_at` as `YYYYMMDDTHHMMSSZ` (same
+clock instant as the signed `captured_at`). A same-second collision fails no-clobber (safe); a
+`-NN` counter suffix is appended if needed so two legitimate same-second artifacts do not block each other.
 
-### 3.4 Census verification first
-
-Before anything else the author `resolve_pinned_key(keys_dir, key_id)` and
-`verify_detached_with_key(census_bytes, census_sig, signer.public_key)` — you cannot author an overlay
-against a forged/tampered/foreign-signed census. Fail-closed with a coded message.
-
-### 3.5 Publish (mirror the collector)
-
-Serialize canonically (`json.dumps(doc, indent=2, sort_keys=True).encode()`) → the **signed message**.
-`build_sig_sidecar(message, private_key)` → sidecar bytes. Publish **sidecar first**, then the overlay,
-each atomic + no-clobber (temp+fsync+`os.link`). Refuse up front if either path exists. Reuse the
-collector's atomic helper (imported, or a ~15-line replica to keep the frozen collector untouched — a
-build-detail, not an interface).
-
-**Naming / unique path:** `evidence/overlay-<dim-slug>-<census12>-<UTC>.json` (+ `.json.sig`), where
-`<dim-slug>` replaces `.` with `_` (`consumer_evidence.static_repo` → `consumer_evidence_static_repo`),
-`<census12>` is the first 12 hex of `base_snapshot_sha256` (groups overlays by the census they bind to),
-`<UTC>` = `YYYYMMDDTHHMMSSZ`. The CI glob is `evidence/overlay-*.json`.
-
-### 3.6 Error codes (`AO0xx`, stable)
-
-`AO000` input unreadable/invalid; `AO001` census signature failed (untrusted/forged base); `AO002`
-`--input` missing a required field / wrong type; `AO003` `--expect-project-ref != census.project_ref`;
-`AO004` source-file/NA-reason mutually-exclusive violation; `AO005` assembled overlay failed a consumer
-check (prints the underlying `OV0xx`); `AO006` intra-overlay duplicate `object_id`; `AO007`
-`DISPOSITION_SIGNING_KEY` unset / not a valid Ed25519 PEM; `AO008` publish failed / path exists
-(no-clobber). Exit 0 only on a signed, published pair.
+### 3.7 Error codes (`AO0xx`)
+`AO000` input unreadable; `AO001` census signature failed; `AO002` `--input` missing/typed field;
+`AO003` project-ref mismatch; `AO004` source-file/NA-reason exclusivity; `AO005` assembled overlay failed a
+consumer check (prints `OV0xx`); `AO006` (reserved — intra-overlay dup now surfaces via `AO005`/OV007);
+`AO007` env key is a valid Ed25519 key but NOT the pinned signer (fingerprint mismatch), or unset/invalid
+PEM; `AO008` publish failed / path exists; `AO009` source-file unreadable (path + type only, value-silent);
+`AO010` provenance gate (dirty / HEAD ≠ `--expect-gate-repo-sha`); `AO011` base census failed
+`verify_census` acceptance (prints `CN0xx`); `AO012` in-memory sidecar verify failed. Exit 0 only on a
+published {source, sidecar, overlay} triple.
 
 ---
 
-## 4. Component B — `verify_overlay_artifact.py` (standalone verifier) + Component C (CI)
+## 4. Component B — verifier + Component C — CI
 
-### 4.1 Verifier
-
-Mirrors `verify_census.py`, at overlay granularity. Args: `--overlay`, `--overlay-sig`, `--census`,
-`--census-sig`, `--key-id`, `--keys-dir`, `--expect-project-ref`. Flow: `resolve_pinned_key` →
-read overlay bytes once → `verify_sidecar_bytes_with_key(overlay_bytes, sig_bytes, signer.public_key)`
-(OV001) → **also** verify the census sig against the same signer (so the base it binds to is itself
-genuine) → `parse_overlay` (dup-key/non-finite reject) → `load_overlay_contract` → `validate_overlay`
-(OV008) → `check_binding` vs `sha256(census bytes)` + schema shas (OV002/003/020) →
-`check_observation_window` (OV009) → `check_target` vs census `rel_index` (OV004/005/006/012/013/014/019).
-Prints `OV0xx`; exit 0 only when clean. It is an **artifact integrity + binding** gate; it does **not**
-run cluster derivation (OV011/015/016/017/018/021/022) — those are `check_disposition --mode preapply`.
-This scoping is stated in the module docstring so no one mistakes a green artifact verify for
+### 4.1 `verify_overlay_artifact.py` (standalone)
+Args: `--overlay`, `--overlay-sig`, `--census`, `--census-sig`, the census-acceptance params (§3.1),
+`--key-id`, `--keys-dir`, `--expect-project-ref`. Flow: `resolve_pinned_key` → read overlay bytes once →
+`verify_sidecar_bytes_with_key(overlay_bytes, sig_bytes, signer.public_key)` (OV001) → verify census sig
+(same signer) → **`verify_census.check_census`** on the census (else `CN0xx`) → `parse_overlay` →
+**`isinstance(doc, dict)` guard** (coded OV008 on a signed non-object, never a crash) → `load_overlay_contract`
+→ `validate_overlay` (OV008) → **short-circuit on any schema error before binding/target** → `check_binding`
+(OV002/003/020) → `check_observation_window` (OV009) → **`captured_at ≤ now`** (OV010 future-half) →
+`check_target` (OV004/005/006/012/013/014/019) → **flat OV007** over the overlay's own assignments. Prints
+codes; exit 0 only when clean. It is an **artifact + base-census-acceptance** gate; it does NOT run the
+cluster derivation (OV011/015/016/017/018/021/022) or the manifest-staleness half of OV010 — those are
+`check_disposition --mode preapply`. Stated in the docstring so a green verify is not mistaken for
 evidence-readiness.
 
-### 4.2 CI — `ci/verify_committed_overlays.sh` + `overlay-evidence` job
+### 4.2 `ci/verify_committed_overlays.sh` + `overlay-evidence` job
+`set -euo pipefail`; **`git fetch origin main` fail-closed** (a fetch failure aborts, not `|| true`);
+`BASE=merge-base` (abort on an ambiguous/empty merge-base).
 
-Mirrors `ci/verify_committed_census.sh`. `set -euo pipefail`; `git fetch origin main`;
-`BASE=merge-base`; `ADDED = git diff --diff-filter=A --name-only BASE HEAD -- '$SP/evidence/overlay-*.json'`
-(excluding `.sig`); if none → exit 0. `TOOLING = author_overlay.py verify_overlay_artifact.py
-disposition_overlay.py disposition_signing.py disposition_trust.py disposition_provenance.py
-overlay.schema.json disposition.schema.json keys`. For each added overlay:
-1. **missing sidecar** → FAIL.
-2. Extract `base_snapshot_sha256`; find the committed `evidence/census-prod-*.json` whose
-   `sha256(bytes)` equals it; **no match → FAIL** (overlay binds to a census not present in the tree).
-3. If `producing_repo_sha` is non-null: assert it is an **ancestor of HEAD** and TOOLING is **unchanged**
-   since it (`git diff --quiet <producing_repo_sha> HEAD -- $TOOLING`) — the same tooling-drift assertion
-   the census gate makes.
-4. Run `verify_overlay_artifact.py` against the matched census + its sidecar + the pinned signer + the
-   expected project ref; must exit 0.
+1. **Immutability.** `git diff --diff-filter=MD --name-only BASE HEAD` over `evidence/census-prod-*.json`,
+   `evidence/overlay-*.json`, and every `*.sig` under `evidence/` → if any committed census/overlay JSON or
+   sidecar was **modified or deleted**, FAIL (signed evidence is no-clobber-immutable). *This also closes
+   the same gap in the census gate (§6).*
+2. **Canonical path + orphans.** For every added/committed file whose JSON `kind == "evidence_overlay"`,
+   require it to sit at the canonical `evidence/overlay-*.json` path (else FAIL — no overlay hidden under a
+   non-glob name). Every `evidence/overlay-*.json` must have exactly one `.json.sig` and vice-versa (no
+   orphan sidecar / unsigned overlay).
+3. **Added set.** `ADDED = git diff --diff-filter=A --name-only BASE HEAD -- 'evidence/overlay-*.json'`;
+   if none → exit 0.
+4. For each added overlay: extract `base_snapshot_sha256`; among committed `evidence/census-prod-*.json`
+   find those whose `sha256(bytes)` equals it — **require exactly one** (0 → FAIL unbound; >1 → FAIL
+   ambiguous). Re-hash the overlay's `source_locator` file and assert `sha256 == source_hash` (skip only if
+   `source_hash` is null with a reason). Extract `producing_repo_sha` **null-safe** (JSON null → empty
+   string): if non-empty, assert ancestor-of-HEAD + `git diff --quiet <sha> HEAD -- $TOOLING`; if empty,
+   skip (safe — step 5 re-verifies at HEAD). Run `verify_overlay_artifact.py` against the matched census +
+   its sidecar + pinned signer + census-acceptance params (extract `--expect-census-repo-sha` from the
+   matched census's `repo_sha`); must exit 0.
+5. **Committed-set OV007.** Build the flat `(dimension, object_id)` list over **every** committed overlay at
+   HEAD (`git ls-files 'evidence/overlay-*.json'`, not just the added set) that binds to each census, incl.
+   intra-overlay repeats; FAIL on any duplicate — mirroring `check_conflict`'s whole-cluster `all_keys`.
 
-After the per-overlay loop, a **cross-overlay OV007** check: across all added overlays binding to the
-same census, no `(dimension, object_id)` pair may repeat → FAIL if it does. New job `overlay-evidence`
-(`fetch-depth: 0`, pinned `uv==0.11.21`) runs the script; the existing `suites` loop gains
-`test_author_overlay` and `test_verify_overlay_artifact`.
+`TOOLING = author_overlay.py verify_overlay_artifact.py disposition_overlay.py verify_census.py
+collect_disposition.py disposition_signing.py disposition_trust.py disposition_provenance.py
+overlay.schema.json disposition.schema.json keys`. New `overlay-evidence` job (`fetch-depth: 0`, pinned
+`uv==0.11.21`); the `suites` loop gains `test_author_overlay` + `test_verify_overlay_artifact`.
 
 ---
 
-## 5. Component D — `OVERLAY_COLLECTION_RUNBOOK.md` (six dimensions)
+## 5. Component S — committed source-evidence record
 
-A **DO-NOT-RUN-until-GO** procedure (like the census runbook) covering, per dimension: authoritative
-source, collection method, `value` shape, `observation_window` semantics, `producing_repo_sha` /
-`source_hash` applicability, failure behavior, redaction, and the evidence-PR procedure.
+Every overlay's `source_locator` is a **repo-relative path** to a committed source-evidence record under
+`evidence/source/`; `source_hash = sha256(that record's bytes)`, which CI re-hashes (§4.2 step 4). The
+record carries the dimension, the (redacted where sensitive) evidence, and — for `consumer_evidence.static_repo`
+scans — an explicit enumeration of **every scanned repository root + its exact commit SHA** (a single
+`producing_repo_sha`, being the author's schema-pub HEAD, does NOT stand in for multiple external repos).
+For `consumer_evidence.runtime_logs` and any raw-secret source, the committed record is a **normalized,
+redacted extract**; the record documents that the raw un-redacted source is held in **separate custody**
+(not committed) with a custody reference. The author publishes this record no-clobber alongside the overlay
+(§3.5), so CI can reproduce `source_hash` and confirm `source_locator` without external access.
 
-| Dimension (`source_type`) | Authoritative source | `value` shape | `producing_repo_sha` | `source_hash` |
+---
+
+## 6. Component D — `OVERLAY_COLLECTION_RUNBOOK.md`
+
+DO-NOT-RUN-until-GO. Per dimension: authoritative source, method, `value` shape, `producing_repo_sha` /
+`source_hash` applicability, and the source-record content.
+
+| Dimension (`source_type`) | Authoritative source | `value` shape | `producing_repo_sha` | source record → `source_hash` |
 |---|---|---|---|---|
-| `in_data_api_exposed_schema` (`platform_config`) | Supabase Data-API **exposed-schemas platform config** (declared, not the runtime `pgrst.db_schemas` GUC) | `observed_bool` `{state:"observed", value:<bool>}` | REQUIRED (repo-committed config export → git HEAD) | sha256(config export) |
-| `advisor_findings` (`advisor_api`) | Supabase **advisor API** (security/performance) | `observed_advisor_array` `{state:"observed", value:[str,…]}` | FORBIDDEN (API snapshot) → null+reason | sha256(saved advisor JSON) |
-| `consumer_evidence.static_repo` (`repository_scan`) | **Static scan** of platform repos for references to each object | `consumer_evidence_dim` | REQUIRED (scanned repo commit → git HEAD) | sha256(scan output) |
-| `consumer_evidence.runtime_logs` (`runtime_logs`) | Production **query/pg logs** over the window | `consumer_evidence_dim` | FORBIDDEN (logs) → null+reason | sha256(log extract) |
-| `consumer_evidence.external_clients` (`external_client_inventory`) | Inventory of **external API clients / integrations** | `consumer_evidence_dim` | CONDITIONAL (repo inventory → git HEAD; else null+reason) | sha256(inventory) |
-| `consumer_evidence.operator_declaration` (`operator_declaration`) | Signed **operator attestation** (+ `operator_identity`, `attestation_ref`) | `consumer_evidence_dim` | FORBIDDEN → null+reason | sha256(attestation) or null+reason |
+| `in_data_api_exposed_schema` (`platform_config`) | Data-API **exposed-schemas platform config** (declared, not the `pgrst.db_schemas` GUC) | `observed_bool` | REQUIRED = author schema-pub HEAD | committed config export |
+| `advisor_findings` (`advisor_api`) | Supabase **advisor API** | `observed_advisor_array` | FORBIDDEN → null+reason | committed advisor JSON |
+| `consumer_evidence.static_repo` (`repository_scan`) | **Static scan** of platform repos | `consumer_evidence_dim` | REQUIRED = author schema-pub HEAD | scan output **+ enumerated {repo_root, commit_sha}** |
+| `consumer_evidence.runtime_logs` (`runtime_logs`) | Production **query/pg logs** | `consumer_evidence_dim` | FORBIDDEN → null+reason | **redacted** log extract (+ raw custody note) |
+| `consumer_evidence.external_clients` (`external_client_inventory`) | External API-client inventory | `consumer_evidence_dim` | CONDITIONAL (author HEAD if repo-committed; else null+reason) | committed inventory |
+| `consumer_evidence.operator_declaration` (`operator_declaration`) | Signed **operator attestation** (+ `operator_identity`, `attestation_ref`) | `consumer_evidence_dim` | FORBIDDEN → null+reason | committed attestation (or null+reason) |
 
-**Window discipline (so the eventual cluster preapply is satisfiable):** every overlay window must obey
-`started < ended ≤ captured ≤ now` (OV009). At preapply the *consumer* window is derived as
-`S=max(started), E=min(ended)` across the observed consumer overlays for each cluster-source relation and
-must be non-empty (OV011), must bracket `base_observed_at` i.e. `S ≤ observed_at ≤ E` (OV017), must be
-fresh vs `--max-consumer-evidence-age-hours` (OV016), and — for a **delete** whose `external_clients`
-resolves `not_applicable` — the observed-**false** `in_data_api_exposed_schema` overlay window must
-**cover** `[S, E]` (OV022). The runbook therefore directs operators to choose, per cluster-source
-relation, consumer windows that overlap and bracket the census instant, and (for deletes) an
-`in_data_api` window at least as wide. This is guidance for *satisfiability at preapply*; the artifact
-tooling enforces only the per-overlay OV009.
-
-Redaction + evidence-PR: overlays and sidecars are produced out-of-tree, secret-scanned/redacted (no
-DSN, key, or `env` dump in any transcript), then copied into `evidence/` and committed through a governed
-evidence PR (Phase 10) whose `overlay-evidence` CI independently re-verifies every artifact.
+**Window + freshness discipline (so preapply is satisfiable).** Per-overlay: `started < ended ≤ captured`
+and `ended ≤ now` (OV009) + `captured ≤ now` (OV010 future-half; the verifier now enforces this). At
+preapply the consumer window is `S=max(started), E=min(ended)` across the *observed* consumer overlays and
+must be non-empty (OV011), bracket the fixed past `base_observed_at` i.e. `S ≤ observed_at ≤ E` (OV017), be
+fresh (OV016), and — for a `not_applicable`-waiver **delete** — the observed-**false**
+`in_data_api_exposed_schema` window must cover `[S,E]` (OV022). **OV016 is measured at preapply `now`
+against `E = min(ended)` — the earliest-ending consumer window, not `captured_at`** — so the runbook directs
+operators to collect all consumer evidence for a cluster-source relation close together, bracket the census
+instant, and **run the cluster gate within `--max-consumer-evidence-age-hours` of the earliest window's
+`ended_at`**, recommending the intended value up front. Redaction + evidence-PR: artifacts produced
+out-of-tree, secret-scanned/redacted, then committed via a governed evidence PR whose `overlay-evidence` CI
+re-verifies everything.
 
 ---
 
-## 6. Component E — `CENSUS_RUNBOOK.md` corrections (grounded)
+## 7. Component E — `CENSUS_RUNBOOK.md` corrections (grounded)
 
-1. **PG16 → PG17.6.** The committed census `target_identity.server_version` is
-   `PostgreSQL 17.6 … (server_version_num 170006)`. Correct the "PG16" statement (§preamble).
-2. **Trust-anchor location.** "TRUSTED_SIGNERS constant in `verify_census.py`" → "the `TRUSTED_SIGNERS`
-   source constant in **`disposition_trust.py`** (the shared anchor; `verify_census` *and*
-   `check_disposition` both resolve through `resolve_pinned_key`)." (SP026 moved the anchor.)
-3. **Post-census sequence.** Replace "build the signed-overlay packet … then the apply runner" (which
-   framed the overlay tooling as future work) with the current sequence: the signed-overlay **consumer**
-   is merged; next is **(this) overlay publication tooling → fresh census → definer-view reconciliation →
-   collect+sign the six overlays with `author_overlay.py` bound to the fresh census → formal cluster gate
-   (`check_disposition --mode preapply`) → apply runner**, each operator-gated.
-
----
-
-## 7. Data flow (end to end)
-
-Fresh signed census (Phase 6/7, committed) → operator collects raw evidence per dimension (collection
-runbook) → `author_overlay.py` binds+validates+signs each overlay against that census → operator
-`verify_overlay_artifact.py` locally → commit overlays+sidecars on an evidence branch → `overlay-evidence`
-CI re-verifies every added artifact → (Phase 11) `check_disposition --mode preapply` derives windows and
-runs the cluster gate over census + all overlays.
+1. **PG16 → PG17.6** (committed census `server_version` = `PostgreSQL 17.6 … 170006`).
+2. **Trust anchor**: "TRUSTED_SIGNERS in `verify_census.py`" → "the `TRUSTED_SIGNERS` source constant in
+   **`disposition_trust.py`** (shared; `verify_census` and `check_disposition` both `resolve_pinned_key`)."
+3. **Post-census sequence**: the signed-overlay **consumer** is merged; next is **overlay publication
+   tooling → fresh census → definer-view reconciliation → collect+sign the six overlays (`author_overlay.py`
+   bound to the fresh census, each with a committed source record) → formal cluster gate (`check_disposition
+   --mode preapply`) → apply runner**, each operator-gated.
+4. **Census immutability note**: the new `overlay-evidence` CI also rejects MODIFY/DELETE of committed
+   `census-prod-*.json` / `.sig` (§4.2 step 1), closing the census gate's `--diff-filter=A`-only weakness.
 
 ---
 
-## 8. Error handling & fail-closed posture
+## 8. Data flow
 
-Every ambiguous/missing/malformed condition is a **stable code** and a non-zero exit, never a stack
-trace: `AO0xx` (author), `OV0xx`/`CN0xx`-analog (verifier), explicit `FAIL:` lines (CI). The author
-never signs a doc that fails a consumer check; the verifier verifies the signature **before** parsing;
-the CI fails on a missing sidecar, an unbound census, tooling drift, an untrusted signer, or a duplicate
-assignment. Key/DSN values never appear in any output.
-
----
-
-## 9. Why the schemas stay frozen
-
-The author computes and injects every overlay field the contract requires; the contract already models
-`source_hash_not_applicable_reason`, `producing_repo_sha_not_applicable_reason`, `operator_identity`, and
-`attestation_ref`; the per-dimension `allOf` already fixes `source_type` and `value`. No new field, enum,
-or constraint is needed to *produce* a conformant overlay — the producer is purely additive tooling over
-a sufficient contract. A schema change would also break the already-merged consumer's `overlay_sha256`
-binding (OV020) and every downstream hash. Therefore: **no schema edit.**
+Fresh signed census (committed) → operator collects raw evidence per dimension (runbook) → `author_overlay.py`
+(provenance gate → full census acceptance → bind → validate signed bytes → signer-parity → publish
+{source, sidecar, overlay}) → operator `verify_overlay_artifact.py` locally → commit the triples on an
+evidence branch → `overlay-evidence` CI (immutability, canonical-path/orphans, exactly-one-census, source
+rehash, per-overlay verify, committed-set OV007) → (Phase 11) `check_disposition --mode preapply` derives
+windows and runs the cluster gate.
 
 ---
 
-## 10. Testing strategy (negative-contract-first)
+## 9. Fail-closed posture
 
-TDD, negatives first (each maps to a failing test before the code exists). Coverage matrix for the
-operator's negative acceptance cases:
+Stable codes, non-zero exits, never a stack trace: `AO0xx` (author), `OV0xx`/`CN0xx` (verifier), explicit
+`FAIL:` lines (CI). The author refuses to sign a doc failing any per-artifact/census check; verifies the
+sidecar in-memory before writing; and is value-silent on key **and** source content. The verifier verifies
+signatures before parsing and fails-closed on non-object/schema-invalid input. CI fails on modified/deleted
+evidence, an unbound/ambiguous census, a mismatched source hash, tooling drift, an untrusted signer, an
+orphan sidecar, an off-path overlay, or a committed-set duplicate.
 
-| Negative case | Enforced by | Code |
+---
+
+## 10. Why the schemas stay frozen
+
+Every overlay field the contract requires is computed and injected; the contract already models the
+optional NA-reasons, `operator_identity`, `attestation_ref`, and fixes `source_type`/`value` per dimension.
+`source_locator` is an existing free string this packet *defines* as a repo-relative path (semantic, not
+schema). A schema edit would break the merged consumer's `overlay_sha256` binding (OV020) and every
+downstream hash. **No schema edit.**
+
+---
+
+## 11. Testing strategy (negative-contract-first)
+
+TDD, negatives first. Coverage matrix (each row → a failing test before code):
+
+| Negative case | Enforced by | Code / mechanism |
 |---|---|---|
-| tampering (bytes altered post-sign) | verifier / CI signature verify | OV001 |
-| wrong base hash | verifier / CI binding | OV002 |
-| wrong project | author + verifier | AO003 / OV003 |
-| stale / incoherent window (per-overlay) | author + verifier | OV009 (+ OV010 captured_at) |
-| schema drift | verifier / CI binding | OV020 (+ OV008) |
-| missing sidecar | CI (and verifier fail-closed) | `FAIL: missing sidecar` |
-| duplicate assignment (intra-overlay) | author | AO006 |
-| duplicate assignment (cross-overlay, same census) | CI | OV007 |
-| untrusted signer — foreign-signed artifact/census | author + verifier (sig fails vs pinned key) | AO001 / OV001 |
-| untrusted signer — unpinned `--key-id` / substituted key material | author + verifier (`resolve_pinned_key` returns None) | key-resolution block (`CN013`-analog) |
-| tooling drift | CI | `git diff --quiet <producing_repo_sha> HEAD -- $TOOLING` |
-| overlay bound to a census not in the tree | CI | `FAIL: no matching committed census` |
+| tampered overlay/census bytes | verifier/CI signature | OV001 |
+| wrong base hash | verifier/CI binding | OV002 |
+| wrong project | author/verifier | AO003/OV003 |
+| schema drift | verifier/CI binding | OV020 (+OV008) |
+| incoherent window (`started≥ended`, `ended>captured`, future `ended`) | author/verifier | OV009 |
+| **future `captured_at`** (ended≤now) | author/verifier | **OV010 future-half (`captured_at ≤ now`)** |
+| **base census out-of-scope / malformed / query-failed / count-mismatch** | author/verifier/CI | **full `verify_census.check_census` (CN0xx)** |
+| **signing key ≠ pinned signer** | author | **AO007 fingerprint mismatch** |
+| **in-memory sidecar fails to verify** | author | **AO012** |
+| **dirty / wrong-HEAD author checkout** | author | **AO010** |
+| signed **non-object** / schema-invalid committed overlay | verifier/CI | **OV008 (isinstance-guard, no crash)** |
+| duplicate `(dimension,object_id)` intra-overlay | author/verifier/CI | flat OV007 |
+| duplicate vs an **already-committed** overlay (same census) | CI | **committed-set OV007** |
+| **modified/deleted** committed census or overlay/sidecar | CI | **`--diff-filter=MD` FAIL** |
+| **orphan sidecar / off-canonical-path overlay** | CI | **path + pairing FAIL** |
+| **`source_locator` rehash ≠ `source_hash`** | CI | **source-record FAIL** |
+| overlay bound to **0 or >1** committed census | CI | **exactly-one FAIL** |
+| **null `producing_repo_sha`** on a FORBIDDEN dim | CI | **null-safe skip (no shell abort)** |
+| tooling drift (SHA-bearing dims) | CI | `git diff --quiet <producing_repo_sha> HEAD -- $TOOLING` |
+| source-file unreadable | author | AO009 (value-silent) |
 
-Each `author_overlay`/`verify_overlay_artifact` suite is a script `__main__` runner using synthetic
-Ed25519 keys + fixtures (no prod key, no DB). Both suites join the CI `suites` loop; the
-`overlay-evidence` job is exercised by the artifact-verify suite plus a shell dry-run fixture.
-
----
-
-## 11. Open decisions for operator ratification (with leans)
-
-- **D1 — Reuse vs re-implement (architectural).** *Lean: reuse.* The author and the standalone verifier
-  both **import `disposition_overlay`** and call its `validate_overlay` / `check_binding` /
-  `check_observation_window` / `check_target`, so "what the author signs" ≡ "what the consumer accepts"
-  with zero drift. Independence is preserved by *layering* — the standalone artifact verifier, the CI
-  gate, and (ultimately) `check_disposition --mode preapply` are separate confirmations — rather than by
-  a duplicate copy of the rules. Alternative: a fully independent re-implementation (belt-and-suspenders,
-  but duplication + drift risk). Recommend **reuse**.
-- **D2 — Module names.** *Lean:* `author_overlay.py`, `verify_overlay_artifact.py`,
-  `ci/verify_committed_overlays.sh`, `OVERLAY_COLLECTION_RUNBOOK.md`. Trivial; rename on request.
-- **D3 — Atomic-publish helper.** *Lean:* replicate the ~15-line `_write_bytes_atomic` sidecar-first
-  helper inside `author_overlay.py` to keep the frozen collector untouched (minimal blast radius).
-  Alternative: extract a shared `disposition_publish.py` used by both (cleaner factoring, touches the
-  collector). Recommend **replicate**.
-- **D4 — `producing_repo_sha` clean-worktree assertion in the author.** *Lean: yes* — for the REQUIRED
-  dims, assert `git_worktree_clean` (and optionally `--expect-repo-sha`) so the producing SHA identifies
-  a real committed scan, mirroring the collector. Recommend **yes**.
+Each suite is a script `__main__` runner with synthetic Ed25519 keys + fixtures (no prod key, no DB). The
+`author_overlay`/`verify_overlay_artifact` suites join the `suites` loop; the CI script is exercised by a
+shell dry-run fixture (added/modified/deleted/orphan/off-path cases).
 
 ---
 
 ## 12. What this design explicitly does NOT do (holds intact)
 
-No evidence is collected, no overlay is signed with the production key, no census is run, no DB is
-touched, no schema is changed, nothing is pushed, no PR is opened, no cluster is assembled, and no
-production action is taken. This packet is **tooling + runbooks only**. Phases 4 (build), 5 (PR), 6+
-(census, reconciliation, collection, cluster, apply) each remain HELD behind their own explicit GO.
+No evidence collected, no overlay signed with the production key, no census run, no DB touched, no schema
+changed, nothing pushed, no PR opened, no cluster assembled, no production action. Tooling + runbooks +
+source-record format only. Phases 4 (build), 5 (PR), 6+ (census, reconciliation, collection, cluster,
+apply) each remain HELD behind their own explicit GO.
