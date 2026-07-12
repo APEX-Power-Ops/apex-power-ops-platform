@@ -18,7 +18,21 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import check_disposition as cd  # noqa: E402
 import disposition_signing as ds  # noqa: E402
+import contextlib  # noqa: E402
+import disposition_provenance as dp  # noqa: E402
+import disposition_trust as dt  # noqa: E402
 import yaml  # noqa: E402
+
+
+def _stub_dp(head, clean=True):
+    saved = (dp.git_head_sha, dp.git_worktree_clean)
+    dp.git_head_sha = lambda *a: head
+    dp.git_worktree_clean = lambda *a: clean
+    return saved
+
+
+def _restore_dp(saved):
+    dp.git_head_sha, dp.git_worktree_clean = saved
 
 
 def _ephemeral_keypair():
@@ -285,7 +299,9 @@ def _receipt_pure():
         with open(paths["snapshot"], "ab") as fh:
             fh.write(b"TAMPER-AFTER-VALIDATION")
         rec = cd.build_receipt(mode="preapply", now_iso="2026-07-10T21:00:00Z", expect_project_ref="fxoyniqnrlkxfligbxmg",
-                               doc_bytes=doc_bytes, doc_paths=paths, extra_paths={}, roots=ROOTS, decisions=dec)
+                               doc_bytes=doc_bytes, doc_paths=paths, signer={"key_id": "k", "spki_sha256": "00" * 32, "pem_sha256": "11" * 32},
+                               snapshot_signature_sha256="22" * 32, gate_repo_sha=None, checkout_bound=False,
+                               production_eligible=False, roots=ROOTS, decisions=dec)
         with open(paths["snapshot"], "rb") as fh:
             tampered_sha = hashlib.sha256(fh.read()).hexdigest()
         ev = {e["ref"]: e["sha256"] for e in rec["evidence"]}
@@ -298,25 +314,6 @@ def _receipt_pure():
 
 def test_gate_receipt_pure():
     assert _receipt_pure()
-
-
-def _receipt_missing_key_raises():
-    # F7: build_receipt must HARD-ERROR (not silently omit) if a verification input vanished before hashing
-    snap, dec, em, man, _sp = harden_bundle()
-    with tempfile.TemporaryDirectory() as d:
-        db = {"snapshot": json.dumps(snap).encode(), "decisions": json.dumps(dec).encode(),
-              "entity_map": json.dumps(em).encode(), "manifest": json.dumps(man).encode()}
-        dp = {k: os.path.join(d, k + ".json") for k in db}
-        try:
-            cd.build_receipt(mode="preapply", now_iso="2026-07-10T21:00:00Z", expect_project_ref="x",
-                             doc_bytes=db, doc_paths=dp, extra_paths={"verify_key": os.path.join(d, "gone.pub")}, roots=ROOTS, decisions=dec)
-            return False
-        except FileNotFoundError:
-            return True
-
-
-def test_receipt_missing_key_raises():
-    assert _receipt_missing_key_raises()
 
 
 def _delete_external_na_unexposed():
@@ -347,44 +344,155 @@ def test_signature_roundtrip():
     assert _sig_roundtrip()
 
 
-def _sig_gate_e2e():
-    """End-to-end SP026: a green harden bundle passes ONLY with a valid signature; a missing or
-    tampered signature blocks (exit 1). Proves the checker verifies before trusting the snapshot."""
+KEY_ID = "test-ed25519"
+
+
+@contextlib.contextmanager
+def _trusted(key_id, fingerprint):
+    prev = dict(dt.TRUSTED_SIGNERS)
+    dt.TRUSTED_SIGNERS[key_id] = fingerprint
+    try:
+        yield
+    finally:
+        dt.TRUSTED_SIGNERS.clear()
+        dt.TRUSTED_SIGNERS.update(prev)
+
+
+def _fp(pub_pem):
+    return ds.public_key_fingerprint(ds.load_public_key_pem(pub_pem))
+
+
+def _preapply_base(d):
+    """Write a GREEN harden bundle's decisions/entity_map/manifest into dir d; return (base_argv, snap).
+    The manifest's evidence_snapshot is set to 'snap.json' — the basename _preapply_signed_paths writes —
+    so it resolves within --root d (SP021). The snapshot itself is passed via --snapshot separately."""
     snap, dec, em, man, _sp = harden_bundle()
     man = copy.deepcopy(man)
+    man["evidence_snapshot"] = "snap.json"
+    for nm, doc in (("dec.json", dec), ("em.json", em), ("man.json", man)):
+        with open(os.path.join(d, nm), "w", encoding="utf-8") as fh:
+            json.dump(doc, fh)
+    base = ["--decisions", os.path.join(d, "dec.json"), "--entity-map", os.path.join(d, "em.json"),
+            "--manifest", os.path.join(d, "man.json"), "--now", "2026-07-10T21:00:00Z", "--root", d,
+            "--expect-project-ref", "fxoyniqnrlkxfligbxmg"]
+    return base, snap
+
+
+def _preapply_signed_paths(d, snap):
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    snap_bytes = json.dumps(snap, indent=2, sort_keys=True).encode("utf-8")
+    snap_path = os.path.join(d, "snap.json")
+    with open(snap_path, "wb") as fh:
+        fh.write(snap_bytes)
+    sig_path = snap_path + ".sig"
+    with open(sig_path, "w", encoding="utf-8") as fh:
+        json.dump(ds.build_sig_sidecar(snap_bytes, priv), fh)
+    keys_dir = os.path.join(d, "keys")
+    os.makedirs(keys_dir, exist_ok=True)
+    with open(os.path.join(keys_dir, KEY_ID + ".pub.pem"), "wb") as fh:
+        fh.write(pub_pem)
+    return snap_path, sig_path, keys_dir, _fp(pub_pem)
+
+
+def _preapply_anchor_green():
     with tempfile.TemporaryDirectory() as d:
-        snap_bytes = json.dumps(snap, indent=2, sort_keys=True).encode("utf-8")
-        snap_path = os.path.join(d, "snap.json")
-        with open(snap_path, "wb") as fh:
-            fh.write(snap_bytes)
-        man["evidence_snapshot"] = "snap.json"  # resolves within root d to snap_path (SP021)
-        paths = {}
-        for nm, doc in (("dec.json", dec), ("em.json", em), ("man.json", man)):
-            paths[nm] = os.path.join(d, nm)
-            with open(paths[nm], "w", encoding="utf-8") as fh:
-                json.dump(doc, fh)
-        priv, _priv_pem, pub_pem = _ephemeral_keypair()
-        sig_path = os.path.join(d, "snap.json.sig")
-        with open(sig_path, "w", encoding="utf-8") as fh:
-            json.dump(ds.build_sig_sidecar(snap_bytes, priv), fh)
-        pub_path = os.path.join(d, "verify.pub")
-        with open(pub_path, "wb") as fh:
-            fh.write(pub_pem)
-        base = ["--snapshot", snap_path, "--decisions", paths["dec.json"], "--entity-map", paths["em.json"],
-                "--manifest", paths["man.json"], "--now", "2026-07-10T21:00:00Z", "--root", d,
-                "--expect-project-ref", "fxoyniqnrlkxfligbxmg"]
+        base, snap = _preapply_base(d)
+        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
         receipt_path = os.path.join(d, "receipt.json")
-        green = cd.main(base + ["--snapshot-sig", sig_path, "--verify-key", pub_path, "--receipt-out", receipt_path]) == 0
-        green = green and os.path.isfile(receipt_path) and json.load(open(receipt_path, encoding="utf-8"))["gate"] == "green"  # receipt emitted on GREEN
-        missing = cd.main(base) == 1                                    # no sig/key supplied
-        with open(snap_path, "ab") as fh:
-            fh.write(b" ")                                              # tamper the signed bytes
-        tampered = cd.main(base + ["--snapshot-sig", sig_path, "--verify-key", pub_path]) == 1
+        with _trusted(KEY_ID, fp):
+            rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path,
+                                 "--key-id", KEY_ID, "--keys-dir", keys_dir, "--allow-unbound-checkout", "--receipt-out", receipt_path])
+        if rc != 0:
+            return False
+        rec = json.load(open(receipt_path, encoding="utf-8"))
+        return (rec["gate"] == "green" and rec["signer"]["key_id"] == KEY_ID and rec["signer"]["spki_sha256"] == fp
+                and "verify_key" not in json.dumps(rec)
+                and rec["snapshot_signature_sha256"] == hashlib.sha256(open(sig_path, "rb").read()).hexdigest())
+
+
+def test_preapply_anchor_green():
+    assert _preapply_anchor_green()
+
+
+# The SP026 negatives assert the SP026 CODE (not just rc). When Task 7 inserts the SP028 gate BEFORE
+# the SP026 gate, a flag-less run would block on SP028 and turn these RED — forcing Task 7 to add
+# --allow-unbound-checkout here so execution still reaches the SP026 path (guard against silent masking).
+def _preapply_missing_key_blocks():
+    import io
+    with tempfile.TemporaryDirectory() as d:
+        base, snap = _preapply_base(d)
+        snap_path, sig_path, _kd, _fp2 = _preapply_signed_paths(d, snap)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--allow-unbound-checkout"])  # no --key-id
+        return rc == 1 and "SP026" in buf.getvalue()
+
+
+def test_preapply_missing_key_blocks():
+    assert _preapply_missing_key_blocks()
+
+
+def _preapply_unknown_key_blocks():
+    import io
+    with tempfile.TemporaryDirectory() as d:
+        base, snap = _preapply_base(d)
+        snap_path, sig_path, keys_dir, _fp2 = _preapply_signed_paths(d, snap)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path,
+                                 "--key-id", "not-a-signer", "--keys-dir", keys_dir, "--allow-unbound-checkout"])
+        return rc == 1 and "SP026" in buf.getvalue()
+
+
+def test_preapply_unknown_key_blocks():
+    assert _preapply_unknown_key_blocks()
+
+
+def _sig_gate_e2e():
+    """End-to-end SP026: a green harden bundle passes ONLY with a valid signature resolved through the
+    TRUSTED_SIGNERS anchor; a missing --key-id or a tampered snapshot blocks with the SP026 code (exit 1).
+    Proves the checker verifies before trusting the snapshot."""
+    import io
+    with tempfile.TemporaryDirectory() as d:
+        base, snap = _preapply_base(d)
+        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
+        receipt_path = os.path.join(d, "receipt.json")
+        with _trusted(KEY_ID, fp):
+            green = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path,
+                                    "--key-id", KEY_ID, "--keys-dir", keys_dir, "--allow-unbound-checkout", "--receipt-out", receipt_path]) == 0
+            green = green and os.path.isfile(receipt_path) and json.load(open(receipt_path, encoding="utf-8"))["gate"] == "green"  # receipt emitted on GREEN
+            mbuf = io.StringIO()
+            with contextlib.redirect_stdout(mbuf):
+                mrc = cd.main(base + ["--snapshot", snap_path, "--allow-unbound-checkout"])                 # no sig/key supplied
+            missing = mrc == 1 and "SP026" in mbuf.getvalue()
+            with open(snap_path, "ab") as fh:
+                fh.write(b" ")                                                  # tamper the signed bytes
+            tbuf = io.StringIO()
+            with contextlib.redirect_stdout(tbuf):
+                trc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path,
+                                      "--key-id", KEY_ID, "--keys-dir", keys_dir, "--allow-unbound-checkout"])
+            tampered = trc == 1 and "SP026" in tbuf.getvalue()
         return green and missing and tampered
 
 
 def test_signature_gate_end_to_end():
     assert _sig_gate_e2e()
+
+
+def _sidecar_bytes_agree():
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    pub = ds.load_public_key_pem(pub_pem)
+    msg = b'{"kind":"evidence_snapshot"}'
+    sidecar_bytes = json.dumps(ds.build_sig_sidecar(msg, priv)).encode("utf-8")
+    ok, _ = ds.verify_sidecar_bytes_with_key(msg, sidecar_bytes, pub)
+    return ok is True
+
+
+def _sidecar_bytes_bad_json_fails_closed():
+    _priv, _pp, pub_pem = _ephemeral_keypair()
+    pub = ds.load_public_key_pem(pub_pem)
+    ok, reason = ds.verify_sidecar_bytes_with_key(b"msg", b"{not json", pub)
+    return ok is False and "sidecar" in reason
 
 
 def test_wrong_kind_document_rejected():
@@ -447,6 +555,128 @@ def _path():
             and not cd.is_path_ref("query:x") and cd.is_path_ref("C:\\x"))
 
 
+def _checkout_matrix():
+    g = cd._checkout_gate
+    r = []
+    r.append(g(None, False, False)[0] is False)                       # (0,0,0) SP028
+    r.append(g(None, False, True) == (True, False, False, None, None))  # (0,0,1) authoring
+    saved = _stub_dp("deadbeef", clean=True)
+    try:
+        r.append(g("deadbeef", True, False)[:4] == (True, True, True, "deadbeef"))  # (1,1,0) bound
+        r.append(g("cafef00d", True, False)[0] is False)              # wrong gate sha -> SP028
+        _restore_dp(saved); saved = _stub_dp("deadbeef", clean=False)
+        r.append(g("deadbeef", True, False)[0] is False)              # dirty -> SP028
+        _restore_dp(saved); saved = _stub_dp(None, clean=True)
+        r.append(g("deadbeef", True, False)[0] is False)              # undeterminable HEAD (git_head_sha->None) -> SP028
+    finally:
+        _restore_dp(saved)
+    r.append(g("deadbeef", False, False)[0] is False)                 # (1,0,0) SP028
+    r.append(g(None, True, False)[0] is False)                        # (0,1,0) SP028
+    r.append(g("deadbeef", True, True)[0] is False)                   # (1,1,1) SP028
+    r.append(g("deadbeef", False, True)[0] is False)                  # (1,0,1) SP028
+    r.append(g(None, True, True)[0] is False)                         # (0,1,1) SP028
+    return all(r)
+
+
+def test_checkout_matrix():
+    assert _checkout_matrix()
+
+
+def _neither_flag_blocks_sp028():
+    import io
+    with tempfile.TemporaryDirectory() as d:
+        base, snap = _preapply_base(d)
+        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
+        buf = io.StringIO()
+        with _trusted(KEY_ID, fp), contextlib.redirect_stdout(buf):
+            rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--key-id", KEY_ID, "--keys-dir", keys_dir])
+    return rc == 1 and "SP028" in buf.getvalue()
+
+
+def test_neither_flag_blocks_sp028():
+    assert _neither_flag_blocks_sp028()
+
+
+def _sp028_precedes_doc_read():
+    # a nonexistent snapshot/decisions path + no checkout flags must fail SP028 (rc 1), NOT SP000 (rc 2):
+    # the gate refuses before any document read.
+    import io
+    with tempfile.TemporaryDirectory() as d:
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = cd.main(["--snapshot", os.path.join(d, "nope.json"), "--decisions", os.path.join(d, "nope.json"),
+                          "--entity-map", os.path.join(d, "nope.json"), "--manifest", os.path.join(d, "nope.json"),
+                          "--now", "2026-07-10T21:00:00Z", "--root", d, "--expect-project-ref", "fxoyniqnrlkxfligbxmg"])
+    return rc == 1 and "SP028" in buf.getvalue()
+
+
+def test_sp028_precedes_doc_read():
+    assert _sp028_precedes_doc_read()
+
+
+def _authoring_banner_and_receipt():
+    import io
+    banner = "=== DISPOSITION GATE (preapply): GREEN — AUTHORING ONLY; CHECKOUT UNBOUND ==="  # exact literal (em-dash)
+    with tempfile.TemporaryDirectory() as d:
+        base, snap = _preapply_base(d)
+        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
+        receipt_path = os.path.join(d, "receipt.json")
+        out_buf, err_buf = io.StringIO(), io.StringIO()
+        with _trusted(KEY_ID, fp), contextlib.redirect_stdout(out_buf), contextlib.redirect_stderr(err_buf):
+            rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--key-id", KEY_ID,
+                                 "--keys-dir", keys_dir, "--allow-unbound-checkout", "--receipt-out", receipt_path])
+        out, err = out_buf.getvalue(), err_buf.getvalue()
+        rec = json.load(open(receipt_path, encoding="utf-8"))
+    return (rc == 0 and banner in out and "WARNING: unbound checkout" in err
+            and rec["checkout_bound"] is False and rec["production_eligible"] is False and rec["gate_repo_sha"] is None)
+
+
+def test_authoring_banner_and_receipt():
+    assert _authoring_banner_and_receipt()
+
+
+def _bound_green_receipt():
+    import io
+    with tempfile.TemporaryDirectory() as d:
+        base, snap = _preapply_base(d)
+        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
+        receipt_path = os.path.join(d, "receipt.json")
+        saved = _stub_dp("deadbeef", clean=True)
+        buf = io.StringIO()
+        try:
+            with _trusted(KEY_ID, fp), contextlib.redirect_stdout(buf):
+                rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--key-id", KEY_ID,
+                                     "--keys-dir", keys_dir, "--expect-gate-repo-sha", "deadbeef",
+                                     "--require-clean-checkout", "--receipt-out", receipt_path])
+            out = buf.getvalue()
+            rec = json.load(open(receipt_path, encoding="utf-8"))
+        finally:
+            _restore_dp(saved)
+    return (rc == 0 and "AUTHORING ONLY" not in out and rec["checkout_bound"] is True
+            and rec["production_eligible"] is True and rec["gate_repo_sha"] == "deadbeef")
+
+
+def test_bound_green_receipt():
+    assert _bound_green_receipt()
+
+
+def _verify_key_flag_rejected():
+    import io
+    err = io.StringIO()
+    argv = ["--snapshot", "s", "--decisions", "d", "--entity-map", "e", "--manifest", "m",
+            "--now", "2026-07-10T21:00:00Z", "--root", "r", "--verify-key", "x"]
+    try:
+        with contextlib.redirect_stderr(err):
+            cd.main(argv)
+        return False  # argparse should have exited before returning
+    except SystemExit as exc:
+        return exc.code == 2 and "unrecognized arguments: --verify-key" in err.getvalue()
+
+
+def test_verify_key_flag_rejected():
+    assert _verify_key_flag_rejected()
+
+
 if __name__ == "__main__":
     ok = True
     print("== green baselines ==")
@@ -469,13 +699,24 @@ if __name__ == "__main__":
         ("sp024_missing_target_identity", _sp024_missing_ti),
         ("delete_external_na_when_unexposed", _delete_external_na_unexposed),
         ("gate_receipt_pure", _receipt_pure),
-        ("receipt_missing_key_raises", _receipt_missing_key_raises),
+        # F7 obsolete under SP026: the receipt binds snapshot_signature_sha256 from in-hand sig bytes; there is no second read to guard.
         ("signature_roundtrip", _sig_roundtrip),
         ("signature_gate_end_to_end", _sig_gate_e2e),
+        ("preapply_anchor_green", _preapply_anchor_green),
+        ("preapply_missing_key_blocks", _preapply_missing_key_blocks),
+        ("preapply_unknown_key_blocks", _preapply_unknown_key_blocks),
+        ("verify_sidecar_bytes_ok", _sidecar_bytes_agree),
+        ("verify_sidecar_bytes_bad_json", _sidecar_bytes_bad_json_fails_closed),
         ("wrong_kind_document", _wrong_kind),
         ("dup_yaml", lambda: _yaml_dup()),
         ("dup_json", lambda: _json_dup()),
         ("path_safety", lambda: _path()),
+        ("checkout_matrix", _checkout_matrix),
+        ("neither_flag_blocks_sp028", _neither_flag_blocks_sp028),
+        ("sp028_precedes_doc_read", _sp028_precedes_doc_read),
+        ("authoring_banner_and_receipt", _authoring_banner_and_receipt),
+        ("bound_green_receipt", _bound_green_receipt),
+        ("verify_key_flag_rejected", _verify_key_flag_rejected),
     ]:
         try:
             r = bool(fn())

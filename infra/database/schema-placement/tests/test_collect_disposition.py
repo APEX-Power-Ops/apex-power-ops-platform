@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import collect_disposition as cd  # noqa: E402
+import disposition_provenance as dp  # noqa: E402
 import disposition_signing as ds  # noqa: E402
 
 NOW = "2026-07-11T00:00:00Z"
@@ -210,17 +211,17 @@ def test_dsn_project_binding():
 
 
 def _stub_git_provenance(head=SHA, clean=True):
-    """Patch the collector's git provenance helpers so main() runs without a real merged-main checkout.
-    Production has NO --repo-sha bypass (D1); tests inject provenance here and pass --expect-repo-sha.
-    Returns the saved originals for _restore_git_provenance."""
-    saved = (cd._git_head_sha, cd._git_worktree_clean)
-    cd._git_head_sha = lambda *a: head
-    cd._git_worktree_clean = lambda *a: clean
+    """Patch the shared provenance helpers so collector main() runs without a real merged-main
+    checkout. Production has NO --repo-sha bypass (D1); tests inject provenance here and pass
+    --expect-repo-sha. Returns the saved originals for _restore_git_provenance."""
+    saved = (dp.git_head_sha, dp.git_worktree_clean)
+    dp.git_head_sha = lambda *a: head
+    dp.git_worktree_clean = lambda *a: clean
     return saved
 
 
 def _restore_git_provenance(saved):
-    cd._git_head_sha, cd._git_worktree_clean = saved
+    dp.git_head_sha, dp.git_worktree_clean = saved
 
 
 def test_main_write_failure_fails_closed():
@@ -385,16 +386,16 @@ def _prep_provenance_env(head, clean):
     _priv, priv_pem, _pub = _ephemeral_keypair()
     os.environ["DISPOSITION_DSN"] = f"postgresql://postgres:pw@db.{PROJECT}.supabase.co:5432/postgres"
     os.environ["DISPOSITION_SIGNING_KEY"] = priv_pem.decode("utf-8")
-    saved = (cd._git_head_sha, cd._git_worktree_clean, cd.collect_from_db)
-    cd._git_head_sha = lambda *a: head
-    cd._git_worktree_clean = lambda *a: clean
+    saved = (dp.git_head_sha, dp.git_worktree_clean, cd.collect_from_db)
+    dp.git_head_sha = lambda *a: head
+    dp.git_worktree_clean = lambda *a: clean
     called = {"v": False}
     cd.collect_from_db = lambda *a, **k: (called.__setitem__("v", True), dict(_MINI_SNAP))[1]
     return saved, called
 
 
 def _restore_provenance_env(saved):
-    cd._git_head_sha, cd._git_worktree_clean, cd.collect_from_db = saved
+    dp.git_head_sha, dp.git_worktree_clean, cd.collect_from_db = saved
     os.environ.pop("DISPOSITION_DSN", None)
     os.environ.pop("DISPOSITION_SIGNING_KEY", None)
 

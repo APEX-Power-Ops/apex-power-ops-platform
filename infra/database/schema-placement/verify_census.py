@@ -24,31 +24,16 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import sys
 
 from jsonschema import Draft202012Validator, FormatChecker
 
 import collect_disposition as cds  # for the authoritative query_bundle_sha256() of THIS repo checkout
+import disposition_provenance as dp
 import disposition_signing as ds
+import disposition_trust as dt
 
 SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "disposition.schema.json")
-DEFAULT_KEYS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "keys")
-
-# Repo-owned trust anchor (SOURCE CONSTANT). This map of an authorized signer id -> the SHA-256 of its
-# Ed25519 SubjectPublicKeyInfo DER IS the trust anchor: it is reviewed and committed as part of this
-# verifier's source, so "repo-owned" means "anchored by reviewed verifier source", NOT "whatever
-# directory the caller supplies". keys/<key-id>.pub.pem provides only the public key MATERIAL; it is
-# accepted only if its SPKI fingerprint equals the value pinned here — a caller cannot substitute their
-# own key + a self-consistent sibling fingerprint file (H1). Rotating a signer is a reviewed one-line
-# change to this map (and a governed commit of the matching public key).
-TRUSTED_SIGNERS = {
-    "prod-disposition-ed25519-2026-07": "c75785cd002977f3ce4794f55ea3b1437be5c60a07c36727372c53bd3dc592ca",
-}
-
-# A signer id is a bare identifier — no path separators, no '..', no leading dot — so it cannot be used
-# to traverse out of the keys directory when joined to a path (F3).
-_KEY_ID_RE = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 
 # relation fact fields (each an observation with a `state`); a census-acceptance rejects ANY that
 # came back query_failed (an incomplete census must not become authoritative).
@@ -59,7 +44,7 @@ _CONSUMER_DIMS = ("static_repo", "database_deps", "runtime_logs", "external_clie
 
 CODES = {
     "CN000": "input could not be read/parsed",
-    "CN001": "snapshot signature is missing or does not verify against --verify-key",
+    "CN001": "snapshot signature is missing or does not verify against the pinned signer (--key-id resolved through the reviewed TRUSTED_SIGNERS anchor)",
     "CN002": "snapshot failed JSON Schema validation or is not kind=evidence_snapshot",
     "CN003": "project_ref does not match --expect-project-ref",
     "CN004": "current_database / collection_scope.expected_database does not match --expect-database",
@@ -107,43 +92,6 @@ def _reject_dup_json_pairs(pairs):
 
 def load_snapshot_from_bytes(data: bytes):
     return json.loads(data.decode("utf-8"), object_pairs_hook=_reject_dup_json_pairs, parse_constant=_reject_nonfinite)
-
-
-def resolve_pinned_key(keys_dir, key_id, trusted_signers=None):
-    """Resolve an authorized signer id to its loaded Ed25519 public key OBJECT, anchored by the reviewed
-    SOURCE CONSTANT TRUSTED_SIGNERS — NOT a caller-supplied sibling fingerprint file. All steps
-    fail-closed:
-      1. key_id must be a known signer in TRUSTED_SIGNERS (the reviewed anchor);
-      2. key_id must be a bare identifier (no path separators / '..'), and the resolved key path must
-         stay within keys_dir (defence in depth against traversal, F3);
-      3. load keys_dir/<key_id>.pub.pem as public key MATERIAL;
-      4. require its SPKI SHA-256 to equal the pinned constant (H1).
-    Returns (public_key_object, '') on success, else (None, reason). Returning the loaded OBJECT (not a
-    path) lets the caller verify the signature against the exact key it fingerprint-checked, with no
-    re-open (H3)."""
-    trusted = trusted_signers if trusted_signers is not None else TRUSTED_SIGNERS
-    expected_fp = trusted.get(key_id)
-    if expected_fp is None:
-        return None, f"key-id {key_id!r} is not an authorized signer (not in the reviewed TRUSTED_SIGNERS anchor)"
-    if not _KEY_ID_RE.match(key_id):
-        return None, f"key-id {key_id!r} is not a bare identifier (path separators / '..' are rejected)"
-    try:
-        keys_dir = os.path.realpath(keys_dir)
-        pub_path = os.path.realpath(os.path.join(keys_dir, f"{key_id}.pub.pem"))
-        contained = os.path.commonpath([keys_dir, pub_path]) == keys_dir
-    except (ValueError, OSError) as exc:
-        return None, f"cannot resolve key path for key-id {key_id!r} ({type(exc).__name__})"
-    if not contained:
-        return None, f"resolved key path escapes the keys directory {keys_dir}"
-    try:
-        with open(pub_path, "rb") as fh:
-            public_key = ds.load_public_key_pem(fh.read())
-    except Exception as exc:  # noqa: BLE001 -- any load failure => cannot establish the anchor
-        return None, f"cannot load key-id public key {pub_path} ({type(exc).__name__})"
-    computed_fp = ds.public_key_fingerprint(public_key)
-    if computed_fp != expected_fp.strip().lower():
-        return None, f"public key SPKI sha256 {computed_fp} != pinned fingerprint for key-id {key_id!r}"
-    return public_key, ""
 
 
 def _validator():
@@ -236,7 +184,7 @@ def main(argv=None):
     ap.add_argument("--key-id", required=True, dest="key_id",
                     help="authorized signer id pinned in the TRUSTED_SIGNERS source anchor, e.g. "
                          "prod-disposition-ed25519-2026-07; keys/<key-id>.pub.pem must match its pinned SPKI fingerprint.")
-    ap.add_argument("--keys-dir", default=DEFAULT_KEYS_DIR, dest="keys_dir",
+    ap.add_argument("--keys-dir", default=dt.DEFAULT_KEYS_DIR, dest="keys_dir",
                     help="dir holding <key-id>.pub.pem (public key MATERIAL only; the trust anchor is the source constant).")
     ap.add_argument("--expect-project-ref", required=True, dest="expect_project_ref")
     ap.add_argument("--expect-database", required=True, dest="expect_database")
@@ -256,8 +204,8 @@ def main(argv=None):
     # trusting them. Fail-closed on a dirty / undeterminable / mismatched checkout.
     if args.require_clean_checkout:
         vdir = os.path.dirname(os.path.abspath(__file__))
-        head = cds._git_head_sha(vdir)
-        if not head or not cds._git_worktree_clean(vdir):
+        head = dp.git_head_sha(vdir)
+        if not head or not dp.git_worktree_clean(vdir):
             print(Diagnostic("CN017", "verifier", "verifier checkout is DIRTY or its git HEAD is undeterminable — run acceptance from a clean merged-main checkout so TRUSTED_SIGNERS + keys/ are reviewed source").render())
             print("=== CENSUS ACCEPTANCE: 1 BLOCKING ===")
             return 1
@@ -276,12 +224,12 @@ def main(argv=None):
         return 2
     # Resolve the trust anchor from the reviewed SOURCE CONSTANT (TRUSTED_SIGNERS), not a caller path,
     # and verify against the loaded key OBJECT so the fingerprint-checked key IS the verify key (H1/H3).
-    public_key, kreason = resolve_pinned_key(os.path.abspath(args.keys_dir), args.key_id)
-    if public_key is None:
+    signer, kreason = dt.resolve_pinned_key(os.path.abspath(args.keys_dir), args.key_id)
+    if signer is None:
         print(Diagnostic("CN013", "key-id", kreason).render())
         print("=== CENSUS ACCEPTANCE: 1 BLOCKING ===")
         return 1
-    ok, reason = ds.verify_detached_with_key(snap_bytes, os.path.abspath(args.snapshot_sig), public_key)
+    ok, reason = ds.verify_detached_with_key(snap_bytes, os.path.abspath(args.snapshot_sig), signer.public_key)
     if not ok:
         print(Diagnostic("CN001", "snapshot", f"signature verification failed: {reason}").render())
         print("=== CENSUS ACCEPTANCE: 1 BLOCKING ===")

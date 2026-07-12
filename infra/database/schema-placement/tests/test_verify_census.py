@@ -16,7 +16,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import collect_disposition as cds  # noqa: E402
+import disposition_provenance as dp  # noqa: E402
 import disposition_signing as ds  # noqa: E402
+import disposition_trust as dt  # noqa: E402
 import verify_census as vc  # noqa: E402
 
 QB = cds.query_bundle_sha256()
@@ -162,16 +164,15 @@ PROD_KEY_ID = "prod-disposition-ed25519-2026-07"
 
 @contextlib.contextmanager
 def _trusted(key_id, fingerprint):
-    """Temporarily pin a signer id -> SPKI fingerprint in the reviewed source-constant anchor, so an
-    ephemeral test key is treated as an authorized signer. Restores the real anchor afterward. Works
-    under both pytest and the __main__ runner (no fixtures)."""
-    prev = dict(vc.TRUSTED_SIGNERS)
-    vc.TRUSTED_SIGNERS[key_id] = fingerprint
+    """Temporarily pin a signer id -> SPKI fingerprint in the reviewed source-constant anchor
+    (disposition_trust.TRUSTED_SIGNERS, where resolve_pinned_key reads it). Restores afterward."""
+    prev = dict(dt.TRUSTED_SIGNERS)
+    dt.TRUSTED_SIGNERS[key_id] = fingerprint
     try:
         yield
     finally:
-        vc.TRUSTED_SIGNERS.clear()
-        vc.TRUSTED_SIGNERS.update(prev)
+        dt.TRUSTED_SIGNERS.clear()
+        dt.TRUSTED_SIGNERS.update(prev)
 
 
 def _fp(pub_pem):
@@ -191,8 +192,8 @@ def _write_signed(snapshot, d, priv, pub_pem, fingerprint=None, key_id=KEY_ID):
     with open(os.path.join(keys_dir, key_id + ".pub.pem"), "wb") as fh:
         fh.write(pub_pem)
     # The sibling .spki-sha256 is INERT under the source-constant anchor (the trust anchor is
-    # vc.TRUSTED_SIGNERS, not this file); it is written only to prove a caller-supplied sibling
-    # fingerprint grants no trust.
+    # disposition_trust.TRUSTED_SIGNERS, not this file); it is written only to prove a caller-supplied
+    # sibling fingerprint grants no trust.
     fp = fingerprint if fingerprint is not None else ds.public_key_fingerprint(ds.load_public_key_pem(pub_pem))
     with open(os.path.join(keys_dir, key_id + ".spki-sha256"), "w", encoding="utf-8") as fh:
         fh.write(fp + "\n")
@@ -280,16 +281,18 @@ def test_main_key_id_traversal_rejected_CN013():
 
 
 def test_resolve_pinned_key_returns_key_object():
-    # H3: resolve_pinned_key returns a loaded public-key OBJECT (not a path), so the caller verifies the
-    # signature against the exact key it fingerprint-checked (no verify-then-reopen TOCTOU).
+    # H3: resolve_pinned_key returns a ResolvedSigner wrapping a loaded public-key OBJECT (not a path),
+    # so the caller verifies the signature against the exact key it fingerprint-checked (no
+    # verify-then-reopen TOCTOU).
     priv, _pp, pub_pem = _ephemeral_keypair()
     with tempfile.TemporaryDirectory() as d:
         _sp, _sig, kd = _write_signed(_snap(), d, priv, pub_pem)
         with _trusted(KEY_ID, _fp(pub_pem)):
-            key, reason = vc.resolve_pinned_key(kd, KEY_ID)
-        assert reason == "" and key is not None
-        assert not isinstance(key, (str, bytes, os.PathLike))
-        assert hasattr(key, "public_bytes")  # an Ed25519 public key object
+            signer, reason = dt.resolve_pinned_key(kd, KEY_ID)
+        assert reason == ""
+        assert signer.public_key is not None and signer.spki_sha256 == _fp(pub_pem) and signer.key_id == KEY_ID
+        assert not isinstance(signer.public_key, (str, bytes, os.PathLike))
+        assert hasattr(signer.public_key, "public_bytes")  # an Ed25519 public key object
 
 
 def test_verify_uses_pinned_key_object_after_file_swap():
@@ -301,12 +304,12 @@ def test_verify_uses_pinned_key_object_after_file_swap():
         with open(sp, "rb") as fh:
             snap_bytes = fh.read()
         with _trusted(KEY_ID, _fp(pub_pem)):
-            key, reason = vc.resolve_pinned_key(kd, KEY_ID)
+            signer, reason = dt.resolve_pinned_key(kd, KEY_ID)
         assert reason == ""
         _p2, _pp2, other_pub = _ephemeral_keypair()
         with open(os.path.join(kd, KEY_ID + ".pub.pem"), "wb") as fh:
             fh.write(other_pub)  # swap the file to a DIFFERENT key after resolve
-        ok, _r = ds.verify_detached_with_key(snap_bytes, sig, key)
+        ok, _r = ds.verify_detached_with_key(snap_bytes, sig, signer.public_key)
         assert ok is True  # verified against the in-hand pinned object, unaffected by the swap
 
 
@@ -338,13 +341,32 @@ def test_committed_prod_key_resolves_and_no_private_material():
     # Finding #2: the COMMITTED production pubkey resolves through the REAL source anchor (no monkeypatch),
     # proving keys/<prod-id>.pub.pem matches the source-pinned TRUSTED_SIGNERS fingerprint; and keys/ holds
     # NO private-key material.
-    assert PROD_KEY_ID in vc.TRUSTED_SIGNERS
-    key, reason = vc.resolve_pinned_key(vc.DEFAULT_KEYS_DIR, PROD_KEY_ID)   # real TRUSTED_SIGNERS, real keys/
-    assert reason == "" and key is not None and hasattr(key, "public_bytes")
-    for root, _dirs, files in os.walk(vc.DEFAULT_KEYS_DIR):
+    assert PROD_KEY_ID in dt.TRUSTED_SIGNERS
+    signer, reason = dt.resolve_pinned_key(dt.DEFAULT_KEYS_DIR, PROD_KEY_ID)   # real TRUSTED_SIGNERS, real keys/
+    assert reason == "" and signer is not None and hasattr(signer.public_key, "public_bytes")
+    for root, _dirs, files in os.walk(dt.DEFAULT_KEYS_DIR):
         for fn in files:
             with open(os.path.join(root, fn), "rb") as fh:
                 assert b"PRIVATE KEY" not in fh.read(), f"private key material found under keys/: {fn}"
+
+
+def test_committed_prod_census_reverifies_through_shared_anchor():
+    # SP026: the REAL committed production census must still verify GREEN through the refactored
+    # disposition_trust anchor — proving the refactor is behavior-preserving for genuine evidence.
+    # This runs the ACTUAL verifier entrypoint; it does NOT rely on the CI 'no new snapshots' path.
+    import glob
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    snaps = sorted(glob.glob(os.path.join(here, "evidence", "census-prod-*.json")))
+    assert snaps, "no committed census artifact found"
+    snap = snaps[-1]
+    sig = snap + ".sig"
+    repo_sha = json.load(open(snap, encoding="utf-8"))["repo_sha"]
+    keys_dir = os.path.join(here, "keys")
+    rc = vc.main(["--snapshot", snap, "--snapshot-sig", sig, "--key-id", PROD_KEY_ID, "--keys-dir", keys_dir,
+                  "--expect-project-ref", PROJECT, "--expect-database", "postgres", "--expect-schemas", "public",
+                  "--expect-repo-sha", repo_sha, "--require-role-markers", ",".join(MARKERS),
+                  "--expect-query-bundle-sha256", QB])
+    assert rc == 0
 
 
 def test_main_expect_query_bundle_required():
@@ -369,17 +391,17 @@ def test_main_require_clean_checkout_preflight():
     priv, _pp, pub_pem = _ephemeral_keypair()
     with tempfile.TemporaryDirectory() as d:
         sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
-        saved = (cds._git_head_sha, cds._git_worktree_clean)
+        saved = (dp.git_head_sha, dp.git_worktree_clean)
         try:
             with _trusted(KEY_ID, _fp(pub_pem)):
-                cds._git_head_sha = lambda *a: SHA; cds._git_worktree_clean = lambda *a: False   # dirty
+                dp.git_head_sha = lambda *a: SHA; dp.git_worktree_clean = lambda *a: False   # dirty
                 assert vc.main(_argv(sp, sig, kd) + ["--require-clean-checkout"]) == 1
-                cds._git_head_sha = lambda *a: "deadbeef1234"; cds._git_worktree_clean = lambda *a: True  # wrong HEAD
+                dp.git_head_sha = lambda *a: "deadbeef1234"; dp.git_worktree_clean = lambda *a: True  # wrong HEAD
                 assert vc.main(_argv(sp, sig, kd) + ["--require-clean-checkout"]) == 1
-                cds._git_head_sha = lambda *a: SHA; cds._git_worktree_clean = lambda *a: True    # clean + match
+                dp.git_head_sha = lambda *a: SHA; dp.git_worktree_clean = lambda *a: True    # clean + match
                 assert vc.main(_argv(sp, sig, kd) + ["--require-clean-checkout"]) == 0
         finally:
-            cds._git_head_sha, cds._git_worktree_clean = saved
+            dp.git_head_sha, dp.git_worktree_clean = saved
 
 
 def test_key_id_traversal_rejected_even_with_planted_key():
@@ -394,8 +416,8 @@ def test_key_id_traversal_rejected_even_with_planted_key():
         with open(planted, "wb") as fh:
             fh.write(pub_pem)  # a loadable key whose SPKI == the trusted fingerprint below
         with _trusted("../evil", _fp(pub_pem)):
-            key, reason = vc.resolve_pinned_key(kd, "../evil")
-        assert key is None
+            signer, reason = dt.resolve_pinned_key(kd, "../evil")
+        assert signer is None
         assert ("bare identifier" in reason) or ("escapes the keys directory" in reason)  # NOT "cannot load"
 
 
@@ -429,6 +451,7 @@ ALL = [
     ("verify_detached_with_key_crypto_is_sole_gate", test_verify_detached_with_key_crypto_is_sole_gate),
     ("key_id_traversal_rejected_even_with_planted_key", test_key_id_traversal_rejected_even_with_planted_key),
     ("committed_prod_key_resolves_and_no_private_material", test_committed_prod_key_resolves_and_no_private_material),
+    ("committed_prod_census_reverifies", test_committed_prod_census_reverifies_through_shared_anchor),
     ("main_expect_query_bundle_required", test_main_expect_query_bundle_required),
     ("main_require_clean_checkout_preflight", test_main_require_clean_checkout_preflight),
 ]
