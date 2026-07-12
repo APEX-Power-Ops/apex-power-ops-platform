@@ -410,6 +410,10 @@ def _preapply_anchor_green():
                 and rec["snapshot_signature_sha256"] == hashlib.sha256(open(sig_path, "rb").read()).hexdigest())
 
 
+def test_preapply_anchor_green():
+    assert _preapply_anchor_green()
+
+
 # The SP026 negatives assert the SP026 CODE (not just rc). When Task 7 inserts the SP028 gate BEFORE
 # the SP026 gate, a flag-less run would block on SP028 and turn these RED — forcing Task 7 to add
 # --allow-unbound-checkout here so execution still reaches the SP026 path (guard against silent masking).
@@ -424,6 +428,10 @@ def _preapply_missing_key_blocks():
         return rc == 1 and "SP026" in buf.getvalue()
 
 
+def test_preapply_missing_key_blocks():
+    assert _preapply_missing_key_blocks()
+
+
 def _preapply_unknown_key_blocks():
     import io
     with tempfile.TemporaryDirectory() as d:
@@ -434,6 +442,10 @@ def _preapply_unknown_key_blocks():
             rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path,
                                  "--key-id", "not-a-signer", "--keys-dir", keys_dir, "--allow-unbound-checkout"])
         return rc == 1 and "SP026" in buf.getvalue()
+
+
+def test_preapply_unknown_key_blocks():
+    assert _preapply_unknown_key_blocks()
 
 
 def _sig_gate_e2e():
@@ -566,6 +578,10 @@ def _checkout_matrix():
     return all(r)
 
 
+def test_checkout_matrix():
+    assert _checkout_matrix()
+
+
 def _neither_flag_blocks_sp028():
     import io
     with tempfile.TemporaryDirectory() as d:
@@ -575,6 +591,10 @@ def _neither_flag_blocks_sp028():
         with _trusted(KEY_ID, fp), contextlib.redirect_stdout(buf):
             rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--key-id", KEY_ID, "--keys-dir", keys_dir])
     return rc == 1 and "SP028" in buf.getvalue()
+
+
+def test_neither_flag_blocks_sp028():
+    assert _neither_flag_blocks_sp028()
 
 
 def _sp028_precedes_doc_read():
@@ -588,6 +608,10 @@ def _sp028_precedes_doc_read():
                           "--entity-map", os.path.join(d, "nope.json"), "--manifest", os.path.join(d, "nope.json"),
                           "--now", "2026-07-10T21:00:00Z", "--root", d, "--expect-project-ref", "fxoyniqnrlkxfligbxmg"])
     return rc == 1 and "SP028" in buf.getvalue()
+
+
+def test_sp028_precedes_doc_read():
+    assert _sp028_precedes_doc_read()
 
 
 def _authoring_banner_and_receipt():
@@ -605,6 +629,10 @@ def _authoring_banner_and_receipt():
         rec = json.load(open(receipt_path, encoding="utf-8"))
     return (rc == 0 and banner in out and "WARNING: unbound checkout" in err
             and rec["checkout_bound"] is False and rec["production_eligible"] is False and rec["gate_repo_sha"] is None)
+
+
+def test_authoring_banner_and_receipt():
+    assert _authoring_banner_and_receipt()
 
 
 def _bound_green_receipt():
@@ -626,6 +654,27 @@ def _bound_green_receipt():
             _restore_dp(saved)
     return (rc == 0 and "AUTHORING ONLY" not in out and rec["checkout_bound"] is True
             and rec["production_eligible"] is True and rec["gate_repo_sha"] == "deadbeef")
+
+
+def test_bound_green_receipt():
+    assert _bound_green_receipt()
+
+
+def _verify_key_flag_rejected():
+    import io
+    err = io.StringIO()
+    argv = ["--snapshot", "s", "--decisions", "d", "--entity-map", "e", "--manifest", "m",
+            "--now", "2026-07-10T21:00:00Z", "--root", "r", "--verify-key", "x"]
+    try:
+        with contextlib.redirect_stderr(err):
+            cd.main(argv)
+        return False  # argparse should have exited before returning
+    except SystemExit as exc:
+        return exc.code == 2 and "unrecognized arguments: --verify-key" in err.getvalue()
+
+
+def test_verify_key_flag_rejected():
+    assert _verify_key_flag_rejected()
 
 
 if __name__ == "__main__":
@@ -667,6 +716,7 @@ if __name__ == "__main__":
         ("sp028_precedes_doc_read", _sp028_precedes_doc_read),
         ("authoring_banner_and_receipt", _authoring_banner_and_receipt),
         ("bound_green_receipt", _bound_green_receipt),
+        ("verify_key_flag_rejected", _verify_key_flag_rejected),
     ]:
         try:
             r = bool(fn())

@@ -21,7 +21,7 @@ def _init_repo(d):
     with open(os.path.join(d, "f.txt"), "w", encoding="utf-8") as fh:
         fh.write("x\n")
     _git(d, "add", "f.txt")
-    _git(d, "commit", "-q", "-m", "init")
+    _git(d, "-c", "commit.gpgsign=false", "commit", "-q", "-m", "init")
     return subprocess.run(["git", "-C", d, "rev-parse", "HEAD"], check=True,
                           capture_output=True, text=True).stdout.strip()
 
