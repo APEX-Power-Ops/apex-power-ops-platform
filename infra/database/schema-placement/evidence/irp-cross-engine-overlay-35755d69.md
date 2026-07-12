@@ -81,3 +81,27 @@ Operator directed an independent focused proof of the rev-5 delta (OV022 + all-c
 **Plan-pinned negative tests (writing-plan §9).** OV022-fires-when-window-not-covering · external_clients-observed→no-OV022 · missing-in_data_api-overlay→SP027 · stale-in_data_api-overlay→OV010 · window-sourced-from-the-specific-assignment · retain-no-overlay→OV018 · retain-with-covering→green · duplicate-src-object→single-derivation-one-marker · OV021-zero-overlay · remove-marker→original-SP009.
 
 **Three LOW spec-clarity items → writing-plan Global Constraints (not spec-blocking; carried to the binding build contract):** T1 (OV022 evaluated only for a delete-conclusion source relation whose external_clients overlay resolves to `not_applicable`; observed → not evaluated); T2 (window looked up from the `(in_data_api_exposed_schema, object_id)` assignment via OV007 uniqueness); T3 (window derived once per **unique** source object_id; the provenance set dedups markers).
+
+---
+
+## ROUND 4 — PLAN cross-engine audit + focused re-audit (2026-07-12)
+
+The writing-plans deliverable (`docs/superpowers/plans/2026-07-11-signed-overlay-evidence-tooling.md`) went through a cross-engine plan audit → revision → cross-engine re-audit.
+
+**Operator cross-engine plan audit of rev1 (`5477d706`): layering RATIFIED (unconditional loader model); plan NOT build-ready — 3 HIGH / 5 MED / 1 LOW + contributor-map-local.** All folded → **rev2 `4f2b2fce`**:
+- **F1 (High)** raw docs consumed before SP001 → `validate_documents` extracted; `main()` validates the raw docs (SP001+kind) **before** the overlay loader; effective view re-validated by `run()`.
+- **F2 (High)** OV009 not per-overlay → `check_observation_window()` (started<ended, ended≤captured, ended≤now) on all six dims incl. the Data-API overlay OV022 relies on.
+- **F3 (High)** receipt binding incomplete → per-overlay binds path, raw+sidecar SHA-256, sidecar path, signer key_id+SPKI, dimension+object_ids+count, source_hash, schema hashes.
+- **F4 (Med)** validate vs hash read different bytes → read-once `OverlayContract` (bytes+hashes+registry+validator); schemas never reopened.
+- **F5 (Med)** fixtures not schema-valid / incoherent times → `_zero_census` reuses `tcd._snapshot/_rel` (all required fields); one canonical coherent fixture clock.
+- **F6 (Med)** suites absent from CI → `test_overlay_schema` + `test_overlay_loader` added to the governed `suites` job.
+- **F7 (Med)** OV015 unimplemented/untested → `check_cluster_completeness()` + dedicated `ov015_missing_gate_required_dimension` test.
+- **F8 (Med)** offline-registry test false proof → real unseeded-`$ref` → `Unresolvable` → coded-OV008 test; no network.
+- **F9 (Low)** null-reason not IFF → OV019/OV012 reject reason-with-non-null-hash too.
+- **#9** contrib map on effective → passed as a separate local `contrib_by_oid` dict, never stashed on the effective view.
+
+**Focused re-audit (instruction #10) — cross-engine.** Claude focused self-review = folds real + internally consistent (traced the fixture clock, every OV-code test↔impl path, the `OverlayContract`/`contrib_by_oid`/receipt threading, and the `semantic_check`/`run`/`build_receipt` signature deltas vs the real `check_disposition.py`; no stale API references). Codex (`codex exec review --base main`, `-m gpt-5.5`, sandbox-bypassed — the apex-jobs front door was blocked on Infisical `APEX_JOBS_PGPASSWORD`, operator custody) = **2 NEW P2s** (neither re-raising F1–F9), both folded → **rev3**:
+- **P2-1:** OV022 emitted for a MISSING `in_data_api` overlay short-circuits `load_and_merge` before `run()` can fire SP027 — contradicting the ratified "missing→SP027" matrix. FIX: OV022 records the window **only** for an observed-false overlay and **defers** (missing/observed-true → SP027 denies the waiver at the semantic gate). Task 5 unit (`missing_in_data_api_defers_to_SP027`) + Task 8 e2e (g/h).
+- **P2-2:** absent/non-finite `max_consumer_evidence_age_hours` checked after the per-relation OV018 short-circuit → a zero-contributor relation masks the missing flag. FIX: the recency-policy `OV016` is a **deterministic precheck at the top of `derive_windows`**, before any per-relation contributor check.
+
+**Cross-engine delta:** Codex caught the OV022/SP027 diagnostic-coherence gap and the OV016 ordering mask that Claude's self-review missed; Claude's grounding confirmed all nine folds + the fixture/threading consistency vs the real host code. Plan convergence: 9 findings → 2 P2s → 0. **Verdict: build-ready pending the operator GO.** Implementation, evidence collection, DB access, production, A1–A3, and the apply runner remain HELD.

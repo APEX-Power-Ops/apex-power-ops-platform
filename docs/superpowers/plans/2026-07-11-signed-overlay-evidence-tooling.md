@@ -1,5 +1,6 @@
 # Signed Evidence Overlay Tooling Implementation Plan
 
+> **rev 3 (2026-07-12)** folds the focused-re-audit cross-engine pass (Codex, 2 P2s): OV022 now **defers to SP027** for a missing/observed-true `in_data_api` overlay (fires only when an observed-false overlay's window fails to cover [S,E]) so the ratified "missing→SP027" contract holds; the recency-policy `OV016` (absent/non-finite `max_consumer_evidence_age_hours`) is a **deterministic precheck at the top of `derive_windows`**, never masked by a zero-contributor `OV018`.
 > **rev 2 (2026-07-12)** folds the operator's cross-engine plan audit: layering RATIFIED (unconditional loader) + all nine findings (F1 raw-input validation, F2 per-overlay OV009, F3 receipt binding, F4 read-once `OverlayContract`, F5 schema-valid fixtures, F6 governed CI, F7 OV015, F8 real unresolved-`$ref` test, F9 IFF null-reason) + contributor-map-local. See the fold table at the end.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -1114,11 +1115,15 @@ def derive_windows(effective, *, cluster_src_oids, contrib_by_oid, now, base_obs
     map (over CONSUMER_CONTRIB_DIMS) passed by the orchestrator, NEVER read off the effective snapshot
     (audit #9) — and write {S, E} ISO-8601 strings into the effective view. Returns
     (diagnostics, derived_window_object_ids). Fail-closed per the §3 predicate."""
+    # Recency-policy precheck (Codex-P2): an absent/non-finite max_consumer_evidence_age_hours is a
+    # DETERMINISTIC coded OV016 reported BEFORE any per-relation contributor check, so a missing CLI
+    # flag can never be masked by an OV018 on a zero-contributor relation.
+    if not (_finite(max_consumer_evidence_age_hours) and max_consumer_evidence_age_hours > 0):
+        return [("OV016", "overlay-derive:policy", f"max_consumer_evidence_age_hours {max_consumer_evidence_age_hours!r} absent or non-finite (required recency floor, fail-closed)")], set()
     out = []
     derived = set()
     contrib = contrib_by_oid
     rel_by_oid = {r["object_id"]: r for r in effective.get("relations", [])}
-    finite_age = _finite(max_consumer_evidence_age_hours) and max_consumer_evidence_age_hours > 0
     for oid in sorted(cluster_src_oids):  # a set => each object_id derived exactly once (T3)
         windows = contrib.get(oid, [])
         loc = f"overlay-derive:{oid}"
@@ -1137,10 +1142,7 @@ def derive_windows(effective, *, cluster_src_oids, contrib_by_oid, now, base_obs
         if e > now:
             out.append(("OV009", loc, f"derived E {e.isoformat()} is in the future vs now {now.isoformat()}"))
             continue
-        if not finite_age:
-            out.append(("OV016", loc, f"max_consumer_evidence_age_hours {max_consumer_evidence_age_hours!r} absent or non-finite (fail-closed)"))
-            continue
-        if (now - e).total_seconds() / 3600.0 > max_consumer_evidence_age_hours:
+        if (now - e).total_seconds() / 3600.0 > max_consumer_evidence_age_hours:  # per-relation recency (max_age validated above)
             out.append(("OV016", loc, f"stale: now-E {(now - e).total_seconds() / 3600.0:.1f}h > max {max_consumer_evidence_age_hours}h"))
             continue
         if not (s <= base_observed_at <= e):
@@ -1243,20 +1245,22 @@ def _external_clients_observed_no_OV022():
     return diags == []
 
 
-def _missing_in_data_api_window_OV022():
-    # external_clients not_applicable but NO in_data_api overlay window supplied -> fail-closed OV022
+def _missing_in_data_api_defers_to_SP027():
+    # external_clients not_applicable but NO observed-false in_data_api overlay backs it -> OV022 does
+    # NOT fire; the SP027 delete floor (in run(), exercised end-to-end in Task 8) denies the waiver
+    # instead, honoring the ratified "missing in_data_api overlay -> SP027" contract (Codex-P2).
     eff = _zero_census(["public.v"])
     S, E = _pdt("2026-07-01T00:00:00Z"), _pdt("2026-07-10T20:00:00Z")
     diags = ov.check_delete_floor_coherence(eff, delete_src_oids={"public.v"}, external_na_oids={"public.v"},
                                             in_data_api_windows={}, derived_windows={"public.v": (S, E)})
-    return "OV022" in _codes(diags)
+    return "OV022" not in _codes(diags)
 
 
 _CASES += [
     ("ov022_fires_when_window_not_covering", _ov022_fires_when_window_not_covering),
     ("ov022_ok_when_window_covers", _ov022_ok_when_window_covers),
     ("external_clients_observed_no_OV022", _external_clients_observed_no_OV022),
-    ("missing_in_data_api_window_OV022", _missing_in_data_api_window_OV022),
+    ("missing_in_data_api_defers_to_SP027", _missing_in_data_api_defers_to_SP027),
 ]
 ```
 
@@ -1274,11 +1278,14 @@ def check_delete_floor_coherence(effective, *, delete_src_oids, external_na_oids
                                  in_data_api_windows, derived_windows):
     """OV022 (T1-scoped): for a delete-conclusion source relation whose external_clients overlay
     resolves to not_applicable (invoking the SP027 waiver, which requires in_data_api observed false),
-    the in_data_api overlay's observation_window (looked up by the exact (dimension, object_id)
-    assignment, T2) must COVER the derived consumer window [S, E] (started_at <= S and ended_at >= E),
-    proving the relation was unexposed THROUGHOUT the evidence interval. Fail-closed: a missing
-    in_data_api window (no covering overlay) is OV022. When external_clients is observed (oid not in
-    external_na_oids), OV022 is not evaluated."""
+    the observed-FALSE in_data_api overlay's observation_window (looked up by the exact
+    (dimension, object_id) assignment, T2) must COVER the derived consumer window [S, E]
+    (started_at <= S and ended_at >= E), proving the relation was unexposed THROUGHOUT the evidence
+    interval. OV022 evaluates ONLY when an observed-false in_data_api overlay backs the waiver (its
+    window is in in_data_api_windows). A MISSING (or observed-true) in_data_api overlay DEFERS to the
+    SP027 delete floor in run() — which denies the waiver and blocks the delete (Codex-P2) — so OV022
+    never short-circuits that ratified path. When external_clients is observed (oid not in
+    external_na_oids), OV022 is not evaluated (T1)."""
     out = []
     for oid in sorted(delete_src_oids & external_na_oids):  # T1: only not_applicable-waiver deletes
         se = derived_windows.get(oid)
@@ -1287,8 +1294,7 @@ def check_delete_floor_coherence(effective, *, delete_src_oids, external_na_oids
         s, e = se
         api = in_data_api_windows.get(oid)
         if api is None:
-            out.append(("OV022", f"overlay-delete:{oid}", "external_clients not_applicable waiver relies on an in_data_api overlay, but none covers this relation"))
-            continue
+            continue  # no observed-false in_data_api overlay backs the waiver -> SP027 denies it (defer)
         api_s, api_e = api
         if not (api_s <= s and api_e >= e):
             out.append(("OV022", f"overlay-delete:{oid}",
@@ -1567,8 +1573,11 @@ def load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions,
                     external_state[oid] = a["value"].get("state")
             else:
                 rel[dim] = a["value"]
-                if dim == "in_data_api_exposed_schema":
-                    in_data_api_windows[oid] = w      # exact (dimension, object_id) window (T2)
+                # Record the in_data_api window ONLY for an observed-FALSE overlay — the only shape that
+                # backs the SP027 external_clients not_applicable waiver. A missing / observed-true
+                # in_data_api overlay leaves this unset, so OV022 defers to SP027 (Codex-P2; T2).
+                if dim == "in_data_api_exposed_schema" and a["value"].get("state") == "observed" and a["value"].get("value") is False:
+                    in_data_api_windows[oid] = w
 
     # cluster-source object_ids across ALL decisions (deduped by object_id, T3), incl. retain.
     dec_by_id = {row["decision_id"]: row for row in decisions.get("rows", [])}
@@ -1746,7 +1755,7 @@ def _e2e_red_then_green():
 _CASES += [("e2e_red_then_green", _e2e_red_then_green)]
 ```
 
-> Implementer guidance for the e2e cases (write these as real assertions, not stubs): build a temp dir with a zero-width census + its detached sig (throwaway key, pinned via `_pin_signer`), an accepted decisions/entity-map/manifest, and per-dimension signed overlays. (a) **OV021-via-main:** mutate the census base window to non-zero, run `cd.main([... "--mode", "preapply", ... "--max-consumer-evidence-age-hours", "8760"])` with **zero** `--overlay`, assert exit `1` and `OV021` printed. (b) **red:** zero overlays on the canonical census → exit `1`. (c) **green:** all gate-required overlays supplied → exit `0` and a receipt with `evidence_ready: true`, `execution_authorized: false`. (d) **retain green:** a `retain` manifest whose source relation has covering consumer overlays → exit `0`. (e) **retain no-overlay → OV018:** same retain manifest, drop the consumer overlays → exit `1`, `OV018`. (f) **authorization boundary:** valid overlays but manifest `status != accepted`/empty TA → exit `1` with `SP018` (evidence readiness NOT reached); and assert the green receipt has no `production_eligible`/write-GO field. Restore `dt.TRUSTED_SIGNERS` from `_pin_signer`'s saved copy in a `finally`.
+> Implementer guidance for the e2e cases (write these as real assertions, not stubs): build a temp dir with a zero-width census + its detached sig (throwaway key, pinned via `_pin_signer`), an accepted decisions/entity-map/manifest, and per-dimension signed overlays. (a) **OV021-via-main:** mutate the census base window to non-zero, run `cd.main([... "--mode", "preapply", ... "--max-consumer-evidence-age-hours", "8760"])` with **zero** `--overlay`, assert exit `1` and `OV021` printed. (b) **red:** zero overlays on the canonical census → exit `1`. (c) **green:** all gate-required overlays supplied → exit `0` and a receipt with `evidence_ready: true`, `execution_authorized: false`. (d) **retain green:** a `retain` manifest whose source relation has covering consumer overlays → exit `0`. (e) **retain no-overlay → OV018:** same retain manifest, drop the consumer overlays → exit `1`, `OV018`. (f) **authorization boundary:** valid overlays but manifest `status != accepted`/empty TA → exit `1` with `SP018` (evidence readiness NOT reached); and assert the green receipt has no `production_eligible`/write-GO field. (g) **delete missing in_data_api → SP027 (Codex-P2):** a `delete` cluster whose `external_clients` overlay is `not_applicable` but with **no** `in_data_api_exposed_schema` overlay → exit `1` with `SP027` (the waiver is denied at the semantic gate, NOT `OV022` — proving the loader defers the missing-overlay case to SP027). (h) **delete OV022:** same delete but WITH an observed-false `in_data_api` overlay whose window does **not** cover the derived consumer window → exit `1` with `OV022`. Restore `dt.TRUSTED_SIGNERS` from `_pin_signer`'s saved copy in a `finally`.
 
 - [ ] **Step 2: Run to verify it fails**
 
@@ -1936,4 +1945,11 @@ Per the mandatory Independent Review Protocol, run the cross-engine Codex pass o
 | F9 (Low) null-reason not IFF | OV019/OV012 reject reason-with-non-null-hash too (Task 3). |
 | #9 contributor map on effective | contributor windows passed as a separate local `contrib_by_oid` dict; never stashed on `effective` (Tasks 4, 6). |
 
-Per audit instruction #10, a **focused plan re-audit** runs after this revision before the implementation GO. Implementation, evidence collection, DB access, production, A1–A3, and the apply runner remain HELD.
+**Focused plan re-audit (instruction #10) — DONE, cross-engine.** Claude focused self-review: folds real + internally consistent. Codex (`codex exec review --base main`, `-m gpt-5.5`, sandbox-bypassed) found **2 NEW P2s** (neither re-raising F1–F9), both folded → **rev 3**:
+
+| Codex P2 | Fix |
+|---|---|
+| OV022 emitted for a *missing* in_data_api overlay → short-circuits before `run()` can fire SP027 (contradicts the "missing→SP027" matrix) | OV022 now records the window only for an **observed-false** overlay and **defers** (missing/observed-true → SP027 denies the waiver at the semantic gate). Task 5 unit + Task 8 e2e (g/h) assert both branches. |
+| Absent/non-finite `max_consumer_evidence_age_hours` checked after the OV018 short-circuit → a zero-contributor relation masks the missing flag | Recency-policy `OV016` is a **deterministic precheck at the top of `derive_windows`**, before any per-relation contributor check. |
+
+Convergence: the design converged 3→1→0 HIGH over the spec's 3 IRP rounds; the plan converged 9 findings → 2 P2s → 0 over 2 plan-audit rounds. Implementation, evidence collection, DB access, production, A1–A3, and the apply runner remain HELD.
