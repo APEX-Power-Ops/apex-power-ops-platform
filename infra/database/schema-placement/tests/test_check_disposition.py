@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import check_disposition as cd  # noqa: E402
 import disposition_signing as ds  # noqa: E402
 import contextlib  # noqa: E402
+import disposition_overlay as ov  # noqa: E402 -- overlay model for the migrated main()-level e2e cases (Task 8)
 import disposition_provenance as dp  # noqa: E402
 import disposition_trust as dt  # noqa: E402
 import yaml  # noqa: E402
@@ -47,6 +48,7 @@ def _ephemeral_keypair():
 
 NOW = cd.parse_dt("2026-07-10T21:00:00Z")
 VALIDATOR = cd._validator()
+_OV_CONTRACT = ov.load_overlay_contract()  # Task 8: schema contract for the migrated main()-level overlay fixtures
 
 _ROOT = tempfile.mkdtemp(prefix="sp01_evidence_")
 for _fn in ("prod.json", "prod2.json", "backup.sha256"):
@@ -301,7 +303,9 @@ def _receipt_pure():
         rec = cd.build_receipt(mode="preapply", now_iso="2026-07-10T21:00:00Z", expect_project_ref="fxoyniqnrlkxfligbxmg",
                                doc_bytes=doc_bytes, doc_paths=paths, signer={"key_id": "k", "spki_sha256": "00" * 32, "pem_sha256": "11" * 32},
                                snapshot_signature_sha256="22" * 32, gate_repo_sha=None, checkout_bound=False,
-                               production_eligible=False, roots=ROOTS, decisions=dec)
+                               evidence_ready=True, execution_authorized=False,
+                               overlays=[{"path": "o.json", "dimension": "consumer_evidence.static_repo", "raw_sha256": "aa"}],
+                               max_consumer_evidence_age_hours=8760, roots=ROOTS, decisions=dec)
         with open(paths["snapshot"], "rb") as fh:
             tampered_sha = hashlib.sha256(fh.read()).hexdigest()
         ev = {e["ref"]: e["sha256"] for e in rec["evidence"]}
@@ -309,7 +313,12 @@ def _receipt_pure():
                 and rec["inputs"]["snapshot"]["sha256"] == hashlib.sha256(doc_bytes["snapshot"]).hexdigest()  # follows validated bytes
                 and rec["inputs"]["snapshot"]["sha256"] != tampered_sha        # NOT the tampered re-read
                 and ev.get("recovery.tar") == RECOVERY_SHA        # the backup bytes are pinned
-                and "restore-ok.log" in ev)                       # and the restore-validation proof
+                and "restore-ok.log" in ev                        # and the restore-validation proof
+                and rec.get("evidence_ready") is True and rec.get("execution_authorized") is False
+                and "production_eligible" not in rec              # §2A: reframed — no write-GO field
+                and rec["overlays"][0]["dimension"] == "consumer_evidence.static_repo"
+                and rec["max_consumer_evidence_age_hours"] == 8760
+                and rec["effective_view"] == {"in_memory_only": True})
 
 
 def test_gate_receipt_pure():
@@ -394,20 +403,150 @@ def _preapply_signed_paths(d, snap):
     return snap_path, sig_path, keys_dir, _fp(pub_pem)
 
 
+def _preapply_signed_paths_with_priv(d, snap):
+    """Same as _preapply_signed_paths but ALSO returns the raw private key object + the exact snapshot
+    bytes signed, so the SAME key used for --snapshot-sig can also sign the accompanying --overlay
+    documents (Task 8 migration: main()'s unconditional loader requires overlays to reach GREEN)."""
+    priv, _pp, pub_pem = _ephemeral_keypair()
+    snap_bytes = json.dumps(snap, indent=2, sort_keys=True).encode("utf-8")
+    snap_path = os.path.join(d, "snap.json")
+    with open(snap_path, "wb") as fh:
+        fh.write(snap_bytes)
+    sig_path = snap_path + ".sig"
+    with open(sig_path, "w", encoding="utf-8") as fh:
+        json.dump(ds.build_sig_sidecar(snap_bytes, priv), fh)
+    keys_dir = os.path.join(d, "keys")
+    os.makedirs(keys_dir, exist_ok=True)
+    with open(os.path.join(keys_dir, KEY_ID + ".pub.pem"), "wb") as fh:
+        fh.write(pub_pem)
+    return snap_path, sig_path, keys_dir, _fp(pub_pem), priv, snap_bytes
+
+
+def _ov_canon(obj):
+    return json.dumps(obj, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+def _ov_sign(obj, priv):
+    body = _ov_canon(obj)
+    sidecar = json.dumps(ds.build_sig_sidecar(body, priv)).encode("utf-8")
+    return body, sidecar
+
+
+def _ov_overlay(dimension, source_type, assignments, census_bytes, **overrides):
+    """A well-formed evidence_overlay bound to census_bytes (mirrors test_overlay_loader.py's _overlay();
+    duplicated here rather than imported to avoid a test<->test import cycle: test_overlay_loader.py
+    imports THIS module as tcd)."""
+    doc = {"kind": "evidence_overlay", "overlay_version": "1",
+           "dimension": dimension, "source_type": source_type,
+           "authority": "test", "collection_method": "test", "source_locator": "test:x",
+           "source_hash": "e" * 64,
+           "base_snapshot_sha256": hashlib.sha256(census_bytes).hexdigest(),
+           "disposition_schema_sha256": _OV_CONTRACT.disp_sha256, "overlay_schema_sha256": _OV_CONTRACT.overlay_sha256,
+           "project_ref": "fxoyniqnrlkxfligbxmg",
+           "captured_at": "2026-07-10T20:30:00Z",
+           "observation_window": {"started_at": "2026-06-05T00:00:00Z", "ended_at": "2026-07-10T20:00:00Z"},
+           "producing_repo_sha": "d" * 40,
+           "assignments": assignments}
+    doc.update(overrides)
+    return doc
+
+
+_OV_SOURCE_TYPE = {"static_repo": "repository_scan", "runtime_logs": "runtime_logs",
+                   "external_clients": "external_client_inventory", "operator_declaration": "operator_declaration"}
+
+
+def _ov_consumer_overlay(dim, cb, ref, oid, **overrides):
+    value = {"state": "observed", "found_consumers": 0, "ref": ref}
+    return _ov_overlay(f"consumer_evidence.{dim}", _OV_SOURCE_TYPE[dim], [{"object_id": oid, "value": value}], cb, **overrides)
+
+
+def _overlay_rel(oid, schema, name, relkind="v"):
+    """Like _rel(), but with the consumer window forced to the canonical zero-width {observed_at,
+    observed_at} (OV021) and the four windowed consumer dims forced not_observed (so they are
+    overlayable; OV006). is_security_definer_view/in_data_api_exposed_schema stay pre-observed —
+    neither needs an overlay for the harden fixture (Task 8 migration)."""
+    r = _rel(oid, schema, name, relkind)
+    obs = "2026-07-10T20:00:00Z"
+    ce = r["consumer_evidence"]
+    ce["observation_window"] = {"started_at": obs, "ended_at": obs}
+    for dimname in ("static_repo", "runtime_logs", "external_clients", "operator_declaration"):
+        ce[dimname] = {"state": "not_observed", "found_consumers": None, "ref": None, "detail": "pending"}
+    return r
+
+
+def _overlay_harden_bundle():
+    """A harden decision built to reach GREEN through the unconditional overlay loader: the census
+    carries the zero-width base window (OV021) with the four consumer dims not_observed, resolved by 4
+    signed overlays the migrated tests supply via _overlay_write_consumer_overlays()."""
+    r = _overlay_rel("public.v_scope_financials", "public", "v_scope_financials")
+    d = {"decision_id": "D-h1", "source_objects": ["public.v_scope_financials"], "meaning_disposition": "preserve",
+         "action_class": "harden", "decision_status": "accepted", "exposure_policy": "service_only",
+         "consumer_disposition": "no_consumer", "evidence_refs": ["query:x"], "technical_authority_approval": "TA-1"}
+    return _snapshot([r]), _decs([d]), _entity_map(), _manifest("harden", ["D-h1"]), SNAP_PATH
+
+
+def _overlay_preapply_base(d):
+    """Like _preapply_base but the harden bundle is REBUILT under the overlay model (zero-width base
+    window + not_observed consumer dims, _overlay_harden_bundle) so the unconditional loader (OV021 +
+    derive_windows) can reach GREEN; also injects --max-consumer-evidence-age-hours (Task 8 migration)."""
+    snap, dec, em, man, _sp = _overlay_harden_bundle()
+    man = copy.deepcopy(man)
+    man["evidence_snapshot"] = "snap.json"
+    for nm, doc in (("dec.json", dec), ("em.json", em), ("man.json", man)):
+        with open(os.path.join(d, nm), "w", encoding="utf-8") as fh:
+            json.dump(doc, fh)
+    base = ["--decisions", os.path.join(d, "dec.json"), "--entity-map", os.path.join(d, "em.json"),
+            "--manifest", os.path.join(d, "man.json"), "--now", "2026-07-10T21:00:00Z", "--root", d,
+            "--expect-project-ref", "fxoyniqnrlkxfligbxmg", "--max-consumer-evidence-age-hours", "8760"]
+    return base, snap
+
+
+def _overlay_write_consumer_overlays(d, priv, census_bytes, oid="public.v_scope_financials"):
+    """Sign + write the full no_consumer resolution set (static_repo/runtime_logs/external_clients/
+    operator_declaration, all observed) for _overlay_harden_bundle's decision, with the SAME key that
+    signs --snapshot-sig. Returns the --overlay CLI args."""
+    dims = [
+        ("static_repo", {}),
+        ("runtime_logs", {"producing_repo_sha": None, "producing_repo_sha_not_applicable_reason": "runtime query"}),
+        ("external_clients", {}),
+        ("operator_declaration", {"producing_repo_sha": None, "producing_repo_sha_not_applicable_reason": "operator",
+                                  "operator_identity": "op-1", "attestation_ref": "att-1"}),
+    ]
+    argv = []
+    for i, (dimname, overrides) in enumerate(dims):
+        doc = _ov_consumer_overlay(dimname, census_bytes, f"sha:c{i}", oid, **overrides)
+        body, sig = _ov_sign(doc, priv)
+        p = os.path.join(d, f"ov{i}.json")
+        with open(p, "wb") as fh:
+            fh.write(body)
+        with open(p + ".sig", "wb") as fh:
+            fh.write(sig)
+        argv += ["--overlay", p]
+    return argv
+
+
 def _preapply_anchor_green():
+    # Task 8 migration: main() now runs the unconditional overlay loader (OV021 + derive_windows) even
+    # with zero overlays, so the bare harden_bundle() census (a real, non-zero-width base window) is
+    # RED. Rebuilt under the overlay model (_overlay_preapply_base + 4 signed consumer overlays) to
+    # reach the SAME green outcome (exit 0, receipt) this test asserted before, now with evidence_ready.
     with tempfile.TemporaryDirectory() as d:
-        base, snap = _preapply_base(d)
-        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
+        base, snap = _overlay_preapply_base(d)
+        snap_path, sig_path, keys_dir, fp, priv, snap_bytes = _preapply_signed_paths_with_priv(d, snap)
+        overlay_argv = _overlay_write_consumer_overlays(d, priv, snap_bytes)
         receipt_path = os.path.join(d, "receipt.json")
         with _trusted(KEY_ID, fp):
             rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path,
-                                 "--key-id", KEY_ID, "--keys-dir", keys_dir, "--allow-unbound-checkout", "--receipt-out", receipt_path])
+                                 "--key-id", KEY_ID, "--keys-dir", keys_dir, "--allow-unbound-checkout",
+                                 "--receipt-out", receipt_path] + overlay_argv)
         if rc != 0:
             return False
         rec = json.load(open(receipt_path, encoding="utf-8"))
         return (rec["gate"] == "green" and rec["signer"]["key_id"] == KEY_ID and rec["signer"]["spki_sha256"] == fp
                 and "verify_key" not in json.dumps(rec)
-                and rec["snapshot_signature_sha256"] == hashlib.sha256(open(sig_path, "rb").read()).hexdigest())
+                and rec["snapshot_signature_sha256"] == hashlib.sha256(open(sig_path, "rb").read()).hexdigest()
+                and rec["evidence_ready"] is True and rec["execution_authorized"] is False
+                and len(rec["overlays"]) == 4)
 
 
 def test_preapply_anchor_green():
@@ -451,19 +590,24 @@ def test_preapply_unknown_key_blocks():
 def _sig_gate_e2e():
     """End-to-end SP026: a green harden bundle passes ONLY with a valid signature resolved through the
     TRUSTED_SIGNERS anchor; a missing --key-id or a tampered snapshot blocks with the SP026 code (exit 1).
-    Proves the checker verifies before trusting the snapshot."""
+    Proves the checker verifies before trusting the snapshot. Task 8 migration: the GREEN sub-check now
+    runs through the unconditional overlay loader (_overlay_preapply_base + signed consumer overlays);
+    the missing-key/tampered sub-checks fail at SP026, BEFORE the loader ever runs, so they are
+    unaffected by whether --overlay is supplied."""
     import io
     with tempfile.TemporaryDirectory() as d:
-        base, snap = _preapply_base(d)
-        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
+        base, snap = _overlay_preapply_base(d)
+        snap_path, sig_path, keys_dir, fp, priv, snap_bytes = _preapply_signed_paths_with_priv(d, snap)
+        overlay_argv = _overlay_write_consumer_overlays(d, priv, snap_bytes)
         receipt_path = os.path.join(d, "receipt.json")
         with _trusted(KEY_ID, fp):
             green = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path,
-                                    "--key-id", KEY_ID, "--keys-dir", keys_dir, "--allow-unbound-checkout", "--receipt-out", receipt_path]) == 0
+                                    "--key-id", KEY_ID, "--keys-dir", keys_dir, "--allow-unbound-checkout",
+                                    "--receipt-out", receipt_path] + overlay_argv) == 0
             green = green and os.path.isfile(receipt_path) and json.load(open(receipt_path, encoding="utf-8"))["gate"] == "green"  # receipt emitted on GREEN
             mbuf = io.StringIO()
             with contextlib.redirect_stdout(mbuf):
-                mrc = cd.main(base + ["--snapshot", snap_path, "--allow-unbound-checkout"])                 # no sig/key supplied
+                mrc = cd.main(base + ["--snapshot", snap_path, "--allow-unbound-checkout"] + overlay_argv)  # no sig/key supplied
             missing = mrc == 1 and "SP026" in mbuf.getvalue()
             with open(snap_path, "ab") as fh:
                 fh.write(b" ")                                                  # tamper the signed bytes
@@ -615,20 +759,28 @@ def test_sp028_precedes_doc_read():
 
 
 def _authoring_banner_and_receipt():
+    # Task 8 migration: the unconditional overlay loader requires overlays to reach GREEN, so the
+    # census/decision is rebuilt under the overlay model; the receipt now carries 4 bound overlays
+    # instead of the empty list a pre-migration GREEN would have emitted.
     import io
     banner = "=== DISPOSITION GATE (preapply): GREEN — AUTHORING ONLY; CHECKOUT UNBOUND ==="  # exact literal (em-dash)
     with tempfile.TemporaryDirectory() as d:
-        base, snap = _preapply_base(d)
-        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
+        base, snap = _overlay_preapply_base(d)
+        snap_path, sig_path, keys_dir, fp, priv, snap_bytes = _preapply_signed_paths_with_priv(d, snap)
+        overlay_argv = _overlay_write_consumer_overlays(d, priv, snap_bytes)
         receipt_path = os.path.join(d, "receipt.json")
         out_buf, err_buf = io.StringIO(), io.StringIO()
         with _trusted(KEY_ID, fp), contextlib.redirect_stdout(out_buf), contextlib.redirect_stderr(err_buf):
             rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--key-id", KEY_ID,
-                                 "--keys-dir", keys_dir, "--allow-unbound-checkout", "--receipt-out", receipt_path])
+                                 "--keys-dir", keys_dir, "--allow-unbound-checkout", "--receipt-out", receipt_path] + overlay_argv)
         out, err = out_buf.getvalue(), err_buf.getvalue()
         rec = json.load(open(receipt_path, encoding="utf-8"))
     return (rc == 0 and banner in out and "WARNING: unbound checkout" in err
-            and rec["checkout_bound"] is False and rec["production_eligible"] is False and rec["gate_repo_sha"] is None)
+            and rec["checkout_bound"] is False and rec["evidence_ready"] is True
+            and rec["execution_authorized"] is False and "production_eligible" not in rec
+            and rec["gate_repo_sha"] is None and len(rec["overlays"]) == 4
+            and rec["max_consumer_evidence_age_hours"] == 8760
+            and rec["effective_view"] == {"in_memory_only": True})
 
 
 def test_authoring_banner_and_receipt():
@@ -636,10 +788,13 @@ def test_authoring_banner_and_receipt():
 
 
 def _bound_green_receipt():
+    # Task 8 migration: same overlay-model rebuild as _authoring_banner_and_receipt, but exercising the
+    # BOUND checkout path (--expect-gate-repo-sha/--require-clean-checkout).
     import io
     with tempfile.TemporaryDirectory() as d:
-        base, snap = _preapply_base(d)
-        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
+        base, snap = _overlay_preapply_base(d)
+        snap_path, sig_path, keys_dir, fp, priv, snap_bytes = _preapply_signed_paths_with_priv(d, snap)
+        overlay_argv = _overlay_write_consumer_overlays(d, priv, snap_bytes)
         receipt_path = os.path.join(d, "receipt.json")
         saved = _stub_dp("deadbeef", clean=True)
         buf = io.StringIO()
@@ -647,13 +802,15 @@ def _bound_green_receipt():
             with _trusted(KEY_ID, fp), contextlib.redirect_stdout(buf):
                 rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--key-id", KEY_ID,
                                      "--keys-dir", keys_dir, "--expect-gate-repo-sha", "deadbeef",
-                                     "--require-clean-checkout", "--receipt-out", receipt_path])
+                                     "--require-clean-checkout", "--receipt-out", receipt_path] + overlay_argv)
             out = buf.getvalue()
             rec = json.load(open(receipt_path, encoding="utf-8"))
         finally:
             _restore_dp(saved)
     return (rc == 0 and "AUTHORING ONLY" not in out and rec["checkout_bound"] is True
-            and rec["production_eligible"] is True and rec["gate_repo_sha"] == "deadbeef")
+            and rec["evidence_ready"] is True and rec["execution_authorized"] is False
+            and "production_eligible" not in rec and rec["gate_repo_sha"] == "deadbeef"
+            and len(rec["overlays"]) == 4 and rec["effective_view"] == {"in_memory_only": True})
 
 
 def test_bound_green_receipt():
@@ -675,6 +832,20 @@ def _verify_key_flag_rejected():
 
 def test_verify_key_flag_rejected():
     assert _verify_key_flag_rejected()
+
+
+def _sp009_provenance_conditional():
+    # An overlay-derived window with ended_at AFTER observed_at PASSES SP009 iff the object_id is in
+    # derived_window_object_ids; with the marker removed it fails via the original bound.
+    snap, dec, em, man, sp = harden_bundle()
+    r = snap["relations"][0]
+    r["consumer_evidence"]["observation_window"] = {"started_at": "2026-07-01T00:00:00Z", "ended_at": "2026-07-20T00:00:00Z"}  # ended > observed_at
+    oid = r["object_id"]
+    with_marker = [d.code for d in cd.run(snap, dec, em, man, NOW, "preapply", ROOTS, VALIDATOR, sp,
+                                          "fxoyniqnrlkxfligbxmg", derived_window_object_ids={oid})]
+    without = [d.code for d in cd.run(snap, dec, em, man, NOW, "preapply", ROOTS, VALIDATOR, sp,
+                                      "fxoyniqnrlkxfligbxmg", derived_window_object_ids=None)]
+    return "SP009" not in with_marker and "SP009" in without
 
 
 if __name__ == "__main__":
@@ -717,6 +888,7 @@ if __name__ == "__main__":
         ("authoring_banner_and_receipt", _authoring_banner_and_receipt),
         ("bound_green_receipt", _bound_green_receipt),
         ("verify_key_flag_rejected", _verify_key_flag_rejected),
+        ("sp009_provenance_conditional", _sp009_provenance_conditional),
     ]:
         try:
             r = bool(fn())

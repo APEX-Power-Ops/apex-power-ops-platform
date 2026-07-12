@@ -162,15 +162,21 @@ def _sha256_file(path):
 
 
 def build_receipt(*, mode, now_iso, expect_project_ref, doc_bytes, doc_paths, signer, snapshot_signature_sha256,
-                  gate_repo_sha, checkout_bound, production_eligible, roots, decisions):
-    """Records the SHA-256 of the exact bytes the gate validated: the four CLI documents hashed from the
+                  gate_repo_sha, checkout_bound, evidence_ready, execution_authorized=False, overlays=None,
+                  max_consumer_evidence_age_hours=None, roots, decisions):
+    """Evidence-readiness receipt (§2A): attests evidence readiness ONLY. It carries NO write-GO and is
+    NOT an authorization token. `production_eligible` is replaced by `evidence_ready` +
+    `execution_authorized: false` so no apply runner can read a receipt field as write authorization.
+    Records the SHA-256 of the exact bytes the gate validated: the four CLI documents hashed from the
     IN-HAND bytes main() parsed, the pinned SIGNER content, and the snapshot signature bytes' hash (bound
     from the in-hand sig bytes — no second read). ADVISORY; emitted ONLY on a GREEN gate."""
     receipt = {"kind": "disposition_gate_receipt", "gate": "green", "mode": mode, "now": now_iso,
                "expect_project_ref": expect_project_ref, "inputs": {}, "evidence": [],
                "signer": signer, "snapshot_signature_sha256": snapshot_signature_sha256,
                "gate_repo_sha": gate_repo_sha, "checkout_bound": checkout_bound,
-               "production_eligible": production_eligible}
+               "evidence_ready": evidence_ready, "execution_authorized": execution_authorized,
+               "overlays": overlays or [], "max_consumer_evidence_age_hours": max_consumer_evidence_age_hours,
+               "effective_view": {"in_memory_only": True}}
     for name, data in doc_bytes.items():
         receipt["inputs"][name] = {"path": doc_paths.get(name), "sha256": hashlib.sha256(data).hexdigest()}
     seen = set()
@@ -215,8 +221,19 @@ def schema_validate(docs, validator):
     return out
 
 
+def validate_documents(docs, validator):
+    """SP001 schema-validation + per-input kind-pin. Shared by run() (on the effective view, post-merge)
+    and main() (on the RAW documents, BEFORE the overlay loader, audit F1) so a validly-signed but
+    malformed census is a coded SP001 red rather than an uncaught raise inside load_and_merge."""
+    diags = schema_validate(docs, validator)
+    for expected, doc in docs.items():
+        if isinstance(doc, dict) and doc.get("kind") != expected:
+            diags.append(Diagnostic("SP001", f"{expected}:kind", f"expected kind={expected!r}, got {doc.get('kind')!r}"))
+    return diags
+
+
 # ---- semantic checks -------------------------------------------------------
-def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref=None):
+def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref=None, derived_window_object_ids=None):
     d = []
     relations = snapshot.get("relations", [])
     rel_by_oid = {}
@@ -328,13 +345,19 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
             else:
                 src_rels.extend(rel_by_oid[oid])
 
-        # window ordering (strict) + minimum duration, scoped to this cluster's source relations (SP009)
+        # window ordering (strict) + minimum duration, scoped to this cluster's source relations (SP009).
+        # Provenance-conditional upper bound: for windows the overlay checker itself derived-and-wrote
+        # (object_id in derived_window_object_ids), the `<= observed_at` bound is relaxed (future/recency/
+        # anchor already enforced at merge by OV009/OV016/OV017); non-derived and no-provenance windows
+        # keep the original s < e <= observed_at (fail-closed on an absent marker).
         for r in src_rels:
             w = r.get("consumer_evidence", {}).get("observation_window")
             if isinstance(w, dict) and "started_at" in w and "ended_at" in w:
                 s, e = parse_dt(w["started_at"]), parse_dt(w["ended_at"])
-                if not (s < e <= observed_at):
-                    d.append(Diagnostic("SP009", f"decision:{did}:{r['object_id']}", f"window {w['started_at']}..{w['ended_at']} must satisfy started<ended<=observed_at ({snapshot['observed_at']})"))
+                is_derived = derived_window_object_ids is not None and r["object_id"] in derived_window_object_ids
+                ordered = (s < e) if is_derived else (s < e <= observed_at)
+                if not ordered:
+                    d.append(Diagnostic("SP009", f"decision:{did}:{r['object_id']}", f"window {w['started_at']}..{w['ended_at']} must satisfy started<ended{'' if is_derived else '<=observed_at'} ({snapshot['observed_at']})"))
                 elif (e - s).total_seconds() / 3600.0 < min_window:
                     d.append(Diagnostic("SP009", f"decision:{did}:{r['object_id']}", f"window duration {(e - s).total_seconds() / 3600.0:.2f}h < minimum_consumer_window_hours {min_window}"))
 
@@ -528,18 +551,12 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
     return d
 
 
-def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, snapshot_path=None, expect_project_ref=None):
+def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, snapshot_path=None, expect_project_ref=None, derived_window_object_ids=None):
     docs = {"evidence_snapshot": snapshot, "decisions_file": decisions, "entity_map": entity_map, "cluster_manifest": manifest}
-    diags = schema_validate(docs, validator)
-    # Pin each CLI input to its EXPECTED kind (finding #8): the top-level oneOf accepts any of the
-    # four document types, so a wrong-kind file (e.g. a decisions_file passed as --snapshot) would
-    # otherwise pass schema validation and then crash on a missing field mid-semantic-check.
-    for expected, doc in docs.items():
-        if isinstance(doc, dict) and doc.get("kind") != expected:
-            diags.append(Diagnostic("SP001", f"{expected}:kind", f"expected kind={expected!r}, got {doc.get('kind')!r}"))
+    diags = validate_documents(docs, validator)
     if diags:
         return sorted(diags, key=lambda x: x.key())
-    diags = semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref)
+    diags = semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref, derived_window_object_ids)
     return sorted(diags, key=lambda x: x.key())
 
 
@@ -578,15 +595,17 @@ def main(argv=None):
     ap.add_argument("--keys-dir", default=dt.DEFAULT_KEYS_DIR, dest="keys_dir", help="dir holding <key-id>.pub.pem (public key MATERIAL only; the trust anchor is the source constant).")
     ap.add_argument("--expect-gate-repo-sha", default=None, dest="expect_gate_repo_sha", help="the reviewed merged commit the CHECKER must run from (bound preapply; SP028). Independent of the census snapshot repo_sha.")
     ap.add_argument("--require-clean-checkout", action="store_true", dest="require_clean_checkout", help="with --expect-gate-repo-sha, enforce the checker's own worktree is clean and at that SHA (SP028).")
-    ap.add_argument("--allow-unbound-checkout", action="store_true", dest="allow_unbound_checkout", help="explicit opt-in for authoring-only unbound runs (production_eligible=false); refused together with the binding flags (SP028).")
+    ap.add_argument("--allow-unbound-checkout", action="store_true", dest="allow_unbound_checkout", help="explicit opt-in for authoring-only unbound runs (checkout_bound=false; not valid for production apply); refused together with the binding flags (SP028).")
     ap.add_argument("--receipt-out", default=None, dest="receipt_out", help="on GREEN, write a gate receipt (input SHA-256 digests) here for the apply runner to rehash.")
     ap.add_argument("--root", action="append", default=[], dest="roots", required=True, help="approved evidence root (repeatable, REQUIRED).")
+    ap.add_argument("--overlay", action="append", default=[], dest="overlays_in", help="signed evidence overlay (repeatable); each needs a detached <PATH>.sig sidecar.")
+    ap.add_argument("--max-consumer-evidence-age-hours", type=float, default=None, dest="max_consumer_evidence_age_hours", help="REQUIRED recency floor for derived consumer windows; absent/non-finite => OV016 (fail-closed).")
     args = ap.parse_args(argv)
 
     # --- SP028 checkout-provenance gate: runs IMMEDIATELY after argument parsing, BEFORE any input
     # document is read, binding (or explicitly opting out of binding) the checker's OWN checkout to a
     # reviewed gate SHA. Accidental unbound is impossible (neither-flag-nor-opt-in -> SP028).
-    ok, checkout_bound, production_eligible, gate_repo_sha, cdiag = _checkout_gate(
+    ok, checkout_bound, _, gate_repo_sha, cdiag = _checkout_gate(  # 3rd (production_eligible) == checkout_bound; the receipt's evidence_ready is a DISTINCT axis
         args.expect_gate_repo_sha, args.require_clean_checkout, args.allow_unbound_checkout)
     if not ok:
         print(cdiag.render())
@@ -640,7 +659,56 @@ def main(argv=None):
             dg = Diagnostic("SP026", "snapshot", f"signature verification failed: {reason}")
             print(dg.render()); print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ==="); return 1
 
-    diags = run(snapshot, decisions, entity_map, manifest, now, args.mode, roots, _validator(), os.path.abspath(args.snapshot), args.expect_project_ref)
+    # Load the read-once schema contract ONCE (both validators + schema hashes) — used for raw
+    # validation, overlay validation/OV020, and effective-view validation (audit round-4 F1). No stage
+    # reopens the schemas; the overlay-enabled CLI path NEVER calls _validator().
+    import disposition_overlay as ovl
+    try:
+        contract = ovl.load_overlay_contract()
+    except ovl.OverlayRegistryError as exc:
+        print(f"OV008 overlay: {exc}"); print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ==="); return 1
+
+    # Raw-document SP001 + kind validation (audit F1): BEFORE the overlay loader, using the contract's
+    # census validator, so a validly-signed but malformed census is a coded SP001 red — never an
+    # uncaught raise inside load_and_merge.
+    raw_docs = {"evidence_snapshot": snapshot, "decisions_file": decisions, "entity_map": entity_map, "cluster_manifest": manifest}
+    raw_diags = validate_documents(raw_docs, contract.disposition_validator)
+    if raw_diags:
+        for dg in sorted(raw_diags, key=lambda x: x.key()):
+            print(dg.render())
+        print(f"=== DISPOSITION GATE ({args.mode}): {len(raw_diags)} BLOCKING ===")
+        return 1
+
+    effective_snapshot = snapshot
+    derived_ids = None
+    overlay_receipt = []
+    if args.mode == "preapply":
+        try:
+            overlay_inputs = []
+            for op in args.overlays_in:
+                abspath = os.path.abspath(op)
+                with open(abspath, "rb") as fh:
+                    ob = fh.read()
+                with open(abspath + ".sig", "rb") as fh:
+                    sb = fh.read()
+                overlay_inputs.append((abspath, abspath + ".sig", ob, sb))
+        except OSError as exc:
+            print(f"OV008 overlay: {exc}"); print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ==="); return 1
+        mres = ovl.load_and_merge(census=snapshot, census_bytes=doc_bytes["snapshot"], overlay_inputs=overlay_inputs,
+                                  manifest=manifest, decisions=decisions, expect_project_ref=args.expect_project_ref,
+                                  now=now, max_consumer_evidence_age_hours=args.max_consumer_evidence_age_hours,
+                                  max_staleness_hours=manifest.get("max_staleness_hours"),
+                                  resolved_signer=signer, contract=contract)
+        if mres.diagnostics:
+            for code, locus, msg in sorted(mres.diagnostics):
+                print(f"{code} {locus}: {msg}")
+            print(f"=== DISPOSITION GATE ({args.mode}): {len(mres.diagnostics)} BLOCKING ===")
+            return 1
+        effective_snapshot, derived_ids, overlay_receipt = mres.effective_snapshot, mres.derived_window_object_ids, mres.receipt_overlays
+
+    # Effective-view SP001 + semantic gate, using the SAME contract census validator (not _validator()).
+    diags = run(effective_snapshot, decisions, entity_map, manifest, now, args.mode, roots, contract.disposition_validator,
+                os.path.abspath(args.snapshot), args.expect_project_ref, derived_ids)
 
     for dg in diags:
         print(dg.render())
@@ -660,7 +728,9 @@ def main(argv=None):
                                     doc_bytes=doc_bytes, doc_paths=doc_paths, signer=signer_meta,
                                     snapshot_signature_sha256=snapshot_signature_sha256,
                                     gate_repo_sha=gate_repo_sha, checkout_bound=checkout_bound,
-                                    production_eligible=production_eligible, roots=roots, decisions=decisions)
+                                    evidence_ready=True, execution_authorized=False, overlays=overlay_receipt,  # §2A: GREEN emission attests evidence readiness; checkout binding is the separate checkout_bound field
+                                    max_consumer_evidence_age_hours=args.max_consumer_evidence_age_hours,
+                                    roots=roots, decisions=decisions)
             with open(args.receipt_out, "w", encoding="utf-8") as fh:
                 json.dump(receipt, fh, indent=2, sort_keys=True)
         except OSError as exc:
