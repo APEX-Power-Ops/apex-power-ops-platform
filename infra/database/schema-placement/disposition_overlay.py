@@ -125,3 +125,46 @@ def load_overlay_contract():
                                disposition_validator=disposition_validator, overlay_validator=overlay_validator)
     except (OSError, ValueError, KeyError, Unresolvable, SchemaError, CannotDetermineSpecification) as exc:
         raise OverlayRegistryError(f"cannot build offline overlay contract ({type(exc).__name__}: {exc})") from exc
+
+
+def _reject_dup_json_pairs(pairs):
+    seen = {}
+    for k, v in pairs:
+        if k in seen:
+            raise ValueError(f"duplicate JSON key {k!r}")
+        seen[k] = v
+    return seen
+
+
+def _reject_nonfinite(const):
+    raise ValueError(f"non-finite JSON constant {const!r} not allowed")
+
+
+def verify_overlay(overlay_bytes: bytes, sig_bytes: bytes, public_key) -> tuple[bool, str]:
+    """OV001: detached Ed25519 verify over the EXACT raw overlay bytes against the pinned key object.
+    Delegates to disposition_signing (same anchor as the census). Fail-closed on any error."""
+    return ds.verify_sidecar_bytes_with_key(overlay_bytes, sig_bytes, public_key)
+
+
+def parse_overlay(overlay_bytes: bytes) -> dict:
+    """Parse the SAME verified buffer (never a re-read). Strict: duplicate keys and non-finite JSON
+    constants are rejected (parity with check_disposition.load_doc_from_text). Raises ValueError."""
+    return json.loads(overlay_bytes.decode("utf-8"),
+                      object_pairs_hook=_reject_dup_json_pairs, parse_constant=_reject_nonfinite)
+
+
+def check_binding(doc, *, census_sha256, census_project_ref, expect_project_ref,
+                  on_disk_disp_sha, on_disk_overlay_sha):
+    """OV002 (base hash), OV003 (project ref, three-way), OV020 (schema drift)."""
+    out = []
+    loc = f"overlay:{doc.get('dimension')}"
+    if doc.get("base_snapshot_sha256") != census_sha256:
+        out.append(("OV002", loc, f"base_snapshot_sha256 {doc.get('base_snapshot_sha256')} != census byte-hash {census_sha256}"))
+    proj = doc.get("project_ref")
+    if not (proj == census_project_ref == expect_project_ref):
+        out.append(("OV003", loc, f"project_ref {proj!r} must equal census {census_project_ref!r} and --expect-project-ref {expect_project_ref!r}"))
+    if doc.get("disposition_schema_sha256") != on_disk_disp_sha:
+        out.append(("OV020", loc, "disposition_schema_sha256 != on-disk disposition.schema.json bytes (drift)"))
+    if doc.get("overlay_schema_sha256") != on_disk_overlay_sha:
+        out.append(("OV020", loc, "overlay_schema_sha256 != on-disk overlay.schema.json bytes (drift)"))
+    return out
