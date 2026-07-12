@@ -566,6 +566,39 @@ def _duplicate_src_object_single_derivation():
     return diags == [] and list(derived) == ["public.v"] and w["started_at"] and w["ended_at"] and "_contrib_windows" not in eff
 
 
+def _multi_contributor_intersection_exact_window():
+    # Locks the CORE derivation math on the SUCCESS path across TWO contributors: S=max(started),
+    # E=min(ended) => the intersection is written. A max<->min swap would change these exact values
+    # (and here also trip E>min_captured), so this case catches a swap the reject-path tests cannot.
+    eff = _zero_census(["public.v"])
+    contrib = _contrib_map(("public.v", "2026-06-01T00:00:00Z", CENSUS_OBSERVED_AT, DEF_CAPTURED),          # ended = base
+                           ("public.v", "2026-06-20T00:00:00Z", "2026-07-12T00:00:00Z", "2026-07-12T00:00:00Z"))
+    diags, derived = _derive(eff, contrib)
+    w = eff["relations"][0]["consumer_evidence"]["observation_window"]
+    # S = max(06-01, 06-20) = 06-20 ; E = min(base=07-10T20, 07-12) = base
+    return (diags == [] and "public.v" in derived
+            and w["started_at"] == _pdt("2026-06-20T00:00:00Z").isoformat()
+            and w["ended_at"] == BASE.isoformat())
+
+
+def _future_ended_window_OV009():
+    # The derive-time future-E OV009 branch: a contributor whose ended_at is after `now` is rejected
+    # (captured_at set later so the E>min_captured branch does not pre-empt it).
+    eff = _zero_census(["public.v"])
+    contrib = _contrib_map(("public.v", "2026-06-05T00:00:00Z", "2026-07-15T00:00:00Z", "2026-07-16T00:00:00Z"))  # ended 07-15 > NOW 07-11
+    diags, _d = _derive(eff, contrib)
+    return "OV009" in _codes(diags)
+
+
+def _ended_after_captured_defense_OV009():
+    # The derive-time defense-assert OV009 branch: a contributor whose ended_at is after its own
+    # captured_at is rejected (an inconsistency the per-overlay OV009 also catches upstream).
+    eff = _zero_census(["public.v"])
+    contrib = _contrib_map(("public.v", "2026-06-05T00:00:00Z", "2026-07-09T00:00:00Z", "2026-07-08T00:00:00Z"))  # ended 07-09 > captured 07-08
+    diags, _d = _derive(eff, contrib)
+    return "OV009" in _codes(diags)
+
+
 _CASES += [
     ("fresh_window_derives_ok", _fresh_window_derives_ok),
     ("decade_old_window_OV016", _decade_old_window_OV016),
@@ -575,6 +608,9 @@ _CASES += [
     ("empty_contributors_OV018", _empty_contributors_OV018),
     ("empty_intersection_OV011", _empty_intersection_OV011),
     ("duplicate_src_object_single_derivation", _duplicate_src_object_single_derivation),
+    ("multi_contributor_intersection_exact_window", _multi_contributor_intersection_exact_window),
+    ("future_ended_window_OV009", _future_ended_window_OV009),
+    ("ended_after_captured_defense_OV009", _ended_after_captured_defense_OV009),
 ]
 
 if __name__ == "__main__":
