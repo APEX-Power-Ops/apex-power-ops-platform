@@ -19,8 +19,20 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import check_disposition as cd  # noqa: E402
 import disposition_signing as ds  # noqa: E402
 import contextlib  # noqa: E402
+import disposition_provenance as dp  # noqa: E402
 import disposition_trust as dt  # noqa: E402
 import yaml  # noqa: E402
+
+
+def _stub_dp(head, clean=True):
+    saved = (dp.git_head_sha, dp.git_worktree_clean)
+    dp.git_head_sha = lambda *a: head
+    dp.git_worktree_clean = lambda *a: clean
+    return saved
+
+
+def _restore_dp(saved):
+    dp.git_head_sha, dp.git_worktree_clean = saved
 
 
 def _ephemeral_keypair():
@@ -288,7 +300,8 @@ def _receipt_pure():
             fh.write(b"TAMPER-AFTER-VALIDATION")
         rec = cd.build_receipt(mode="preapply", now_iso="2026-07-10T21:00:00Z", expect_project_ref="fxoyniqnrlkxfligbxmg",
                                doc_bytes=doc_bytes, doc_paths=paths, signer={"key_id": "k", "spki_sha256": "00" * 32, "pem_sha256": "11" * 32},
-                               snapshot_signature_sha256="22" * 32, roots=ROOTS, decisions=dec)
+                               snapshot_signature_sha256="22" * 32, gate_repo_sha=None, checkout_bound=False,
+                               production_eligible=False, roots=ROOTS, decisions=dec)
         with open(paths["snapshot"], "rb") as fh:
             tampered_sha = hashlib.sha256(fh.read()).hexdigest()
         ev = {e["ref"]: e["sha256"] for e in rec["evidence"]}
@@ -388,7 +401,7 @@ def _preapply_anchor_green():
         receipt_path = os.path.join(d, "receipt.json")
         with _trusted(KEY_ID, fp):
             rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path,
-                                 "--key-id", KEY_ID, "--keys-dir", keys_dir, "--receipt-out", receipt_path])
+                                 "--key-id", KEY_ID, "--keys-dir", keys_dir, "--allow-unbound-checkout", "--receipt-out", receipt_path])
         if rc != 0:
             return False
         rec = json.load(open(receipt_path, encoding="utf-8"))
@@ -407,7 +420,7 @@ def _preapply_missing_key_blocks():
         snap_path, sig_path, _kd, _fp2 = _preapply_signed_paths(d, snap)
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
-            rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path])  # no --key-id
+            rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--allow-unbound-checkout"])  # no --key-id
         return rc == 1 and "SP026" in buf.getvalue()
 
 
@@ -419,7 +432,7 @@ def _preapply_unknown_key_blocks():
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
             rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path,
-                                 "--key-id", "not-a-signer", "--keys-dir", keys_dir])
+                                 "--key-id", "not-a-signer", "--keys-dir", keys_dir, "--allow-unbound-checkout"])
         return rc == 1 and "SP026" in buf.getvalue()
 
 
@@ -434,18 +447,18 @@ def _sig_gate_e2e():
         receipt_path = os.path.join(d, "receipt.json")
         with _trusted(KEY_ID, fp):
             green = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path,
-                                    "--key-id", KEY_ID, "--keys-dir", keys_dir, "--receipt-out", receipt_path]) == 0
+                                    "--key-id", KEY_ID, "--keys-dir", keys_dir, "--allow-unbound-checkout", "--receipt-out", receipt_path]) == 0
             green = green and os.path.isfile(receipt_path) and json.load(open(receipt_path, encoding="utf-8"))["gate"] == "green"  # receipt emitted on GREEN
             mbuf = io.StringIO()
             with contextlib.redirect_stdout(mbuf):
-                mrc = cd.main(base + ["--snapshot", snap_path])                 # no sig/key supplied
+                mrc = cd.main(base + ["--snapshot", snap_path, "--allow-unbound-checkout"])                 # no sig/key supplied
             missing = mrc == 1 and "SP026" in mbuf.getvalue()
             with open(snap_path, "ab") as fh:
                 fh.write(b" ")                                                  # tamper the signed bytes
             tbuf = io.StringIO()
             with contextlib.redirect_stdout(tbuf):
                 trc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path,
-                                      "--key-id", KEY_ID, "--keys-dir", keys_dir])
+                                      "--key-id", KEY_ID, "--keys-dir", keys_dir, "--allow-unbound-checkout"])
             tampered = trc == 1 and "SP026" in tbuf.getvalue()
         return green and missing and tampered
 
@@ -530,6 +543,91 @@ def _path():
             and not cd.is_path_ref("query:x") and cd.is_path_ref("C:\\x"))
 
 
+def _checkout_matrix():
+    g = cd._checkout_gate
+    r = []
+    r.append(g(None, False, False)[0] is False)                       # (0,0,0) SP028
+    r.append(g(None, False, True) == (True, False, False, None, None))  # (0,0,1) authoring
+    saved = _stub_dp("deadbeef", clean=True)
+    try:
+        r.append(g("deadbeef", True, False)[:4] == (True, True, True, "deadbeef"))  # (1,1,0) bound
+        r.append(g("cafef00d", True, False)[0] is False)              # wrong gate sha -> SP028
+        _restore_dp(saved); saved = _stub_dp("deadbeef", clean=False)
+        r.append(g("deadbeef", True, False)[0] is False)              # dirty -> SP028
+        _restore_dp(saved); saved = _stub_dp(None, clean=True)
+        r.append(g("deadbeef", True, False)[0] is False)              # undeterminable HEAD (git_head_sha->None) -> SP028
+    finally:
+        _restore_dp(saved)
+    r.append(g("deadbeef", False, False)[0] is False)                 # (1,0,0) SP028
+    r.append(g(None, True, False)[0] is False)                        # (0,1,0) SP028
+    r.append(g("deadbeef", True, True)[0] is False)                   # (1,1,1) SP028
+    r.append(g("deadbeef", False, True)[0] is False)                  # (1,0,1) SP028
+    r.append(g(None, True, True)[0] is False)                         # (0,1,1) SP028
+    return all(r)
+
+
+def _neither_flag_blocks_sp028():
+    import io
+    with tempfile.TemporaryDirectory() as d:
+        base, snap = _preapply_base(d)
+        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
+        buf = io.StringIO()
+        with _trusted(KEY_ID, fp), contextlib.redirect_stdout(buf):
+            rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--key-id", KEY_ID, "--keys-dir", keys_dir])
+    return rc == 1 and "SP028" in buf.getvalue()
+
+
+def _sp028_precedes_doc_read():
+    # a nonexistent snapshot/decisions path + no checkout flags must fail SP028 (rc 1), NOT SP000 (rc 2):
+    # the gate refuses before any document read.
+    import io
+    with tempfile.TemporaryDirectory() as d:
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = cd.main(["--snapshot", os.path.join(d, "nope.json"), "--decisions", os.path.join(d, "nope.json"),
+                          "--entity-map", os.path.join(d, "nope.json"), "--manifest", os.path.join(d, "nope.json"),
+                          "--now", "2026-07-10T21:00:00Z", "--root", d, "--expect-project-ref", "fxoyniqnrlkxfligbxmg"])
+    return rc == 1 and "SP028" in buf.getvalue()
+
+
+def _authoring_banner_and_receipt():
+    import io
+    banner = "=== DISPOSITION GATE (preapply): GREEN — AUTHORING ONLY; CHECKOUT UNBOUND ==="  # exact literal (em-dash)
+    with tempfile.TemporaryDirectory() as d:
+        base, snap = _preapply_base(d)
+        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
+        receipt_path = os.path.join(d, "receipt.json")
+        out_buf, err_buf = io.StringIO(), io.StringIO()
+        with _trusted(KEY_ID, fp), contextlib.redirect_stdout(out_buf), contextlib.redirect_stderr(err_buf):
+            rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--key-id", KEY_ID,
+                                 "--keys-dir", keys_dir, "--allow-unbound-checkout", "--receipt-out", receipt_path])
+        out, err = out_buf.getvalue(), err_buf.getvalue()
+        rec = json.load(open(receipt_path, encoding="utf-8"))
+    return (rc == 0 and banner in out and "WARNING: unbound checkout" in err
+            and rec["checkout_bound"] is False and rec["production_eligible"] is False and rec["gate_repo_sha"] is None)
+
+
+def _bound_green_receipt():
+    import io
+    with tempfile.TemporaryDirectory() as d:
+        base, snap = _preapply_base(d)
+        snap_path, sig_path, keys_dir, fp = _preapply_signed_paths(d, snap)
+        receipt_path = os.path.join(d, "receipt.json")
+        saved = _stub_dp("deadbeef", clean=True)
+        buf = io.StringIO()
+        try:
+            with _trusted(KEY_ID, fp), contextlib.redirect_stdout(buf):
+                rc = cd.main(base + ["--snapshot", snap_path, "--snapshot-sig", sig_path, "--key-id", KEY_ID,
+                                     "--keys-dir", keys_dir, "--expect-gate-repo-sha", "deadbeef",
+                                     "--require-clean-checkout", "--receipt-out", receipt_path])
+            out = buf.getvalue()
+            rec = json.load(open(receipt_path, encoding="utf-8"))
+        finally:
+            _restore_dp(saved)
+    return (rc == 0 and "AUTHORING ONLY" not in out and rec["checkout_bound"] is True
+            and rec["production_eligible"] is True and rec["gate_repo_sha"] == "deadbeef")
+
+
 if __name__ == "__main__":
     ok = True
     print("== green baselines ==")
@@ -564,6 +662,11 @@ if __name__ == "__main__":
         ("dup_yaml", lambda: _yaml_dup()),
         ("dup_json", lambda: _json_dup()),
         ("path_safety", lambda: _path()),
+        ("checkout_matrix", _checkout_matrix),
+        ("neither_flag_blocks_sp028", _neither_flag_blocks_sp028),
+        ("sp028_precedes_doc_read", _sp028_precedes_doc_read),
+        ("authoring_banner_and_receipt", _authoring_banner_and_receipt),
+        ("bound_green_receipt", _bound_green_receipt),
     ]:
         try:
             r = bool(fn())

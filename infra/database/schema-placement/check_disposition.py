@@ -25,6 +25,7 @@ from datetime import datetime, timezone
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
+import disposition_provenance as dp
 import disposition_signing as ds
 import disposition_trust as dt
 
@@ -63,6 +64,7 @@ CODES = {
     "SP025": "a target_object does not live in the decision's target_schema (relocation destination binding)",
     "SP026": "evidence_snapshot signature is missing or does not verify against the pinned signer (--key-id resolved through the reviewed TRUSTED_SIGNERS anchor); preapply requires a signed snapshot",
     "SP027": "accepted delete does not meet the destructive-evidence floor (a consumer dimension is not observed, external_clients is not_applicable while API-exposed, or the observation window is < 30 days)",
+    "SP028": "checkout-provenance binding failed: for preapply supply either both --expect-gate-repo-sha and --require-clean-checkout (bound) OR --allow-unbound-checkout alone (authoring-only); any other combination is refused, and on the bound path the checker's git HEAD must be determinable, its worktree clean, and equal to the reviewed gate SHA (never the census snapshot's repo_sha)",
 }
 
 
@@ -159,13 +161,16 @@ def _sha256_file(path):
         return hashlib.sha256(fh.read()).hexdigest()
 
 
-def build_receipt(*, mode, now_iso, expect_project_ref, doc_bytes, doc_paths, signer, snapshot_signature_sha256, roots, decisions):
+def build_receipt(*, mode, now_iso, expect_project_ref, doc_bytes, doc_paths, signer, snapshot_signature_sha256,
+                  gate_repo_sha, checkout_bound, production_eligible, roots, decisions):
     """Records the SHA-256 of the exact bytes the gate validated: the four CLI documents hashed from the
     IN-HAND bytes main() parsed, the pinned SIGNER content, and the snapshot signature bytes' hash (bound
     from the in-hand sig bytes — no second read). ADVISORY; emitted ONLY on a GREEN gate."""
     receipt = {"kind": "disposition_gate_receipt", "gate": "green", "mode": mode, "now": now_iso,
                "expect_project_ref": expect_project_ref, "inputs": {}, "evidence": [],
-               "signer": signer, "snapshot_signature_sha256": snapshot_signature_sha256}
+               "signer": signer, "snapshot_signature_sha256": snapshot_signature_sha256,
+               "gate_repo_sha": gate_repo_sha, "checkout_bound": checkout_bound,
+               "production_eligible": production_eligible}
     for name, data in doc_bytes.items():
         receipt["inputs"][name] = {"path": doc_paths.get(name), "sha256": hashlib.sha256(data).hexdigest()}
     seen = set()
@@ -538,6 +543,27 @@ def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, 
     return sorted(diags, key=lambda x: x.key())
 
 
+def _checkout_gate(expect_gate_repo_sha, require_clean_checkout, allow_unbound):
+    """SP028: decide the checkout binding from the flag combination alone, BEFORE any input document is
+    read. Returns (ok, checkout_bound, production_eligible, gate_repo_sha, diagnostic_or_None). Only the
+    bound path runs a git check, against the checker's own repo dir. Accidental unbound is impossible:
+    neither-flag-nor-opt-in is refused."""
+    has_gate = bool(expect_gate_repo_sha)
+    has_clean = bool(require_clean_checkout)
+    has_allow = bool(allow_unbound)
+    if has_gate and has_clean and not has_allow:
+        cdir = os.path.dirname(os.path.abspath(__file__))
+        head = dp.git_head_sha(cdir)
+        if not head or not dp.git_worktree_clean(cdir):
+            return False, None, None, None, Diagnostic("SP028", "checkout", "checker checkout is DIRTY or its git HEAD is undeterminable — run preapply from a clean checkout at --expect-gate-repo-sha")
+        if head != expect_gate_repo_sha:
+            return False, None, None, None, Diagnostic("SP028", "checkout", f"checker git HEAD {head[:12]} != --expect-gate-repo-sha {expect_gate_repo_sha[:12]} (never the census snapshot repo_sha)")
+        return True, True, True, expect_gate_repo_sha, None
+    if (not has_gate) and (not has_clean) and has_allow:
+        return True, False, False, None, None
+    return False, None, None, None, Diagnostic("SP028", "checkout", "supply BOTH --expect-gate-repo-sha and --require-clean-checkout (bound), OR --allow-unbound-checkout alone (authoring-only); any other combination is refused")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Offline semantic gate for the disposition ledger.")
     ap.add_argument("--snapshot", required=True)
@@ -550,9 +576,22 @@ def main(argv=None):
     ap.add_argument("--snapshot-sig", default=None, dest="snapshot_sig", help="path to the snapshot's detached Ed25519 signature sidecar (REQUIRED for preapply; SP026).")
     ap.add_argument("--key-id", default=None, dest="key_id", help="authorized signer id pinned in the TRUSTED_SIGNERS anchor (REQUIRED for preapply; SP026).")
     ap.add_argument("--keys-dir", default=dt.DEFAULT_KEYS_DIR, dest="keys_dir", help="dir holding <key-id>.pub.pem (public key MATERIAL only; the trust anchor is the source constant).")
+    ap.add_argument("--expect-gate-repo-sha", default=None, dest="expect_gate_repo_sha", help="the reviewed merged commit the CHECKER must run from (bound preapply; SP028). Independent of the census snapshot repo_sha.")
+    ap.add_argument("--require-clean-checkout", action="store_true", dest="require_clean_checkout", help="with --expect-gate-repo-sha, enforce the checker's own worktree is clean and at that SHA (SP028).")
+    ap.add_argument("--allow-unbound-checkout", action="store_true", dest="allow_unbound_checkout", help="explicit opt-in for authoring-only unbound runs (production_eligible=false); refused together with the binding flags (SP028).")
     ap.add_argument("--receipt-out", default=None, dest="receipt_out", help="on GREEN, write a gate receipt (input SHA-256 digests) here for the apply runner to rehash.")
     ap.add_argument("--root", action="append", default=[], dest="roots", required=True, help="approved evidence root (repeatable, REQUIRED).")
     args = ap.parse_args(argv)
+
+    # --- SP028 checkout-provenance gate: runs IMMEDIATELY after argument parsing, BEFORE any input
+    # document is read, binding (or explicitly opting out of binding) the checker's OWN checkout to a
+    # reviewed gate SHA. Accidental unbound is impossible (neither-flag-nor-opt-in -> SP028).
+    ok, checkout_bound, production_eligible, gate_repo_sha, cdiag = _checkout_gate(
+        args.expect_gate_repo_sha, args.require_clean_checkout, args.allow_unbound_checkout)
+    if not ok:
+        print(cdiag.render())
+        print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ===")
+        return 1
 
     # Read every input's bytes ONCE and parse from that same buffer, so the bytes the gate verifies
     # (SP026) and pins in the receipt are identical to the bytes it parsed and trusted (Codex P1).
@@ -619,14 +658,20 @@ def main(argv=None):
         try:
             receipt = build_receipt(mode=args.mode, now_iso=args.now, expect_project_ref=args.expect_project_ref,
                                     doc_bytes=doc_bytes, doc_paths=doc_paths, signer=signer_meta,
-                                    snapshot_signature_sha256=snapshot_signature_sha256, roots=roots, decisions=decisions)
+                                    snapshot_signature_sha256=snapshot_signature_sha256,
+                                    gate_repo_sha=gate_repo_sha, checkout_bound=checkout_bound,
+                                    production_eligible=production_eligible, roots=roots, decisions=decisions)
             with open(args.receipt_out, "w", encoding="utf-8") as fh:
                 json.dump(receipt, fh, indent=2, sort_keys=True)
         except OSError as exc:
             print(f"SP000: gate is GREEN but the receipt could not be produced ({type(exc).__name__}); refusing to emit an incomplete receipt", file=sys.stderr)
             return 1
         print(f"=== gate receipt written: {args.receipt_out} ({len(receipt['evidence'])} evidence files pinned) ===")
-    print(f"=== DISPOSITION GATE ({args.mode}): GREEN ===")
+    if checkout_bound:
+        print(f"=== DISPOSITION GATE ({args.mode}): GREEN ===")
+    else:
+        print("WARNING: unbound checkout — the trust anchor was trusted WITHOUT a reviewed gate SHA; authoring-only, not valid for production apply", file=sys.stderr)
+        print(f"=== DISPOSITION GATE ({args.mode}): GREEN — AUTHORING ONLY; CHECKOUT UNBOUND ===")
     return 0
 
 
