@@ -763,6 +763,17 @@ def _stale_overlay_captured_at_OV010():
     return "OV010" in _codes(res.diagnostics)
 
 
+def _future_captured_at_OV010():
+    # OV010 future-captured branch (review Minor #3): an overlay captured_at AFTER `now` is rejected —
+    # the stale test covers only the too-old branch. Window stays coherent (ended <= captured, <= now).
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    o = _static_overlay(cb, captured_at="2026-07-20T00:00:00Z")  # after NOW 2026-07-11; default window ends 07-10T20
+    decisions, manifest = _decisions_manifest(["public.v"])
+    res = _merge(census, cb, [o], decisions, manifest, (priv, _FakeSigner(pub)))
+    return "OV010" in _codes(res.diagnostics)
+
+
 def _effective_view_datetimes_are_iso():
     priv, pub = _ephemeral_keypair()
     census = _zero_census(["public.v"]); cb = _canon(census)
@@ -828,6 +839,7 @@ def _signed_malformed_assignments_OV008():
 _CASES += [
     ("merge_deepcopy_unmutated", _merge_deepcopy_unmutated),
     ("stale_overlay_captured_at_OV010", _stale_overlay_captured_at_OV010),
+    ("future_captured_at_OV010", _future_captured_at_OV010),
     ("effective_view_datetimes_are_iso", _effective_view_datetimes_are_iso),
     ("receipt_binds_sidecar_and_signer", _receipt_binds_sidecar_and_signer),
     ("ov015_missing_gate_required_dimension", _ov015_missing_gate_required_dimension),
