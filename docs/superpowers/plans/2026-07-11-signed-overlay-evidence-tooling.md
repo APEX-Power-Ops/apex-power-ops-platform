@@ -1335,10 +1335,12 @@ def check_delete_floor_coherence(effective, *, delete_src_oids, external_na_oids
     (dimension, object_id) assignment, T2) must COVER the derived consumer window [S, E]
     (started_at <= S and ended_at >= E), proving the relation was unexposed THROUGHOUT the evidence
     interval. OV022 evaluates ONLY when an observed-false in_data_api overlay backs the waiver (its
-    window is in in_data_api_windows). A MISSING (or observed-true) in_data_api overlay DEFERS to the
-    SP027 delete floor in run() — which denies the waiver and blocks the delete (Codex-P2) — so OV022
-    never short-circuits that ratified path. When external_clients is observed (oid not in
-    external_na_oids), OV022 is not evaluated (T1)."""
+    window is in in_data_api_windows). The coherent routing for the other cases (audit round-3 F2):
+    a MISSING in_data_api overlay leaves the gate-required dimension unresolved and is caught by
+    **OV015** (cluster-completeness, before run()); an **observed-TRUE** overlay defers here and
+    **SP027** denies the waiver at the semantic gate; only an observed-false overlay with an inadequate
+    window is OV022 — none of these short-circuit their ratified diagnostic. When external_clients is
+    observed (oid not in external_na_oids), OV022 is not evaluated (T1)."""
     out = []
     for oid in sorted(delete_src_oids & external_na_oids):  # T1: only not_applicable-waiver deletes
         se = derived_windows.get(oid)
@@ -1668,8 +1670,9 @@ def load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions,
             else:
                 rel[dim] = a["value"]
                 # Record the in_data_api window ONLY for an observed-FALSE overlay — the only shape that
-                # backs the SP027 external_clients not_applicable waiver. A missing / observed-true
-                # in_data_api overlay leaves this unset, so OV022 defers to SP027 (Codex-P2; T2).
+                # backs the SP027 external_clients not_applicable waiver. A missing overlay leaves the
+                # gate-required dim unresolved (-> OV015); an observed-true overlay leaves this unset so
+                # OV022 defers and SP027 denies the waiver at the semantic gate (audit F2; T2).
                 if dim == "in_data_api_exposed_schema" and a["value"].get("state") == "observed" and a["value"].get("value") is False:
                     in_data_api_windows[oid] = w
 
@@ -2126,7 +2129,7 @@ Per the mandatory Independent Review Protocol, run the cross-engine Codex pass o
 
 | Codex P2 | Fix |
 |---|---|
-| OV022 emitted for a *missing* in_data_api overlay → short-circuits before `run()` can fire SP027 (contradicts the "missing→SP027" matrix) | OV022 now records the window only for an **observed-false** overlay and **defers** (missing/observed-true → SP027 denies the waiver at the semantic gate). Task 5 unit + Task 8 e2e (g/h) assert both branches. |
+| OV022 emitted for a *missing* in_data_api overlay → short-circuits before `run()` can fire SP027 | OV022 records the window only for an **observed-false** overlay and **defers**. The **rev-4 refinement** (audit F2) then routes the deferred cases coherently: **OV015** (missing) / **SP027** (observed-true) / **OV022** (observed-false, inadequate window). Task-5 unit + Task-8 e2e assert all three. |
 | Absent/non-finite `max_consumer_evidence_age_hours` checked after the OV018 short-circuit → a zero-contributor relation masks the missing flag | Recency-policy `OV016` is a **deterministic precheck at the top of `derive_windows`**, before any per-relation contributor check. |
 
 **Second plan re-audit (2026-07-12) → rev 4 (1 High + 4 Med, all folded):** F1 loader short-circuits on any schema failure (non-object/malformed-`assignments` → OV008, no `AttributeError`); F2 the coherent `in_data_api` delete split OV015(missing)/SP027(observed-true)/OV022(observed-false,bad-window) — matrix + Task-5 unit + Task-8 e2e updated; F3 `_e2e_red_then_green` + `_e2e_ov021_via_main` are real `cd.main` tests; F4 real `validate_overlay`→coded-OV008 unseeded-`$ref` test; F5 three `producing_repo_sha` categories (required/forbidden/conditional) with pos+neg tests.
