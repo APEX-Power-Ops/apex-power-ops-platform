@@ -50,3 +50,34 @@ L12 unversioned schema `$id`, overlays carry no schema content-hash (drift) · L
 - **D3 process (Q3→revise + re-IRP):** revise spec, re-run FULL cross-engine IRP; no writing-plans until the revised spec has NO unresolved HIGH.
 - **Revision checklist (fold ALL):** SP028 step-0; read-once + parse exact verified bytes; reject zero contributors; only checker-derived window update (overlays still can't assign observation_window); keep SP009 ordering+duration; reject stale even when captured_at current; `_finite()` on every age/duration/staleness param; registry+format failures → coded OV diagnostics (no uncaught); bind overlay schema $id+version+content-SHA in receipt; bind each overlay path+raw-SHA+sig-SHA+signer+source-hash; add source_hash_not_applicable_reason (required iff source_hash null); OV015 fix (base-observed database_deps satisfies; only unresolved permitted-overlay-targets need overlays); operator_identity/attestation_ref = provenance not authz; a signer with every valid overlay cannot produce an execution-authorized DELETE receipt.
 - **Adversarial tests (add to §9):** decade-old window on a fresh overlay; database_deps observed outside derived window; empty contributor set; NaN/Inf recency; replayed overlay vs a DIFFERENT census; duplicate-equal assignments; verify-then-file-swap; valid operator overlay WITHOUT manifest TA approval; valid overlays+manifest but NO operator execution authorization; DELETE window < 30d.
+
+---
+
+## ROUND 3 — FOCUSED DELTA PROOF of rev5 @ 1916e607 (range `33199350..1916e607`; Claude host-grounded, independent of the Codex recommendation)
+
+Operator directed an independent focused proof of the rev-5 delta (OV022 + all-cluster window derivation + OV021 unconditional) against 10 obligations before ratifying — *"folding ≠ independently proving closed."* Every obligation verified against BOTH the real spec text AND the live `infra/database/schema-placement/check_disposition.py` on the overlay worktree (off main `7c9a97ca`). **Verdict: CLEAN — 0 High, 0 Medium gate defect. rev-5 RATIFIED.** Three LOW clarity/correctness items carried into the writing-plan as Global Constraints + pinned negative tests (none is a gate-bypass; every one is fail-closed).
+
+**Grounding anchors (real `check_disposition.py`):**
+- SP027 block is **delete-gated**: `L435  if row.get("action_class") == "delete" and row.get("decision_status") == "accepted"`.
+- external_clients waiver: `L493  if ext.get("state") == "not_applicable"` → `L494-496 requires in_data_api_exposed_schema {state:"observed", value is False}` else SP027.
+- consumer dims OBSERVED `L489-491`; 720h delete floor `L500-503`.
+- Overlay `observation_window {started_at, ended_at}` is a **top-level field on EVERY overlay document** (§4 contract), so the observed_bool `in_data_api` overlay carries one → OV022 is well-founded (not referencing a non-existent field). `(dimension, object_id)` uniqueness via the **OV007 loader counter** → the "exact assignment" lookup is unique.
+
+| # | Obligation | Verdict | Evidence / plan-pin |
+|---|---|---|---|
+| 1 | OV022 only for delete ∧ external_clients not_applicable ∧ in_data_api observed-false | **CONFIRMED** | `L435` delete-gate + `L493` not_applicable + `L494-496` observed-false; OV022 text ties to "SP027 delete floor relies on the external_clients not_applicable waiver". Plan-pin **T1**: state explicitly OV022 is NOT evaluated when external_clients is observed. |
+| 2 | Window from the exact `(in_data_api, object_id)` overlay assignment, not any exposure overlay | **CONFIRMED** | §4 one-dimension-per-overlay + OV007 `(dim,object_id)` uniqueness → unique doc-level `observation_window` lookup keyed by the assigned object_id. Pin test **T-obl2**. |
+| 3 | Coverage inclusive: `started_at ≤ S ∧ ended_at ≥ E` | **CONFIRMED** | Delta text verbatim: `started_at <= S` and `ended_at >= E`. |
+| 4 | Missing provenance / missing exposure overlay / stale / partial → fail-closed | **CONFIRMED** | missing in_data_api overlay → SP027 fires (state not observed-false); stale → OV010 per-overlay `captured_at`; partial coverage → OV022; absent provenance marker → original SP009. Pin tests **T-obl4a/b**. |
+| 5 | external_clients observed → OV022 not invoked | **CONFIRMED** (fail-closed over-reject risk only, not a gate-bypass) | OV022 keyed to the not_applicable waiver; the observed path never relies on it. Plan-pin **T1** + negative test **T-obl5**. |
+| 6 | Every unique cluster-source relation derived once, retain included | **CONFIRMED** | Delta: "for every cluster-source relation … retain included"; SP009 runs on every `src_rel`. |
+| 7 | Duplicate src objects across decisions → no dup derivation / no conflicting markers | **CONFIRMED** (idempotent) | `derived_window_object_ids` is a **set** (marker dedup); same object_id → same contributors → identical window. Plan-pin **T3**: derive once per UNIQUE object_id; pin idempotency test **T-obl7**. |
+| 8 | Non-cluster relations untouched | **CONFIRMED** | Delta: non-cluster keep zero-width default, not over-rejected; `copy.deepcopy`, base census never mutated. |
+| 9 | Valid retain fixtures reach evidence-ready green | **CONFIRMED** | §9 pinned test: retain + covering overlays → green. |
+| 10 | OV021 runs with zero overlay inputs | **CONFIRMED** | Delta: "UNCONDITIONAL … runs even with zero `--overlay` inputs"; §9 pinned test present. |
+
+**Cross-engine delta.** Codex's focused pass (operator-relayed recommendation) found no new High/Medium and judged both changes correctly scoped + fail-closed except the intended retain-reachability alignment. Claude's independent host-grounded proof confirms all 10 against the real SP027 code and adds three LOW plan-pins (OV022 trigger-scoping crispness, exact-assignment lookup test, unique-object_id dedup) plus the full negative-test matrix. Convergence across rounds: **3 → 1 → 0 High; focused delta = 0/0.**
+
+**Plan-pinned negative tests (writing-plan §9).** OV022-fires-when-window-not-covering · external_clients-observed→no-OV022 · missing-in_data_api-overlay→SP027 · stale-in_data_api-overlay→OV010 · window-sourced-from-the-specific-assignment · retain-no-overlay→OV018 · retain-with-covering→green · duplicate-src-object→single-derivation-one-marker · OV021-zero-overlay · remove-marker→original-SP009.
+
+**Three LOW spec-clarity items → writing-plan Global Constraints (not spec-blocking; carried to the binding build contract):** T1 (OV022 evaluated only for a delete-conclusion source relation whose external_clients overlay resolves to `not_applicable`; observed → not evaluated); T2 (window looked up from the `(in_data_api_exposed_schema, object_id)` assignment via OV007 uniqueness); T3 (window derived once per **unique** source object_id; the provenance set dedups markers).
