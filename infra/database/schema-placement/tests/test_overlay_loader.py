@@ -847,6 +847,279 @@ _CASES += [
     ("signed_malformed_assignments_OV008", _signed_malformed_assignments_OV008),
 ]
 
+# ---- Task 8: CLI wiring + end-to-end negatives + migrate main()-level baselines ----
+import contextlib
+import io
+import tempfile
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_disposition as cd  # noqa: E402
+import disposition_trust as dt  # noqa: E402
+
+
+def _wb(path, b):
+    with open(path, "wb") as fh:
+        fh.write(b if isinstance(b, (bytes, bytearray)) else json.dumps(b).encode("utf-8"))
+    return path
+
+
+def _pin_signer(pub):
+    """Monkeypatch the trust anchor so the throwaway key resolves as the pinned 'test-signer' (tests
+    only). Returns the saved TRUSTED_SIGNERS to restore in a finally."""
+    from cryptography.hazmat.primitives import serialization
+    fp = hashlib.sha256(pub.public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)).hexdigest()
+    saved = dict(dt.TRUSTED_SIGNERS)
+    dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS["test-signer"] = fp
+    return saved
+
+
+def _keys_dir(tmp, pub):
+    from cryptography.hazmat.primitives import serialization
+    kd = os.path.join(tmp, "keys"); os.makedirs(kd, exist_ok=True)
+    _wb(os.path.join(kd, "test-signer.pub.pem"),
+        pub.public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo))
+    return kd
+
+
+def _capture_main(argv):
+    # Catch SystemExit so these tests start RED cleanly BEFORE implementation: an unknown --overlay /
+    # --max-consumer-evidence-age-hours makes argparse call sys.exit(2) (a BaseException the runner's
+    # `except Exception` would NOT catch), which would otherwise crash the whole suite instead of
+    # reporting a per-test FAIL. After the CLI flags exist, cd.main returns an int normally.
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        try:
+            rc = cd.main(argv)
+        except SystemExit as exc:
+            rc = exc.code if isinstance(exc.code, int) else 2
+    return rc, buf.getvalue()
+
+
+def _harden_docs(oid):
+    # disposition.schema.json pins an ACCEPTED harden decision's consumer_disposition to the resolved
+    # enum {no_consumer, has_consumers} (a bare "unresolved" is a coded SP001 at the schema boundary,
+    # not a semantic gate) -- so 'no_consumer' is used here, which makes SP022 force EVERY consumer dim
+    # resolved on the effective view; required_observations additionally names in_data_api (a
+    # permitted-overlay target, base not_observed) as a gate-required dim.
+    d = {"decision_id": "D-h1", "source_objects": [oid], "meaning_disposition": "preserve",
+         "action_class": "harden", "decision_status": "accepted", "exposure_policy": "service_only",
+         "consumer_disposition": "no_consumer", "evidence_refs": ["query:x"], "technical_authority_approval": "TA-1"}
+    manifest = {"kind": "cluster_manifest", "cluster_id": "c-001", "status": "accepted", "action_class": "harden",
+                "decision_ids": ["D-h1"], "evidence_snapshot": "census.json", "max_staleness_hours": 8760,
+                "minimum_consumer_window_hours": 24, "required_observations": ["in_data_api_exposed_schema"],
+                "technical_authority_approval": "TA-1"}
+    return tcd._decs([d]), manifest, tcd._entity_map()
+
+
+def _base_argv(tmp, cpath, dpath, epath, mpath, pub):
+    return ["--snapshot", cpath, "--snapshot-sig", cpath + ".sig", "--decisions", dpath,
+            "--entity-map", epath, "--manifest", mpath, "--now", NOW_ISO, "--mode", "preapply",
+            "--expect-project-ref", "fxoyniqnrlkxfligbxmg", "--key-id", "test-signer",
+            "--keys-dir", _keys_dir(tmp, pub), "--allow-unbound-checkout",
+            "--max-consumer-evidence-age-hours", "8760", "--root", tmp]
+
+
+def _write_harden_case(priv, pub, census):
+    tmp = tempfile.mkdtemp(prefix="ov_e2e_")
+    cb = _canon(census)
+    cpath = _wb(os.path.join(tmp, "census.json"), cb); _wb(cpath + ".sig", _sign(census, priv)[1])
+    decisions, manifest, em = _harden_docs("public.v")
+    dpath = _wb(os.path.join(tmp, "dec.json"), _canon(decisions))
+    epath = _wb(os.path.join(tmp, "ent.json"), _canon(em))
+    mpath = _wb(os.path.join(tmp, "man.json"), _canon(manifest))
+    return tmp, cb, _base_argv(tmp, cpath, dpath, epath, mpath, pub)
+
+
+def _e2e_red_then_green():
+    priv, pub = _ephemeral_keypair(); saved = _pin_signer(pub); oid = "public.v"
+    try:
+        tmp, cb, base = _write_harden_case(priv, pub, _zero_census([oid]))
+        rc_red, _o = _capture_main(base)                          # RED: zero overlays -> OV018/OV015
+        # GREEN: in_data_api observed-false (gate-required) + the full consumer set (static_repo/
+        # runtime_logs/external_clients/operator_declaration observed) — an accepted harden's
+        # no_consumer conclusion forces every consumer dim resolved (SP022) on the effective view.
+        # Consumer refs use the 'sha:' scheme so SP014 treats them as non-path (a bare id would be a path ref).
+        ov_api = _overlay("in_data_api_exposed_schema", "platform_config",
+                          [{"object_id": oid, "value": {"state": "observed", "value": False}}], census_bytes=cb)
+        opts = []
+        for i, o in enumerate([ov_api] + _harden_consumer_overlays(cb, oid)):
+            p = os.path.join(tmp, f"ov{i}.json"); ob, sig = _sign(o, priv); _wb(p, ob); _wb(p + ".sig", sig); opts += ["--overlay", p]
+        rpath = os.path.join(tmp, "receipt.json")
+        rc_green, _o2 = _capture_main(base + opts + ["--receipt-out", rpath])
+        receipt = json.load(open(rpath)) if os.path.exists(rpath) else {}
+        return (rc_red == 1 and rc_green == 0 and receipt.get("evidence_ready") is True
+                and receipt.get("execution_authorized") is False and "production_eligible" not in receipt)
+    finally:
+        dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS.update(saved)
+
+
+def _e2e_ov021_via_main():
+    priv, pub = _ephemeral_keypair(); saved = _pin_signer(pub); oid = "public.v"
+    try:
+        census = _zero_census([oid])
+        census["relations"][0]["consumer_evidence"]["observation_window"] = {"started_at": "2026-06-05T00:00:00Z", "ended_at": CENSUS_OBSERVED_AT}
+        _tmp, _cb, base = _write_harden_case(priv, pub, census)   # non-zero base window, zero overlays
+        rc, out = _capture_main(base)
+        return rc == 1 and "OV021" in out
+    finally:
+        dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS.update(saved)
+
+
+# ---- delete/retain/SP018 e2e helpers + the six named tests (audit round-4 F2) ----
+def _write_case(priv, pub, census, docs, extra_roots=()):
+    """Generalizes _write_harden_case to any (decisions, manifest, entity_map) + extra --root dirs."""
+    tmp = tempfile.mkdtemp(prefix="ov_e2e_")
+    cb = _canon(census)
+    cpath = _wb(os.path.join(tmp, "census.json"), cb); _wb(cpath + ".sig", _sign(census, priv)[1])
+    decisions, manifest, em = docs
+    dpath = _wb(os.path.join(tmp, "dec.json"), _canon(decisions))
+    epath = _wb(os.path.join(tmp, "ent.json"), _canon(em))
+    mpath = _wb(os.path.join(tmp, "man.json"), _canon(manifest))
+    argv = _base_argv(tmp, cpath, dpath, epath, mpath, pub)
+    for r in extra_roots:
+        argv += ["--root", r]
+    return tmp, cb, argv
+
+
+def _add_overlays(tmp, priv, overlays):
+    opts = []
+    for i, o in enumerate(overlays):
+        p = os.path.join(tmp, f"ov{i}.json"); ob, sig = _sign(o, priv); _wb(p, ob); _wb(p + ".sig", sig)
+        opts += ["--overlay", p]
+    return opts
+
+
+def _consumer_overlay(dim, cb, ref, state="observed", **overrides):
+    src = {"static_repo": "repository_scan", "runtime_logs": "runtime_logs",
+           "external_clients": "external_client_inventory", "operator_declaration": "operator_declaration"}[dim]
+    value = ({"state": "observed", "found_consumers": 0, "ref": ref} if state == "observed"
+             else {"state": state, "found_consumers": None, "ref": None, "detail": "n/a"})
+    return _overlay(f"consumer_evidence.{dim}", src, [{"object_id": "public.v", "value": value}], census_bytes=cb, **overrides)
+
+
+def _in_data_api_overlay(cb, value, window=None):
+    extra = {"observation_window": window} if window else {}
+    return _overlay("in_data_api_exposed_schema", "platform_config",
+                    [{"object_id": "public.v", "value": {"state": "observed", "value": value}}], census_bytes=cb, **extra)
+
+
+def _harden_consumer_overlays(cb, oid="public.v"):
+    """Full no_consumer resolution set for an accepted harden decision (disposition.schema.json pins
+    consumer_disposition to no_consumer/has_consumers for accepted harden -- SP022 then requires EVERY
+    consumer dim resolved on the effective view; unlike the delete floor, harden has no SP027
+    not_applicable waiver, so external_clients is simply observed like the other three)."""
+    return [
+        _consumer_overlay("static_repo", cb, "sha:s1"),
+        _consumer_overlay("runtime_logs", cb, "sha:r1", producing_repo_sha=None, producing_repo_sha_not_applicable_reason="runtime query"),
+        _consumer_overlay("external_clients", cb, "sha:e1"),
+        _consumer_overlay("operator_declaration", cb, "sha:o1", producing_repo_sha=None,
+                          producing_repo_sha_not_applicable_reason="operator", operator_identity="op-1", attestation_ref="att-1"),
+    ]
+
+
+def _delete_consumer_overlays(cb):
+    """The SP027/SP022 consumer set for a no_consumer delete: static_repo/runtime_logs/operator_declaration
+    observed (windowed contributors) + external_clients not_applicable (invokes the SP027 waiver)."""
+    return [
+        _consumer_overlay("static_repo", cb, "sha:s1"),  # producing_repo_sha default "d"*40 (required category)
+        _consumer_overlay("runtime_logs", cb, "sha:r1", producing_repo_sha=None, producing_repo_sha_not_applicable_reason="runtime query"),
+        _consumer_overlay("operator_declaration", cb, "sha:o1", producing_repo_sha=None,
+                          producing_repo_sha_not_applicable_reason="operator", operator_identity="op-1", attestation_ref="att-1"),
+        _consumer_overlay("external_clients", cb, None, state="not_applicable",
+                          producing_repo_sha=None, producing_repo_sha_not_applicable_reason="no external clients"),
+    ]
+
+
+def _delete_docs(oid):
+    d = {"decision_id": "D-d1", "source_objects": [oid], "meaning_disposition": "retire",
+         "action_class": "delete", "decision_status": "accepted", "consumer_disposition": "no_consumer",
+         "retention_disposition": {"policy": "delete_after", "recovery_proof": tcd._recovery_artifact()},
+         "evidence_refs": ["query:x"], "technical_authority_approval": "TA-5"}
+    manifest = {"kind": "cluster_manifest", "cluster_id": "c-001", "status": "accepted", "action_class": "delete",
+                "decision_ids": ["D-d1"], "evidence_snapshot": "census.json", "max_staleness_hours": 8760,
+                "minimum_consumer_window_hours": 24, "required_observations": ["in_data_api_exposed_schema"],
+                "technical_authority_approval": "TA-5"}
+    return tcd._decs([d]), manifest, tcd._entity_map()
+
+
+def _retain_docs(oid):
+    d = {"decision_id": "D-r1", "source_objects": [oid], "meaning_disposition": "preserve",
+         "action_class": "retain", "decision_status": "accepted", "consumer_disposition": "unresolved",
+         "retention_disposition": {"policy": "retain", "recovery_proof": None},
+         "evidence_refs": ["query:x"], "technical_authority_approval": "TA-r"}
+    manifest = {"kind": "cluster_manifest", "cluster_id": "c-001", "status": "accepted", "action_class": "retain",
+                "decision_ids": ["D-r1"], "evidence_snapshot": "census.json", "max_staleness_hours": 8760,
+                "minimum_consumer_window_hours": 24, "required_observations": ["in_data_api_exposed_schema"],
+                "technical_authority_approval": "TA-r"}
+    return tcd._decs([d]), manifest, tcd._entity_map()
+
+
+def _run_case(docs, build_overlays, receipt=False, extra_roots=()):
+    """Write a case, sign the overlays build_overlays(cb) produces, run cd.main, return (rc, out, receipt_path_or_None)."""
+    priv, pub = _ephemeral_keypair(); saved = _pin_signer(pub)
+    try:
+        tmp, cb, base = _write_case(priv, pub, _zero_census(["public.v"]), docs, extra_roots=extra_roots)
+        argv = base + _add_overlays(tmp, priv, build_overlays(cb))
+        rpath = None
+        if receipt:
+            rpath = os.path.join(tmp, "receipt.json"); argv += ["--receipt-out", rpath]
+        rc, out = _capture_main(argv)
+        return rc, out, (rpath if rpath and os.path.exists(rpath) else None)
+    finally:
+        dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS.update(saved)
+
+
+def _e2e_delete_missing_in_data_api_OV015():
+    rc, out, _r = _run_case(_delete_docs("public.v"), _delete_consumer_overlays, extra_roots=[tcd._ROOT])
+    return rc == 1 and "OV015" in out
+
+
+def _e2e_delete_true_in_data_api_SP027():
+    rc, out, _r = _run_case(_delete_docs("public.v"),
+                            lambda cb: _delete_consumer_overlays(cb) + [_in_data_api_overlay(cb, True)], extra_roots=[tcd._ROOT])
+    return rc == 1 and "SP027" in out
+
+
+def _e2e_delete_false_noncovering_OV022():
+    narrow = {"started_at": "2026-06-20T00:00:00Z", "ended_at": CENSUS_OBSERVED_AT}  # starts after S=06-05 -> not covering
+    rc, out, _r = _run_case(_delete_docs("public.v"),
+                            lambda cb: _delete_consumer_overlays(cb) + [_in_data_api_overlay(cb, False, window=narrow)], extra_roots=[tcd._ROOT])
+    return rc == 1 and "OV022" in out
+
+
+def _e2e_retain_no_overlay_OV018():
+    rc, out, _r = _run_case(_retain_docs("public.v"), lambda cb: [])   # retain source relation has no contributor
+    return rc == 1 and "OV018" in out
+
+
+def _e2e_retain_green():
+    rc, out, _r = _run_case(_retain_docs("public.v"),
+                            lambda cb: [_in_data_api_overlay(cb, False), _consumer_overlay("static_repo", cb, "sha:s1")])
+    return rc == 0
+
+
+def _e2e_unaccepted_manifest_SP018_no_receipt():
+    # The overlay loader must reach a CLEAN merge (full no_consumer resolution + in_data_api) so the
+    # manifest's not-accepted status is caught by run()'s SP018 (a semantic-gate code), not masked by
+    # an earlier OV015/OV018 loader reject.
+    decisions, manifest, em = _harden_docs("public.v")
+    manifest["status"] = "proposed"; manifest["technical_authority_approval"] = None   # not accepted -> SP018
+    rc, out, receipt = _run_case((decisions, manifest, em),
+                                 lambda cb: [_in_data_api_overlay(cb, False)] + _harden_consumer_overlays(cb), receipt=True)
+    return rc == 1 and "SP018" in out and receipt is None   # no receipt is written on a RED gate
+
+
+_CASES += [
+    ("e2e_red_then_green", _e2e_red_then_green),
+    ("e2e_ov021_via_main", _e2e_ov021_via_main),
+    ("e2e_delete_missing_in_data_api_OV015", _e2e_delete_missing_in_data_api_OV015),
+    ("e2e_delete_true_in_data_api_SP027", _e2e_delete_true_in_data_api_SP027),
+    ("e2e_delete_false_noncovering_OV022", _e2e_delete_false_noncovering_OV022),
+    ("e2e_retain_no_overlay_OV018", _e2e_retain_no_overlay_OV018),
+    ("e2e_retain_green", _e2e_retain_green),
+    ("e2e_unaccepted_manifest_SP018_no_receipt", _e2e_unaccepted_manifest_SP018_no_receipt),
+]
+
 if __name__ == "__main__":
     ok = True
     for name, fn in _CASES:
