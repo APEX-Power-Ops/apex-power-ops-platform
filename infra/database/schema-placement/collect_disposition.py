@@ -64,6 +64,7 @@ import sys
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+import disposition_provenance as dp
 import disposition_signing as ds
 
 SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "disposition.schema.json")
@@ -588,29 +589,6 @@ def write_signed_snapshot(path, snapshot, *, sig_path, private_key):
     _write_bytes_atomic(path, message, overwrite=False)
 
 
-def _git_head_sha(repo_dir):
-    import subprocess  # noqa: PLC0415 -- live-only; keeps the import off the offline path
-    try:
-        out = subprocess.run(["git", "-C", repo_dir, "rev-parse", "HEAD"],
-                             capture_output=True, text=True, check=True, timeout=10)
-        return out.stdout.strip() or None
-    except Exception:  # noqa: BLE001
-        return None
-
-
-def _git_worktree_clean(repo_dir):
-    """True only if the git worktree has NO tracked-modified AND NO untracked changes. Fail-closed:
-    any error => treated as dirty. A census's repo_sha only identifies the merged commit if the tree
-    is clean — a dirty tree could census modified tooling yet stamp the clean commit (operator finding)."""
-    import subprocess  # noqa: PLC0415
-    try:
-        out = subprocess.run(["git", "-C", repo_dir, "status", "--porcelain"],
-                             capture_output=True, text=True, check=True, timeout=10)
-        return out.stdout.strip() == ""
-    except Exception:  # noqa: BLE001
-        return False
-
-
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Read-only, target-bound census collector for the disposition ledger.")
     ap.add_argument("--dsn-env", default="DISPOSITION_DSN", help="env var holding the DSN (value-silent; never argv).")
@@ -618,7 +596,7 @@ def main(argv=None):
     ap.add_argument("--expect-repo-sha", required=True, dest="expect_repo_sha",
                     help="REQUIRED: the MERGED main commit the census must run from. git HEAD must equal it AND the "
                          "worktree must be clean, asserted before the signing key is read or the DB is opened. There "
-                         "is no runtime bypass (tests inject provenance by patching _git_head_sha / _git_worktree_clean).")
+                         "is no runtime bypass (tests inject provenance by patching disposition_provenance.git_head_sha / git_worktree_clean).")
     ap.add_argument("--schemas", default="public", help="comma-separated schema list.")
     ap.add_argument("--expect-database", required=True, help="fail closed unless current_database() matches (e.g. postgres).")
     ap.add_argument("--require-role-markers", default="anon,authenticated,service_role",
@@ -645,13 +623,13 @@ def main(argv=None):
     # Provenance (operator finding, D1/D2): a census's repo_sha MUST identify a CLEAN, expected merged
     # commit, verified BEFORE the signing key is read and BEFORE any DB access. There is NO runtime
     # bypass — --expect-repo-sha is required, and git HEAD == expect AND a clean worktree are ALWAYS
-    # enforced. Tests inject provenance by patching _git_head_sha / _git_worktree_clean, never a flag.
+    # enforced. Tests inject provenance by patching disposition_provenance.git_head_sha / git_worktree_clean, never a flag.
     repo_dir = os.path.dirname(os.path.abspath(__file__))
-    repo_sha = _git_head_sha(repo_dir)
+    repo_sha = dp.git_head_sha(repo_dir)
     if not repo_sha:
         print("SP000 collector: could not derive repo SHA from git HEAD (run from a clean merged-main checkout)", file=sys.stderr)
         return 2
-    if not _git_worktree_clean(repo_dir):
+    if not dp.git_worktree_clean(repo_dir):
         print("SP000 collector: refusing to census from a DIRTY worktree (tracked or untracked changes) — run from a clean merged-main checkout so repo_sha identifies exactly that commit", file=sys.stderr)
         return 2
     if repo_sha != args.expect_repo_sha:

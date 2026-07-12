@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import collect_disposition as cds  # noqa: E402
+import disposition_provenance as dp  # noqa: E402
 import disposition_signing as ds  # noqa: E402
 import verify_census as vc  # noqa: E402
 
@@ -369,17 +370,17 @@ def test_main_require_clean_checkout_preflight():
     priv, _pp, pub_pem = _ephemeral_keypair()
     with tempfile.TemporaryDirectory() as d:
         sp, sig, kd = _write_signed(_snap(), d, priv, pub_pem)
-        saved = (cds._git_head_sha, cds._git_worktree_clean)
+        saved = (dp.git_head_sha, dp.git_worktree_clean)
         try:
             with _trusted(KEY_ID, _fp(pub_pem)):
-                cds._git_head_sha = lambda *a: SHA; cds._git_worktree_clean = lambda *a: False   # dirty
+                dp.git_head_sha = lambda *a: SHA; dp.git_worktree_clean = lambda *a: False   # dirty
                 assert vc.main(_argv(sp, sig, kd) + ["--require-clean-checkout"]) == 1
-                cds._git_head_sha = lambda *a: "deadbeef1234"; cds._git_worktree_clean = lambda *a: True  # wrong HEAD
+                dp.git_head_sha = lambda *a: "deadbeef1234"; dp.git_worktree_clean = lambda *a: True  # wrong HEAD
                 assert vc.main(_argv(sp, sig, kd) + ["--require-clean-checkout"]) == 1
-                cds._git_head_sha = lambda *a: SHA; cds._git_worktree_clean = lambda *a: True    # clean + match
+                dp.git_head_sha = lambda *a: SHA; dp.git_worktree_clean = lambda *a: True    # clean + match
                 assert vc.main(_argv(sp, sig, kd) + ["--require-clean-checkout"]) == 0
         finally:
-            cds._git_head_sha, cds._git_worktree_clean = saved
+            dp.git_head_sha, dp.git_worktree_clean = saved
 
 
 def test_key_id_traversal_rejected_even_with_planted_key():

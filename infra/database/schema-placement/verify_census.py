@@ -30,6 +30,7 @@ import sys
 from jsonschema import Draft202012Validator, FormatChecker
 
 import collect_disposition as cds  # for the authoritative query_bundle_sha256() of THIS repo checkout
+import disposition_provenance as dp
 import disposition_signing as ds
 
 SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "disposition.schema.json")
@@ -256,8 +257,8 @@ def main(argv=None):
     # trusting them. Fail-closed on a dirty / undeterminable / mismatched checkout.
     if args.require_clean_checkout:
         vdir = os.path.dirname(os.path.abspath(__file__))
-        head = cds._git_head_sha(vdir)
-        if not head or not cds._git_worktree_clean(vdir):
+        head = dp.git_head_sha(vdir)
+        if not head or not dp.git_worktree_clean(vdir):
             print(Diagnostic("CN017", "verifier", "verifier checkout is DIRTY or its git HEAD is undeterminable — run acceptance from a clean merged-main checkout so TRUSTED_SIGNERS + keys/ are reviewed source").render())
             print("=== CENSUS ACCEPTANCE: 1 BLOCKING ===")
             return 1
