@@ -101,6 +101,53 @@ def _contract_hashes_match_on_disk_bytes():
             and c.overlay_sha256 == ov._sha256_hex(open(ov.OVERLAY_SCHEMA_PATH, "rb").read()))
 
 
+def _malformed_schema_build_error_coded():
+    # A jsonschema SchemaError raised by check_schema() inside load_overlay_contract() must map to a
+    # coded OverlayRegistryError, never escape as an uncaught exception (fail-closed read-once contract;
+    # round-6 F1 hardening — the except tuple must cover SchemaError, not just OSError/ValueError/KeyError).
+    import tempfile
+    orig = ov.OVERLAY_SCHEMA_PATH
+    fd, tmp = tempfile.mkstemp(suffix=".json")
+    try:
+        with os.fdopen(fd, "w") as fh:
+            fh.write('{"type": 123}')  # invalid: "type" must be string/array -> check_schema raises SchemaError
+        ov.OVERLAY_SCHEMA_PATH = tmp
+        try:
+            ov.load_overlay_contract()
+            return False  # must have raised
+        except ov.OverlayRegistryError:
+            return True
+        except Exception:
+            return False  # any uncaught/other-typed exception is a fail-closed violation
+    finally:
+        ov.OVERLAY_SCHEMA_PATH = orig
+        os.unlink(tmp)
+
+
+def _undeterminable_spec_build_error_coded():
+    # A referencing CannotDetermineSpecification raised by Resource.from_contents() (a schema with no
+    # determinable $schema dialect) must ALSO map to a coded OverlayRegistryError, not escape
+    # (round-6 F1 hardening — referencing.exceptions.ReferencingError does not exist on the pinned
+    # version, so the except tuple names CannotDetermineSpecification explicitly).
+    import tempfile
+    orig = ov.OVERLAY_SCHEMA_PATH
+    fd, tmp = tempfile.mkstemp(suffix=".json")
+    try:
+        with os.fdopen(fd, "w") as fh:
+            fh.write('{"$id": "https://overlay.local/undeterminable", "type": "object"}')  # valid schema, no $schema
+        ov.OVERLAY_SCHEMA_PATH = tmp
+        try:
+            ov.load_overlay_contract()
+            return False
+        except ov.OverlayRegistryError:
+            return True
+        except Exception:
+            return False
+    finally:
+        ov.OVERLAY_SCHEMA_PATH = orig
+        os.unlink(tmp)
+
+
 if __name__ == "__main__":
     ok = True
     for name, fn in [
@@ -112,6 +159,8 @@ if __name__ == "__main__":
         ("calendar_invalid_datetime_coded", _calendar_invalid_datetime_coded),
         ("unseeded_ref_raises_unresolvable_offline", _unseeded_ref_raises_unresolvable_offline),
         ("contract_hashes_match_on_disk_bytes", _contract_hashes_match_on_disk_bytes),
+        ("malformed_schema_build_error_coded", _malformed_schema_build_error_coded),
+        ("undeterminable_spec_build_error_coded", _undeterminable_spec_build_error_coded),
     ]:
         try:
             r = bool(fn())

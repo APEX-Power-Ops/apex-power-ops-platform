@@ -16,8 +16,9 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema.exceptions import SchemaError
 from referencing import Registry, Resource
-from referencing.exceptions import Unresolvable
+from referencing.exceptions import CannotDetermineSpecification, Unresolvable
 
 import disposition_signing as ds
 
@@ -122,5 +123,5 @@ def load_overlay_contract():
         return OverlayContract(disp_bytes=disp_bytes, disp_sha256=_sha256_hex(disp_bytes),
                                overlay_bytes=overlay_bytes, overlay_sha256=_sha256_hex(overlay_bytes),
                                disposition_validator=disposition_validator, overlay_validator=overlay_validator)
-    except (OSError, ValueError, KeyError, Unresolvable) as exc:
+    except (OSError, ValueError, KeyError, Unresolvable, SchemaError, CannotDetermineSpecification) as exc:
         raise OverlayRegistryError(f"cannot build offline overlay contract ({type(exc).__name__}: {exc})") from exc
