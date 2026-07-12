@@ -26,6 +26,7 @@ import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
 import disposition_signing as ds
+import disposition_trust as dt
 
 SCHEMA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "disposition.schema.json")
 DIMS = ("static_repo", "database_deps", "runtime_logs", "external_clients", "operator_declaration")
@@ -60,7 +61,7 @@ CODES = {
     "SP023": "target_entity's physical_schema disagrees with target_schema",
     "SP024": "evidence_snapshot target_identity is absent/not-guard-passed, or its project binding is unasserted/mismatched",
     "SP025": "a target_object does not live in the decision's target_schema (relocation destination binding)",
-    "SP026": "evidence_snapshot signature is missing or does not verify against --verify-key (preapply requires a signed snapshot)",
+    "SP026": "evidence_snapshot signature is missing or does not verify against the pinned signer (--key-id resolved through the reviewed TRUSTED_SIGNERS anchor); preapply requires a signed snapshot",
     "SP027": "accepted delete does not meet the destructive-evidence floor (a consumer dimension is not observed, external_clients is not_applicable while API-exposed, or the observation window is < 30 days)",
 }
 
@@ -158,31 +159,15 @@ def _sha256_file(path):
         return hashlib.sha256(fh.read()).hexdigest()
 
 
-def build_receipt(*, mode, now_iso, expect_project_ref, doc_bytes, doc_paths, extra_paths, roots, decisions):
-    """A gate receipt RECORDS the SHA-256 of the exact bytes the gate validated: the four CLI documents
-    hashed from the IN-HAND bytes main() already parsed and gated (NOT a second read — Codex P1), plus
-    the verification inputs (signature / verify-key) and each resolved decision-referenced evidence
-    file (recovery artifact, restore-validation proof, evidence_refs, transform report, telemetry).
-
-    The receipt is ADVISORY. It does NOT by itself close the check→apply TOCTOU or authorize SQL: the
-    verification-input and evidence-file hashes are second reads from disk, and no apply runner exists
-    yet. The apply runner is the authority and MUST independently re-read every input once, re-verify
-    the snapshot (and future overlay) signatures against the repo-pinned public key, re-run the
-    schema/semantic/target/SP014 checks, rehash, and restore-test the backup before executing the exact
-    bound SQL — the receipt is the reference it checks against, not a substitute for that
-    re-validation. Emitted ONLY on a GREEN gate."""
+def build_receipt(*, mode, now_iso, expect_project_ref, doc_bytes, doc_paths, signer, snapshot_signature_sha256, roots, decisions):
+    """Records the SHA-256 of the exact bytes the gate validated: the four CLI documents hashed from the
+    IN-HAND bytes main() parsed, the pinned SIGNER content, and the snapshot signature bytes' hash (bound
+    from the in-hand sig bytes — no second read). ADVISORY; emitted ONLY on a GREEN gate."""
     receipt = {"kind": "disposition_gate_receipt", "gate": "green", "mode": mode, "now": now_iso,
-               "expect_project_ref": expect_project_ref, "inputs": {}, "evidence": []}
+               "expect_project_ref": expect_project_ref, "inputs": {}, "evidence": [],
+               "signer": signer, "snapshot_signature_sha256": snapshot_signature_sha256}
     for name, data in doc_bytes.items():
         receipt["inputs"][name] = {"path": doc_paths.get(name), "sha256": hashlib.sha256(data).hexdigest()}
-    for name, p in extra_paths.items():
-        if p is None:
-            continue
-        if not os.path.isfile(p):
-            # Do NOT silently omit a verification input that vanished/rotated between verify and
-            # receipt build — that would emit a receipt missing the sig/key binding (F7). Fail hard.
-            raise FileNotFoundError(f"gate-receipt input {name!r} is missing at receipt time: {p}")
-        receipt["inputs"][name] = {"path": p, "sha256": _sha256_file(p)}
     seen = set()
     for row in decisions.get("rows", []):
         refs = list(row.get("evidence_refs", []))
@@ -563,7 +548,8 @@ def main(argv=None):
     ap.add_argument("--mode", default="preapply", choices=["preapply"])
     ap.add_argument("--expect-project-ref", default=None, dest="expect_project_ref", help="bind the snapshot's project_ref (REQUIRED for preapply; SP024).")
     ap.add_argument("--snapshot-sig", default=None, dest="snapshot_sig", help="path to the snapshot's detached Ed25519 signature sidecar (REQUIRED for preapply; SP026).")
-    ap.add_argument("--verify-key", default=None, dest="verify_key", help="path to the committed Ed25519 public key that must have signed the snapshot (REQUIRED for preapply; SP026).")
+    ap.add_argument("--key-id", default=None, dest="key_id", help="authorized signer id pinned in the TRUSTED_SIGNERS anchor (REQUIRED for preapply; SP026).")
+    ap.add_argument("--keys-dir", default=dt.DEFAULT_KEYS_DIR, dest="keys_dir", help="dir holding <key-id>.pub.pem (public key MATERIAL only; the trust anchor is the source constant).")
     ap.add_argument("--receipt-out", default=None, dest="receipt_out", help="on GREEN, write a gate receipt (input SHA-256 digests) here for the apply runner to rehash.")
     ap.add_argument("--root", action="append", default=[], dest="roots", required=True, help="approved evidence root (repeatable, REQUIRED).")
     args = ap.parse_args(argv)
@@ -590,22 +576,30 @@ def main(argv=None):
     # --- signature gate (SP026), BEFORE any semantic trust. The offline checker cannot bind a
     # self-attested snapshot (guard_passed/project_ref/target_identity/consumer_evidence are plain
     # JSON) to a genuine read-only census without verifying the collector's detached Ed25519
-    # signature over the exact snapshot bytes (F1). preapply REQUIRES --snapshot-sig + --verify-key;
+    # signature over the exact snapshot bytes (F1). preapply REQUIRES --snapshot-sig + --key-id;
     # a missing or non-verifying signature blocks and the semantic gate never runs. Default-deny:
     # gated for EVERY mode except an explicit exempt set (empty today), so a future --mode added to
     # argparse choices cannot silently run the gate unsigned (F5).
+    signer = None
+    sig_bytes = b""
     if args.mode not in _SIGNATURE_EXEMPT_MODES:
-        if not args.snapshot_sig or not args.verify_key:
-            dg = Diagnostic("SP026", "snapshot", "preapply requires --snapshot-sig and --verify-key (an unsigned snapshot is not trusted)")
-            print(dg.render())
-            print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ===")
-            return 1
-        ok, reason = ds.verify_detached(doc_bytes["snapshot"], os.path.abspath(args.snapshot_sig), os.path.abspath(args.verify_key))
+        if not args.snapshot_sig or not args.key_id:
+            dg = Diagnostic("SP026", "snapshot", "preapply requires --snapshot-sig and --key-id (an unsigned snapshot is not trusted)")
+            print(dg.render()); print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ==="); return 1
+        try:
+            with open(os.path.abspath(args.snapshot_sig), "rb") as fh:
+                sig_bytes = fh.read()
+        except OSError as exc:
+            dg = Diagnostic("SP026", "snapshot", f"cannot read signature sidecar ({type(exc).__name__})")
+            print(dg.render()); print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ==="); return 1
+        signer, kreason = dt.resolve_pinned_key(os.path.abspath(args.keys_dir), args.key_id)
+        if signer is None:
+            dg = Diagnostic("SP026", "snapshot", kreason)
+            print(dg.render()); print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ==="); return 1
+        ok, reason = ds.verify_sidecar_bytes_with_key(doc_bytes["snapshot"], sig_bytes, signer.public_key)
         if not ok:
             dg = Diagnostic("SP026", "snapshot", f"signature verification failed: {reason}")
-            print(dg.render())
-            print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ===")
-            return 1
+            print(dg.render()); print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ==="); return 1
 
     diags = run(snapshot, decisions, entity_map, manifest, now, args.mode, roots, _validator(), os.path.abspath(args.snapshot), args.expect_project_ref)
 
@@ -615,13 +609,17 @@ def main(argv=None):
         print(f"=== DISPOSITION GATE ({args.mode}): {len(diags)} BLOCKING ===")
         return 1
     if args.receipt_out:
+        if signer is None:
+            print("SP000: receipt requested but the gate ran signature-exempt (no signer); refusing an incomplete receipt", file=sys.stderr)
+            return 1
         doc_paths = {"snapshot": os.path.abspath(args.snapshot), "decisions": os.path.abspath(args.decisions),
                      "entity_map": os.path.abspath(args.entity_map), "manifest": os.path.abspath(args.manifest)}
-        extra_paths = {"snapshot_sig": os.path.abspath(args.snapshot_sig) if args.snapshot_sig else None,
-                       "verify_key": os.path.abspath(args.verify_key) if args.verify_key else None}
+        signer_meta = {"key_id": signer.key_id, "spki_sha256": signer.spki_sha256, "pem_sha256": signer.pem_sha256}
+        snapshot_signature_sha256 = hashlib.sha256(sig_bytes).hexdigest()
         try:
             receipt = build_receipt(mode=args.mode, now_iso=args.now, expect_project_ref=args.expect_project_ref,
-                                    doc_bytes=doc_bytes, doc_paths=doc_paths, extra_paths=extra_paths, roots=roots, decisions=decisions)
+                                    doc_bytes=doc_bytes, doc_paths=doc_paths, signer=signer_meta,
+                                    snapshot_signature_sha256=snapshot_signature_sha256, roots=roots, decisions=decisions)
             with open(args.receipt_out, "w", encoding="utf-8") as fh:
                 json.dump(receipt, fh, indent=2, sort_keys=True)
         except OSError as exc:
