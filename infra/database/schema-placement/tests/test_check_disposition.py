@@ -301,7 +301,9 @@ def _receipt_pure():
         rec = cd.build_receipt(mode="preapply", now_iso="2026-07-10T21:00:00Z", expect_project_ref="fxoyniqnrlkxfligbxmg",
                                doc_bytes=doc_bytes, doc_paths=paths, signer={"key_id": "k", "spki_sha256": "00" * 32, "pem_sha256": "11" * 32},
                                snapshot_signature_sha256="22" * 32, gate_repo_sha=None, checkout_bound=False,
-                               production_eligible=False, roots=ROOTS, decisions=dec)
+                               evidence_ready=True, execution_authorized=False,
+                               overlays=[{"path": "o.json", "dimension": "consumer_evidence.static_repo", "raw_sha256": "aa"}],
+                               max_consumer_evidence_age_hours=8760, roots=ROOTS, decisions=dec)
         with open(paths["snapshot"], "rb") as fh:
             tampered_sha = hashlib.sha256(fh.read()).hexdigest()
         ev = {e["ref"]: e["sha256"] for e in rec["evidence"]}
@@ -309,7 +311,12 @@ def _receipt_pure():
                 and rec["inputs"]["snapshot"]["sha256"] == hashlib.sha256(doc_bytes["snapshot"]).hexdigest()  # follows validated bytes
                 and rec["inputs"]["snapshot"]["sha256"] != tampered_sha        # NOT the tampered re-read
                 and ev.get("recovery.tar") == RECOVERY_SHA        # the backup bytes are pinned
-                and "restore-ok.log" in ev)                       # and the restore-validation proof
+                and "restore-ok.log" in ev                        # and the restore-validation proof
+                and rec.get("evidence_ready") is True and rec.get("execution_authorized") is False
+                and "production_eligible" not in rec              # §2A: reframed — no write-GO field
+                and rec["overlays"][0]["dimension"] == "consumer_evidence.static_repo"
+                and rec["max_consumer_evidence_age_hours"] == 8760
+                and rec["effective_view"] == {"in_memory_only": True})
 
 
 def test_gate_receipt_pure():
@@ -628,7 +635,10 @@ def _authoring_banner_and_receipt():
         out, err = out_buf.getvalue(), err_buf.getvalue()
         rec = json.load(open(receipt_path, encoding="utf-8"))
     return (rc == 0 and banner in out and "WARNING: unbound checkout" in err
-            and rec["checkout_bound"] is False and rec["production_eligible"] is False and rec["gate_repo_sha"] is None)
+            and rec["checkout_bound"] is False and rec["evidence_ready"] is False
+            and rec["execution_authorized"] is False and "production_eligible" not in rec
+            and rec["gate_repo_sha"] is None and rec["overlays"] == []
+            and rec["effective_view"] == {"in_memory_only": True})
 
 
 def test_authoring_banner_and_receipt():
@@ -653,7 +663,9 @@ def _bound_green_receipt():
         finally:
             _restore_dp(saved)
     return (rc == 0 and "AUTHORING ONLY" not in out and rec["checkout_bound"] is True
-            and rec["production_eligible"] is True and rec["gate_repo_sha"] == "deadbeef")
+            and rec["evidence_ready"] is True and rec["execution_authorized"] is False
+            and "production_eligible" not in rec and rec["gate_repo_sha"] == "deadbeef"
+            and rec["overlays"] == [] and rec["effective_view"] == {"in_memory_only": True})
 
 
 def test_bound_green_receipt():
