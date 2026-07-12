@@ -654,11 +654,47 @@ def _missing_in_data_api_no_OV022():
     return "OV022" not in _codes(diags)
 
 
+def _ov022_fires_when_ended_short():
+    # Locks the ENDED half of the covering predicate (review-Important): api_started covers S but
+    # api_ended < E => fires. A mutation dropping the `and api_e >= e` conjunct would survive without this.
+    eff = _zero_census(["public.v"])
+    S, E = _pdt("2026-07-01T00:00:00Z"), _pdt("2026-07-10T20:00:00Z")
+    inapi = {"public.v": (_pdt("2026-06-25T00:00:00Z"), _pdt("2026-07-08T00:00:00Z"))}  # started<=S, ended 07-08 < E
+    diags = ov.check_delete_floor_coherence(eff, delete_src_oids={"public.v"}, external_na_oids={"public.v"},
+                                            in_data_api_windows=inapi, derived_windows={"public.v": (S, E)})
+    return "OV022" in _codes(diags)
+
+
+def _ov022_ok_exact_boundary():
+    # Locks the <= / >= boundary: an in_data_api window EXACTLY equal to [S,E] covers => no OV022.
+    # A `<`-for-`<=` (or `>`-for-`>=`) off-by-one would spuriously fire here.
+    eff = _zero_census(["public.v"])
+    S, E = _pdt("2026-07-01T00:00:00Z"), _pdt("2026-07-10T20:00:00Z")
+    inapi = {"public.v": (S, E)}  # exact match on BOTH ends
+    diags = ov.check_delete_floor_coherence(eff, delete_src_oids={"public.v"}, external_na_oids={"public.v"},
+                                            in_data_api_windows=inapi, derived_windows={"public.v": (S, E)})
+    return diags == []
+
+
+def _ov022_non_delete_oid_no_OV022():
+    # T1 symmetry: an oid with external_clients=not_applicable but NOT a delete-conclusion source is
+    # never evaluated (empty delete_src_oids ∩ external_na_oids), even with a deliberately non-covering window.
+    eff = _zero_census(["public.v"])
+    S, E = _pdt("2026-07-01T00:00:00Z"), _pdt("2026-07-10T20:00:00Z")
+    inapi = {"public.v": (_pdt("2026-07-05T00:00:00Z"), _pdt("2026-07-08T00:00:00Z"))}  # non-covering, would fire if evaluated
+    diags = ov.check_delete_floor_coherence(eff, delete_src_oids=set(), external_na_oids={"public.v"},
+                                            in_data_api_windows=inapi, derived_windows={"public.v": (S, E)})
+    return "OV022" not in _codes(diags)
+
+
 _CASES += [
     ("ov022_fires_when_window_not_covering", _ov022_fires_when_window_not_covering),
     ("ov022_ok_when_window_covers", _ov022_ok_when_window_covers),
     ("external_clients_observed_no_OV022", _external_clients_observed_no_OV022),
     ("missing_in_data_api_no_OV022", _missing_in_data_api_no_OV022),
+    ("ov022_fires_when_ended_short", _ov022_fires_when_ended_short),
+    ("ov022_ok_exact_boundary", _ov022_ok_exact_boundary),
+    ("ov022_non_delete_oid_no_OV022", _ov022_non_delete_oid_no_OV022),
 ]
 
 if __name__ == "__main__":
