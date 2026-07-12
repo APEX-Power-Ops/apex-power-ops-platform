@@ -1,4 +1,19 @@
-# Cross-engine IRP — Signed-Overlay Spec @ 35755d69
+# Cross-engine IRP — Signed-Overlay Spec
+
+## ROUND 2 — re-audit of rev2 @ e283be68 (Codex `b90bewrpo` + Claude Workflow `w8h9lninz`)
+
+**Verdict: every rev1 fix genuinely CLOSED; ONE residual HIGH (cross-engine confirmed) + 2 MED + 2 LOW — all self-inflicted in the rev1→rev2 fold. Fail-CLOSED, no prod exposure. Fixed in rev3.**
+- **Finding 1 (HIGH, both engines):** OV017 (`S<=base_observed_at<=E`) + retained SP009 `e<=observed_at` force `E==base_observed_at` exactly → gate never GREEN for real later-collected evidence; §9 test structurally impossible. FIX: relax SP009's `<=observed_at` on the effective-view consumer window (keep ordering `s<e` + duration); OV017 is the census anchor. Matches the ratified D2 predicate (`E<=now`, not `E<=observed_at`). Disclose as a deliberate SP009 gate change; fix §9 test + §3 prose. (Non-overlaid zero-width windows still fail `s<e` closed → no bypass; signed census can't carry a forged non-zero window.)
+- **Finding 2 (MED, both engines):** `max_consumer_evidence_age_hours` can't be a new `cluster_manifest` field (schema additionalProperties:false + frozen → SP001) AND must not fail-open on absence (Invariant 7). FIX: REQUIRED CLI flag, absent/non-finite → coded reject (OV016 fires closed), receipt-bound.
+- **Finding 3 (MED/LOW):** OV010 per-overlay captured_at staleness bound unnamed. FIX: reuse manifest `max_staleness_hours` (existing TA-reviewed field), `_finite()`-guarded.
+- **Finding 4 (LOW):** OV018 "requires a consumer window" is a semantic-gate notion; derive/OV018 only for cluster-source relations under a resolved/delete conclusion (else over-rejects the ~113 non-overlaid).
+- **Finding 5 (LOW):** §4 `uniqueItems` on object_id is not a real guard (compares whole items); intra-file uniqueness = the OV007 counter.
+- **D4:** state derived `{S,E}` written as ISO-8601 strings; §5.9 re-validates effective view vs `disposition.schema.json` with rfc3339 FormatChecker.
+CLOSED-confirmed (round 2): HIGH-2 (recency+coherence), HIGH-3 (evidence-readiness), all 4 Codex P2s, M7/M11/L12/L13; HIGH-1 rev1 defects reverted. Codex round-2 = same 2 P2s (Finding 1 + Finding 2). Operator ratification pending: the deliberate SP009 gate change + rev3 → full re-audit vs ratify-low-risk (D3).
+
+---
+
+## ROUND 1 — Signed-Overlay Spec @ 35755d69
 
 Audit mode, Deep. Artifact: `docs/superpowers/specs/2026-07-11-signed-overlay-evidence-design.md` on `schema-placement/signed-overlay`. Engines: Codex `gpt-5.5` xhigh (`bjzmb40u3`) + Claude grounded Workflow (5 lenses + refute + synth, `wf_bfe9e6cf-612`). Verdict: **core sound; NOT safe to build as written; HOLD confirmed.** All HIGH claims re-verified against host `check_disposition.py`.
 
