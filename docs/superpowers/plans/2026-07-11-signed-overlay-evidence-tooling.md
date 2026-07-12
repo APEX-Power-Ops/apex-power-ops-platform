@@ -1,5 +1,7 @@
 # Signed Evidence Overlay Tooling Implementation Plan
 
+> **rev 2 (2026-07-12)** folds the operator's cross-engine plan audit: layering RATIFIED (unconditional loader) + all nine findings (F1 raw-input validation, F2 per-overlay OV009, F3 receipt binding, F4 read-once `OverlayContract`, F5 schema-valid fixtures, F6 governed CI, F7 OV015, F8 real unresolved-`$ref` test, F9 IFF null-reason) + contributor-map-local. See the fold table at the end.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the signed-overlay evidence loader that lets the six `not_observed` dimensions of the immutable signed production census be resolved by separately-signed overlay documents, so `check_disposition.py` preapply can reach **evidence readiness** without ever mutating, re-signing, or re-emitting the census.
@@ -20,7 +22,15 @@
 - **T1 (OV022 trigger scope):** `OV022` is evaluated **only** for a `delete`-conclusion cluster-source relation whose `external_clients` overlay resolves to `not_applicable` (invoking the SP027 waiver, which itself requires `in_data_api_exposed_schema` observed `false`). When `external_clients` is `observed`, `OV022` is **not** evaluated.
 - **T2 (exact-assignment window lookup):** the `in_data_api_exposed_schema` window used by `OV022` comes from the overlay whose `(dimension, object_id)` assignment matches that exact relation — uniquely determined by the `OV007` `(dimension, object_id)` uniqueness guarantee — never "any exposure overlay."
 - **T3 (unique derivation):** the consumer window is derived **once per unique source `object_id`** across all cluster decisions (deduplicate by `object_id`); the `derived_window_object_ids` set makes repeated markers idempotent.
-- **Layering (blast-radius control):** the unconditional `OV021` precheck + effective-view build live in `main()`/`disposition_overlay`; `semantic_check`/`run()` gain only the `derived_window_object_ids`-conditional SP009 branch. Existing `run()`-level SP0xx baselines in `tests/test_check_disposition.py` stay green untouched; only the `main()`-level e2e/receipt tests migrate to the overlay model (Task 7 & 8).
+- **Layering — RATIFIED (operator cross-engine plan audit, 2026-07-12):** the **unconditional loader model** stands — `OV021` runs even with zero overlays; a bare preapply against the canonical raw census is **RED**; overlay presence is required for evidence readiness; direct `run()` tests retain their authoring semantics. The unconditional `OV021` precheck + effective-view build live in `main()`/`disposition_overlay`; `semantic_check`/`run()` gain only the `derived_window_object_ids`-conditional SP009 branch. Existing `run()`-level SP0xx baselines in `tests/test_check_disposition.py` stay green untouched; only the `main()`-level e2e/receipt tests migrate to the overlay model (Task 7 & 8).
+- **Raw-input validation before overlay processing (audit F1):** immediately after the SP026 signature gate and **before** the overlay loader, `main()` schema-validates + kind-pins the four raw documents (via the extracted `validate_documents` helper). A validly-signed-but-malformed census yields a coded `SP001` red **before** any overlay parse — no uncaught exception. The effective view is re-validated after merge by `run()` (already planned). The loader is additionally defensive: every datetime parse is wrapped and mapped to a coded reject (Invariant 7).
+- **Per-overlay window validation (audit F2):** every overlay (all six dimensions, incl. the Data-API-exposure overlay used by `OV022`) passes `check_observation_window()` — `started_at < ended_at`, `ended_at <= captured_at`, `ended_at <= now` — as a coded `OV009` **before** its assignments are staged. This is independent of the derived-window predicate.
+- **Read-once schema contract (audit F4):** an `OverlayContract` object (schema bytes, their SHA-256, the seeded offline registry, and the validator) is built **once** and threaded through the gate. The schema files are never reopened during a run, so the bytes validated and the bytes hashed (`OV020`) are identical.
+- **Receipt per-overlay binding (audit F3):** each `receipt_overlays` entry binds — absolute overlay path, raw-byte SHA-256, sidecar path + SHA-256, signer `key_id` + SPKI fingerprint, dimension + assignment `object_id`s + count, `source_hash`, and the `disposition_schema_sha256`/`overlay_schema_sha256`.
+- **Contributor map is local (audit instruction #9):** the per-relation consumer-contributor windows are passed to `derive_windows` as a **separate local dict** — never stashed on the effective snapshot — so no scratch key can ever reach schema validation or serialization.
+- **`OV015` implemented + tested (audit F7):** `check_cluster_completeness()` produces a coded `OV015` for a cluster relation lacking a permitted-overlay-target, base-`not_observed` gate-required dimension (already-observed `database_deps` satisfies), with a dedicated negative test. `OV015` is advisory-completeness; `SP009`/`SP022`/`SP027` on the effective view remain authoritative.
+- **IFF null-reason contracts (audit F9):** `OV019` (`source_hash`) and `OV012` (`producing_repo_sha`) enforce a true biconditional — a reason is required **iff** the hash is null, so a reason supplied alongside a **non-null** hash is also rejected.
+- **Governed CI (audit F6):** `test_overlay_schema` and `test_overlay_loader` are added to the `suites` job of `.github/workflows/schema-placement-ci.yml` (Tasks 1 & 8). Manual Task-9 execution is not sufficient.
 - **Derived-window predicate (§3), enforced at merge:** contributors `C` = consumer-dimension overlays resolving the relation with `state = observed` over `{static_repo, runtime_logs, external_clients, operator_declaration}` (`database_deps` is anchored at `base_observed_at`, NOT a windowed contributor). `S = max(startedᵢ)`, `E = min(endedᵢ)`; reject unless: `C` non-empty (`OV018`); `S < E` (`OV011`); `E <= now` (`OV009`); `now - E <= max_consumer_evidence_age_hours` (`OV016`, required finite+positive CLI flag; absent/NaN/Inf ⇒ `OV016`); `S <= base_observed_at <= E` (`OV017`); for a `delete` conclusion `(E - S) >= 720h` is left to SP027 on the effective view.
 - **Negative-test matrix (every item MUST appear as a pinned failing test, most in Tasks 3–5/8):** OV022-fires-when-window-not-covering · external_clients-observed→no-OV022 · missing-in_data_api-overlay→SP027 · stale-in_data_api-overlay→OV010 · window-sourced-from-the-specific-assignment · retain-no-overlay→OV018 · retain-with-covering→green · duplicate-src-object→single-derivation-one-marker · OV021-fires-with-zero-overlays · remove-marker→original-SP009.
 - **Test invocation (every "run the test" step):** from `infra/database/schema-placement/`, run `uv run --project . --locked python tests/<file>.py`. A test file exits `0` iff all its `_name()` cases return truthy. NEVER invoke `pytest`.
@@ -36,8 +46,9 @@
 | File | Create/Modify | Responsibility |
 |---|---|---|
 | `overlay.schema.json` | Create | The overlay document contract; `$ref`s frozen `disposition.schema.json` `$defs` via absolute `$id`. |
-| `disposition_overlay.py` | Create | Leaf module: `OV_CODES`, the offline registry validator, and the load→verify→bind→target→conflict→base-precheck→derive→coherence pipeline returning `MergeResult`. |
-| `check_disposition.py` | Modify | `main()` CLI wiring (`--overlay`, `--max-consumer-evidence-age-hours`, call the loader, print `OV`+`SP` diags), the provenance-conditional SP009 branch in `semantic_check`, and the receipt reframe in `build_receipt`. |
+| `disposition_overlay.py` | Create | Leaf module: `OV_CODES`, `OverlayContract` (read-once schema bytes+hashes+registry+validator), and the load→verify→bind→window→target→conflict→base-precheck→derive→coherence→completeness pipeline returning `MergeResult`. |
+| `check_disposition.py` | Modify | `validate_documents` helper (extracted from `run()`'s preamble); `main()` CLI wiring (raw-input validation before the loader, `--overlay`, `--max-consumer-evidence-age-hours`, call the loader, print `OV`+`SP` diags); the provenance-conditional SP009 branch in `semantic_check`; and the receipt reframe in `build_receipt`. |
+| `.github/workflows/schema-placement-ci.yml` | Modify | Add `test_overlay_schema` + `test_overlay_loader` to the governed `suites` job (audit F6). |
 | `tests/test_overlay_schema.py` | Create | Schema + offline-registry lens (Task 1). |
 | `tests/test_overlay_loader.py` | Create | Loader OV-code + time-model + coherence + integration + e2e lens (Tasks 2–8). |
 | `tests/test_check_disposition.py` | Modify | Migrate the `main()`-level e2e/receipt cases to the overlay model + reframed receipt (Tasks 7–8). The `run()`-level SP0xx cases are untouched. |
@@ -50,11 +61,11 @@
 
 **Files:**
 - Create: `overlay.schema.json`
-- Create: `disposition_overlay.py` (skeleton: `OV_CODES`, `DIMENSIONS`, `build_overlay_validator`, `OverlayRegistryError`)
+- Create: `disposition_overlay.py` (skeleton: `OV_CODES`, `DIMENSIONS`, `OverlayContract`, `load_overlay_contract`, `OverlayRegistryError`)
 - Test: `tests/test_overlay_schema.py`
 
 **Interfaces:**
-- Produces: `disposition_overlay.build_overlay_validator() -> jsonschema.Draft202012Validator` (seeded offline registry, `FormatChecker`); `disposition_overlay.OverlayRegistryError` (raised on registry build failure, mapped to `OV008` by callers); `disposition_overlay.DIMENSIONS: dict[str, tuple[str, str]]` mapping each of the six dimension paths to `(value_def_name, fixed_source_type)`; `disposition_overlay.OV_CODES: dict[str, str]`.
+- Produces: `disposition_overlay.OverlayContract` (a `dataclass` holding `disp_bytes`, `disp_sha256`, `overlay_bytes`, `overlay_sha256`, `validator`, all from a **single** read of the two schema files); `disposition_overlay.load_overlay_contract() -> OverlayContract` (builds the seeded offline registry + `FormatChecker` validator from the exact bytes it hashed); `disposition_overlay.OverlayRegistryError` (raised on registry/schema failure, mapped to `OV008` by callers); `disposition_overlay.DIMENSIONS: dict[str, tuple[str, str]]` mapping each of the six dimension paths to `(value_def_name, fixed_source_type)`; `disposition_overlay.OV_CODES: dict[str, str]`.
 
 - [ ] **Step 1: Write the failing schema tests**
 
@@ -73,7 +84,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import disposition_overlay as ov  # noqa: E402
 
-VALIDATOR = ov.build_overlay_validator()
+VALIDATOR = ov.load_overlay_contract().validator
 
 
 def _base_overlay(dimension, source_type, value):
@@ -140,17 +151,28 @@ def _calendar_invalid_datetime_coded():
     return _errs(doc) != []
 
 
-def _unseeded_ref_is_coded_not_uncaught():
-    # A validator built against a registry with NO retrieve callback must raise the module's
-    # OverlayRegistryError (coded) — never leak referencing.Unresolvable — when a schema $ref is
-    # unresolvable. Proven by build_overlay_validator refusing to resolve a bogus remote ref.
+def _unseeded_ref_raises_unresolvable_offline():
+    # A registry with NO retrieve callback must FAIL CLOSED (raise referencing.Unresolvable) rather
+    # than fetch when a schema $ref points at an UNSEEDED $id — proving remote resolution is impossible
+    # and no network is attempted. (Task 3 additionally proves validate_overlay maps this to a coded OV008.)
+    from jsonschema import Draft202012Validator
+    from referencing import Registry
+    from referencing.exceptions import Unresolvable
+    bogus = Draft202012Validator({"$ref": "https://unseeded.example/nope.json#/$defs/x"}, registry=Registry())
     try:
-        ov.assert_offline_registry_has_no_retrieve()  # helper asserting retrieve is None
-        return True
-    except ov.OverlayRegistryError:
-        return True
+        list(bogus.iter_errors({"any": 1}))
+        return False  # must not silently pass
+    except Unresolvable:
+        return True   # fail-closed, offline, no fetch
     except Exception:
-        return False
+        return False  # any other exception (incl. a network error) is a failure
+
+
+def _contract_hashes_match_on_disk_bytes():
+    # The contract's schema SHA-256s must equal the on-disk bytes (read-once binding, audit F4).
+    c = ov.load_overlay_contract()
+    return (c.disp_sha256 == ov._sha256_hex(open(ov.DISPOSITION_SCHEMA_PATH, "rb").read())
+            and c.overlay_sha256 == ov._sha256_hex(open(ov.OVERLAY_SCHEMA_PATH, "rb").read()))
 
 
 if __name__ == "__main__":
@@ -162,7 +184,8 @@ if __name__ == "__main__":
         ("wrong_value_shape_rejected", _wrong_value_shape_rejected),
         ("operator_declaration_requires_provenance", _operator_declaration_requires_provenance),
         ("calendar_invalid_datetime_coded", _calendar_invalid_datetime_coded),
-        ("unseeded_ref_is_coded_not_uncaught", _unseeded_ref_is_coded_not_uncaught),
+        ("unseeded_ref_raises_unresolvable_offline", _unseeded_ref_raises_unresolvable_offline),
+        ("contract_hashes_match_on_disk_bytes", _contract_hashes_match_on_disk_bytes),
     ]:
         try:
             r = bool(fn())
@@ -269,6 +292,7 @@ import hashlib
 import json
 import math
 import os
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from jsonschema import Draft202012Validator, FormatChecker
@@ -337,47 +361,64 @@ def _finite(x):
     return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
 
 
-def build_overlay_validator():
-    """Draft202012Validator for overlay.schema.json, seeded with BOTH schema docs by $id in a local
-    referencing.Registry built WITHOUT a retrieve callback (remote/unseeded resolution is impossible).
-    Raises OverlayRegistryError on any load/build failure (callers map to a coded OV008)."""
+@dataclass(frozen=True)
+class OverlayContract:
+    """Read-once schema contract (audit F4): the exact schema bytes, their SHA-256, the seeded offline
+    registry, and the validator — all from a SINGLE read of the two schema files. The files are never
+    reopened during a gate run, so the bytes validated and the bytes hashed (OV020) are identical."""
+    disp_bytes: bytes
+    disp_sha256: str
+    overlay_bytes: bytes
+    overlay_sha256: str
+    validator: object
+
+
+def load_overlay_contract():
+    """Build the OverlayContract: read both schema files ONCE (bytes), hash those exact bytes, parse
+    them, seed a local referencing.Registry by $id built WITHOUT a retrieve callback (remote/unseeded
+    resolution is impossible), and construct the FormatChecker validator. Raises OverlayRegistryError
+    on any load/build failure (callers map to a coded OV008). The gate calls this ONCE and threads the
+    returned contract everywhere; the schema files are never reopened during a run."""
     try:
-        with open(DISPOSITION_SCHEMA_PATH, encoding="utf-8") as fh:
-            disp = json.load(fh)
-        with open(OVERLAY_SCHEMA_PATH, encoding="utf-8") as fh:
-            overlay = json.load(fh)
+        with open(DISPOSITION_SCHEMA_PATH, "rb") as fh:
+            disp_bytes = fh.read()
+        with open(OVERLAY_SCHEMA_PATH, "rb") as fh:
+            overlay_bytes = fh.read()
+        disp = json.loads(disp_bytes)
+        overlay = json.loads(overlay_bytes)
         registry = Registry().with_resources([
             (disp["$id"], Resource.from_contents(disp)),
             (overlay["$id"], Resource.from_contents(overlay)),
         ])  # no retrieve= => network/unseeded resolution raises Unresolvable, never fetches
         Draft202012Validator.check_schema(overlay)
-        return Draft202012Validator(overlay, registry=registry, format_checker=FormatChecker())
+        validator = Draft202012Validator(overlay, registry=registry, format_checker=FormatChecker())
+        return OverlayContract(disp_bytes=disp_bytes, disp_sha256=_sha256_hex(disp_bytes),
+                               overlay_bytes=overlay_bytes, overlay_sha256=_sha256_hex(overlay_bytes),
+                               validator=validator)
     except (OSError, ValueError, KeyError, Unresolvable) as exc:
-        raise OverlayRegistryError(f"cannot build offline overlay validator ({type(exc).__name__}: {exc})") from exc
-
-
-def assert_offline_registry_has_no_retrieve():
-    """Test hook: prove the registry underpinning build_overlay_validator has no retrieve callback,
-    so remote $ref resolution can never fetch. Raises OverlayRegistryError if a retrieve is present."""
-    with open(DISPOSITION_SCHEMA_PATH, encoding="utf-8") as fh:
-        disp = json.load(fh)
-    registry = Registry().with_resources([(disp["$id"], Resource.from_contents(disp))])
-    if getattr(registry, "_retrieve", None) not in (None, getattr(Registry(), "_retrieve", None)):
-        raise OverlayRegistryError("registry has a retrieve callback — remote resolution is possible")
+        raise OverlayRegistryError(f"cannot build offline overlay contract ({type(exc).__name__}: {exc})") from exc
 ```
 
-> Implementer note: if `Registry`'s private `_retrieve` sentinel differs across `referencing` versions, replace `assert_offline_registry_has_no_retrieve` with a positive proof — build the validator, validate a doc whose schema `$ref`s an **unseeded** `$id`, and assert it raises `Unresolvable` (which `build_overlay_validator` maps to `OverlayRegistryError`). Either form satisfies the test; do not add a retrieve callback.
+> Implementer note: `load_overlay_contract` is the ONLY reader of the two schema files during a gate run. `OV020` compares each overlay's declared `disposition_schema_sha256`/`overlay_schema_sha256` against `contract.disp_sha256`/`contract.overlay_sha256` — the same bytes the validator was built from — so validation and drift-binding can never diverge (audit F4).
 
 - [ ] **Step 5: Run to verify it passes**
 
 Run: `uv run --project . --locked python tests/test_overlay_schema.py`
 Expected: PASS — `=== OVERLAY SCHEMA SUITE: ALL PASS ===`.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Register the suite in governed CI (audit F6)**
+
+In `.github/workflows/schema-placement-ci.yml`, add `test_overlay_schema` to the `suites` job's loop so the gate runs it on every PR:
+
+```yaml
+          for t in test_disposition_schema test_check_disposition test_collect_disposition test_verify_census test_disposition_trust test_disposition_provenance test_overlay_schema; do
+```
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add overlay.schema.json disposition_overlay.py tests/test_overlay_schema.py
-git commit -m "feat(overlay): overlay.schema.json + offline registry validator (Task 1)"
+git add overlay.schema.json disposition_overlay.py tests/test_overlay_schema.py .github/workflows/schema-placement-ci.yml
+git commit -m "feat(overlay): overlay.schema.json + read-once OverlayContract + CI (Task 1)"
 ```
 
 ---
@@ -408,11 +449,23 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # tests/ dir, to reuse the real helpers
 import disposition_overlay as ov  # noqa: E402
+import disposition_signing as _ds  # noqa: E402
+import test_check_disposition as tcd  # noqa: E402 -- reuse the SCHEMA-VALID snapshot/rel helpers (audit F5)
+
+# Canonical, mutually-coherent fixture clock (audit F5). base census observed_at == tcd._snapshot's;
+# NOW is after it; the default overlay captured_at and window sit inside [.., NOW] with
+# base_observed_at IN the default window (ended_at == base_observed_at), so the default derivation is
+# valid and every timestamp is internally consistent.
+CENSUS_OBSERVED_AT = "2026-07-10T20:00:00Z"    # == tcd._snapshot observed_at (base_observed_at)
+NOW_ISO = "2026-07-11T00:00:00Z"
+DEF_CAPTURED = "2026-07-10T21:00:00Z"          # <= NOW, >= every default window ended_at
+DEF_WIN = {"started_at": "2026-06-05T00:00:00Z", "ended_at": CENSUS_OBSERVED_AT}  # ~35d; ended == base_observed_at
+_CONTRACT = ov.load_overlay_contract()
 
 
 def _ephemeral_keypair():
-    from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
     priv = Ed25519PrivateKey.generate()
     return priv, priv.public_key()
@@ -424,54 +477,50 @@ def _canon(obj) -> bytes:
 
 def _sign(obj, priv):
     body = _canon(obj)
-    sidecar = json.dumps(__import__("disposition_signing").build_sig_sidecar(body, priv)).encode("utf-8")
+    sidecar = json.dumps(_ds.build_sig_sidecar(body, priv)).encode("utf-8")
     return body, sidecar
 
 
-CENSUS_OBSERVED_AT = "2026-07-10T20:00:00Z"
+def _no_bool():
+    return {"state": "not_observed", "detail": "pending"}
+
+
+def _no_ci():
+    return {"state": "not_observed", "found_consumers": None, "ref": None, "detail": "pending"}
 
 
 def _zero_census(oids):
-    """A canonical zero-width-window census over oids, all six dims not_observed."""
-    def _rel(oid):
+    """A fully SCHEMA-VALID census built from tcd._snapshot/_rel (all required top-level fields:
+    repo_sha, collector_version, query_bundle_sha256, catalog_relation_count, collection_scope,
+    target_identity, ...), forced to the canonical zero-width consumer window + all six overlay dims
+    not_observed. database_deps stays observed (NOT an overlay target). Reuses the real helpers (F5)."""
+    rels = []
+    for oid in oids:
         schema, name = oid.split(".", 1)
-        na = {"state": "not_observed", "detail": "pending"}
-        na_ci = {"state": "not_observed", "found_consumers": None, "ref": None, "detail": "pending"}
-        return {"object_id": oid, "schema": schema, "name": name, "relkind": "v",
-                "owner": {"state": "observed", "value": "postgres"},
-                "rls_enabled": {"state": "observed", "value": False},
-                "is_security_definer_view": {"state": "observed", "value": True},
-                "in_data_api_exposed_schema": na,
-                "anon_effective_privs": {"state": "observed", "value": []},
-                "authenticated_effective_privs": {"state": "observed", "value": []},
-                "inbound_fk_count": {"state": "observed", "value": 0},
-                "outbound_fk_count": {"state": "observed", "value": 0},
-                "dependent_objects": {"state": "observed", "value": []},
-                "row_estimate": {"state": "observed", "value": 0},
-                "advisor_findings": na,
-                "consumer_evidence": {
-                    "observation_window": {"started_at": CENSUS_OBSERVED_AT, "ended_at": CENSUS_OBSERVED_AT},
-                    "static_repo": na_ci, "database_deps": {"state": "observed", "found_consumers": 0, "ref": "dep:0"},
-                    "runtime_logs": na_ci, "external_clients": na_ci, "operator_declaration": na_ci}}
-    return {"kind": "evidence_snapshot", "project_ref": "fxoyniqnrlkxfligbxmg",
-            "observed_at": CENSUS_OBSERVED_AT, "relation_count": len(oids),
-            "target_identity": {"current_database": "postgres", "current_user": "postgres",
-                                "server_version": "16", "transaction_read_only": True, "guard_passed": True},
-            "relations": [_rel(o) for o in oids]}
+        r = tcd._rel(oid, schema, name, "v")
+        r["in_data_api_exposed_schema"] = _no_bool()
+        r["advisor_findings"] = _no_bool()
+        ce = r["consumer_evidence"]
+        ce["observation_window"] = {"started_at": CENSUS_OBSERVED_AT, "ended_at": CENSUS_OBSERVED_AT}
+        for dim in ("static_repo", "runtime_logs", "external_clients", "operator_declaration"):
+            ce[dim] = _no_ci()
+        # database_deps stays observed (tcd._rel set it observed) — not an overlay target
+        rels.append(r)
+    return tcd._snapshot(rels)  # sets observed_at == CENSUS_OBSERVED_AT + all required snapshot fields
 
 
 def _overlay(dimension, source_type, assignments, census_bytes=None, **overrides):
+    """A well-formed overlay bound to census_bytes. Default source_hash/producing_repo_sha are NON-null
+    with NO *_not_applicable_reason (IFF-valid, audit F9); dimensions needing null+reason override both."""
     doc = {"kind": "evidence_overlay", "overlay_version": "1",
            "dimension": dimension, "source_type": source_type,
            "authority": "test", "collection_method": "test", "source_locator": "test:x",
-           "source_hash": "e" * 64, "source_hash_not_applicable_reason": "n/a",
+           "source_hash": "e" * 64,
            "base_snapshot_sha256": hashlib.sha256(census_bytes).hexdigest() if census_bytes else "a" * 64,
-           "disposition_schema_sha256": ov._sha256_hex(open(ov.DISPOSITION_SCHEMA_PATH, "rb").read()),
-           "overlay_schema_sha256": ov._sha256_hex(open(ov.OVERLAY_SCHEMA_PATH, "rb").read()),
+           "disposition_schema_sha256": _CONTRACT.disp_sha256, "overlay_schema_sha256": _CONTRACT.overlay_sha256,
            "project_ref": "fxoyniqnrlkxfligbxmg",
-           "captured_at": "2026-07-12T00:00:00+00:00",
-           "observation_window": {"started_at": "2026-07-01T00:00:00Z", "ended_at": "2026-07-09T00:00:00Z"},
-           "producing_repo_sha": "d" * 40, "producing_repo_sha_not_applicable_reason": "n/a",
+           "captured_at": DEF_CAPTURED, "observation_window": dict(DEF_WIN),
+           "producing_repo_sha": "d" * 40,
            "assignments": assignments}
     doc.update(overrides)
     return doc
@@ -628,8 +677,8 @@ git commit -m "feat(overlay): read-once signature verify + binding guards OV001/
 - Test: `tests/test_overlay_loader.py` (append Task-3 cases)
 
 **Interfaces:**
-- Produces: `validate_overlay(doc, validator) -> list[tuple]` (`OV008`, maps schema/registry/format failures to a coded reject); `check_target(doc, census_rel_index: dict[str, dict]) -> list[tuple]` (`OV004/OV005/OV006/OV013/OV012/OV019/OV014`); `check_conflict(assignment_keys: list[tuple[str, str]]) -> list[tuple]` (`OV007`, counts duplicates within+across overlays); `precheck_base_window(census) -> list[tuple]` (`OV021`, unconditional, string-equality to `observed_at`).
-- Consumes: `DIMENSIONS`; `census_rel_index` = `{object_id: relation_dict}` built by the orchestrator.
+- Produces: `validate_overlay(doc, validator) -> list[tuple]` (`OV008`, maps schema/registry/format failures to a coded reject, incl. `Unresolvable`→coded); `check_observation_window(doc, now) -> list[tuple]` (`OV009`, per-overlay: `started_at < ended_at`, `ended_at <= captured_at`, `ended_at <= now`, well-formed; applied to ALL six dimensions incl. the Data-API overlay used by OV022, audit F2); `check_target(doc, census_rel_index: dict[str, dict]) -> list[tuple]` (`OV004/OV005/OV006/OV013/OV012/OV019/OV014`, with IFF null-reason for OV012/OV019 per audit F9); `check_conflict(assignment_keys: list[tuple[str, str]]) -> list[tuple]` (`OV007`, counts duplicates within+across overlays); `precheck_base_window(census) -> list[tuple]` (`OV021`, unconditional, string-equality to `observed_at`).
+- Consumes: `DIMENSIONS`; `census_rel_index` = `{object_id: relation_dict}` built by the orchestrator; `now: datetime`.
 
 - [ ] **Step 1: Write the failing guard tests** — append these cases and add them to `_CASES`:
 
@@ -709,6 +758,62 @@ def _base_canonical_window_passes_OV021():
     return ov.precheck_base_window(census) == []
 
 
+NOW_DT = ov._parse_iso(NOW_ISO)
+
+
+# ---- Task 3: per-overlay window (OV009) + IFF null-reason (F9) ----
+def _window_started_after_ended_OV009():
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   observation_window={"started_at": "2026-07-10T00:00:00Z", "ended_at": "2026-06-01T00:00:00Z"})
+    return "OV009" in _codes(ov.check_observation_window(doc, NOW_DT))
+
+
+def _window_ended_after_captured_OV009():
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   captured_at="2026-07-08T00:00:00Z", observation_window={"started_at": "2026-06-05T00:00:00Z", "ended_at": "2026-07-09T00:00:00Z"})
+    return "OV009" in _codes(ov.check_observation_window(doc, NOW_DT))
+
+
+def _window_future_ended_OV009():
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   captured_at="2026-07-20T00:00:00Z", observation_window={"started_at": "2026-06-05T00:00:00Z", "ended_at": "2026-07-15T00:00:00Z"})  # ended after NOW
+    return "OV009" in _codes(ov.check_observation_window(doc, NOW_DT))
+
+
+def _in_data_api_overlay_window_is_checked_OV009():
+    # The Data-API-exposure overlay (observed_bool, NOT a consumer contributor) still passes OV009 (F2).
+    doc = _overlay("in_data_api_exposed_schema", "platform_config",
+                   [{"object_id": "public.v", "value": {"state": "observed", "value": False}}],
+                   observation_window={"started_at": "2026-07-10T00:00:00Z", "ended_at": "2026-06-01T00:00:00Z"})
+    return "OV009" in _codes(ov.check_observation_window(doc, NOW_DT))
+
+
+def _valid_window_passes_OV009():
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}])
+    return ov.check_observation_window(doc, NOW_DT) == []
+
+
+def _source_hash_reason_with_nonnull_OV019():
+    # IFF (F9): a reason supplied ALONGSIDE a non-null source_hash is also rejected.
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   source_hash="e" * 64, source_hash_not_applicable_reason="should not be here")
+    return "OV019" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _producing_repo_sha_reason_with_nonnull_OV012():
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   producing_repo_sha="d" * 40, producing_repo_sha_not_applicable_reason="should not be here")
+    return "OV012" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
 _CASES += [
     ("dimension_not_permitted_OV004", _dimension_not_permitted_OV004),
     ("unknown_object_id_OV005", _unknown_object_id_OV005),
@@ -717,7 +822,14 @@ _CASES += [
     ("operator_declaration_missing_provenance_OV014", _operator_declaration_missing_provenance_OV014),
     ("source_hash_null_without_reason_OV019", _source_hash_null_without_reason_OV019),
     ("producing_repo_sha_absent_OV012", _producing_repo_sha_absent_OV012),
+    ("source_hash_reason_with_nonnull_OV019", _source_hash_reason_with_nonnull_OV019),
+    ("producing_repo_sha_reason_with_nonnull_OV012", _producing_repo_sha_reason_with_nonnull_OV012),
     ("duplicate_pair_within_and_across_OV007", _duplicate_pair_within_and_across_OV007),
+    ("window_started_after_ended_OV009", _window_started_after_ended_OV009),
+    ("window_ended_after_captured_OV009", _window_ended_after_captured_OV009),
+    ("window_future_ended_OV009", _window_future_ended_OV009),
+    ("in_data_api_overlay_window_is_checked_OV009", _in_data_api_overlay_window_is_checked_OV009),
+    ("valid_window_passes_OV009", _valid_window_passes_OV009),
     ("base_nonzero_window_OV021_with_zero_overlays", _base_nonzero_window_OV021_with_zero_overlays),
     ("base_canonical_window_passes_OV021", _base_canonical_window_passes_OV021),
 ]
@@ -749,6 +861,29 @@ def validate_overlay(doc, validator):
     return out
 
 
+def check_observation_window(doc, now):
+    """OV009 (audit F2): per-overlay window guard applied to EVERY overlay (all six dimensions, incl.
+    the Data-API-exposure overlay OV022 relies on): started_at < ended_at, ended_at <= captured_at,
+    ended_at <= now. Fail-closed: a malformed/unparseable window is a single coded OV009, never an
+    uncaught exception."""
+    out = []
+    loc = f"overlay:{doc.get('dimension')}"
+    w = doc.get("observation_window") or {}
+    try:
+        s = _parse_iso(w["started_at"])
+        e = _parse_iso(w["ended_at"])
+        cap = _parse_iso(doc["captured_at"])
+    except (KeyError, ValueError, TypeError):
+        return [("OV009", loc, f"observation_window/captured_at malformed or unparseable: {w!r}")]
+    if not (s < e):
+        out.append(("OV009", loc, f"started_at {w['started_at']} must be < ended_at {w['ended_at']}"))
+    if e > cap:
+        out.append(("OV009", loc, f"ended_at {w['ended_at']} is after captured_at {doc['captured_at']}"))
+    if e > now:
+        out.append(("OV009", loc, f"ended_at {w['ended_at']} is in the future vs now {now.isoformat()}"))
+    return out
+
+
 def _base_slot(rel, dimension):
     if dimension.startswith("consumer_evidence."):
         return rel.get("consumer_evidence", {}).get(dimension.split(".", 1)[1], {})
@@ -766,13 +901,26 @@ def check_target(doc, census_rel_index):
     _vdef, fixed_source = DIMENSIONS[dimension]
     if doc.get("source_type") != fixed_source:
         out.append(("OV013", loc, f"source_type {doc.get('source_type')!r} != fixed {fixed_source!r} for {dimension}"))
-    if doc.get("source_hash") is None and not (doc.get("source_hash_not_applicable_reason") or "").strip():
+    # OV019 IFF (audit F9): a source_hash_not_applicable_reason is required IFF source_hash is null.
+    sh = doc.get("source_hash")
+    sh_reason = (doc.get("source_hash_not_applicable_reason") or "").strip()
+    if sh is None and not sh_reason:
         out.append(("OV019", loc, "source_hash is null without source_hash_not_applicable_reason"))
+    elif sh is not None and sh_reason:
+        out.append(("OV019", loc, "source_hash is non-null but a source_hash_not_applicable_reason is also present (must be absent)"))
+    # OV012 IFF: required dims need a non-null producing_repo_sha with NO reason; other dims need null+reason.
+    prs = doc.get("producing_repo_sha")
+    prs_reason = (doc.get("producing_repo_sha_not_applicable_reason") or "").strip()
     if dimension in _PRODUCING_SHA_REQUIRED:
-        if not doc.get("producing_repo_sha"):
+        if not prs:
             out.append(("OV012", loc, f"producing_repo_sha required for {dimension} but absent/null"))
-    elif doc.get("producing_repo_sha") is None and not (doc.get("producing_repo_sha_not_applicable_reason") or "").strip():
-        out.append(("OV012", loc, "producing_repo_sha is null without producing_repo_sha_not_applicable_reason"))
+        elif prs_reason:
+            out.append(("OV012", loc, "producing_repo_sha is non-null but a not_applicable_reason is also present (must be absent)"))
+    else:
+        if prs is None and not prs_reason:
+            out.append(("OV012", loc, "producing_repo_sha is null without producing_repo_sha_not_applicable_reason"))
+        elif prs is not None and prs_reason:
+            out.append(("OV012", loc, "producing_repo_sha is non-null but a not_applicable_reason is also present (must be absent)"))
     if dimension == "consumer_evidence.operator_declaration":
         if not (doc.get("operator_identity") or "").strip() or not (doc.get("attestation_ref") or "").strip():
             out.append(("OV014", loc, "operator_declaration overlay missing operator_identity/attestation_ref provenance"))
@@ -842,81 +990,84 @@ git commit -m "feat(overlay): target/conflict guards + unconditional OV021 base-
 - [ ] **Step 1: Write the failing time-model tests** — append to `tests/test_overlay_loader.py` and `_CASES`:
 
 ```python
-import datetime as _dt
-
 def _pdt(s):
     return ov._parse_iso(s)
 
-BASE = _pdt(CENSUS_OBSERVED_AT)          # 2026-07-10T20:00:00Z
-NOW = _pdt("2026-07-11T00:00:00Z")
+BASE = _pdt(CENSUS_OBSERVED_AT)          # 2026-07-10T20:00:00Z (base_observed_at)
+NOW = _pdt(NOW_ISO)                      # 2026-07-11T00:00:00Z
 
 
-def _contrib(effective, oid, dim, started, ended):
-    ce = effective["relations"][0]["consumer_evidence"]
-    ce[dim] = {"state": "observed", "found_consumers": 0, "ref": f"{dim}:1"}
-    # the per-relation contributor windows live on the overlay docs; the orchestrator threads them via
-    # a side map, but derive_windows reads them off effective["_contrib_windows"][oid] (Task-6 orchestrator
-    # populates this; here we set it directly to unit-test the predicate).
-    effective.setdefault("_contrib_windows", {}).setdefault(oid, []).append((_pdt(started), _pdt(ended), _pdt("2026-07-12T00:00:00Z")))
+def _contrib_map(*entries):
+    """Build a LOCAL {oid: [(started, ended, captured), ...]} contributor map (audit #9: passed as a
+    separate arg to derive_windows — NEVER stashed on the effective snapshot)."""
+    m = {}
+    for oid, started, ended, captured in entries:
+        m.setdefault(oid, []).append((_pdt(started), _pdt(ended), _pdt(captured)))
+    return m
+
+
+def _derive(eff, contrib, max_age=8760):
+    return ov.derive_windows(eff, cluster_src_oids=set(contrib) or {"public.v"}, contrib_by_oid=contrib,
+                             now=NOW, base_observed_at=BASE, max_consumer_evidence_age_hours=max_age)
 
 
 def _fresh_window_derives_ok():
     eff = _zero_census(["public.v"])
-    _contrib(eff, "public.v", "static_repo", "2026-07-01T00:00:00Z", "2026-07-11T00:00:00Z")
-    diags, derived = ov.derive_windows(eff, cluster_src_oids={"public.v"}, now=NOW, base_observed_at=BASE,
-                                       max_consumer_evidence_age_hours=8760)
+    contrib = _contrib_map(("public.v", "2026-06-05T00:00:00Z", CENSUS_OBSERVED_AT, DEF_CAPTURED))
+    diags, derived = _derive(eff, contrib)
     return diags == [] and "public.v" in derived
 
 
 def _decade_old_window_OV016():
     eff = _zero_census(["public.v"])
-    _contrib(eff, "public.v", "static_repo", "2016-06-01T00:00:00Z", "2016-07-01T00:00:00Z")
-    diags, _d = ov.derive_windows(eff, cluster_src_oids={"public.v"}, now=NOW, base_observed_at=BASE, max_consumer_evidence_age_hours=8760)
+    contrib = _contrib_map(("public.v", "2016-06-01T00:00:00Z", "2016-07-01T00:00:00Z", "2016-07-02T00:00:00Z"))
+    diags, _d = _derive(eff, contrib)
     return "OV016" in _codes(diags)
 
 
 def _absent_maxage_is_OV016():
     eff = _zero_census(["public.v"])
-    _contrib(eff, "public.v", "static_repo", "2026-07-01T00:00:00Z", "2026-07-11T00:00:00Z")
-    diags, _d = ov.derive_windows(eff, cluster_src_oids={"public.v"}, now=NOW, base_observed_at=BASE, max_consumer_evidence_age_hours=None)
+    contrib = _contrib_map(("public.v", "2026-06-05T00:00:00Z", CENSUS_OBSERVED_AT, DEF_CAPTURED))
+    diags, _d = _derive(eff, contrib, max_age=None)
     return "OV016" in _codes(diags)
 
 
 def _nonfinite_maxage_is_OV016():
     eff = _zero_census(["public.v"])
-    _contrib(eff, "public.v", "static_repo", "2026-07-01T00:00:00Z", "2026-07-11T00:00:00Z")
-    diags, _d = ov.derive_windows(eff, cluster_src_oids={"public.v"}, now=NOW, base_observed_at=BASE, max_consumer_evidence_age_hours=float("inf"))
+    contrib = _contrib_map(("public.v", "2026-06-05T00:00:00Z", CENSUS_OBSERVED_AT, DEF_CAPTURED))
+    diags, _d = _derive(eff, contrib, max_age=float("inf"))
     return "OV016" in _codes(diags)
 
 
 def _base_outside_window_OV017():
-    eff = _zero_census(["public.v"])  # base_observed_at = 2026-07-10T20; window ends 2026-07-05 < base
-    _contrib(eff, "public.v", "static_repo", "2026-07-01T00:00:00Z", "2026-07-05T00:00:00Z")
-    diags, _d = ov.derive_windows(eff, cluster_src_oids={"public.v"}, now=NOW, base_observed_at=BASE, max_consumer_evidence_age_hours=8760)
+    eff = _zero_census(["public.v"])  # base_observed_at = 07-10T20; window ends 07-05 < base
+    contrib = _contrib_map(("public.v", "2026-06-01T00:00:00Z", "2026-07-05T00:00:00Z", "2026-07-06T00:00:00Z"))
+    diags, _d = _derive(eff, contrib)
     return "OV017" in _codes(diags)
 
 
 def _empty_contributors_OV018():
-    eff = _zero_census(["public.v"])  # no _contrib set
-    diags, _d = ov.derive_windows(eff, cluster_src_oids={"public.v"}, now=NOW, base_observed_at=BASE, max_consumer_evidence_age_hours=8760)
+    eff = _zero_census(["public.v"])
+    diags, _d = ov.derive_windows(eff, cluster_src_oids={"public.v"}, contrib_by_oid={}, now=NOW,
+                                  base_observed_at=BASE, max_consumer_evidence_age_hours=8760)
     return "OV018" in _codes(diags)
 
 
 def _empty_intersection_OV011():
     eff = _zero_census(["public.v"])
-    _contrib(eff, "public.v", "static_repo", "2026-07-08T00:00:00Z", "2026-07-11T00:00:00Z")
-    _contrib(eff, "public.v", "runtime_logs", "2026-07-01T00:00:00Z", "2026-07-05T00:00:00Z")  # S=07-08 > E=07-05
-    diags, _d = ov.derive_windows(eff, cluster_src_oids={"public.v"}, now=NOW, base_observed_at=BASE, max_consumer_evidence_age_hours=8760)
+    contrib = _contrib_map(("public.v", "2026-07-08T00:00:00Z", CENSUS_OBSERVED_AT, DEF_CAPTURED),   # ended 07-10T20
+                           ("public.v", "2026-06-05T00:00:00Z", "2026-07-05T00:00:00Z", "2026-07-06T00:00:00Z"))  # ended 07-05
+    diags, _d = _derive(eff, contrib)  # S=max(07-08,06-05)=07-08 ; E=min(07-10T20,07-05)=07-05 ; S>E
     return "OV011" in _codes(diags)
 
 
 def _duplicate_src_object_single_derivation():
-    # object_id in cluster_src_oids once (it is a set) => derived once; the derived marker is idempotent
+    # object_id appears once in the set => derived exactly once; the derived marker is idempotent.
     eff = _zero_census(["public.v"])
-    _contrib(eff, "public.v", "static_repo", "2026-07-01T00:00:00Z", "2026-07-11T00:00:00Z")
-    diags, derived = ov.derive_windows(eff, cluster_src_oids={"public.v"}, now=NOW, base_observed_at=BASE, max_consumer_evidence_age_hours=8760)
+    contrib = _contrib_map(("public.v", "2026-06-05T00:00:00Z", CENSUS_OBSERVED_AT, DEF_CAPTURED))
+    diags, derived = _derive(eff, contrib)
     w = eff["relations"][0]["consumer_evidence"]["observation_window"]
-    return diags == [] and list(derived) == ["public.v"] and w["started_at"] and w["ended_at"]
+    return diags == [] and list(derived) == ["public.v"] and w["started_at"] and w["ended_at"] and "_contrib_windows" not in eff
 
 
 _CASES += [
@@ -957,14 +1108,15 @@ Run: `uv run --project . --locked python tests/test_check_disposition.py` → FA
 - [ ] **Step 3a: Implement `derive_windows`** — append to `disposition_overlay.py`:
 
 ```python
-def derive_windows(effective, *, cluster_src_oids, now, base_observed_at, max_consumer_evidence_age_hours):
+def derive_windows(effective, *, cluster_src_oids, contrib_by_oid, now, base_observed_at, max_consumer_evidence_age_hours):
     """For each UNIQUE cluster-source object_id (T3), derive the consumer window from the relation's
-    observed consumer contributors staged in effective['_contrib_windows'][oid] as
-    (started, ended, captured) tuples over CONSUMER_CONTRIB_DIMS, and write {S, E} ISO-8601 strings into
-    the effective view. Returns (diagnostics, derived_window_object_ids). Fail-closed per the §3 predicate."""
+    observed consumer contributors in contrib_by_oid[oid] — a LOCAL {oid: [(started, ended, captured), ...]}
+    map (over CONSUMER_CONTRIB_DIMS) passed by the orchestrator, NEVER read off the effective snapshot
+    (audit #9) — and write {S, E} ISO-8601 strings into the effective view. Returns
+    (diagnostics, derived_window_object_ids). Fail-closed per the §3 predicate."""
     out = []
     derived = set()
-    contrib = effective.get("_contrib_windows", {})
+    contrib = contrib_by_oid
     rel_by_oid = {r["object_id"]: r for r in effective.get("relations", [])}
     finite_age = _finite(max_consumer_evidence_age_hours) and max_consumer_evidence_age_hours > 0
     for oid in sorted(cluster_src_oids):  # a set => each object_id derived exactly once (T3)
@@ -1165,82 +1317,115 @@ git commit -m "feat(overlay): OV022 delete-floor temporal coherence (T1/T2-scope
 - Test: `tests/test_overlay_loader.py` (append orchestration + integrity cases, incl. OV010)
 
 **Interfaces:**
-- Produces: `MergeResult` (a `dataclass` with `effective_snapshot: dict`, `derived_window_object_ids: set[str]`, `receipt_overlays: list[dict]`, `diagnostics: list[tuple[str, str, str]]`); `load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions, expect_project_ref, now, max_consumer_evidence_age_hours, max_staleness_hours, resolved_signer, overlay_validator) -> MergeResult`. `overlay_inputs` = `list[tuple[str, bytes, bytes]]` of `(path, overlay_bytes, sig_bytes)` read once by the caller. Never mutates `census`.
+- Produces: `MergeResult` (a `dataclass` with `effective_snapshot: dict`, `derived_window_object_ids: set[str]`, `receipt_overlays: list[dict]`, `diagnostics: list[tuple[str, str, str]]`); `check_cluster_completeness(base_census, effective, manifest, decisions) -> list[tuple]` (`OV015`); `load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions, expect_project_ref, now, max_consumer_evidence_age_hours, max_staleness_hours, resolved_signer, contract) -> MergeResult`. `overlay_inputs` = `list[tuple[str, str, bytes, bytes]]` of `(overlay_path, sig_path, overlay_bytes, sig_bytes)` read once by the caller; `contract` = the read-once `OverlayContract`. Never mutates `census`.
 
 - [ ] **Step 1: Write the failing orchestration + integrity tests** — append to `tests/test_overlay_loader.py` and `_CASES`. These build a fake `resolved_signer` and a real `overlay_validator`:
 
 ```python
+import re
+
 class _FakeSigner:
+    """Stands in for disposition_trust.ResolvedSigner (public_key + provenance for the receipt, F3)."""
     def __init__(self, pub):
         self.public_key = pub
+        self.key_id = "test-signer"
+        self.spki_sha256 = "f" * 64
 
-VAL = ov.build_overlay_validator()
 
-
-def _decisions_manifest(oids, action="harden", conclusion="no_consumer"):
+def _decisions_manifest(oids, action="harden", conclusion="unresolved", required=None):
+    # default conclusion 'unresolved' + empty required_observations => OV015 is NOT triggered, so these
+    # merge-mechanics unit tests isolate the deepcopy/derivation/receipt behavior. (Full gate-required
+    # coverage + OV015 are exercised in Task 8's e2e + Task 6's dedicated OV015 case below.)
     rows = [{"decision_id": "D1", "action_class": action, "decision_status": "accepted",
              "consumer_disposition": conclusion, "source_objects": list(oids)}]
     decisions = {"kind": "decisions_file", "rows": rows}
-    manifest = {"kind": "cluster_manifest", "cluster_id": "C1", "status": "accepted", "action_class": action,
-                "decision_ids": ["D1"], "evidence_snapshot": "snap.json", "max_staleness_hours": 8760,
-                "required_observations": [], "technical_authority_approval": "TA-1"}
+    manifest = {"kind": "cluster_manifest", "cluster_id": "c-001", "status": "accepted", "action_class": action,
+                "decision_ids": ["D1"], "evidence_snapshot": "prod.json", "max_staleness_hours": 8760,
+                "minimum_consumer_window_hours": 24, "required_observations": list(required or []),
+                "technical_authority_approval": "TA-1"}
     return decisions, manifest
+
+
+def _static_overlay(cb, oid="public.v", **overrides):
+    return _overlay("consumer_evidence.static_repo", "repository_scan",
+                    [{"object_id": oid, "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                    census_bytes=cb, **overrides)
+
+
+def _merge(census, cb, overlays, decisions, manifest, signer, max_stale=8760):
+    inputs = []
+    for i, ov_doc in enumerate(overlays):
+        ob, sig = _sign(ov_doc, signer[0])
+        inputs.append((f"o{i}.json", f"o{i}.json.sig", ob, sig))
+    return ov.load_and_merge(census=census, census_bytes=cb, overlay_inputs=inputs, manifest=manifest,
+                             decisions=decisions, expect_project_ref="fxoyniqnrlkxfligbxmg", now=NOW,
+                             max_consumer_evidence_age_hours=8760, max_staleness_hours=max_stale,
+                             resolved_signer=signer[1], contract=_CONTRACT)
 
 
 def _merge_deepcopy_unmutated():
     priv, pub = _ephemeral_keypair()
     census = _zero_census(["public.v"]); cb = _canon(census)
     before = copy.deepcopy(census)
-    o = _overlay("consumer_evidence.static_repo", "repository_scan",
-                 [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
-                 census_bytes=cb, observation_window={"started_at": "2026-07-01T00:00:00Z", "ended_at": "2026-07-11T00:00:00Z"})
-    ob, sig = _sign(o, priv)
     decisions, manifest = _decisions_manifest(["public.v"])
-    res = ov.load_and_merge(census=census, census_bytes=cb, overlay_inputs=[("o.json", ob, sig)],
-                            manifest=manifest, decisions=decisions, expect_project_ref="fxoyniqnrlkxfligbxmg",
-                            now=NOW, max_consumer_evidence_age_hours=8760, max_staleness_hours=8760,
-                            resolved_signer=_FakeSigner(pub), overlay_validator=VAL)
-    # base census object is unmutated; the effective view got the derived window
-    return census == before and res.effective_snapshot["relations"][0]["consumer_evidence"]["observation_window"]["ended_at"] != CENSUS_OBSERVED_AT
+    res = _merge(census, cb, [_static_overlay(cb)], decisions, manifest, (priv, _FakeSigner(pub)))
+    # base census object is unmutated; the effective view got a derived window (started_at moved off the
+    # zero-width base); and no scratch contributor map leaked onto the effective snapshot (audit #9).
+    w = res.effective_snapshot["relations"][0]["consumer_evidence"]["observation_window"]
+    return (census == before and res.diagnostics == [] and w["started_at"] != CENSUS_OBSERVED_AT
+            and "_contrib_windows" not in res.effective_snapshot)
 
 
 def _stale_overlay_captured_at_OV010():
     priv, pub = _ephemeral_keypair()
     census = _zero_census(["public.v"]); cb = _canon(census)
-    o = _overlay("consumer_evidence.static_repo", "repository_scan",
-                 [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
-                 census_bytes=cb, captured_at="2020-01-01T00:00:00+00:00")  # far older than max_staleness_hours
-    ob, sig = _sign(o, priv)
+    # coherent window (ended <= captured, no OV009) but captured_at far older than max_staleness_hours
+    o = _static_overlay(cb, captured_at="2020-01-05T00:00:00Z",
+                        observation_window={"started_at": "2019-12-01T00:00:00Z", "ended_at": "2020-01-01T00:00:00Z"})
     decisions, manifest = _decisions_manifest(["public.v"])
-    res = ov.load_and_merge(census=census, census_bytes=cb, overlay_inputs=[("o.json", ob, sig)],
-                            manifest=manifest, decisions=decisions, expect_project_ref="fxoyniqnrlkxfligbxmg",
-                            now=NOW, max_consumer_evidence_age_hours=8760, max_staleness_hours=24,
-                            resolved_signer=_FakeSigner(pub), overlay_validator=VAL)
+    res = _merge(census, cb, [o], decisions, manifest, (priv, _FakeSigner(pub)), max_stale=24)
     return "OV010" in _codes(res.diagnostics)
 
 
 def _effective_view_datetimes_are_iso():
     priv, pub = _ephemeral_keypair()
     census = _zero_census(["public.v"]); cb = _canon(census)
-    o = _overlay("consumer_evidence.static_repo", "repository_scan",
-                 [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
-                 census_bytes=cb, observation_window={"started_at": "2026-07-01T00:00:00Z", "ended_at": "2026-07-11T00:00:00Z"})
-    ob, sig = _sign(o, priv)
     decisions, manifest = _decisions_manifest(["public.v"])
-    res = ov.load_and_merge(census=census, census_bytes=cb, overlay_inputs=[("o.json", ob, sig)],
-                            manifest=manifest, decisions=decisions, expect_project_ref="fxoyniqnrlkxfligbxmg",
-                            now=NOW, max_consumer_evidence_age_hours=8760, max_staleness_hours=8760,
-                            resolved_signer=_FakeSigner(pub), overlay_validator=VAL)
+    res = _merge(census, cb, [_static_overlay(cb)], decisions, manifest, (priv, _FakeSigner(pub)))
     w = res.effective_snapshot["relations"][0]["consumer_evidence"]["observation_window"]
-    import re
     pat = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"
     return res.diagnostics == [] and re.match(pat, w["started_at"]) and re.match(pat, w["ended_at"])
+
+
+def _receipt_binds_sidecar_and_signer():
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    decisions, manifest = _decisions_manifest(["public.v"])
+    res = _merge(census, cb, [_static_overlay(cb)], decisions, manifest, (priv, _FakeSigner(pub)))
+    e = res.receipt_overlays[0]
+    return (res.diagnostics == [] and e["path"] == "o0.json" and e["sig_path"] == "o0.json.sig"
+            and len(e["raw_sha256"]) == 64 and len(e["sig_sha256"]) == 64
+            and e["signer"]["key_id"] == "test-signer" and e["signer"]["spki_sha256"] == "f" * 64
+            and e["object_ids"] == ["public.v"] and e["dimension"] == "consumer_evidence.static_repo"
+            and e["disposition_schema_sha256"] == _CONTRACT.disp_sha256)
+
+
+def _ov015_missing_gate_required_dimension():
+    # A resolved (no_consumer) conclusion forces every consumer contributor dim; supplying only
+    # static_repo leaves runtime_logs/external_clients/operator_declaration unresolved -> OV015 (F7).
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    decisions, manifest = _decisions_manifest(["public.v"], conclusion="no_consumer")
+    res = _merge(census, cb, [_static_overlay(cb)], decisions, manifest, (priv, _FakeSigner(pub)))
+    return "OV015" in _codes(res.diagnostics)
 
 
 _CASES += [
     ("merge_deepcopy_unmutated", _merge_deepcopy_unmutated),
     ("stale_overlay_captured_at_OV010", _stale_overlay_captured_at_OV010),
     ("effective_view_datetimes_are_iso", _effective_view_datetimes_are_iso),
+    ("receipt_binds_sidecar_and_signer", _receipt_binds_sidecar_and_signer),
+    ("ov015_missing_gate_required_dimension", _ov015_missing_gate_required_dimension),
 ]
 ```
 
@@ -1252,7 +1437,51 @@ Expected: FAIL — `AttributeError: ... 'load_and_merge'`.
 - [ ] **Step 3: Implement `MergeResult` + `load_and_merge`** — append to `disposition_overlay.py`:
 
 ```python
-from dataclasses import dataclass, field  # noqa: E402 -- grouped with other stdlib at top on final edit
+# ---- OV015 cluster-completeness (advisory; audit F7) ----
+_PERMITTED_OVERLAY_TARGETS = set(DIMENSIONS)  # the six permitted overlay paths
+_CONSUMER_REQUIRED_EXPANSION = tuple(f"consumer_evidence.{d}" for d in CONSUMER_CONTRIB_DIMS)
+
+
+def _gate_required_dims(row, manifest):
+    """Permitted-overlay-target dimensions a decision's source relations must have resolved: the
+    permitted-target subset of manifest.required_observations (consumer_evidence expands to the four
+    contributor dims) UNION the consumer dims for a resolved consumer_disposition (SP022) UNION the
+    delete-floor dims + in_data_api for a delete (SP027 external_clients waiver)."""
+    req = set()
+    for f in manifest.get("required_observations", []):
+        if f == "consumer_evidence":
+            req.update(_CONSUMER_REQUIRED_EXPANSION)
+        elif f in _PERMITTED_OVERLAY_TARGETS:
+            req.add(f)
+    if row.get("consumer_disposition") in ("no_consumer", "has_consumers"):
+        req.update(_CONSUMER_REQUIRED_EXPANSION)
+    if row.get("action_class") == "delete":
+        req.update(_CONSUMER_REQUIRED_EXPANSION)
+        req.add("in_data_api_exposed_schema")
+    return req & _PERMITTED_OVERLAY_TARGETS
+
+
+def check_cluster_completeness(base_census, effective, manifest, decisions):
+    """OV015 (advisory, audit F7): every cluster-source relation must have each gate-required
+    permitted-overlay-target dimension resolved (state != not_observed) in the effective view — unless
+    it was already observed in the BASE census (e.g. database_deps, which is not an overlay target).
+    SP009/SP022/SP027 on the effective view remain authoritative; OV015 names the missing overlay early."""
+    out = []
+    dec_by_id = {row["decision_id"]: row for row in decisions.get("rows", [])}
+    base_index = {r["object_id"]: r for r in base_census.get("relations", [])}
+    eff_index = {r["object_id"]: r for r in effective.get("relations", [])}
+    for did in manifest.get("decision_ids", []):
+        row = dec_by_id.get(did)
+        if not row:
+            continue
+        for oid in row.get("source_objects", []):
+            base_rel, eff_rel = base_index.get(oid), eff_index.get(oid)
+            if base_rel is None or eff_rel is None:
+                continue
+            for dim in sorted(_gate_required_dims(row, manifest)):
+                if _base_slot(base_rel, dim).get("state") == "not_observed" and _base_slot(eff_rel, dim).get("state") == "not_observed":
+                    out.append(("OV015", f"cluster:{did}:{oid}:{dim}", f"gate-required dimension {dim} is unresolved (no permitted overlay)"))
+    return out
 
 
 @dataclass
@@ -1264,52 +1493,52 @@ class MergeResult:
 
 
 def load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions, expect_project_ref,
-                   now, max_consumer_evidence_age_hours, max_staleness_hours, resolved_signer, overlay_validator):
-    """The step 1-8 pipeline. Verifies + binds + targets + de-conflicts each overlay, runs the
-    UNCONDITIONAL OV021 base-window precheck, deep-copies the census, sets each resolved dimension,
-    derives per-relation consumer windows for EVERY cluster-source relation, and runs OV022. Returns a
-    MergeResult. NEVER mutates census. Any reject short-circuits to a red MergeResult (no effective view
-    is trusted when a gate fails)."""
+                   now, max_consumer_evidence_age_hours, max_staleness_hours, resolved_signer, contract):
+    """The step 1-8 pipeline. `contract` is the read-once OverlayContract (schema bytes+hashes+validator,
+    audit F4 — schemas are NEVER reopened here). `overlay_inputs` = list of
+    (overlay_path, sig_path, overlay_bytes, sig_bytes) read once by the caller. Verifies + binds +
+    window-checks (OV009, per-overlay) + targets + de-conflicts each overlay; runs the UNCONDITIONAL
+    OV021 precheck; deep-copies the census; sets each resolved dimension; derives per-relation consumer
+    windows for EVERY cluster-source relation (contributor map kept LOCAL, audit #9); runs OV022 + OV015.
+    Returns a MergeResult. NEVER mutates census. Any reject short-circuits to a red MergeResult."""
     diags = []
-    on_disk_disp = _sha256_hex(open(DISPOSITION_SCHEMA_PATH, "rb").read())
-    on_disk_ov = _sha256_hex(open(OVERLAY_SCHEMA_PATH, "rb").read())
     census_sha = _sha256_hex(census_bytes)
-    observed_at = census.get("observed_at")
-    base_observed_at = _parse_iso(observed_at)
+    base_observed_at = _parse_iso(census.get("observed_at"))
     rel_index = {r["object_id"]: r for r in census.get("relations", [])}
 
     # step 8 (OV021) runs UNCONDITIONALLY, even with zero overlays.
     diags += precheck_base_window(census)
 
-    parsed = []            # (doc, path)
+    parsed = []            # (doc, overlay_path, sig_path, overlay_bytes, sig_bytes)
     all_keys = []          # (dimension, object_id) for OV007
-    for path, ob_bytes, sig_bytes in overlay_inputs:
+    for overlay_path, sig_path, ob_bytes, sig_bytes in overlay_inputs:
         ok, reason = verify_overlay(ob_bytes, sig_bytes, resolved_signer.public_key)
         if not ok:
-            diags.append(("OV001", f"overlay:{path}", f"signature verification failed: {reason}"))
+            diags.append(("OV001", f"overlay:{overlay_path}", f"signature verification failed: {reason}"))
             continue
         try:
             doc = parse_overlay(ob_bytes)          # parse the SAME verified buffer
         except ValueError as exc:
-            diags.append(("OV008", f"overlay:{path}", f"parse failed ({exc})"))
+            diags.append(("OV008", f"overlay:{overlay_path}", f"parse failed ({exc})"))
             continue
-        diags += validate_overlay(doc, overlay_validator)
+        diags += validate_overlay(doc, contract.validator)
         diags += check_binding(doc, census_sha256=census_sha, census_project_ref=census.get("project_ref"),
-                               expect_project_ref=expect_project_ref, on_disk_disp_sha=on_disk_disp,
-                               on_disk_overlay_sha=on_disk_ov)
+                               expect_project_ref=expect_project_ref, on_disk_disp_sha=contract.disp_sha256,
+                               on_disk_overlay_sha=contract.overlay_sha256)
+        diags += check_observation_window(doc, now)   # OV009 per-overlay (audit F2), before assignments are trusted
         diags += check_target(doc, rel_index)
         # OV010 per-overlay captured_at freshness (finite-guarded), reusing manifest max_staleness_hours.
         try:
             cap = _parse_iso(doc.get("captured_at"))
             if cap > now:
-                diags.append(("OV010", f"overlay:{path}", "captured_at is in the future"))
+                diags.append(("OV010", f"overlay:{overlay_path}", "captured_at is in the future"))
             elif _finite(max_staleness_hours) and (now - cap).total_seconds() / 3600.0 > max_staleness_hours:
-                diags.append(("OV010", f"overlay:{path}", f"captured_at staler than max_staleness_hours {max_staleness_hours}"))
+                diags.append(("OV010", f"overlay:{overlay_path}", f"captured_at staler than max_staleness_hours {max_staleness_hours}"))
         except (ValueError, TypeError):
-            diags.append(("OV010", f"overlay:{path}", "captured_at unparseable"))
+            diags.append(("OV010", f"overlay:{overlay_path}", "captured_at unparseable"))
         for a in doc.get("assignments", []):
             all_keys.append((doc.get("dimension"), a.get("object_id")))
-        parsed.append((doc, path))
+        parsed.append((doc, overlay_path, sig_path, ob_bytes, sig_bytes))
     diags += check_conflict(all_keys)
 
     if diags:
@@ -1318,10 +1547,10 @@ def load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions,
     # ---- build the effective view (deepcopy; census never mutated) ----
     effective = copy.deepcopy(census)
     eff_index = {r["object_id"]: r for r in effective["relations"]}
-    contrib = {}                     # oid -> [(started, ended, captured)]
+    contrib = {}                     # LOCAL: oid -> [(started, ended, captured)] (audit #9; NOT stashed on effective)
     in_data_api_windows = {}         # oid -> (started, ended) from the (in_data_api, oid) overlay (T2)
-    external_state = {}              # (oid) -> external_clients state, for T1
-    for doc, _path in parsed:
+    external_state = {}              # oid -> external_clients state, for T1
+    for doc, _op, _sp, _ob, _sb in parsed:
         dim = doc["dimension"]
         win = doc["observation_window"]
         w = (_parse_iso(win["started_at"]), _parse_iso(win["ended_at"]))
@@ -1340,7 +1569,6 @@ def load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions,
                 rel[dim] = a["value"]
                 if dim == "in_data_api_exposed_schema":
                     in_data_api_windows[oid] = w      # exact (dimension, object_id) window (T2)
-    effective["_contrib_windows"] = contrib
 
     # cluster-source object_ids across ALL decisions (deduped by object_id, T3), incl. retain.
     dec_by_id = {row["decision_id"]: row for row in decisions.get("rows", [])}
@@ -1356,8 +1584,8 @@ def load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions,
                 if row.get("action_class") == "delete":
                     delete_src_oids.add(oid)
 
-    wdiags, derived = derive_windows(effective, cluster_src_oids=cluster_src_oids, now=now,
-                                     base_observed_at=base_observed_at,
+    wdiags, derived = derive_windows(effective, cluster_src_oids=cluster_src_oids, contrib_by_oid=contrib,
+                                     now=now, base_observed_at=base_observed_at,
                                      max_consumer_evidence_age_hours=max_consumer_evidence_age_hours)
     diags += wdiags
     derived_windows = {oid: (_parse_iso(eff_index[oid]["consumer_evidence"]["observation_window"]["started_at"]),
@@ -1367,22 +1595,28 @@ def load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions,
     diags += check_delete_floor_coherence(effective, delete_src_oids=delete_src_oids,
                                           external_na_oids=external_na_oids,
                                           in_data_api_windows=in_data_api_windows, derived_windows=derived_windows)
+    diags += check_cluster_completeness(census, effective, manifest, decisions)   # OV015 (audit F7)
 
-    effective.pop("_contrib_windows", None)   # scratch, never serialized / never validated
-    receipt_overlays = [{"path": p, "dimension": doc["dimension"],
-                         "raw_sha256": _sha256_hex(ob), "captured_at": doc["captured_at"],
-                         "producing_repo_sha": doc.get("producing_repo_sha"), "source_hash": doc.get("source_hash"),
-                         "object_id_count": len(doc.get("assignments", [])),
-                         **({"operator_identity": doc.get("operator_identity"), "attestation_ref": doc.get("attestation_ref")}
-                            if doc["dimension"] == "consumer_evidence.operator_declaration" else {})}
-                        for (doc, p), (_p2, ob, _s) in zip(parsed, overlay_inputs)]
+    receipt_overlays = []
+    for doc, op, sp, ob, sb in parsed:
+        entry = {"path": op, "raw_sha256": _sha256_hex(ob), "sig_path": sp, "sig_sha256": _sha256_hex(sb),
+                 "signer": {"key_id": resolved_signer.key_id, "spki_sha256": resolved_signer.spki_sha256},
+                 "dimension": doc["dimension"], "object_ids": [a["object_id"] for a in doc.get("assignments", [])],
+                 "object_id_count": len(doc.get("assignments", [])), "captured_at": doc["captured_at"],
+                 "producing_repo_sha": doc.get("producing_repo_sha"), "source_hash": doc.get("source_hash"),
+                 "disposition_schema_sha256": doc.get("disposition_schema_sha256"),
+                 "overlay_schema_sha256": doc.get("overlay_schema_sha256")}
+        if doc["dimension"] == "consumer_evidence.operator_declaration":
+            entry["operator_identity"] = doc.get("operator_identity")
+            entry["attestation_ref"] = doc.get("attestation_ref")
+        receipt_overlays.append(entry)
     if diags:
         return MergeResult(effective_snapshot=None, derived_window_object_ids=set(), diagnostics=diags)
     return MergeResult(effective_snapshot=effective, derived_window_object_ids=derived,
                        receipt_overlays=receipt_overlays, diagnostics=[])
 ```
 
-> Implementer notes: (1) move the `from dataclasses import dataclass, field` and `import copy` to the module's top import block during this task (they appear inline above only to show what Task 6 adds); keep the module's imports grouped. (2) `_contrib_windows` is scratch state on the effective view during derivation and is popped before the view leaves the loader, so it never reaches `disposition.schema.json` validation (which is `additionalProperties:false` at the relation level, not the snapshot root — confirm the snapshot root does not forbid it; if it does, thread the contributor map as a separate local dict instead of stashing it on `effective`). (3) OV010's `captured_at` unparseable branch is defense-in-depth; the schema's `iso_datetime` format already guards it, but per Invariant 7 do not rely on that.
+> Implementer notes: (1) the contributor windows are a **local** `contrib` dict passed to `derive_windows` (audit #9) — it is never written onto `effective`, so no scratch key can reach schema validation or serialization. (2) `check_cluster_completeness` compares the BASE slot (was it `not_observed`?) against the EFFECTIVE slot (did an overlay resolve it?); an already-observed `database_deps` (not an overlay target) never triggers OV015. (3) OV010's `captured_at`-unparseable branch is defense-in-depth (the schema's `iso_datetime` format already guards it, but per Invariant 7 do not rely on that). (4) `dataclass`/`field`/`copy` are imported at the module top (Task 1); do not re-import here.
 
 - [ ] **Step 4: Run to verify it passes**
 
@@ -1471,7 +1705,7 @@ git commit -m "feat(overlay): reframe gate receipt to evidence_ready + execution
 - Test: `tests/test_overlay_loader.py` (append e2e red→green + authorization-boundary + retain green + OV021-via-main cases); `tests/test_check_disposition.py` (migrate the `main()`-level e2e cases to the overlay model)
 
 **Interfaces:**
-- Consumes: `disposition_overlay.load_and_merge`, `disposition_overlay.build_overlay_validator`, `MergeResult`.
+- Consumes: `disposition_overlay.load_and_merge`, `disposition_overlay.load_overlay_contract`, `MergeResult`.
 - Modifies: `main()` orchestration. New argv: `--overlay PATH` (`action="append"`, default `[]`), `--max-consumer-evidence-age-hours` (`type=float`, default `None`).
 
 - [ ] **Step 1: Write the failing CLI e2e tests** — append to `tests/test_overlay_loader.py` and `_CASES`. These drive `check_disposition.main()` with real temp files:
@@ -1528,9 +1762,46 @@ Add the argparse options (near `check_disposition.py:583`):
     ap.add_argument("--max-consumer-evidence-age-hours", type=float, default=None, dest="max_consumer_evidence_age_hours", help="REQUIRED recency floor for derived consumer windows; absent/non-finite => OV016 (fail-closed).")
 ```
 
-After the SP026 signature gate succeeds and `snapshot`/`decisions`/`manifest` are parsed (after `check_disposition.py:642`), and BEFORE `run(...)`, insert the overlay loader (preapply only). Read each overlay's bytes + sidecar bytes once, call `load_and_merge`, print OV diagnostics sorted with the SP diagnostics, and pass the effective view + derived set forward:
+**First, extract the raw-validation preamble (audit F1).** Refactor `run()`'s schema-validate + kind-pin preamble (`check_disposition.py:533-540`) into a shared helper, so `main()` can run it on the RAW documents before the overlay loader:
 
 ```python
+def validate_documents(docs, validator):
+    """SP001 schema-validation + per-input kind-pin. Shared by run() (on the effective view, post-merge)
+    and main() (on the RAW documents, BEFORE the overlay loader, audit F1) so a validly-signed but
+    malformed census is a coded SP001 red rather than an uncaught raise inside load_and_merge."""
+    diags = schema_validate(docs, validator)
+    for expected, doc in docs.items():
+        if isinstance(doc, dict) and doc.get("kind") != expected:
+            diags.append(Diagnostic("SP001", f"{expected}:kind", f"expected kind={expected!r}, got {doc.get('kind')!r}"))
+    return diags
+```
+
+and make `run()` call it (behavior-preserving):
+
+```python
+def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, snapshot_path=None, expect_project_ref=None, derived_window_object_ids=None):
+    docs = {"evidence_snapshot": snapshot, "decisions_file": decisions, "entity_map": entity_map, "cluster_manifest": manifest}
+    diags = validate_documents(docs, validator)
+    if diags:
+        return sorted(diags, key=lambda x: x.key())
+    diags = semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref, derived_window_object_ids)
+    return sorted(diags, key=lambda x: x.key())
+```
+
+**Then**, after the SP026 signature gate succeeds and `snapshot`/`decisions`/`manifest` are parsed (after `check_disposition.py:642`) and BEFORE `run(...)`, insert the raw-validation stage and the overlay loader (preapply only):
+
+```python
+    # Raw-document SP001 + kind validation (audit F1): BEFORE the overlay loader, so a validly-signed
+    # but malformed census is a coded SP001 red — never an uncaught raise inside load_and_merge.
+    raw_validator = _validator()
+    raw_docs = {"evidence_snapshot": snapshot, "decisions_file": decisions, "entity_map": entity_map, "cluster_manifest": manifest}
+    raw_diags = validate_documents(raw_docs, raw_validator)
+    if raw_diags:
+        for dg in sorted(raw_diags, key=lambda x: x.key()):
+            print(dg.render())
+        print(f"=== DISPOSITION GATE ({args.mode}): {len(raw_diags)} BLOCKING ===")
+        return 1
+
     import disposition_overlay as ovl
     effective_snapshot = snapshot
     derived_ids = None
@@ -1539,19 +1810,20 @@ After the SP026 signature gate succeeds and `snapshot`/`decisions`/`manifest` ar
         try:
             overlay_inputs = []
             for op in args.overlays_in:
-                with open(op, "rb") as fh:
+                abspath = os.path.abspath(op)
+                with open(abspath, "rb") as fh:
                     ob = fh.read()
-                with open(op + ".sig", "rb") as fh:
+                with open(abspath + ".sig", "rb") as fh:
                     sb = fh.read()
-                overlay_inputs.append((os.path.abspath(op), ob, sb))
-            overlay_validator = ovl.build_overlay_validator()
+                overlay_inputs.append((abspath, abspath + ".sig", ob, sb))
+            contract = ovl.load_overlay_contract()
         except (OSError, ovl.OverlayRegistryError) as exc:
             print(f"OV008 overlay: {exc}"); print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ==="); return 1
         mres = ovl.load_and_merge(census=snapshot, census_bytes=doc_bytes["snapshot"], overlay_inputs=overlay_inputs,
                                   manifest=manifest, decisions=decisions, expect_project_ref=args.expect_project_ref,
                                   now=now, max_consumer_evidence_age_hours=args.max_consumer_evidence_age_hours,
                                   max_staleness_hours=manifest.get("max_staleness_hours"),
-                                  resolved_signer=signer, overlay_validator=overlay_validator)
+                                  resolved_signer=signer, contract=contract)
         if mres.diagnostics:
             for code, locus, msg in sorted(mres.diagnostics):
                 print(f"{code} {locus}: {msg}")
@@ -1563,7 +1835,7 @@ After the SP026 signature gate succeeds and `snapshot`/`decisions`/`manifest` ar
                 os.path.abspath(args.snapshot), args.expect_project_ref, derived_ids)
 ```
 
-> Note: `signer` here is the `ResolvedSigner` already produced by the SP026 signature gate (`check_disposition.py:635`) — the overlay loader reuses the SAME pinned key, so no second `resolve_pinned_key` call. `run(...)` now validates the **effective** view (which is a census) via its existing `schema_validate`, satisfying the §5.9 re-validation with `FormatChecker`. Guard: if `signer is None` (signature-exempt mode, empty today) the overlay path is skipped — preapply is never exempt, so this is dead-safe.
+> Note: `signer` here is the `ResolvedSigner` already produced by the SP026 signature gate (`check_disposition.py:635`) — the overlay loader reuses the SAME pinned key (no second `resolve_pinned_key`) and reads its `key_id`/`spki_sha256` into the receipt (F3). `run(...)` re-validates the **effective** view (a census) via `validate_documents` with the `FormatChecker`, satisfying §5.9. Guard: preapply is never signature-exempt, so `signer` is always set on this path.
 
 Update the receipt call (`check_disposition.py:660`) to the reframed signature:
 
@@ -1586,11 +1858,19 @@ The `run()`-level SP0xx cases are untouched. Only the cases that drive `cd.main(
 Run: `uv run --project . --locked python tests/test_overlay_loader.py` → PASS.
 Run: `uv run --project . --locked python tests/test_check_disposition.py` → PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 6: Register the loader suite in governed CI (audit F6)**
+
+In `.github/workflows/schema-placement-ci.yml`, add `test_overlay_loader` to the `suites` job's loop (it now lists both new suites):
+
+```yaml
+          for t in test_disposition_schema test_check_disposition test_collect_disposition test_verify_census test_disposition_trust test_disposition_provenance test_overlay_schema test_overlay_loader; do
+```
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add check_disposition.py tests/test_overlay_loader.py tests/test_check_disposition.py
-git commit -m "feat(overlay): wire --overlay into main() + e2e negatives + migrate main-level baselines (Task 8)"
+git add check_disposition.py tests/test_overlay_loader.py tests/test_check_disposition.py .github/workflows/schema-placement-ci.yml
+git commit -m "feat(overlay): raw-input validation + wire --overlay into main() + e2e + migrate baselines + CI (Task 8)"
 ```
 
 ---
@@ -1629,7 +1909,7 @@ Per the mandatory Independent Review Protocol, run the cross-engine Codex pass o
 
 ## Self-Review
 
-**1. Spec coverage.** Every section maps to a task: §2A control separation → Task 7 receipt + Task 8 authorization-boundary test; §3 time model + provenance-conditional SP009 → Task 4; §4 overlay contract + `overlay.schema.json` + offline registry → Task 1; §5 steps 0-10 → the SP028 gate is pre-existing (unchanged, still step 0), read-once/verify/parse → Task 2, bind → Task 2, freshness/target/conflict → Tasks 3+6, effective view + OV021 + derive + OV022 → Tasks 3/4/5/6, semantic gate on effective view → Task 8 wiring, receipt → Task 7; §6 reject matrix `OV001–OV022` → Tasks 2-6 (each code has a pinned test); §7 signature handling → Task 2 (`verify_overlay` reuses the pinned anchor); §8 definer-view reconciliation/cluster admissibility (`OV015`) → Appendix-A views are data; `OV015` cluster-completeness is advisory and exercised through the gate-required-dimension coverage in the Task 8 green/retain fixtures (note: `OV015`'s own dedicated advisory test is folded into Task 8's cluster fixtures; if a standalone unit is wanted, add `check_cluster_completeness` in Task 6 — flagged as the one place the plan leaves `OV015` gate-driven rather than unit-tested); §9 testing strategy → the whole negative-first suite; §10 out-of-scope holds → Global Constraints; §11 ratified decisions → folded (T1/T2/T3 in Global Constraints).
+**1. Spec coverage.** Every section maps to a task: §2A control separation → Task 7 receipt + Task 8 authorization-boundary test; §3 time model + provenance-conditional SP009 → Task 4; §4 overlay contract + `overlay.schema.json` + read-once `OverlayContract` offline registry → Task 1; §5 steps 0-10 → SP028 gate pre-existing (unchanged, still step 0), raw-input SP001/kind validation before the loader → Task 8 (audit F1), read-once/verify/parse → Task 2, bind → Task 2, per-overlay window OV009 → Task 3 (audit F2), freshness/target/conflict → Tasks 3+6, effective view + OV021 + derive + OV022 + OV015 → Tasks 3/4/5/6, semantic gate on effective view → Task 8 wiring, receipt → Task 7; §6 reject matrix `OV001–OV022` → **every code has a pinned failing test** (OV001/002/003/020 T2; OV004/005/006/007/009/012/013/014/019/021 T3; OV011/016/017/018 T4; OV022 T5; OV008 T1; OV010/OV015 T6); §7 signature handling → Task 2 (`verify_overlay` reuses the pinned anchor); §8 definer-view reconciliation/cluster admissibility → Appendix-A views are data; `OV015` cluster-completeness is implemented as `check_cluster_completeness` in Task 6 with a dedicated negative test `ov015_missing_gate_required_dimension` (audit F7); §9 testing strategy → the whole negative-first suite (registered in CI, audit F6); §10 out-of-scope holds → Global Constraints; §11 ratified decisions → folded (T1/T2/T3 in Global Constraints). Cross-engine plan-audit findings F1–F9 + contributor-map instruction are all folded (see the fold table below).
 
 **2. Placeholder scan.** The e2e cases in Task 8 Step 1 are intentionally specified as implementer-guidance-with-assertions (the harness is mechanical temp-file plumbing); every other step carries complete, runnable code. The one `...` (Task 8 `_e2e_red_then_green`) is explicitly flagged as "replace with the real assertion," with the exact assertions enumerated in the guidance block — acceptable because the body is deterministic file-writing, not novel logic. No `TBD`/`handle edge cases`/`similar to Task N` elsewhere.
 
@@ -1637,6 +1917,23 @@ Per the mandatory Independent Review Protocol, run the cross-engine Codex pass o
 
 ---
 
-## Known integration decision (surface to operator at execution handoff)
+## Ratified layering + cross-engine plan-audit fold (rev 2, 2026-07-12)
 
-**Layering (blast-radius):** `OV021` + the overlay loader run in `main()`/`disposition_overlay` (unconditional in preapply); `semantic_check`/`run` gain only the `derived_window_object_ids`-conditional SP009 branch (default `None` = original behavior). Consequence: a **bare** `check_disposition --mode preapply` (no `--overlay`) now requires a **zero-width base census** (OV021) and yields no evidence readiness without overlays — the intended production model (the real signed census IS zero-width). This migrates the four `main()`-level e2e baselines in `tests/test_check_disposition.py` to the overlay model (Task 8 Step 4); the `run()`-level SP0xx baselines are untouched. If the operator prefers gating the overlay path on `--overlay` presence instead (leaving bare-preapply behavior unchanged), that is a spec deviation from the ratified "OV021 fires with zero `--overlay` inputs" acceptance test and would need re-ratification — my lean is the faithful unconditional model as planned.
+**Layering — RATIFIED by the operator's cross-engine plan audit.** The unconditional loader model stands: `OV021` + the overlay loader run in `main()`/`disposition_overlay` (unconditional in preapply); `semantic_check`/`run` gain only the `derived_window_object_ids`-conditional SP009 branch (default `None` = original behavior). A bare `check_disposition --mode preapply` (no `--overlay`) requires a zero-width base census (OV021) and yields no evidence readiness without overlays — the production model. The four `main()`-level e2e baselines migrate to the overlay model (Task 8 Step 4); the `run()`-level SP0xx baselines are untouched.
+
+**Audit findings folded (all nine + the contributor-map instruction):**
+
+| Finding | Fold |
+|---|---|
+| F1 (High) raw docs consumed before SP001 | `validate_documents` extracted; `main()` runs SP001+kind on the raw docs **before** the loader; effective view re-validated by `run()` (Task 8). |
+| F2 (High) OV009 not per-overlay | `check_observation_window()` (started<ended, ended≤captured, ended≤now) applied to ALL six dimensions before assignments (Tasks 3, 6). |
+| F3 (High) receipt binding incomplete | `receipt_overlays` binds path, raw+sidecar SHA-256, sidecar path, signer key_id+SPKI, dimension+object_ids+count, source_hash, schema hashes (Tasks 6, 7). |
+| F4 (Med) schema validate vs hash read different bytes | read-once `OverlayContract` (bytes+hashes+registry+validator); schemas never reopened during a run (Tasks 1, 6). |
+| F5 (Med) fixtures not schema-valid / incoherent times | `_zero_census` reuses `tcd._snapshot`/`_rel` (all required fields); one canonical, coherent fixture clock (Task 2). |
+| F6 (Med) new suites absent from CI | `test_overlay_schema` + `test_overlay_loader` added to the governed `suites` job (Tasks 1, 8). |
+| F7 (Med) OV015 unimplemented/untested | `check_cluster_completeness()` + dedicated `ov015_missing_gate_required_dimension` test (Task 6). |
+| F8 (Med) offline-registry test false proof | replaced with a real unseeded-`$ref` → `Unresolvable`/coded-OV008 test (Tasks 1, 3); no network. |
+| F9 (Low) null-reason not IFF | OV019/OV012 reject reason-with-non-null-hash too (Task 3). |
+| #9 contributor map on effective | contributor windows passed as a separate local `contrib_by_oid` dict; never stashed on `effective` (Tasks 4, 6). |
+
+Per audit instruction #10, a **focused plan re-audit** runs after this revision before the implementation GO. Implementation, evidence collection, DB access, production, A1–A3, and the apply runner remain HELD.
