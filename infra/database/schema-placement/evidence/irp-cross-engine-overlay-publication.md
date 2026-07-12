@@ -156,4 +156,45 @@ All round-1 findings CLOSED (grounded) after the tightening; all round-2 finding
 coverage caveat recorded honestly: the ci-set-semantics lens is re-executed against the tightened text as
 round-2b, appended below. → Operator approval gate.
 
-## ROUND 2b — ci-set-semantics genuine re-run + Codex pass on the tightened rev2 — *appended on completion.*
+## ROUND 2b — ci-set-semantics genuine re-run + Codex pass on the tightened rev2 (`c656e435`) — 2026-07-12
+
+**Codex (`--base main` @ `c656e435`, exit 0): two P2 consistency residuals from the tightening itself —
+both FOLDED.** (1) The NA-case `source_locator` had no input (CLI was `--source-file` xor NA-reason while
+"COMPUTED never typed" left the custody locator sourceless) → added `--source-custody-locator`, required
+iff NA-reason, classed as operator *semantics* (AO004 covers the three-way exclusivity). (2) §10 still said
+"repo-relative", reintroducing the SB1 path-base contradiction in the rationale section → corrected; the
+schema-placement-relative base is now stated consistently in Global Constraints, §3.3, §5, and §10.
+
+**Claude ci-set-semantics genuine re-run (replacing the round-2 degenerate lens agent): grounded across
+all six probes, with EMPIRICAL reproduction — six findings, ALL FOLDED:**
+
+- **CI2b-1 (Important, reproduced on git 2.43):** git's default rename detection reports rename+modify as
+  status `R`, which `--diff-filter=MD` (step 1) AND `--diff-filter=A` (step 3) both silently ignore — a
+  git-native bypass of the immutability fold (reproduced: R097/R100/R099 for overlay/sig/source-record;
+  the specced MD and A commands returned EMPTY). A file→symlink typechange (`T`) likewise evaded MD.
+  FOLDED: step 1 is now `git diff --no-renames --name-status`, **FAIL unless every entry is status `A`**
+  (rejects M/D/T/R/C/U/B); renames decompose to `A`+`D` (D fails, A re-enters the added set); non-regular
+  modes (`120000`/`160000`) under `evidence/` FAIL via `git ls-files -s`.
+- **CI2b-2 (Important):** `source_locator` (a schema-level free string) was rehashed with no path
+  constraint — a validly-signed overlay could point it at a mutable non-glob file (e.g. `evidence/*.md`)
+  or a symlink, divorcing `source_hash` from committed content after the adding PR. FOLDED: step 4 now
+  normalizes the locator (reject absolute/`..`), requires it under `evidence/source/` as a committed
+  regular blob inside the step-1-protected set, before hashing.
+- **CI2b-3 (Minor):** the `.json`-extension kind-scan admitted `.JSON`/extension-less/"opaque" hidden
+  overlays. FOLDED: content-sniff every added file under `evidence/` (strict parse regardless of
+  extension/case); parsed `kind=evidence_overlay` off-path FAILs; sig-pairing scope pinned to
+  `evidence/overlay-*.json.sig`.
+- **CI2b-4 (Minor):** a byte-identical duplicate census would pass the census gate yet make every bound
+  overlay permanently ambiguous (>1 match) while immutability forbids deleting either copy. FOLDED:
+  step 2 FAILs any ADDED census whose `sha256(bytes)` equals an already-committed census.
+- **CI2b-5 (Nit):** stale "step 5 re-verifies at HEAD" cross-reference → corrected to "the
+  `verify_overlay_artifact.py` run later in this step enforces OV012 at HEAD".
+- **CI2b-6 (Nit):** "abort on ambiguous merge-base" was unimplementable with plain `git merge-base`
+  (prints one best candidate) → specified `git merge-base --all`, FAIL unless exactly one line. (The
+  agent also verified fail-closed fetch is viable under `persist-credentials:false` — the repo is public.)
+
+**Verdict (cross-engine, round 2b):** the rename/typechange bypass (CI2b-1) and the unconstrained-locator
+divorce (CI2b-2) were the last Important-class gaps; both are folded with empirically-pinned mechanisms
+and matrix rows. Codex and Claude findings were disjoint and non-contradictory; every round-1, round-2,
+and round-2b finding is now folded into the spec. **Design ready for operator approval** (Phase 2 stop —
+no plan, no implementation, nothing pushed).
