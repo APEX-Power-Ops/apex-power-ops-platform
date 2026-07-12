@@ -1,5 +1,6 @@
 # Signed Evidence Overlay Tooling Implementation Plan
 
+> **rev 5 (2026-07-12)** folds the third plan re-audit (1 High + 1 Med + 1 Low): **F1** `OverlayContract` now holds **both** validators (`disposition_validator` for raw + effective, `overlay_validator` for overlays) built from the same in-hand bytes and loaded **once** — the overlay-enabled CLI path never calls `_validator()`, so no schema stage re-reads `disposition.schema.json`; **F2** the six delete/retain/SP018 e2e cases are now **named, registered, real `cd.main` tests** (`_e2e_delete_missing_in_data_api_OV015` / `_delete_true_in_data_api_SP027` / `_delete_false_noncovering_OV022` / `_retain_no_overlay_OV018` / `_retain_green` / `_unaccepted_manifest_SP018_no_receipt`); **F3** the self-review placeholder scan corrected (no placeholders remain).
 > **rev 4 (2026-07-12)** folds the second plan re-audit (1 High + 4 Med): **F1** the loader **short-circuits on any schema failure** (non-object payload + malformed `assignments` → coded OV008, no `AttributeError`); **F2** the `in_data_api` delete diagnostic is a coherent split — **OV015** (missing) / **SP027** (observed-true) / **OV022** (observed-false, inadequate window); **F3** the principal `_e2e_red_then_green` + `_e2e_ov021_via_main` are now **real `cd.main` tests** (no passing placeholder); **F4** a real `validate_overlay`-maps-unseeded-`$ref`→coded-OV008 test; **F5** `producing_repo_sha` applicability is **three categories** (required / forbidden+reason / conditional) with positive+negative tests.
 > **rev 3 (2026-07-12)** folds the focused-re-audit cross-engine pass (Codex, 2 P2s): OV022 **defers** for a missing/observed-true `in_data_api` overlay (fires only when an observed-false overlay's window fails to cover [S,E]); the recency-policy `OV016` (absent/non-finite `max_consumer_evidence_age_hours`) is a **deterministic precheck at the top of `derive_windows`**, never masked by a zero-contributor `OV018`.
 > **rev 2 (2026-07-12)** folds the operator's cross-engine plan audit: layering RATIFIED (unconditional loader) + all nine findings (F1 raw-input validation, F2 per-overlay OV009, F3 receipt binding, F4 read-once `OverlayContract`, F5 schema-valid fixtures, F6 governed CI, F7 OV015, F8 real unresolved-`$ref` test, F9 IFF null-reason) + contributor-map-local. See the fold table at the end.
@@ -27,7 +28,7 @@
 - **Layering — RATIFIED (operator cross-engine plan audit, 2026-07-12):** the **unconditional loader model** stands — `OV021` runs even with zero overlays; a bare preapply against the canonical raw census is **RED**; overlay presence is required for evidence readiness; direct `run()` tests retain their authoring semantics. The unconditional `OV021` precheck + effective-view build live in `main()`/`disposition_overlay`; `semantic_check`/`run()` gain only the `derived_window_object_ids`-conditional SP009 branch. Existing `run()`-level SP0xx baselines in `tests/test_check_disposition.py` stay green untouched; only the `main()`-level e2e/receipt tests migrate to the overlay model (Task 7 & 8).
 - **Raw-input validation before overlay processing (audit F1):** immediately after the SP026 signature gate and **before** the overlay loader, `main()` schema-validates + kind-pins the four raw documents (via the extracted `validate_documents` helper). A validly-signed-but-malformed census yields a coded `SP001` red **before** any overlay parse — no uncaught exception. The effective view is re-validated after merge by `run()` (already planned). The loader is additionally defensive: every datetime parse is wrapped and mapped to a coded reject (Invariant 7).
 - **Per-overlay window validation (audit F2):** every overlay (all six dimensions, incl. the Data-API-exposure overlay used by `OV022`) passes `check_observation_window()` — `started_at < ended_at`, `ended_at <= captured_at`, `ended_at <= now` — as a coded `OV009` **before** its assignments are staged. This is independent of the derived-window predicate.
-- **Read-once schema contract (audit F4):** an `OverlayContract` object (schema bytes, their SHA-256, the seeded offline registry, and the validator) is built **once** and threaded through the gate. The schema files are never reopened during a run, so the bytes validated and the bytes hashed (`OV020`) are identical.
+- **Read-once schema contract (audit F4 + round-4 F1):** one `OverlayContract` (schema bytes, their SHA-256, **and both validators** — `disposition_validator` for raw + effective-view SP001, `overlay_validator` for overlays) is built **once** immediately after SP026 and threaded through every validation stage. `disposition.schema.json` is read exactly once per run; the overlay-enabled CLI path (`main()`) never calls `_validator()`, so raw validation, OV020 drift-binding, and effective-view validation cannot see different bytes under a concurrent schema edit.
 - **Receipt per-overlay binding (audit F3):** each `receipt_overlays` entry binds — absolute overlay path, raw-byte SHA-256, sidecar path + SHA-256, signer `key_id` + SPKI fingerprint, dimension + assignment `object_id`s + count, `source_hash`, and the `disposition_schema_sha256`/`overlay_schema_sha256`.
 - **Contributor map is local (audit instruction #9):** the per-relation consumer-contributor windows are passed to `derive_windows` as a **separate local dict** — never stashed on the effective snapshot — so no scratch key can ever reach schema validation or serialization.
 - **`OV015` implemented + tested (audit F7):** `check_cluster_completeness()` produces a coded `OV015` for a cluster relation lacking a permitted-overlay-target, base-`not_observed` gate-required dimension (already-observed `database_deps` satisfies), with a dedicated negative test. `OV015` is advisory-completeness; `SP009`/`SP022`/`SP027` on the effective view remain authoritative.
@@ -67,7 +68,7 @@
 - Test: `tests/test_overlay_schema.py`
 
 **Interfaces:**
-- Produces: `disposition_overlay.OverlayContract` (a `dataclass` holding `disp_bytes`, `disp_sha256`, `overlay_bytes`, `overlay_sha256`, `validator`, all from a **single** read of the two schema files); `disposition_overlay.load_overlay_contract() -> OverlayContract` (builds the seeded offline registry + `FormatChecker` validator from the exact bytes it hashed); `disposition_overlay.OverlayRegistryError` (raised on registry/schema failure, mapped to `OV008` by callers); `disposition_overlay.DIMENSIONS: dict[str, tuple[str, str]]` mapping each of the six dimension paths to `(value_def_name, fixed_source_type)`; `disposition_overlay.OV_CODES: dict[str, str]`.
+- Produces: `disposition_overlay.OverlayContract` (a `dataclass` holding `disp_bytes`, `disp_sha256`, `overlay_bytes`, `overlay_sha256`, and **both** `disposition_validator` + `overlay_validator`, all from a **single** read of the two schema files); `disposition_overlay.load_overlay_contract() -> OverlayContract` (builds both `FormatChecker` validators from the exact bytes it hashed — the census `disposition_validator` and the seeded-offline-registry `overlay_validator`); `disposition_overlay.OverlayRegistryError` (raised on registry/schema failure, mapped to `OV008` by callers); `disposition_overlay.DIMENSIONS: dict[str, tuple[str, str]]` mapping each of the six dimension paths to `(value_def_name, fixed_source_type)`; `disposition_overlay.OV_CODES: dict[str, str]`.
 
 - [ ] **Step 1: Write the failing schema tests**
 
@@ -86,7 +87,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import disposition_overlay as ov  # noqa: E402
 
-VALIDATOR = ov.load_overlay_contract().validator
+VALIDATOR = ov.load_overlay_contract().overlay_validator
 
 
 def _base_overlay(dimension, source_type, value):
@@ -365,22 +366,27 @@ def _finite(x):
 
 @dataclass(frozen=True)
 class OverlayContract:
-    """Read-once schema contract (audit F4): the exact schema bytes, their SHA-256, the seeded offline
-    registry, and the validator — all from a SINGLE read of the two schema files. The files are never
-    reopened during a gate run, so the bytes validated and the bytes hashed (OV020) are identical."""
+    """Read-once schema contract (audit F4 + round-4 F1): the exact schema bytes, their SHA-256, and
+    BOTH validators — the census `disposition_validator` (raw + effective snapshot) and the
+    `overlay_validator` — all from a SINGLE read of the two schema files. The gate loads this once and
+    uses it for every validation stage, so a concurrent schema edit cannot make raw validation, OV020
+    binding, and effective-view validation see different bytes."""
     disp_bytes: bytes
     disp_sha256: str
     overlay_bytes: bytes
     overlay_sha256: str
-    validator: object
+    disposition_validator: object
+    overlay_validator: object
 
 
 def load_overlay_contract():
     """Build the OverlayContract: read both schema files ONCE (bytes), hash those exact bytes, parse
-    them, seed a local referencing.Registry by $id built WITHOUT a retrieve callback (remote/unseeded
-    resolution is impossible), and construct the FormatChecker validator. Raises OverlayRegistryError
-    on any load/build failure (callers map to a coded OV008). The gate calls this ONCE and threads the
-    returned contract everywhere; the schema files are never reopened during a run."""
+    them, and construct BOTH validators from the in-hand parsed content — the census
+    `disposition_validator` (self-contained `#/$defs` refs; used for raw + effective-view SP001) and the
+    `overlay_validator` (seeded offline `referencing.Registry`, no retrieve callback → remote/unseeded
+    resolution is impossible). Raises OverlayRegistryError on any load/build failure (callers map to a
+    coded OV008). The gate calls this ONCE and threads the contract to every validation stage; the
+    schema files are never reopened during a run (audit round-4 F1)."""
     try:
         with open(DISPOSITION_SCHEMA_PATH, "rb") as fh:
             disp_bytes = fh.read()
@@ -388,20 +394,22 @@ def load_overlay_contract():
             overlay_bytes = fh.read()
         disp = json.loads(disp_bytes)
         overlay = json.loads(overlay_bytes)
+        Draft202012Validator.check_schema(disp)
+        Draft202012Validator.check_schema(overlay)
         registry = Registry().with_resources([
             (disp["$id"], Resource.from_contents(disp)),
             (overlay["$id"], Resource.from_contents(overlay)),
         ])  # no retrieve= => network/unseeded resolution raises Unresolvable, never fetches
-        Draft202012Validator.check_schema(overlay)
-        validator = Draft202012Validator(overlay, registry=registry, format_checker=FormatChecker())
+        disposition_validator = Draft202012Validator(disp, format_checker=FormatChecker())  # census, self-contained #/$defs
+        overlay_validator = Draft202012Validator(overlay, registry=registry, format_checker=FormatChecker())
         return OverlayContract(disp_bytes=disp_bytes, disp_sha256=_sha256_hex(disp_bytes),
                                overlay_bytes=overlay_bytes, overlay_sha256=_sha256_hex(overlay_bytes),
-                               validator=validator)
+                               disposition_validator=disposition_validator, overlay_validator=overlay_validator)
     except (OSError, ValueError, KeyError, Unresolvable) as exc:
         raise OverlayRegistryError(f"cannot build offline overlay contract ({type(exc).__name__}: {exc})") from exc
 ```
 
-> Implementer note: `load_overlay_contract` is the ONLY reader of the two schema files during a gate run. `OV020` compares each overlay's declared `disposition_schema_sha256`/`overlay_schema_sha256` against `contract.disp_sha256`/`contract.overlay_sha256` — the same bytes the validator was built from — so validation and drift-binding can never diverge (audit F4).
+> Implementer note: `load_overlay_contract` is the ONLY reader of the two schema files during a gate run (audit round-4 F1). `OV020` compares each overlay's declared `disposition_schema_sha256`/`overlay_schema_sha256` against `contract.disp_sha256`/`contract.overlay_sha256` — the same bytes both validators were built from — so raw validation, overlay validation, drift-binding, and effective-view validation can never diverge. `check_disposition._validator()` is retained only for the standalone `run()`-level tests; the overlay-enabled CLI path (`main()`) NEVER calls it.
 
 - [ ] **Step 5: Run to verify it passes**
 
@@ -1620,7 +1628,7 @@ def load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions,
             continue
         # SHORT-CIRCUIT on any schema/format/registry failure: a schema-invalid overlay is not safe to
         # bind / window-check / target / iterate (its assignments may be malformed). OV008 then continue.
-        schema_diags = validate_overlay(doc, contract.validator)
+        schema_diags = validate_overlay(doc, contract.overlay_validator)
         if schema_diags:
             diags.extend(schema_diags)
             continue
@@ -1851,9 +1859,16 @@ def _keys_dir(tmp, pub):
 
 
 def _capture_main(argv):
+    # Catch SystemExit so these tests start RED cleanly BEFORE implementation: an unknown --overlay /
+    # --max-consumer-evidence-age-hours makes argparse call sys.exit(2) (a BaseException the runner's
+    # `except Exception` would NOT catch), which would otherwise crash the whole suite instead of
+    # reporting a per-test FAIL. After the CLI flags exist, cd.main returns an int normally.
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
-        rc = cd.main(argv)
+        try:
+            rc = cd.main(argv)
+        except SystemExit as exc:
+            rc = exc.code if isinstance(exc.code, int) else 2
     return rc, buf.getvalue()
 
 
@@ -1924,18 +1939,146 @@ def _e2e_ov021_via_main():
         dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS.update(saved)
 
 
+# ---- delete/retain/SP018 e2e helpers + the six named tests (audit round-4 F2) ----
+def _write_case(priv, pub, census, docs, extra_roots=()):
+    """Generalizes _write_harden_case to any (decisions, manifest, entity_map) + extra --root dirs."""
+    tmp = tempfile.mkdtemp(prefix="ov_e2e_")
+    cb = _canon(census)
+    cpath = _wb(os.path.join(tmp, "census.json"), cb); _wb(cpath + ".sig", _sign(census, priv)[1])
+    decisions, manifest, em = docs
+    dpath = _wb(os.path.join(tmp, "dec.json"), _canon(decisions))
+    epath = _wb(os.path.join(tmp, "ent.json"), _canon(em))
+    mpath = _wb(os.path.join(tmp, "man.json"), _canon(manifest))
+    argv = _base_argv(tmp, cpath, dpath, epath, mpath, pub)
+    for r in extra_roots:
+        argv += ["--root", r]
+    return tmp, cb, argv
+
+
+def _add_overlays(tmp, priv, overlays):
+    opts = []
+    for i, o in enumerate(overlays):
+        p = os.path.join(tmp, f"ov{i}.json"); ob, sig = _sign(o, priv); _wb(p, ob); _wb(p + ".sig", sig)
+        opts += ["--overlay", p]
+    return opts
+
+
+def _consumer_overlay(dim, cb, ref, state="observed", **overrides):
+    src = {"static_repo": "repository_scan", "runtime_logs": "runtime_logs",
+           "external_clients": "external_client_inventory", "operator_declaration": "operator_declaration"}[dim]
+    value = ({"state": "observed", "found_consumers": 0, "ref": ref} if state == "observed"
+             else {"state": state, "found_consumers": None, "ref": None, "detail": "n/a"})
+    return _overlay(f"consumer_evidence.{dim}", src, [{"object_id": "public.v", "value": value}], census_bytes=cb, **overrides)
+
+
+def _in_data_api_overlay(cb, value, window=None):
+    extra = {"observation_window": window} if window else {}
+    return _overlay("in_data_api_exposed_schema", "platform_config",
+                    [{"object_id": "public.v", "value": {"state": "observed", "value": value}}], census_bytes=cb, **extra)
+
+
+def _delete_consumer_overlays(cb):
+    """The SP027/SP022 consumer set for a no_consumer delete: static_repo/runtime_logs/operator_declaration
+    observed (windowed contributors) + external_clients not_applicable (invokes the SP027 waiver)."""
+    return [
+        _consumer_overlay("static_repo", cb, "sha:s1"),  # producing_repo_sha default "d"*40 (required category)
+        _consumer_overlay("runtime_logs", cb, "sha:r1", producing_repo_sha=None, producing_repo_sha_not_applicable_reason="runtime query"),
+        _consumer_overlay("operator_declaration", cb, "sha:o1", producing_repo_sha=None,
+                          producing_repo_sha_not_applicable_reason="operator", operator_identity="op-1", attestation_ref="att-1"),
+        _consumer_overlay("external_clients", cb, None, state="not_applicable",
+                          producing_repo_sha=None, producing_repo_sha_not_applicable_reason="no external clients"),
+    ]
+
+
+def _delete_docs(oid):
+    d = {"decision_id": "D-d1", "source_objects": [oid], "meaning_disposition": "retire",
+         "action_class": "delete", "decision_status": "accepted", "consumer_disposition": "no_consumer",
+         "retention_disposition": {"policy": "delete_after", "recovery_proof": tcd._recovery_artifact()},
+         "evidence_refs": ["query:x"], "technical_authority_approval": "TA-5"}
+    manifest = {"kind": "cluster_manifest", "cluster_id": "c-001", "status": "accepted", "action_class": "delete",
+                "decision_ids": ["D-d1"], "evidence_snapshot": "census.json", "max_staleness_hours": 8760,
+                "minimum_consumer_window_hours": 24, "required_observations": ["in_data_api_exposed_schema"],
+                "technical_authority_approval": "TA-5"}
+    return tcd._decs([d]), manifest, tcd._entity_map()
+
+
+def _retain_docs(oid):
+    d = {"decision_id": "D-r1", "source_objects": [oid], "meaning_disposition": "preserve",
+         "action_class": "retain", "decision_status": "accepted", "consumer_disposition": "unresolved",
+         "retention_disposition": {"policy": "retain", "recovery_proof": None},
+         "evidence_refs": ["query:x"], "technical_authority_approval": "TA-r"}
+    manifest = {"kind": "cluster_manifest", "cluster_id": "c-001", "status": "accepted", "action_class": "retain",
+                "decision_ids": ["D-r1"], "evidence_snapshot": "census.json", "max_staleness_hours": 8760,
+                "minimum_consumer_window_hours": 24, "required_observations": ["in_data_api_exposed_schema"],
+                "technical_authority_approval": "TA-r"}
+    return tcd._decs([d]), manifest, tcd._entity_map()
+
+
+def _run_case(docs, build_overlays, receipt=False, extra_roots=()):
+    """Write a case, sign the overlays build_overlays(cb) produces, run cd.main, return (rc, out, receipt_path_or_None)."""
+    priv, pub = _ephemeral_keypair(); saved = _pin_signer(pub)
+    try:
+        tmp, cb, base = _write_case(priv, pub, _zero_census(["public.v"]), docs, extra_roots=extra_roots)
+        argv = base + _add_overlays(tmp, priv, build_overlays(cb))
+        rpath = None
+        if receipt:
+            rpath = os.path.join(tmp, "receipt.json"); argv += ["--receipt-out", rpath]
+        rc, out = _capture_main(argv)
+        return rc, out, (rpath if rpath and os.path.exists(rpath) else None)
+    finally:
+        dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS.update(saved)
+
+
+def _e2e_delete_missing_in_data_api_OV015():
+    rc, out, _r = _run_case(_delete_docs("public.v"), _delete_consumer_overlays, extra_roots=[tcd._ROOT])
+    return rc == 1 and "OV015" in out
+
+
+def _e2e_delete_true_in_data_api_SP027():
+    rc, out, _r = _run_case(_delete_docs("public.v"),
+                            lambda cb: _delete_consumer_overlays(cb) + [_in_data_api_overlay(cb, True)], extra_roots=[tcd._ROOT])
+    return rc == 1 and "SP027" in out
+
+
+def _e2e_delete_false_noncovering_OV022():
+    narrow = {"started_at": "2026-06-20T00:00:00Z", "ended_at": CENSUS_OBSERVED_AT}  # starts after S=06-05 -> not covering
+    rc, out, _r = _run_case(_delete_docs("public.v"),
+                            lambda cb: _delete_consumer_overlays(cb) + [_in_data_api_overlay(cb, False, window=narrow)], extra_roots=[tcd._ROOT])
+    return rc == 1 and "OV022" in out
+
+
+def _e2e_retain_no_overlay_OV018():
+    rc, out, _r = _run_case(_retain_docs("public.v"), lambda cb: [])   # retain source relation has no contributor
+    return rc == 1 and "OV018" in out
+
+
+def _e2e_retain_green():
+    rc, out, _r = _run_case(_retain_docs("public.v"),
+                            lambda cb: [_in_data_api_overlay(cb, False), _consumer_overlay("static_repo", cb, "sha:s1")])
+    return rc == 0
+
+
+def _e2e_unaccepted_manifest_SP018_no_receipt():
+    decisions, manifest, em = _harden_docs("public.v")
+    manifest["status"] = "proposed"; manifest["technical_authority_approval"] = None   # not accepted -> SP018
+    rc, out, receipt = _run_case((decisions, manifest, em),
+                                 lambda cb: [_in_data_api_overlay(cb, False), _consumer_overlay("static_repo", cb, "sha:s1")], receipt=True)
+    return rc == 1 and "SP018" in out and receipt is None   # no receipt is written on a RED gate
+
+
 _CASES += [
     ("e2e_red_then_green", _e2e_red_then_green),
     ("e2e_ov021_via_main", _e2e_ov021_via_main),
+    ("e2e_delete_missing_in_data_api_OV015", _e2e_delete_missing_in_data_api_OV015),
+    ("e2e_delete_true_in_data_api_SP027", _e2e_delete_true_in_data_api_SP027),
+    ("e2e_delete_false_noncovering_OV022", _e2e_delete_false_noncovering_OV022),
+    ("e2e_retain_no_overlay_OV018", _e2e_retain_no_overlay_OV018),
+    ("e2e_retain_green", _e2e_retain_green),
+    ("e2e_unaccepted_manifest_SP018_no_receipt", _e2e_unaccepted_manifest_SP018_no_receipt),
 ]
 ```
 
-> **Additional e2e cases the implementer writes as real `cd.main` tests** (same `_pin_signer`/`_capture_main`/`_wb` harness; restore `dt.TRUSTED_SIGNERS` in a `finally`). Delete cases reuse `tcd._recovery_artifact()` + `tcd.ROOTS` for the SP014 recovery proof (pass both `--root tmp` and `--root <tcd._ROOT>`) and supply the full SP027/SP022 consumer set (static_repo/runtime_logs/operator_declaration observed + external_clients `not_applicable`). The ratified **OV015 / SP027 / OV022 diagnostic split (audit round-3 F2):**
-> - **SP018:** `status` not `accepted` (schema-valid, e.g. `proposed`) with otherwise-green overlays → exit `1`, `SP018`; assert the receipt has no `production_eligible`/write-GO.
-> - **delete missing in_data_api → OV015:** a delete whose `external_clients` overlay is `not_applicable` but with **no** `in_data_api_exposed_schema` overlay → exit `1`, **`OV015`** (the gate-required dimension is unresolved at cluster-completeness, which short-circuits before the semantic gate).
-> - **delete observed-true in_data_api → SP027:** the `in_data_api` overlay resolves to observed **true** → OV015 clears (resolved), OV022 defers (no observed-false window), and `run()` fires **`SP027`** (the waiver requires observed-false).
-> - **delete observed-false, non-covering window → OV022:** an observed-false `in_data_api` overlay whose window does **not** cover the derived consumer window → exit `1`, **`OV022`**.
-> - **retain green / retain no-overlay → OV018:** a `retain` cluster with covering consumer overlays → exit `0`; drop them → exit `1`, `OV018`.
+> All e2e matrix items are now **pinned tests above** (audit round-4 F2): the OV015/SP027/OV022 delete split, retain green + OV018, and SP018-with-no-receipt. The delete cases reuse `tcd._recovery_artifact()` + `tcd._ROOT` for the SP014 recovery proof (`extra_roots=[tcd._ROOT]`) and the full SP027/SP022 consumer set; they vary only the `in_data_api` overlay (absent / observed-true / observed-false-non-covering) to exercise each of the three coherent diagnostics.
 
 - [ ] **Step 2: Run to verify it fails**
 
@@ -1980,18 +2123,26 @@ def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, 
 **Then**, after the SP026 signature gate succeeds and `snapshot`/`decisions`/`manifest` are parsed (after `check_disposition.py:642`) and BEFORE `run(...)`, insert the raw-validation stage and the overlay loader (preapply only):
 
 ```python
-    # Raw-document SP001 + kind validation (audit F1): BEFORE the overlay loader, so a validly-signed
-    # but malformed census is a coded SP001 red — never an uncaught raise inside load_and_merge.
-    raw_validator = _validator()
+    # Load the read-once schema contract ONCE (both validators + schema hashes) — used for raw
+    # validation, overlay validation/OV020, and effective-view validation (audit round-4 F1). No stage
+    # reopens the schemas; the overlay-enabled CLI path NEVER calls _validator().
+    import disposition_overlay as ovl
+    try:
+        contract = ovl.load_overlay_contract()
+    except ovl.OverlayRegistryError as exc:
+        print(f"OV008 overlay: {exc}"); print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ==="); return 1
+
+    # Raw-document SP001 + kind validation (audit F1): BEFORE the overlay loader, using the contract's
+    # census validator, so a validly-signed but malformed census is a coded SP001 red — never an
+    # uncaught raise inside load_and_merge.
     raw_docs = {"evidence_snapshot": snapshot, "decisions_file": decisions, "entity_map": entity_map, "cluster_manifest": manifest}
-    raw_diags = validate_documents(raw_docs, raw_validator)
+    raw_diags = validate_documents(raw_docs, contract.disposition_validator)
     if raw_diags:
         for dg in sorted(raw_diags, key=lambda x: x.key()):
             print(dg.render())
         print(f"=== DISPOSITION GATE ({args.mode}): {len(raw_diags)} BLOCKING ===")
         return 1
 
-    import disposition_overlay as ovl
     effective_snapshot = snapshot
     derived_ids = None
     overlay_receipt = []
@@ -2005,8 +2156,7 @@ def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, 
                 with open(abspath + ".sig", "rb") as fh:
                     sb = fh.read()
                 overlay_inputs.append((abspath, abspath + ".sig", ob, sb))
-            contract = ovl.load_overlay_contract()
-        except (OSError, ovl.OverlayRegistryError) as exc:
+        except OSError as exc:
             print(f"OV008 overlay: {exc}"); print(f"=== DISPOSITION GATE ({args.mode}): 1 BLOCKING ==="); return 1
         mres = ovl.load_and_merge(census=snapshot, census_bytes=doc_bytes["snapshot"], overlay_inputs=overlay_inputs,
                                   manifest=manifest, decisions=decisions, expect_project_ref=args.expect_project_ref,
@@ -2020,11 +2170,12 @@ def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, 
             return 1
         effective_snapshot, derived_ids, overlay_receipt = mres.effective_snapshot, mres.derived_window_object_ids, mres.receipt_overlays
 
-    diags = run(effective_snapshot, decisions, entity_map, manifest, now, args.mode, roots, _validator(),
+    # Effective-view SP001 + semantic gate, using the SAME contract census validator (not _validator()).
+    diags = run(effective_snapshot, decisions, entity_map, manifest, now, args.mode, roots, contract.disposition_validator,
                 os.path.abspath(args.snapshot), args.expect_project_ref, derived_ids)
 ```
 
-> Note: `signer` here is the `ResolvedSigner` already produced by the SP026 signature gate (`check_disposition.py:635`) — the overlay loader reuses the SAME pinned key (no second `resolve_pinned_key`) and reads its `key_id`/`spki_sha256` into the receipt (F3). `run(...)` re-validates the **effective** view (a census) via `validate_documents` with the `FormatChecker`, satisfying §5.9. Guard: preapply is never signature-exempt, so `signer` is always set on this path.
+> Note: `signer` here is the `ResolvedSigner` already produced by the SP026 signature gate (`check_disposition.py:635`) — the overlay loader reuses the SAME pinned key (no second `resolve_pinned_key`) and reads its `key_id`/`spki_sha256` into the receipt (F3). Both the raw-doc validation and the effective-view `run(...)` use `contract.disposition_validator` (built from the same in-hand `disp_bytes` as the overlay validator + the OV020 hashes), so **no schema stage re-reads `disposition.schema.json`** and `_validator()` is never called on this path (audit round-4 F1). Guard: preapply is never signature-exempt, so `signer` is always set here.
 
 Update the receipt call (`check_disposition.py:660`) to the reframed signature:
 
@@ -2100,7 +2251,7 @@ Per the mandatory Independent Review Protocol, run the cross-engine Codex pass o
 
 **1. Spec coverage.** Every section maps to a task: §2A control separation → Task 7 receipt + Task 8 authorization-boundary test; §3 time model + provenance-conditional SP009 → Task 4; §4 overlay contract + `overlay.schema.json` + read-once `OverlayContract` offline registry → Task 1; §5 steps 0-10 → SP028 gate pre-existing (unchanged, still step 0), raw-input SP001/kind validation before the loader → Task 8 (audit F1), read-once/verify/parse → Task 2, bind → Task 2, per-overlay window OV009 → Task 3 (audit F2), freshness/target/conflict → Tasks 3+6, effective view + OV021 + derive + OV022 + OV015 → Tasks 3/4/5/6, semantic gate on effective view → Task 8 wiring, receipt → Task 7; §6 reject matrix `OV001–OV022` → **every code has a pinned failing test** (OV001/002/003/020 T2; OV004/005/006/007/009/012/013/014/019/021 T3; OV011/016/017/018 T4; OV022 T5; OV008 T1; OV010/OV015 T6); §7 signature handling → Task 2 (`verify_overlay` reuses the pinned anchor); §8 definer-view reconciliation/cluster admissibility → Appendix-A views are data; `OV015` cluster-completeness is implemented as `check_cluster_completeness` in Task 6 with a dedicated negative test `ov015_missing_gate_required_dimension` (audit F7); §9 testing strategy → the whole negative-first suite (registered in CI, audit F6); §10 out-of-scope holds → Global Constraints; §11 ratified decisions → folded (T1/T2/T3 in Global Constraints). Cross-engine plan-audit findings F1–F9 + contributor-map instruction are all folded (see the fold table below).
 
-**2. Placeholder scan.** The e2e cases in Task 8 Step 1 are intentionally specified as implementer-guidance-with-assertions (the harness is mechanical temp-file plumbing); every other step carries complete, runnable code. The one `...` (Task 8 `_e2e_red_then_green`) is explicitly flagged as "replace with the real assertion," with the exact assertions enumerated in the guidance block — acceptable because the body is deterministic file-writing, not novel logic. No `TBD`/`handle edge cases`/`similar to Task N` elsewhere.
+**2. Placeholder scan.** No placeholders remain. Every step carries complete, runnable code, including the Task 8 e2e suite: `_e2e_red_then_green`, `_e2e_ov021_via_main`, and the six named delete/retain/SP018 tests (`_e2e_delete_missing_in_data_api_OV015`, `_e2e_delete_true_in_data_api_SP027`, `_e2e_delete_false_noncovering_OV022`, `_e2e_retain_no_overlay_OV018`, `_e2e_retain_green`, `_e2e_unaccepted_manifest_SP018_no_receipt`) are all real `cd.main` tests with concrete assertions, registered in `_CASES` (audit round-4 F2 + F3). No `TBD`/`handle edge cases`/`similar to Task N`/`... return True` anywhere.
 
 **3. Type consistency.** `MergeResult` fields (`effective_snapshot`, `derived_window_object_ids`, `receipt_overlays`, `diagnostics`) are used identically in Tasks 6+8. Diagnostics are `(code, locus, message)` tuples throughout the loader; `check_disposition` prints them directly (it does not wrap them in `Diagnostic`, avoiding the circular import). `derive_windows` returns `(diags, set)`; `load_and_merge` consumes that shape. `build_receipt`'s reframed keyword set (`evidence_ready`, `execution_authorized`, `overlays`, `max_consumer_evidence_age_hours`) matches its call site in Task 8 and its tests in Task 7. `semantic_check`/`run` gain the same `derived_window_object_ids=None` trailing parameter, kept consistent at the call site.
 
@@ -2134,4 +2285,6 @@ Per the mandatory Independent Review Protocol, run the cross-engine Codex pass o
 
 **Second plan re-audit (2026-07-12) → rev 4 (1 High + 4 Med, all folded):** F1 loader short-circuits on any schema failure (non-object/malformed-`assignments` → OV008, no `AttributeError`); F2 the coherent `in_data_api` delete split OV015(missing)/SP027(observed-true)/OV022(observed-false,bad-window) — matrix + Task-5 unit + Task-8 e2e updated; F3 `_e2e_red_then_green` + `_e2e_ov021_via_main` are real `cd.main` tests; F4 real `validate_overlay`→coded-OV008 unseeded-`$ref` test; F5 three `producing_repo_sha` categories (required/forbidden/conditional) with pos+neg tests.
 
-Convergence: the design converged 3→1→0 HIGH over the spec's 3 IRP rounds; the plan converged 9 → 2 → 5 → 0 over three plan-audit rounds (round 2's "5" were newly-surfaced correctness/coverage gaps, not regressions). A final **narrow re-audit** over only the five round-3 areas (invalid-overlay short-circuit · OV015/SP027/OV022 routing · real RED→GREEN e2e · unseeded-`$ref`→OV008 · dimension-specific repo-SHA) precedes the build GO. Implementation, evidence collection, DB access, production, A1–A3, and the apply runner remain HELD.
+**Third plan re-audit (2026-07-12) → rev 5 (1 High + 1 Med + 1 Low, folded):** F1 read-once completeness — `OverlayContract` holds both validators, loaded once; the overlay-enabled CLI path never calls `_validator()` (no `disposition.schema.json` re-read across the raw / OV020 / effective stages); F2 six named, registered, real `cd.main` e2e tests for the delete/retain/SP018 matrix items; F3 corrected self-review placeholder scan.
+
+Convergence: the design converged 3→1→0 HIGH over the spec's 3 IRP rounds; the plan converged 9 → 2 → 5 → 3 → 0 over four plan-audit rounds (each round's findings were newly-surfaced correctness/coverage gaps, not regressions). A final **narrow diff review** should prove no `_validator()` call remains in the overlay-enabled CLI path and all six new e2e tests start RED (per the operator's instruction); if clean, the build GO is authorized without another broad plan audit. Implementation, evidence collection, DB access, production, A1–A3, and the apply runner remain HELD.
