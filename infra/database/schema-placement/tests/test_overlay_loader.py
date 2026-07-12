@@ -484,6 +484,99 @@ _CASES += [
     ("producing_repo_sha_conditional_null_without_reason_OV012", _producing_repo_sha_conditional_null_without_reason_OV012),
 ]
 
+# ---- Task 4: time derivation (derive_windows) ----
+def _pdt(s):
+    return ov._parse_iso(s)
+
+
+BASE = _pdt(CENSUS_OBSERVED_AT)          # 2026-07-10T20:00:00Z (base_observed_at)
+NOW = _pdt(NOW_ISO)                      # 2026-07-11T00:00:00Z
+
+
+def _contrib_map(*entries):
+    """Build a LOCAL {oid: [(started, ended, captured), ...]} contributor map (audit #9: passed as a
+    separate arg to derive_windows — NEVER stashed on the effective snapshot)."""
+    m = {}
+    for oid, started, ended, captured in entries:
+        m.setdefault(oid, []).append((_pdt(started), _pdt(ended), _pdt(captured)))
+    return m
+
+
+def _derive(eff, contrib, max_age=8760):
+    return ov.derive_windows(eff, cluster_src_oids=set(contrib) or {"public.v"}, contrib_by_oid=contrib,
+                             now=NOW, base_observed_at=BASE, max_consumer_evidence_age_hours=max_age)
+
+
+def _fresh_window_derives_ok():
+    eff = _zero_census(["public.v"])
+    contrib = _contrib_map(("public.v", "2026-06-05T00:00:00Z", CENSUS_OBSERVED_AT, DEF_CAPTURED))
+    diags, derived = _derive(eff, contrib)
+    return diags == [] and "public.v" in derived
+
+
+def _decade_old_window_OV016():
+    eff = _zero_census(["public.v"])
+    contrib = _contrib_map(("public.v", "2016-06-01T00:00:00Z", "2016-07-01T00:00:00Z", "2016-07-02T00:00:00Z"))
+    diags, _d = _derive(eff, contrib)
+    return "OV016" in _codes(diags)
+
+
+def _absent_maxage_is_OV016():
+    eff = _zero_census(["public.v"])
+    contrib = _contrib_map(("public.v", "2026-06-05T00:00:00Z", CENSUS_OBSERVED_AT, DEF_CAPTURED))
+    diags, _d = _derive(eff, contrib, max_age=None)
+    return "OV016" in _codes(diags)
+
+
+def _nonfinite_maxage_is_OV016():
+    eff = _zero_census(["public.v"])
+    contrib = _contrib_map(("public.v", "2026-06-05T00:00:00Z", CENSUS_OBSERVED_AT, DEF_CAPTURED))
+    diags, _d = _derive(eff, contrib, max_age=float("inf"))
+    return "OV016" in _codes(diags)
+
+
+def _base_outside_window_OV017():
+    eff = _zero_census(["public.v"])  # base_observed_at = 07-10T20; window ends 07-05 < base
+    contrib = _contrib_map(("public.v", "2026-06-01T00:00:00Z", "2026-07-05T00:00:00Z", "2026-07-06T00:00:00Z"))
+    diags, _d = _derive(eff, contrib)
+    return "OV017" in _codes(diags)
+
+
+def _empty_contributors_OV018():
+    eff = _zero_census(["public.v"])
+    diags, _d = ov.derive_windows(eff, cluster_src_oids={"public.v"}, contrib_by_oid={}, now=NOW,
+                                  base_observed_at=BASE, max_consumer_evidence_age_hours=8760)
+    return "OV018" in _codes(diags)
+
+
+def _empty_intersection_OV011():
+    eff = _zero_census(["public.v"])
+    contrib = _contrib_map(("public.v", "2026-07-08T00:00:00Z", CENSUS_OBSERVED_AT, DEF_CAPTURED),   # ended 07-10T20
+                           ("public.v", "2026-06-05T00:00:00Z", "2026-07-05T00:00:00Z", "2026-07-06T00:00:00Z"))  # ended 07-05
+    diags, _d = _derive(eff, contrib)  # S=max(07-08,06-05)=07-08 ; E=min(07-10T20,07-05)=07-05 ; S>E
+    return "OV011" in _codes(diags)
+
+
+def _duplicate_src_object_single_derivation():
+    # object_id appears once in the set => derived exactly once; the derived marker is idempotent.
+    eff = _zero_census(["public.v"])
+    contrib = _contrib_map(("public.v", "2026-06-05T00:00:00Z", CENSUS_OBSERVED_AT, DEF_CAPTURED))
+    diags, derived = _derive(eff, contrib)
+    w = eff["relations"][0]["consumer_evidence"]["observation_window"]
+    return diags == [] and list(derived) == ["public.v"] and w["started_at"] and w["ended_at"] and "_contrib_windows" not in eff
+
+
+_CASES += [
+    ("fresh_window_derives_ok", _fresh_window_derives_ok),
+    ("decade_old_window_OV016", _decade_old_window_OV016),
+    ("absent_maxage_is_OV016", _absent_maxage_is_OV016),
+    ("nonfinite_maxage_is_OV016", _nonfinite_maxage_is_OV016),
+    ("base_outside_window_OV017", _base_outside_window_OV017),
+    ("empty_contributors_OV018", _empty_contributors_OV018),
+    ("empty_intersection_OV011", _empty_intersection_OV011),
+    ("duplicate_src_object_single_derivation", _duplicate_src_object_single_derivation),
+]
+
 if __name__ == "__main__":
     ok = True
     for name, fn in _CASES:

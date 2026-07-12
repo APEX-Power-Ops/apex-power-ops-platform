@@ -677,6 +677,20 @@ def test_verify_key_flag_rejected():
     assert _verify_key_flag_rejected()
 
 
+def _sp009_provenance_conditional():
+    # An overlay-derived window with ended_at AFTER observed_at PASSES SP009 iff the object_id is in
+    # derived_window_object_ids; with the marker removed it fails via the original bound.
+    snap, dec, em, man, sp = harden_bundle()
+    r = snap["relations"][0]
+    r["consumer_evidence"]["observation_window"] = {"started_at": "2026-07-01T00:00:00Z", "ended_at": "2026-07-20T00:00:00Z"}  # ended > observed_at
+    oid = r["object_id"]
+    with_marker = [d.code for d in cd.run(snap, dec, em, man, NOW, "preapply", ROOTS, VALIDATOR, sp,
+                                          "fxoyniqnrlkxfligbxmg", derived_window_object_ids={oid})]
+    without = [d.code for d in cd.run(snap, dec, em, man, NOW, "preapply", ROOTS, VALIDATOR, sp,
+                                      "fxoyniqnrlkxfligbxmg", derived_window_object_ids=None)]
+    return "SP009" not in with_marker and "SP009" in without
+
+
 if __name__ == "__main__":
     ok = True
     print("== green baselines ==")
@@ -717,6 +731,7 @@ if __name__ == "__main__":
         ("authoring_banner_and_receipt", _authoring_banner_and_receipt),
         ("bound_green_receipt", _bound_green_receipt),
         ("verify_key_flag_rejected", _verify_key_flag_rejected),
+        ("sp009_provenance_conditional", _sp009_provenance_conditional),
     ]:
         try:
             r = bool(fn())

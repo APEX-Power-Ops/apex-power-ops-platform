@@ -294,3 +294,47 @@ def precheck_base_window(census):
             out.append(("OV021", f"census:{r.get('object_id')}",
                         f"base consumer window {w} is not the canonical zero-width {{{observed_at}, {observed_at}}}"))
     return out
+
+
+def derive_windows(effective, *, cluster_src_oids, contrib_by_oid, now, base_observed_at, max_consumer_evidence_age_hours):
+    """For each UNIQUE cluster-source object_id (T3), derive the consumer window from the relation's
+    observed consumer contributors in contrib_by_oid[oid] — a LOCAL {oid: [(started, ended, captured), ...]}
+    map (over CONSUMER_CONTRIB_DIMS) passed by the orchestrator, NEVER read off the effective snapshot
+    (audit #9) — and write {S, E} ISO-8601 strings into the effective view. Returns
+    (diagnostics, derived_window_object_ids). Fail-closed per the §3 predicate."""
+    # Recency-policy precheck (Codex-P2): an absent/non-finite max_consumer_evidence_age_hours is a
+    # DETERMINISTIC coded OV016 reported BEFORE any per-relation contributor check, so a missing CLI
+    # flag can never be masked by an OV018 on a zero-contributor relation.
+    if not (_finite(max_consumer_evidence_age_hours) and max_consumer_evidence_age_hours > 0):
+        return [("OV016", "overlay-derive:policy", f"max_consumer_evidence_age_hours {max_consumer_evidence_age_hours!r} absent or non-finite (required recency floor, fail-closed)")], set()
+    out = []
+    derived = set()
+    contrib = contrib_by_oid
+    rel_by_oid = {r["object_id"]: r for r in effective.get("relations", [])}
+    for oid in sorted(cluster_src_oids):  # a set => each object_id derived exactly once (T3)
+        windows = contrib.get(oid, [])
+        loc = f"overlay-derive:{oid}"
+        if not windows:
+            out.append(("OV018", loc, "zero observed consumer contributors for a cluster-source relation"))
+            continue
+        s = max(w[0] for w in windows)
+        e = min(w[1] for w in windows)
+        min_captured = min(w[2] for w in windows)
+        if s >= e:
+            out.append(("OV011", loc, f"derived window empty: S {s.isoformat()} >= E {e.isoformat()}"))
+            continue
+        if e > min_captured:
+            out.append(("OV009", loc, f"E {e.isoformat()} > min captured_at {min_captured.isoformat()} (defense assert)"))
+            continue
+        if e > now:
+            out.append(("OV009", loc, f"derived E {e.isoformat()} is in the future vs now {now.isoformat()}"))
+            continue
+        if (now - e).total_seconds() / 3600.0 > max_consumer_evidence_age_hours:  # per-relation recency (max_age validated above)
+            out.append(("OV016", loc, f"stale: now-E {(now - e).total_seconds() / 3600.0:.1f}h > max {max_consumer_evidence_age_hours}h"))
+            continue
+        if not (s <= base_observed_at <= e):
+            out.append(("OV017", loc, f"base_observed_at {base_observed_at.isoformat()} not within derived window [{s.isoformat()}, {e.isoformat()}]"))
+            continue
+        rel_by_oid[oid]["consumer_evidence"]["observation_window"] = {"started_at": s.isoformat(), "ended_at": e.isoformat()}
+        derived.add(oid)
+    return out, derived

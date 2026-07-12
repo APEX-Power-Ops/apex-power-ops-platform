@@ -216,7 +216,7 @@ def schema_validate(docs, validator):
 
 
 # ---- semantic checks -------------------------------------------------------
-def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref=None):
+def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref=None, derived_window_object_ids=None):
     d = []
     relations = snapshot.get("relations", [])
     rel_by_oid = {}
@@ -328,13 +328,19 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
             else:
                 src_rels.extend(rel_by_oid[oid])
 
-        # window ordering (strict) + minimum duration, scoped to this cluster's source relations (SP009)
+        # window ordering (strict) + minimum duration, scoped to this cluster's source relations (SP009).
+        # Provenance-conditional upper bound: for windows the overlay checker itself derived-and-wrote
+        # (object_id in derived_window_object_ids), the `<= observed_at` bound is relaxed (future/recency/
+        # anchor already enforced at merge by OV009/OV016/OV017); non-derived and no-provenance windows
+        # keep the original s < e <= observed_at (fail-closed on an absent marker).
         for r in src_rels:
             w = r.get("consumer_evidence", {}).get("observation_window")
             if isinstance(w, dict) and "started_at" in w and "ended_at" in w:
                 s, e = parse_dt(w["started_at"]), parse_dt(w["ended_at"])
-                if not (s < e <= observed_at):
-                    d.append(Diagnostic("SP009", f"decision:{did}:{r['object_id']}", f"window {w['started_at']}..{w['ended_at']} must satisfy started<ended<=observed_at ({snapshot['observed_at']})"))
+                is_derived = derived_window_object_ids is not None and r["object_id"] in derived_window_object_ids
+                ordered = (s < e) if is_derived else (s < e <= observed_at)
+                if not ordered:
+                    d.append(Diagnostic("SP009", f"decision:{did}:{r['object_id']}", f"window {w['started_at']}..{w['ended_at']} must satisfy started<ended{'' if is_derived else '<=observed_at'} ({snapshot['observed_at']})"))
                 elif (e - s).total_seconds() / 3600.0 < min_window:
                     d.append(Diagnostic("SP009", f"decision:{did}:{r['object_id']}", f"window duration {(e - s).total_seconds() / 3600.0:.2f}h < minimum_consumer_window_hours {min_window}"))
 
@@ -528,7 +534,7 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
     return d
 
 
-def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, snapshot_path=None, expect_project_ref=None):
+def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, snapshot_path=None, expect_project_ref=None, derived_window_object_ids=None):
     docs = {"evidence_snapshot": snapshot, "decisions_file": decisions, "entity_map": entity_map, "cluster_manifest": manifest}
     diags = schema_validate(docs, validator)
     # Pin each CLI input to its EXPECTED kind (finding #8): the top-level oneOf accepts any of the
@@ -539,7 +545,7 @@ def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, 
             diags.append(Diagnostic("SP001", f"{expected}:kind", f"expected kind={expected!r}, got {doc.get('kind')!r}"))
     if diags:
         return sorted(diags, key=lambda x: x.key())
-    diags = semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref)
+    diags = semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, snapshot_path, expect_project_ref, derived_window_object_ids)
     return sorted(diags, key=lambda x: x.key())
 
 
