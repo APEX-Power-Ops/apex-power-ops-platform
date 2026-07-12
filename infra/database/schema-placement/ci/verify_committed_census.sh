@@ -14,7 +14,7 @@ mapfile -t SNAPS < <(git diff --diff-filter=A --name-only "$BASE" HEAD -- "$SP/e
 if [ "${#SNAPS[@]}" -eq 0 ]; then
   echo "no census artifacts added on this branch (vs origin/main) — nothing to verify"; exit 0
 fi
-TOOLING=("$SP/verify_census.py" "$SP/collect_disposition.py" "$SP/disposition_signing.py" "$SP/disposition.schema.json" "$SP/keys")
+TOOLING=("$SP/verify_census.py" "$SP/collect_disposition.py" "$SP/disposition_signing.py" "$SP/disposition_trust.py" "$SP/disposition_provenance.py" "$SP/disposition.schema.json" "$SP/keys")
 rc=0
 for snap in "${SNAPS[@]}"; do
   echo "=== verifying committed census: $snap ==="
