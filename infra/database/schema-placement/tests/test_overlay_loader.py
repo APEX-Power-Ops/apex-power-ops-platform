@@ -137,9 +137,80 @@ def _schema_drift_OV020():
                    census_bytes=cb, disposition_schema_sha256="0" * 64)
     diags = ov.check_binding(doc, census_sha256=hashlib.sha256(cb).hexdigest(),
                              census_project_ref="fxoyniqnrlkxfligbxmg", expect_project_ref="fxoyniqnrlkxfligbxmg",
-                             on_disk_disp_sha=ov._sha256_hex(open(ov.DISPOSITION_SCHEMA_PATH, "rb").read()),
-                             on_disk_overlay_sha=doc["overlay_schema_sha256"])
+                             on_disk_disp_sha=_CONTRACT.disp_sha256, on_disk_overlay_sha=_CONTRACT.overlay_sha256)
     return "OV020" in _codes(diags)
+
+
+def _schema_drift_overlay_branch_OV020():
+    # The overlay_schema_sha256 half of OV020 must fire independently of the disposition half
+    # (regression: the disp-branch test alone left this half unexercised).
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   census_bytes=cb, overlay_schema_sha256="0" * 64)
+    diags = ov.check_binding(doc, census_sha256=hashlib.sha256(cb).hexdigest(),
+                             census_project_ref="fxoyniqnrlkxfligbxmg", expect_project_ref="fxoyniqnrlkxfligbxmg",
+                             on_disk_disp_sha=_CONTRACT.disp_sha256, on_disk_overlay_sha=_CONTRACT.overlay_sha256)
+    return "OV020" in _codes(diags)
+
+
+def _project_mismatch_census_vs_expect_OV003():
+    # OV003 is a THREE-way equality: a doc whose project_ref matches the census must STILL be rejected
+    # when census_project_ref != expect_project_ref (the --expect-project-ref axis, not just the doc's).
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   census_bytes=cb)  # doc.project_ref == census_project_ref == fxoyniqnrlkxfligbxmg
+    diags = ov.check_binding(doc, census_sha256=hashlib.sha256(cb).hexdigest(),
+                             census_project_ref="fxoyniqnrlkxfligbxmg", expect_project_ref="a-different-expected-ref",
+                             on_disk_disp_sha=_CONTRACT.disp_sha256, on_disk_overlay_sha=_CONTRACT.overlay_sha256)
+    return "OV003" in _codes(diags)
+
+
+def _check_binding_clean_no_diags():
+    # The POSITIVE side of the fail-closed contract: a correctly-bound overlay yields NO diagnostics.
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   census_bytes=cb)
+    diags = ov.check_binding(doc, census_sha256=hashlib.sha256(cb).hexdigest(),
+                             census_project_ref="fxoyniqnrlkxfligbxmg", expect_project_ref="fxoyniqnrlkxfligbxmg",
+                             on_disk_disp_sha=_CONTRACT.disp_sha256, on_disk_overlay_sha=_CONTRACT.overlay_sha256)
+    return diags == []
+
+
+def _parse_overlay_rejects_duplicate_keys():
+    # A JSON body with a repeated object key must raise ValueError (parser-confusion guard, fail-closed).
+    try:
+        ov.parse_overlay(b'{"kind": "evidence_overlay", "kind": "sneaky"}')
+        return False  # must have raised
+    except ValueError:
+        return True
+    except Exception:
+        return False
+
+
+def _parse_overlay_rejects_nonfinite():
+    # NaN / Infinity / -Infinity JSON constants must raise ValueError (Python json accepts them by default).
+    for body in (b'{"x": NaN}', b'{"x": Infinity}', b'{"x": -Infinity}'):
+        try:
+            ov.parse_overlay(body)
+            return False  # must have raised
+        except ValueError:
+            continue
+        except Exception:
+            return False
+    return True
+
+
+def _parse_overlay_accepts_valid_body():
+    # Non-vacuity guard for the two reject tests: a well-formed overlay body parses to a dict.
+    census_bytes = _canon(_zero_census(["public.v"]))
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   census_bytes=census_bytes)
+    parsed = ov.parse_overlay(_canon(doc))
+    return isinstance(parsed, dict) and parsed.get("kind") == "evidence_overlay"
 
 
 _CASES = [
@@ -148,6 +219,12 @@ _CASES = [
     ("base_hash_mismatch_OV002", _base_hash_mismatch_OV002),
     ("project_mismatch_OV003", _project_mismatch_OV003),
     ("schema_drift_OV020", _schema_drift_OV020),
+    ("schema_drift_overlay_branch_OV020", _schema_drift_overlay_branch_OV020),
+    ("project_mismatch_census_vs_expect_OV003", _project_mismatch_census_vs_expect_OV003),
+    ("check_binding_clean_no_diags", _check_binding_clean_no_diags),
+    ("parse_overlay_rejects_duplicate_keys", _parse_overlay_rejects_duplicate_keys),
+    ("parse_overlay_rejects_nonfinite", _parse_overlay_rejects_nonfinite),
+    ("parse_overlay_accepts_valid_body", _parse_overlay_accepts_valid_body),
 ]
 
 if __name__ == "__main__":
