@@ -1,5 +1,15 @@
 # Cross-engine IRP — Signed-Overlay Spec
 
+## ROUND 3 — FOCUSED re-audit of rev4 @ 33199350 (Codex `ba41zm7qn` + Claude `w20hsch0h`)
+
+**Claude focused re-audit: ADVANCE — all 6 operator areas CLOSED, no High/Medium gate defect (every claim host-grounded; OV021 single-signer closure independently re-derived). Codex: 2 NEW P2s (neither re-raises a prior finding). Both folded → rev5.**
+- **Codex P2-1 → folded (OV022):** SP027's `external_clients` `not_applicable` waiver trusts `in_data_api_exposed_schema` observed=false, but rev4 only required that overlay's window be fresh — a DELETE could pair a 30-day consumer window with an API-exposure overlay whose window starts AFTER the API was disabled, waiving external-client evidence for a period the relation WAS exposed. FIX (**OV022**): the `in_data_api_exposed_schema` overlay window must COVER the derived consumer window (or at least `base_observed_at`) when relied on for the SP027 waiver.
+- **Codex P2-2 + Claude below-bar → folded:** SP009 evaluates ALL cluster `src_rels`, but rev4 derived windows only for resolved/delete-conclusion relations → a `retain` cluster keeps its zero-width window → can never go green. FIX: derive for **every cluster-source relation SP009 evaluates**; OV018 fires for any with zero observed contributors. (retain fails SP009 today pre-overlay anyway — not a regression; not the first-cluster target.)
+- **Claude below-bar → rev5/plan pins:** OV021 must be an UNCONDITIONAL preapply precheck (fires with zero overlays); absent CLI flag → coded `OV016` (deterministic diagnostics); OV021 canonical-equality = string-equality to `observed_at`; the 2 non-negotiable §9 acceptance tests (OV021-zero-overlay; remove-marker-restores-original-SP009).
+- **Cross-engine delta:** Codex caught the API-exposure-window coherence gap Claude missed; Claude's exhaustive host-grounding confirmed all 6 areas + the OV021 single-signer closure and graded retain below-bar. Convergence trend across rounds: 3 HIGH → 1 HIGH → 0 HIGH + 2 P2.
+
+---
+
 ## ROUND 2 — re-audit of rev2 @ e283be68 (Codex `b90bewrpo` + Claude Workflow `w8h9lninz`)
 
 **Verdict: every rev1 fix genuinely CLOSED; ONE residual HIGH (cross-engine confirmed) + 2 MED + 2 LOW — all self-inflicted in the rev1→rev2 fold. Fail-CLOSED, no prod exposure. Fixed in rev3.**
