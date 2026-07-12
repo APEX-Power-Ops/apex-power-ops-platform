@@ -557,7 +557,7 @@ def run(snapshot, decisions, entity_map, manifest, now, mode, roots, validator, 
 
 def _checkout_gate(expect_gate_repo_sha, require_clean_checkout, allow_unbound):
     """SP028: decide the checkout binding from the flag combination alone, BEFORE any input document is
-    read. Returns (ok, checkout_bound, evidence_ready, gate_repo_sha, diagnostic_or_None). Only the
+    read. Returns (ok, checkout_bound, production_eligible, gate_repo_sha, diagnostic_or_None). Only the
     bound path runs a git check, against the checker's own repo dir. Accidental unbound is impossible:
     neither-flag-nor-opt-in is refused."""
     has_gate = bool(expect_gate_repo_sha)
@@ -590,7 +590,7 @@ def main(argv=None):
     ap.add_argument("--keys-dir", default=dt.DEFAULT_KEYS_DIR, dest="keys_dir", help="dir holding <key-id>.pub.pem (public key MATERIAL only; the trust anchor is the source constant).")
     ap.add_argument("--expect-gate-repo-sha", default=None, dest="expect_gate_repo_sha", help="the reviewed merged commit the CHECKER must run from (bound preapply; SP028). Independent of the census snapshot repo_sha.")
     ap.add_argument("--require-clean-checkout", action="store_true", dest="require_clean_checkout", help="with --expect-gate-repo-sha, enforce the checker's own worktree is clean and at that SHA (SP028).")
-    ap.add_argument("--allow-unbound-checkout", action="store_true", dest="allow_unbound_checkout", help="explicit opt-in for authoring-only unbound runs (evidence_ready=false); refused together with the binding flags (SP028).")
+    ap.add_argument("--allow-unbound-checkout", action="store_true", dest="allow_unbound_checkout", help="explicit opt-in for authoring-only unbound runs (checkout_bound=false; not valid for production apply); refused together with the binding flags (SP028).")
     ap.add_argument("--receipt-out", default=None, dest="receipt_out", help="on GREEN, write a gate receipt (input SHA-256 digests) here for the apply runner to rehash.")
     ap.add_argument("--root", action="append", default=[], dest="roots", required=True, help="approved evidence root (repeatable, REQUIRED).")
     args = ap.parse_args(argv)
@@ -598,7 +598,7 @@ def main(argv=None):
     # --- SP028 checkout-provenance gate: runs IMMEDIATELY after argument parsing, BEFORE any input
     # document is read, binding (or explicitly opting out of binding) the checker's OWN checkout to a
     # reviewed gate SHA. Accidental unbound is impossible (neither-flag-nor-opt-in -> SP028).
-    ok, checkout_bound, evidence_ready, gate_repo_sha, cdiag = _checkout_gate(
+    ok, checkout_bound, _, gate_repo_sha, cdiag = _checkout_gate(  # 3rd (production_eligible) == checkout_bound; the receipt's evidence_ready is a DISTINCT axis
         args.expect_gate_repo_sha, args.require_clean_checkout, args.allow_unbound_checkout)
     if not ok:
         print(cdiag.render())
@@ -672,7 +672,7 @@ def main(argv=None):
                                     doc_bytes=doc_bytes, doc_paths=doc_paths, signer=signer_meta,
                                     snapshot_signature_sha256=snapshot_signature_sha256,
                                     gate_repo_sha=gate_repo_sha, checkout_bound=checkout_bound,
-                                    evidence_ready=evidence_ready, execution_authorized=False, overlays=None,
+                                    evidence_ready=True, execution_authorized=False, overlays=None,  # §2A: GREEN emission attests evidence readiness; checkout binding is the separate checkout_bound field
                                     roots=roots, decisions=decisions)
             with open(args.receipt_out, "w", encoding="utf-8") as fh:
                 json.dump(receipt, fh, indent=2, sort_keys=True)

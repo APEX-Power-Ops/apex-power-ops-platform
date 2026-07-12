@@ -635,7 +635,7 @@ def _authoring_banner_and_receipt():
         out, err = out_buf.getvalue(), err_buf.getvalue()
         rec = json.load(open(receipt_path, encoding="utf-8"))
     return (rc == 0 and banner in out and "WARNING: unbound checkout" in err
-            and rec["checkout_bound"] is False and rec["evidence_ready"] is False
+            and rec["checkout_bound"] is False and rec["evidence_ready"] is True
             and rec["execution_authorized"] is False and "production_eligible" not in rec
             and rec["gate_repo_sha"] is None and rec["overlays"] == []
             and rec["effective_view"] == {"in_memory_only": True})
