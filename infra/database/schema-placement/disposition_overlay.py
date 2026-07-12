@@ -338,3 +338,33 @@ def derive_windows(effective, *, cluster_src_oids, contrib_by_oid, now, base_obs
         rel_by_oid[oid]["consumer_evidence"]["observation_window"] = {"started_at": s.isoformat(), "ended_at": e.isoformat()}
         derived.add(oid)
     return out, derived
+
+
+def check_delete_floor_coherence(effective, *, delete_src_oids, external_na_oids,
+                                 in_data_api_windows, derived_windows):
+    """OV022 (T1-scoped): for a delete-conclusion source relation whose external_clients overlay
+    resolves to not_applicable (invoking the SP027 waiver, which requires in_data_api observed false),
+    the observed-FALSE in_data_api overlay's observation_window (looked up by the exact
+    (dimension, object_id) assignment, T2) must COVER the derived consumer window [S, E]
+    (started_at <= S and ended_at >= E), proving the relation was unexposed THROUGHOUT the evidence
+    interval. OV022 evaluates ONLY when an observed-false in_data_api overlay backs the waiver (its
+    window is in in_data_api_windows). The coherent routing for the other cases (audit round-3 F2):
+    a MISSING in_data_api overlay leaves the gate-required dimension unresolved and is caught by
+    **OV015** (cluster-completeness, before run()); an **observed-TRUE** overlay defers here and
+    **SP027** denies the waiver at the semantic gate; only an observed-false overlay with an inadequate
+    window is OV022 — none of these short-circuit their ratified diagnostic. When external_clients is
+    observed (oid not in external_na_oids), OV022 is not evaluated (T1)."""
+    out = []
+    for oid in sorted(delete_src_oids & external_na_oids):  # T1: only not_applicable-waiver deletes
+        se = derived_windows.get(oid)
+        if se is None:
+            continue  # no derived window (already rejected upstream by OV018/OV011/etc.)
+        s, e = se
+        api = in_data_api_windows.get(oid)
+        if api is None:
+            continue  # no observed-false in_data_api overlay backs the waiver -> SP027 denies it (defer)
+        api_s, api_e = api
+        if not (api_s <= s and api_e >= e):
+            out.append(("OV022", f"overlay-delete:{oid}",
+                        f"in_data_api window [{api_s.isoformat()}, {api_e.isoformat()}] does not cover derived consumer window [{s.isoformat()}, {e.isoformat()}]"))
+    return out

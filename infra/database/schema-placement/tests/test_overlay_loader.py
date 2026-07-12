@@ -613,6 +613,54 @@ _CASES += [
     ("ended_after_captured_defense_OV009", _ended_after_captured_defense_OV009),
 ]
 
+# ---- Task 5: OV022 delete-floor coherence (T1/T2-scoped) ----
+def _ov022_fires_when_window_not_covering():
+    eff = _zero_census(["public.v"])
+    S, E = _pdt("2026-07-01T00:00:00Z"), _pdt("2026-07-10T20:00:00Z")
+    # in_data_api overlay window starts AFTER S -> does NOT cover [S,E]
+    inapi = {"public.v": (_pdt("2026-07-05T00:00:00Z"), _pdt("2026-07-10T20:00:00Z"))}
+    diags = ov.check_delete_floor_coherence(eff, delete_src_oids={"public.v"}, external_na_oids={"public.v"},
+                                            in_data_api_windows=inapi, derived_windows={"public.v": (S, E)})
+    return "OV022" in _codes(diags)
+
+
+def _ov022_ok_when_window_covers():
+    eff = _zero_census(["public.v"])
+    S, E = _pdt("2026-07-01T00:00:00Z"), _pdt("2026-07-10T20:00:00Z")
+    inapi = {"public.v": (_pdt("2026-06-01T00:00:00Z"), _pdt("2026-07-15T00:00:00Z"))}  # covers [S,E]
+    diags = ov.check_delete_floor_coherence(eff, delete_src_oids={"public.v"}, external_na_oids={"public.v"},
+                                            in_data_api_windows=inapi, derived_windows={"public.v": (S, E)})
+    return diags == []
+
+
+def _external_clients_observed_no_OV022():
+    # external_clients OBSERVED -> the not_applicable waiver is not invoked -> OV022 not evaluated (T1)
+    eff = _zero_census(["public.v"])
+    S, E = _pdt("2026-07-01T00:00:00Z"), _pdt("2026-07-10T20:00:00Z")
+    inapi = {"public.v": (_pdt("2026-07-05T00:00:00Z"), _pdt("2026-07-08T00:00:00Z"))}  # narrow, would fail if evaluated
+    diags = ov.check_delete_floor_coherence(eff, delete_src_oids={"public.v"}, external_na_oids=set(),  # NOT not_applicable
+                                            in_data_api_windows=inapi, derived_windows={"public.v": (S, E)})
+    return diags == []
+
+
+def _missing_in_data_api_no_OV022():
+    # NO observed-false in_data_api overlay backs the waiver -> check_delete_floor_coherence emits NO
+    # OV022 (it defers). The OVERALL routing for a missing overlay is OV015 (cluster-completeness) and,
+    # for an observed-TRUE overlay, SP027 at the semantic gate — both exercised in Task 8 (audit F2).
+    eff = _zero_census(["public.v"])
+    S, E = _pdt("2026-07-01T00:00:00Z"), _pdt("2026-07-10T20:00:00Z")
+    diags = ov.check_delete_floor_coherence(eff, delete_src_oids={"public.v"}, external_na_oids={"public.v"},
+                                            in_data_api_windows={}, derived_windows={"public.v": (S, E)})
+    return "OV022" not in _codes(diags)
+
+
+_CASES += [
+    ("ov022_fires_when_window_not_covering", _ov022_fires_when_window_not_covering),
+    ("ov022_ok_when_window_covers", _ov022_ok_when_window_covers),
+    ("external_clients_observed_no_OV022", _external_clients_observed_no_OV022),
+    ("missing_in_data_api_no_OV022", _missing_in_data_api_no_OV022),
+]
+
 if __name__ == "__main__":
     ok = True
     for name, fn in _CASES:
