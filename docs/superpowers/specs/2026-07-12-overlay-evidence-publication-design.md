@@ -27,8 +27,11 @@ the census gate accept* — with the artifact tooling additionally enforcing evi
 ## Global Constraints (bind every task)
 
 - **Schemas FROZEN.** `disposition.schema.json` / `overlay.schema.json` are read-only inputs; this design
-  needs no schema change (§10). `source_locator` (already a free string) is *defined* by this packet to be
-  a repo-relative path — a semantic tightening, not a schema edit.
+  needs no schema change (§10). `source_locator` (already a free string) is *defined* by this packet: when a
+  source record is committed, it is the record's path **relative to the schema-placement directory**
+  (`evidence/source/…`; CI resolves `$SP/<source_locator>` after `cd $(git rev-parse --show-toplevel)`,
+  exactly the census gate's convention); in the null-`source_hash` case it names the out-of-band
+  authority/custody locator. A semantic tightening, not a schema edit.
 - **Value-silence (extended).** The Ed25519 private key is read only from `DISPOSITION_SIGNING_KEY` (env,
   Infisical-injected), never argv/printed/embedded. **The `--source-file` content is also secret-bearing**
   (runtime logs, advisor JSON may embed DSN fragments): the author only `read → sha256`s it and copies it,
@@ -144,7 +147,9 @@ ancestor of the eventual evidence-PR HEAD, so the CI's ancestor/tooling-diff ass
 read-once `OverlayContract`; `project_ref = census.project_ref` (asserted `== --expect-project-ref`, else
 `AO003`); `captured_at = now` (single UTC clock read, also used for the `<UTC>` path); `source_type =
 DIMENSIONS[dim][1]`; `kind`/`overlay_version` constants; `source_hash = sha256(published source-record
-bytes)` (or null+reason); `source_locator = the repo-relative path of the published source record` (§S).
+bytes)` (or null+reason); `source_locator` = the published source record's path **relative to the
+schema-placement directory** (the literal `evidence/source/overlay-…` value; §S — one explicit base, used
+identically by author and CI).
 **`producing_repo_sha` = the AUTHOR's `--expect-gate-repo-sha` (schema-pub clean merged-main HEAD)** for
 REQUIRED dims — NOT the external scanned-repo commit (that lives in the source record, §S). FORBIDDEN dims:
 `null` + reason. CONDITIONAL (`external_clients`): the author's HEAD if a repo-committed inventory backed it,
@@ -152,9 +157,10 @@ else `null` + reason.
 
 ### 3.4 Census acceptance (not just signature)
 `resolve_pinned_key` → `verify_detached_with_key(census_bytes, census_sig, signer.public_key)` (else
-`AO001`), then **run the full `verify_census.check_census`** with the §3.1 census-acceptance params. Any
-`CN0xx` → `AO011` (prints the underlying `CN0xx`) and stop. You cannot author against a forged **or**
-out-of-scope/malformed census.
+`AO001`), then parse the verified bytes with **`verify_census.load_snapshot_from_bytes`** (the census
+gate's own dup-key/non-finite-rejecting parse — sig-before-parse, never a bare `json.loads`) and **run the
+full `verify_census.check_census`** with the §3.1 census-acceptance params. Any `CN0xx` → `AO011` (prints
+the underlying `CN0xx`) and stop. You cannot author against a forged **or** out-of-scope/malformed census.
 
 ### 3.5 Assemble → validate the SIGNED BYTES → signer-parity → publish
 Assemble the doc; serialize canonically (`json.dumps(doc, indent=2, sort_keys=True).encode()`) → the
@@ -167,8 +173,13 @@ assignments (intra-overlay dup). Any code → `AO005` (prints the underlying `OV
 signer.spki_sha256` (else `AO007` — the env key is not the pinned signer); build the sidecar
 (`sidecar_bytes = json.dumps(build_sig_sidecar(message, key), indent=2, sort_keys=True).encode()`);
 **verify the sidecar in-memory** (`verify_sidecar_bytes_with_key(message, sidecar_bytes, signer.public_key)`)
-before writing anything (else `AO012`). Publish **source-record first, then sidecar, then overlay**, each
-atomic + no-clobber (temp+fsync+`os.link`, with `finally` temp-unlink). Refuse up front if any path exists.
+before writing anything (else `AO012`). Publish **source-record first (when `--source-file` was given),
+then sidecar, then overlay**, each atomic + no-clobber (temp+fsync+`os.link`, with `finally` temp-unlink).
+In the `--source-hash-na-reason` case NO source record is published (a **pair**, not a triple) and
+`source_locator` names the out-of-band authority/custody locator instead of a path. Refuse up front if any
+target path exists. The signer-parity/fingerprint comparison is an **explicit coded check** (never a bare
+Python `assert`, which `-O` strips), and an unset/invalid/unloadable key PEM is reported value-silently
+(the PEM content never appears in any message — same discipline as `AO009`).
 
 ### 3.6 Naming
 `evidence/overlay-<dim-slug>-<census12>-<UTC>.json` (+ `.json.sig`); source record
@@ -185,7 +196,8 @@ consumer check (prints `OV0xx`); `AO006` (reserved — intra-overlay dup now sur
 PEM; `AO008` publish failed / path exists; `AO009` source-file unreadable (path + type only, value-silent);
 `AO010` provenance gate (dirty / HEAD ≠ `--expect-gate-repo-sha`); `AO011` base census failed
 `verify_census` acceptance (prints `CN0xx`); `AO012` in-memory sidecar verify failed. Exit 0 only on a
-published {source, sidecar, overlay} triple.
+fully published set — {source, sidecar, overlay} when a source record applies, {sidecar, overlay} in the
+NA-reason case.
 
 ---
 
@@ -195,7 +207,8 @@ published {source, sidecar, overlay} triple.
 Args: `--overlay`, `--overlay-sig`, `--census`, `--census-sig`, the census-acceptance params (§3.1),
 `--key-id`, `--keys-dir`, `--expect-project-ref`. Flow: `resolve_pinned_key` → read overlay bytes once →
 `verify_sidecar_bytes_with_key(overlay_bytes, sig_bytes, signer.public_key)` (OV001) → verify census sig
-(same signer) → **`verify_census.check_census`** on the census (else `CN0xx`) → `parse_overlay` →
+(same signer) → parse the census via **`verify_census.load_snapshot_from_bytes`** → **`check_census`** on
+it (else `CN0xx`) → `parse_overlay` →
 **`isinstance(doc, dict)` guard** (coded OV008 on a signed non-object, never a crash) → `load_overlay_contract`
 → `validate_overlay` (OV008) → **short-circuit on any schema error before binding/target** → `check_binding`
 (OV002/003/020) → `check_observation_window` (OV009) → **`captured_at ≤ now`** (OV010 future-half) →
@@ -210,23 +223,33 @@ evidence-readiness.
 `BASE=merge-base` (abort on an ambiguous/empty merge-base).
 
 1. **Immutability.** `git diff --diff-filter=MD --name-only BASE HEAD` over `evidence/census-prod-*.json`,
-   `evidence/overlay-*.json`, and every `*.sig` under `evidence/` → if any committed census/overlay JSON or
-   sidecar was **modified or deleted**, FAIL (signed evidence is no-clobber-immutable). *This also closes
-   the same gap in the census gate (§6).*
-2. **Canonical path + orphans.** For every added/committed file whose JSON `kind == "evidence_overlay"`,
-   require it to sit at the canonical `evidence/overlay-*.json` path (else FAIL — no overlay hidden under a
-   non-glob name). Every `evidence/overlay-*.json` must have exactly one `.json.sig` and vice-versa (no
-   orphan sidecar / unsigned overlay).
+   `evidence/overlay-*.json`, **`evidence/source/**` (every committed source-evidence record)**, and every
+   `*.sig` under `evidence/` → if any committed census/overlay JSON, **source record**, or sidecar was
+   **modified or deleted**, FAIL (signed evidence AND the source records backing `source_hash` are
+   no-clobber-immutable). *Steps 1–2 run UNCONDITIONALLY — before and regardless of the added-set
+   early-exit in step 3 — so a PR that only tampers with existing evidence still fails.* *This also closes
+   the same gap in the census gate (§7).*
+2. **Canonical path + orphans.** For every added/committed **`.json`** file under `evidence/` whose parsed
+   `kind == "evidence_overlay"`, require it to sit at the canonical `evidence/overlay-*.json` path (else
+   FAIL — no overlay hidden under a non-glob name, **including under `evidence/source/`**). Non-JSON files
+   under `evidence/source/` are opaque source records (no kind-scan). Every `evidence/overlay-*.json` must
+   have exactly one `.json.sig` and vice-versa (no orphan sidecar / unsigned overlay).
 3. **Added set.** `ADDED = git diff --diff-filter=A --name-only BASE HEAD -- 'evidence/overlay-*.json'`;
-   if none → exit 0.
+   if none → exit 0 *(steps 1–2 have already run)*.
 4. For each added overlay: extract `base_snapshot_sha256`; among committed `evidence/census-prod-*.json`
    find those whose `sha256(bytes)` equals it — **require exactly one** (0 → FAIL unbound; >1 → FAIL
-   ambiguous). Re-hash the overlay's `source_locator` file and assert `sha256 == source_hash` (skip only if
-   `source_hash` is null with a reason). Extract `producing_repo_sha` **null-safe** (JSON null → empty
-   string): if non-empty, assert ancestor-of-HEAD + `git diff --quiet <sha> HEAD -- $TOOLING`; if empty,
-   skip (safe — step 5 re-verifies at HEAD). Run `verify_overlay_artifact.py` against the matched census +
-   its sidecar + pinned signer + census-acceptance params (extract `--expect-census-repo-sha` from the
-   matched census's `repo_sha`); must exit 0.
+   ambiguous). **Bind the matched census independently, mirroring `verify_committed_census.sh`:** assert
+   `git merge-base --is-ancestor <census.repo_sha> HEAD` and `git diff --quiet <census.repo_sha> HEAD --
+   $TOOLING`, and compute `--expect-query-bundle-sha256` from `collect_disposition.query_bundle_sha256()`
+   **at HEAD** (reviewed source — never the census's self-attested value); pass pinned constants for
+   `--expect-project-ref/--expect-database/--expect-schemas/--require-role-markers` (CN006/CN007 must not
+   be self-referential). Re-hash the overlay's `source_locator` file and assert `sha256 == source_hash`
+   (skip only if `source_hash` is null with a reason). Extract `producing_repo_sha` **null-safe** (JSON
+   null → empty string): if non-empty, assert ancestor-of-HEAD + `git diff --quiet <sha> HEAD -- $TOOLING`;
+   if empty, skip (safe — step 5 re-verifies at HEAD). Run `verify_overlay_artifact.py` against the matched
+   census + its sidecar + pinned signer + the census-acceptance params above (`--expect-census-repo-sha` =
+   the matched census's `repo_sha`, made non-self-referential by the ancestor + tooling-diff binding);
+   must exit 0.
 5. **Committed-set OV007.** Build the flat `(dimension, object_id)` list over **every** committed overlay at
    HEAD (`git ls-files 'evidence/overlay-*.json'`, not just the added set) that binds to each census, incl.
    intra-overlay repeats; FAIL on any duplicate — mirroring `check_conflict`'s whole-cluster `all_keys`.
@@ -240,8 +263,11 @@ overlay.schema.json disposition.schema.json keys`. New `overlay-evidence` job (`
 
 ## 5. Component S — committed source-evidence record
 
-Every overlay's `source_locator` is a **repo-relative path** to a committed source-evidence record under
-`evidence/source/`; `source_hash = sha256(that record's bytes)`, which CI re-hashes (§4.2 step 4). The
+Every overlay's `source_locator` is the committed source-evidence record's path **relative to the
+schema-placement directory** (`evidence/source/…`; CI resolves it as `$SP/<source_locator>` from the git
+root, the census gate's convention); `source_hash = sha256(that record's bytes)`, which CI re-hashes
+(§4.2 step 4). In the null-`source_hash` (+reason) case no record is committed and `source_locator` names
+the out-of-band authority/custody locator instead. The
 record carries the dimension, the (redacted where sensitive) evidence, and — for `consumer_evidence.static_repo`
 scans — an explicit enumeration of **every scanned repository root + its exact commit SHA** (a single
 `producing_repo_sha`, being the author's schema-pub HEAD, does NOT stand in for multiple external repos).
@@ -312,8 +338,9 @@ Stable codes, non-zero exits, never a stack trace: `AO0xx` (author), `OV0xx`/`CN
 `FAIL:` lines (CI). The author refuses to sign a doc failing any per-artifact/census check; verifies the
 sidecar in-memory before writing; and is value-silent on key **and** source content. The verifier verifies
 signatures before parsing and fails-closed on non-object/schema-invalid input. CI fails on modified/deleted
-evidence, an unbound/ambiguous census, a mismatched source hash, tooling drift, an untrusted signer, an
-orphan sidecar, an off-path overlay, or a committed-set duplicate.
+evidence (**including committed source records**), an unbound/ambiguous census, a mismatched source hash,
+tooling drift, an untrusted signer, an orphan sidecar, an off-path overlay, or a committed-set duplicate —
+with the immutability + canonical-path steps running unconditionally, before any added-set early exit.
 
 ---
 
@@ -346,9 +373,10 @@ TDD, negatives first. Coverage matrix (each row → a failing test before code):
 | signed **non-object** / schema-invalid committed overlay | verifier/CI | **OV008 (isinstance-guard, no crash)** |
 | duplicate `(dimension,object_id)` intra-overlay | author/verifier/CI | flat OV007 |
 | duplicate vs an **already-committed** overlay (same census) | CI | **committed-set OV007** |
-| **modified/deleted** committed census or overlay/sidecar | CI | **`--diff-filter=MD` FAIL** |
-| **orphan sidecar / off-canonical-path overlay** | CI | **path + pairing FAIL** |
+| **modified/deleted** committed census, overlay, sidecar, **or source record** | CI | **`--diff-filter=MD` FAIL (unconditional, pre-early-exit)** |
+| **orphan sidecar / off-canonical-path overlay (incl. hidden under `evidence/source/`)** | CI | **path + pairing FAIL** |
 | **`source_locator` rehash ≠ `source_hash`** | CI | **source-record FAIL** |
+| **self-referential census binding** (CN006/CN007 fed from the census itself) | CI | **ancestor + tooling-diff + HEAD-computed bundle** |
 | overlay bound to **0 or >1** committed census | CI | **exactly-one FAIL** |
 | **null `producing_repo_sha`** on a FORBIDDEN dim | CI | **null-safe skip (no shell abort)** |
 | tooling drift (SHA-bearing dims) | CI | `git diff --quiet <producing_repo_sha> HEAD -- $TOOLING` |

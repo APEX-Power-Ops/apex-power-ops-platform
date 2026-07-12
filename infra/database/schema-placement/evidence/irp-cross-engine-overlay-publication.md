@@ -96,4 +96,64 @@ rev1 NOT approved. Design-only posture is correct and the branch is clean, but t
 gaps, the census-acceptance and source-record integrity gaps, the signer-parity gap, and the OV010
 misattribution must be folded. → **rev 2** (below), then a focused re-audit.
 
-## ROUND 2 — rev2 re-audit — *pending (folds the above; focused Codex + Claude re-audit to be appended).*
+## ROUND 2 — rev2 (`bc37daa5`) focused re-audit — 2026-07-12
+
+Focused cross-engine re-audit over the five revised areas (CI set semantics, full census acceptance,
+source-evidence binding, signer parity, temporal-policy boundary): **Codex** (`codex exec review --base
+main`, exit 0) + a **Claude focused-audit workflow** (5 lenses → adversarial verify; 10 agents, 0 errors).
+
+### Round-1 closure assessment (grounded, per lens)
+
+- **Temporal-policy boundary: CLOSED.** rev2's OV009/OV010 attribution verified verbatim against
+  `check_observation_window` (no `captured_at ≤ now` bound) and the inline OV010; the verifier's
+  future-half check + manifest-staleness deferral are correctly scoped; the §6 OV016 min-ended guidance is
+  accurate vs `derive_windows`.
+- **Signer parity: CLOSED.** `public_key_fingerprint` and `ResolvedSigner.spki_sha256` verified to be the
+  same lowercase-hex SPKI-sha256 encoding (directly `==`-comparable); AO007 + AO012 close operator #5.
+- **Full census acceptance: CLOSED for author + standalone verifier** (param set threads correctly;
+  sig-before-parse ordering matches `verify_census.main`); **CI path had a residual** (OCA-1 below).
+- **Source-evidence binding: mechanism sound, two residuals** (SB1/SB2 below). CC1/DAG-F4
+  (`producing_repo_sha` = author HEAD; external roots in the record) confirmed CLOSED.
+- **CI set semantics:** the dedicated lens agent returned a degenerate placeholder (recorded honestly; not
+  counted as coverage). The area was independently probed by the other four lenses + Codex; a genuine
+  re-run of this lens executes against the tightened spec (round-2b below).
+
+### Round-2 findings (adversarially verified) — ALL FOLDED in the same-day tightening
+
+- **SRC-IMMUT (Codex P2 + three independent CONFIRMED-Important verdicts): committed `evidence/source/`
+  records were outside the §4.2 step-1 immutability globs and only rehashed on the added-overlay path** —
+  a later PR could modify/delete a source record backing an already-committed signed overlay, and the
+  step-3 early-exit skipped everything when no overlay was added. FOLDED: `evidence/source/**` added to the
+  `--diff-filter=MD` set; steps 1–2 run unconditionally before the early exit.
+- **SB1 (CONFIRMED Important): `source_locator` path-base self-contradiction** ("repo-relative" prose vs
+  the concrete schema-placement-relative `evidence/source/…` value; git root is 3 levels up, so a literal
+  reading false-FAILs the CI rehash). FOLDED: one explicit base — schema-placement-directory-relative,
+  resolved as `$SP/<locator>` (the census gate's convention) — stated in Global Constraints, §3.3, §5.
+- **OCA-1 (PARTIAL → Minor): the overlay CI self-sourced the census `repo_sha` (and left the query-bundle
+  source unspecified), making CN006/CN007 self-referential** — bounded because the census is separately
+  gated when ADDED, content-matched by hash, and immutable, but not stated. FOLDED: §4.2 step 4 now mirrors
+  `verify_committed_census.sh` — ancestor-of-HEAD + tooling-diff on the census `repo_sha`, HEAD-computed
+  `--expect-query-bundle-sha256`, pinned constants for project/db/schemas/markers.
+- **OCA-2 (Minor):** census parse pinned to `verify_census.load_snapshot_from_bytes` (dup-key/non-finite
+  guards; sig-before-parse) in §3.4/§4.1. FOLDED.
+- **SB3 (Minor):** NA-reason case is a **pair** (no source record; `source_locator` names the out-of-band
+  custody locator) — the always-a-triple wording corrected in §3.5/§3.7/§5. FOLDED.
+- **SB4 (Minor):** kind-scan scoped to `.json` files (non-JSON source records opaque; a JSON
+  `kind=evidence_overlay` hidden under `evidence/source/` FAILs). FOLDED into §4.2 step 2.
+- **SP-2/SP-3 (Minor/Nit):** key-load failure held to AO009-grade value-silence; the fingerprint parity is
+  an explicit coded check, never a bare `assert`. FOLDED into §3.5.
+
+### Cross-engine delta (round 2)
+
+Codex's single P2 (source-record immutability) was independently CONFIRMED by three Claude adversarial
+verdicts from different lenses — the strongest convergence of the round. Claude's panel additionally
+surfaced the path-base contradiction (SB1) and the self-referential census binding (OCA-1) that Codex did
+not; Codex surfaced nothing the panel missed. No contradictions between engines.
+
+### Verdict
+
+All round-1 findings CLOSED (grounded) after the tightening; all round-2 findings FOLDED same-day. One
+coverage caveat recorded honestly: the ci-set-semantics lens is re-executed against the tightened text as
+round-2b, appended below. → Operator approval gate.
+
+## ROUND 2b — ci-set-semantics genuine re-run + Codex pass on the tightened rev2 — *appended on completion.*
