@@ -350,6 +350,25 @@ def test_committed_prod_key_resolves_and_no_private_material():
                 assert b"PRIVATE KEY" not in fh.read(), f"private key material found under keys/: {fn}"
 
 
+def test_committed_prod_census_reverifies_through_shared_anchor():
+    # SP026: the REAL committed production census must still verify GREEN through the refactored
+    # disposition_trust anchor — proving the refactor is behavior-preserving for genuine evidence.
+    # This runs the ACTUAL verifier entrypoint; it does NOT rely on the CI 'no new snapshots' path.
+    import glob
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    snaps = sorted(glob.glob(os.path.join(here, "evidence", "census-prod-*.json")))
+    assert snaps, "no committed census artifact found"
+    snap = snaps[-1]
+    sig = snap + ".sig"
+    repo_sha = json.load(open(snap, encoding="utf-8"))["repo_sha"]
+    keys_dir = os.path.join(here, "keys")
+    rc = vc.main(["--snapshot", snap, "--snapshot-sig", sig, "--key-id", PROD_KEY_ID, "--keys-dir", keys_dir,
+                  "--expect-project-ref", PROJECT, "--expect-database", "postgres", "--expect-schemas", "public",
+                  "--expect-repo-sha", repo_sha, "--require-role-markers", ",".join(MARKERS),
+                  "--expect-query-bundle-sha256", QB])
+    assert rc == 0
+
+
 def test_main_expect_query_bundle_required():
     # RR-2: --expect-query-bundle-sha256 is REQUIRED at the CLI (no self-referential default); argparse errors.
     priv, _pp, pub_pem = _ephemeral_keypair()
@@ -432,6 +451,7 @@ ALL = [
     ("verify_detached_with_key_crypto_is_sole_gate", test_verify_detached_with_key_crypto_is_sole_gate),
     ("key_id_traversal_rejected_even_with_planted_key", test_key_id_traversal_rejected_even_with_planted_key),
     ("committed_prod_key_resolves_and_no_private_material", test_committed_prod_key_resolves_and_no_private_material),
+    ("committed_prod_census_reverifies", test_committed_prod_census_reverifies_through_shared_anchor),
     ("main_expect_query_bundle_required", test_main_expect_query_bundle_required),
     ("main_require_clean_checkout_preflight", test_main_require_clean_checkout_preflight),
 ]
