@@ -409,6 +409,50 @@ def _producing_repo_sha_reason_with_nonnull_OV012():
     return "OV012" in _codes(ov.check_target(doc, _rel_index(census)))
 
 
+def _malformed_window_null_timestamp_OV009():
+    # Fail-closed (round-3 review): a null / non-string window timestamp must be a coded OV009,
+    # never an uncaught AttributeError from _parse_iso's .replace().
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   observation_window={"started_at": None, "ended_at": "2026-07-09T00:00:00Z"})
+    return "OV009" in _codes(ov.check_observation_window(doc, NOW_DT))
+
+
+def _validate_overlay_clean_no_diags():
+    # Happy-path guard: a fully valid overlay yields NO OV008 (guards against a spurious-reject regression).
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}])
+    return ov.validate_overlay(doc, _CONTRACT.overlay_validator) == []
+
+
+def _check_conflict_distinct_no_diags():
+    # Mutation guard: distinct (dimension, object_id) keys yield NO OV007 (kills an `n >= 1` flag-everything bug).
+    keys = [("consumer_evidence.static_repo", "public.v"),
+            ("consumer_evidence.runtime_logs", "public.v"),
+            ("consumer_evidence.static_repo", "public.w")]
+    return ov.check_conflict(keys) == []
+
+
+def _producing_repo_sha_forbidden_null_without_reason_OV012():
+    # FORBIDDEN dim (advisor_findings): null producing_repo_sha WITHOUT a reason must reject (matrix completeness).
+    census = _zero_census(["public.v"])
+    doc = _overlay("advisor_findings", "advisor_api",
+                   [{"object_id": "public.v", "value": {"state": "observed", "value": ["x"]}}],
+                   producing_repo_sha=None)
+    doc.pop("producing_repo_sha_not_applicable_reason", None)
+    return "OV012" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _producing_repo_sha_conditional_null_without_reason_OV012():
+    # CONDITIONAL dim (external_clients): null producing_repo_sha WITHOUT a reason must reject (matrix completeness).
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.external_clients", "external_client_inventory",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "sha:e1"}}],
+                   producing_repo_sha=None)
+    doc.pop("producing_repo_sha_not_applicable_reason", None)
+    return "OV012" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
 _CASES += [
     ("dimension_not_permitted_OV004", _dimension_not_permitted_OV004),
     ("unknown_object_id_OV005", _unknown_object_id_OV005),
@@ -433,6 +477,11 @@ _CASES += [
     ("valid_window_passes_OV009", _valid_window_passes_OV009),
     ("base_nonzero_window_OV021_with_zero_overlays", _base_nonzero_window_OV021_with_zero_overlays),
     ("base_canonical_window_passes_OV021", _base_canonical_window_passes_OV021),
+    ("malformed_window_null_timestamp_OV009", _malformed_window_null_timestamp_OV009),
+    ("validate_overlay_clean_no_diags", _validate_overlay_clean_no_diags),
+    ("check_conflict_distinct_no_diags", _check_conflict_distinct_no_diags),
+    ("producing_repo_sha_forbidden_null_without_reason_OV012", _producing_repo_sha_forbidden_null_without_reason_OV012),
+    ("producing_repo_sha_conditional_null_without_reason_OV012", _producing_repo_sha_conditional_null_without_reason_OV012),
 ]
 
 if __name__ == "__main__":

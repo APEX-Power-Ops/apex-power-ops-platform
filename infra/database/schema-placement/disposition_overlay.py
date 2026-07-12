@@ -202,7 +202,7 @@ def check_observation_window(doc, now):
         s = _parse_iso(w["started_at"])
         e = _parse_iso(w["ended_at"])
         cap = _parse_iso(doc["captured_at"])
-    except (KeyError, ValueError, TypeError):
+    except (KeyError, ValueError, TypeError, AttributeError):
         return [("OV009", loc, f"observation_window/captured_at malformed or unparseable: {w!r}")]
     if not (s < e):
         out.append(("OV009", loc, f"started_at {w['started_at']} must be < ended_at {w['ended_at']}"))
