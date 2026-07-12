@@ -6,6 +6,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -695,6 +696,143 @@ _CASES += [
     ("ov022_fires_when_ended_short", _ov022_fires_when_ended_short),
     ("ov022_ok_exact_boundary", _ov022_ok_exact_boundary),
     ("ov022_non_delete_oid_no_OV022", _ov022_non_delete_oid_no_OV022),
+]
+
+
+# ---- Task 6: load_and_merge orchestration + effective-view integrity ----
+class _FakeSigner:
+    """Stands in for disposition_trust.ResolvedSigner (public_key + provenance for the receipt, F3)."""
+    def __init__(self, pub):
+        self.public_key = pub
+        self.key_id = "test-signer"
+        self.spki_sha256 = "f" * 64
+
+
+def _decisions_manifest(oids, action="harden", conclusion="unresolved", required=None):
+    # default conclusion 'unresolved' + empty required_observations => OV015 is NOT triggered, so these
+    # merge-mechanics unit tests isolate the deepcopy/derivation/receipt behavior. (Full gate-required
+    # coverage + OV015 are exercised in Task 8's e2e + Task 6's dedicated OV015 case below.)
+    rows = [{"decision_id": "D1", "action_class": action, "decision_status": "accepted",
+             "consumer_disposition": conclusion, "source_objects": list(oids)}]
+    decisions = {"kind": "decisions_file", "rows": rows}
+    manifest = {"kind": "cluster_manifest", "cluster_id": "c-001", "status": "accepted", "action_class": action,
+                "decision_ids": ["D1"], "evidence_snapshot": "prod.json", "max_staleness_hours": 8760,
+                "minimum_consumer_window_hours": 24, "required_observations": list(required or []),
+                "technical_authority_approval": "TA-1"}
+    return decisions, manifest
+
+
+def _static_overlay(cb, oid="public.v", **overrides):
+    return _overlay("consumer_evidence.static_repo", "repository_scan",
+                    [{"object_id": oid, "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                    census_bytes=cb, **overrides)
+
+
+def _merge(census, cb, overlays, decisions, manifest, signer, max_stale=8760):
+    inputs = []
+    for i, ov_doc in enumerate(overlays):
+        ob, sig = _sign(ov_doc, signer[0])
+        inputs.append((f"o{i}.json", f"o{i}.json.sig", ob, sig))
+    return ov.load_and_merge(census=census, census_bytes=cb, overlay_inputs=inputs, manifest=manifest,
+                             decisions=decisions, expect_project_ref="fxoyniqnrlkxfligbxmg", now=NOW,
+                             max_consumer_evidence_age_hours=8760, max_staleness_hours=max_stale,
+                             resolved_signer=signer[1], contract=_CONTRACT)
+
+
+def _merge_deepcopy_unmutated():
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    before = copy.deepcopy(census)
+    decisions, manifest = _decisions_manifest(["public.v"])
+    res = _merge(census, cb, [_static_overlay(cb)], decisions, manifest, (priv, _FakeSigner(pub)))
+    # base census object is unmutated; the effective view got a derived window (started_at moved off the
+    # zero-width base); and no scratch contributor map leaked onto the effective snapshot (audit #9).
+    w = res.effective_snapshot["relations"][0]["consumer_evidence"]["observation_window"]
+    return (census == before and res.diagnostics == [] and w["started_at"] != CENSUS_OBSERVED_AT
+            and "_contrib_windows" not in res.effective_snapshot)
+
+
+def _stale_overlay_captured_at_OV010():
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    # coherent window (ended <= captured, no OV009) but captured_at far older than max_staleness_hours
+    o = _static_overlay(cb, captured_at="2020-01-05T00:00:00Z",
+                        observation_window={"started_at": "2019-12-01T00:00:00Z", "ended_at": "2020-01-01T00:00:00Z"})
+    decisions, manifest = _decisions_manifest(["public.v"])
+    res = _merge(census, cb, [o], decisions, manifest, (priv, _FakeSigner(pub)), max_stale=24)
+    return "OV010" in _codes(res.diagnostics)
+
+
+def _effective_view_datetimes_are_iso():
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    decisions, manifest = _decisions_manifest(["public.v"])
+    res = _merge(census, cb, [_static_overlay(cb)], decisions, manifest, (priv, _FakeSigner(pub)))
+    w = res.effective_snapshot["relations"][0]["consumer_evidence"]["observation_window"]
+    pat = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$"
+    return res.diagnostics == [] and re.match(pat, w["started_at"]) and re.match(pat, w["ended_at"])
+
+
+def _receipt_binds_sidecar_and_signer():
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    decisions, manifest = _decisions_manifest(["public.v"])
+    res = _merge(census, cb, [_static_overlay(cb)], decisions, manifest, (priv, _FakeSigner(pub)))
+    e = res.receipt_overlays[0]
+    return (res.diagnostics == [] and e["path"] == "o0.json" and e["sig_path"] == "o0.json.sig"
+            and len(e["raw_sha256"]) == 64 and len(e["sig_sha256"]) == 64
+            and e["signer"]["key_id"] == "test-signer" and e["signer"]["spki_sha256"] == "f" * 64
+            and e["object_ids"] == ["public.v"] and e["dimension"] == "consumer_evidence.static_repo"
+            and e["disposition_schema_sha256"] == _CONTRACT.disp_sha256)
+
+
+def _ov015_missing_gate_required_dimension():
+    # A resolved (no_consumer) conclusion forces every consumer contributor dim; supplying only
+    # static_repo leaves runtime_logs/external_clients/operator_declaration unresolved -> OV015 (F7).
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    decisions, manifest = _decisions_manifest(["public.v"], conclusion="no_consumer")
+    res = _merge(census, cb, [_static_overlay(cb)], decisions, manifest, (priv, _FakeSigner(pub)))
+    return "OV015" in _codes(res.diagnostics)
+
+
+def _signed_non_object_overlay_OV008():
+    # a SIGNED JSON array (not an object) must be a coded OV008, never an uncaught AttributeError (F1).
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    body, sig = _sign(["not", "an", "object"], priv)
+    decisions, manifest = _decisions_manifest(["public.v"])
+    res = ov.load_and_merge(census=census, census_bytes=cb, overlay_inputs=[("bad.json", "bad.json.sig", body, sig)],
+                            manifest=manifest, decisions=decisions, expect_project_ref="fxoyniqnrlkxfligbxmg", now=NOW,
+                            max_consumer_evidence_age_hours=8760, max_staleness_hours=8760,
+                            resolved_signer=_FakeSigner(pub), contract=_CONTRACT)
+    return "OV008" in _codes(res.diagnostics)  # reached here => no uncaught exception
+
+
+def _signed_malformed_assignments_OV008():
+    # a SIGNED object whose assignments is the wrong TYPE (not an array) -> schema OV008, no crash: the
+    # short-circuit skips the assignment iteration that would otherwise iterate a string (F1).
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    doc = _static_overlay(cb)
+    doc["assignments"] = "not-an-array"
+    body, sig = _sign(doc, priv)
+    decisions, manifest = _decisions_manifest(["public.v"])
+    res = ov.load_and_merge(census=census, census_bytes=cb, overlay_inputs=[("m.json", "m.json.sig", body, sig)],
+                            manifest=manifest, decisions=decisions, expect_project_ref="fxoyniqnrlkxfligbxmg", now=NOW,
+                            max_consumer_evidence_age_hours=8760, max_staleness_hours=8760,
+                            resolved_signer=_FakeSigner(pub), contract=_CONTRACT)
+    return "OV008" in _codes(res.diagnostics)
+
+
+_CASES += [
+    ("merge_deepcopy_unmutated", _merge_deepcopy_unmutated),
+    ("stale_overlay_captured_at_OV010", _stale_overlay_captured_at_OV010),
+    ("effective_view_datetimes_are_iso", _effective_view_datetimes_are_iso),
+    ("receipt_binds_sidecar_and_signer", _receipt_binds_sidecar_and_signer),
+    ("ov015_missing_gate_required_dimension", _ov015_missing_gate_required_dimension),
+    ("signed_non_object_overlay_OV008", _signed_non_object_overlay_OV008),
+    ("signed_malformed_assignments_OV008", _signed_malformed_assignments_OV008),
 ]
 
 if __name__ == "__main__":

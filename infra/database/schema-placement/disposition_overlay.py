@@ -368,3 +368,196 @@ def check_delete_floor_coherence(effective, *, delete_src_oids, external_na_oids
             out.append(("OV022", f"overlay-delete:{oid}",
                         f"in_data_api window [{api_s.isoformat()}, {api_e.isoformat()}] does not cover derived consumer window [{s.isoformat()}, {e.isoformat()}]"))
     return out
+
+
+# ---- OV015 cluster-completeness (advisory; audit F7) ----
+_PERMITTED_OVERLAY_TARGETS = set(DIMENSIONS)  # the six permitted overlay paths
+_CONSUMER_REQUIRED_EXPANSION = tuple(f"consumer_evidence.{d}" for d in CONSUMER_CONTRIB_DIMS)
+
+
+def _gate_required_dims(row, manifest):
+    """Permitted-overlay-target dimensions a decision's source relations must have resolved: the
+    permitted-target subset of manifest.required_observations (consumer_evidence expands to the four
+    contributor dims) UNION the consumer dims for a resolved consumer_disposition (SP022) UNION the
+    delete-floor dims + in_data_api for a delete (SP027 external_clients waiver)."""
+    req = set()
+    for f in manifest.get("required_observations", []):
+        if f == "consumer_evidence":
+            req.update(_CONSUMER_REQUIRED_EXPANSION)
+        elif f in _PERMITTED_OVERLAY_TARGETS:
+            req.add(f)
+    if row.get("consumer_disposition") in ("no_consumer", "has_consumers"):
+        req.update(_CONSUMER_REQUIRED_EXPANSION)
+    if row.get("action_class") == "delete":
+        req.update(_CONSUMER_REQUIRED_EXPANSION)
+        req.add("in_data_api_exposed_schema")
+    return req & _PERMITTED_OVERLAY_TARGETS
+
+
+def check_cluster_completeness(base_census, effective, manifest, decisions):
+    """OV015 (advisory, audit F7): every cluster-source relation must have each gate-required
+    permitted-overlay-target dimension resolved (state != not_observed) in the effective view — unless
+    it was already observed in the BASE census (e.g. database_deps, which is not an overlay target).
+    SP009/SP022/SP027 on the effective view remain authoritative; OV015 names the missing overlay early."""
+    out = []
+    dec_by_id = {row["decision_id"]: row for row in decisions.get("rows", [])}
+    base_index = {r["object_id"]: r for r in base_census.get("relations", [])}
+    eff_index = {r["object_id"]: r for r in effective.get("relations", [])}
+    for did in manifest.get("decision_ids", []):
+        row = dec_by_id.get(did)
+        if not row:
+            continue
+        for oid in row.get("source_objects", []):
+            base_rel, eff_rel = base_index.get(oid), eff_index.get(oid)
+            if base_rel is None or eff_rel is None:
+                continue
+            for dim in sorted(_gate_required_dims(row, manifest)):
+                if _base_slot(base_rel, dim).get("state") == "not_observed" and _base_slot(eff_rel, dim).get("state") == "not_observed":
+                    out.append(("OV015", f"cluster:{did}:{oid}:{dim}", f"gate-required dimension {dim} is unresolved (no permitted overlay)"))
+    return out
+
+
+@dataclass
+class MergeResult:
+    effective_snapshot: dict
+    derived_window_object_ids: set
+    receipt_overlays: list = field(default_factory=list)
+    diagnostics: list = field(default_factory=list)
+
+
+def load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions, expect_project_ref,
+                   now, max_consumer_evidence_age_hours, max_staleness_hours, resolved_signer, contract):
+    """The step 1-8 pipeline. `contract` is the read-once OverlayContract (schema bytes+hashes+validator,
+    audit F4 — schemas are NEVER reopened here). `overlay_inputs` = list of
+    (overlay_path, sig_path, overlay_bytes, sig_bytes) read once by the caller. Verifies + binds +
+    window-checks (OV009, per-overlay) + targets + de-conflicts each overlay; runs the UNCONDITIONAL
+    OV021 precheck; deep-copies the census; sets each resolved dimension; derives per-relation consumer
+    windows for EVERY cluster-source relation (contributor map kept LOCAL, audit #9); runs OV022 + OV015.
+    Returns a MergeResult. NEVER mutates census. Any reject short-circuits to a red MergeResult."""
+    diags = []
+    census_sha = _sha256_hex(census_bytes)
+    base_observed_at = _parse_iso(census.get("observed_at"))
+    rel_index = {r["object_id"]: r for r in census.get("relations", [])}
+
+    # step 8 (OV021) runs UNCONDITIONALLY, even with zero overlays.
+    diags += precheck_base_window(census)
+
+    parsed = []            # (doc, overlay_path, sig_path, overlay_bytes, sig_bytes)
+    all_keys = []          # (dimension, object_id) for OV007
+    for overlay_path, sig_path, ob_bytes, sig_bytes in overlay_inputs:
+        ok, reason = verify_overlay(ob_bytes, sig_bytes, resolved_signer.public_key)
+        if not ok:
+            diags.append(("OV001", f"overlay:{overlay_path}", f"signature verification failed: {reason}"))
+            continue
+        try:
+            doc = parse_overlay(ob_bytes)          # parse the SAME verified buffer
+        except ValueError as exc:
+            diags.append(("OV008", f"overlay:{overlay_path}", f"parse failed ({exc})"))
+            continue
+        # A signed-but-non-object payload (JSON array/scalar) has no .get/.assignments — reject it as a
+        # coded OV008 before any dict-shaped access, never an uncaught AttributeError (audit round-3 F1).
+        if not isinstance(doc, dict):
+            diags.append(("OV008", f"overlay:{overlay_path}", f"overlay is not a JSON object (got {type(doc).__name__})"))
+            continue
+        # SHORT-CIRCUIT on any schema/format/registry failure: a schema-invalid overlay is not safe to
+        # bind / window-check / target / iterate (its assignments may be malformed). OV008 then continue.
+        schema_diags = validate_overlay(doc, contract.overlay_validator)
+        if schema_diags:
+            diags.extend(schema_diags)
+            continue
+        diags += check_binding(doc, census_sha256=census_sha, census_project_ref=census.get("project_ref"),
+                               expect_project_ref=expect_project_ref, on_disk_disp_sha=contract.disp_sha256,
+                               on_disk_overlay_sha=contract.overlay_sha256)
+        diags += check_observation_window(doc, now)   # OV009 per-overlay (audit F2), on a schema-valid doc
+        diags += check_target(doc, rel_index)
+        # OV010 per-overlay captured_at freshness (finite-guarded), reusing manifest max_staleness_hours.
+        try:
+            cap = _parse_iso(doc.get("captured_at"))
+            if cap > now:
+                diags.append(("OV010", f"overlay:{overlay_path}", "captured_at is in the future"))
+            elif _finite(max_staleness_hours) and (now - cap).total_seconds() / 3600.0 > max_staleness_hours:
+                diags.append(("OV010", f"overlay:{overlay_path}", f"captured_at staler than max_staleness_hours {max_staleness_hours}"))
+        except (ValueError, TypeError):
+            diags.append(("OV010", f"overlay:{overlay_path}", "captured_at unparseable"))
+        for a in doc.get("assignments", []):
+            all_keys.append((doc.get("dimension"), a.get("object_id")))
+        parsed.append((doc, overlay_path, sig_path, ob_bytes, sig_bytes))
+    diags += check_conflict(all_keys)
+
+    if diags:
+        return MergeResult(effective_snapshot=None, derived_window_object_ids=set(), diagnostics=diags)
+
+    # ---- build the effective view (deepcopy; census never mutated) ----
+    effective = copy.deepcopy(census)
+    eff_index = {r["object_id"]: r for r in effective["relations"]}
+    contrib = {}                     # LOCAL: oid -> [(started, ended, captured)] (audit #9; NOT stashed on effective)
+    in_data_api_windows = {}         # oid -> (started, ended) from the (in_data_api, oid) overlay (T2)
+    external_state = {}              # oid -> external_clients state, for T1
+    for doc, _op, _sp, _ob, _sb in parsed:
+        dim = doc["dimension"]
+        win = doc["observation_window"]
+        w = (_parse_iso(win["started_at"]), _parse_iso(win["ended_at"]))
+        cap = _parse_iso(doc["captured_at"])
+        for a in doc["assignments"]:
+            oid = a["object_id"]
+            rel = eff_index[oid]
+            if dim.startswith("consumer_evidence."):
+                sub = dim.split(".", 1)[1]
+                rel["consumer_evidence"][sub] = a["value"]
+                if sub in CONSUMER_CONTRIB_DIMS and a["value"].get("state") == "observed":
+                    contrib.setdefault(oid, []).append((w[0], w[1], cap))
+                if sub == "external_clients":
+                    external_state[oid] = a["value"].get("state")
+            else:
+                rel[dim] = a["value"]
+                # Record the in_data_api window ONLY for an observed-FALSE overlay — the only shape that
+                # backs the SP027 external_clients not_applicable waiver. A missing overlay leaves the
+                # gate-required dim unresolved (-> OV015); an observed-true overlay leaves this unset so
+                # OV022 defers and SP027 denies the waiver at the semantic gate (audit F2; T2).
+                if dim == "in_data_api_exposed_schema" and a["value"].get("state") == "observed" and a["value"].get("value") is False:
+                    in_data_api_windows[oid] = w
+
+    # cluster-source object_ids across ALL decisions (deduped by object_id, T3), incl. retain.
+    dec_by_id = {row["decision_id"]: row for row in decisions.get("rows", [])}
+    cluster_src_oids = set()
+    delete_src_oids = set()
+    for did in manifest.get("decision_ids", []):
+        row = dec_by_id.get(did)
+        if not row:
+            continue
+        for oid in row.get("source_objects", []):
+            if oid in eff_index:
+                cluster_src_oids.add(oid)
+                if row.get("action_class") == "delete":
+                    delete_src_oids.add(oid)
+
+    wdiags, derived = derive_windows(effective, cluster_src_oids=cluster_src_oids, contrib_by_oid=contrib,
+                                     now=now, base_observed_at=base_observed_at,
+                                     max_consumer_evidence_age_hours=max_consumer_evidence_age_hours)
+    diags += wdiags
+    derived_windows = {oid: (_parse_iso(eff_index[oid]["consumer_evidence"]["observation_window"]["started_at"]),
+                             _parse_iso(eff_index[oid]["consumer_evidence"]["observation_window"]["ended_at"]))
+                       for oid in derived}
+    external_na_oids = {oid for oid, st in external_state.items() if st == "not_applicable"}
+    diags += check_delete_floor_coherence(effective, delete_src_oids=delete_src_oids,
+                                          external_na_oids=external_na_oids,
+                                          in_data_api_windows=in_data_api_windows, derived_windows=derived_windows)
+    diags += check_cluster_completeness(census, effective, manifest, decisions)   # OV015 (audit F7)
+
+    receipt_overlays = []
+    for doc, op, sp, ob, sb in parsed:
+        entry = {"path": op, "raw_sha256": _sha256_hex(ob), "sig_path": sp, "sig_sha256": _sha256_hex(sb),
+                 "signer": {"key_id": resolved_signer.key_id, "spki_sha256": resolved_signer.spki_sha256},
+                 "dimension": doc["dimension"], "object_ids": [a["object_id"] for a in doc.get("assignments", [])],
+                 "object_id_count": len(doc.get("assignments", [])), "captured_at": doc["captured_at"],
+                 "producing_repo_sha": doc.get("producing_repo_sha"), "source_hash": doc.get("source_hash"),
+                 "disposition_schema_sha256": doc.get("disposition_schema_sha256"),
+                 "overlay_schema_sha256": doc.get("overlay_schema_sha256")}
+        if doc["dimension"] == "consumer_evidence.operator_declaration":
+            entry["operator_identity"] = doc.get("operator_identity")
+            entry["attestation_ref"] = doc.get("attestation_ref")
+        receipt_overlays.append(entry)
+    if diags:
+        return MergeResult(effective_snapshot=None, derived_window_object_ids=set(), diagnostics=diags)
+    return MergeResult(effective_snapshot=effective, derived_window_object_ids=derived,
+                       receipt_overlays=receipt_overlays, diagnostics=[])
