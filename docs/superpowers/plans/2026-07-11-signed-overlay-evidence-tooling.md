@@ -1,6 +1,7 @@
 # Signed Evidence Overlay Tooling Implementation Plan
 
-> **rev 3 (2026-07-12)** folds the focused-re-audit cross-engine pass (Codex, 2 P2s): OV022 now **defers to SP027** for a missing/observed-true `in_data_api` overlay (fires only when an observed-false overlay's window fails to cover [S,E]) so the ratified "missing→SP027" contract holds; the recency-policy `OV016` (absent/non-finite `max_consumer_evidence_age_hours`) is a **deterministic precheck at the top of `derive_windows`**, never masked by a zero-contributor `OV018`.
+> **rev 4 (2026-07-12)** folds the second plan re-audit (1 High + 4 Med): **F1** the loader **short-circuits on any schema failure** (non-object payload + malformed `assignments` → coded OV008, no `AttributeError`); **F2** the `in_data_api` delete diagnostic is a coherent split — **OV015** (missing) / **SP027** (observed-true) / **OV022** (observed-false, inadequate window); **F3** the principal `_e2e_red_then_green` + `_e2e_ov021_via_main` are now **real `cd.main` tests** (no passing placeholder); **F4** a real `validate_overlay`-maps-unseeded-`$ref`→coded-OV008 test; **F5** `producing_repo_sha` applicability is **three categories** (required / forbidden+reason / conditional) with positive+negative tests.
+> **rev 3 (2026-07-12)** folds the focused-re-audit cross-engine pass (Codex, 2 P2s): OV022 **defers** for a missing/observed-true `in_data_api` overlay (fires only when an observed-false overlay's window fails to cover [S,E]); the recency-policy `OV016` (absent/non-finite `max_consumer_evidence_age_hours`) is a **deterministic precheck at the top of `derive_windows`**, never masked by a zero-contributor `OV018`.
 > **rev 2 (2026-07-12)** folds the operator's cross-engine plan audit: layering RATIFIED (unconditional loader) + all nine findings (F1 raw-input validation, F2 per-overlay OV009, F3 receipt binding, F4 read-once `OverlayContract`, F5 schema-valid fixtures, F6 governed CI, F7 OV015, F8 real unresolved-`$ref` test, F9 IFF null-reason) + contributor-map-local. See the fold table at the end.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -33,7 +34,7 @@
 - **IFF null-reason contracts (audit F9):** `OV019` (`source_hash`) and `OV012` (`producing_repo_sha`) enforce a true biconditional — a reason is required **iff** the hash is null, so a reason supplied alongside a **non-null** hash is also rejected.
 - **Governed CI (audit F6):** `test_overlay_schema` and `test_overlay_loader` are added to the `suites` job of `.github/workflows/schema-placement-ci.yml` (Tasks 1 & 8). Manual Task-9 execution is not sufficient.
 - **Derived-window predicate (§3), enforced at merge:** contributors `C` = consumer-dimension overlays resolving the relation with `state = observed` over `{static_repo, runtime_logs, external_clients, operator_declaration}` (`database_deps` is anchored at `base_observed_at`, NOT a windowed contributor). `S = max(startedᵢ)`, `E = min(endedᵢ)`; reject unless: `C` non-empty (`OV018`); `S < E` (`OV011`); `E <= now` (`OV009`); `now - E <= max_consumer_evidence_age_hours` (`OV016`, required finite+positive CLI flag; absent/NaN/Inf ⇒ `OV016`); `S <= base_observed_at <= E` (`OV017`); for a `delete` conclusion `(E - S) >= 720h` is left to SP027 on the effective view.
-- **Negative-test matrix (every item MUST appear as a pinned failing test, most in Tasks 3–5/8):** OV022-fires-when-window-not-covering · external_clients-observed→no-OV022 · missing-in_data_api-overlay→SP027 · stale-in_data_api-overlay→OV010 · window-sourced-from-the-specific-assignment · retain-no-overlay→OV018 · retain-with-covering→green · duplicate-src-object→single-derivation-one-marker · OV021-fires-with-zero-overlays · remove-marker→original-SP009.
+- **Negative-test matrix (every item MUST appear as a pinned failing test, most in Tasks 3–5/8):** OV022-fires-when-window-not-covering · external_clients-observed→no-OV022 · **delete-missing-in_data_api→OV015** · **delete-observed-true-in_data_api→SP027** · **delete-observed-false-non-covering→OV022** · stale-in_data_api-overlay→OV010 · window-sourced-from-the-specific-assignment · retain-no-overlay→OV018 · retain-with-covering→green · duplicate-src-object→single-derivation-one-marker · OV021-fires-with-zero-overlays · remove-marker→original-SP009 · signed-non-object-overlay→OV008 · unseeded-$ref→coded-OV008 · producing_repo_sha-{required,forbidden,conditional}. The `in_data_api` delete diagnostic split is **OV015 (missing) / SP027 (observed-true) / OV022 (observed-false, inadequate window)** — a coherent three-way routing (audit round-3 F2).
 - **Test invocation (every "run the test" step):** from `infra/database/schema-placement/`, run `uv run --project . --locked python tests/<file>.py`. A test file exits `0` iff all its `_name()` cases return truthy. NEVER invoke `pytest`.
 - **Grounding constants:** base snapshot SHA-256 = `5bb4191fea584f4cecf111c718382bc3f6d0d88707a7c6e9c4c5065132ac416e`; project ref `fxoyniqnrlkxfligbxmg`; pinned signer id `prod-disposition-ed25519-2026-07`; disposition schema `$id` = `https://apex-power-ops/schema-placement/disposition.schema.json`.
 - **Commit discipline:** solo-maintainer branch `schema-placement/signed-overlay`; frequent commits, exact paths only (`git add <file>` — never `git add <dir>`). Merge is operator-gated after green CI + cross-engine IRP (no admin bypass).
@@ -721,9 +722,49 @@ def _source_type_mismatch_OV013():
 def _operator_declaration_missing_provenance_OV014():
     census = _zero_census(["public.v"])
     doc = _overlay("consumer_evidence.operator_declaration", "operator_declaration",
-                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 1, "ref": "att:1"}}])
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 1, "ref": "sha:att1"}}],
+                   producing_repo_sha=None, producing_repo_sha_not_applicable_reason="operator attestation")  # forbidden dim -> null+reason (isolates OV014)
     doc.pop("operator_identity", None); doc.pop("attestation_ref", None)
     return "OV014" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _validate_overlay_unresolvable_maps_to_OV008():
+    # audit round-3 F4: an unseeded $ref hit during validation must be CAUGHT by validate_overlay and
+    # mapped to a coded OV008 (never an uncaught referencing.Unresolvable, never a network fetch).
+    from jsonschema import Draft202012Validator
+    from referencing import Registry
+    bogus = Draft202012Validator({"$ref": "https://unseeded.example/nope.json#/$defs/x"}, registry=Registry())
+    return _codes(ov.validate_overlay({"dimension": "x", "any": 1}, bogus)) == ["OV008"]
+
+
+def _producing_repo_sha_forbidden_nonnull_OV012():
+    census = _zero_census(["public.v"])  # advisor_findings is FORBIDDEN: a non-null producing_repo_sha rejects
+    doc = _overlay("advisor_findings", "advisor_api",
+                   [{"object_id": "public.v", "value": {"state": "observed", "value": ["security_definer_view"]}}])  # default producing_repo_sha="d"*40
+    return "OV012" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _producing_repo_sha_forbidden_null_reason_ok():
+    census = _zero_census(["public.v"])
+    doc = _overlay("advisor_findings", "advisor_api",
+                   [{"object_id": "public.v", "value": {"state": "observed", "value": ["x"]}}],
+                   producing_repo_sha=None, producing_repo_sha_not_applicable_reason="advisor API pull")
+    return "OV012" not in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _producing_repo_sha_conditional_nonnull_ok():
+    census = _zero_census(["public.v"])  # external_clients is CONDITIONAL: non-null (no reason) is allowed
+    doc = _overlay("consumer_evidence.external_clients", "external_client_inventory",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "sha:e1"}}])
+    return "OV012" not in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _producing_repo_sha_conditional_null_reason_ok():
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.external_clients", "external_client_inventory",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "sha:e1"}}],
+                   producing_repo_sha=None, producing_repo_sha_not_applicable_reason="no producing repo")
+    return "OV012" not in _codes(ov.check_target(doc, _rel_index(census)))
 
 
 def _source_hash_null_without_reason_OV019():
@@ -825,6 +866,11 @@ _CASES += [
     ("producing_repo_sha_absent_OV012", _producing_repo_sha_absent_OV012),
     ("source_hash_reason_with_nonnull_OV019", _source_hash_reason_with_nonnull_OV019),
     ("producing_repo_sha_reason_with_nonnull_OV012", _producing_repo_sha_reason_with_nonnull_OV012),
+    ("producing_repo_sha_forbidden_nonnull_OV012", _producing_repo_sha_forbidden_nonnull_OV012),
+    ("producing_repo_sha_forbidden_null_reason_ok", _producing_repo_sha_forbidden_null_reason_ok),
+    ("producing_repo_sha_conditional_nonnull_ok", _producing_repo_sha_conditional_nonnull_ok),
+    ("producing_repo_sha_conditional_null_reason_ok", _producing_repo_sha_conditional_null_reason_ok),
+    ("validate_overlay_unresolvable_maps_to_OV008", _validate_overlay_unresolvable_maps_to_OV008),
     ("duplicate_pair_within_and_across_OV007", _duplicate_pair_within_and_across_OV007),
     ("window_started_after_ended_OV009", _window_started_after_ended_OV009),
     ("window_ended_after_captured_OV009", _window_ended_after_captured_OV009),
@@ -844,8 +890,10 @@ Expected: FAIL — `AttributeError: ... 'check_target'` (and the other new attrs
 - [ ] **Step 3: Implement the guards** — append to `disposition_overlay.py`:
 
 ```python
-# dimensions whose overlay MUST carry a real producing_repo_sha (Appendix B); others require null+reason.
-_PRODUCING_SHA_REQUIRED = {"in_data_api_exposed_schema", "consumer_evidence.static_repo"}
+# producing_repo_sha applicability, three categories per Appendix B (audit round-3 F5):
+_PRODUCING_SHA_REQUIRED = {"in_data_api_exposed_schema", "consumer_evidence.static_repo"}            # non-null, NO reason
+_PRODUCING_SHA_FORBIDDEN = {"advisor_findings", "consumer_evidence.runtime_logs", "consumer_evidence.operator_declaration"}  # MUST be null + reason
+# consumer_evidence.external_clients is CONDITIONAL: non-null (no reason) OR null + reason (the IFF fallthrough).
 
 
 def validate_overlay(doc, validator):
@@ -912,12 +960,17 @@ def check_target(doc, census_rel_index):
     # OV012 IFF: required dims need a non-null producing_repo_sha with NO reason; other dims need null+reason.
     prs = doc.get("producing_repo_sha")
     prs_reason = (doc.get("producing_repo_sha_not_applicable_reason") or "").strip()
-    if dimension in _PRODUCING_SHA_REQUIRED:
+    if dimension in _PRODUCING_SHA_REQUIRED:                 # required: non-null, no reason
         if not prs:
             out.append(("OV012", loc, f"producing_repo_sha required for {dimension} but absent/null"))
         elif prs_reason:
             out.append(("OV012", loc, "producing_repo_sha is non-null but a not_applicable_reason is also present (must be absent)"))
-    else:
+    elif dimension in _PRODUCING_SHA_FORBIDDEN:              # forbidden: MUST be null + reason
+        if prs is not None:
+            out.append(("OV012", loc, f"producing_repo_sha is not applicable for {dimension}; it must be null with a not_applicable_reason"))
+        elif not prs_reason:
+            out.append(("OV012", loc, "producing_repo_sha is null without producing_repo_sha_not_applicable_reason"))
+    else:                                                    # conditional (external_clients): IFF null<->reason
         if prs is None and not prs_reason:
             out.append(("OV012", loc, "producing_repo_sha is null without producing_repo_sha_not_applicable_reason"))
         elif prs is not None and prs_reason:
@@ -1245,10 +1298,10 @@ def _external_clients_observed_no_OV022():
     return diags == []
 
 
-def _missing_in_data_api_defers_to_SP027():
-    # external_clients not_applicable but NO observed-false in_data_api overlay backs it -> OV022 does
-    # NOT fire; the SP027 delete floor (in run(), exercised end-to-end in Task 8) denies the waiver
-    # instead, honoring the ratified "missing in_data_api overlay -> SP027" contract (Codex-P2).
+def _missing_in_data_api_no_OV022():
+    # NO observed-false in_data_api overlay backs the waiver -> check_delete_floor_coherence emits NO
+    # OV022 (it defers). The OVERALL routing for a missing overlay is OV015 (cluster-completeness) and,
+    # for an observed-TRUE overlay, SP027 at the semantic gate — both exercised in Task 8 (audit F2).
     eff = _zero_census(["public.v"])
     S, E = _pdt("2026-07-01T00:00:00Z"), _pdt("2026-07-10T20:00:00Z")
     diags = ov.check_delete_floor_coherence(eff, delete_src_oids={"public.v"}, external_na_oids={"public.v"},
@@ -1260,7 +1313,7 @@ _CASES += [
     ("ov022_fires_when_window_not_covering", _ov022_fires_when_window_not_covering),
     ("ov022_ok_when_window_covers", _ov022_ok_when_window_covers),
     ("external_clients_observed_no_OV022", _external_clients_observed_no_OV022),
-    ("missing_in_data_api_defers_to_SP027", _missing_in_data_api_defers_to_SP027),
+    ("missing_in_data_api_no_OV022", _missing_in_data_api_no_OV022),
 ]
 ```
 
@@ -1426,12 +1479,43 @@ def _ov015_missing_gate_required_dimension():
     return "OV015" in _codes(res.diagnostics)
 
 
+def _signed_non_object_overlay_OV008():
+    # a SIGNED JSON array (not an object) must be a coded OV008, never an uncaught AttributeError (F1).
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    body, sig = _sign(["not", "an", "object"], priv)
+    decisions, manifest = _decisions_manifest(["public.v"])
+    res = ov.load_and_merge(census=census, census_bytes=cb, overlay_inputs=[("bad.json", "bad.json.sig", body, sig)],
+                            manifest=manifest, decisions=decisions, expect_project_ref="fxoyniqnrlkxfligbxmg", now=NOW,
+                            max_consumer_evidence_age_hours=8760, max_staleness_hours=8760,
+                            resolved_signer=_FakeSigner(pub), contract=_CONTRACT)
+    return "OV008" in _codes(res.diagnostics)  # reached here => no uncaught exception
+
+
+def _signed_malformed_assignments_OV008():
+    # a SIGNED object whose assignments is the wrong TYPE (not an array) -> schema OV008, no crash: the
+    # short-circuit skips the assignment iteration that would otherwise iterate a string (F1).
+    priv, pub = _ephemeral_keypair()
+    census = _zero_census(["public.v"]); cb = _canon(census)
+    doc = _static_overlay(cb)
+    doc["assignments"] = "not-an-array"
+    body, sig = _sign(doc, priv)
+    decisions, manifest = _decisions_manifest(["public.v"])
+    res = ov.load_and_merge(census=census, census_bytes=cb, overlay_inputs=[("m.json", "m.json.sig", body, sig)],
+                            manifest=manifest, decisions=decisions, expect_project_ref="fxoyniqnrlkxfligbxmg", now=NOW,
+                            max_consumer_evidence_age_hours=8760, max_staleness_hours=8760,
+                            resolved_signer=_FakeSigner(pub), contract=_CONTRACT)
+    return "OV008" in _codes(res.diagnostics)
+
+
 _CASES += [
     ("merge_deepcopy_unmutated", _merge_deepcopy_unmutated),
     ("stale_overlay_captured_at_OV010", _stale_overlay_captured_at_OV010),
     ("effective_view_datetimes_are_iso", _effective_view_datetimes_are_iso),
     ("receipt_binds_sidecar_and_signer", _receipt_binds_sidecar_and_signer),
     ("ov015_missing_gate_required_dimension", _ov015_missing_gate_required_dimension),
+    ("signed_non_object_overlay_OV008", _signed_non_object_overlay_OV008),
+    ("signed_malformed_assignments_OV008", _signed_malformed_assignments_OV008),
 ]
 ```
 
@@ -1527,11 +1611,21 @@ def load_and_merge(*, census, census_bytes, overlay_inputs, manifest, decisions,
         except ValueError as exc:
             diags.append(("OV008", f"overlay:{overlay_path}", f"parse failed ({exc})"))
             continue
-        diags += validate_overlay(doc, contract.validator)
+        # A signed-but-non-object payload (JSON array/scalar) has no .get/.assignments — reject it as a
+        # coded OV008 before any dict-shaped access, never an uncaught AttributeError (audit round-3 F1).
+        if not isinstance(doc, dict):
+            diags.append(("OV008", f"overlay:{overlay_path}", f"overlay is not a JSON object (got {type(doc).__name__})"))
+            continue
+        # SHORT-CIRCUIT on any schema/format/registry failure: a schema-invalid overlay is not safe to
+        # bind / window-check / target / iterate (its assignments may be malformed). OV008 then continue.
+        schema_diags = validate_overlay(doc, contract.validator)
+        if schema_diags:
+            diags.extend(schema_diags)
+            continue
         diags += check_binding(doc, census_sha256=census_sha, census_project_ref=census.get("project_ref"),
                                expect_project_ref=expect_project_ref, on_disk_disp_sha=contract.disp_sha256,
                                on_disk_overlay_sha=contract.overlay_sha256)
-        diags += check_observation_window(doc, now)   # OV009 per-overlay (audit F2), before assignments are trusted
+        diags += check_observation_window(doc, now)   # OV009 per-overlay (audit F2), on a schema-valid doc
         diags += check_target(doc, rel_index)
         # OV010 per-overlay captured_at freshness (finite-guarded), reusing manifest max_staleness_hours.
         try:
@@ -1720,7 +1814,8 @@ git commit -m "feat(overlay): reframe gate receipt to evidence_ready + execution
 - [ ] **Step 1: Write the failing CLI e2e tests** — append to `tests/test_overlay_loader.py` and `_CASES`. These drive `check_disposition.main()` with real temp files:
 
 ```python
-import subprocess as _sp  # only for structure; the test calls cd.main(argv) directly, not a subprocess
+import contextlib
+import io
 import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -1728,34 +1823,116 @@ import check_disposition as cd  # noqa: E402
 import disposition_trust as dt  # noqa: E402
 
 
-def _write(d, name, obj_or_bytes):
-    p = os.path.join(d, name)
-    mode = "wb" if isinstance(obj_or_bytes, (bytes, bytearray)) else "w"
-    with open(p, mode) as fh:
-        fh.write(obj_or_bytes if isinstance(obj_or_bytes, (bytes, bytearray)) else json.dumps(obj_or_bytes))
-    return p
+def _wb(path, b):
+    with open(path, "wb") as fh:
+        fh.write(b if isinstance(b, (bytes, bytearray)) else json.dumps(b).encode("utf-8"))
+    return path
 
 
 def _pin_signer(pub):
-    """Monkeypatch the trust anchor so a throwaway key resolves as the pinned signer (tests only)."""
+    """Monkeypatch the trust anchor so the throwaway key resolves as the pinned 'test-signer' (tests
+    only). Returns the saved TRUSTED_SIGNERS to restore in a finally."""
     from cryptography.hazmat.primitives import serialization
     fp = hashlib.sha256(pub.public_bytes(serialization.Encoding.DER, serialization.PublicFormat.SubjectPublicKeyInfo)).hexdigest()
     saved = dict(dt.TRUSTED_SIGNERS)
     dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS["test-signer"] = fp
-    return saved, fp
+    return saved
+
+
+def _keys_dir(tmp, pub):
+    from cryptography.hazmat.primitives import serialization
+    kd = os.path.join(tmp, "keys"); os.makedirs(kd, exist_ok=True)
+    _wb(os.path.join(kd, "test-signer.pub.pem"),
+        pub.public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo))
+    return kd
+
+
+def _capture_main(argv):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = cd.main(argv)
+    return rc, buf.getvalue()
+
+
+def _harden_docs(oid):
+    # consumer_disposition 'unresolved' => SP022 does not force the consumer dims; required_observations
+    # names in_data_api (a permitted-overlay target, base not_observed) as the sole gate-required dim.
+    d = {"decision_id": "D-h1", "source_objects": [oid], "meaning_disposition": "preserve",
+         "action_class": "harden", "decision_status": "accepted", "exposure_policy": "service_only",
+         "consumer_disposition": "unresolved", "evidence_refs": ["query:x"], "technical_authority_approval": "TA-1"}
+    manifest = {"kind": "cluster_manifest", "cluster_id": "c-001", "status": "accepted", "action_class": "harden",
+                "decision_ids": ["D-h1"], "evidence_snapshot": "census.json", "max_staleness_hours": 8760,
+                "minimum_consumer_window_hours": 24, "required_observations": ["in_data_api_exposed_schema"],
+                "technical_authority_approval": "TA-1"}
+    return tcd._decs([d]), manifest, tcd._entity_map()
+
+
+def _base_argv(tmp, cpath, dpath, epath, mpath, pub):
+    return ["--snapshot", cpath, "--snapshot-sig", cpath + ".sig", "--decisions", dpath,
+            "--entity-map", epath, "--manifest", mpath, "--now", NOW_ISO, "--mode", "preapply",
+            "--expect-project-ref", "fxoyniqnrlkxfligbxmg", "--key-id", "test-signer",
+            "--keys-dir", _keys_dir(tmp, pub), "--allow-unbound-checkout",
+            "--max-consumer-evidence-age-hours", "8760", "--root", tmp]
+
+
+def _write_harden_case(priv, pub, census):
+    tmp = tempfile.mkdtemp(prefix="ov_e2e_")
+    cb = _canon(census)
+    cpath = _wb(os.path.join(tmp, "census.json"), cb); _wb(cpath + ".sig", _sign(census, priv)[1])
+    decisions, manifest, em = _harden_docs("public.v")
+    dpath = _wb(os.path.join(tmp, "dec.json"), _canon(decisions))
+    epath = _wb(os.path.join(tmp, "ent.json"), _canon(em))
+    mpath = _wb(os.path.join(tmp, "man.json"), _canon(manifest))
+    return tmp, cb, _base_argv(tmp, cpath, dpath, epath, mpath, pub)
 
 
 def _e2e_red_then_green():
-    # A zero-width census fails preapply with zero overlays (OV018/OV021 path); adding a full set of
-    # signed overlays reaches evidence-ready green. (Full harness in the plan appendix; assert exit codes.)
-    ...  # see implementer guidance below
-    return True  # replaced by the real assertion during implementation
+    priv, pub = _ephemeral_keypair(); saved = _pin_signer(pub); oid = "public.v"
+    try:
+        tmp, cb, base = _write_harden_case(priv, pub, _zero_census([oid]))
+        rc_red, _o = _capture_main(base)                          # RED: zero overlays -> OV018/OV015
+        # GREEN: in_data_api observed-false (gate-required) + static_repo observed (a windowed contributor).
+        # Consumer refs use the 'sha:' scheme so SP014 treats them as non-path (a bare id would be a path ref).
+        ov_api = _overlay("in_data_api_exposed_schema", "platform_config",
+                          [{"object_id": oid, "value": {"state": "observed", "value": False}}], census_bytes=cb)
+        ov_static = _overlay("consumer_evidence.static_repo", "repository_scan",
+                             [{"object_id": oid, "value": {"state": "observed", "found_consumers": 0, "ref": "sha:s1"}}], census_bytes=cb)
+        opts = []
+        for i, o in enumerate((ov_api, ov_static)):
+            p = os.path.join(tmp, f"ov{i}.json"); ob, sig = _sign(o, priv); _wb(p, ob); _wb(p + ".sig", sig); opts += ["--overlay", p]
+        rpath = os.path.join(tmp, "receipt.json")
+        rc_green, _o2 = _capture_main(base + opts + ["--receipt-out", rpath])
+        receipt = json.load(open(rpath)) if os.path.exists(rpath) else {}
+        return (rc_red == 1 and rc_green == 0 and receipt.get("evidence_ready") is True
+                and receipt.get("execution_authorized") is False and "production_eligible" not in receipt)
+    finally:
+        dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS.update(saved)
 
 
-_CASES += [("e2e_red_then_green", _e2e_red_then_green)]
+def _e2e_ov021_via_main():
+    priv, pub = _ephemeral_keypair(); saved = _pin_signer(pub); oid = "public.v"
+    try:
+        census = _zero_census([oid])
+        census["relations"][0]["consumer_evidence"]["observation_window"] = {"started_at": "2026-06-05T00:00:00Z", "ended_at": CENSUS_OBSERVED_AT}
+        _tmp, _cb, base = _write_harden_case(priv, pub, census)   # non-zero base window, zero overlays
+        rc, out = _capture_main(base)
+        return rc == 1 and "OV021" in out
+    finally:
+        dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS.update(saved)
+
+
+_CASES += [
+    ("e2e_red_then_green", _e2e_red_then_green),
+    ("e2e_ov021_via_main", _e2e_ov021_via_main),
+]
 ```
 
-> Implementer guidance for the e2e cases (write these as real assertions, not stubs): build a temp dir with a zero-width census + its detached sig (throwaway key, pinned via `_pin_signer`), an accepted decisions/entity-map/manifest, and per-dimension signed overlays. (a) **OV021-via-main:** mutate the census base window to non-zero, run `cd.main([... "--mode", "preapply", ... "--max-consumer-evidence-age-hours", "8760"])` with **zero** `--overlay`, assert exit `1` and `OV021` printed. (b) **red:** zero overlays on the canonical census → exit `1`. (c) **green:** all gate-required overlays supplied → exit `0` and a receipt with `evidence_ready: true`, `execution_authorized: false`. (d) **retain green:** a `retain` manifest whose source relation has covering consumer overlays → exit `0`. (e) **retain no-overlay → OV018:** same retain manifest, drop the consumer overlays → exit `1`, `OV018`. (f) **authorization boundary:** valid overlays but manifest `status != accepted`/empty TA → exit `1` with `SP018` (evidence readiness NOT reached); and assert the green receipt has no `production_eligible`/write-GO field. (g) **delete missing in_data_api → SP027 (Codex-P2):** a `delete` cluster whose `external_clients` overlay is `not_applicable` but with **no** `in_data_api_exposed_schema` overlay → exit `1` with `SP027` (the waiver is denied at the semantic gate, NOT `OV022` — proving the loader defers the missing-overlay case to SP027). (h) **delete OV022:** same delete but WITH an observed-false `in_data_api` overlay whose window does **not** cover the derived consumer window → exit `1` with `OV022`. Restore `dt.TRUSTED_SIGNERS` from `_pin_signer`'s saved copy in a `finally`.
+> **Additional e2e cases the implementer writes as real `cd.main` tests** (same `_pin_signer`/`_capture_main`/`_wb` harness; restore `dt.TRUSTED_SIGNERS` in a `finally`). Delete cases reuse `tcd._recovery_artifact()` + `tcd.ROOTS` for the SP014 recovery proof (pass both `--root tmp` and `--root <tcd._ROOT>`) and supply the full SP027/SP022 consumer set (static_repo/runtime_logs/operator_declaration observed + external_clients `not_applicable`). The ratified **OV015 / SP027 / OV022 diagnostic split (audit round-3 F2):**
+> - **SP018:** `status` not `accepted` (schema-valid, e.g. `proposed`) with otherwise-green overlays → exit `1`, `SP018`; assert the receipt has no `production_eligible`/write-GO.
+> - **delete missing in_data_api → OV015:** a delete whose `external_clients` overlay is `not_applicable` but with **no** `in_data_api_exposed_schema` overlay → exit `1`, **`OV015`** (the gate-required dimension is unresolved at cluster-completeness, which short-circuits before the semantic gate).
+> - **delete observed-true in_data_api → SP027:** the `in_data_api` overlay resolves to observed **true** → OV015 clears (resolved), OV022 defers (no observed-false window), and `run()` fires **`SP027`** (the waiver requires observed-false).
+> - **delete observed-false, non-covering window → OV022:** an observed-false `in_data_api` overlay whose window does **not** cover the derived consumer window → exit `1`, **`OV022`**.
+> - **retain green / retain no-overlay → OV018:** a `retain` cluster with covering consumer overlays → exit `0`; drop them → exit `1`, `OV018`.
 
 - [ ] **Step 2: Run to verify it fails**
 
@@ -1952,4 +2129,6 @@ Per the mandatory Independent Review Protocol, run the cross-engine Codex pass o
 | OV022 emitted for a *missing* in_data_api overlay → short-circuits before `run()` can fire SP027 (contradicts the "missing→SP027" matrix) | OV022 now records the window only for an **observed-false** overlay and **defers** (missing/observed-true → SP027 denies the waiver at the semantic gate). Task 5 unit + Task 8 e2e (g/h) assert both branches. |
 | Absent/non-finite `max_consumer_evidence_age_hours` checked after the OV018 short-circuit → a zero-contributor relation masks the missing flag | Recency-policy `OV016` is a **deterministic precheck at the top of `derive_windows`**, before any per-relation contributor check. |
 
-Convergence: the design converged 3→1→0 HIGH over the spec's 3 IRP rounds; the plan converged 9 findings → 2 P2s → 0 over 2 plan-audit rounds. Implementation, evidence collection, DB access, production, A1–A3, and the apply runner remain HELD.
+**Second plan re-audit (2026-07-12) → rev 4 (1 High + 4 Med, all folded):** F1 loader short-circuits on any schema failure (non-object/malformed-`assignments` → OV008, no `AttributeError`); F2 the coherent `in_data_api` delete split OV015(missing)/SP027(observed-true)/OV022(observed-false,bad-window) — matrix + Task-5 unit + Task-8 e2e updated; F3 `_e2e_red_then_green` + `_e2e_ov021_via_main` are real `cd.main` tests; F4 real `validate_overlay`→coded-OV008 unseeded-`$ref` test; F5 three `producing_repo_sha` categories (required/forbidden/conditional) with pos+neg tests.
+
+Convergence: the design converged 3→1→0 HIGH over the spec's 3 IRP rounds; the plan converged 9 → 2 → 5 → 0 over three plan-audit rounds (round 2's "5" were newly-surfaced correctness/coverage gaps, not regressions). A final **narrow re-audit** over only the five round-3 areas (invalid-overlay short-circuit · OV015/SP027/OV022 routing · real RED→GREEN e2e · unseeded-`$ref`→OV008 · dimension-specific repo-SHA) precedes the build GO. Implementation, evidence collection, DB access, production, A1–A3, and the apply runner remain HELD.
