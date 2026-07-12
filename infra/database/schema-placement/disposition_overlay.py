@@ -168,3 +168,129 @@ def check_binding(doc, *, census_sha256, census_project_ref, expect_project_ref,
     if doc.get("overlay_schema_sha256") != on_disk_overlay_sha:
         out.append(("OV020", loc, "overlay_schema_sha256 != on-disk overlay.schema.json bytes (drift)"))
     return out
+
+
+# producing_repo_sha applicability, three categories per Appendix B (audit round-3 F5):
+_PRODUCING_SHA_REQUIRED = {"in_data_api_exposed_schema", "consumer_evidence.static_repo"}            # non-null, NO reason
+_PRODUCING_SHA_FORBIDDEN = {"advisor_findings", "consumer_evidence.runtime_logs", "consumer_evidence.operator_declaration"}  # MUST be null + reason
+# consumer_evidence.external_clients is CONDITIONAL: non-null (no reason) OR null + reason (the IFF fallthrough).
+
+
+def validate_overlay(doc, validator):
+    """OV008: JSON-Schema + FormatChecker validation against overlay.schema.json. Any
+    referencing.Unresolvable (unseeded/remote $ref) is caught and mapped to a coded OV008."""
+    out = []
+    loc = f"overlay:{doc.get('dimension')}"
+    try:
+        for err in sorted(validator.iter_errors(doc), key=lambda e: str(e.path)):
+            path = "/".join(str(p) for p in err.path) or "<root>"
+            out.append(("OV008", f"{loc}:{path}", err.message))
+    except Unresolvable as exc:
+        out.append(("OV008", loc, f"schema $ref unresolvable offline ({exc}) — no remote resolution permitted"))
+    return out
+
+
+def check_observation_window(doc, now):
+    """OV009 (audit F2): per-overlay window guard applied to EVERY overlay (all six dimensions, incl.
+    the Data-API-exposure overlay OV022 relies on): started_at < ended_at, ended_at <= captured_at,
+    ended_at <= now. Fail-closed: a malformed/unparseable window is a single coded OV009, never an
+    uncaught exception."""
+    out = []
+    loc = f"overlay:{doc.get('dimension')}"
+    w = doc.get("observation_window") or {}
+    try:
+        s = _parse_iso(w["started_at"])
+        e = _parse_iso(w["ended_at"])
+        cap = _parse_iso(doc["captured_at"])
+    except (KeyError, ValueError, TypeError):
+        return [("OV009", loc, f"observation_window/captured_at malformed or unparseable: {w!r}")]
+    if not (s < e):
+        out.append(("OV009", loc, f"started_at {w['started_at']} must be < ended_at {w['ended_at']}"))
+    if e > cap:
+        out.append(("OV009", loc, f"ended_at {w['ended_at']} is after captured_at {doc['captured_at']}"))
+    if e > now:
+        out.append(("OV009", loc, f"ended_at {w['ended_at']} is in the future vs now {now.isoformat()}"))
+    return out
+
+
+def _base_slot(rel, dimension):
+    if dimension.startswith("consumer_evidence."):
+        return rel.get("consumer_evidence", {}).get(dimension.split(".", 1)[1], {})
+    return rel.get(dimension, {})
+
+
+def check_target(doc, census_rel_index):
+    """OV004/OV005/OV006/OV013/OV012/OV019/OV014. Validation, NOT execution-authorization."""
+    out = []
+    dimension = doc.get("dimension")
+    loc = f"overlay:{dimension}"
+    if dimension not in DIMENSIONS:
+        out.append(("OV004", loc, f"dimension {dimension!r} is not one of the six permitted paths"))
+        return out  # nothing else is meaningful for an unknown dimension
+    _vdef, fixed_source = DIMENSIONS[dimension]
+    if doc.get("source_type") != fixed_source:
+        out.append(("OV013", loc, f"source_type {doc.get('source_type')!r} != fixed {fixed_source!r} for {dimension}"))
+    # OV019 IFF (audit F9): a source_hash_not_applicable_reason is required IFF source_hash is null.
+    sh = doc.get("source_hash")
+    sh_reason = (doc.get("source_hash_not_applicable_reason") or "").strip()
+    if sh is None and not sh_reason:
+        out.append(("OV019", loc, "source_hash is null without source_hash_not_applicable_reason"))
+    elif sh is not None and sh_reason:
+        out.append(("OV019", loc, "source_hash is non-null but a source_hash_not_applicable_reason is also present (must be absent)"))
+    # OV012 IFF: required dims need a non-null producing_repo_sha with NO reason; other dims need null+reason.
+    prs = doc.get("producing_repo_sha")
+    prs_reason = (doc.get("producing_repo_sha_not_applicable_reason") or "").strip()
+    if dimension in _PRODUCING_SHA_REQUIRED:                 # required: non-null, no reason
+        if not prs:
+            out.append(("OV012", loc, f"producing_repo_sha required for {dimension} but absent/null"))
+        elif prs_reason:
+            out.append(("OV012", loc, "producing_repo_sha is non-null but a not_applicable_reason is also present (must be absent)"))
+    elif dimension in _PRODUCING_SHA_FORBIDDEN:              # forbidden: MUST be null + reason
+        if prs is not None:
+            out.append(("OV012", loc, f"producing_repo_sha is not applicable for {dimension}; it must be null with a not_applicable_reason"))
+        elif not prs_reason:
+            out.append(("OV012", loc, "producing_repo_sha is null without producing_repo_sha_not_applicable_reason"))
+    else:                                                    # conditional (external_clients): IFF null<->reason
+        if prs is None and not prs_reason:
+            out.append(("OV012", loc, "producing_repo_sha is null without producing_repo_sha_not_applicable_reason"))
+        elif prs is not None and prs_reason:
+            out.append(("OV012", loc, "producing_repo_sha is non-null but a not_applicable_reason is also present (must be absent)"))
+    if dimension == "consumer_evidence.operator_declaration":
+        if not (doc.get("operator_identity") or "").strip() or not (doc.get("attestation_ref") or "").strip():
+            out.append(("OV014", loc, "operator_declaration overlay missing operator_identity/attestation_ref provenance"))
+    for a in doc.get("assignments", []):
+        oid = a.get("object_id")
+        rel = census_rel_index.get(oid)
+        if rel is None:
+            out.append(("OV005", f"{loc}:{oid}", "assignment object_id absent from the census"))
+            continue
+        if _base_slot(rel, dimension).get("state") != "not_observed":
+            out.append(("OV006", f"{loc}:{oid}", f"base slot state={_base_slot(rel, dimension).get('state')} (only not_observed is overlayable)"))
+    return out
+
+
+def check_conflict(assignment_keys):
+    """OV007: reject any (dimension, object_id) pair assigned more than once, within OR across
+    overlays, even if the values are identical. assignment_keys is the full flat list."""
+    out = []
+    counts = {}
+    for key in assignment_keys:
+        counts[key] = counts.get(key, 0) + 1
+    for (dimension, oid), n in sorted(counts.items()):
+        if n > 1:
+            out.append(("OV007", f"overlay:{dimension}:{oid}", f"(dimension, object_id) assigned {n} times (across or within overlays)"))
+    return out
+
+
+def precheck_base_window(census):
+    """OV021 (UNCONDITIONAL preapply precheck — runs even with zero overlays): every relation's base
+    consumer window must be the canonical zero-width {observed_at, observed_at} the collector emits.
+    String-equality to observed_at; a signed-but-hand-crafted non-zero window is caught before merge."""
+    out = []
+    observed_at = census.get("observed_at")
+    for r in census.get("relations", []):
+        w = r.get("consumer_evidence", {}).get("observation_window", {})
+        if not (w.get("started_at") == observed_at and w.get("ended_at") == observed_at):
+            out.append(("OV021", f"census:{r.get('object_id')}",
+                        f"base consumer window {w} is not the canonical zero-width {{{observed_at}, {observed_at}}}"))
+    return out

@@ -227,6 +227,214 @@ _CASES = [
     ("parse_overlay_accepts_valid_body", _parse_overlay_accepts_valid_body),
 ]
 
+
+def _rel_index(census):
+    return {r["object_id"]: r for r in census["relations"]}
+
+
+# ---- Task 3: target / conflict / base-window ----
+def _dimension_not_permitted_OV004():
+    census = _zero_census(["public.v"])
+    doc = _overlay("database_deps", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}])
+    return "OV004" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _unknown_object_id_OV005():
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.absent", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}])
+    return "OV005" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _non_not_observed_target_OV006():
+    census = _zero_census(["public.v"])
+    census["relations"][0]["consumer_evidence"]["static_repo"] = {"state": "query_failed", "found_consumers": None, "ref": None, "detail": "err"}
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}])
+    return "OV006" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _source_type_mismatch_OV013():
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.static_repo", "runtime_logs",  # wrong source_type for dimension
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}])
+    return "OV013" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _operator_declaration_missing_provenance_OV014():
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.operator_declaration", "operator_declaration",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 1, "ref": "sha:att1"}}],
+                   producing_repo_sha=None, producing_repo_sha_not_applicable_reason="operator attestation")  # forbidden dim -> null+reason (isolates OV014)
+    doc.pop("operator_identity", None); doc.pop("attestation_ref", None)
+    return "OV014" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _validate_overlay_unresolvable_maps_to_OV008():
+    # audit round-3 F4: an unseeded $ref hit during validation must be CAUGHT by validate_overlay and
+    # mapped to a coded OV008 (never an uncaught referencing.Unresolvable, never a network fetch).
+    from jsonschema import Draft202012Validator
+    from referencing import Registry
+    bogus = Draft202012Validator({"$ref": "https://unseeded.example/nope.json#/$defs/x"}, registry=Registry())
+    return _codes(ov.validate_overlay({"dimension": "x", "any": 1}, bogus)) == ["OV008"]
+
+
+def _validate_overlay_calendar_invalid_datetime_OV008():
+    # Global-constraint emphasis: a calendar-invalid datetime (Feb 30) is a coded OV008 via the REAL
+    # contract overlay_validator's FormatChecker — not an uncaught exception, not silently accepted
+    # (the sibling regex pattern alone would NOT catch this; the format check does).
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   captured_at="2026-02-30T00:00:00Z")
+    return _codes(ov.validate_overlay(doc, _CONTRACT.overlay_validator)) == ["OV008"]
+
+
+def _producing_repo_sha_forbidden_nonnull_OV012():
+    census = _zero_census(["public.v"])  # advisor_findings is FORBIDDEN: a non-null producing_repo_sha rejects
+    doc = _overlay("advisor_findings", "advisor_api",
+                   [{"object_id": "public.v", "value": {"state": "observed", "value": ["security_definer_view"]}}])  # default producing_repo_sha="d"*40
+    return "OV012" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _producing_repo_sha_forbidden_null_reason_ok():
+    census = _zero_census(["public.v"])
+    doc = _overlay("advisor_findings", "advisor_api",
+                   [{"object_id": "public.v", "value": {"state": "observed", "value": ["x"]}}],
+                   producing_repo_sha=None, producing_repo_sha_not_applicable_reason="advisor API pull")
+    return "OV012" not in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _producing_repo_sha_conditional_nonnull_ok():
+    census = _zero_census(["public.v"])  # external_clients is CONDITIONAL: non-null (no reason) is allowed
+    doc = _overlay("consumer_evidence.external_clients", "external_client_inventory",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "sha:e1"}}])
+    return "OV012" not in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _producing_repo_sha_conditional_null_reason_ok():
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.external_clients", "external_client_inventory",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "sha:e1"}}],
+                   producing_repo_sha=None, producing_repo_sha_not_applicable_reason="no producing repo")
+    return "OV012" not in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _source_hash_null_without_reason_OV019():
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   source_hash=None); doc.pop("source_hash_not_applicable_reason", None)
+    return "OV019" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _producing_repo_sha_absent_OV012():
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",  # this dimension requires producing_repo_sha
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   producing_repo_sha=None); doc.pop("producing_repo_sha_not_applicable_reason", None)
+    return "OV012" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _duplicate_pair_within_and_across_OV007():
+    # identical (dimension, object_id) twice, even with identical values, must reject
+    keys = [("consumer_evidence.static_repo", "public.v"), ("consumer_evidence.static_repo", "public.v")]
+    return "OV007" in _codes(ov.check_conflict(keys))
+
+
+def _base_nonzero_window_OV021_with_zero_overlays():
+    census = _zero_census(["public.v"])
+    census["relations"][0]["consumer_evidence"]["observation_window"] = {"started_at": "2026-07-01T00:00:00Z", "ended_at": "2026-07-09T00:00:00Z"}
+    return "OV021" in _codes(ov.precheck_base_window(census))
+
+
+def _base_canonical_window_passes_OV021():
+    census = _zero_census(["public.v"])  # already {observed_at, observed_at}
+    return ov.precheck_base_window(census) == []
+
+
+NOW_DT = ov._parse_iso(NOW_ISO)
+
+
+# ---- Task 3: per-overlay window (OV009) + IFF null-reason (F9) ----
+def _window_started_after_ended_OV009():
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   observation_window={"started_at": "2026-07-10T00:00:00Z", "ended_at": "2026-06-01T00:00:00Z"})
+    return "OV009" in _codes(ov.check_observation_window(doc, NOW_DT))
+
+
+def _window_ended_after_captured_OV009():
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   captured_at="2026-07-08T00:00:00Z", observation_window={"started_at": "2026-06-05T00:00:00Z", "ended_at": "2026-07-09T00:00:00Z"})
+    return "OV009" in _codes(ov.check_observation_window(doc, NOW_DT))
+
+
+def _window_future_ended_OV009():
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   captured_at="2026-07-20T00:00:00Z", observation_window={"started_at": "2026-06-05T00:00:00Z", "ended_at": "2026-07-15T00:00:00Z"})  # ended after NOW
+    return "OV009" in _codes(ov.check_observation_window(doc, NOW_DT))
+
+
+def _in_data_api_overlay_window_is_checked_OV009():
+    # The Data-API-exposure overlay (observed_bool, NOT a consumer contributor) still passes OV009 (F2).
+    doc = _overlay("in_data_api_exposed_schema", "platform_config",
+                   [{"object_id": "public.v", "value": {"state": "observed", "value": False}}],
+                   observation_window={"started_at": "2026-07-10T00:00:00Z", "ended_at": "2026-06-01T00:00:00Z"})
+    return "OV009" in _codes(ov.check_observation_window(doc, NOW_DT))
+
+
+def _valid_window_passes_OV009():
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}])
+    return ov.check_observation_window(doc, NOW_DT) == []
+
+
+def _source_hash_reason_with_nonnull_OV019():
+    # IFF (F9): a reason supplied ALONGSIDE a non-null source_hash is also rejected.
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   source_hash="e" * 64, source_hash_not_applicable_reason="should not be here")
+    return "OV019" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+def _producing_repo_sha_reason_with_nonnull_OV012():
+    census = _zero_census(["public.v"])
+    doc = _overlay("consumer_evidence.static_repo", "repository_scan",
+                   [{"object_id": "public.v", "value": {"state": "observed", "found_consumers": 0, "ref": "s:1"}}],
+                   producing_repo_sha="d" * 40, producing_repo_sha_not_applicable_reason="should not be here")
+    return "OV012" in _codes(ov.check_target(doc, _rel_index(census)))
+
+
+_CASES += [
+    ("dimension_not_permitted_OV004", _dimension_not_permitted_OV004),
+    ("unknown_object_id_OV005", _unknown_object_id_OV005),
+    ("non_not_observed_target_OV006", _non_not_observed_target_OV006),
+    ("source_type_mismatch_OV013", _source_type_mismatch_OV013),
+    ("operator_declaration_missing_provenance_OV014", _operator_declaration_missing_provenance_OV014),
+    ("source_hash_null_without_reason_OV019", _source_hash_null_without_reason_OV019),
+    ("producing_repo_sha_absent_OV012", _producing_repo_sha_absent_OV012),
+    ("source_hash_reason_with_nonnull_OV019", _source_hash_reason_with_nonnull_OV019),
+    ("producing_repo_sha_reason_with_nonnull_OV012", _producing_repo_sha_reason_with_nonnull_OV012),
+    ("producing_repo_sha_forbidden_nonnull_OV012", _producing_repo_sha_forbidden_nonnull_OV012),
+    ("producing_repo_sha_forbidden_null_reason_ok", _producing_repo_sha_forbidden_null_reason_ok),
+    ("producing_repo_sha_conditional_nonnull_ok", _producing_repo_sha_conditional_nonnull_ok),
+    ("producing_repo_sha_conditional_null_reason_ok", _producing_repo_sha_conditional_null_reason_ok),
+    ("validate_overlay_unresolvable_maps_to_OV008", _validate_overlay_unresolvable_maps_to_OV008),
+    ("validate_overlay_calendar_invalid_datetime_OV008", _validate_overlay_calendar_invalid_datetime_OV008),
+    ("duplicate_pair_within_and_across_OV007", _duplicate_pair_within_and_across_OV007),
+    ("window_started_after_ended_OV009", _window_started_after_ended_OV009),
+    ("window_ended_after_captured_OV009", _window_ended_after_captured_OV009),
+    ("window_future_ended_OV009", _window_future_ended_OV009),
+    ("in_data_api_overlay_window_is_checked_OV009", _in_data_api_overlay_window_is_checked_OV009),
+    ("valid_window_passes_OV009", _valid_window_passes_OV009),
+    ("base_nonzero_window_OV021_with_zero_overlays", _base_nonzero_window_OV021_with_zero_overlays),
+    ("base_canonical_window_passes_OV021", _base_canonical_window_passes_OV021),
+]
+
 if __name__ == "__main__":
     ok = True
     for name, fn in _CASES:
