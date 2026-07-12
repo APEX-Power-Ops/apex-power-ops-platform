@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://apex-power-ops/schema-placement/overlay.schema.json",
+  "title": "Signed Evidence Overlay — contract",
+  "version": "1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "overlay_version", "dimension", "source_type", "authority",
+               "collection_method", "source_locator", "source_hash",
+               "base_snapshot_sha256", "disposition_schema_sha256", "overlay_schema_sha256",
+               "project_ref", "captured_at", "observation_window", "producing_repo_sha", "assignments"],
+  "properties": {
+    "kind": { "const": "evidence_overlay" },
+    "overlay_version": { "const": "1" },
+    "dimension": { "enum": ["in_data_api_exposed_schema", "advisor_findings",
+                            "consumer_evidence.static_repo", "consumer_evidence.runtime_logs",
+                            "consumer_evidence.external_clients", "consumer_evidence.operator_declaration"] },
+    "source_type": { "enum": ["platform_config", "advisor_api", "repository_scan",
+                              "runtime_logs", "external_client_inventory", "operator_declaration"] },
+    "authority": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/nonempty_string" },
+    "collection_method": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/nonempty_string" },
+    "source_locator": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/nonempty_string" },
+    "source_hash": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+    "source_hash_not_applicable_reason": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/nonempty_string" },
+    "base_snapshot_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "disposition_schema_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "overlay_schema_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "project_ref": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/nonempty_string" },
+    "captured_at": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/iso_datetime" },
+    "observation_window": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/observation_window" },
+    "producing_repo_sha": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" },
+    "producing_repo_sha_not_applicable_reason": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/nonempty_string" },
+    "operator_identity": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/nonempty_string" },
+    "attestation_ref": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/nonempty_string" },
+    "assignments": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["object_id", "value"],
+        "properties": {
+          "object_id": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/object_id" },
+          "value": { "type": "object" }
+        }
+      }
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "dimension": { "const": "in_data_api_exposed_schema" } } },
+      "then": { "properties": { "source_type": { "const": "platform_config" },
+        "assignments": { "items": { "properties": { "value": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/observed_bool" } } } } } } },
+    { "if": { "properties": { "dimension": { "const": "advisor_findings" } } },
+      "then": { "properties": { "source_type": { "const": "advisor_api" },
+        "assignments": { "items": { "properties": { "value": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/observed_advisor_array" } } } } } } },
+    { "if": { "properties": { "dimension": { "const": "consumer_evidence.static_repo" } } },
+      "then": { "properties": { "source_type": { "const": "repository_scan" },
+        "assignments": { "items": { "properties": { "value": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/consumer_evidence_dim" } } } } } } },
+    { "if": { "properties": { "dimension": { "const": "consumer_evidence.runtime_logs" } } },
+      "then": { "properties": { "source_type": { "const": "runtime_logs" },
+        "assignments": { "items": { "properties": { "value": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/consumer_evidence_dim" } } } } } } },
+    { "if": { "properties": { "dimension": { "const": "consumer_evidence.external_clients" } } },
+      "then": { "properties": { "source_type": { "const": "external_client_inventory" },
+        "assignments": { "items": { "properties": { "value": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/consumer_evidence_dim" } } } } } } },
+    { "if": { "properties": { "dimension": { "const": "consumer_evidence.operator_declaration" } } },
+      "then": { "required": ["operator_identity", "attestation_ref"],
+        "properties": { "source_type": { "const": "operator_declaration" },
+        "assignments": { "items": { "properties": { "value": { "$ref": "https://apex-power-ops/schema-placement/disposition.schema.json#/$defs/consumer_evidence_dim" } } } } } } }
+  ]
+}
