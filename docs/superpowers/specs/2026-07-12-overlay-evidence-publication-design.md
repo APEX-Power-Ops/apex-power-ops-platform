@@ -246,7 +246,13 @@ evidence-readiness.
    and vice-versa (pairing scoped to overlay sidecars; census sidecars belong to the census gate). **FAIL
    any ADDED `evidence/census-prod-*.json` whose `sha256(bytes)` equals an already-committed census**
    (byte-identical duplicate would make every bound overlay permanently ambiguous under step 4's
-   exactly-one rule while immutability forbids deleting either copy).
+   exactly-one rule while immutability forbids deleting either copy). **Source-record orphan guard
+   (unconditional):** build the set of `source_locator` values from **every committed overlay at HEAD**
+   with non-null `source_hash` (`git ls-files 'evidence/overlay-*.json'`); every committed regular blob
+   under `evidence/source/**` must be referenced by **exactly one** such overlay — an unreferenced
+   (orphan) or multiply-referenced source record FAILs. Source records exist only *per overlay* (§5), and
+   because this runs before the step-3 early exit, a **source-only PR** (an added `evidence/source/**`
+   record with no referencing overlay in the same HEAD) fails even when zero overlays are added.
 3. **Added set.** `ADDED = git diff --no-renames --diff-filter=A --name-only BASE HEAD --
    'evidence/overlay-*.json'`; if none → exit 0 *(steps 1–2 have already run)*.
 4. For each added overlay: extract `base_snapshot_sha256`; among committed `evidence/census-prod-*.json`
@@ -399,6 +405,7 @@ TDD, negatives first. Coverage matrix (each row → a failing test before code):
 | **byte-identical duplicate census added** | CI | **census-uniqueness FAIL** |
 | **`source_locator` rehash ≠ `source_hash`** | CI | **source-record FAIL** |
 | **traversal / absolute / outside-`evidence/source/` / non-regular `source_locator`** | CI | **locator-constraint FAIL** |
+| **orphan / multiply-referenced source record (incl. a source-only PR)** | CI | **source-orphan guard FAIL (unconditional; test `source_record_without_overlay_fails`)** |
 | **self-referential census binding** (CN006/CN007 fed from the census itself) | CI | **ancestor + tooling-diff + HEAD-computed bundle** |
 | overlay bound to **0 or >1** committed census | CI | **exactly-one FAIL** |
 | **null `producing_repo_sha`** on a FORBIDDEN dim | CI | **null-safe skip (no shell abort)** |

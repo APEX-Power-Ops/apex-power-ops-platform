@@ -196,5 +196,26 @@ all six probes, with EMPIRICAL reproduction — six findings, ALL FOLDED:**
 **Verdict (cross-engine, round 2b):** the rename/typechange bypass (CI2b-1) and the unconstrained-locator
 divorce (CI2b-2) were the last Important-class gaps; both are folded with empirically-pinned mechanisms
 and matrix rows. Codex and Claude findings were disjoint and non-contradictory; every round-1, round-2,
-and round-2b finding is now folded into the spec. **Design ready for operator approval** (Phase 2 stop —
-no plan, no implementation, nothing pushed).
+and round-2b finding is now folded into the spec. → operator review.
+
+## ROUND 2c — OPERATOR review of the round-2b text (`e211594a`) — 2026-07-12
+
+**Operator finding (Important, reproduced): source-only PRs pass — an orphan `evidence/source/**` record
+can be added with NO overlay referencing it.** Step 1 admits an added source record as status `A`; step 3
+exits early when zero overlays are added; the source↔overlay linkage was only ever checked from the
+overlay side (the step-4 rehash, added-overlays only). Reproduced by the operator with a committed
+source-only addition (`A evidence/source/orphan.source.txt`, empty added-overlay set). Since source
+records exist only *per overlay* (§5), a source-only PR must fail.
+
+**FOLDED (strong form):** §4.2 step 2 gains an **unconditional source-record orphan guard** — the set of
+`source_locator` values is built from EVERY committed overlay at HEAD with non-null `source_hash`
+(`git ls-files`), and every committed regular blob under `evidence/source/**` must be referenced by
+**exactly one** such overlay (orphan or multiply-referenced → FAIL); running before the step-3 early exit,
+it fails a source-only PR even with zero added overlays. §11 matrix row + negative test
+`source_record_without_overlay_fails` added. (Exactly-one is by construction: each overlay publishes its
+own uniquely-named record; the referenced-bytes==`source_hash` check is unchanged in step 4.)
+
+**Operator disposition:** everything else checked ALIGNED — branch boundary, design-only scope, full
+census acceptance, signer parity, rename-proof immutability, locator constraints, held downstream phases.
+Approval contingent on this single fold, now applied. **Design at the post-fold commit is the
+approval candidate** (Phase 2 stop — no plan, no implementation, nothing pushed).
