@@ -286,3 +286,56 @@ small RED test.
 (one fresh implementer per task, per-task review; NOT inline batching — the author/verifier/gate/runbook
 surfaces are separable and the shell-git harness is high-risk). Phase 4 remains gated on its own explicit
 GO; no live evidence, no production signing key, no DB/prod, no push/PR/merge.
+
+---
+
+## ROUND 4 — Phase-4 build verification + whole-branch cross-engine review (2026-07-13)
+
+**Scope:** the Phase-4 SDD build authorized by the operator GO ("build only from `cace5568`; no live evidence, no production signing key, no DB/prod, no push/PR/merge"). Subagent-driven TDD, one fresh implementer per task, two-stage review after every task (opus reviewers on high-risk Tasks 5/8/9), per the operator's no-inline-batching directive.
+
+### Build record
+
+12 build commits `400255a6..63261888` (branch tip `63261888`, local-only, never pushed):
+
+| Task | Commit | Deliverable |
+|---|---|---|
+| 1 | `06dedf0e` | `tests/_overlay_pub_fixtures.py` (synthetic fixtures) |
+| 2 | `16c43830` | author core (`AuthorError`/`AO_CODES`, `load_input_core`, `compute_producing`, `read_source`) |
+| 3 | `088d9589` | `assemble_overlay` + `validate_assembled` (validate-the-exact-signed-bytes) |
+| 4 | `fc198948` | `accept_census` (full `check_census`) + `load_signing_key` (parity) + `build_and_check_sidecar` (AO012) |
+| 5 | `89dac938` | atomic no-clobber publish + canonical names + D4 provenance gate + `main()` (AO013 wired) |
+| 6 | `7cf9d327` | `verify_overlay_artifact.py` standalone verifier |
+| 7 | `998564bb` | RIDER source-orphan guard (`source_record_without_overlay_fails` RED-first) + locator + rehash |
+| 8 | `da78031f` | CI driver part 2 + **operator Phase-4 fold**: `isinstance(doc, dict)` guard in `_collect_overlay_docs`, genuine isolated RED |
+| 9 | `2f0184e8` | `ci/verify_committed_overlays.sh` (rename-proof all-`A`, fail-closed) + 15-case scratch-BARE-origin e2e |
+| 10 | `86d502e0` | workflow: 11-suite loop + `overlay-evidence` job (pins, `persist-credentials: false`, `fetch-depth: 0`) |
+| 11 | `e62c33b5` | `OVERLAY_COLLECTION_RUNBOOK.md` (six dimensions, DO-NOT-RUN-until-GO) |
+| 12 | `63261888` | `CENSUS_RUNBOOK.md` corrections (PG17.6, trust anchor, sequence, immutability) |
+
+**Build-time folds (both documented in commit bodies):**
+- Task 8 (operator-mandated): `isinstance(doc, dict)` guard before `overlay_docs.append`, RED shown as silent-acceptance pre-guard.
+- Task 9 (controller-authorized, semantics-preserving): `os.makedirs(..., exist_ok=True)` at 7 e2e write-helper sites — the plan's `_scratch()` seeds `evidence/` dirs empty, git does not track empty directories, post-clone writes hit `FileNotFoundError` (same defect class as plan-audit E2E-1). The `.gitkeep` alternative was rejected because a tracked file under `evidence/source/**` is a committed source record and would corrupt the orphan-guard e2e semantics. Implementer stopped and escalated rather than improvising; opus review adjudicated the fold as exactly the authorized change.
+
+### Regression (run as the exact CI gate, unmasked exits)
+
+All 11 suites rc=0 — **388 cases**: disposition_schema 60 · check_disposition 74 · collect_disposition 42 · verify_census 32 · disposition_trust 7 · disposition_provenance 3 · overlay_schema 10 · overlay_loader 73 · author_overlay 44 · verify_overlay_artifact 12 · verify_committed_overlays 31 (16 unit + 15 e2e). Both artifact gates rc=0 (census: nothing added; overlay: "ALL COMMITTED OVERLAY ARTIFACTS VERIFIED"). `git diff --check main HEAD` clean; CI-scope empty-tree check clean. Frozen surfaces (all `disposition_*`/collector/verifier modules, both schemas, `keys/`, 8 pre-existing suites) confirmed untouched across `main..HEAD`. Shellcheck rc=0 on the new gate.
+
+### Claude whole-branch review (fable, read-only, full package)
+
+Verdict: **Ready for PR — Yes**, with one pre-PR docs item.
+- Critical: none. Code-level Important: none.
+- **Important (docs, plan-mandated text — OPERATOR ADJUDICATION REQUIRED):** `CENSUS_RUNBOOK.md:146` "each with a committed source record" contradicts the design's NA/custody path (`operator_declaration` may publish null `source_hash` + `--source-custody-locator`, per AO004 and the collection runbook's own table). The sentence is verbatim from the approved plan, so it was transcribed, not fixed — per governance the operator authors the correction. Suggested wording exists in the review record; final wording is the operator's call.
+- Cross-task seams verified: canonical-name/locator ↔ `normalize_locator`/`source_rehash`; shell all-`A` partition ↔ driver `--diff-filter=A` added-set; driver argv ↔ verifier parser flag-for-flag; `DEFAULT_KEYS_DIR` cwd-independence proven by e2e-from-foreign-cwd.
+- Notable systemic property to state in the PR body: post-merge, `author_overlay.py`/`verify_overlay_artifact.py` join TOOLING, so overlays cannot bind to the existing committed census (tooling drift vs its signed `repo_sha`) — the "fresh census first" sequence is enforced, not just documented.
+- Minor triage: 26 accumulated ledger Minors → 19 accept-as-is, 6 fold-into-PR-notes, 1 must-fix-before-PR (= the Important above, operator wording). Three one-liner hygiene candidates (dead `hashlib`/`json` imports, `list(source_paths)` guard) explicitly non-blocking.
+
+### Codex cross-engine pass (fallback path)
+
+- Front door `apex-jobs review-run` dispatched (`review-cb9e584a`) but FAILED before review: the job invoked model `gpt-5.6-sol`, which host Codex CLI v0.141.0 cannot serve (API 400 "requires a newer version of Codex"), at reasoning effort `low`. **Tooling flags for the operator:** (1) review-run model selection drifted off the pinned `gpt-5.5` contract; (2) effort ran `low` vs the xhigh IRP default; (3) the failed dispatch left its detached worktree at `/home/olares/.apex-jobs/runs/review-cb9e584a` (`cleanup_status: not_attempted`).
+- Fallback per the IRP standard: direct `codex exec review --base main -m gpt-5.5` in the (clean, detached, HEAD=`63261888`) review worktree. Completed; **one finding**:
+  - [P2] "invalid UTF-8 overlay bytes crash the gate: `strict_parse` raises `UnicodeDecodeError`, only `ValueError` is caught" — **REFUTED empirically on the host**: `UnicodeDecodeError` subclasses `ValueError` (ValueError ← UnicodeError ← UnicodeDecodeError); live proof `cic.strict_parse(b"\xff\xfe{...")` → `CAUGHT-AS-ValueError: UnicodeDecodeError`, producing the coded `FAIL:` line and continuing. False positive.
+- **Cross-engine delta:** Codex raised the malformed-bytes robustness lens (refuted on exception-hierarchy grounds); Claude raised the runbook clause contradiction and the seam/interlock verifications Codex did not. No finding survived both engines against the code.
+
+### Verdict
+
+Phase-4 build COMPLETE at `63261888`. Zero surviving Critical/Important code findings across per-task reviews (12), the whole-branch Claude review, and the Codex cross-engine pass. One operator decision outstanding (runbook clause wording) before or alongside the Phase-5 PR. Push/PR/merge, fresh census, evidence collection, signing, cluster gate, apply-runner, and A1–A3 all remain HELD behind their own GOs.
