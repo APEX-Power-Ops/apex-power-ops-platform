@@ -232,6 +232,18 @@ def _custody_valid_uri_passes():
     return data is None and custody == "vault:padloc/item/xyz"
 
 
+def _custody_drive_relative_AO004():
+    # Cross-engine (Codex) Phase-4.1 follow-up finding: a drive-RELATIVE Windows path -- letter,
+    # colon, NO slash/backslash after -- must not pass as scheme "C" + opaque reference.
+    return _err_code(ao.read_source, None, "no artifact", "C:evidence-out.log") == "AO004"
+
+
+def _custody_single_letter_scheme_AO004():
+    # single-letter schemes are rejected wholesale (legitimate custody schemes are all >=2 chars);
+    # also removes the x:/foo vs x:opaque asymmetry the drive regex alone would leave.
+    return _err_code(ao.read_source, None, "no artifact", "x:opaque-ref") == "AO004"
+
+
 _CASES += [
     ("input_unreadable_AO000", _input_unreadable_AO000),
     ("input_not_object_AO002", _input_not_object_AO002),
@@ -265,6 +277,8 @@ _CASES += [
     ("custody_whitespace_AO004", _custody_whitespace_AO004),
     ("custody_empty_string_AO004", _custody_empty_string_AO004),
     ("custody_valid_uri_passes", _custody_valid_uri_passes),
+    ("custody_drive_relative_AO004", _custody_drive_relative_AO004),
+    ("custody_single_letter_scheme_AO004", _custody_single_letter_scheme_AO004),
 ]
 
 import hashlib  # noqa: E402

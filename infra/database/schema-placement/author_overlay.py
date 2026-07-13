@@ -131,16 +131,19 @@ def compute_producing(dimension, gate_repo_sha, na_reason):
     return gate_repo_sha, None  # conditional: repo-backed inventory -> author HEAD
 
 
-_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*:(.+)$")
+_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]+:(.+)$")
 _WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:[\\/]")
 
 
 def is_custody_uri(value):
-    """Custody-locator URI rule (Phase-4.1 item 4): must be '<scheme>:<opaque-reference>' --
-    scheme matches [A-Za-z][A-Za-z0-9+.-]*, followed by ':' and a non-empty opaque part. Rejects
-    absolute paths (leading '/' or a Windows drive letter), relative filesystem paths (no scheme/
-    colon), '..' traversal, backslashes, and any whitespace. D3 replica -- kept byte-parallel with
-    ci/overlay_ci_checks.py's copy (comment there references this one). Returns
+    """Custody-locator URI rule (Phase-4.1 item 4 + cross-engine follow-up): must be
+    '<scheme>:<opaque-reference>' -- scheme matches [A-Za-z][A-Za-z0-9+.-]+ (TWO+ characters:
+    single-letter schemes are rejected wholesale, closing the drive-RELATIVE Windows path gap,
+    e.g. 'C:evidence-out.log'; legitimate custody schemes are all >=2 chars), followed by ':'
+    and a non-empty opaque part. Rejects absolute paths (leading '/' or a Windows drive letter --
+    the explicit drive regex stays as defense in depth), relative filesystem paths (no scheme/
+    colon), '..' traversal, backslashes, and any whitespace. D3 replica -- kept byte-parallel
+    with ci/overlay_ci_checks.py's copy (comment there references this one). Returns
     (ok, reason_or_value)."""
     if not isinstance(value, str) or not value:
         return False, "custody locator is not a non-empty string"
@@ -155,7 +158,7 @@ def is_custody_uri(value):
     if _WINDOWS_DRIVE_RE.match(value):
         return False, "custody locator is a Windows drive path"
     if not _SCHEME_RE.match(value):
-        return False, "custody locator is not URI-like (expected <scheme>:<opaque-reference>)"
+        return False, "custody locator is not URI-like (expected <scheme>:<opaque-reference>, scheme >= 2 chars)"
     return True, value
 
 

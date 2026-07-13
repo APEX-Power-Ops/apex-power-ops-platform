@@ -113,16 +113,19 @@ def strict_parse(data: bytes):
     return json.loads(data.decode("utf-8"), object_pairs_hook=_reject_dup, parse_constant=_reject_nonfinite)
 
 
-_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*:(.+)$")
+_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]+:(.+)$")
 _WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:[\\/]")
 
 
 def is_custody_uri(value):
-    """D3 replica of author_overlay.py's is_custody_uri -- kept byte-parallel (Phase-4.1 item 4).
-    Custody-locator URI rule: must be '<scheme>:<opaque-reference>' -- scheme matches
-    [A-Za-z][A-Za-z0-9+.-]*, followed by ':' and a non-empty opaque part. Rejects absolute paths
-    (leading '/' or a Windows drive letter), relative filesystem paths (no scheme/colon), '..'
-    traversal, backslashes, and any whitespace. Returns (ok, reason_or_value)."""
+    """D3 replica of author_overlay.py's is_custody_uri -- kept byte-parallel (Phase-4.1 item 4
+    + cross-engine follow-up). Custody-locator URI rule: must be '<scheme>:<opaque-reference>' --
+    scheme matches [A-Za-z][A-Za-z0-9+.-]+ (TWO+ characters: single-letter schemes are rejected
+    wholesale, closing the drive-RELATIVE Windows path gap, e.g. 'C:evidence-out.log'; legitimate
+    custody schemes are all >=2 chars), followed by ':' and a non-empty opaque part. Rejects
+    absolute paths (leading '/' or a Windows drive letter -- the explicit drive regex stays as
+    defense in depth), relative filesystem paths (no scheme/colon), '..' traversal, backslashes,
+    and any whitespace. Returns (ok, reason_or_value)."""
     if not isinstance(value, str) or not value:
         return False, "custody locator is not a non-empty string"
     if any(ch.isspace() for ch in value):
@@ -136,7 +139,7 @@ def is_custody_uri(value):
     if _WINDOWS_DRIVE_RE.match(value):
         return False, "custody locator is a Windows drive path"
     if not _SCHEME_RE.match(value):
-        return False, "custody locator is not URI-like (expected <scheme>:<opaque-reference>)"
+        return False, "custody locator is not URI-like (expected <scheme>:<opaque-reference>, scheme >= 2 chars)"
     return True, value
 
 

@@ -128,6 +128,18 @@ def _custody_check_skips_non_null_source_hash():
     return cic.custody_locator_check(docs) == []
 
 
+def _custody_check_drive_relative_fails():
+    # Cross-engine (Codex) Phase-4.1 follow-up finding: drive-RELATIVE Windows path (letter,
+    # colon, no slash) must FAIL, not parse as scheme "C" + opaque.
+    docs = [("evidence/overlay-x.json", _doc(locator="C:evidence-out.log", source_hash=None))]
+    return any("evidence/overlay-x.json" in f for f in cic.custody_locator_check(docs))
+
+
+def _custody_check_single_letter_scheme_fails():
+    docs = [("evidence/overlay-x.json", _doc(locator="x:opaque-ref", source_hash=None))]
+    return any("evidence/overlay-x.json" in f for f in cic.custody_locator_check(docs))
+
+
 _CASES += [
     ("source_record_without_overlay_fails", source_record_without_overlay_fails),  # RIDER, first
     ("referenced_source_passes", _referenced_source_passes),
@@ -145,6 +157,8 @@ _CASES += [
     ("custody_check_backslash_fails", _custody_check_backslash_fails),
     ("custody_check_whitespace_fails", _custody_check_whitespace_fails),
     ("custody_check_skips_non_null_source_hash", _custody_check_skips_non_null_source_hash),
+    ("custody_check_drive_relative_fails", _custody_check_drive_relative_fails),
+    ("custody_check_single_letter_scheme_fails", _custody_check_single_letter_scheme_fails),
 ]
 
 
