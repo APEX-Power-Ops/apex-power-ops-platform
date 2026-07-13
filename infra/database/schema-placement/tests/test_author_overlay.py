@@ -389,6 +389,197 @@ _CASES += [
     ("sidecar_inmemory_failure_AO012", _sidecar_inmemory_failure_AO012),
 ]
 
+import contextlib  # noqa: E402
+import io  # noqa: E402
+
+import disposition_provenance as dp  # noqa: E402
+
+GATE_SHA = "f" * 40
+
+
+@contextlib.contextmanager
+def _provenance(head=GATE_SHA, clean=True):
+    orig_head, orig_clean = dp.git_head_sha, dp.git_worktree_clean
+    dp.git_head_sha = lambda _d: head
+    dp.git_worktree_clean = lambda _d: clean
+    try:
+        yield
+    finally:
+        dp.git_head_sha, dp.git_worktree_clean = orig_head, orig_clean
+
+
+def _noclobber_refuses_existing():
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "x.json")
+        open(p, "wb").write(b"old")
+        try:
+            ao._write_bytes_atomic_noclobber(p, b"new")
+            return False
+        except FileExistsError:
+            return open(p, "rb").read() == b"old" and not [f for f in os.listdir(d) if f.startswith(".")]
+
+
+def _publish_set_partial_failure_AO008():
+    # sidecar target pre-exists: source publishes, sidecar refuses -> AO008; overlay NEVER written;
+    # no temp residue anywhere (the finally-unlink).
+    with tempfile.TemporaryDirectory() as d:
+        src = os.path.join(d, "source", "r.source.txt")
+        sig = os.path.join(d, "o.json.sig")
+        ovl = os.path.join(d, "o.json")
+        open(sig, "wb").write(b"squatter")
+        code = _err_code(ao.publish_set, [(src, b"S"), (sig, b"G"), (ovl, b"O")])
+        residue = [f for f in os.listdir(d) if f.startswith(".")]
+        return (code == "AO008" and os.path.exists(src) and not os.path.exists(ovl)
+                and open(sig, "rb").read() == b"squatter" and not residue)
+
+
+def _canonical_names_counter():
+    with tempfile.TemporaryDirectory() as d:
+        from datetime import datetime, timezone
+        dt_ = datetime(2026, 7, 12, 6, 0, 0, tzinfo=timezone.utc)
+        first = ao.canonical_names("consumer_evidence.static_repo", "ab" * 32, dt_, d, ".txt")
+        base = "overlay-consumer_evidence_static_repo-abababababab-20260712T060000Z"
+        if os.path.basename(first["overlay"]) != base + ".json":
+            return False
+        if first["locator"] != "evidence/source/" + base + ".source.txt":
+            return False
+        open(first["overlay"], "wb").write(b"x")  # occupy -> next call must pick -01
+        second = ao.canonical_names("consumer_evidence.static_repo", "ab" * 32, dt_, d, ".txt")
+        return os.path.basename(second["overlay"]) == base + "-01.json"
+
+
+def _main_env(d, *, dimension="consumer_evidence.static_repo", with_source=True):
+    """Build a full green argv + env for main(); returns (argv, cleanup_ctx, signer_pub_fp)."""
+    priv, pub = fx.keypair()
+    keys_dir = fx.write_keys_dir(d, pub)
+    census = fx.acceptance_census(["public.t1"])
+    cpath, cs_path, _cb, _sb = fx.write_signed(d, "census-prod-fixture.json", census, priv)
+    core = fx.overlay_core(dimension, [{"object_id": "public.t1",
+                                        "value": {"state": "observed", "found_consumers": 0, "ref": "scan:t"}}])
+    ipath = os.path.join(d, "core.json")
+    json.dump(core, open(ipath, "w"))
+    out_dir = os.path.join(d, "out")
+    os.makedirs(out_dir, exist_ok=True)
+    exp = fx.acceptance_expects(census)
+    argv = ["--census", cpath, "--census-sig", cs_path, "--key-id", fx.KEY_ID, "--keys-dir", keys_dir,
+            "--input", ipath, "--expect-gate-repo-sha", GATE_SHA,
+            "--expect-project-ref", exp["project_ref"], "--expect-database", exp["database"],
+            "--expect-schemas", ",".join(exp["schemas"]), "--expect-census-repo-sha", exp["census_repo_sha"],
+            "--require-role-markers", ",".join(exp["role_markers"]),
+            "--expect-query-bundle-sha256", exp["query_bundle_sha256"],
+            "--out-dir", out_dir, "--signing-key-env", "TEST_SIGNING_KEY_XYZ"]
+    if with_source:
+        spath = os.path.join(d, "scan-output.txt")
+        open(spath, "wb").write(b"public.t1: 0 refs\n")
+        argv += ["--source-file", spath]
+    os.environ["TEST_SIGNING_KEY_XYZ"] = fx.priv_pem(priv)
+    return argv, pub, out_dir
+
+
+def _run_main(argv, pub):
+    err = io.StringIO()
+    with fx.trusted(fx.KEY_ID, fx.spki_fp(pub)), contextlib.redirect_stderr(err):
+        rc = ao.main(argv)
+    return rc, err.getvalue()
+
+
+def _main_green_publishes_triple():
+    with tempfile.TemporaryDirectory() as d:
+        argv, pub, out_dir = _main_env(d)
+        try:
+            with _provenance():
+                rc, err = _run_main(argv, pub)
+        finally:
+            os.environ.pop("TEST_SIGNING_KEY_XYZ", None)
+        if rc != 0:
+            print("    stderr:", err)
+            return False
+        names = sorted(os.listdir(out_dir))
+        overlays = [n for n in names if n.endswith(".json")]
+        sigs = [n for n in names if n.endswith(".json.sig")]
+        sources = os.listdir(os.path.join(out_dir, "source"))
+        if not (len(overlays) == 1 and len(sigs) == 1 and len(sources) == 1):
+            return False
+        doc = json.load(open(os.path.join(out_dir, overlays[0])))
+        return (doc["producing_repo_sha"] == GATE_SHA
+                and doc["source_locator"] == "evidence/source/" + sources[0]
+                and doc["source_hash"] is not None)
+
+
+def _main_dirty_worktree_AO010_before_key():
+    with tempfile.TemporaryDirectory() as d:
+        argv, pub, _ = _main_env(d)
+        os.environ.pop("TEST_SIGNING_KEY_XYZ", None)  # key ABSENT: AO010 must fire first anyway
+        with _provenance(clean=False):
+            rc, err = _run_main(argv, pub)
+        return rc == 2 and "AO010" in err and "AO007" not in err
+
+
+def _main_wrong_head_AO010():
+    with tempfile.TemporaryDirectory() as d:
+        argv, pub, _ = _main_env(d)
+        try:
+            with _provenance(head="0" * 40):
+                rc, err = _run_main(argv, pub)
+        finally:
+            os.environ.pop("TEST_SIGNING_KEY_XYZ", None)
+        return rc == 2 and "AO010" in err
+
+
+def _main_unpinned_key_id_AO013():
+    with tempfile.TemporaryDirectory() as d:
+        argv, pub, _ = _main_env(d)
+        argv[argv.index("--key-id") + 1] = "not-a-pinned-signer"
+        try:
+            with _provenance():
+                rc, err = _run_main(argv, pub)
+        finally:
+            os.environ.pop("TEST_SIGNING_KEY_XYZ", None)
+        return rc == 2 and "AO013" in err
+
+
+def _main_bad_assembly_refuses_to_sign_AO005():
+    with tempfile.TemporaryDirectory() as d:
+        argv, pub, out_dir = _main_env(d)
+        ipath = argv[argv.index("--input") + 1]
+        core = json.load(open(ipath))
+        core["observation_window"] = {"started_at": "2026-07-12T00:00:00+00:00",
+                                      "ended_at": "2026-07-11T00:00:00+00:00"}  # OV009
+        json.dump(core, open(ipath, "w"))
+        try:
+            with _provenance():
+                rc, err = _run_main(argv, pub)
+        finally:
+            os.environ.pop("TEST_SIGNING_KEY_XYZ", None)
+        published = os.listdir(out_dir)
+        published_src = os.listdir(os.path.join(out_dir, "source")) if os.path.isdir(os.path.join(out_dir, "source")) else []
+        return rc == 2 and "OV009" in err and "AO005" in err and published == [] and published_src == []
+
+
+def _main_value_silent_key_never_echoed():
+    with tempfile.TemporaryDirectory() as d:
+        argv, pub, _ = _main_env(d)
+        os.environ["TEST_SIGNING_KEY_XYZ"] = "-----BEGIN PRIVATE KEY-----\nGARBAGE\n-----END PRIVATE KEY-----"
+        try:
+            with _provenance():
+                rc, err = _run_main(argv, pub)
+        finally:
+            os.environ.pop("TEST_SIGNING_KEY_XYZ", None)
+        return rc == 2 and "AO007" in err and "GARBAGE" not in err
+
+
+_CASES += [
+    ("noclobber_refuses_existing", _noclobber_refuses_existing),
+    ("publish_set_partial_failure_AO008", _publish_set_partial_failure_AO008),
+    ("canonical_names_counter", _canonical_names_counter),
+    ("main_green_publishes_triple", _main_green_publishes_triple),
+    ("main_dirty_worktree_AO010_before_key", _main_dirty_worktree_AO010_before_key),
+    ("main_wrong_head_AO010", _main_wrong_head_AO010),
+    ("main_unpinned_key_id_AO013", _main_unpinned_key_id_AO013),
+    ("main_bad_assembly_refuses_to_sign_AO005", _main_bad_assembly_refuses_to_sign_AO005),
+    ("main_value_silent_key_never_echoed", _main_value_silent_key_never_echoed),
+]
+
 if __name__ == "__main__":
     ok = True
     for name, fn in _CASES:

@@ -236,3 +236,147 @@ def build_and_check_sidecar(message, private_key, signer):
     if not ok:
         raise AuthorError("AO012", f"in-memory sidecar verification failed: {reason}")
     return sidecar_bytes
+
+
+def _write_bytes_atomic_noclobber(path, data):
+    """D3 replica of collect_disposition._write_bytes_atomic's NO-CLOBBER branch, verbatim
+    semantics: temp sibling + flush + fsync, os.link (atomic create-if-absent; FileExistsError if
+    present -- no check-then-act race), finally-unlink of the temp. Never os.rename/os.replace."""
+    directory = os.path.dirname(os.path.abspath(path))
+    os.makedirs(directory, exist_ok=True)
+    tmp = os.path.join(directory, f".{os.path.basename(path)}.tmp-{os.getpid()}")
+    try:
+        with open(tmp, "wb") as fh:
+            fh.write(data)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.link(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+
+
+def publish_set(entries):
+    """Ordered no-clobber publish (spec 3.5): source record first (when present), then sidecar,
+    then overlay -- a partial failure can never leave an overlay without its signature."""
+    for path, data in entries:
+        try:
+            _write_bytes_atomic_noclobber(path, data)
+        except FileExistsError:
+            raise AuthorError("AO008", f"refusing to overwrite existing {path} (no-clobber)")
+        except OSError as exc:
+            raise AuthorError("AO008", f"publish failed for {path} ({type(exc).__name__})")
+
+
+def canonical_names(dimension, census_sha256, captured_dt, out_dir, source_ext):
+    """Spec 3.6 naming: overlay-<dim-slug>-<census12>-<UTC>[-NN].json (+ .json.sig), source record
+    under source/ with .source.<ext>. The stamp derives from the SAME captured_dt written into the
+    doc (single clock). First candidate has no suffix; -01..-99 on collision; AO008 when exhausted."""
+    slug = dimension.replace(".", "_")
+    stamp = captured_dt.strftime("%Y%m%dT%H%M%SZ")
+    for n in range(100):
+        suffix = "" if n == 0 else f"-{n:02d}"
+        base = f"overlay-{slug}-{census_sha256[:12]}-{stamp}{suffix}"
+        overlay = os.path.join(out_dir, base + ".json")
+        sig = overlay + ".sig"
+        source = os.path.join(out_dir, "source", base + ".source" + source_ext) if source_ext is not None else None
+        candidates = [p for p in (overlay, sig, source) if p]
+        if not any(os.path.exists(p) for p in candidates):
+            locator = ("evidence/source/" + os.path.basename(source)) if source else None
+            return {"overlay": overlay, "sig": sig, "source": source, "locator": locator,
+                    "stamp": stamp + suffix}
+    raise AuthorError("AO008", "no free canonical name (suffixes -01..-99 exhausted for this census+dimension+second)")
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description="Author + sign ONE per-dimension evidence overlay bound to a signed census.")
+    ap.add_argument("--census", required=True)
+    ap.add_argument("--census-sig", required=True, dest="census_sig")
+    ap.add_argument("--key-id", required=True, dest="key_id")
+    ap.add_argument("--keys-dir", default=dt.DEFAULT_KEYS_DIR, dest="keys_dir")
+    ap.add_argument("--input", required=True, help="operator-semantics overlay core JSON (spec 3.1)")
+    ap.add_argument("--source-file", default=None, dest="source_file")
+    ap.add_argument("--source-hash-na-reason", default=None, dest="source_hash_na_reason")
+    ap.add_argument("--source-custody-locator", default=None, dest="source_custody_locator")
+    ap.add_argument("--producing-repo-sha-na-reason", default=None, dest="producing_na_reason")
+    ap.add_argument("--expect-gate-repo-sha", required=True, dest="expect_gate_repo_sha",
+                    help="REQUIRED (D4): the author's clean merged-main HEAD; asserted before any read.")
+    ap.add_argument("--expect-project-ref", required=True, dest="expect_project_ref")
+    ap.add_argument("--expect-database", required=True, dest="expect_database")
+    ap.add_argument("--expect-schemas", required=True, dest="expect_schemas")
+    ap.add_argument("--expect-census-repo-sha", required=True, dest="expect_census_repo_sha")
+    ap.add_argument("--require-role-markers", default="anon,authenticated,service_role", dest="require_role_markers")
+    ap.add_argument("--expect-query-bundle-sha256", required=True, dest="expect_query_bundle_sha256")
+    ap.add_argument("--out-dir", default=os.path.join(SP_DIR, "evidence"), dest="out_dir")
+    ap.add_argument("--signing-key-env", default="DISPOSITION_SIGNING_KEY", dest="signing_key_env")
+    args = ap.parse_args(argv)
+
+    try:
+        # 1. Provenance gate FIRST (D4): before the signing key or ANY evidence input is read.
+        head = dp.git_head_sha(SP_DIR)
+        if not head or not dp.git_worktree_clean(SP_DIR):
+            raise AuthorError("AO010", "author checkout is DIRTY or HEAD undeterminable -- run from a clean merged-main checkout")
+        if head != args.expect_gate_repo_sha:
+            raise AuthorError("AO010", f"git HEAD {head[:12]} != --expect-gate-repo-sha {args.expect_gate_repo_sha[:12]}")
+        # 2. Pinned signer.
+        signer, kreason = dt.resolve_pinned_key(os.path.abspath(args.keys_dir), args.key_id)
+        if signer is None:
+            raise AuthorError("AO013", kreason)
+        # 3. Census bytes read ONCE + FULL acceptance.
+        try:
+            with open(args.census, "rb") as fh:
+                census_bytes = fh.read()
+            with open(args.census_sig, "rb") as fh:
+                census_sig_bytes = fh.read()
+        except OSError as exc:
+            raise AuthorError("AO000", f"cannot read census/sig ({type(exc).__name__})")
+        expects = {"project_ref": args.expect_project_ref, "database": args.expect_database,
+                   "schemas": [s.strip() for s in args.expect_schemas.split(",") if s.strip()],
+                   "census_repo_sha": args.expect_census_repo_sha,
+                   "role_markers": [s.strip() for s in args.require_role_markers.split(",") if s.strip()],
+                   "query_bundle_sha256": args.expect_query_bundle_sha256}
+        census = accept_census(census_bytes, census_sig_bytes, signer=signer, expects=expects)
+        # 4. Operator semantics + source + producing category.
+        core = load_input_core(args.input)
+        source_bytes, source_reason, custody, source_ext = read_source(
+            args.source_file, args.source_hash_na_reason, args.source_custody_locator)
+        producing = compute_producing(core["dimension"], head, args.producing_na_reason)
+        # 5. Contract + ONE clock read + canonical names.
+        try:
+            contract = dov.load_overlay_contract()
+        except dov.OverlayRegistryError as exc:
+            raise AuthorError("AO000", f"cannot build overlay contract ({type(exc).__name__})")
+        captured_dt = datetime.now(timezone.utc).replace(microsecond=0)
+        census_sha = hashlib.sha256(census_bytes).hexdigest()
+        names = canonical_names(core["dimension"], census_sha, captured_dt, args.out_dir, source_ext)
+        source_hash = hashlib.sha256(source_bytes).hexdigest() if source_bytes is not None else None
+        source_locator = names["locator"] if source_bytes is not None else custody
+        # 6. Assemble -> validate the EXACT signed bytes.
+        doc = assemble_overlay(core, census=census, census_sha256=census_sha, contract=contract,
+                               producing=producing, source_hash=source_hash,
+                               source_hash_reason=source_reason, source_locator=source_locator,
+                               captured_at_iso=captured_dt.isoformat())
+        message = _canon(doc)
+        diags = validate_assembled(message, census=census, census_bytes_sha=census_sha,
+                                   contract=contract, expect_project_ref=args.expect_project_ref,
+                                   now=captured_dt)
+        if diags:
+            for code, locus, msg in diags:
+                print(f"{code} {locus}: {msg}", file=sys.stderr)
+            raise AuthorError("AO005", f"assembled overlay failed {len(diags)} consumer check(s) -- refusing to sign")
+        # 7. Signer parity + in-memory-verified sidecar; 8. ordered no-clobber publish.
+        private_key = load_signing_key(args.signing_key_env, signer)
+        sidecar_bytes = build_and_check_sidecar(message, private_key, signer)
+        entries = ([(names["source"], source_bytes)] if source_bytes is not None else [])
+        entries += [(names["sig"], sidecar_bytes), (names["overlay"], message)]
+        publish_set(entries)
+    except AuthorError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    print(f"=== OVERLAY AUTHORED: {core['dimension']} n={len(core['assignments'])} -> {names['overlay']} "
+          f"(census {census_sha[:12]}, signer {signer.key_id}) ===")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
