@@ -89,6 +89,45 @@ def _rehash_green():
         return cic.source_rehash(doc, d, protected_sources={"evidence/source/a.source.txt"}) == []
 
 
+# ---- Phase-4.1 item 4: custody-locator URI rule (CI side, mirrors author_overlay.is_custody_uri) ----
+def _custody_check_valid_uri_passes():
+    docs = [("evidence/overlay-x.json", _doc(locator="vault:padloc/item/xyz", source_hash=None))]
+    return cic.custody_locator_check(docs) == []
+
+
+def _custody_check_filesystem_path_fails():
+    docs = [("evidence/overlay-x.json", _doc(locator="/etc/passwd", source_hash=None))]
+    fails = cic.custody_locator_check(docs)
+    return any("evidence/overlay-x.json" in f for f in fails)
+
+
+def _custody_check_windows_drive_fails():
+    docs = [("evidence/overlay-x.json", _doc(locator="C:\\evidence\\out.log", source_hash=None))]
+    return any("evidence/overlay-x.json" in f for f in cic.custody_locator_check(docs))
+
+
+def _custody_check_traversal_fails():
+    docs = [("evidence/overlay-x.json", _doc(locator="vault:../secrets", source_hash=None))]
+    return any("evidence/overlay-x.json" in f for f in cic.custody_locator_check(docs))
+
+
+def _custody_check_backslash_fails():
+    docs = [("evidence/overlay-x.json", _doc(locator="vault:cus\\tody", source_hash=None))]
+    return any("evidence/overlay-x.json" in f for f in cic.custody_locator_check(docs))
+
+
+def _custody_check_whitespace_fails():
+    docs = [("evidence/overlay-x.json", _doc(locator="vault:custody ref", source_hash=None))]
+    return any("evidence/overlay-x.json" in f for f in cic.custody_locator_check(docs))
+
+
+def _custody_check_skips_non_null_source_hash():
+    # a committed regular-evidence overlay (non-null source_hash) is out of scope for this check
+    # even though its locator is a repo path, not a URI -- orphan_check/source_rehash own that.
+    docs = [("evidence/overlay-x.json", _doc(locator="evidence/source/a.source.txt", source_hash="e" * 64))]
+    return cic.custody_locator_check(docs) == []
+
+
 _CASES += [
     ("source_record_without_overlay_fails", source_record_without_overlay_fails),  # RIDER, first
     ("referenced_source_passes", _referenced_source_passes),
@@ -99,6 +138,13 @@ _CASES += [
     ("non_regular_source_fails", _non_regular_source_fails),
     ("hash_mismatch_source_fails", _hash_mismatch_source_fails),
     ("rehash_green", _rehash_green),
+    ("custody_check_valid_uri_passes", _custody_check_valid_uri_passes),
+    ("custody_check_filesystem_path_fails", _custody_check_filesystem_path_fails),
+    ("custody_check_windows_drive_fails", _custody_check_windows_drive_fails),
+    ("custody_check_traversal_fails", _custody_check_traversal_fails),
+    ("custody_check_backslash_fails", _custody_check_backslash_fails),
+    ("custody_check_whitespace_fails", _custody_check_whitespace_fails),
+    ("custody_check_skips_non_null_source_hash", _custody_check_skips_non_null_source_hash),
 ]
 
 
@@ -479,6 +525,31 @@ def _e2e_forbidden_dim_null_producing_green():
         return r.returncode == 0 and "ALL COMMITTED OVERLAY ARTIFACTS VERIFIED" in r.stdout
 
 
+def _e2e_bad_custody_locator_fails():
+    # Phase-4.1 item 4, e2e: a committed NA-case overlay whose source_locator is a filesystem
+    # path (not a URI) must FAIL the whole gate via custody_locator_check, even though every
+    # other check (orphan/rehash/OV007/etc.) is satisfied -- mirrors
+    # e2e_forbidden_dim_null_producing_green's GREEN NA-pair shape but with a bad locator.
+    with tempfile.TemporaryDirectory() as tmp:
+        work, priv, base = _scratch(tmp)
+        census, cb, _ = _fixture_census(work, priv, base)
+        _commit_all(work, "census evidence")
+        sp = os.path.join(work, *SP.split("/"))
+        contract = dov.load_overlay_contract()
+        core = fx.overlay_core("advisor_findings",
+                               [{"object_id": "public.t2", "value": {"state": "observed", "value": ["lint:ok"]}}])
+        doc = ao.assemble_overlay(core, census=census, census_sha256=hashlib.sha256(cb).hexdigest(),
+                                  contract=contract, producing=(None, "advisor API snapshot"),
+                                  source_hash=None, source_hash_reason="no committed artifact",
+                                  source_locator="/etc/advisor-export.log",  # path-like -- must FAIL
+                                  captured_at_iso="2026-07-12T06:00:00+00:00")
+        os.makedirs(os.path.join(sp, "evidence"), exist_ok=True)
+        fx.write_signed(os.path.join(sp, "evidence"), "overlay-advisor_findings-scratch-badcustody.json", doc, priv)
+        _commit_all(work, "advisor overlay (bad custody locator)")
+        r = _gate(work)
+        return r.returncode == 1 and "custody locator" in r.stdout
+
+
 def _e2e_source_hash_mismatch_fails():
     # The record is ADDED in the same PR (immutability passes) but its bytes no longer match the
     # overlay's source_hash -- the step-4 rehash wiring must FAIL (plan-audit E2E-2).
@@ -543,6 +614,7 @@ _CASES += [
     ("e2e_census_nonancestor_fails", _e2e_census_nonancestor_fails),
     ("e2e_tooling_drift_since_census_fails", _e2e_tooling_drift_since_census_fails),
     ("e2e_forbidden_dim_null_producing_green", _e2e_forbidden_dim_null_producing_green),
+    ("e2e_bad_custody_locator_fails", _e2e_bad_custody_locator_fails),
     ("e2e_source_hash_mismatch_fails", _e2e_source_hash_mismatch_fails),
     ("e2e_modify_committed_source_record_fails", _e2e_modify_committed_source_record_fails),
     ("e2e_added_overlay_bad_signature_fails", _e2e_added_overlay_bad_signature_fails),

@@ -1,5 +1,5 @@
 # .github/workflows/schema-placement-ci.yml
-# Path-filtered gate for the schema-placement disposition ledger. Runs the four locked offline suites
+# Path-filtered gate for the schema-placement disposition ledger. Runs the eleven locked offline suites
 # (no DB — the collector's live census path is GO-gated and stubbed in tests) plus a whitespace /
 # conflict-marker check, so a PR touching this tooling cannot merge on unrelated green checks.
 name: Schema-placement CI

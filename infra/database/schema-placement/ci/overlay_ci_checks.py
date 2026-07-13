@@ -92,6 +92,8 @@ _CANONICAL_OVERLAY = re.compile(r"^evidence/overlay-[^/]+\.json$")
 
 
 def _reject_dup(pairs):
+    """D3 replica target: author_overlay.py's load_input_core keeps a byte-parallel copy of this
+    function (as _reject_dup_keys) for its own --input strict-parse (Phase-4.1 item 2)."""
     seen = {}
     for k, v in pairs:
         if k in seen:
@@ -101,11 +103,56 @@ def _reject_dup(pairs):
 
 
 def _reject_nonfinite(const):
+    """D3 replica target: author_overlay.py's _reject_nonfinite_const."""
     raise ValueError(f"non-finite JSON constant {const!r} not allowed")
 
 
 def strict_parse(data: bytes):
+    """D3 replica target: author_overlay.py's _strict_parse_input. Kept byte-parallel per D3
+    precedent -- edit both copies together if this contract changes."""
     return json.loads(data.decode("utf-8"), object_pairs_hook=_reject_dup, parse_constant=_reject_nonfinite)
+
+
+_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*:(.+)$")
+_WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:[\\/]")
+
+
+def is_custody_uri(value):
+    """D3 replica of author_overlay.py's is_custody_uri -- kept byte-parallel (Phase-4.1 item 4).
+    Custody-locator URI rule: must be '<scheme>:<opaque-reference>' -- scheme matches
+    [A-Za-z][A-Za-z0-9+.-]*, followed by ':' and a non-empty opaque part. Rejects absolute paths
+    (leading '/' or a Windows drive letter), relative filesystem paths (no scheme/colon), '..'
+    traversal, backslashes, and any whitespace. Returns (ok, reason_or_value)."""
+    if not isinstance(value, str) or not value:
+        return False, "custody locator is not a non-empty string"
+    if any(ch.isspace() for ch in value):
+        return False, "custody locator contains whitespace"
+    if "\\" in value:
+        return False, "custody locator contains a backslash"
+    if ".." in value:
+        return False, "custody locator contains '..'"
+    if value.startswith("/"):
+        return False, "custody locator is an absolute path"
+    if _WINDOWS_DRIVE_RE.match(value):
+        return False, "custody locator is a Windows drive path"
+    if not _SCHEME_RE.match(value):
+        return False, "custody locator is not URI-like (expected <scheme>:<opaque-reference>)"
+    return True, value
+
+
+def custody_locator_check(overlay_docs):
+    """Focused check (Phase-4.1 item 4): every committed overlay with a null source_hash (the
+    NA/custody path) must carry a source_locator that is URI-like (is_custody_uri). Runs
+    UNCONDITIONALLY over every committed overlay doc -- unlike orphan_check, which only inspects
+    non-null-hash docs, this is the mirror image and only inspects null-hash docs."""
+    fails = []
+    for path, doc in overlay_docs:
+        if doc.get("source_hash") is not None:
+            continue
+        ok, reason = is_custody_uri(doc.get("source_locator"))
+        if not ok:
+            fails.append(f"FAIL: {path}: {reason}")
+    return fails
 
 
 def kind_sniff(files):
@@ -245,6 +292,7 @@ def main(argv=None):
     fails += census_uniqueness(census_files)
     fails += sig_pairing(overlay_paths, sig_paths)
     fails += orphan_check(overlay_docs, source_paths)
+    fails += custody_locator_check(overlay_docs)
 
     added = [line for line in _git(["diff", "--no-renames", "--diff-filter=A", "--name-only",
                                     args.base, "HEAD", "--",

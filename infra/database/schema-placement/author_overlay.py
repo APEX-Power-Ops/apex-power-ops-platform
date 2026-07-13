@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 
@@ -57,18 +58,51 @@ def _canon(doc) -> bytes:
 
 
 _CORE_REQUIRED = ("dimension", "assignments", "observation_window", "authority", "collection_method")
+_CORE_OPTIONAL = ("operator_identity", "attestation_ref")
+_CORE_ALLOWED = frozenset(_CORE_REQUIRED) | frozenset(_CORE_OPTIONAL)
+
+
+def _reject_dup_keys(pairs):
+    """D3 replica of ci/overlay_ci_checks.py's _reject_dup -- kept byte-parallel (Phase-4.1 item 2).
+    object_pairs_hook fires for EVERY JSON object in the parse tree, so this rejects a duplicate
+    key at any nesting depth, not just the top level."""
+    seen = {}
+    for k, v in pairs:
+        if k in seen:
+            raise ValueError(f"duplicate JSON key {k!r}")
+        seen[k] = v
+    return seen
+
+
+def _reject_nonfinite_const(const):
+    """D3 replica of ci/overlay_ci_checks.py's _reject_nonfinite."""
+    raise ValueError(f"non-finite JSON constant {const!r} not allowed")
+
+
+def _strict_parse_input(data: bytes):
+    """D3 replica of ci/overlay_ci_checks.py's strict_parse: rejects duplicate keys (any depth)
+    and NaN/Infinity/-Infinity. Kept byte-parallel with the CI driver per D3 precedent -- the
+    two copies must be edited together if the parsing contract ever changes."""
+    return json.loads(data.decode("utf-8"), object_pairs_hook=_reject_dup_keys,
+                      parse_constant=_reject_nonfinite_const)
 
 
 def load_input_core(path):
-    """Operator SEMANTICS only (spec 3.1). AO000 unreadable/unparseable; AO002 structurally invalid.
-    Full per-field validation is the consumer schema's job (validate_assembled)."""
+    """Operator SEMANTICS only (spec 3.1). AO000 unreadable/unparseable (incl. duplicate JSON
+    keys at any depth and NaN/Infinity/-Infinity constants -- Phase-4.1 item 2); AO002
+    structurally invalid (not an object, unknown property, missing required field, bad dimension/
+    assignments shape). Full per-field validation is the consumer schema's job
+    (validate_assembled)."""
     try:
         with open(path, "rb") as fh:
-            core = json.loads(fh.read().decode("utf-8"))
+            core = _strict_parse_input(fh.read())
     except (OSError, ValueError, UnicodeDecodeError) as exc:
         raise AuthorError("AO000", f"cannot read/parse --input ({type(exc).__name__})")
     if not isinstance(core, dict):
         raise AuthorError("AO002", f"--input must be a JSON object (got {type(core).__name__})")
+    unknown = sorted(set(core) - _CORE_ALLOWED)
+    if unknown:
+        raise AuthorError("AO002", "--input has unknown field(s): " + ",".join(unknown))
     missing = [k for k in _CORE_REQUIRED if k not in core]
     if missing:
         raise AuthorError("AO002", "--input missing required field(s): " + ",".join(missing))
@@ -97,10 +131,40 @@ def compute_producing(dimension, gate_repo_sha, na_reason):
     return gate_repo_sha, None  # conditional: repo-backed inventory -> author HEAD
 
 
+_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*:(.+)$")
+_WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:[\\/]")
+
+
+def is_custody_uri(value):
+    """Custody-locator URI rule (Phase-4.1 item 4): must be '<scheme>:<opaque-reference>' --
+    scheme matches [A-Za-z][A-Za-z0-9+.-]*, followed by ':' and a non-empty opaque part. Rejects
+    absolute paths (leading '/' or a Windows drive letter), relative filesystem paths (no scheme/
+    colon), '..' traversal, backslashes, and any whitespace. D3 replica -- kept byte-parallel with
+    ci/overlay_ci_checks.py's copy (comment there references this one). Returns
+    (ok, reason_or_value)."""
+    if not isinstance(value, str) or not value:
+        return False, "custody locator is not a non-empty string"
+    if any(ch.isspace() for ch in value):
+        return False, "custody locator contains whitespace"
+    if "\\" in value:
+        return False, "custody locator contains a backslash"
+    if ".." in value:
+        return False, "custody locator contains '..'"
+    if value.startswith("/"):
+        return False, "custody locator is an absolute path"
+    if _WINDOWS_DRIVE_RE.match(value):
+        return False, "custody locator is a Windows drive path"
+    if not _SCHEME_RE.match(value):
+        return False, "custody locator is not URI-like (expected <scheme>:<opaque-reference>)"
+    return True, value
+
+
 def read_source(source_file, na_reason, custody_locator):
     """Value-silent source intake (spec 3.1 + round-2b Codex P2). Exactly one of source_file /
-    na_reason; custody_locator IFF na_reason. Returns (bytes|None, reason|None, custody|None,
-    ext|None). AO009 reports ONLY path + exception type -- source content is secret-bearing."""
+    na_reason; custody_locator IFF na_reason, and (Phase-4.1 item 4) the custody_locator must be
+    URI-like (is_custody_uri) -- AO004, consistent with the other custody-locator argument
+    violations below. Returns (bytes|None, reason|None, custody|None, ext|None). AO009 reports
+    ONLY path + exception type -- source content is secret-bearing."""
     has_file = source_file is not None
     has_reason = bool((na_reason or "").strip())
     has_custody = bool((custody_locator or "").strip())
@@ -116,7 +180,11 @@ def read_source(source_file, na_reason, custody_locator):
             raise AuthorError("AO009", f"source-file unreadable: {source_file} ({type(exc).__name__})")
         ext = os.path.splitext(source_file)[1] or ".dat"
         return data, None, None, ext
-    return None, na_reason.strip(), custody_locator.strip(), None
+    custody_clean = custody_locator.strip()
+    ok, reason = is_custody_uri(custody_clean)
+    if not ok:
+        raise AuthorError("AO004", reason)
+    return None, na_reason.strip(), custody_clean, None
 
 
 def assemble_overlay(core, *, census, census_sha256, contract, producing, source_hash,

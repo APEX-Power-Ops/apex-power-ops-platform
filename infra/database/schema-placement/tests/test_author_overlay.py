@@ -64,6 +64,76 @@ def _input_valid_core_loads():
         return ao.load_input_core(p)["dimension"] == "advisor_findings"
 
 
+_CORE_TAIL = ('"observation_window": {"started_at": "2026-07-11T00:00:00+00:00", '
+             '"ended_at": "2026-07-12T00:00:00+00:00"}, "authority": "a", "collection_method": "m"')
+
+
+def _input_duplicate_dimension_key_AO000():
+    # Phase-4.1 item 2 (RED before the strict-parse fix): a duplicate top-level "dimension" key
+    # is currently silently last-wins -- json.dump cannot express this, so the fixture is raw text.
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "core.json")
+        raw = ('{"dimension": "advisor_findings", "dimension": "in_data_api_exposed_schema", '
+              '"assignments": [{"object_id": "public.t1", "value": {}}], ' + _CORE_TAIL + "}")
+        open(p, "w").write(raw)
+        return _err_code(ao.load_input_core, p) == "AO000"
+
+
+def _input_duplicate_assignments_key_AO000():
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "core.json")
+        raw = ('{"dimension": "advisor_findings", '
+              '"assignments": [{"object_id": "public.t1", "value": {}}], '
+              '"assignments": [{"object_id": "public.t2", "value": {}}], ' + _CORE_TAIL + "}")
+        open(p, "w").write(raw)
+        return _err_code(ao.load_input_core, p) == "AO000"
+
+
+def _input_duplicate_key_nested_any_depth_AO000():
+    # "any depth": object_pairs_hook fires for every JSON object in the tree, not just the top
+    # level -- prove it catches a duplicate INSIDE observation_window too.
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "core.json")
+        raw = ('{"dimension": "advisor_findings", '
+              '"assignments": [{"object_id": "public.t1", "value": {}}], '
+              '"observation_window": {"started_at": "2026-07-11T00:00:00+00:00", '
+              '"started_at": "2026-07-11T01:00:00+00:00", "ended_at": "2026-07-12T00:00:00+00:00"}, '
+              '"authority": "a", "collection_method": "m"}')
+        open(p, "w").write(raw)
+        return _err_code(ao.load_input_core, p) == "AO000"
+
+
+def _input_nonfinite_value_AO000():
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "core.json")
+        raw = ('{"dimension": "advisor_findings", '
+              '"assignments": [{"object_id": "public.t1", "value": NaN}], ' + _CORE_TAIL + "}")
+        open(p, "w").write(raw)
+        return _err_code(ao.load_input_core, p) == "AO000"
+
+
+def _input_unknown_property_AO002():
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "core.json")
+        core = fx.overlay_core("advisor_findings", [{"object_id": "public.t1", "value": {}}])
+        core["note"] = "not part of the contract"
+        json.dump(core, open(p, "w"))
+        return _err_code(ao.load_input_core, p) == "AO002"
+
+
+def _input_optional_fields_still_allowed():
+    # regression guard: operator_identity/attestation_ref are the two OPTIONAL allowed keys --
+    # the unknown-property gate must not reject them.
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "core.json")
+        core = fx.overlay_core("advisor_findings", [{"object_id": "public.t1", "value": {}}])
+        core["operator_identity"] = "jason"
+        core["attestation_ref"] = "sig:abc"
+        json.dump(core, open(p, "w"))
+        loaded = ao.load_input_core(p)
+        return loaded["operator_identity"] == "jason" and loaded["attestation_ref"] == "sig:abc"
+
+
 SHA = "c" * 40
 
 
@@ -129,6 +199,39 @@ def _source_na_path():
     return data is None and reason == "no artifact for this source" and custody == "vault:custody/2026-07" and ext is None
 
 
+def _custody_absolute_path_AO004():
+    return _err_code(ao.read_source, None, "no artifact", "/etc/passwd") == "AO004"
+
+
+def _custody_windows_drive_AO004():
+    return _err_code(ao.read_source, None, "no artifact", "C:\\evidence\\out.log") == "AO004"
+
+
+def _custody_relative_path_AO004():
+    return _err_code(ao.read_source, None, "no artifact", "relative/path/to/file.log") == "AO004"
+
+
+def _custody_traversal_AO004():
+    return _err_code(ao.read_source, None, "no artifact", "vault:../secrets") == "AO004"
+
+
+def _custody_backslash_AO004():
+    return _err_code(ao.read_source, None, "no artifact", "vault:cus\\tody") == "AO004"
+
+
+def _custody_whitespace_AO004():
+    return _err_code(ao.read_source, None, "no artifact", "vault:custody ref") == "AO004"
+
+
+def _custody_empty_string_AO004():
+    return _err_code(ao.read_source, None, "no artifact", "   ") == "AO004"
+
+
+def _custody_valid_uri_passes():
+    data, reason, custody, ext = ao.read_source(None, "no artifact", "vault:padloc/item/xyz")
+    return data is None and custody == "vault:padloc/item/xyz"
+
+
 _CASES += [
     ("input_unreadable_AO000", _input_unreadable_AO000),
     ("input_not_object_AO002", _input_not_object_AO002),
@@ -136,6 +239,12 @@ _CASES += [
     ("input_bad_dimension_AO002", _input_bad_dimension_AO002),
     ("input_empty_assignments_AO002", _input_empty_assignments_AO002),
     ("input_valid_core_loads", _input_valid_core_loads),
+    ("input_duplicate_dimension_key_AO000", _input_duplicate_dimension_key_AO000),
+    ("input_duplicate_assignments_key_AO000", _input_duplicate_assignments_key_AO000),
+    ("input_duplicate_key_nested_any_depth_AO000", _input_duplicate_key_nested_any_depth_AO000),
+    ("input_nonfinite_value_AO000", _input_nonfinite_value_AO000),
+    ("input_unknown_property_AO002", _input_unknown_property_AO002),
+    ("input_optional_fields_still_allowed", _input_optional_fields_still_allowed),
     ("producing_required_uses_gate_sha", _producing_required_uses_gate_sha),
     ("producing_required_rejects_reason_AO002", _producing_required_rejects_reason_AO002),
     ("producing_forbidden_needs_reason_AO002", _producing_forbidden_needs_reason_AO002),
@@ -148,6 +257,14 @@ _CASES += [
     ("source_unreadable_AO009_value_silent", _source_unreadable_AO009_value_silent),
     ("source_file_read_and_ext", _source_file_read_and_ext),
     ("source_na_path", _source_na_path),
+    ("custody_absolute_path_AO004", _custody_absolute_path_AO004),
+    ("custody_windows_drive_AO004", _custody_windows_drive_AO004),
+    ("custody_relative_path_AO004", _custody_relative_path_AO004),
+    ("custody_traversal_AO004", _custody_traversal_AO004),
+    ("custody_backslash_AO004", _custody_backslash_AO004),
+    ("custody_whitespace_AO004", _custody_whitespace_AO004),
+    ("custody_empty_string_AO004", _custody_empty_string_AO004),
+    ("custody_valid_uri_passes", _custody_valid_uri_passes),
 ]
 
 import hashlib  # noqa: E402

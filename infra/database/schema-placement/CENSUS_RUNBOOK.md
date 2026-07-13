@@ -142,11 +142,13 @@ clean). No secret ever entered the operator shell, so there is nothing to `unset
 **After the census (current sequence — each step operator-gated):** the signed-overlay CONSUMER
 (`disposition_overlay.py`, OV001–OV022) and the overlay PUBLICATION tooling (`author_overlay.py`,
 `verify_overlay_artifact.py`, the `overlay-evidence` CI gate, `OVERLAY_COLLECTION_RUNBOOK.md`) are
-merged. Next: **fresh census → definer-view reconciliation → collect + sign the six per-dimension
-overlays (`author_overlay.py`, bound to the fresh census byte-hash, each with a committed source
-record) → formal cluster gate (`check_disposition --mode preapply` over census + all overlays) →
-apply runner** (revalidate-everything: read-once, verify snapshot+overlay sigs vs the pinned key,
-re-run schema/semantic/target gates, bind+hash the exact migration SQL, restore-test the backup in
+merged. Next: **fresh census → definer-view reconciliation → collect and sign the six per-dimension
+overlays, each bound to the fresh census byte hash and publishing either (a) a committed source
+record whose bytes match its non-null `source_hash`, or (b), only where the contract permits
+`source_hash:null`, a non-empty NA reason and approved out-of-band custody locator → formal cluster
+gate (`check_disposition --mode preapply` over census + all overlays) → apply runner**
+(revalidate-everything: read-once, verify snapshot+overlay sigs vs the pinned key, re-run
+schema/semantic/target gates, bind+hash the exact migration SQL, restore-test the backup in
 disposable PostgreSQL, recheck identity+drift immediately before SQL). The apply gate remains HELD.
 
 **Evidence immutability:** the `overlay-evidence` CI job also rejects any MODIFY/DELETE/RENAME/
