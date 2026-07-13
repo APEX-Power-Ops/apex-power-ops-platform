@@ -101,6 +101,92 @@ _CASES += [
     ("rehash_green", _rehash_green),
 ]
 
+
+# ---- Task 8: kind-sniff, census uniqueness, sig pairing, exactly-one census binding,
+# committed-set OV007, strict_parse ----
+def _kind_sniff_catches_hidden_overlay():
+    hidden = fx.canon({"kind": "evidence_overlay", "x": 1})
+    files = [("evidence/notes.md", b"# just docs"),
+             ("evidence/HIDDEN.JSON", hidden),                       # extension case
+             ("evidence/source/x.source.dat", hidden),               # hidden under source/
+             ("evidence/overlay-good.json", fx.canon({"kind": "evidence_overlay"}))]
+    fails = cic.kind_sniff(files)
+    return (any("HIDDEN.JSON" in f for f in fails) and any("x.source.dat" in f for f in fails)
+            and not any("overlay-good.json" in f for f in fails))
+
+
+def _census_uniqueness_fails_duplicates():
+    b = fx.canon({"kind": "evidence_snapshot", "n": 1})
+    fails = cic.census_uniqueness([("evidence/census-prod-A.json", b), ("evidence/census-prod-B.json", b)])
+    return any("byte-identical" in f for f in fails)
+
+
+def _sig_pairing_both_directions():
+    fails = cic.sig_pairing(["evidence/overlay-a.json", "evidence/overlay-b.json"],
+                            ["evidence/overlay-a.json.sig", "evidence/overlay-c.json.sig"])
+    return any("overlay-b.json" in f for f in fails) and any("overlay-c.json.sig" in f for f in fails)
+
+
+def _match_census_exactly_one():
+    b1, b2 = b"census-one", b"census-two"
+    files = [("evidence/census-prod-1.json", b1), ("evidence/census-prod-2.json", b2)]
+    h1 = hashlib.sha256(b1).hexdigest()
+    p, f = cic.match_census(h1, files)
+    zero_p, zero_f = cic.match_census("0" * 64, files)
+    dup_files = files + [("evidence/census-prod-3.json", b1)]
+    amb_p, amb_f = cic.match_census(h1, dup_files)
+    return (p == "evidence/census-prod-1.json" and f is None
+            and zero_p is None and "no committed census" in zero_f
+            and amb_p is None and "ambiguous" in amb_f)
+
+
+def _committed_set_ov007_cross_overlay():
+    base = "c" * 64
+    d1 = {"base_snapshot_sha256": base, "dimension": "advisor_findings",
+          "assignments": [{"object_id": "public.t1"}]}
+    d2 = {"base_snapshot_sha256": base, "dimension": "advisor_findings",
+          "assignments": [{"object_id": "public.t1"}]}          # same (dim, oid), DIFFERENT overlay
+    other = {"base_snapshot_sha256": "d" * 64, "dimension": "advisor_findings",
+             "assignments": [{"object_id": "public.t1"}]}        # different census -> no conflict
+    fails = cic.committed_set_ov007([("evidence/overlay-1.json", d1), ("evidence/overlay-2.json", d2),
+                                     ("evidence/overlay-3.json", other)])
+    return any("OV007" in f for f in fails) and not any("overlay-3" in f for f in fails)
+
+
+def _strict_parse_rejects_dup_keys_and_nonfinite():
+    try:
+        cic.strict_parse(b'{"a": 1, "a": 2}')
+        return False
+    except ValueError:
+        pass
+    try:
+        cic.strict_parse(b'{"a": NaN}')
+        return False
+    except ValueError:
+        return True
+
+
+# ---- OPERATOR FOLD (Phase-4 GO): main()'s collection helper must FAIL a non-dict overlay
+# document, not crash and not silently accept it into overlay_docs ----
+def _collect_overlay_docs_rejects_non_dict():
+    files = [("evidence/overlay-list.json", b"[]"), ("evidence/overlay-str.json", b'"x"')]
+    docs, fails = cic._collect_overlay_docs(
+        ["evidence/overlay-list.json", "evidence/overlay-str.json"], files)
+    return (docs == []
+            and any("overlay-list.json" in f and "not a JSON object" in f for f in fails)
+            and any("overlay-str.json" in f and "not a JSON object" in f for f in fails))
+
+
+_CASES += [
+    ("kind_sniff_catches_hidden_overlay", _kind_sniff_catches_hidden_overlay),
+    ("census_uniqueness_fails_duplicates", _census_uniqueness_fails_duplicates),
+    ("sig_pairing_both_directions", _sig_pairing_both_directions),
+    ("match_census_exactly_one", _match_census_exactly_one),
+    ("committed_set_ov007_cross_overlay", _committed_set_ov007_cross_overlay),
+    ("strict_parse_rejects_dup_keys_and_nonfinite", _strict_parse_rejects_dup_keys_and_nonfinite),
+    ("collect_overlay_docs_rejects_non_dict", _collect_overlay_docs_rejects_non_dict),
+]
+
 if __name__ == "__main__":
     ok = True
     for name, fn in _CASES:
