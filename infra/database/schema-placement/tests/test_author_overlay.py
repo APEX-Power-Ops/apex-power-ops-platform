@@ -256,6 +256,139 @@ _CASES += [
     ("na_reason_fields_assemble_green", _na_reason_fields_assemble_green),
 ]
 
+import disposition_signing as ds  # noqa: E402
+import disposition_trust as dt  # noqa: E402
+
+
+def _signer_and_census(tmpdir, priv=None, pub=None):
+    priv2, pub2 = fx.keypair()
+    priv, pub = priv or priv2, pub or pub2
+    keys_dir = fx.write_keys_dir(tmpdir, pub)
+    with fx.trusted(fx.KEY_ID, fx.spki_fp(pub)):
+        signer, reason = dt.resolve_pinned_key(keys_dir, fx.KEY_ID)
+    assert signer is not None, reason
+    census = fx.acceptance_census(["public.t1"])
+    census_bytes = fx.canon(census)
+    sig_bytes = fx.sidecar_bytes_for(census_bytes, priv)
+    return signer, census, census_bytes, sig_bytes, priv
+
+
+def _census_accepts_green():
+    with tempfile.TemporaryDirectory() as d:
+        signer, census, cb, sb, _ = _signer_and_census(d)
+        got = ao.accept_census(cb, sb, signer=signer, expects=fx.acceptance_expects(census))
+        return got["project_ref"] == fx.PROJECT_REF
+
+
+def _tampered_census_AO001():
+    with tempfile.TemporaryDirectory() as d:
+        signer, census, cb, sb, _ = _signer_and_census(d)
+        bad = cb[:-2] + b" }"
+        return _err_code(ao.accept_census, bad, sb, signer=signer,
+                         expects=fx.acceptance_expects(census)) == "AO001"
+
+
+def _foreign_signed_census_AO001():
+    with tempfile.TemporaryDirectory() as d:
+        signer, census, cb, _sb, _ = _signer_and_census(d)
+        foreign_priv, _fp = fx.keypair()
+        foreign_sig = fx.sidecar_bytes_for(cb, foreign_priv)
+        return _err_code(ao.accept_census, cb, foreign_sig, signer=signer,
+                         expects=fx.acceptance_expects(census)) == "AO001"
+
+
+def _project_mismatch_AO003():
+    with tempfile.TemporaryDirectory() as d:
+        signer, census, cb, sb, _ = _signer_and_census(d)
+        expects = fx.acceptance_expects(census)
+        expects["project_ref"] = "otherproject"
+        return _err_code(ao.accept_census, cb, sb, signer=signer, expects=expects) == "AO003"
+
+
+def _out_of_scope_census_AO011():
+    with tempfile.TemporaryDirectory() as d:
+        signer, census, cb, sb, _ = _signer_and_census(d)
+        expects = fx.acceptance_expects(census)
+        expects["schemas"] = ["public", "extra_schema"]  # CN005 inside check_census
+        return _err_code(ao.accept_census, cb, sb, signer=signer, expects=expects) == "AO011"
+
+
+def _key_env_unset_AO007():
+    os.environ.pop("TEST_SIGNING_KEY_XYZ", None)
+    with tempfile.TemporaryDirectory() as d:
+        signer, *_ = _signer_and_census(d)
+        return _err_code(ao.load_signing_key, "TEST_SIGNING_KEY_XYZ", signer) == "AO007"
+
+
+def _key_invalid_pem_AO007_value_silent():
+    os.environ["TEST_SIGNING_KEY_XYZ"] = "not-a-pem"
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            signer, *_ = _signer_and_census(d)
+            try:
+                ao.load_signing_key("TEST_SIGNING_KEY_XYZ", signer)
+                return False
+            except ao.AuthorError as exc:
+                return exc.code == "AO007" and "not-a-pem" not in str(exc)
+    finally:
+        os.environ.pop("TEST_SIGNING_KEY_XYZ", None)
+
+
+def _key_wrong_signer_AO007():
+    wrong_priv, _ = fx.keypair()  # valid Ed25519 key, NOT the pinned signer
+    os.environ["TEST_SIGNING_KEY_XYZ"] = fx.priv_pem(wrong_priv)
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            signer, *_ = _signer_and_census(d)
+            try:
+                ao.load_signing_key("TEST_SIGNING_KEY_XYZ", signer)
+                return False
+            except ao.AuthorError as exc:
+                return exc.code == "AO007" and "wrong signer" in exc.message
+    finally:
+        os.environ.pop("TEST_SIGNING_KEY_XYZ", None)
+
+
+def _key_parity_green_and_sidecar_verifies():
+    with tempfile.TemporaryDirectory() as d:
+        signer, _census, cb, _sb, priv = _signer_and_census(d)
+        os.environ["TEST_SIGNING_KEY_XYZ"] = fx.priv_pem(priv)
+        try:
+            key = ao.load_signing_key("TEST_SIGNING_KEY_XYZ", signer)
+            sidecar = ao.build_and_check_sidecar(b"message-bytes", key, signer)
+            ok, _ = ds.verify_sidecar_bytes_with_key(b"message-bytes", sidecar, signer.public_key)
+            return ok
+        finally:
+            os.environ.pop("TEST_SIGNING_KEY_XYZ", None)
+
+
+def _sidecar_inmemory_failure_AO012():
+    # Matrix row "in-memory sidecar fails to verify": force the verify step to report failure
+    # (a broken/mismatched signer path) and prove the author raises AO012 BEFORE any publish.
+    with tempfile.TemporaryDirectory() as d:
+        signer, _census, _cb, _sb, priv = _signer_and_census(d)
+        orig = ds.verify_sidecar_bytes_with_key
+        ds.verify_sidecar_bytes_with_key = lambda *_a, **_k: (False, "forced failure (test)")
+        try:
+            code = _err_code(ao.build_and_check_sidecar, b"message-bytes", priv, signer)
+        finally:
+            ds.verify_sidecar_bytes_with_key = orig
+        return code == "AO012"
+
+
+_CASES += [
+    ("census_accepts_green", _census_accepts_green),
+    ("tampered_census_AO001", _tampered_census_AO001),
+    ("foreign_signed_census_AO001", _foreign_signed_census_AO001),
+    ("project_mismatch_AO003", _project_mismatch_AO003),
+    ("out_of_scope_census_AO011", _out_of_scope_census_AO011),
+    ("key_env_unset_AO007", _key_env_unset_AO007),
+    ("key_invalid_pem_AO007_value_silent", _key_invalid_pem_AO007_value_silent),
+    ("key_wrong_signer_AO007", _key_wrong_signer_AO007),
+    ("key_parity_green_and_sidecar_verifies", _key_parity_green_and_sidecar_verifies),
+    ("sidecar_inmemory_failure_AO012", _sidecar_inmemory_failure_AO012),
+]
+
 if __name__ == "__main__":
     ok = True
     for name, fn in _CASES:

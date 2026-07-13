@@ -181,3 +181,58 @@ def validate_assembled(message, *, census, census_bytes_sha, contract, expect_pr
     diags += dov.check_conflict([(doc.get("dimension"), a.get("object_id"))
                                  for a in doc.get("assignments", [])])
     return diags
+
+
+def accept_census(census_bytes, sig_bytes, *, signer, expects):
+    """FULL census acceptance, not just signature (spec 3.4; operator round-1 #2). Order:
+    signature over the exact bytes -> the census gate's own strict parse -> explicit AO003 ->
+    check_census. The bytes verified ARE the bytes parsed (read-once discipline)."""
+    ok, reason = ds.verify_sidecar_bytes_with_key(census_bytes, sig_bytes, signer.public_key)
+    if not ok:
+        raise AuthorError("AO001", f"census signature verification failed: {reason}")
+    try:
+        census = vc.load_snapshot_from_bytes(census_bytes)
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise AuthorError("AO000", f"cannot parse census ({type(exc).__name__})")
+    if not isinstance(census, dict):
+        raise AuthorError("AO000", f"census is not a JSON object (got {type(census).__name__})")
+    if census.get("project_ref") != expects["project_ref"]:
+        raise AuthorError("AO003", f"census project_ref {census.get('project_ref')!r} != --expect-project-ref {expects['project_ref']!r}")
+    diags = vc.check_census(census,
+                            expect_project_ref=expects["project_ref"],
+                            expect_database=expects["database"],
+                            expect_schemas=expects["schemas"],
+                            expect_repo_sha=expects["census_repo_sha"],
+                            require_role_markers=expects["role_markers"],
+                            expect_query_bundle_sha256=expects["query_bundle_sha256"])
+    if diags:
+        head = "; ".join(d.render() for d in diags[:5])
+        more = f" (+{len(diags) - 5} more)" if len(diags) > 5 else ""
+        raise AuthorError("AO011", f"base census failed acceptance: {head}{more}")
+    return census
+
+
+def load_signing_key(env_name, signer):
+    """Signer parity (spec 3.5; operator round-1 #5). Value-silent: the PEM never appears in any
+    message; explicit coded checks, never a bare assert."""
+    pem = os.environ.get(env_name)
+    if not pem:
+        raise AuthorError("AO007", f"env var {env_name} is not set (the signing key is never passed on the command line)")
+    try:
+        key = ds.load_private_key_pem(pem.encode("utf-8"))
+    except Exception:  # noqa: BLE001 -- never surface key material
+        raise AuthorError("AO007", f"{env_name} is not a valid Ed25519 private key PEM")
+    fp = ds.public_key_fingerprint(key.public_key())
+    if fp != signer.spki_sha256:
+        raise AuthorError("AO007", f"signing key SPKI {fp[:12]}... is a valid Ed25519 key but the wrong signer (pinned {signer.key_id!r})")
+    return key
+
+
+def build_and_check_sidecar(message, private_key, signer):
+    """Sign, then verify IN MEMORY against the pinned public key BEFORE anything is written
+    (spec 3.5, AO012). Returns the exact sidecar bytes to publish."""
+    sidecar_bytes = _canon(ds.build_sig_sidecar(message, private_key))
+    ok, reason = ds.verify_sidecar_bytes_with_key(message, sidecar_bytes, signer.public_key)
+    if not ok:
+        raise AuthorError("AO012", f"in-memory sidecar verification failed: {reason}")
+    return sidecar_bytes
