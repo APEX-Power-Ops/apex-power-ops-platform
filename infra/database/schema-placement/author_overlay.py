@@ -117,3 +117,67 @@ def read_source(source_file, na_reason, custody_locator):
         ext = os.path.splitext(source_file)[1] or ".dat"
         return data, None, None, ext
     return None, na_reason.strip(), custody_locator.strip(), None
+
+
+def assemble_overlay(core, *, census, census_sha256, contract, producing, source_hash,
+                     source_hash_reason, source_locator, captured_at_iso):
+    """Mechanical binder (spec 3.3): every binding value is COMPUTED by the caller pipeline;
+    the operator core contributes semantics only. NA-reason fields appear IFF the value is null
+    (the OV012/OV019 IFF shapes)."""
+    doc = {
+        "kind": "evidence_overlay", "overlay_version": "1",
+        "dimension": core["dimension"],
+        "source_type": dov.DIMENSIONS[core["dimension"]][1],
+        "authority": core["authority"], "collection_method": core["collection_method"],
+        "source_locator": source_locator, "source_hash": source_hash,
+        "base_snapshot_sha256": census_sha256,
+        "disposition_schema_sha256": contract.disp_sha256,
+        "overlay_schema_sha256": contract.overlay_sha256,
+        "project_ref": census.get("project_ref"),
+        "captured_at": captured_at_iso,
+        "observation_window": core["observation_window"],
+        "producing_repo_sha": producing[0],
+        "assignments": core["assignments"],
+    }
+    if source_hash is None:
+        doc["source_hash_not_applicable_reason"] = source_hash_reason
+    if producing[0] is None:
+        doc["producing_repo_sha_not_applicable_reason"] = producing[1]
+    for k in ("operator_identity", "attestation_ref"):
+        if k in core:
+            doc[k] = core[k]
+    return doc
+
+
+def validate_assembled(message, *, census, census_bytes_sha, contract, expect_project_ref, now):
+    """Validate the EXACT signed bytes (spec 3.5 + round-1 DAG-F5): round-trip through
+    parse_overlay so the dup-key/non-finite guard covers what is signed, then run the consumer's
+    per-artifact checks, the OV010 future-half, and the intra-overlay flat OV007. Any schema
+    failure SHORT-CIRCUITS (mirrors load_and_merge -- a schema-invalid doc is not safe to
+    bind/window/target)."""
+    loc = "author:assembled"
+    try:
+        doc = dov.parse_overlay(message)
+    except ValueError as exc:
+        return [("OV008", loc, f"serialized overlay does not re-parse ({exc})")]
+    if not isinstance(doc, dict):
+        return [("OV008", loc, f"serialized overlay is not a JSON object (got {type(doc).__name__})")]
+    diags = dov.validate_overlay(doc, contract.overlay_validator)
+    if diags:
+        return diags
+    diags += dov.check_binding(doc, census_sha256=census_bytes_sha,
+                               census_project_ref=census.get("project_ref"),
+                               expect_project_ref=expect_project_ref,
+                               on_disk_disp_sha=contract.disp_sha256,
+                               on_disk_overlay_sha=contract.overlay_sha256)
+    diags += dov.check_observation_window(doc, now)
+    try:
+        if dov._parse_iso(doc["captured_at"]) > now:
+            diags.append(("OV010", f"overlay:{doc.get('dimension')}", "captured_at is in the future"))
+    except (KeyError, ValueError, TypeError):
+        diags.append(("OV010", f"overlay:{doc.get('dimension')}", "captured_at unparseable"))
+    rel_index = {r["object_id"]: r for r in census.get("relations", [])}
+    diags += dov.check_target(doc, rel_index)
+    diags += dov.check_conflict([(doc.get("dimension"), a.get("object_id"))
+                                 for a in doc.get("assignments", [])])
+    return diags
