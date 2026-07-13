@@ -1,6 +1,6 @@
-# Forward-observability packet — design (Phase 9A-OBS-DESIGN)
+# Forward-observability packet — design (Phase 9A-OBS-DESIGN), rev 2
 
-2026-07-13 · disposition-ledger lane · authored under operator GO "Phase 9A-OBS-DESIGN — design/spec only; no production access or mutation" · **stops for operator review; technical-authority approval only after the pending Supabase support response is folded in (§10)**
+2026-07-13 · disposition-ledger lane · authored under operator GO "Phase 9A-OBS-DESIGN — design/spec only; no production access or mutation" · **stops for operator review.** Technical-authority approval may proceed on this design as-is; the pending Supabase support response folds in via §10 as an amendment when it arrives — at the latest before the Phase-9 `runtime_logs` signing GO if it affects §4.5 bounds or decision D2. Rev 2 folds one Codex P2 + 31 findings from a four-lens adversarial review (§12).
 
 ## 1. Objective and scope
 
@@ -14,8 +14,9 @@ Two tiers. **Tier A (preferred, §4): no-reset `pg_stat_statements` baseline/del
 production mutation. **Tier B (escalation only, §5): narrowly scoped pgAudit read telemetry** — production writes behind
 separate enable/restore GOs. This document authorizes NOTHING; every execution step maps to its own future GO (§8).
 
-Out of scope: the other five overlay dimensions' collection procedures (their existing runbook rows govern), the fresh
-census procedure itself (CENSUS_RUNBOOK governs; this design only fixes its TIMING), and any disposition decision.
+Out of scope: the other five overlay dimensions' collection procedures (their existing runbook rows govern — but §3
+imposes the window-coordination and truthful-start requirements they must satisfy), the fresh census procedure itself
+(CENSUS_RUNBOOK governs; this design fixes only its TIMING), and any disposition decision.
 
 ## 2. Grounding
 
@@ -24,194 +25,317 @@ Tiers of grounding used here, labeled throughout:
   `log_statement=ddl` (config file); `log_min_duration_statement=-1`; `log_connections=off`; `log_duration=off`;
   pgAudit **library preloaded** in `shared_preload_libraries` but **extension NOT installed** (available 17.1) and inactive
   (`pgaudit.log=none`, `pgaudit.role` empty); `pg_stat_statements` **1.11 installed + preloaded**, `stats_reset
-  2026-05-31T03:10:51Z`, 4,867 tracked of `pg_stat_statements.max=5000` (**near eviction cap**), `pg_stat_statements_info.dealloc`
-  available; cohort name-match telemetry 3 entries / 3 calls per view (unattributed by design).
-- **(b) repo facts at `GATE_SHA`** — `OVERLAY_COLLECTION_RUNBOOK.md` (dimension table, window discipline §3, author
-  command §4), `overlay.schema.json`, `author_overlay.py` / `verify_overlay_artifact.py` contracts.
+  2026-05-31T03:10:51Z`, 4,867 tracked of `pg_stat_statements.max=5000` (**near eviction cap**); cohort name-match
+  telemetry 3 entries / 3 calls per view (unattributed by design; see §7 for what CAN have produced these).
+- **(b) repo facts at `GATE_SHA`** — `OVERLAY_COLLECTION_RUNBOOK.md`, `overlay.schema.json`, `author_overlay.py` /
+  `verify_overlay_artifact.py` contracts; the census collector's catalog-only query surface (verified as a repo fact in
+  the OBS-CENSUS preflight, §8).
 - **(c) policy anchors** — per-phase GO discipline; value-silence; `APPROVED_CUSTODY_SCHEMES = {vault, infisical}`;
   operator findings of 2026-07-13 (no `pg_stat_statements_reset()`; eviction fail-closed; support response = input, not
   prerequisite).
-- **(d) PostgreSQL-semantic inferences**, labeled `(PG-inference)` — e.g. `pg_stat_statements` 1.11 per-entry
-  `stats_since` / `minmax_stats_since` columns and `pg_stat_statements_info (dealloc, stats_reset)` semantics; pgAudit
-  object-audit mechanics. Any (d) claim load-bearing at execution time carries a **verify-at-execution preflight** in §8.
+- **(d) PostgreSQL-semantic inferences**, labeled `(PG-inference)`. Any (d) claim load-bearing at execution time carries
+  a **verify-at-execution preflight** in §8. Key (d) claims used: `pg_stat_statements` visibility masking for
+  non-`pg_read_all_stats` viewers; per-entry `stats_since` = entry-creation time, while `minmax_stats_since` = last
+  minmax-only reset time (initially equal — the two are NOT synonyms; new-entry corroboration pins to `stats_since`
+  exclusively); `pg_stat_statements_info` (`dealloc`, `stats_reset`) lives in shared memory and is NOT persisted across
+  server starts (clean restart re-initializes `stats_reset`/`dealloc`; entries survive a clean shutdown only if
+  `pg_stat_statements.save=on`; a crash empties the store); a targeted `pg_stat_statements_reset(userid, dbid, queryid)`
+  moves NEITHER `stats_reset` NOR `dealloc`; queryid stability is not guaranteed across server versions and hashes
+  relation OIDs (view DROP+CREATE changes queryids); pgAudit object-audit mechanics (§5).
 
 Pin vocabulary (fixed 2026-07-13): `GATE_SHA` (origin/main, re-derived at every GO; `8678f30e` at authoring),
 `BASE_SNAPSHOT_SHA256` / `CENSUS_REPO_SHA` / `QUERY_BUNDLE_SHA256` / `CENSUS_OBSERVED_AT` — after the fresh census
-(§3) these four re-pin to the NEW census; the current `52962abe…` census remains valid for the already-merged Phase-8
+(§4.2) these four re-pin to the NEW census; the current `52962abe…` census remains valid for the merged Phase-8
 reconciliation but is superseded for overlay binding.
 
-## 3. Timeline invariant (why the census sits INSIDE the observed window)
+## 3. Timeline invariant and window discipline
 
 ```
 T0 = Tier-A baseline snapshot (read-only)            ── window opens
 T1 = fresh signed census (CENSUS_OBSERVED_AT_new)    ── T0 < T1
-Tobs = operator-approved observation interval        ── runs after T1
+Tobs = operator-approved observation interval        ── opens only after the census is signed
 Tend = end snapshot + bounded API-log export         ── window closes; T0 < T1 < Tend
 ```
 
-The runtime_logs overlay's `observation_window` is **[T0, Tend]** — truthful because the baseline/delta method measures
-exactly that span. OV017 requires the derived consumer window to bracket the census instant (`S ≤ observed_at ≤ E`);
-with `started_at = T0 < T1` and `ended_at = Tend > T1`, this overlay brackets by construction. **Window-coordination
-requirement for the other three consumer dimensions** (`static_repo`, `external_clients`, `operator_declaration`): each
-must truthfully support `started_at ≤ T1` and `ended_at ≥ T1`, collected close to Tend (OV016 freshness runs against the
-earliest `ended_at`; preapply within 720 h of it). The `in_data_api_exposed_schema` overlay window must **cover**
-`[S, E] = [max(started), min(ended)]` (OV022). A one-page window table is produced at Phase-10 assembly and checked
-against these rules before any signing.
+**Clock source:** `T0` and `Tend` are the database `now()` values returned INSIDE the OBS-A1/OBS-A2 snapshot
+transactions. API-export bounds are taken conservatively inside the SQL window (start ≥ T0, end ≤ Tend as measured by
+the log platform's clock); all clock readings are recorded in the source record so skew is inspectable.
 
-**Never backdate:** no window may start before the evidence source actually covers (T0 is the earliest truthful start
-for Tier-A SQL evidence; API-log bounds are whatever the export's explicit `iso_timestamp_start/end` prove).
+The runtime_logs overlay's `observation_window` is **[T0, Tend]** — truthful because the baseline/delta method measures
+exactly that span; with `started_at = T0 < T1` and `ended_at = Tend > T1`, OV017 bracketing holds by construction.
+
+**Window-coordination for the other three consumer dimensions** (`static_repo`, `external_clients`,
+`operator_declaration`): each needs `started_at ≤ T1 ≤ ended_at`. A point-in-time collection at Tend does NOT truthfully
+support `started_at ≤ T1` by itself — each dimension needs a stated **truthful-start basis**:
+- `static_repo`: scan pinned at the new `CENSUS_REPO_SHA`, plus git evidence that the scanned surfaces have no relevant
+  diff between that SHA and the ref at scan time — widening the truthful window to [T1, Tscan]. (Scanning at both T1 and
+  Tend is the fallback.)
+- `external_clients`: change-evidence (config history / platform evidence / attestation) that the client inventory did
+  not change over [T1, Tscan].
+- `operator_declaration`: the attestation TEXT must explicitly cover the interval [≤ T1, Tend], not merely be signed at
+  Tend.
+The Phase-10 assembly produces a one-page window table with a **truthful-start-basis column per dimension** and checks:
+OV009 (`started_at < ended_at ≤ captured_at`, where `captured_at` = that dimension's collection/authoring completion
+time — for runtime_logs, the OBS-A2/export completion or later); OV011/OV017 (S = max(started) ≤ T1 ≤ E = min(ended),
+non-empty); OV016 (preapply within 720 h of the earliest `ended_at`); OV022 (the `in_data_api_exposed_schema` window
+must COVER [S, E] — formally binding for delete-disposition cases). **`in_data_api` interval coverage is made truthful
+by capturing the exposure posture at BOTH ends of the interval and citing the §4.3 posture freeze + F7 no-interference
+result; a single-instant capture may not claim interval coverage.**
+
+**Never backdate:** no window may start before its evidence source actually covers — T0 is the earliest truthful start
+for Tier-A SQL evidence; API-log bounds are whatever the export's verified bounds prove; the truthful-start bases above
+are the only sanctioned ways a later collection reaches back.
 
 ## 4. Tier A (preferred) — no-reset `pg_stat_statements` baseline/delta + bounded API-gateway logs
 
 ### 4.1 Baseline snapshot (read-only GO "OBS-A1")
 Captured via the authorized governed-prod SQL surface, SELECT-only, value-silent:
-1. **Environment**: `stats_reset` + `dealloc` from `pg_stat_statements_info`; tracked-entry count;
-   `pg_stat_statements.max`; `pg_stat_statements.track`; `pg_stat_statements.track_utility`; `compute_query_id`;
-   server version. (`track`/`compute_query_id` were NOT captured in 9A-CAP — first capture happens here; if
-   `compute_query_id=off` or `track=none`, **fail closed before starting**: deltas would be meaningless.)
-2. **Cohort entries** (filter server-side on `query ILIKE` any of the three names; output **never includes query text**):
-   `dbid`, `userid` (numeric) + `rolname` via join, `queryid`, `toplevel`, `calls`, `rows`, `stats_since`.
-   `(PG-inference: stats_since/minmax_stats_since are per-entry first-tracked timestamps in pg_stat_statements 1.11;
-   verify column presence in the OBS-A1 preflight.)`
-3. **Anti-eviction guard for baseline entries**: record the full baseline row-set hash so end-comparison detects any
-   disappearance.
-4. Baseline artifact: one JSON snapshot, hashed, stored out-of-repo; raw copy under `vault:`/`infisical:` custody.
-   Client details (rolname) stay in the raw/custody copy; the committed source record later carries redacted role
-   *classes* (e.g. "service role", "operator role"), not names, unless the operator declassifies.
+1. **Visibility preflight (gates everything; F9):** assert the executing role has cross-role statistics visibility —
+   `pg_has_role(current_user, 'pg_read_all_stats', 'member')` (or superuser) — AND a value-silent count of tracked
+   entries whose text is masked (`query = '<insufficient privilege>'` or `queryid IS NULL`) equals zero.
+   `(PG-inference: without pg_read_all_stats, other roles' entries are silently masked — the ILIKE filter would
+   under-select with no error, and both snapshots would be blind identically.)` Re-asserted at OBS-A2.
+2. **Environment capture (both snapshots; feeds F4):** `stats_reset` + `dealloc` (`pg_stat_statements_info`);
+   tracked-entry count; `pg_stat_statements.max`; `pg_stat_statements.track`; `pg_stat_statements.track_utility`;
+   `pg_stat_statements.save`; `compute_query_id`; `server_version`; installed `pg_stat_statements` extension version;
+   `pg_postmaster_start_time()`; re-assert `shared_preload_libraries` contains `pg_stat_statements`.
+   **Acceptance set:** `compute_query_id IN ('on','auto')` passes ('auto' is valid because the library is confirmed
+   preloaded); `'off'`/`'regress'` or `track = 'none'` ⇒ fail closed before starting.
+3. **Cohort entries** (filter server-side on `query ILIKE` any of the three names; output **never includes query
+   text**): `dbid`, `userid` (numeric) + `rolname` via join, `queryid`, `toplevel`, `calls`, `rows`, `stats_since`, and
+   a server-side, value-silent **class flag** per entry (read-shaped vs utility-shaped, e.g. `query ILIKE 'select%'`) —
+   the flag is exported, never the text.
+4. **Per-view object-state capture (feeds F7):** for each of the three views, `pg_class.oid`, an md5 of
+   `pg_get_viewdef()`, and `relacl` — captured identically at OBS-A2; any inequality trips F7. `(PG-inference: queryid
+   hashes relation OIDs, so DROP+CREATE silently splits post-DDL traffic to new queryids — oid capture is what makes
+   F7 detectable.)`
+5. **Self-noise post-check (§8 preflight):** after the capture, re-run the filter and assert the snapshot's own
+   statement did not enter the matched set `(PG-inference: its ILIKE literals normalize to $N)`.
+6. Baseline artifact: one JSON snapshot, hashed, stored out-of-repo; raw copy (including `rolname` values) under
+   `vault:`/`infisical:` custody. Committed source records carry redacted role *classes* (e.g. "service role",
+   "operator role"), never role names, unless the operator declassifies.
 
-**No `pg_stat_statements_reset()` anywhere in this packet** (operator finding 2). The baseline/delta method needs none.
+**No `pg_stat_statements_reset()` anywhere in this packet** — full, targeted, or minmax-only (operator finding 2). The
+baseline/delta method needs none.
 
 ### 4.2 Fresh signed census (GO "OBS-CENSUS", CENSUS_RUNBOOK verbatim)
 Run AFTER OBS-A1 completes, from clean merged main; new `BASE_SNAPSHOT_SHA256`/`CENSUS_OBSERVED_AT`; published +
-merged per the Phase-6/7/7M pattern. All six Phase-9 overlays bind to THIS census.
+merged per the Phase-6/7/7M pattern. All six Phase-9 overlays bind to THIS census. Preflight (repo fact): verify the
+collector's query surface at `GATE_SHA` touches catalogs only; if any query selects from the cohort views, it must be
+logged as a controlled consumer instead.
 
-### 4.3 Observation interval (no GO needed — passive)
-- **Duration**: operator decision (§9 D1). Lean: **7 days** — long enough for weekly cron/report consumers, short
-  enough that OV016 (720 h) and evidence freshness stay comfortable.
-- **Controlled-consumer discipline**: during [T0, Tend], deliberate queries naming the cohort views (dashboard
-  browsing, ad-hoc SQL, demos) are **prohibited by default**; any exception is logged at execution time in a
-  controlled-consumer log (who/when/surface/purpose — one line each) that becomes part of the source record, so
-  end-deltas decompose into `controlled + uncontrolled`. Known self-noise that needs no logging `(PG-inference)`:
-  the snapshot queries themselves normalize their ILIKE literals to `$N` and do not create name-matching entries;
-  the census collector queries catalogs only and never selects from the views.
-- Platform posture freeze: no Packet-01-style grant/DDL changes to the three views during the interval (would confound
-  both the census and the deltas); the lane holds A1–A3 anyway.
+### 4.3 Observation interval (passive; exceptions rule below)
+- **Duration**: operator decision (§9 D1). Lean: **7 days**. Longer windows raise BOTH eviction exposure (F2/F3) AND
+  the probability of a routine platform restart tripping F1 `(PG-inference: any server start re-initializes
+  stats_reset — the observed 2026-05-31 value plausibly marks the last restart, i.e. ~6 weeks between restarts, but
+  Supabase maintenance can restart within any week)`. The **churn-rate viability estimator**: the `dealloc` difference
+  between OBS-A0 and OBS-A1 (readings days apart) projects eviction risk over the candidate duration — if the
+  projection is nonzero, pick the shorter window or pre-stage Tier B.
+- **Controlled-consumer discipline**: during [T0, Tend], deliberate queries naming the cohort views are **prohibited by
+  default**. Exceptions: an exception executed by the operator (or a third party the operator directs) requires a
+  controlled-consumer log entry; an exception executed by the executor/agent additionally requires its own operator GO.
+  Every exception (i) is logged one-line-each (who/when/surface/purpose) and (ii) **executes under a dedicated marker
+  role** so it lands in `pg_stat_statements` under a distinct `userid` — decomposition of deltas is then BY KEY, not by
+  arithmetic subtraction. Raw ledger entries (real identities) go under `vault:`/`infisical:` custody; the committed
+  source record carries redacted role classes per the §4.1 rule, preserving the one-line-per-exception structure.
+- Known self-noise needing no ledger entry: the snapshot queries themselves (§4.1 item 5 verifies) and the census
+  collector (§4.2 preflight verifies — a repo fact, not an inference).
+- **Platform posture freeze**: no grant/DDL/exposure changes to the three views during [T0, Tend] (would confound the
+  census, the deltas, and the `in_data_api` interval-coverage argument); the lane holds A1–A3 anyway. F7 verifies.
 
 ### 4.4 End snapshot + delta (read-only GO "OBS-A2")
-Same captures as OBS-A1, plus:
-- **Delta computation** per `(dbid, userid, queryid, toplevel)`: `calls_end − calls_base` (new entries: `calls_end`
-  with `stats_since ≥ T0` as corroboration).
-- **`found_consumers` definition (fixed here):** the number of distinct `(userid, queryid)` pairs with positive
-  uncontrolled call-delta across the three views' matching entries, **plus** distinct API-client identities from §4.5.
-  Per-view assignment values follow the runbook's consumer_evidence_dim shape
-  (`{"state":"observed","found_consumers":<int>,"ref":"<source-record ref>"}`).
-- A zero result is reportable ONLY if every fail-closed condition in §6 passed — and even then the overlay reports
-  "0 observed under the stated instruments and window", never "no consumers exist" (the record states instrument
-  limits: normalized-literal blindness, `track=top` nesting blindness `(PG-inference)`, eviction cap).
+Same captures as OBS-A1 (visibility preflight re-asserted), plus delta computation per identity
+`(dbid, userid, queryid, toplevel)`:
+- Surviving identities: require `stats_since` unchanged AND `calls_end ≥ calls_base` (else F3); delta = `calls_end −
+  calls_base`.
+- New identities: `stats_since ≥ T0` corroborates window-created entries (pinned to `stats_since` exclusively; a changed
+  `minmax_stats_since` on a baseline identity is treated as a partial-reset indicator ⇒ F3).
+- **Classification before counting:** only read-shaped entries (class flag, §4.1 item 3) count toward consumers;
+  utility-shaped matches (e.g. EXPLAIN) are reported as annotated window events; DDL-shaped matches double as F7
+  signals.
+- **`found_consumers` is defined PER VIEW** (assignments are keyed by `object_id`): for view V,
+  `found_consumers(V) = |distinct (userid, queryid) with positive uncontrolled read-shaped call-delta among entries
+  whose normalized text matches V's name| + |distinct API-client identities with ≥ 1 request touching V in [T0, Tend]
+  per §4.5|`. An entry or request matching multiple cohort views counts toward EACH matched view. SQL-side and API-side
+  identities are NOT deduplicated across components (a PostgREST request also lands in `pg_stat_statements` under the
+  authenticator role): `found_consumers` is therefore a deliberate, declared **upper bound** on distinct consumers. A
+  cross-view aggregate may appear in the source-record summary but is never an assignment value. Any delta key
+  containing BOTH controlled (marker-role) and unattributed calls cannot occur by construction (distinct userid); if a
+  non-marker key's delta is partially explained by a ledger entry that failed to use the marker role, the WHOLE delta
+  counts as uncontrolled (resolves toward `found_consumers > 0`) and F8 additionally trips for ledger-discipline
+  failure.
+- **Stated instrument limits carried in the source record:** normalized-literal blindness; `track=top` nesting
+  blindness; the near-cap eviction regime; and the **joint blind class — function-mediated reads** (PostgREST
+  `/rest/v1/rpc/<fn>`, `pg_cron` jobs, or app code calling a function that reads the views) are invisible to BOTH
+  instruments: the URL lacks the view name and the nested SELECT is untracked at `track=top`. (Tier B's object-level
+  audit IS executor-level and does catch nested reads of granted views — part of the escalation rationale.) A zero
+  result is reportable ONLY if every §6 condition passed — and even then the overlay reports "0 observed under the
+  stated instruments and window", never "no consumers exist".
 
-### 4.5 Bounded API-gateway log component (same window, explicit bounds)
-Purpose: HTTP/Data-API consumers (`/rest/v1/<view>` paths) that SQL telemetry cannot see, and vice-versa.
+### 4.5 Bounded API-gateway log component (same window, verified bounds AND completeness)
+Purpose: HTTP/Data-API consumers that SQL telemetry cannot fully attribute, and vice-versa (subject to the joint blind
+class above).
+- **Filter**: the **full request URL including query string** (and request body for POST-with-select variants where the
+  log surface records it) — a path-only filter misses PostgREST **embedded reads**
+  (`/rest/v1/<other>?select=...,v_active_tasks(...)`) where the view name appears only in the query string. Per-view
+  attribution follows the matched name.
 - **Surface** (§9 D2): lean = **operator-run Logs Explorer SQL export** over `edge_logs` with explicit
-  `iso_timestamp_start=T0`, `iso_timestamp_end=Tend`, path filter on the three view names; export (JSON/CSV) handed to
-  the executor as raw evidence. Alternative = Management-API analytics endpoint with an operator-injected
-  `SUPABASE_ACCESS_TOKEN` via `inject.sh` (new credential path; needs explicit approval). Either way the export must
-  EMBED its bounds; **bounds unavailable or unverifiable ⇒ fail closed** (GO requirement).
+  `iso_timestamp_start/end`; alternative = Management-API analytics endpoint with an operator-injected
+  `SUPABASE_ACCESS_TOKEN` via `inject.sh` (new credential path; needs explicit approval).
+- **Completeness requirements (F6 — bounds alone are NOT enough):** (i) verified bounds covering [T0, Tend]; (ii)
+  completeness evidence — returned row count strictly below the export/row cap, or exhaustive-pagination proof, plus a
+  count-query cross-check against the returned rows; (iii) a **retention-horizon check at export time** — if the
+  platform's earliest retained timestamp is later than T0, the export cannot cover the window ⇒ fail closed; (iv) when
+  the D1 duration approaches the (known or unknown) retention horizon, schedule **intermediate harvests** (e.g. daily
+  or mid-window) and stitch exports with overlap verification. Any requirement unmet ⇒ F6.
 - If the pending support response recovers 2026-07-13 API history, that recovery only ever ADDS an earlier-window API
   annex to the source record; it cannot substitute for [T0, Tend] SQL evidence (operator finding 1).
 
 ### 4.6 Evidence assembly (feeds the eventual Phase-9 runtime_logs GO)
-Normalized, redacted source record = {baseline snapshot digest, end snapshot digest, delta table (counts only),
-controlled-consumer log, API-log extract with bounds, fail-closed checklist results}. Raw un-redacted material under
+Normalized, redacted source record = {baseline snapshot digest, end snapshot digest, per-view delta table (counts +
+class flags only), controlled-consumer ledger (redacted role classes), API-log extract with bounds + completeness
+evidence, clock readings, fail-closed checklist results, stated instrument limits}. Raw un-redacted material under
 `vault:`/`infisical:` custody, referenced per runbook §1/§4. Author via `author_overlay.py` with the runbook §4 pins
 (NEW census; `--producing-repo-sha-na-reason` since runtime_logs forbids a producing SHA), window `[T0, Tend]`,
-validate-before-sign, `verify_overlay_artifact.py` GREEN, secret-scan — all under that future GO, not this design.
+`captured_at` = OBS-A2/export completion or later, validate-before-sign, `verify_overlay_artifact.py` GREEN,
+secret-scan — all under that future GO, not this design.
 
 ## 5. Tier B (escalation only) — narrowly scoped pgAudit read telemetry
 
-**Trigger criteria (any):** Tier-A fail-closed conditions trip un-recoverably (e.g. repeated eviction churn), the
-operator requires statement-time attribution that counters cannot give, or a disposition decision needs per-session
-evidence. Tier B is NOT entered by default.
+**Trigger criteria (any):** (1) **two consecutive Tier-A attempts tripped by F2/F3** (eviction/interference), or an
+explicit operator declaration that Tier A is exhausted; (2) the operator requires statement-time attribution that
+counters cannot give; (3) a disposition decision needs per-session evidence. Criteria 2–3 are operator-initiated by
+definition. Tier B is NOT entered by default.
 
+- **Census rebind on entry (structural):** Tier-B triggers fire at/after OBS-A2 — after the OBS-CENSUS census — so a
+  Tier-B audit window cannot bracket that census instant. **Tier-B entry requires a full §3 re-run**: pgAudit enable
+  defines a new T0; a NEW fresh signed census (re-pinning `BASE_SNAPSHOT_SHA256`/`CENSUS_OBSERVED_AT`) is taken inside
+  the audit window; ALL SIX overlays re-bind to that new census. This second census+publish cycle is a real cost —
+  priced into decision D4.
 - **Mechanism `(PG-inference; verify at enable)`:** object-scoped audit via `pgaudit.role` — create a NOLOGIN marker
-  role (e.g. `disposition_audit`), `GRANT SELECT ON` **only the three cohort views** to it, set `pgaudit.role`; pgAudit
-  then logs only statements touching objects that role can read, i.e. reads of the three views — NOT global
-  `pgaudit.log=read` session logging (unbounded volume).
+  role (e.g. `disposition_audit`), `GRANT SELECT ON` **only the three cohort views** to it, and set `pgaudit.role`
+  **database-wide** (`ALTER DATABASE ... SET`) so it applies to sessions of ALL serving roles — NOT per-role (`ALTER
+  ROLE <r> SET` audits only that role's sessions) and NOT global `pgaudit.log=read` session logging (unbounded volume).
+  pgAudit's object audit is executor-level: it catches nested/function-mediated reads of the granted views — closing
+  Tier A's joint blind class.
+- **Propagation `(PG-inference; enable-preflight)`:** `ALTER DATABASE ... SET` affects **new sessions only**. Long-lived
+  pooled backends (PostgREST/Supavisor pools, pg_cron workers) keep the old empty setting indefinitely — precisely the
+  standing consumers Tier B exists to observe. The OBS-B-ENABLE GO must therefore (i) verify effectiveness across ALL
+  serving backends (compare `pg_stat_activity` session starts against the enable time) and (ii) include an explicitly
+  GO-gated pool-recycle / backend-termination step (a disruption line-item in that GO). **The Tier-B window opens only
+  when the oldest surviving backend postdates enable.** Tier-B fail-closed row: any backend observed with a pre-enable
+  session start and no audit coverage ⇒ a Tier-B zero is not reportable.
 - **Prod-write inventory (all inside GO "OBS-B-ENABLE"):** `CREATE EXTENSION pgaudit` (library already preloaded per
-  9A-CAP ⇒ **no restart/reboot expected**; verify), create marker role, three grants, set `pgaudit.role` (SUSET —
-  exact Supabase-permitted mechanism, `ALTER DATABASE/ROLE ... SET`, is a **verify-at-enable preflight**; if the
-  managed `postgres` role cannot set it, Tier B is BLOCKED, not worked around — see
-  [[feedback_supabase_prod_superuser_fidelity]]), keep `pgaudit.log_parameter=off`.
+  9A-CAP ⇒ no restart expected; verify), marker role, three grants, the database-wide `pgaudit.role` setting (SUSET —
+  the exact Supabase-permitted mechanism is a verify-at-enable preflight; if the managed `postgres` role cannot set it,
+  Tier B is BLOCKED, not worked around), `pgaudit.log_parameter` stays off. The GO text must explicitly acknowledge
+  that pgAudit captures statement TEXT into the postgres log stream as a **bounded, custody-handled exception** to the
+  never-emit rule (§11).
 - **Volume estimate:** proportional to actual cohort reads (expected near-zero given Phase-8 static evidence); logs
-  flow to the postgres log stream where retention is plan-bound — harvest within retention or continuously.
-- **Sensitive-data handling:** pgAudit records statement TEXT ⇒ the log stream becomes secret-bearing (literals may
-  embed identifiers); committed record = redacted extract, raw under custody; parameters logging stays off.
-- **Rollback/restore (GO "OBS-B-RESTORE", separate):** clear `pgaudit.role`, revoke the three grants, drop the marker
-  role, optionally `DROP EXTENSION pgaudit`; verify all settings back to the 9A-CAP baseline; harvest + redact residual
-  logs first.
-- Tier B still uses the §3 timeline (its window starts when auditing verifiably begins) and §4.5 API component.
+  land in the plan-retention-bound postgres log stream.
+- **Harvest:** mid-interval log harvest is a recurring, secret-bearing, production-log read — it has its own §8 row and
+  GO (which may authorize a bounded recurring cadence, informed by the §10(iii) retention numbers). Committed record =
+  redacted extract; raw under custody; parameters logging off.
+- **Rollback/restore (GO "OBS-B-RESTORE", separate; limited to reverting to the 9A-CAP baseline):** harvest + redact
+  residual logs first; clear `pgaudit.role`, revoke the three grants, drop the marker role, optionally `DROP EXTENSION
+  pgaudit`; verify all settings match the 9A-CAP baseline.
 
-## 6. Fail-closed matrix (Tier A; all ⇒ BLOCKED, no negative conclusion, report and stop)
+## 6. Fail-closed matrix (Tier A; any row ⇒ BLOCKED, no negative conclusion, report and stop)
 
 | # | Condition | Detected by |
 |---|---|---|
 | F1 | `stats_reset` differs between OBS-A1 and OBS-A2 | `pg_stat_statements_info.stats_reset` |
-| F2 | `dealloc` increased over the interval | `pg_stat_statements_info.dealloc` baseline vs end |
-| F3 | Any baseline cohort entry missing at end | baseline row-set vs end row-set |
-| F4 | `pg_stat_statements.track/track_utility/compute_query_id/max` changed, or `track=none`/`compute_query_id=off` at baseline | settings capture both ends |
+| F2 | `dealloc` **changed in either direction** over the interval | `pg_stat_statements_info.dealloc` baseline vs end |
+| F3 | Per-identity integrity violated: any baseline cohort identity `(dbid, userid, queryid, toplevel)` missing at end, OR its `stats_since` changed, OR `calls_end < calls_base`, OR `minmax_stats_since` changed on a baseline identity | structured per-identity comparison (replaces any opaque row-set hash) |
+| F4 | Any environment value changed between snapshots — `track`, `track_utility`, `save`, `compute_query_id`, `max`, `server_version`, pgss extension version, `pg_postmaster_start_time()` — or baseline values outside the §4.1 acceptance set | settings capture both ends |
 | F5 | Snapshot query failure / surface unavailable | OBS-A1/OBS-A2 execution |
-| F6 | API-log export bounds unavailable, unverifiable, or not covering [T0, Tend] | §4.5 export inspection |
-| F7 | Uncontrolled interference (grant/DDL change to cohort views during interval) | census + `pg_stat_statements` env checks, git/lane log |
-| F8 | Controlled-consumer log incomplete (a known deliberate query unlogged) | operator attestation at OBS-A2 |
+| F6 | API-log export bounds unverified/not covering [T0, Tend], OR completeness unproven (row-cap/pagination), OR count cross-check mismatch, OR retention horizon later than T0 | §4.5 export inspection |
+| F7 | Cohort-view object state changed during interval: `pg_class.oid`, `pg_get_viewdef()` md5, or `relacl` differs between snapshots (grant/DDL interference; also corroborable from the DDL log stream — `log_statement=ddl` is already on) | §4.1 item 4 capture both ends |
+| F8 | Controlled-consumer ledger incomplete, or an exception executed without the marker role (its key's delta then counts wholly as uncontrolled) | operator attestation + marker-role audit at OBS-A2 |
+| F9 | Executing role lacks cross-role statistics visibility (`pg_read_all_stats`), or ANY masked entry (`<insufficient privilege>` / NULL queryid) observed in either snapshot | §4.1 item 1 preflight, re-asserted at OBS-A2 |
 
-F2/F3 nuance: eviction near the 4,867/5,000 cap is plausible; if tripped, remediation is a LONGER second attempt or a
-Tier-B escalation decision — never loosening the guard, never a reset.
+**Restart/crash analysis `(PG-inference; fail-closure holds under either persistence interpretation)`:** a clean
+restart re-initializes `pg_stat_statements_info` ⇒ F1 trips (entries themselves survive if `save=on`); a crash empties
+the statistics ⇒ F1 + F3 trip; an in-place version change ⇒ F4 trips (and queryids may re-hash — why F4 includes
+versions and postmaster start time rather than relying on incidental F1/F3 coverage).
+
+**Remediation direction:** if F2/F3 trip, the correct retry is a **SHORTER window** (e.g. 72 h) or a Tier-B escalation
+decision — never a longer attempt (eviction probability grows with duration), never a loosened guard, never a reset.
+Use the §4.3 churn-rate estimator before committing any retry duration.
 
 ## 7. Optional pre-step — attribution probe (read-only GO "OBS-A0", operator finding 4)
 
 Before OBS-A1, optionally attribute the existing symmetric 3-entries/3-calls pattern: expose `rolname`, `queryid`,
-`toplevel`, `calls`, `stats_since` for the current name-matching entries — **no query text**. Outcome only informs
-expectations (e.g. confirming they are 2026-07-13 audit traffic via `stats_since`); it feeds the controlled-consumer
-ledger but gates nothing.
+`toplevel`, `calls`, `stats_since` for the current name-matching entries — **no query text**; `rolname` output goes
+under custody per the §4.3 ledger rule. Interpretation note: constant-normalization means catalog/ILIKE-style tooling
+CANNOT have produced these entries — only statements carrying the view names as **identifiers** (actual SELECTs from
+the views, or utility statements naming them) can. `stats_since` dates them. The probe also yields the first `dealloc`
+reading for the §4.3 churn estimator. Outcome informs expectations and the controlled-consumer ledger; it gates
+nothing.
 
 ## 8. GO map (nothing here is authorized by this design)
 
-| Step | GO | Access | Writes |
-|---|---|---|---|
-| OBS-A0 attribution probe (optional) | own GO | prod read-only | none |
-| OBS-A1 baseline snapshot | own GO | prod read-only | none |
-| OBS-CENSUS fresh census (+ publish/merge per 6/7/7M pattern) | own GOs | prod read-only | repo evidence |
-| observation interval | none (passive) | none | none |
-| OBS-A2 end snapshot + delta | own GO | prod read-only | none |
-| API-log export | operator-run (lean) or own GO (token path) | platform logs read-only | none |
-| runtime_logs overlay author/sign | Phase-9 runtime_logs GO | none (offline + injected key) | out-of-repo artifacts |
-| remaining five overlays | five separate Phase-9 GOs | per runbook | out-of-repo artifacts |
-| OBS-B-ENABLE / OBS-B-RESTORE (escalation only) | separate WRITE GOs | prod write | extension/role/grants/GUC |
+| Step | GO | Access | Prod writes | Artifacts |
+|---|---|---|---|---|
+| OBS-A0 attribution probe (optional) | own GO | prod read-only | none | probe output (custody) |
+| OBS-A1 baseline snapshot | own GO | prod read-only | none | snapshot JSON out-of-repo + custody copy |
+| OBS-CENSUS fresh census (+ publish/merge per 6/7/7M pattern) | own GOs | prod read-only | none | repo evidence (census triple) |
+| observation interval | none (passive; exceptions per §4.3 rule) | none | none | controlled-consumer ledger (custody) |
+| OBS-A2 end snapshot + delta | own GO | prod read-only | none | snapshot + delta out-of-repo + custody copy |
+| API-log export | operator-run (lean) or own GO (token path) | platform logs read-only | none | export + completeness evidence (custody) |
+| runtime_logs overlay author/sign | Phase-9 runtime_logs GO | none (offline + injected key) | none | out-of-repo overlay triple |
+| remaining five overlays | five separate Phase-9 GOs | per runbook | none | out-of-repo overlay triples |
+| OBS-B-ENABLE (escalation only) | separate WRITE GO | prod write | extension/role/grants/GUC + gated pool recycle | — |
+| Tier-B log harvest (escalation only) | own GO (may authorize bounded recurring cadence) | platform logs read-only | none | redacted extracts + custody raw |
+| OBS-B-RESTORE (escalation only) | separate WRITE GO | prod write | revert to 9A-CAP baseline only | residual harvest (custody) |
 
-Verify-at-execution preflights carried by their GOs: `stats_since`/`minmax_stats_since` column presence (OBS-A1);
-`compute_query_id`/`track` values (OBS-A1); Supabase-permitted mechanism for `pgaudit.role` and no-restart assumption
-(OBS-B-ENABLE).
+**Verify-at-execution preflights carried by their GOs:** cross-role statistics visibility + zero-masked-entries (OBS-A1,
+re-asserted OBS-A2); `stats_since`/`minmax_stats_since` column presence and semantics (OBS-A1); `compute_query_id`/`track`
+acceptance set (OBS-A1); snapshot self-noise post-check (OBS-A1/OBS-A2); census-collector catalog-only verification
+(OBS-CENSUS); Supabase-permitted mechanism for database-wide `pgaudit.role`, no-restart assumption, and all-backends
+propagation (OBS-B-ENABLE).
 
 ## 9. Operator decision points (leans first)
 
-- **D1 — interval duration:** lean **7 days**; alternatives 72 h (faster, misses weekly consumers) / 14 d (higher
-  eviction-guard exposure F2/F3, later gate).
+- **D1 — interval duration:** lean **7 days**; alternatives 72 h (faster; misses weekly consumers; lowest F1/F2/F3
+  exposure) / 14 d (higher eviction AND restart-trip exposure; later gate). Commit only after the §4.3 churn estimator.
 - **D2 — API-log surface:** lean **operator-run Logs Explorer export** (no new credential path); alternative
-  Management-API + injected token (repeatable, scriptable, new secret path).
-- **D3 — OBS-A0 attribution probe:** lean **run it** (cheap, read-only, de-noises the baseline).
-- **D4 — Tier-B pre-authorization:** lean **decide only if triggered** (keep Tier B cold; its enable GO is written
-  when its trigger criteria are met, folding this §5 spec).
+  Management-API + injected token (repeatable, scriptable, new secret path). Either must meet §4.5 completeness.
+- **D3 — OBS-A0 attribution probe:** lean **run it** (cheap, read-only, de-noises the baseline, seeds the churn
+  estimator).
+- **D4 — Tier-B pre-authorization:** lean **decide only if triggered** — noting Tier-B entry costs a SECOND fresh
+  census + publish cycle and re-binding of all six overlays (§5), plus a gated pool-recycle disruption.
 
-## 10. Support-response fold-in (before technical-authority approval)
+## 10. Support-response fold-in (amendment path; NOT a prerequisite)
 
 The pending Supabase ticket (recoverability of 2026-07-13 `edge_logs` / statement logs; project-specific ingestion
-loss; exact retention) folds in here: (i) recovered API history → optional historical annex to the source record
-(§4.5), never a substitute; (ii) confirmed ingestion loss → notes a platform-reliability caveat on §4.5 and may raise
-D2 to the token path with tighter bounds verification; (iii) retention numbers → bound the API harvest cadence for D1
-durations > retention. **No section's SQL-side design depends on the response** (operator finding 1).
+loss; exact retention) folds in as an amendment when it arrives — at the latest before the Phase-9 runtime_logs
+signing GO if it affects §4.5 or D2: (i) recovered API history → optional historical annex to the source record,
+never a substitute; (ii) confirmed ingestion loss → platform-reliability caveat on §4.5, may raise D2 to the token
+path with tighter bounds verification; (iii) retention numbers → bound the §4.5 intermediate-harvest cadence and D1
+durations. No section's SQL-side design depends on the response (operator finding 1).
 
 ## 11. Explicit prohibitions inherited by every execution GO
 
-No `pg_stat_statements_reset()`. No pgAudit installation/role/GUC change outside OBS-B-ENABLE. No census before
-OBS-A1. No overlay signing against the old census `52962abe…`. No query text or client identities in committed
-records. No backdated windows. Signing key remains in Infisical operator custody, injected child-only. Custody
-locators `vault:`/`infisical:` only. Any ambiguity, guard failure, or drift ⇒ STOP.
+No `pg_stat_statements_reset()` — full, targeted, or minmax-only. No pgAudit installation/role/GUC change outside GO
+OBS-B-ENABLE or GO OBS-B-RESTORE (restore limited to reverting to the 9A-CAP baseline). No census before OBS-A1
+completes; the observation interval may not rely on any period before OBS-CENSUS completes (Tobs opens only after the
+fresh census is signed). No overlay signing against the old census `52962abe…`. **No query text on any model-visible
+or committed surface** (Tier B's statement-text capture into the custody-handled log stream is the sole bounded
+exception, and only when its enable GO explicitly accepts it); no client identities in committed records (custody +
+role-class redaction per §4.1/§4.3). No backdated windows (§3 truthful-start bases are the only reach-back). No
+deliberate cohort queries during the interval except per the §4.3 exception rule. Signing key remains in Infisical
+operator custody, injected child-only. Custody locators `vault:`/`infisical:` only. Any ambiguity, guard failure, or
+drift ⇒ STOP.
+
+## 12. Review record (rev 2)
+
+Rev 1 (`d4766525`) was reviewed by a four-lens adversarial panel (pg-semantics, fail-closed, window-coherence,
+governance — 31 findings: 4 critical, 11 important, 16 minor) and a Codex cross-engine pass (1 P2). ALL folded into
+rev 2; the load-bearing corrections: F9 statistics-visibility gate (silent masking would have passed every rev-1 gate);
+partial-reset detection via per-identity `stats_since` + call monotonicity in F3; F2 made directionless; restart/crash
+persistence analysis + expanded F4; API-export completeness/retention-horizon requirements in F6; F7 made actually
+detectable (oid/viewdef/relacl capture); per-view `found_consumers` partitioning (Codex P2 + panel convergence);
+marker-role controlled-consumer decomposition; truthful-start bases for the other consumer dimensions; Tier-B
+database-wide scope, backend-propagation gating, census-rebind-on-entry, harvest GO row, and restore-exception wording;
+header corrected so the support response is an amendment input, not an approval prerequisite.
