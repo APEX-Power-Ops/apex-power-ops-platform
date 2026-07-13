@@ -101,13 +101,16 @@ Captured via the authorized governed-prod SQL surface, SELECT-only, value-silent
    under-selects with no error, identically at both snapshots.)` Re-asserted at OBS-A2.
 2. **Reset-capability surface capture (feeds F10):** enumerate, value-silently, the full reset-capable closure at both
    snapshots by **EFFECTIVE privilege, not raw ACL text**: {every role for which
-   `has_function_privilege(role, <oid>, 'EXECUTE')` holds for ANY overload of the `pg_stat_statements_reset` family —
-   enumerate the overloads from `pg_proc` (1.11 ships `reset()`, `reset(oid,oid,bigint)`, and
-   `reset(oid,oid,bigint,boolean)`) rather than assuming a single signature, since a GRANT may sit on only one} ∪ {the
-   `pg_auth_members` membership closure of those roles reachable by BOTH inheritance AND `SET ROLE` — a `NOINHERIT`
-   member does not inherit EXECUTE but can `SET ROLE` to the grantee and reset, so membership, not inheritance, is the
-   boundary} ∪ {all `rolsuper` roles} ∪ {the functions' `proowner` and its transitive membership closure} ∪ {roles
-   holding `admin_option` on any member of the preceding sets, evaluated transitively}. **PUBLIC grant expanded
+   `has_function_privilege(role, <oid>, 'EXECUTE')` holds for ANY `pg_stat_statements_reset` procedure found in
+   `pg_proc` — enumerate them by `proname` rather than hardcoding a signature: extension 1.11 defines a **single**
+   all-defaulted `pg_stat_statements_reset(oid, oid, bigint, boolean)` (callable with 0–4 arguments; the pre-1.11
+   3-arg form is DROPped on upgrade), but enumerating by name is defensive against version drift or an un-upgraded
+   extension leaving an additional proc, and each proc carries its own EXECUTE ACL; `has_function_privilege` already
+   resolves a PUBLIC grant to true for every role} ∪ {the `pg_auth_members` membership closure of those roles — the
+   UNION of the inheritance-reachable and `SET ROLE`-reachable members (a `NOINHERIT` member does not inherit EXECUTE,
+   which `has_function_privilege` already reflects, but can `SET ROLE` to the grantee and reset, so membership, not
+   inheritance, is the boundary)} ∪ {all `rolsuper` roles} ∪ {the functions' `proowner` and its transitive membership
+   closure} ∪ {roles holding `admin_option` on any member of the preceding sets, evaluated transitively}. **PUBLIC grant expanded
    explicitly:** a grant of EXECUTE to `PUBLIC` (aclitem grantee OID `0`, which a naive join to `pg_roles`/`pg_auth_members`
    silently drops) makes EVERY role effective-capable ⇒ the closure is ALL roles and no accepted-zero is possible —
    this branch is reported fail-closed, not worked around. `(PG-inference: superusers and owners execute regardless of
@@ -132,7 +135,7 @@ Captured via the authorized governed-prod SQL surface, SELECT-only, value-silent
    §9 D5):** capture, value-silently and identically at both snapshots, the effective CREATE-capable closure on
    schema `public`: {every role for which `has_schema_privilege(role, 'public', 'CREATE')` holds, with a PUBLIC grant
    expanded explicitly (grantee OID `0`) — a PUBLIC CREATE grant makes the closure ALL roles, reported fail-closed as
-   above} ∪ {the `pg_auth_members` membership closure of those roles reachable by inheritance AND `SET ROLE`} ∪ {the schema owner and the cohort-view
+   above} ∪ {the `pg_auth_members` membership closure of those roles — union of inheritance-reachable and `SET ROLE`-reachable members} ∪ {the schema owner and the cohort-view
    owners and their transitive `pg_auth_members` closures — resolving `pg_database_owner`'s implicit membership via
    `pg_database.datdba` `(PG-inference: on PG15+ public is commonly owned by pg_database_owner, whose membership
    never appears in pg_auth_members)`} ∪ {all `rolsuper` roles} ∪ {roles holding `admin_option` on any member of the
@@ -233,8 +236,8 @@ Same captures as OBS-A1 (visibility preflight re-asserted), plus delta computati
   invisible to F1–F3 by construction `(PG-inference: only a full discard updates the global stats_reset)`, and its
   invocation is unloggable under `log_statement=ddl` (reset calls are SELECTs). Resets only ERASE evidence — they
   cannot fabricate calls — so F10 gates ZERO outcomes only; positive `found_consumers` stands regardless. The
-  exclusion set: (i) the §4.1 item-2 reset-capable CLOSURE (ACL ∪ role-membership ∪ superusers ∪ owner) is unchanged
-  between snapshots; (ii) a signed operator attestation that **no principal under operator control, direction, or
+  exclusion set: (i) the §4.1 item-2 reset-capable CLOSURE (effective EXECUTE ∪ role-membership ∪ superusers ∪ owner ∪
+  transitive admin-option) is unchanged between snapshots; (ii) a signed operator attestation that **no principal under operator control, direction, or
   knowledge invoked any reset OR changed reset capability (GRANT/REVOKE/role-DDL touching the reset family or
   reset-capable roles)** during [T0, Tend]; (iii) an **authoritative platform-side confirmation** — the §10(iv)
   support answer or an equivalent explicit Supabase statement — that no platform principal or automation invoked
@@ -424,7 +427,7 @@ definition. Tier B is NOT entered by default.
 | F7 | Cohort-view object state changed: `pg_class.oid`, `pg_get_viewdef()` md5, or `relacl` differs between snapshots, OR the **transitive dependent-closure digest** differs, OR available DDL evidence shows CREATE/ALTER/DROP touching the cohort views or their dependent closure during the window. Endpoint equality alone cannot exclude mid-interval transients — the §4.4 transient-DDL exclusion rule governs zero outcomes | §4.1 item 5 capture both ends + §4.4 transient-DDL rule |
 | F8 | Controlled-consumer ledger incomplete, an exception executed without the marker role (its key's delta then counts wholly as uncontrolled), or an exception occurred with no verified marker role in existence | operator attestation + marker-role audit at OBS-A2 |
 | F9 | Executing role lacks cross-role statistics visibility (`pg_read_all_stats`), or ANY unreadable entry — `<insufficient privilege>`, `queryid IS NULL`, or **`query IS NULL`** (discarded text) — observed in either snapshot | §4.1 item 1 preflight, re-asserted at OBS-A2 |
-| F10 | **Interference signals ⇒ BLOCKED:** the reset-capable CLOSURE (ACL ∪ role membership ∪ superusers ∪ owner) changed between snapshots, OR the (corroboration-only) window DDL-log sweep shows GRANT/REVOKE/role-DDL touching the reset family or reset-capable roles. **Missing exclusions ⇒ machine-fail-closed, not BLOCKED:** absence of the extended operator attestation (§4.4 leg ii), of the authoritative platform-reset confirmation (§4.4 leg iii), or an uncontrolled non-platform member in the reset-capable closure (§4.4 leg iv defeat test) forces any zero outcome to `state: not_observed` + detail per the §4.4 machine-state rule; `observed`/0 requires legs (i)–(iv) all satisfied | §4.1 item 2 capture both ends + attestations + §4.4 machine-state rule |
+| F10 | **Interference signals ⇒ BLOCKED:** the reset-capable CLOSURE (effective EXECUTE ∪ role membership ∪ superusers ∪ owner ∪ transitive admin-option, §4.1 item 2) changed between snapshots, OR the (corroboration-only) window DDL-log sweep shows GRANT/REVOKE/role-DDL touching the reset family or reset-capable roles. **Missing exclusions ⇒ machine-fail-closed, not BLOCKED:** absence of the extended operator attestation (§4.4 leg ii), of the authoritative platform-reset confirmation (§4.4 leg iii), or an uncontrolled non-platform member in the reset-capable closure (§4.4 leg iv defeat test) forces any zero outcome to `state: not_observed` + detail per the §4.4 machine-state rule; `observed`/0 requires legs (i)–(iv) all satisfied | §4.1 item 2 capture both ends + attestations + §4.4 machine-state rule |
 
 **Restart/crash analysis `(PG-inference; fail-closure holds under either persistence interpretation)`:** a clean
 restart re-initializes `pg_stat_statements_info` ⇒ F1 trips (entries themselves survive if `save=on`); a crash empties
@@ -673,5 +676,18 @@ PUBLIC-expansion / inherit-plus-SET-ROLE discipline extended to the CREATE-capab
 (`has_schema_privilege(…, 'public', 'CREATE')`); §8 preflight line updated to match. This is required before OBS-A1
 implementation and does NOT block OBS-A0. Followed by one focused review only.
 
-**Rev 4.2 focused check:** [to be recorded after the ordered focused review of the reset/create effective-privilege
-edit.]
+**Rev 4.2 focused check (cross-engine; scoped to the effective-privilege edit):** both engines CONVERGED on one P2 and
+agreed it is NOT a false-green — the "1.11 ships `reset()`, `reset(oid,oid,bigint)`, `reset(oid,oid,bigint,boolean)`
+(three overloads)" claim was factually wrong: pgss 1.11 drops the 3-arg form on upgrade and defines a SINGLE
+all-defaulted `reset(oid,oid,bigint,boolean)` (callable with 0–4 args); the "enumerate from `pg_proc`" method
+self-corrects (returns the one real proc, `has_function_privilege` over it yields a complete closure), so the error
+direction is safe (over-enumeration / fail-loud, never missed capability), but the assertion is false and was newly
+introduced by rev 4.2. FOLDED: reset-set re-worded to "single all-defaulted function; enumerate by `proname`,
+defensive against version drift." Both engines PASS on everything else — effective-privilege primitive
+(`has_function_privilege`/`has_schema_privilege`), PUBLIC/OID-0 fail-closed handling, the inherit-vs-`SET ROLE` split
+(non-double-counting; over-inclusion is the safe direction), preserved owner/superuser/admin-option +
+`pg_database_owner`-via-`datdba` terms, and §4.1↔§8 consistency. Two Claude P3s folded (explicit note that
+`has_function_privilege` already subsumes PUBLIC so the expansion is belt-and-suspenders / load-bearing only for the
+raw-ACL path; "BOTH…AND" → "UNION of" in both closures). Coherence fold (Claude out-of-scope flag): the §4.4(i) and §6
+F10 shorthand "(ACL ∪ …)" updated to "(effective EXECUTE ∪ … ∪ transitive admin-option)" to match the re-based
+closure. No P1 either engine; the effective-privilege re-basing is conceptually sound.
