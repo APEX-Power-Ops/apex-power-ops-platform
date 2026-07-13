@@ -265,3 +265,24 @@ break (E2E-1, reproduced) plus the coverage matrix gaps. No contradictions.
 **Verdict: plan BUILD-READY at the post-fold commit** — rider honored (Task 7 first-class,
 `source_record_without_overlay_fails` first), every confirmed audit finding folded, matrix coverage now
 test-backed end-to-end. STOP: build (Phase 4), push/PR (Phase 5), and all downstream remain HELD.
+
+## ROUND 3 — OPERATOR RATIFICATION of the Phase-3 plan (`cace5568`) — 2026-07-12
+
+**Phase 3 APPROVED @ `cace5568`.** Operator audit: no Critical or Important blockers. Independently
+verified: worktree clean on `schema-placement/overlay-publication` at `cace5568`; `main`/`origin/main`
+untouched at `a47161fc`; diff limited to the Phase-2 spec, Phase-3 plan, and this record; `git diff
+--check` clean. GO-requirement satisfaction confirmed (negative-first TDD; separate author/verifier/CI/
+runbook tasks; exact files + function boundaries; read-once bytes; source-pinned signer verification;
+no-clobber + partial-publication tests; 8+3-suite regression; whole-branch review before PR; the
+round-2c source-orphan rider first-class in Task 7 and re-exercised at gate level in Task 9).
+
+**Operator Minor (build-time fold, not approval-blocking):** in Task 8, add an `isinstance(doc, dict)`
+guard before `overlay_docs.append((p, doc))` in `overlay_ci_checks.py` — as planned, a canonical
+`evidence/overlay-*.json` that strict-parses to a list/scalar would fail closed via `AttributeError`
+inside `orphan_check` rather than a stable `FAIL:` line. To be folded during the Task-8 build WITH a
+small RED test.
+
+**All six flagged Plan decisions ACCEPTED as written.** Phase-4 recommendation: subagent-driven build
+(one fresh implementer per task, per-task review; NOT inline batching — the author/verifier/gate/runbook
+surfaces are separable and the shell-git harness is high-risk). Phase 4 remains gated on its own explicit
+GO; no live evidence, no production signing key, no DB/prod, no push/PR/merge.
