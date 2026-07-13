@@ -109,7 +109,9 @@ Captured via the authorized governed-prod SQL surface, SELECT-only, value-silent
    §8 preflight)` — but that stream's WINDOW COMPLETENESS is unproven for this project (the 9A probe reached ~1h38m
    back; `postgres_logs` has no equivalent of the §4.5 liveness/completeness controls), so the window DDL-log sweep
    is **one-way corroboration only**: a sweep that SHOWS touching DDL is disqualifying (F10 trips), but a clean sweep
-   proves nothing and is neither a sufficient nor a required exclusion leg. It may be upgraded to an evidence leg
+   proves nothing and is neither a sufficient nor a required exclusion leg. **Running the sweep is nonetheless
+   mandatory at OBS-A2** — skipping it would forfeit the interference check (a don't-look posture is not permitted);
+   only its evidentiary weight is capped at corroboration. It may be upgraded to an evidence leg
    only if a `postgres_logs` completeness discipline mirroring F6 is established under the OBS-A1 GO (stitched
    slices, per-slice retention checks, and a verified ingestion-liveness basis for the postgres stream — candidate:
    the 9A-observed per-minute collation-warning heartbeat, itself a same-stream `(PG-inference / platform
@@ -215,15 +217,22 @@ Same captures as OBS-A1 (visibility preflight re-asserted), plus delta computati
   knowledge invoked any reset OR changed reset capability (GRANT/REVOKE/role-DDL touching the reset family or
   reset-capable roles)** during [T0, Tend]; (iii) an **authoritative platform-side confirmation** — the §10(iv)
   support answer or an equivalent explicit Supabase statement — that no platform principal or automation invoked
-  `pg_stat_statements_reset` (full or targeted) on this project during the window (platform reset surfaces
-  demonstrably exist: the Studio Query-Performance reset control is full-scope and F1-caught, but it proves the
-  class). The window DDL-log sweep is one-way corroboration per §4.1 item 2: touching DDL found ⇒ F10 trips; a clean
-  sweep is neither sufficient nor required.
+  `pg_stat_statements_reset` (full or targeted) **or enabled its invocation (granted reset capability to any
+  principal)** on this project during the window (platform reset surfaces demonstrably exist: the Studio
+  Query-Performance reset control is full-scope and F1-caught, but it proves the class; the enablement clause closes
+  the platform-granted-transient-capability corner — a mid-window grantee's standing capability never appears in the
+  endpoint closures, and every possible granter is either operator-sphere (leg ii) or platform-sphere (this leg)).
+  **Leg-(iii) acceptance criterion:** only a categorical statement, or one explicitly covering [T0, Tend], satisfies
+  it — the §10(iv) question is asked pre-window, so a standing-policy "never" is the expected satisfying form; a
+  qualified or partial answer does NOT satisfy leg (iii). The window DDL-log sweep is one-way corroboration per §4.1
+  item 2 (mandatory to run, capped in weight): touching DDL found ⇒ F10 trips; a clean sweep is neither sufficient
+  nor required as evidence.
 - **Zero-outcome MACHINE state (closes the rev-3 prose-caveat false green):** any epistemic caveat must be carried in
   the dimension record's `state` field, never in prose — `check_disposition.py` accepts every `observed`/0 dimension
   toward a resolved `no_consumer` conclusion regardless of surrounding text. Rule, in the `consumer_evidence_dim`
   vocabulary (`observed` ⇒ integer `found_consumers` + non-empty `ref`; any other state ⇒ `found_consumers: null`,
-  `ref: null`, non-empty `detail`): with (i)+(ii)+(iii) all satisfied and every §6 row green, the runtime_logs
+  `ref: null`, non-empty `detail`): with (i)+(ii)+(iii) all satisfied, the transient-DDL exclusion below available,
+  and every §6 row green, the runtime_logs
   dimension may be authored `state: observed, found_consumers: 0`. With (iii) missing but (i)+(ii) clean, it MUST be
   authored `state: not_observed` with `detail` = "0 observed under stated instruments; platform-side selective-reset
   exclusion unavailable" — never `observed`/0; under SP022 a resolved `no_consumer` conclusion is then impossible by
@@ -237,8 +246,11 @@ Same captures as OBS-A1 (visibility preflight re-asserted), plus delta computati
   CREATE/ALTER/DROP touching the cohort views or their dependent closure; or (b) a signed operator attestation that
   no principal under operator control, direction, or knowledge executed such DDL during [T0, Tend]. Platform-side
   wrapper DDL is carried as a stated limit, not a machine gate (no known platform surface creates dependents on user
-  relations — structurally unlike resets, where the Studio control demonstrates a platform surface). Absent both (a)
-  and (b), a zero outcome follows the machine-state rule above (`not_observed` + detail). DDL evidence that SHOWS
+  relations — structurally unlike resets, where the Studio control demonstrates a platform surface). The attestation's
+  reach is operator-sphere only: the platform/unknown-actor wrapper-DDL residual is bounded by the §10(v) ticket
+  answer when it arrives and is otherwise carried as a stated limit; whether attestation-sufficiency stands here (vs
+  requiring a platform statement symmetric with F10 leg (iii)) is an explicit ratification item — §9 D5. Absent both
+  (a) and (b), a zero outcome follows the machine-state rule above (`not_observed` + detail). DDL evidence that SHOWS
   touching DDL ⇒ F7 BLOCKED.
 - **Stated instrument limits carried in the source record:** normalized-literal blindness; `track=top` nesting
   blindness; the near-cap eviction regime; **any name-indirect read** — wrapper views/rules (tracked, but under the
@@ -276,7 +288,8 @@ class above).
   event) — evaluated over the UNION of slice bounds; events are normalized to [T0, Tend] at assembly, and
   boundary-clipped events are retained as annotations rather than dropped; (ii) extract-completeness evidence —
   per-slice returned row count strictly below the export/row cap (Supabase documents a 1,000-row result cap on Logs
-  Explorer results), or exhaustive-pagination proof, plus a count-query cross-check computed per-slice-then-union;
+  Explorer results; the effective cap value may be dialect-dependent and is CONFIRMED at the D2 dialect preflight,
+  never assumed), or exhaustive-pagination proof, plus a count-query cross-check computed per-slice-then-union;
   (iii) a **retention-horizon check at each export** — each slice's retention horizon must be earlier than that
   SLICE's start (a whole-window `horizon ≤ T0` test would wrongly block the exact stitched-harvest scenario the next
   clause mandates); (iv) when the D1 duration approaches the (known or unknown) retention horizon, schedule
@@ -364,7 +377,7 @@ definition. Tier B is NOT entered by default.
   residual logs first; clear `pgaudit.role`, revoke the three grants, drop the marker role, optionally `DROP EXTENSION
   pgaudit`; verify all settings match the 9A-CAP baseline.
 
-## 6. Fail-closed matrix (Tier A; any tripped row ⇒ BLOCKED, no negative conclusion, report and stop — F10's missing-exclusion branch instead forces the §4.4 `not_observed` machine state)
+## 6. Fail-closed matrix (Tier A; any tripped row ⇒ BLOCKED, no negative conclusion, report and stop — the F10/F7 missing-exclusion branches instead force the §4.4 `not_observed` machine state)
 
 | # | Condition | Detected by |
 |---|---|---|
@@ -373,7 +386,7 @@ definition. Tier B is NOT entered by default.
 | F3 | Per-identity integrity violated: any baseline cohort identity `(dbid, userid, queryid, toplevel)` missing at end, OR its `stats_since` changed, OR `calls_end < calls_base`, OR `minmax_stats_since` changed on a baseline identity | structured per-identity comparison (replaces any opaque row-set hash) |
 | F4 | Any environment value changed between snapshots — `track`, `track_utility`, `save`, `compute_query_id`, `max`, `server_version`, pgss extension version, `pg_postmaster_start_time()` — or baseline values outside the §4.1 acceptance set | settings capture both ends |
 | F5 | Snapshot query failure / surface unavailable | OBS-A1/OBS-A2 execution |
-| F6 | Evaluated at the STITCHED-UNION level: union of slice bounds not outward-with-margin of [T0, Tend] (`API_start ≤ T0−δ`, `API_end ≥ Tend+δ`), OR per-slice extract completeness unproven (1,000-row cap / pagination / per-slice-then-union count cross-check), OR any slice's retention horizon later than that slice's start, OR slice overlap/continuity/dedup unverified, OR **any scheduled liveness sentinel unledgered or unrecovered** | §4.5 export inspection + sentinel ledger |
+| F6 | Evaluated at the STITCHED-UNION level: union of slice bounds not outward-with-margin of [T0, Tend] (`API_start ≤ T0−δ`, `API_end ≥ Tend+δ`), OR per-slice extract completeness unproven (1,000-row cap / pagination / per-slice-then-union count cross-check), OR any slice's retention horizon later than that slice's start, OR slice overlap/continuity/dedup unverified, OR **any scheduled liveness sentinel unledgered, unrecovered, or failing the issuance success predicate (non-2xx service-path failure)** | §4.5 export inspection + sentinel ledger |
 | F7 | Cohort-view object state changed: `pg_class.oid`, `pg_get_viewdef()` md5, or `relacl` differs between snapshots, OR the **transitive dependent-closure digest** differs, OR available DDL evidence shows CREATE/ALTER/DROP touching the cohort views or their dependent closure during the window. Endpoint equality alone cannot exclude mid-interval transients — the §4.4 transient-DDL exclusion rule governs zero outcomes | §4.1 item 5 capture both ends + §4.4 transient-DDL rule |
 | F8 | Controlled-consumer ledger incomplete, an exception executed without the marker role (its key's delta then counts wholly as uncontrolled), or an exception occurred with no verified marker role in existence | operator attestation + marker-role audit at OBS-A2 |
 | F9 | Executing role lacks cross-role statistics visibility (`pg_read_all_stats`), or ANY unreadable entry — `<insufficient privilege>`, `queryid IS NULL`, or **`query IS NULL`** (discarded text) — observed in either snapshot | §4.1 item 1 preflight, re-asserted at OBS-A2 |
@@ -387,7 +400,8 @@ versions and postmaster start time rather than relying on incidental F1/F3 cover
 **Remediation direction:** if F2/F3 trip, the correct retry is a **SHORTER window** (e.g. 72 h) or a Tier-B escalation
 decision — never a longer attempt (eviction probability grows with duration), never a loosened guard, never a reset.
 Use the §4.3 churn-rate estimator before committing any retry duration. If F6 trips on **ingestion loss** (unrecovered
-sentinels), the retry is a NEW window from a new T0 after platform remediation — switching query surfaces cannot
+sentinels), the retry is a NEW window from a new T0 after platform remediation (a full §3 re-run including a fresh
+census, §4.2 — a new T0 after the signed census would violate `T0 < T1`) — switching query surfaces cannot
 recover events that never entered the log store (§4.5).
 
 ## 7. Optional pre-step — attribution probe (read-only GO "OBS-A0", operator finding 4)
@@ -441,8 +455,9 @@ Supabase-permitted mechanism for database-wide `pgaudit.role`, no-restart assump
   sentinel cadence is fixed with this decision.
 - **D2 — API-log surface (operator-directed):** **operator-run Logs Explorer** — dialect preflight FIRST (identify
   ClickHouse shared `logs` vs BigQuery-style `edge_logs`; validate the exact count/export/sentinel-recovery templates
-  against the live dialect over a trivial bounded window), then pinned query/count templates, outward bounds
-  (`API_start ≤ T0`, `API_end ≥ Tend`), result-cap proof (documented 1,000-row cap), retention proof, and liveness
+  against the live dialect over a trivial bounded window), then pinned query/count templates, outward bounds with
+  margin (`API_start ≤ T0 − δ`, `API_end ≥ Tend + δ`, δ per §3), result-cap proof (preflight-confirmed row cap;
+  documented 1,000), retention proof, and liveness
   sentinels — all per §4.5. The Management-API token path remains the fallback for QUERY-SURFACE inadequacy only; it
   cannot remedy ingestion loss (§4.5).
 - **D3 — OBS-A0 attribution probe (operator-directed):** run it, under its own read-only GO, with the corrected §7
@@ -450,6 +465,13 @@ Supabase-permitted mechanism for database-wide `pgaudit.role`, no-restart assump
 - **D4 — Tier B (operator-directed):** keep COLD. If triggered, a **separate write design** is required first (§5),
   covering pgAudit's best-effort boundary, sentinel reads, pool recycling, fresh-census rebinding, and restoration —
   noting Tier-B entry costs a second census + publish cycle and re-binding of all six overlays.
+- **D5 — transient-wrapper-DDL epistemic basis (ratification item; cross-engine fork):** rev 4 implements the
+  prescribed remedy — trustworthy DDL evidence OR an operator no-DDL attestation (§4.4) — carrying the
+  platform/unknown-actor wrapper residual as a stated limit bounded by the §10(v) ticket answer (structural basis: no
+  known platform surface creates dependents on user relations, unlike resets where the Studio control demonstrates
+  one). The Codex delta reviewer judged this residual a remaining `observed`/0 path and proposed requiring a platform
+  statement, symmetric with F10 leg (iii). **Lean: keep attestation-sufficiency + §10(v) bounding**; escalate to a
+  required platform statement only if the operator judges the wrapper-DDL actor class equivalent to the reset class.
 
 ## 10. Support-response fold-in (amendment path; NOT a design prerequisite — but an OBS-A1 gate)
 
@@ -463,9 +485,13 @@ query surface — pre-T0 loss caveats the optional annex only, while loss overla
 wait for platform remediation, then restart from a NEW T0 (full §3 re-run including a fresh census, §4.2); (iii)
 retention numbers → bound the §4.5 intermediate-harvest cadence and D1 durations; (iv) **platform-invoked-reset
 question (add to the ticket thread):** whether Supabase platform principals or automation ever invoke
-`pg_stat_statements_reset` (full or targeted) on this project — this answer is now LOAD-BEARING: F10 leg (iii)
-requires it (or an equivalent explicit Supabase statement) before any `observed`/0 authoring of runtime_logs; absent
-it, zero outcomes land `not_observed` per the §4.4 machine-state rule. No section's SQL-side design depends on the
+`pg_stat_statements_reset` (full or targeted) on this project, **or grant reset capability to any principal** — this
+answer is now LOAD-BEARING: F10 leg (iii) requires it (or an equivalent explicit Supabase statement) before any
+`observed`/0 authoring of runtime_logs, and only a categorical or explicitly window-covering answer satisfies the
+leg-(iii) acceptance criterion; absent it, zero outcomes land `not_observed` per the §4.4 machine-state rule; (v)
+**platform-dependent-DDL question (add to the ticket thread):** whether platform principals or automation ever
+create, alter, or drop dependent objects (views/rules) on user relations — bounds the §4.4 transient-DDL platform
+residual (D5); not load-bearing under the D5 lean. No section's SQL-side design depends on the
 response (operator finding 1); design revision and review are never blocked on it.
 
 ## 11. Explicit prohibitions inherited by every execution GO
@@ -540,4 +566,20 @@ predicate, and marker recovery (non-2xx = service-path failure, still blocking).
 discovered before pinning templates — D2 gains a dialect preflight (ClickHouse shared `logs` vs BigQuery-style
 `edge_logs`) validating count/export/sentinel-recovery templates against the live dialect.
 
-**Rev 4 focused delta round:** [to be recorded after the ordered focused delta review over the six rev-4 closures.]
+**Rev 4 focused delta round (this text):** the ordered focused delta review ran cross-engine over only the six rev-4
+closures. **Claude focused reviewer:** all six CLOSED at the mechanism level; machine-state rule verified consistent
+with the `consumer_evidence_dim` schema and the SP022 consequence; no P1/P2 contradictions; nine P3 residuals, all
+folded — leg-(iii) acceptance criterion (categorical/window-covering answer only, closing the §10(iv) "ever" vs
+"during the window" mismatch); F10 leg (iii) widened to platform-ENABLED invocation (closing the
+platform-granted-transient-capability corner: a mid-window grantee never appears in endpoint closures, and every
+granter is operator-sphere or platform-sphere); DDL sweep made mandatory-to-run while capped at corroboration (no
+don't-look posture); §6 header names the F7 missing-exclusion branch alongside F10's; the machine-state authorization
+sentence now includes the transient-DDL exclusion; F6 row enumerates the non-2xx issuance-predicate failure class;
+§6 ingestion-loss remediation states the fresh-census re-run explicitly; D2 restates outward bounds WITH the δ
+margin; the 1,000-row cap is preflight-confirmed per dialect, not assumed. **Codex:** five of six CLOSED; Finding 3
+judged PARTIALLY CLOSED on the platform-side wrapper-DDL residual (operator attestation is operator-sphere only) —
+the mechanism follows the operator's prescribed remedy (DDL evidence OR attestation), so the fork is surfaced as
+ratification decision **D5** with a §10(v) bounding question rather than silently resolved either way; Codex also
+flagged the §6 header wording (folded, above). **Cross-engine delta:** mirror-image catches — Codex found the
+platform residual on the wrapper-DDL side; Claude found the symmetric reset-capability-granting corner (folded into
+leg (iii)) that Codex missed. Neither engine found a new false-green path at P1/P2.
