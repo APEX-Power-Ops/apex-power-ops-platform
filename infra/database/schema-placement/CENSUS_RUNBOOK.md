@@ -4,7 +4,7 @@
 > procedure only. The census produces AUTHORITATIVE production evidence, so it runs from a **merged
 > `main` checkout**, never from an unpushed branch.
 
-Prod project: `fxoyniqnrlkxfligbxmg` (Supabase, managed non-super `postgres`, PG16). The census is a
+Prod project: `fxoyniqnrlkxfligbxmg` (Supabase, managed non-super `postgres`, PG17.6 — per the committed census `target_identity.server_version`, `server_version_num` 170006). The census is a
 **read-only** catalog SELECT sweep — no writes. It emits an immutable, Ed25519-signed
 `evidence_snapshot`; a separate acceptance gate then proves it is genuine and in-scope.
 
@@ -17,8 +17,9 @@ Prod project: `fxoyniqnrlkxfligbxmg` (Supabase, managed non-super `postgres`, PG
    repo, argv, logs, or this runbook.
 3. Add **only** the **public** key to the branch (through your own governed keypair commit, NOT the
    tooling commit): `infra/database/schema-placement/keys/prod-disposition-ed25519-2026-07.pub.pem`.
-   The trust anchor is the `TRUSTED_SIGNERS` constant in `verify_census.py` (reviewed verifier source),
-   which pins this signer id to SPKI SHA-256
+   The trust anchor is the `TRUSTED_SIGNERS` source constant in `disposition_trust.py` (the SHARED
+   reviewed anchor — `verify_census` AND `check_disposition` both resolve signers through
+   `disposition_trust.resolve_pinned_key`), which pins this signer id to SPKI SHA-256
    `c75785cd002977f3ce4794f55ea3b1437be5c60a07c36727372c53bd3dc592ca`. The committed public key MUST
    have exactly that SPKI fingerprint or `verify_census` fails closed (CN013). (An optional
    `.spki-sha256` sidecar may accompany the key for humans, but it is NOT the anchor — the verifier
@@ -138,9 +139,18 @@ clean). No secret ever entered the operator shell, so there is nothing to `unset
 
 ---
 
-**After the census:** build the signed-overlay packet (the `not_observed` overlays become
-separately-signed docs bound to the base snapshot SHA-256 — the census stays immutable), then the
-apply runner (revalidate-everything: read-once, verify snapshot+overlay sigs vs the pinned key, re-run
-schema/semantic/target/SP014, verify receipt hashes, bind+hash the exact migration SQL, restore-test
-the backup in disposable PostgreSQL, recheck identity+drift immediately before the SQL). The apply gate
-remains HELD until then.
+**After the census (current sequence — each step operator-gated):** the signed-overlay CONSUMER
+(`disposition_overlay.py`, OV001–OV022) and the overlay PUBLICATION tooling (`author_overlay.py`,
+`verify_overlay_artifact.py`, the `overlay-evidence` CI gate, `OVERLAY_COLLECTION_RUNBOOK.md`) are
+merged. Next: **fresh census → definer-view reconciliation → collect + sign the six per-dimension
+overlays (`author_overlay.py`, bound to the fresh census byte-hash, each with a committed source
+record) → formal cluster gate (`check_disposition --mode preapply` over census + all overlays) →
+apply runner** (revalidate-everything: read-once, verify snapshot+overlay sigs vs the pinned key,
+re-run schema/semantic/target gates, bind+hash the exact migration SQL, restore-test the backup in
+disposable PostgreSQL, recheck identity+drift immediately before SQL). The apply gate remains HELD.
+
+**Evidence immutability:** the `overlay-evidence` CI job also rejects any MODIFY/DELETE/RENAME/
+TYPECHANGE of committed `census-prod-*.json`, `overlay-*.json`, `evidence/source/**`, or `*.sig`
+artifacts (`git diff --no-renames --name-status`, all-`A` required) — closing the census gate's
+added-only blind spot. Committed evidence is immutable; supersede with a fresh artifact, never an
+edit.
