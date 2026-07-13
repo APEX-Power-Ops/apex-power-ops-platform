@@ -1,4 +1,4 @@
-# Forward-observability packet — design (Phase 9A-OBS-DESIGN), rev 4.1
+# Forward-observability packet — design (Phase 9A-OBS-DESIGN), rev 4.2
 
 2026-07-13 · disposition-ledger lane · authored under operator GO "Phase 9A-OBS-DESIGN — design/spec only; no production access or mutation" · **stops for operator review.** Ratification was HELD at rev 3 on six findings (3 P1 / 3 P2); rev 4 closes them: the F10 zero-outcome **machine state** (`observed`/0 only under the full exclusion set, else `not_observed` + detail — never a prose-only caveat); the window DDL-log sweep demoted to one-way corroboration (`postgres_logs` completeness unproven); transitive dependent-closure digests in F7 plus a transient-DDL exclusion rule; ingestion-loss vs query-surface-failure routing; a valid pinned PostgREST sentinel; and the Logs Explorer dialect preflight — see §12. The pending Supabase support response folds in via §10 as an amendment (non-blocking for design revision), but **must arrive before OBS-A1**: its retention/ingestion findings determine D1/D2 viability, and its §10(iv)+(v) answers are now LOAD-BEARING for any accepted zero (F10 leg (iii); §4.4 transient-DDL path (b)). **Rev 4.1 resolves the delta round's D5 fork STRICT per operator ruling (2026-07-13):** the transient-DDL exclusion requires complete DDL evidence OR the full path-(b) set (load-bearing §10(v) platform statement + operator attestation + clean CREATE-capability closure); an operator-only attestation never suffices.
 
@@ -100,12 +100,21 @@ Captured via the authorized governed-prod SQL surface, SELECT-only, value-silent
    leaving NULL text with live queryid+counters; ILIKE against NULL matches nothing, so either condition silently
    under-selects with no error, identically at both snapshots.)` Re-asserted at OBS-A2.
 2. **Reset-capability surface capture (feeds F10):** enumerate, value-silently, the full reset-capable closure at both
-   snapshots: {roles holding EXECUTE on the `pg_stat_statements_reset` function family per `pg_proc` ACLs} ∪ {the
-   transitive `pg_auth_members` closure of those roles} ∪ {all `rolsuper` roles} ∪ {the functions' `proowner` and its
-   transitive `pg_auth_members` closure} ∪ {roles holding `admin_option` on any member of the preceding sets,
-   evaluated transitively} `(PG-inference: superusers and owners execute regardless of ACL; grants reach every
-   member; an ADMIN-OPTION holder can mint membership — hence capability — without holding it, and owner-role
-   membership inherits owner rights)`. This does not detect
+   snapshots by **EFFECTIVE privilege, not raw ACL text**: {every role for which
+   `has_function_privilege(role, <oid>, 'EXECUTE')` holds for ANY overload of the `pg_stat_statements_reset` family —
+   enumerate the overloads from `pg_proc` (1.11 ships `reset()`, `reset(oid,oid,bigint)`, and
+   `reset(oid,oid,bigint,boolean)`) rather than assuming a single signature, since a GRANT may sit on only one} ∪ {the
+   `pg_auth_members` membership closure of those roles reachable by BOTH inheritance AND `SET ROLE` — a `NOINHERIT`
+   member does not inherit EXECUTE but can `SET ROLE` to the grantee and reset, so membership, not inheritance, is the
+   boundary} ∪ {all `rolsuper` roles} ∪ {the functions' `proowner` and its transitive membership closure} ∪ {roles
+   holding `admin_option` on any member of the preceding sets, evaluated transitively}. **PUBLIC grant expanded
+   explicitly:** a grant of EXECUTE to `PUBLIC` (aclitem grantee OID `0`, which a naive join to `pg_roles`/`pg_auth_members`
+   silently drops) makes EVERY role effective-capable ⇒ the closure is ALL roles and no accepted-zero is possible —
+   this branch is reported fail-closed, not worked around. `(PG-inference: superusers and owners execute regardless of
+   ACL; a PUBLIC grant reaches every role; SET ROLE confers a grantee's privileges to a NOINHERIT member; an
+   ADMIN-OPTION holder can mint membership — hence capability — without holding it; owner-role membership inherits
+   owner rights.)` The same effective-privilege, PUBLIC-expansion, and inheritance-plus-SET-ROLE discipline governs the
+   CREATE-capability closure below. This does not detect
    an invocation (reset calls are SELECTs and are not logged under `log_statement=ddl`); it bounds WHO could have
    reset. TRANSIENT capability (mid-window GRANT/REVOKE/role-DDL touching the reset family or reset-capable roles) is
    DDL-classified and would land in the postgres log stream under the already-on `log_statement=ddl` `(PG-inference;
@@ -121,8 +130,9 @@ Captured via the authorized governed-prod SQL surface, SELECT-only, value-silent
    assumption)` to verify at execution). Transient-capability exclusion otherwise rests on the extended attestations
    in §4.4 (F10). **CREATE-capability closure (feeds the §4.4 transient-DDL defeat test; operator defense-in-depth,
    §9 D5):** capture, value-silently and identically at both snapshots, the effective CREATE-capable closure on
-   schema `public`: {roles holding CREATE on the schema per `pg_namespace.nspacl`, including a PUBLIC grant if
-   present} ∪ {the transitive `pg_auth_members` closure of those roles} ∪ {the schema owner and the cohort-view
+   schema `public`: {every role for which `has_schema_privilege(role, 'public', 'CREATE')` holds, with a PUBLIC grant
+   expanded explicitly (grantee OID `0`) — a PUBLIC CREATE grant makes the closure ALL roles, reported fail-closed as
+   above} ∪ {the `pg_auth_members` membership closure of those roles reachable by inheritance AND `SET ROLE`} ∪ {the schema owner and the cohort-view
    owners and their transitive `pg_auth_members` closures — resolving `pg_database_owner`'s implicit membership via
    `pg_database.datdba` `(PG-inference: on PG15+ public is commonly owned by pg_database_owner, whose membership
    never appears in pg_auth_members)`} ∪ {all `rolsuper` roles} ∪ {roles holding `admin_option` on any member of the
@@ -457,9 +467,12 @@ probe also yields the first `dealloc` reading for the §4.3 churn estimator. It 
 | OBS-B-RESTORE (escalation only) | separate WRITE GO | prod write | revert to 9A-CAP baseline only | residual harvest (custody) |
 
 **Verify-at-execution preflights carried by their GOs:** cross-role statistics visibility + zero-unreadable-entries
-(`<insufficient privilege>` / `queryid IS NULL` / `query IS NULL`) (OBS-A1, re-asserted OBS-A2); reset-capability ACL
-surface capture + CREATE-capability closure on `public` (OBS-A1/OBS-A2 — feed F10 and the §4.4 transient-DDL defeat
-test); marker-role existence check (OBS-A1 — absent role ⇒ §4.3 exceptions
+(`<insufficient privilege>` / `queryid IS NULL` / `query IS NULL`) (OBS-A1, re-asserted OBS-A2); reset-capability and
+CREATE-capability closure capture by EFFECTIVE privilege — `has_function_privilege` over ALL `pg_stat_statements_reset`
+overloads and `has_schema_privilege(…, 'public', 'CREATE')`, PUBLIC (grantee OID 0) expanded, inheritance AND SET-ROLE
+membership paths, owners/superusers/transitive admin-option (OBS-A1/OBS-A2 — feed F10, the F10 leg-(iv) defeat test,
+and the §4.4 transient-DDL defeat test; a PUBLIC grant on either capability ⇒ closure = all roles ⇒ fail-closed);
+marker-role existence check (OBS-A1 — absent role ⇒ §4.3 exceptions
 prohibited); `stats_since`/`minmax_stats_since` column presence and semantics (OBS-A1); `compute_query_id`/`track`
 acceptance set incl. `track_utility` handling (OBS-A1); snapshot self-noise post-check (OBS-A1/OBS-A2); SQL-level
 `PREPARE`/`EXECUTE` attribution semantics under pgss 1.11 (OBS-A1 — determines whether prepared reads surface under
@@ -642,3 +655,23 @@ gained defeat-test leg (iv) — an uncontrolled non-platform member of the reset
 outcomes to the machine state — because the identical sphere-gap exists on the reset side (a standing uncontrolled
 reset-capable principal is covered by neither the operator attestation nor the platform statement); this implements
 the ruling's defense-in-depth principle symmetrically and goes one clause beyond the check's prescribed fix.
+
+**Rev 4.1 ratified + merged; F10 leg (iv) ACCEPTED (operator, 2026-07-13):** the operator ratified D1–D5 with strict
+D5, accepted F10 leg (iv) (do not strike; do not reopen D5), and merged the design to main via PR #95 (squash →
+`bf66bdef`; parent `8678f30e`; tree equality proven; primary ff'd; docs-only path ⇒ test/census/overlay suites
+path-filtered, Vercel-only, `mergeStateStatus=CLEAN` = required-check satisfaction, made explicit here).
+
+**Rev 4.2 (this revision — surgical operator clarification, 2026-07-13):** the operator flagged a P2 in the
+reset-capability enumeration: "roles holding EXECUTE per ACLs" used a raw-ACL framing that (unlike the CREATE closure)
+did not expand a `PUBLIC` grant and could mis-scope via a naive `pg_roles` join dropping grantee OID `0`, and did not
+distinguish inherited from `SET ROLE` privilege paths. Surgical fix (no other section's logic changed): §4.1 item 2
+reset-capability closure re-based on **effective privilege** — `has_function_privilege` over ALL
+`pg_stat_statements_reset` overloads (1.11 ships three signatures), PUBLIC grant expanded explicitly (a PUBLIC EXECUTE
+grant ⇒ closure = all roles ⇒ no accepted-zero possible, reported fail-closed), and the membership closure taken over
+BOTH inheritance and `SET ROLE` paths (a NOINHERIT member can `SET ROLE` and reset); the same effective-privilege /
+PUBLIC-expansion / inherit-plus-SET-ROLE discipline extended to the CREATE-capability closure
+(`has_schema_privilege(…, 'public', 'CREATE')`); §8 preflight line updated to match. This is required before OBS-A1
+implementation and does NOT block OBS-A0. Followed by one focused review only.
+
+**Rev 4.2 focused check:** [to be recorded after the ordered focused review of the reset/create effective-privilege
+edit.]
