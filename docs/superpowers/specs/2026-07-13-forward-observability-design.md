@@ -1,6 +1,6 @@
-# Forward-observability packet — design (Phase 9A-OBS-DESIGN), rev 4
+# Forward-observability packet — design (Phase 9A-OBS-DESIGN), rev 4.1
 
-2026-07-13 · disposition-ledger lane · authored under operator GO "Phase 9A-OBS-DESIGN — design/spec only; no production access or mutation" · **stops for operator review.** Ratification was HELD at rev 3 on six findings (3 P1 / 3 P2); rev 4 closes them: the F10 zero-outcome **machine state** (`observed`/0 only under the full exclusion set, else `not_observed` + detail — never a prose-only caveat); the window DDL-log sweep demoted to one-way corroboration (`postgres_logs` completeness unproven); transitive dependent-closure digests in F7 plus a transient-DDL exclusion rule; ingestion-loss vs query-surface-failure routing; a valid pinned PostgREST sentinel; and the Logs Explorer dialect preflight — see §12. The pending Supabase support response folds in via §10 as an amendment (non-blocking for design revision), but **must arrive before OBS-A1**: its retention/ingestion findings determine D1/D2 viability, and its §10(iv) platform-reset answer is now LOAD-BEARING for any accepted zero (F10 leg (iii)).
+2026-07-13 · disposition-ledger lane · authored under operator GO "Phase 9A-OBS-DESIGN — design/spec only; no production access or mutation" · **stops for operator review.** Ratification was HELD at rev 3 on six findings (3 P1 / 3 P2); rev 4 closes them: the F10 zero-outcome **machine state** (`observed`/0 only under the full exclusion set, else `not_observed` + detail — never a prose-only caveat); the window DDL-log sweep demoted to one-way corroboration (`postgres_logs` completeness unproven); transitive dependent-closure digests in F7 plus a transient-DDL exclusion rule; ingestion-loss vs query-surface-failure routing; a valid pinned PostgREST sentinel; and the Logs Explorer dialect preflight — see §12. The pending Supabase support response folds in via §10 as an amendment (non-blocking for design revision), but **must arrive before OBS-A1**: its retention/ingestion findings determine D1/D2 viability, and its §10(iv)+(v) answers are now LOAD-BEARING for any accepted zero (F10 leg (iii); §4.4 transient-DDL path (b)). **Rev 4.1 resolves the delta round's D5 fork STRICT per operator ruling (2026-07-13):** the transient-DDL exclusion requires complete DDL evidence OR the full path-(b) set (load-bearing §10(v) platform statement + operator attestation + clean CREATE-capability closure); an operator-only attestation never suffices.
 
 ## 1. Objective and scope
 
@@ -116,7 +116,12 @@ Captured via the authorized governed-prod SQL surface, SELECT-only, value-silent
    slices, per-slice retention checks, and a verified ingestion-liveness basis for the postgres stream — candidate:
    the 9A-observed per-minute collation-warning heartbeat, itself a same-stream `(PG-inference / platform
    assumption)` to verify at execution). Transient-capability exclusion otherwise rests on the extended attestations
-   in §4.4 (F10).
+   in §4.4 (F10). **CREATE-capability closure (feeds the §4.4 transient-DDL defeat test; operator defense-in-depth,
+   §9 D5):** capture, value-silently and identically at both snapshots, the effective CREATE-capable closure on
+   schema `public`: {roles holding CREATE on the schema per `pg_namespace.nspacl`, including a PUBLIC grant if
+   present} ∪ {the transitive `pg_auth_members` closure of those roles} ∪ {the schema owner and the cohort-view
+   owners} ∪ {all `rolsuper` roles}. The §4.4 path-(b) defeat test evaluates the UNION of the two endpoint closures;
+   any member outside operator control that is not platform automation independently defeats path (b).
 3. **Environment capture (both snapshots; feeds F4):** `stats_reset` + `dealloc` (`pg_stat_statements_info`);
    tracked-entry count; `pg_stat_statements.max`; `pg_stat_statements.track`; `pg_stat_statements.track_utility`;
    `pg_stat_statements.save`; `compute_query_id`; `server_version`; installed `pg_stat_statements` extension version;
@@ -240,18 +245,22 @@ Same captures as OBS-A1 (visibility preflight re-asserted), plus delta computati
   names the missing operator attestation) and when the transient-DDL exclusion below is unavailable (detail:
   "transient dependent-closure exclusion unavailable"). Closure drift under (i) or touching DDL in the sweep is an
   interference SIGNAL ⇒ F10 BLOCKED outright (nothing authored; report and stop).
-- **Transient-DDL exclusion (feeds F7; closes the wrapper interval-drift gap):** F7's endpoint comparison cannot see
-  a mid-interval transient (§4.1 item 5). Exclusion requires ONE of: (a) trustworthy DDL evidence — the
-  `postgres_logs` DDL stream for the window WITH the §4.1 item-2 completeness discipline established — showing no
-  CREATE/ALTER/DROP touching the cohort views or their dependent closure; or (b) a signed operator attestation that
-  no principal under operator control, direction, or knowledge executed such DDL during [T0, Tend]. Platform-side
-  wrapper DDL is carried as a stated limit, not a machine gate (no known platform surface creates dependents on user
-  relations — structurally unlike resets, where the Studio control demonstrates a platform surface). The attestation's
-  reach is operator-sphere only: the platform/unknown-actor wrapper-DDL residual is bounded by the §10(v) ticket
-  answer when it arrives and is otherwise carried as a stated limit; whether attestation-sufficiency stands here (vs
-  requiring a platform statement symmetric with F10 leg (iii)) is an explicit ratification item — §9 D5. Absent both
-  (a) and (b), a zero outcome follows the machine-state rule above (`not_observed` + detail). DDL evidence that SHOWS
-  touching DDL ⇒ F7 BLOCKED.
+- **Transient-DDL exclusion (feeds F7; closes the wrapper interval-drift gap; STRICT per operator ruling 2026-07-13
+  — §9 D5):** F7's endpoint comparison cannot see a mid-interval transient (§4.1 item 5), and an operator-scoped
+  attestation is never authoritative for actors outside its scope. Exclusion therefore requires ONE of: **(a)
+  trustworthy, COMPLETE DDL evidence for [T0, Tend]** — the `postgres_logs` DDL stream WITH the §4.1 item-2
+  completeness discipline established — showing no CREATE/ALTER/DROP touching the cohort views or their dependent
+  closure and no change to CREATE capability on the containing schema; or **(b) ALL THREE of:** a categorical or
+  explicitly window-covering platform statement answering §10(v) (LOAD-BEARING exactly like §10(iv)); AND a signed
+  operator attestation that no principal under operator control, direction, or knowledge executed such DDL **or
+  changed CREATE capability on the containing schema (GRANT/REVOKE/ownership/role-DDL touching the CREATE-capable
+  closure)** during [T0, Tend]; AND the §4.1 item-2 CREATE-capability closure on `public` (union of both endpoints)
+  containing NO principal outside operator control that is not platform automation — any uncontrolled non-platform
+  creator independently defeats path (b) regardless of attestations. (The capability-change clauses terminate the
+  regress: standing capability is bounded by the verified closure, and every capability CHANGE is an act by a
+  principal already inside it, covered by the two statements.) Absent both paths, a zero outcome follows the
+  machine-state rule above (`not_observed`, detail: "transient dependent-closure exclusion unavailable"). DDL
+  evidence that SHOWS touching DDL ⇒ F7 BLOCKED.
 - **Stated instrument limits carried in the source record:** normalized-literal blindness; `track=top` nesting
   blindness; the near-cap eviction regime; **any name-indirect read** — wrapper views/rules (tracked, but under the
   wrapper's name; mitigated by the §4.1 item-5 `pg_depend` sweep), SQL-level `PREPARE`/`EXECUTE` (attribution
@@ -434,7 +443,8 @@ probe also yields the first `dealloc` reading for the §4.3 churn estimator. It 
 
 **Verify-at-execution preflights carried by their GOs:** cross-role statistics visibility + zero-unreadable-entries
 (`<insufficient privilege>` / `queryid IS NULL` / `query IS NULL`) (OBS-A1, re-asserted OBS-A2); reset-capability ACL
-surface capture (OBS-A1/OBS-A2, feeds F10); marker-role existence check (OBS-A1 — absent role ⇒ §4.3 exceptions
+surface capture + CREATE-capability closure on `public` (OBS-A1/OBS-A2 — feed F10 and the §4.4 transient-DDL defeat
+test); marker-role existence check (OBS-A1 — absent role ⇒ §4.3 exceptions
 prohibited); `stats_since`/`minmax_stats_since` column presence and semantics (OBS-A1); `compute_query_id`/`track`
 acceptance set incl. `track_utility` handling (OBS-A1); snapshot self-noise post-check (OBS-A1/OBS-A2); SQL-level
 `PREPARE`/`EXECUTE` attribution semantics under pgss 1.11 (OBS-A1 — determines whether prepared reads surface under
@@ -465,13 +475,15 @@ Supabase-permitted mechanism for database-wide `pgaudit.role`, no-restart assump
 - **D4 — Tier B (operator-directed):** keep COLD. If triggered, a **separate write design** is required first (§5),
   covering pgAudit's best-effort boundary, sentinel reads, pool recycling, fresh-census rebinding, and restoration —
   noting Tier-B entry costs a second census + publish cycle and re-binding of all six overlays.
-- **D5 — transient-wrapper-DDL epistemic basis (ratification item; cross-engine fork):** rev 4 implements the
-  prescribed remedy — trustworthy DDL evidence OR an operator no-DDL attestation (§4.4) — carrying the
-  platform/unknown-actor wrapper residual as a stated limit bounded by the §10(v) ticket answer (structural basis: no
-  known platform surface creates dependents on user relations, unlike resets where the Studio control demonstrates
-  one). The Codex delta reviewer judged this residual a remaining `observed`/0 path and proposed requiring a platform
-  statement, symmetric with F10 leg (iii). **Lean: keep attestation-sufficiency + §10(v) bounding**; escalate to a
-  required platform statement only if the operator judges the wrapper-DDL actor class equivalent to the reset class.
+- **D5 — transient-wrapper-DDL epistemic basis: RESOLVED STRICT (operator ruling 2026-07-13).** The
+  attestation-sufficiency lean was REJECTED: an operator-scoped attestation is not authoritative for platform or
+  unknown actors, and under the lean the residual could still author `observed`/0 — a machine false-green
+  indistinguishable from complete evidence once authored (the Codex delta verdict of PARTIALLY CLOSED was correct).
+  Ruling: the §4.4 transient-DDL exclusion requires trustworthy complete DDL evidence for [T0, Tend], OR the full
+  path-(b) set (load-bearing §10(v) platform statement + extended operator attestation + clean CREATE-capability
+  closure); if neither exists, `runtime_logs.state = not_observed` with `found_consumers`/`ref` null. Defense in
+  depth: OBS-A1/OBS-A2 inventory effective CREATE capability on `public` (schema ACL ∪ membership closure ∪ owners ∪
+  superusers, §4.1 item 2); any uncontrolled non-platform creator independently defeats path (b).
 
 ## 10. Support-response fold-in (amendment path; NOT a design prerequisite — but an OBS-A1 gate)
 
@@ -490,8 +502,11 @@ answer is now LOAD-BEARING: F10 leg (iii) requires it (or an equivalent explicit
 `observed`/0 authoring of runtime_logs, and only a categorical or explicitly window-covering answer satisfies the
 leg-(iii) acceptance criterion; absent it, zero outcomes land `not_observed` per the §4.4 machine-state rule; (v)
 **platform-dependent-DDL question (add to the ticket thread):** whether platform principals or automation ever
-create, alter, or drop dependent objects (views/rules) on user relations — bounds the §4.4 transient-DDL platform
-residual (D5); not load-bearing under the D5 lean. No section's SQL-side design depends on the
+create, alter, or drop dependent objects (views/rules) on user relations, or grant schema-level CREATE capability on
+user schemas — **LOAD-BEARING exactly like (iv)** (operator ruling, §9 D5): absent trustworthy complete DDL evidence,
+the §4.4 transient-DDL exclusion's path (b) requires a categorical or explicitly window-covering answer to this
+question; absent both paths, zero outcomes land `not_observed` per the §4.4 machine-state rule. No section's SQL-side
+design depends on the
 response (operator finding 1); design revision and review are never blocked on it.
 
 ## 11. Explicit prohibitions inherited by every execution GO
@@ -583,3 +598,18 @@ ratification decision **D5** with a §10(v) bounding question rather than silent
 flagged the §6 header wording (folded, above). **Cross-engine delta:** mirror-image catches — Codex found the
 platform residual on the wrapper-DDL side; Claude found the symmetric reset-capability-granting corner (folded into
 leg (iii)) that Codex missed. Neither engine found a new false-green path at P1/P2.
+
+**Rev 4.1 (this revision — operator ruling on D5, 2026-07-13):** the operator REJECTED the D5 attestation-sufficiency
+lean as a remaining P1 machine false-green (an operator-scoped attestation is not authoritative for platform or
+unknown actors; once authored, the checker cannot distinguish that risk acceptance from complete evidence — the Codex
+PARTIALLY CLOSED verdict was correct). Narrow changes: §4.4 transient-DDL exclusion made STRICT (complete DDL
+evidence for [T0, Tend], OR platform statement §10(v) + extended operator attestation covering CREATE-capability
+changes + clean CREATE-capability closure; neither ⇒ `not_observed` with null `found_consumers`/`ref`); §10(v) made
+LOAD-BEARING exactly like §10(iv) with the same categorical/window-covering acceptance criterion; §4.1 item 2 gains
+the defense-in-depth CREATE-capability closure capture on `public` (schema ACL ∪ membership closure ∪ owners ∪
+superusers, both endpoints, union-evaluated) whose uncontrolled non-platform members independently defeat path (b);
+§9 D5 recorded as RESOLVED STRICT. Operator ratification per the same ruling: **D1–D5 ratified with strict D5**
+(D1 sequenced probe→churn+retention→duration; D2 operator Logs Explorer with dialect preflight; D3 run OBS-A0 under
+its own future GO; D4 Tier B cold; D5 strict as above), contingent on the ordered focused textual/semantic check of
+this revision. OBS-A0 remains held for its separate read-only GO; OBS-A1 remains blocked until the Supabase support
+response settles retention, ingestion, reset, and dependent-DDL questions.
