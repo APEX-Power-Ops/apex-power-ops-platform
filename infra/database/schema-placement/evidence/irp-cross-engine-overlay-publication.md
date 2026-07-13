@@ -339,3 +339,29 @@ Verdict: **Ready for PR — Yes**, with one pre-PR docs item.
 ### Verdict
 
 Phase-4 build COMPLETE at `63261888`. Zero surviving Critical/Important code findings across per-task reviews (12), the whole-branch Claude review, and the Codex cross-engine pass. One operator decision outstanding (runbook clause wording) before or alongside the Phase-5 PR. Push/PR/merge, fresh census, evidence collection, signing, cluster gate, apply-runner, and A1–A3 all remain HELD behind their own GOs.
+
+---
+
+## ROUND 4.1 — operator correction tranche + focused cross-engine delta review (2026-07-13)
+
+**Trigger:** operator post-build audit of the Phase-4 artifact (independently re-ran all 11 suites, both gates, `git diff --check`, shellcheck — all green) returned 4 findings and a Phase-4.1 GO: (1) Important — `CENSUS_RUNBOOK.md:146` committed-source clause contradicts the NA/custody path; (2) Medium — `load_input_core` permissive `json.loads` silently last-wins duplicate keys; (3) Medium — custody locators effectively unconstrained on the `source_hash:null` path; (4) Low — stale "four suites" workflow comment. Operator directive: fix before PR, do not carry as PR notes.
+
+### Correction commits
+
+- **`582aac30`** — the tranche: operator's exact two-arm runbook wording (committed source record with matching non-null `source_hash` | contract-permitted `source_hash:null` + NA reason + out-of-band custody locator); strict `--input` parsing (duplicate-key + non-finite rejection replicated D3-style from the CI driver's `strict_parse`; exact 7-key allowlist `dimension, assignments, observation_window, authority, collection_method, operator_identity, attestation_ref`; AO000 parse-level / AO002 unknown-property); custody-locator URI rule (`<scheme>:<opaque>`, rejecting filesystem paths, `..`, backslashes, whitespace; AO004) enforced byte-parallel in `read_source` AND unconditionally in the CI driver (`custody_locator_check`, before the added-set early-exit — a source-only PR still exercises it); "four suites" → eleven. RED→GREEN tests for every behavior change incl. a scratch-repo e2e proving the CI backstop catches a bad custody locator that bypasses the author (doc built via `assemble_overlay` directly). Zero fixture changes (all existing NA fixtures already `vault:` URIs).
+- **`8dada6ca`** — cross-engine fix: reject single-letter schemes (`_SCHEME_RE` `*`→`+`, both replicas; `_WINDOWS_DRIVE_RE` retained as defense in depth) closing the drive-relative Windows path gap AND the disclosed single-letter asymmetry. 4 new RED-first tests (`C:evidence-out.log`, `x:opaque-ref` — author AO004 + CI FAIL, both proven accepted by the pre-fix code).
+
+### Focused delta review (both engines, base `787c3f51`)
+
+- **Claude (opus), named-risk protocol:** all six risks PASS — custody rule probed live against the full attack set (`C:/x`, `C:\x`, no-scheme, `..`, whitespace, empty-opaque all REJECT; `vault:` PASSES); author/CI validators byte-parallel and applied to the same persisted value (`assemble_overlay` writes `source_locator` verbatim; `source_locator:null` on a null-hash doc unreachable from the author, still FAILed by CI); strict-parse any-depth duplicate rejection with zero blast radius on valid shapes; runbook wording verbatim + sequence coherent; tests genuinely RED; no regression surface (zero committed overlays on the branch → empty live domain). Delta approved. Two Minors: `file:`-scheme admission (literal-compliant — no scheme allow/deny-list ordered); single-letter asymmetry (superseded by `8dada6ca`).
+- **Codex (`codex exec review --base 787c3f51 -m gpt-5.5`, temp detached worktree, removed after):** 1 P2 — **CONFIRMED GENUINE**: drive-relative `C:evidence-out.log` passed as scheme `C`. Fixed in `8dada6ca`.
+- **Re-review of the fix delta (Claude opus):** approved — stripped-body md5 of both `is_custody_uri` copies identical (`e692bbbb…` both files); all 7 probe cases correct both sides incl. `infisical:/path?x` PASS; RED-genuineness proven against the pre-fix regex; exactly 4 files, no collateral; Minor #2 fully resolved (categorical single-letter rejection is the only fail-closed answer to the drive-relative ambiguity); **sole residual = Minor #1 (`file:`/`mailto:` and other ≥2-char schemes pass — no allow/deny-list was ordered; opaque never-dereferenced pointer; operator may optionally order a scheme allowlist, e.g. `vault`/`infisical`/`https`).**
+- **Cross-engine delta:** Codex escalated to a confirmed gap what the Claude pass had characterized as a low-risk asymmetry — the second time this lane's cross-engine pass has caught a real defect the single-engine review under-weighted.
+
+### Verification at the tranche tip `8dada6ca` (controller-run, unmasked)
+
+11 suites rc=0 — **414 cases** (60/74/42/32/7/3/10/73/**60**/12/**41**); census gate rc=0; overlay gate rc=0; `git diff --check main HEAD` clean; worktree clean; frozen surfaces untouched.
+
+### Verdict
+
+Phase 4.1 COMPLETE. All four operator findings fixed on-branch with RED-first tests; one cross-engine gap found and fixed inside the tranche; zero open Critical/Important. One optional operator confirmation: whether to add a custody-scheme allowlist (Minor #1) — current behavior is literal-compliant with the ordered rule. **Recommend Phase 5 GO** (push + governed squash PR, no merge). Phases 5/5M/6-13 remain HELD per the v2 roadmap.
