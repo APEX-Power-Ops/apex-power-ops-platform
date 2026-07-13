@@ -140,6 +140,44 @@ def _custody_check_single_letter_scheme_fails():
     return any("evidence/overlay-x.json" in f for f in cic.custody_locator_check(docs))
 
 
+# ---- Phase-4.2 scheme pin: only APPROVED_CUSTODY_SCHEMES (vault, infisical) accepted ----
+def _custody_check_scheme_vault_passes():
+    docs = [("evidence/overlay-x.json", _doc(locator="vault:custody/x", source_hash=None))]
+    return cic.custody_locator_check(docs) == []
+
+
+def _custody_check_scheme_infisical_passes():
+    docs = [("evidence/overlay-x.json", _doc(locator="infisical:prod/path", source_hash=None))]
+    return cic.custody_locator_check(docs) == []
+
+
+def _custody_check_scheme_file_fails():
+    # RED pre-pin: syntactically valid URI, unapproved scheme -- FAIL line must name the policy.
+    docs = [("evidence/overlay-x.json", _doc(locator="file:/etc/passwd", source_hash=None))]
+    return any("APPROVED_CUSTODY_SCHEMES" in f for f in cic.custody_locator_check(docs))
+
+
+def _custody_check_scheme_mailto_fails():
+    docs = [("evidence/overlay-x.json", _doc(locator="mailto:a@b", source_hash=None))]
+    return any("APPROVED_CUSTODY_SCHEMES" in f for f in cic.custody_locator_check(docs))
+
+
+def _custody_check_scheme_https_fails():
+    docs = [("evidence/overlay-x.json", _doc(locator="https://example.com/evidence", source_hash=None))]
+    return any("APPROVED_CUSTODY_SCHEMES" in f for f in cic.custody_locator_check(docs))
+
+
+def _custody_check_scheme_custom_fails():
+    docs = [("evidence/overlay-x.json", _doc(locator="custom:anything", source_hash=None))]
+    return any("APPROVED_CUSTODY_SCHEMES" in f for f in cic.custody_locator_check(docs))
+
+
+def _custody_check_scheme_mixed_case_vault_passes():
+    # operator policy (explicit): scheme case-normalized (.lower()) before the allowlist check.
+    docs = [("evidence/overlay-x.json", _doc(locator="Vault:custody/x", source_hash=None))]
+    return cic.custody_locator_check(docs) == []
+
+
 _CASES += [
     ("source_record_without_overlay_fails", source_record_without_overlay_fails),  # RIDER, first
     ("referenced_source_passes", _referenced_source_passes),
@@ -159,6 +197,13 @@ _CASES += [
     ("custody_check_skips_non_null_source_hash", _custody_check_skips_non_null_source_hash),
     ("custody_check_drive_relative_fails", _custody_check_drive_relative_fails),
     ("custody_check_single_letter_scheme_fails", _custody_check_single_letter_scheme_fails),
+    ("custody_check_scheme_vault_passes", _custody_check_scheme_vault_passes),
+    ("custody_check_scheme_infisical_passes", _custody_check_scheme_infisical_passes),
+    ("custody_check_scheme_file_fails", _custody_check_scheme_file_fails),
+    ("custody_check_scheme_mailto_fails", _custody_check_scheme_mailto_fails),
+    ("custody_check_scheme_https_fails", _custody_check_scheme_https_fails),
+    ("custody_check_scheme_custom_fails", _custody_check_scheme_custom_fails),
+    ("custody_check_scheme_mixed_case_vault_passes", _custody_check_scheme_mixed_case_vault_passes),
 ]
 
 
@@ -564,6 +609,31 @@ def _e2e_bad_custody_locator_fails():
         return r.returncode == 1 and "custody locator" in r.stdout
 
 
+def _e2e_unapproved_custody_scheme_fails():
+    # Phase-4.2 scheme pin, e2e: a VALIDLY SIGNED NA overlay (built through the harness's
+    # signed-write path, so the Ed25519 sidecar verifies) whose custody locator is a
+    # syntactically valid URI with an UNAPPROVED scheme must FAIL the whole shell gate with the
+    # scheme-policy FAIL line -- a valid signature must not carry an off-policy custody pointer.
+    with tempfile.TemporaryDirectory() as tmp:
+        work, priv, base = _scratch(tmp)
+        census, cb, _ = _fixture_census(work, priv, base)
+        _commit_all(work, "census evidence")
+        sp = os.path.join(work, *SP.split("/"))
+        contract = dov.load_overlay_contract()
+        core = fx.overlay_core("advisor_findings",
+                               [{"object_id": "public.t2", "value": {"state": "observed", "value": ["lint:ok"]}}])
+        doc = ao.assemble_overlay(core, census=census, census_sha256=hashlib.sha256(cb).hexdigest(),
+                                  contract=contract, producing=(None, "advisor API snapshot"),
+                                  source_hash=None, source_hash_reason="no committed artifact",
+                                  source_locator="custom:anything",  # valid URI, unapproved scheme
+                                  captured_at_iso="2026-07-12T06:00:00+00:00")
+        os.makedirs(os.path.join(sp, "evidence"), exist_ok=True)
+        fx.write_signed(os.path.join(sp, "evidence"), "overlay-advisor_findings-scratch-badscheme.json", doc, priv)
+        _commit_all(work, "advisor overlay (unapproved custody scheme)")
+        r = _gate(work)
+        return r.returncode == 1 and "APPROVED_CUSTODY_SCHEMES" in r.stdout
+
+
 def _e2e_source_hash_mismatch_fails():
     # The record is ADDED in the same PR (immutability passes) but its bytes no longer match the
     # overlay's source_hash -- the step-4 rehash wiring must FAIL (plan-audit E2E-2).
@@ -629,6 +699,7 @@ _CASES += [
     ("e2e_tooling_drift_since_census_fails", _e2e_tooling_drift_since_census_fails),
     ("e2e_forbidden_dim_null_producing_green", _e2e_forbidden_dim_null_producing_green),
     ("e2e_bad_custody_locator_fails", _e2e_bad_custody_locator_fails),
+    ("e2e_unapproved_custody_scheme_fails", _e2e_unapproved_custody_scheme_fails),
     ("e2e_source_hash_mismatch_fails", _e2e_source_hash_mismatch_fails),
     ("e2e_modify_committed_source_record_fails", _e2e_modify_committed_source_record_fails),
     ("e2e_added_overlay_bad_signature_fails", _e2e_added_overlay_bad_signature_fails),

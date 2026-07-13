@@ -75,7 +75,10 @@ dimension). Then:
           --out-dir "$OUT"
 
 For a no-artifact dimension replace `--source-file` with
-`--source-hash-na-reason "<why>" --source-custody-locator "<vault ref>"`.
+`--source-hash-na-reason "<why>" --source-custody-locator "<vault ref>"`. The custody locator
+must use an approved scheme — `vault:` or `infisical:` (`APPROVED_CUSTODY_SCHEMES`, pinned
+identically in `author_overlay.py` and `ci/overlay_ci_checks.py`); adding a scheme requires a
+governed tooling change (a reviewed source change to `APPROVED_CUSTODY_SCHEMES`).
 For FORBIDDEN/`external_clients`-null dimensions add `--producing-repo-sha-na-reason "<why>"`.
 The tool validates BEFORE signing (AO005 prints the exact OV codes), enforces signer parity
 (AO007), verifies the sidecar in memory (AO012), and publishes

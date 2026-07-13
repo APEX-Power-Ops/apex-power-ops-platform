@@ -244,6 +244,41 @@ def _custody_single_letter_scheme_AO004():
     return _err_code(ao.read_source, None, "no artifact", "x:opaque-ref") == "AO004"
 
 
+# ---- Phase-4.2 scheme pin: only APPROVED_CUSTODY_SCHEMES (vault, infisical) accepted ----
+def _custody_scheme_vault_passes():
+    data, reason, custody, ext = ao.read_source(None, "no artifact", "vault:custody/x")
+    return custody == "vault:custody/x"
+
+
+def _custody_scheme_infisical_passes():
+    data, reason, custody, ext = ao.read_source(None, "no artifact", "infisical:prod/path")
+    return custody == "infisical:prod/path"
+
+
+def _custody_scheme_file_rejected_AO004():
+    # RED pre-pin: file:/etc/passwd is a syntactically valid URI but an unapproved scheme.
+    return _err_code(ao.read_source, None, "no artifact", "file:/etc/passwd") == "AO004"
+
+
+def _custody_scheme_mailto_rejected_AO004():
+    return _err_code(ao.read_source, None, "no artifact", "mailto:a@b") == "AO004"
+
+
+def _custody_scheme_https_rejected_AO004():
+    return _err_code(ao.read_source, None, "no artifact", "https://example.com/evidence") == "AO004"
+
+
+def _custody_scheme_custom_rejected_AO004():
+    return _err_code(ao.read_source, None, "no artifact", "custom:anything") == "AO004"
+
+
+def _custody_scheme_mixed_case_vault_passes():
+    # operator policy (explicit): the scheme is case-normalized (.lower()) BEFORE the allowlist
+    # check, so a mixed-case approved scheme is ACCEPTED; the locator value itself is unchanged.
+    data, reason, custody, ext = ao.read_source(None, "no artifact", "Vault:custody/x")
+    return custody == "Vault:custody/x"
+
+
 _CASES += [
     ("input_unreadable_AO000", _input_unreadable_AO000),
     ("input_not_object_AO002", _input_not_object_AO002),
@@ -279,6 +314,13 @@ _CASES += [
     ("custody_valid_uri_passes", _custody_valid_uri_passes),
     ("custody_drive_relative_AO004", _custody_drive_relative_AO004),
     ("custody_single_letter_scheme_AO004", _custody_single_letter_scheme_AO004),
+    ("custody_scheme_vault_passes", _custody_scheme_vault_passes),
+    ("custody_scheme_infisical_passes", _custody_scheme_infisical_passes),
+    ("custody_scheme_file_rejected_AO004", _custody_scheme_file_rejected_AO004),
+    ("custody_scheme_mailto_rejected_AO004", _custody_scheme_mailto_rejected_AO004),
+    ("custody_scheme_https_rejected_AO004", _custody_scheme_https_rejected_AO004),
+    ("custody_scheme_custom_rejected_AO004", _custody_scheme_custom_rejected_AO004),
+    ("custody_scheme_mixed_case_vault_passes", _custody_scheme_mixed_case_vault_passes),
 ]
 
 import hashlib  # noqa: E402

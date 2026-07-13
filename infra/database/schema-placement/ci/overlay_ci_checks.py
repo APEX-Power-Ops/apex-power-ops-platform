@@ -113,19 +113,24 @@ def strict_parse(data: bytes):
     return json.loads(data.decode("utf-8"), object_pairs_hook=_reject_dup, parse_constant=_reject_nonfinite)
 
 
-_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]+:(.+)$")
+_SCHEME_RE = re.compile(r"^([A-Za-z][A-Za-z0-9+.\-]+):(.+)$")
 _WINDOWS_DRIVE_RE = re.compile(r"^[A-Za-z]:[\\/]")
+# Phase-4.2 operator policy: the ONLY approved out-of-band custody schemes. Additions require a
+# governed tooling change (a reviewed source change to this constant, in BOTH D3 replicas).
+APPROVED_CUSTODY_SCHEMES = frozenset({"vault", "infisical"})
 
 
 def is_custody_uri(value):
     """D3 replica of author_overlay.py's is_custody_uri -- kept byte-parallel (Phase-4.1 item 4
-    + cross-engine follow-up). Custody-locator URI rule: must be '<scheme>:<opaque-reference>' --
-    scheme matches [A-Za-z][A-Za-z0-9+.-]+ (TWO+ characters: single-letter schemes are rejected
-    wholesale, closing the drive-RELATIVE Windows path gap, e.g. 'C:evidence-out.log'; legitimate
-    custody schemes are all >=2 chars), followed by ':' and a non-empty opaque part. Rejects
-    absolute paths (leading '/' or a Windows drive letter -- the explicit drive regex stays as
-    defense in depth), relative filesystem paths (no scheme/colon), '..' traversal, backslashes,
-    and any whitespace. Returns (ok, reason_or_value)."""
+    + cross-engine follow-up + Phase-4.2 scheme pin). Custody-locator URI rule: must be
+    '<scheme>:<opaque-reference>' -- scheme matches [A-Za-z][A-Za-z0-9+.-]+ (TWO+ characters:
+    single-letter schemes are rejected wholesale, closing the drive-RELATIVE Windows path gap,
+    e.g. 'C:evidence-out.log'), followed by ':' and a non-empty opaque part, AND the scheme --
+    case-normalized via .lower() FIRST (operator policy: mixed-case approved schemes are
+    accepted) -- must be a member of APPROVED_CUSTODY_SCHEMES. Rejects absolute paths (leading
+    '/' or a Windows drive letter -- the explicit drive regex stays as defense in depth),
+    relative filesystem paths (no scheme/colon), '..' traversal, backslashes, and any
+    whitespace. Returns (ok, reason_or_value)."""
     if not isinstance(value, str) or not value:
         return False, "custody locator is not a non-empty string"
     if any(ch.isspace() for ch in value):
@@ -138,8 +143,12 @@ def is_custody_uri(value):
         return False, "custody locator is an absolute path"
     if _WINDOWS_DRIVE_RE.match(value):
         return False, "custody locator is a Windows drive path"
-    if not _SCHEME_RE.match(value):
+    m = _SCHEME_RE.match(value)
+    if not m:
         return False, "custody locator is not URI-like (expected <scheme>:<opaque-reference>, scheme >= 2 chars)"
+    if m.group(1).lower() not in APPROVED_CUSTODY_SCHEMES:
+        return False, (f"custody scheme {m.group(1).lower()!r} not in APPROVED_CUSTODY_SCHEMES "
+                       f"({', '.join(sorted(APPROVED_CUSTODY_SCHEMES))})")
     return True, value
 
 

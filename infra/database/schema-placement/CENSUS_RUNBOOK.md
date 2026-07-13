@@ -151,6 +151,11 @@ gate (`check_disposition --mode preapply` over census + all overlays) → apply 
 schema/semantic/target gates, bind+hash the exact migration SQL, restore-test the backup in
 disposable PostgreSQL, recheck identity+drift immediately before SQL). The apply gate remains HELD.
 
+**Approved custody schemes:** an out-of-band custody locator must use scheme `vault:` or
+`infisical:` (`APPROVED_CUSTODY_SCHEMES`, pinned identically in `author_overlay.py` and
+`ci/overlay_ci_checks.py`); adding a scheme requires a governed tooling change (a reviewed
+source change to `APPROVED_CUSTODY_SCHEMES`), never an ad-hoc value.
+
 **Evidence immutability:** the `overlay-evidence` CI job also rejects any MODIFY/DELETE/RENAME/
 TYPECHANGE of committed `census-prod-*.json`, `overlay-*.json`, `evidence/source/**`, or `*.sig`
 artifacts (`git diff --no-renames --name-status`, all-`A` required) — closing the census gate's
