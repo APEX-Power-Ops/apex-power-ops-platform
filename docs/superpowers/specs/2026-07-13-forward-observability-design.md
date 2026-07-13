@@ -101,8 +101,11 @@ Captured via the authorized governed-prod SQL surface, SELECT-only, value-silent
    under-selects with no error, identically at both snapshots.)` Re-asserted at OBS-A2.
 2. **Reset-capability surface capture (feeds F10):** enumerate, value-silently, the full reset-capable closure at both
    snapshots: {roles holding EXECUTE on the `pg_stat_statements_reset` function family per `pg_proc` ACLs} ∪ {the
-   transitive `pg_auth_members` closure of those roles} ∪ {all `rolsuper` roles} ∪ {the functions' `proowner`}
-   `(PG-inference: superusers and owners execute regardless of ACL; grants reach every member)`. This does not detect
+   transitive `pg_auth_members` closure of those roles} ∪ {all `rolsuper` roles} ∪ {the functions' `proowner` and its
+   transitive `pg_auth_members` closure} ∪ {roles holding `admin_option` on any member of the preceding sets,
+   evaluated transitively} `(PG-inference: superusers and owners execute regardless of ACL; grants reach every
+   member; an ADMIN-OPTION holder can mint membership — hence capability — without holding it, and owner-role
+   membership inherits owner rights)`. This does not detect
    an invocation (reset calls are SELECTs and are not logged under `log_statement=ddl`); it bounds WHO could have
    reset. TRANSIENT capability (mid-window GRANT/REVOKE/role-DDL touching the reset family or reset-capable roles) is
    DDL-classified and would land in the postgres log stream under the already-on `log_statement=ddl` `(PG-inference;
@@ -120,8 +123,11 @@ Captured via the authorized governed-prod SQL surface, SELECT-only, value-silent
    §9 D5):** capture, value-silently and identically at both snapshots, the effective CREATE-capable closure on
    schema `public`: {roles holding CREATE on the schema per `pg_namespace.nspacl`, including a PUBLIC grant if
    present} ∪ {the transitive `pg_auth_members` closure of those roles} ∪ {the schema owner and the cohort-view
-   owners} ∪ {all `rolsuper` roles}. The §4.4 path-(b) defeat test evaluates the UNION of the two endpoint closures;
-   any member outside operator control that is not platform automation independently defeats path (b).
+   owners and their transitive `pg_auth_members` closures — resolving `pg_database_owner`'s implicit membership via
+   `pg_database.datdba` `(PG-inference: on PG15+ public is commonly owned by pg_database_owner, whose membership
+   never appears in pg_auth_members)`} ∪ {all `rolsuper` roles} ∪ {roles holding `admin_option` on any member of the
+   preceding sets, evaluated transitively}. The §4.4 path-(b) defeat test evaluates the UNION of the two endpoint
+   closures; any member outside operator control that is not platform automation independently defeats path (b).
 3. **Environment capture (both snapshots; feeds F4):** `stats_reset` + `dealloc` (`pg_stat_statements_info`);
    tracked-entry count; `pg_stat_statements.max`; `pg_stat_statements.track`; `pg_stat_statements.track_utility`;
    `pg_stat_statements.save`; `compute_query_id`; `server_version`; installed `pg_stat_statements` extension version;
@@ -229,20 +235,27 @@ Same captures as OBS-A1 (visibility preflight re-asserted), plus delta computati
   endpoint closures, and every possible granter is either operator-sphere (leg ii) or platform-sphere (this leg)).
   **Leg-(iii) acceptance criterion:** only a categorical statement, or one explicitly covering [T0, Tend], satisfies
   it — the §10(iv) question is asked pre-window, so a standing-policy "never" is the expected satisfying form; a
-  qualified or partial answer does NOT satisfy leg (iii). The window DDL-log sweep is one-way corroboration per §4.1
+  qualified or partial answer does NOT satisfy leg (iii). And (iv) the same defeat test as the transient-DDL rule:
+  the §4.1 item-2 reset-capable closure (union of both endpoints) contains NO principal outside operator control
+  that is not platform automation — an uncontrolled non-platform member with standing reset capability is covered by
+  neither statement, so its presence forces zero outcomes to the machine-state rule below (executor-added symmetry
+  with the D5 defeat test, implementing the same defense-in-depth principle on the reset side; flagged for operator
+  review in the §12 rev-4.1 record). The window DDL-log sweep is one-way corroboration per §4.1
   item 2 (mandatory to run, capped in weight): touching DDL found ⇒ F10 trips; a clean sweep is neither sufficient
   nor required as evidence.
 - **Zero-outcome MACHINE state (closes the rev-3 prose-caveat false green):** any epistemic caveat must be carried in
   the dimension record's `state` field, never in prose — `check_disposition.py` accepts every `observed`/0 dimension
   toward a resolved `no_consumer` conclusion regardless of surrounding text. Rule, in the `consumer_evidence_dim`
   vocabulary (`observed` ⇒ integer `found_consumers` + non-empty `ref`; any other state ⇒ `found_consumers: null`,
-  `ref: null`, non-empty `detail`): with (i)+(ii)+(iii) all satisfied, the transient-DDL exclusion below available,
+  `ref: null`, non-empty `detail`): with (i)–(iv) all satisfied, the transient-DDL exclusion below available,
   and every §6 row green, the runtime_logs
-  dimension may be authored `state: observed, found_consumers: 0`. With (iii) missing but (i)+(ii) clean, it MUST be
+  dimension may be authored `state: observed, found_consumers: 0`. With (iii) missing but the other legs clean, it
+  MUST be
   authored `state: not_observed` with `detail` = "0 observed under stated instruments; platform-side selective-reset
   exclusion unavailable" — never `observed`/0; under SP022 a resolved `no_consumer` conclusion is then impossible by
   construction, which is the intended fail-closed consequence. The same rule applies when (ii) is absent (detail
-  names the missing operator attestation) and when the transient-DDL exclusion below is unavailable (detail:
+  names the missing operator attestation), when (iv) fails (detail: "uncontrolled reset-capable principal;
+  selective-reset exclusion unavailable"), and when the transient-DDL exclusion below is unavailable (detail:
   "transient dependent-closure exclusion unavailable"). Closure drift under (i) or touching DDL in the sweep is an
   interference SIGNAL ⇒ F10 BLOCKED outright (nothing authored; report and stop).
 - **Transient-DDL exclusion (feeds F7; closes the wrapper interval-drift gap; STRICT per operator ruling 2026-07-13
@@ -257,8 +270,10 @@ Same captures as OBS-A1 (visibility preflight re-asserted), plus delta computati
   closure)** during [T0, Tend]; AND the §4.1 item-2 CREATE-capability closure on `public` (union of both endpoints)
   containing NO principal outside operator control that is not platform automation — any uncontrolled non-platform
   creator independently defeats path (b) regardless of attestations. (The capability-change clauses terminate the
-  regress: standing capability is bounded by the verified closure, and every capability CHANGE is an act by a
-  principal already inside it, covered by the two statements.) Absent both paths, a zero outcome follows the
+  regress: standing capability is bounded by the verified closure — which by the §4.1 item-2 definition includes
+  owner-set membership expansion and transitive `admin_option` holders, the two meta-privilege classes able to mint
+  capability without holding it — and every capability CHANGE is an act by a principal already inside that widened
+  closure, covered by the two statements.) Absent both paths, a zero outcome follows the
   machine-state rule above (`not_observed`, detail: "transient dependent-closure exclusion unavailable"). DDL
   evidence that SHOWS touching DDL ⇒ F7 BLOCKED.
 - **Stated instrument limits carried in the source record:** normalized-literal blindness; `track=top` nesting
@@ -399,7 +414,7 @@ definition. Tier B is NOT entered by default.
 | F7 | Cohort-view object state changed: `pg_class.oid`, `pg_get_viewdef()` md5, or `relacl` differs between snapshots, OR the **transitive dependent-closure digest** differs, OR available DDL evidence shows CREATE/ALTER/DROP touching the cohort views or their dependent closure during the window. Endpoint equality alone cannot exclude mid-interval transients — the §4.4 transient-DDL exclusion rule governs zero outcomes | §4.1 item 5 capture both ends + §4.4 transient-DDL rule |
 | F8 | Controlled-consumer ledger incomplete, an exception executed without the marker role (its key's delta then counts wholly as uncontrolled), or an exception occurred with no verified marker role in existence | operator attestation + marker-role audit at OBS-A2 |
 | F9 | Executing role lacks cross-role statistics visibility (`pg_read_all_stats`), or ANY unreadable entry — `<insufficient privilege>`, `queryid IS NULL`, or **`query IS NULL`** (discarded text) — observed in either snapshot | §4.1 item 1 preflight, re-asserted at OBS-A2 |
-| F10 | **Interference signals ⇒ BLOCKED:** the reset-capable CLOSURE (ACL ∪ role membership ∪ superusers ∪ owner) changed between snapshots, OR the (corroboration-only) window DDL-log sweep shows GRANT/REVOKE/role-DDL touching the reset family or reset-capable roles. **Missing exclusions ⇒ machine-fail-closed, not BLOCKED:** absence of the extended operator attestation (§4.4 leg ii) or of the authoritative platform-reset confirmation (§4.4 leg iii) forces any zero outcome to `state: not_observed` + detail per the §4.4 machine-state rule; `observed`/0 requires legs (i)+(ii)+(iii) all satisfied | §4.1 item 2 capture both ends + attestations + §4.4 machine-state rule |
+| F10 | **Interference signals ⇒ BLOCKED:** the reset-capable CLOSURE (ACL ∪ role membership ∪ superusers ∪ owner) changed between snapshots, OR the (corroboration-only) window DDL-log sweep shows GRANT/REVOKE/role-DDL touching the reset family or reset-capable roles. **Missing exclusions ⇒ machine-fail-closed, not BLOCKED:** absence of the extended operator attestation (§4.4 leg ii), of the authoritative platform-reset confirmation (§4.4 leg iii), or an uncontrolled non-platform member in the reset-capable closure (§4.4 leg iv defeat test) forces any zero outcome to `state: not_observed` + detail per the §4.4 machine-state rule; `observed`/0 requires legs (i)–(iv) all satisfied | §4.1 item 2 capture both ends + attestations + §4.4 machine-state rule |
 
 **Restart/crash analysis `(PG-inference; fail-closure holds under either persistence interpretation)`:** a clean
 restart re-initializes `pg_stat_statements_info` ⇒ F1 trips (entries themselves survive if `save=on`); a crash empties
@@ -613,3 +628,17 @@ superusers, both endpoints, union-evaluated) whose uncontrolled non-platform mem
 its own future GO; D4 Tier B cold; D5 strict as above), contingent on the ordered focused textual/semantic check of
 this revision. OBS-A0 remains held for its separate read-only GO; OBS-A1 remains blocked until the Supabase support
 response settles retention, ingestion, reset, and dependent-DDL questions.
+
+**Rev 4.1 focused check (ordered; textual/semantic only):** items — P1 closure PASS (no remaining `observed`/0 path
+absent the two bases); internal consistency PASS (all sections state the same rule; no live lean language); no
+collateral drift PASS (F10 reset rule, sentinel, dialect, ingestion-loss routing untouched); historical-record
+hygiene PASS. Item 3 FAIL (P2, FOLDED): the closure enumerations missed two meta-privilege classes able to mint
+capability without holding it — transitive `admin_option` holders (ADMIN is separable from membership) and owner-set
+membership expansion (including `pg_database_owner`'s implicit membership, resolvable only via
+`pg_database.datdba`) — so the defeat test could pass while an uncontrolled principal held mintable capability. Fold:
+both §4.1 item-2 closures (reset-capable AND CREATE-capable) widened with the two terms; the §4.4 regress
+parenthetical corrected to cite the widened closure. **Executor-added symmetry, flagged for operator review:** F10
+gained defeat-test leg (iv) — an uncontrolled non-platform member of the reset-capable closure likewise forces zero
+outcomes to the machine state — because the identical sphere-gap exists on the reset side (a standing uncontrolled
+reset-capable principal is covered by neither the operator attestation nor the platform statement); this implements
+the ruling's defense-in-depth principle symmetrically and goes one clause beyond the check's prescribed fix.
