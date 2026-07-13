@@ -217,5 +217,51 @@ own uniquely-named record; the referenced-bytes==`source_hash` check is unchange
 
 **Operator disposition:** everything else checked ALIGNED — branch boundary, design-only scope, full
 census acceptance, signer parity, rename-proof immutability, locator constraints, held downstream phases.
-Approval contingent on this single fold, now applied. **Design at the post-fold commit is the
-approval candidate** (Phase 2 stop — no plan, no implementation, nothing pushed).
+Approval contingent on this single fold, now applied. **Phase 2 APPROVED by the operator @ `8f6d41c4`**
+(design-only; unlocks Phase-3 planning ONLY; rider: source-orphan guard = first-class plan task,
+`source_record_without_overlay_fails` failing first, + orphan/multiply-referenced/traversal/non-regular/
+hash-mismatch source-record negatives).
+
+## ROUND 3 — Phase-3 TDD plan (`f2a01f55`) cross-engine plan audit — 2026-07-12
+
+Artifact: `docs/superpowers/plans/2026-07-12-overlay-evidence-publication-tooling.md` (13 tasks,
+negative-tests-first, complete code per step). Engines: **Codex** (`review --base 8f6d41c4`, exit 0) +
+**Claude 3-lens grounded panel** (embedded-code-vs-merged-contracts / spec+rider fidelity / test-validity
++ e2e-harness; 8 agents, adversarial verify on every material finding).
+
+**Codex: no actionable defect** — and it EMPIRICALLY EXECUTED the plan's riskiest recipe on the host
+(`_zero_census` + the Task-1 `acceptance_census` overrides → schema-valid, 0 errors; full `check_census`
+→ 0 diags), de-risking the fixture assumption the plan itself flags.
+
+**Claude panel — verified findings, ALL FOLDED same-day:**
+- **E2E-1 (CONFIRMED, independently reproduced): non-bare scratch origin** — `git push` back to a
+  non-bare origin is refused (`receive.denyCurrentBranch`), breaking the four push-first tamper cases.
+  FOLDED: `_scratch` builds a seed tree → **bare** `origin.git` → work clone.
+- **ECMC-1 / SPEC-1 / SPEC-2 / E2E-2 (CONFIRMED/PARTIAL, Important): §11 matrix rows without tests** —
+  census non-ancestor binding, TOOLING-drift-since-census, AO012 in-memory-sidecar negative, the
+  null-`producing_repo_sha` FORBIDDEN-dim path, verifier census-side OV001, and the gate's
+  rehash/verifier-rejection wiring were implemented but never driven RED. FOLDED: +1 author case
+  (`sidecar_inmemory_failure_AO012`), +1 verifier case (`main_tampered_census_OV001_census_locus`),
+  **+6 gate e2e cases** (`census_nonancestor`, `tooling_drift_since_census`,
+  `forbidden_dim_null_producing_green`, `source_hash_mismatch`, `modify_committed_source_record`
+  — the SRC-IMMUT headline at the gate level — and `added_overlay_bad_signature`); suite now 30 cases.
+- **ECMC-4 / SPEC-3 / E2E-5 (Minor): `|| true` masked git failures** in the gate's immutability/mode
+  pipelines (fail-OPEN on git error — this repo's own false-green lesson). FOLDED: removed; `set -euo
+  pipefail` + awk-exits-0 semantics documented in the script.
+- **ECMC-3 / SPEC-7 / E2E-4 (Minor): interface-map drift** (`assemble_overlay` kwargs, `verify_artifact`
+  signature, `canonical_names` suffix wording). FOLDED: map corrected + authority demoted to "task
+  bodies govern on conflict".
+- **ECMC-2 / SPEC-6 (Minor): unflagged strengthening** — kind-sniff/census-uniqueness run over the WHOLE
+  committed tree (spec said ADDED set) and a third suite joins the loop. FOLDED as explicit **Plan
+  decision #6** with the supersede-not-edit ratchet note (verified green on the current tree).
+- **E2E-3 / E2E-6 (Minor/Nit):** rename-case now asserts the `immutability` FAIL line (anti-vacuity);
+  dead-code line removed; Task-9 RED mechanism description corrected. SPEC-4 (fixture dates) judged a
+  non-issue: all fixture instants are in the past relative to any future run.
+
+**Cross-engine delta (round 3):** disjoint and complementary — Codex validated the fixture recipe by
+execution but raised no findings; the Claude panel's harness lens found the one Critical-class harness
+break (E2E-1, reproduced) plus the coverage matrix gaps. No contradictions.
+
+**Verdict: plan BUILD-READY at the post-fold commit** — rider honored (Task 7 first-class,
+`source_record_without_overlay_fails` first), every confirmed audit finding folded, matrix coverage now
+test-backed end-to-end. STOP: build (Phase 4), push/PR (Phase 5), and all downstream remain HELD.

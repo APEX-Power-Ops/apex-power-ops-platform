@@ -44,7 +44,7 @@
 | `CENSUS_RUNBOOK.md` (modify) | PG17.6, `disposition_trust.py` anchor, post-census sequence, immutability note | 12 |
 | — | Full regression + whole-branch cross-engine review | 13 |
 
-**Interface map (single source of truth for cross-task names):**
+**Interface map (cross-task name summary — on any conflict, the TASK BODIES govern):**
 
 ```python
 # author_overlay.py
@@ -55,7 +55,8 @@ def compute_producing(dimension, gate_repo_sha, na_reason) -> tuple  # (sha_or_N
 def read_source(source_file, na_reason, custody_locator) -> tuple
     # -> (source_bytes_or_None, na_reason_or_None, custody_or_None, ext_or_None)
     # raises AuthorError AO004 (exclusivity) / AO009 (unreadable; path + exception type only)
-def assemble_overlay(core, *, census, census_sha256, contract, producing, source, captured_at_iso) -> dict
+def assemble_overlay(core, *, census, census_sha256, contract, producing,
+                     source_hash, source_hash_reason, source_locator, captured_at_iso) -> dict
 def validate_assembled(message: bytes, *, census, contract, expect_project_ref, census_bytes_sha, now) -> list
     # -> [(code, locus, msg)] running: parse_overlay -> isinstance guard -> validate_overlay ->
     #    check_binding -> check_observation_window -> captured_at<=now -> check_target -> intra check_conflict
@@ -63,11 +64,11 @@ def _write_bytes_atomic_noclobber(path, data) -> None               # replica; F
 def publish_set(entries) -> None                                    # ordered [(path, bytes), ...]; AO008 wrapper
 def canonical_names(dimension, census_sha256, captured_dt, out_dir, source_ext) -> dict
     # {"overlay": path, "sig": path, "source": path_or_None, "locator": "evidence/source/<name>" , "stamp": "<UTC>"}
-    # probes -00..-99 suffix for a fully-free set (AO008 if none free)
+    # first candidate has NO suffix; -01..-99 probed on collision (AO008 when exhausted)
 def main(argv=None) -> int
 
 # verify_overlay_artifact.py
-def verify_artifact(overlay_bytes, sig_bytes, census, census_bytes, *, signer, contract,
+def verify_artifact(overlay_bytes, *, census, census_bytes_sha, contract,
                     expect_project_ref, now) -> list                # [(code, locus, msg)]; artifact-side only
 def main(argv=None) -> int
 
@@ -915,6 +916,20 @@ def _key_parity_green_and_sidecar_verifies():
             os.environ.pop("TEST_SIGNING_KEY_XYZ", None)
 
 
+def _sidecar_inmemory_failure_AO012():
+    # Matrix row "in-memory sidecar fails to verify": force the verify step to report failure
+    # (a broken/mismatched signer path) and prove the author raises AO012 BEFORE any publish.
+    with tempfile.TemporaryDirectory() as d:
+        signer, _census, _cb, _sb, priv = _signer_and_census(d)
+        orig = ds.verify_sidecar_bytes_with_key
+        ds.verify_sidecar_bytes_with_key = lambda *_a, **_k: (False, "forced failure (test)")
+        try:
+            code = _err_code(ao.build_and_check_sidecar, b"message-bytes", priv, signer)
+        finally:
+            ds.verify_sidecar_bytes_with_key = orig
+        return code == "AO012"
+
+
 _CASES += [
     ("census_accepts_green", _census_accepts_green),
     ("tampered_census_AO001", _tampered_census_AO001),
@@ -925,10 +940,11 @@ _CASES += [
     ("key_invalid_pem_AO007_value_silent", _key_invalid_pem_AO007_value_silent),
     ("key_wrong_signer_AO007", _key_wrong_signer_AO007),
     ("key_parity_green_and_sidecar_verifies", _key_parity_green_and_sidecar_verifies),
+    ("sidecar_inmemory_failure_AO012", _sidecar_inmemory_failure_AO012),
 ]
 ```
 
-- [ ] **Step 2: Run to verify RED** — Expected: the 9 new cases FAIL (`no attribute 'accept_census'`); prior 25 stay `ok`.
+- [ ] **Step 2: Run to verify RED** — Expected: the 10 new cases FAIL (`no attribute 'accept_census'`); prior 25 stay `ok`.
 
 - [ ] **Step 3: Implement**
 
@@ -990,7 +1006,7 @@ def build_and_check_sidecar(message, private_key, signer):
     return sidecar_bytes
 ```
 
-- [ ] **Step 4: Run to verify GREEN** — 34 `ok`, ALL PASS, exit 0.
+- [ ] **Step 4: Run to verify GREEN** — 35 `ok`, ALL PASS, exit 0.
 
 - [ ] **Step 5: Commit**
 
@@ -1210,7 +1226,7 @@ _CASES += [
 ]
 ```
 
-- [ ] **Step 2: Run to verify RED** — the 9 new cases FAIL (`no attribute '_write_bytes_atomic_noclobber'` / `'main'`); prior 34 stay `ok`.
+- [ ] **Step 2: Run to verify RED** — the 9 new cases FAIL (`no attribute '_write_bytes_atomic_noclobber'` / `'main'`); prior 35 stay `ok`.
 
 - [ ] **Step 3: Implement**
 
@@ -1361,7 +1377,7 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run to verify GREEN** — `uv run --project . --locked python tests/test_author_overlay.py`; Expected: 43 `ok`, ALL PASS, exit 0.
+- [ ] **Step 4: Run to verify GREEN** — `uv run --project . --locked python tests/test_author_overlay.py`; Expected: 44 `ok`, ALL PASS, exit 0.
 
 - [ ] **Step 5: Regression — the merged suites must stay green (unmasked exit codes, one command per suite)**
 
@@ -1530,6 +1546,18 @@ def _main_tampered_overlay_OV001():
         return rc == 1 and "OV001" in out
 
 
+def _main_tampered_census_OV001_census_locus():
+    # Matrix row "tampered census bytes" at the VERIFIER: the census-side OV001 branch fires
+    # with its own locus (distinct from the overlay-side OV001).
+    with tempfile.TemporaryDirectory() as d:
+        argv, pub, _ = _files(d)
+        cpath = argv[argv.index("--census") + 1]
+        data = open(cpath, "rb").read()
+        open(cpath, "wb").write(data[:-2] + b" }")
+        rc, out = _run_main(argv, pub)
+        return rc == 1 and "OV001 census" in out
+
+
 def _main_bad_census_scope_CN005():
     with tempfile.TemporaryDirectory() as d:
         argv, pub, _ = _files(d)
@@ -1556,6 +1584,7 @@ _CASES += [
     ("schema_invalid_short_circuits", _schema_invalid_short_circuits),
     ("main_green", _main_green),
     ("main_tampered_overlay_OV001", _main_tampered_overlay_OV001),
+    ("main_tampered_census_OV001_census_locus", _main_tampered_census_OV001_census_locus),
     ("main_bad_census_scope_CN005", _main_bad_census_scope_CN005),
     ("main_unpinned_key_blocks", _main_unpinned_key_blocks),
 ]
@@ -1710,7 +1739,7 @@ if __name__ == "__main__":
     raise SystemExit(main())
 ```
 
-- [ ] **Step 4: Run to verify GREEN** — 11 `ok`, ALL PASS, exit 0. Also re-run `tests/test_author_overlay.py` (still 43 `ok`).
+- [ ] **Step 4: Run to verify GREEN** — 12 `ok`, ALL PASS, exit 0. Also re-run `tests/test_author_overlay.py` (still 44 `ok`).
 
 - [ ] **Step 5: Commit**
 
@@ -2311,15 +2340,15 @@ def _sh(args, cwd, check=True):
 
 
 def _scratch(tmp):
-    """origin repo with the PATCHED tooling tree at <repo>/infra/database/schema-placement/,
-    committed on main; then a clone (so origin/main exists). Returns (work_dir, priv, base_sha).
-    PATCH (test-only, in the SCRATCH COPY): the synthetic public key replaces the prod pubkey
-    file AND the TRUSTED_SIGNERS fingerprint line in disposition_trust.py is rewritten to the
-    synthetic SPKI -- the shipped gate binary stays fail-closed; the scratch repo is a parallel
-    universe signed by the test key under the SAME pinned key-id."""
+    """Seed tree -> BARE origin -> work clone (a non-bare origin refuses pushes to its checked-out
+    branch: receive.denyCurrentBranch -- plan-audit E2E-1, empirically confirmed). Returns
+    (work_dir, priv, base_sha). PATCH (test-only, in the SCRATCH COPY): the synthetic public key
+    replaces the prod pubkey file AND the TRUSTED_SIGNERS fingerprint line in disposition_trust.py
+    is rewritten to the synthetic SPKI -- the shipped gate binary stays fail-closed; the scratch
+    repo is a parallel universe signed by the test key under the SAME pinned key-id."""
     priv, pub = fx.keypair()
-    origin = os.path.join(tmp, "origin")
-    sp = os.path.join(origin, *SP.split("/"))
+    seed = os.path.join(tmp, "seed")
+    sp = os.path.join(seed, *SP.split("/"))
     os.makedirs(os.path.join(sp, "evidence", "source"), exist_ok=True)
     os.makedirs(os.path.join(sp, "keys"), exist_ok=True)
     os.makedirs(os.path.join(sp, "ci"), exist_ok=True)
@@ -2329,10 +2358,12 @@ def _scratch(tmp):
     trust = open(os.path.join(sp, "disposition_trust.py")).read()
     trust = trust.replace("c75785cd002977f3ce4794f55ea3b1437be5c60a07c36727372c53bd3dc592ca", fx.spki_fp(pub))
     open(os.path.join(sp, "disposition_trust.py"), "w").write(trust)
-    _sh(["git", "init", "-q", "-b", "main"], origin)
-    _sh(["git", "-c", "user.name=t", "-c", "user.email=t@t", "add", "-A"], origin)
-    _sh(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "base"], origin)
-    base_sha = _sh(["git", "rev-parse", "HEAD"], origin).stdout.strip()
+    _sh(["git", "init", "-q", "-b", "main"], seed)
+    _sh(["git", "-c", "user.name=t", "-c", "user.email=t@t", "add", "-A"], seed)
+    _sh(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "base"], seed)
+    base_sha = _sh(["git", "rev-parse", "HEAD"], seed).stdout.strip()
+    origin = os.path.join(tmp, "origin.git")
+    _sh(["git", "clone", "-q", "--bare", seed, origin], tmp)
     work = os.path.join(tmp, "work")
     _sh(["git", "clone", "-q", origin, work], tmp)
     return work, priv, base_sha
@@ -2425,7 +2456,9 @@ def _e2e_rename_modify_fails():
         open(new, "wb").write(data[:-2] + b" }")   # rename + modify (similarity high -> status R)
         _commit_all(work, "rename+modify tamper")
         r = _gate(work)
-        return r.returncode == 1
+        # --no-renames decomposes to A+D; the D trips all-A -> the failure MUST be the
+        # immutability step (not some unrelated rc=1 path; plan-audit E2E-3 anti-vacuity).
+        return r.returncode == 1 and "immutability" in r.stdout
 
 
 def _e2e_modify_census_fails():
@@ -2460,9 +2493,7 @@ def _e2e_delete_sidecar_fails():
 def _e2e_symlink_under_evidence_fails():
     with tempfile.TemporaryDirectory() as tmp:
         work, priv, base = _scratch(tmp)
-        sp = os.path.join(work, *SP.split("/"))
         # commit a symlink blob (mode 120000) under evidence/source/ without touching the fs:
-        blob = _sh(["git", "hash-object", "-w", "--stdin"], work).stdout.strip() if False else None
         r1 = subprocess.run(["git", "hash-object", "-w", "--stdin"], cwd=work, input="target",
                             capture_output=True, text=True)
         _sh(["git", "update-index", "--add", "--cacheinfo",
@@ -2515,6 +2546,112 @@ def _e2e_hidden_overlay_off_path_fails():
         return r.returncode == 1 and "canonical" in r.stdout
 
 
+def _e2e_census_nonancestor_fails():
+    # Matrix row "self-referential census binding": a census whose repo_sha is NOT an ancestor of
+    # HEAD must fail the non-self-referential binding (plan-audit ECMC-1/SPEC-1).
+    with tempfile.TemporaryDirectory() as tmp:
+        work, priv, base = _scratch(tmp)
+        sys.path.insert(0, SP_REAL)
+        import collect_disposition as cds
+        census = fx.acceptance_census(["public.t1", "public.t2"], repo_sha="1" * 40,
+                                      qb=cds.query_bundle_sha256())
+        sp = os.path.join(work, *SP.split("/"))
+        _cp, _cs, cb, _sb = fx.write_signed(os.path.join(sp, "evidence"),
+                                            "census-prod-scratch.json", census, priv)
+        _commit_all(work, "census evidence (foreign repo_sha)")
+        _fixture_overlay(work, priv, census, cb, base)
+        _commit_all(work, "overlay evidence")
+        r = _gate(work)
+        return r.returncode == 1 and "not an ancestor" in r.stdout
+
+
+def _e2e_tooling_drift_since_census_fails():
+    with tempfile.TemporaryDirectory() as tmp:
+        work, priv, base = _scratch(tmp)
+        census, cb, _ = _fixture_census(work, priv, base)
+        _commit_all(work, "census evidence")
+        sp = os.path.join(work, *SP.split("/"))
+        open(os.path.join(sp, "disposition_overlay.py"), "a").write("\n# drift\n")
+        _commit_all(work, "tooling drift after census")
+        _fixture_overlay(work, priv, census, cb, base)
+        _commit_all(work, "overlay evidence")
+        r = _gate(work)
+        return r.returncode == 1 and "TOOLING changed" in r.stdout
+
+
+def _e2e_forbidden_dim_null_producing_green():
+    # FORBIDDEN dim (advisor_findings): producing null+reason, NA source (custody locator, NO
+    # source record) -- proves the driver's null-safe skip and the NA pair path THROUGH the gate.
+    with tempfile.TemporaryDirectory() as tmp:
+        work, priv, base = _scratch(tmp)
+        census, cb, _ = _fixture_census(work, priv, base)
+        _commit_all(work, "census evidence")
+        sp = os.path.join(work, *SP.split("/"))
+        contract = dov.load_overlay_contract()
+        core = fx.overlay_core("advisor_findings",
+                               [{"object_id": "public.t2", "value": {"state": "observed", "value": ["lint:ok"]}}])
+        doc = ao.assemble_overlay(core, census=census, census_sha256=hashlib.sha256(cb).hexdigest(),
+                                  contract=contract, producing=(None, "advisor API snapshot"),
+                                  source_hash=None, source_hash_reason="no committed artifact",
+                                  source_locator="vault:custody/advisor-2026-07",
+                                  captured_at_iso="2026-07-12T06:00:00+00:00")
+        fx.write_signed(os.path.join(sp, "evidence"), "overlay-advisor_findings-scratch.json", doc, priv)
+        _commit_all(work, "advisor overlay (NA pair, null producing)")
+        r = _gate(work)
+        return r.returncode == 0 and "ALL COMMITTED OVERLAY ARTIFACTS VERIFIED" in r.stdout
+
+
+def _e2e_source_hash_mismatch_fails():
+    # The record is ADDED in the same PR (immutability passes) but its bytes no longer match the
+    # overlay's source_hash -- the step-4 rehash wiring must FAIL (plan-audit E2E-2).
+    with tempfile.TemporaryDirectory() as tmp:
+        work, priv, base = _scratch(tmp)
+        census, cb, _ = _fixture_census(work, priv, base)
+        _commit_all(work, "census evidence")
+        _fixture_overlay(work, priv, census, cb, base)
+        sp = os.path.join(work, *SP.split("/"))
+        open(os.path.join(sp, "evidence", "source",
+                          "overlay-consumer_evidence_static_repo-scratch.source.txt"), "wb").write(b"TAMPERED")
+        _commit_all(work, "overlay evidence w/ tampered source record")
+        r = _gate(work)
+        return r.returncode == 1 and "source_hash" in r.stdout
+
+
+def _e2e_modify_committed_source_record_fails():
+    # The round-2 SRC-IMMUT headline itself: a later PR modifying a COMMITTED source record must
+    # trip the evidence/source/** immutability pathspec (plan-audit SPEC-5).
+    with tempfile.TemporaryDirectory() as tmp:
+        work, priv, base = _scratch(tmp)
+        census, cb, _ = _fixture_census(work, priv, base)
+        _commit_all(work, "census evidence")
+        _fixture_overlay(work, priv, census, cb, base)
+        _commit_all(work, "overlay evidence")
+        _sh(["git", "-c", "user.name=t", "-c", "user.email=t@t", "push", "-q", "origin", "main"], work)
+        sp = os.path.join(work, *SP.split("/"))
+        open(os.path.join(sp, "evidence", "source",
+                          "overlay-consumer_evidence_static_repo-scratch.source.txt"), "ab").write(b"\nEDIT")
+        _commit_all(work, "tamper committed source record")
+        r = _gate(work)
+        return r.returncode == 1 and "immutability" in r.stdout
+
+
+def _e2e_added_overlay_bad_signature_fails():
+    # Tampered-before-commit overlay: status A (immutability passes), so the verifier-subprocess
+    # wiring must be what rejects it (OV001) -- proves the rc-propagation path (plan-audit E2E-2).
+    with tempfile.TemporaryDirectory() as tmp:
+        work, priv, base = _scratch(tmp)
+        census, cb, _ = _fixture_census(work, priv, base)
+        _commit_all(work, "census evidence")
+        _fixture_overlay(work, priv, census, cb, base)
+        sp = os.path.join(work, *SP.split("/"))
+        p = os.path.join(sp, "evidence", "overlay-consumer_evidence_static_repo-scratch.json")
+        data = open(p, "rb").read()
+        open(p, "wb").write(data[:-2] + b" }")
+        _commit_all(work, "overlay evidence (tampered pre-commit)")
+        r = _gate(work)
+        return r.returncode == 1 and "verify_overlay_artifact rejected" in r.stdout
+
+
 _CASES += [
     ("e2e_green_overlay_pr", _e2e_green_overlay_pr),
     ("e2e_source_only_pr_fails", _e2e_source_only_pr_fails),
@@ -2525,12 +2662,18 @@ _CASES += [
     ("e2e_cross_pr_committed_set_dup_fails", _e2e_cross_pr_committed_set_dup_fails),
     ("e2e_duplicate_census_bytes_fails", _e2e_duplicate_census_bytes_fails),
     ("e2e_hidden_overlay_off_path_fails", _e2e_hidden_overlay_off_path_fails),
+    ("e2e_census_nonancestor_fails", _e2e_census_nonancestor_fails),
+    ("e2e_tooling_drift_since_census_fails", _e2e_tooling_drift_since_census_fails),
+    ("e2e_forbidden_dim_null_producing_green", _e2e_forbidden_dim_null_producing_green),
+    ("e2e_source_hash_mismatch_fails", _e2e_source_hash_mismatch_fails),
+    ("e2e_modify_committed_source_record_fails", _e2e_modify_committed_source_record_fails),
+    ("e2e_added_overlay_bad_signature_fails", _e2e_added_overlay_bad_signature_fails),
 ]
 ```
 
 **Fixture-shape note (build-time watch-items):** (a) `_fixture_overlay` writes fixture names OUTSIDE the author's `canonical_names` scheme on purpose — the gate must accept any `evidence/overlay-*.json` name and judge content, not naming beyond the glob; (b) the tamper cases PUSH main first so BASE(origin/main) contains the artifact and the tamper is a modification of COMMITTED evidence; (c) if the rename+modify case produces status `A`+`D` instead of `R` on some git config, the gate must STILL fail (the `D` trips all-`A`) — assert only `returncode == 1`, not the mechanism.
 
-- [ ] **Step 2: Run to verify RED** — the 9 e2e cases FAIL (`No such file ... verify_committed_overlays.sh` propagated as `RuntimeError`/rc!=0 from `_scratch`'s copy step); the 15 unit cases stay `ok`.
+- [ ] **Step 2: Run to verify RED** — the 15 e2e cases FAIL: `_scratch`'s `shutil.copy2` of the not-yet-existing `ci/verify_committed_overlays.sh` raises `FileNotFoundError`, which the runner catches per-case and prints as `FAIL: e2e_... (EXC ...)`; the 15 unit cases stay `ok`; suite exit 1.
 
 - [ ] **Step 3: Implement the shell gate** — create `ci/verify_committed_overlays.sh`:
 
@@ -2557,13 +2700,16 @@ if [ "$(printf '%s\n' "$BASES" | grep -c .)" -ne 1 ]; then
 fi
 BASE=$BASES
 
-# step 1a: immutability -- every touched evidence artifact must be status A
+# step 1a: immutability -- every touched evidence artifact must be status A.
+# NO '|| true' anywhere in these pipelines (plan-audit ECMC-4/SPEC-3: it would rescue a FAILING
+# git diff/ls-files and pass the step fail-OPEN); awk exits 0 on zero matches, and under
+# `set -euo pipefail` a git failure aborts the gate -- the fail-closed posture.
 BAD=$(git diff --no-renames --name-status "$BASE" HEAD -- \
         ":(glob)$SP/evidence/census-prod-*.json" \
         ":(glob)$SP/evidence/overlay-*.json" \
         "$SP/evidence/source" \
         ":(glob)$SP/evidence/**/*.sig" \
-      | awk '$1 != "A"' || true)
+      | awk '$1 != "A"')
 if [ -n "$BAD" ]; then
   echo "FAIL: immutability -- committed evidence was modified/deleted/renamed/typechanged:"
   printf '%s\n' "$BAD"
@@ -2571,7 +2717,7 @@ if [ -n "$BAD" ]; then
 fi
 
 # step 1b: non-regular modes under evidence/ (symlink/gitlink)
-MODES=$(git ls-files -s -- "$SP/evidence" | awk '$1 == "120000" || $1 == "160000"' || true)
+MODES=$(git ls-files -s -- "$SP/evidence" | awk '$1 == "120000" || $1 == "160000"')
 if [ -n "$MODES" ]; then
   echo "FAIL: non-regular file mode under $SP/evidence:"
   printf '%s\n' "$MODES"
@@ -2585,7 +2731,7 @@ uv run --project "$SP" --locked python "$SP/ci/overlay_ci_checks.py" --base "$BA
 
 Then `chmod +x ci/verify_committed_overlays.sh`.
 
-- [ ] **Step 4: Run to verify GREEN** — `uv run --project . --locked python tests/test_verify_committed_overlays.py`; Expected: 24 `ok` (15 unit + 9 e2e), ALL PASS, exit 0. This run is slower (~1–3 min: scratch clones + nested `uv run`); that is expected.
+- [ ] **Step 4: Run to verify GREEN** — `uv run --project . --locked python tests/test_verify_committed_overlays.py`; Expected: 30 `ok` (15 unit + 15 e2e), ALL PASS, exit 0. This run is slower (~2–4 min: scratch clones + nested `uv run`); that is expected.
 
 - [ ] **Step 5: Manual gate check on the REAL branch (no overlays added → green)**
 
@@ -2859,6 +3005,7 @@ Fold Critical/Important findings via fix tasks (re-running Steps 1–2 after), a
 3. **Gate scripts are not in TOOLING** (census-gate precedent: the gate executes at HEAD; its own drift is meaningless to measure against itself).
 4. **The CI driver lives in `ci/overlay_ci_checks.py`** (python) with a thin shell entry — the spec's step semantics are unchanged; shell does fetch/merge-base/immutability/modes, python does everything requiring JSON/set logic. This maximizes unit-testability of the rider functions.
 5. **The e2e suite patches the SCRATCH-repo copy** of `disposition_trust.py`/`keys/` to a synthetic signer (same key-id). The shipped anchor is never weakened; no env override exists in the gate.
+6. **Unconditional scope strengthening (plan-audit ECMC-2/SPEC-6):** the driver runs `kind_sniff` and `census_uniqueness` over the WHOLE committed evidence tree, not just the spec §4.2 step-2 ADDED set, and the suites loop registers THREE new suites (the spec enumerated two; `test_verify_committed_overlays` is added). Strictly stronger than the spec; verified green against the current tree (one census pair, no off-path overlay-kind JSON). Ratchet note: because committed evidence is immutable, any future retroactive trip of these unconditional checks is resolved by SUPERSEDING evidence (fresh census + overlays), never by editing — the same discipline the immutability rule already imposes.
 
 ## Execution & review protocol (build phase)
 
