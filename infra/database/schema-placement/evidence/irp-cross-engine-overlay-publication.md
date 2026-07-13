@@ -365,3 +365,27 @@ Phase-4 build COMPLETE at `63261888`. Zero surviving Critical/Important code fin
 ### Verdict
 
 Phase 4.1 COMPLETE. All four operator findings fixed on-branch with RED-first tests; one cross-engine gap found and fixed inside the tranche; zero open Critical/Important. One optional operator confirmation: whether to add a custody-scheme allowlist (Minor #1) — current behavior is literal-compliant with the ordered rule. **Recommend Phase 5 GO** (push + governed squash PR, no merge). Phases 5/5M/6-13 remain HELD per the v2 roadmap.
+
+---
+
+## ROUND 4.2 — custody-scheme policy pin + focused cross-engine delta review (2026-07-13)
+
+**Trigger:** operator audit of Phase 4.1 (independently re-ran all suites/gates/checks — green) confirmed the tranche accurate and escalated the disclosed residual to a **Medium policy ambiguity**: "approved custody locator" was not enforced as approved — any ≥2-char scheme passed (`file:/etc/passwd`, `mailto:a@b`, invented schemes). Phase-4.2 GO: pin an explicit initial allowlist (`vault`, `infisical`), case-normalized, additions only via governed tooling change.
+
+### Commit
+
+**`84ecf2c6`** — `APPROVED_CUSTODY_SCHEMES = frozenset({"vault", "infisical"})` defined identically in both D3 validator replicas; scheme captured and lowercased BEFORE membership (mixed-case approved schemes accepted per explicit operator policy); every 4.1 rejection retained (single-letter, drive/absolute/relative paths, `..`, backslash, whitespace, empty opaque); rejection message derives the list live via `sorted()` (no drift risk). RED-first tests both sides (author AO004 / CI FAIL line) for `file:`/`mailto:`/`https:`/`custom:` (all proven pre-pin-passing) + positives `vault:custody/x`, `infisical:prod/path`, `Vault:custody/x`. New e2e `_e2e_unapproved_custody_scheme_fails`: a VALIDLY SIGNED overlay (real Ed25519 sidecar through the harness signed-write path — its green twin proves the path yields gate-accepted signatures) with `custom:anything` custody FAILs the whole gate on the `APPROVED_CUSTODY_SCHEMES` line — signature validity does not rescue an off-policy pointer. Both runbooks name the approved schemes + the governed-change requirement (CENSUS_RUNBOOK note placed adjacent to — not inside — the operator's ratified 4.1 two-arm clause, whose wording is diff-proven untouched).
+
+### Verification at `84ecf2c6` (controller-run, unmasked; the implementer's summary miscounted 59/442 — corrected)
+
+11 suites rc=0 — **429 cases** (60/74/42/32/7/3/10/73/**67**/12/**49**); census gate rc=0; overlay gate rc=0; `git diff --check main HEAD` clean; shellcheck rc=0; delta = exactly the 6 authorized files; frozen `test_disposition_schema` re-verified 60/60.
+
+### Focused cross-engine delta review (base `4c115965`)
+
+- **Claude (opus), 6-point protocol with live probes:** all VERIFIED — identical frozensets (author:138 / ci:120), lower-before-membership, 18-case probe matrix clean both sides (all 4.1 rejections still fire; `infisical:/path?x` correctly passes — leading `/` inside an approved scheme's namespace is the operator's own required-pass shape), validator bodies md5-identical stripped of docstrings, e2e honesty proven via its green twin + policy-line pinning, ratified clause untouched, no collateral, value-silence intact (message carries the scheme token only, never the locator/key/source). **Approved; no security residual remains for the operator.** One Minor: implementer report-count slip (bookkeeping only).
+- **Codex (`codex exec review --base 4c115965 -m gpt-5.5`, temp detached worktree, removed after):** **zero findings** — "allowlist applied consistently in both authoring and CI validation paths, with targeted tests covering approved, unapproved, and end-to-end signed overlay scenarios. I did not identify a discrete regression."
+- **Cross-engine delta:** none — both engines clean.
+
+### Verdict
+
+Phase 4.2 COMPLETE. The custody-provenance surface is now closed end-to-end: syntax rule (4.1) → drive-relative fix (4.1-fix) → approved-scheme pin (4.2), each layer RED-tested on both the author and the unconditional CI side. Zero open findings of any severity except bookkeeping notes. **Recommend Phase 5 GO** (push + governed squash PR, no merge). Phases 5/5M/6–13 HELD per roadmap v3.
