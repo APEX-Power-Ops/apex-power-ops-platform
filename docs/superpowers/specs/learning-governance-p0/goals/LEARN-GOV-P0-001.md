@@ -1,6 +1,6 @@
 # Goal LEARN-GOV-P0-001
 
-Status: IN PROGRESS - DESIGN ONLY
+Status: CHECKPOINT REVIEW - CP5 COMPLETE; OPERATOR CP6 REQUIRED
 
 ## Identity
 
@@ -12,9 +12,13 @@ Status: IN PROGRESS - DESIGN ONLY
 - Program Manager: `LEARN-PM-2026-07-14`
 - Primary executor: not assigned for this revision; the Program Manager authored
   the governance draft under direct operator instruction
-- Independent review: required from an identity that did not author this
-  revision before design acceptance
-- Current checkpoint: `CP3`
+- Technical Authority: Codex CLI `gpt-5.5` run
+  `019f6129-76e2-75c1-88b3-cb9df9cb6dff`; review-only, did not author or edit
+  the reviewed version
+- Independent auditor: Codex CLI `gpt-5.5` run
+  `019f612c-853c-7683-92de-02c5541573c9`; review-only, did not author or edit
+  the reviewed version
+- Current checkpoint: `CP5`
 
 ## Objective
 
@@ -53,5 +57,5 @@ requirements, and faithful migration of the held Level II state.
 
 ## Next Decision
 
-Program Manager CP3 review, followed by Technical Authority/independent audit and
-operator ratification before any implementation plan.
+Operator CP6 acceptance, conditional acceptance, revision, hold, or rejection.
+No implementation goal is authorized by the Program Manager's CP5 recommendation.

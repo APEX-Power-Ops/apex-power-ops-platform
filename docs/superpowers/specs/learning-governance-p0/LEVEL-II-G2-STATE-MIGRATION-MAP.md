@@ -27,7 +27,8 @@ be verified against the referenced external artifacts before migration.
 - exact target identities and edition;
 - artifact locators, hashes, and availability states;
 - Stage 0, Stage 1, G1, and G2 reported decisions;
-- five owner-return tracks;
+- five historical owner-return tracks plus the current learner identity/privacy
+  gate;
 - delegation references and limitations;
 - blockers, stop conditions, and next decision owner;
 - parked-target state.
@@ -41,7 +42,7 @@ be verified against the referenced external artifacts before migration.
 - agent-authored final approvals;
 - any implicit clearing of the hold.
 
-## Five Owner-Return Tracks
+## Current Readiness Tracks
 
 1. Rights/source authority: standing policy owner identified; source-specific
    admissibility remains partial and does not clear the hold.
@@ -49,8 +50,11 @@ be verified against the referenced external artifacts before migration.
 3. Platform/import mapping.
 4. Render-package requirements.
 5. Release authority.
+6. Learner identity, data purpose, privacy, retention, and access authority.
 
-Missing or partial returns preserve the hold.
+Missing or partial returns on any of the six tracks preserve the hold. The sixth
+track is a current governance requirement and must not be omitted merely because
+the older prompt trail named five owner returns.
 
 The staged product decision names this cohort's intended first product
 **Internal Level II Learning and Readiness Pilot**. Naming the product does not

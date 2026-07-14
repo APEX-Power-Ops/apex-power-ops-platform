@@ -16,12 +16,14 @@ Status: OPERATOR-DIRECTED DESIGN - ROADMAP NOT YET MACHINE ENFORCED
 
 | Goal ID | Goal | State | Next checkpoint |
 |---|---|---|---|
-| `LEARN-GOV-P0-001` | Learning Governance Control Plane design | `in_progress` design-only | CP3 Program Manager review of this packet |
+| `LEARN-GOV-P0-001` | Learning Governance Control Plane design | `checkpoint_review` at CP5 | operator CP6 decision |
+| `LEARN-GOV-P1-CHECKER-001` | Offline goal schema, registry, decision, and checkpoint checker | `proposed` and held | P0 design CP6 acceptance plus separate CP1 authorization |
+| `LEARN-RIGHTS-DECISIONS-001` | Metadata-only source-rights decision packet for the 12 ET rows | `proposed` and held | rights-authority CP1 authorization |
+| `LEARN-SME-APPOINTMENT-001` | SME qualification, appointment, and review-rubric packet | `proposed` and held | stakeholder names the candidate or approved candidate pool |
 | `LEVEL-II-ET-PILOT-001` | ET-010..014 Stage-1 pilot | `held` / `ET-PILOT-HOLD` | CP2 only after all owner-return tracks are evidenced |
 | `LEARN-SLICE2D-CONTRACT-001` | Reconcile `ksa_mapped` rehearsal contradiction | `proposed` and held | separate CP1 authorization |
 | `LEARN-IDENTITY-AUTH-001` | Learner identity, authorization, and privacy contract | `proposed` and held | separate design GO |
 | `LEARN-CONTENT-BUNDLE-001` | Versioned content, assessment, SME, and release-bundle contract | `proposed` and held | separate design GO |
-| `LEARN-GOV-P1-CHECKER-001` | Goal schema, registry, checker, and negative tests | `proposed` and held | P0 design ratification and implementation GO |
 
 ## Stage-1 Owner-Return Tracks
 
@@ -37,7 +39,7 @@ Every missing or partial track preserves `ET-PILOT-HOLD`.
 
 ## Next Recommended Goal
 
-Complete CP3 review of `LEARN-GOV-P0-001`. If the design is accepted, prepare a
-separate implementation plan for the structured goal schema, appointments,
-decision records, and offline checker. Do not start content authoring or the
-Slice 2d rehearsal as the next goal.
+Obtain the operator's CP6 decision for `LEARN-GOV-P0-001`. If accepted, run
+`LEARN-GOV-P1-CHECKER-001` first while the rights and SME packets proceed in
+parallel under their own goals. Do not start content authoring or the Slice 2d
+rehearsal as the next goal.
