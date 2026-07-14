@@ -572,7 +572,9 @@ def health_ready(response: Response):
         if not dsn:
             checks[name] = {"ok": False, "code": "dsn_unset"}; ok = False; return
         try:
-            with connect_bound(dsn, expect_ref="fxoyniqnrlkxfligbxmg", connect_timeout=5) as conn:
+            # autocommit=True: a read probe must not leave an idle-in-transaction session on
+            # the prod project for the probe window (RI2 lens-B F6).
+            with connect_bound(dsn, expect_ref="fxoyniqnrlkxfligbxmg", connect_timeout=5, autocommit=True) as conn:
                 with conn.cursor() as cur:
                     cur.execute(contract_sql)
                     cols = [d.name for d in cur.description]; vals = cur.fetchone()

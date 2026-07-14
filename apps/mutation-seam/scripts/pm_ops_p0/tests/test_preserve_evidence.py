@@ -568,11 +568,55 @@ def test_git_env_scrubs_injected_secrets_and_redirects():
                 os.environ.pop(k, None)
             else:
                 os.environ[k] = v
-    for k in injected:
-        assert k not in env, (
-            k
-        )  # neither secrets nor repo/config-redirection vars survive
+    # neither secrets nor GIT_*/XDG_* redirection vars are forwarded ...
+    for k in (
+        "SUPABASE_PROD_DSN",
+        "DISPOSITION_SIGNING_KEY",
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "XDG_CONFIG_HOME",
+    ):
+        assert k not in env, k
+    # ... and the attacker's GIT_CONFIG_GLOBAL value is REPLACED with our safe /dev/null pin
+    # (present with our value, never the injected one; RI2 lens-A F1).
+    assert env.get("GIT_CONFIG_GLOBAL") == "/dev/null"
+    assert "/tmp/attacker/gitconfig" not in env.values()
     assert "PATH" in env  # git still receives what it legitimately needs
+    # RI2 lens-A F1: global/system gitconfig is pinned to /dev/null so it cannot inject
+    # hooks/fsmonitor/credential-helpers into the preflight.
+    assert env.get("GIT_CONFIG_GLOBAL") == "/dev/null"
+    assert env.get("GIT_CONFIG_SYSTEM") == "/dev/null"
+
+
+def test_git_hardening_flags_disable_config_execution():
+    # RI2 lens-A F1: every git call forces the code-execution knobs OFF via command-line -c
+    joined = " ".join(pe._GIT_HARDENING)
+    assert "core.fsmonitor=false" in joined
+    assert "core.hooksPath=/dev/null" in joined
+    assert "credential.helper=" in joined
+    assert "protocol.ext.allow=never" in joined
+
+
+def test_git_preflight_neutralizes_repo_local_fsmonitor():
+    # RI2 lens-A F1 (behavioral): a repo-local core.fsmonitor is arbitrary code git runs
+    # during `git status`. The preflight's `-c core.fsmonitor=false` (command-line, outranks
+    # repo config) must prevent it from executing at all.
+    tmp = Path(tempfile.mkdtemp(prefix="p0a-ri-fsmon-"))
+    try:
+        work, _origin, _head = _make_repo_with_remote(tmp)
+        marker = tmp / "FSMONITOR_RAN"
+        hook = work / "evil_fsmonitor.sh"
+        hook.write_text(f'#!/bin/sh\ntouch "{marker}"\nexit 1\n')
+        hook.chmod(0o755)
+        # a repo-LOCAL config setting fsmonitor to the hook (untracked config, invisible to
+        # `git status`); git would invoke it during status absent the hardening.
+        _git(work, "config", "core.fsmonitor", str(hook))
+        pe._repo_git_state(work)  # runs the hardened `git status`
+        assert not marker.exists(), (
+            "repo-local core.fsmonitor executed despite -c override"
+        )
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 def test_isolation_gate():

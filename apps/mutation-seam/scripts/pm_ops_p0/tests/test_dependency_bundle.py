@@ -71,7 +71,10 @@ def _expect_refusal(code: str, bundle: Path, manifest: Path, msha: str) -> None:
 # --------------------------------------------------------------- positive load
 
 
-def test_bootstrap_accepts_clean_bundle_and_imports_from_it():
+def test_bootstrap_stages_verified_bundle_and_imports_from_stage():
+    # RI2 lens-A F2: the bootstrap imports from a fresh run-private STAGE (hash-while-copy),
+    # NOT the source bundle, so the verified bytes are the imported bytes (no verify->import
+    # TOCTOU) and the source is never placed on sys.path.
     with tempfile.TemporaryDirectory(prefix="p0a-bundle-") as d, _restore_syspath():
         bundle, manifest, msha = _make_bundle(
             Path(d),
@@ -80,18 +83,21 @@ def test_bootstrap_accepts_clean_bundle_and_imports_from_it():
                 "fake_dep_ok/util.py": b"x = 1\n",
             },
         )
-        base = pe._bootstrap_dependency_bundle(str(bundle), str(manifest), msha)
+        staged = pe._bootstrap_dependency_bundle(str(bundle), str(manifest), msha)
         try:
-            assert base == os.path.realpath(bundle)
-            assert sys.path[0] == base  # exposed at the FRONT
+            assert staged != os.path.realpath(bundle)  # a private stage, not the source
+            assert sys.path[0] == staged  # the STAGE is exposed at the FRONT
+            assert os.path.realpath(bundle) not in sys.path  # source never on the path
             assert (
                 sys.dont_write_bytecode is True
             )  # no unlisted __pycache__ written back
-            mod = importlib.import_module(
-                "fake_dep_ok"
-            )  # resolves from the verified bundle
+            mod = importlib.import_module("fake_dep_ok")  # resolves from the STAGE
             assert mod.VALUE == 42
-            assert os.path.realpath(mod.__file__).startswith(base + os.sep)
+            assert os.path.realpath(mod.__file__).startswith(staged + os.sep)
+            # the staged copy contains exactly the listed files (bytes preserved)
+            assert (Path(staged) / "fake_dep_ok" / "__init__.py").read_bytes() == (
+                b"VALUE = 42\n"
+            )
         finally:
             sys.modules.pop("fake_dep_ok", None)
             sys.modules.pop("fake_dep_ok.util", None)
@@ -201,6 +207,22 @@ def test_bootstrap_rejects_unreadable_member():
             _expect_refusal("bundle_member_unreadable", bundle, manifest, msha)
         finally:
             os.chmod(bundle / "a.py", 0o644)  # let TemporaryDirectory clean up
+
+
+def test_bootstrap_rejects_unreadable_subdir():
+    # RI2 lens-A F4: an unreadable subdir would be SILENTLY skipped by os.walk(onerror=None),
+    # letting an unlisted member hide under it. The onerror callback must fail closed instead.
+    if (
+        hasattr(os, "geteuid") and os.geteuid() == 0
+    ):  # pragma: no cover - root ignores 0o000
+        return
+    with tempfile.TemporaryDirectory(prefix="p0a-bundle-") as d:
+        bundle, manifest, msha = _make_bundle(Path(d), {"pkg/__init__.py": b"x = 1\n"})
+        os.chmod(bundle / "pkg", 0o000)  # unreadable subdir
+        try:
+            _expect_refusal("bundle_dir_unreadable", bundle, manifest, msha)
+        finally:
+            os.chmod(bundle / "pkg", 0o755)  # let TemporaryDirectory clean up
 
 
 def test_bootstrap_rejects_non_directory_bundle():

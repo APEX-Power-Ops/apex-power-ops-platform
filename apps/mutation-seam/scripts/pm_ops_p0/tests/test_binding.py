@@ -39,6 +39,20 @@ def _expect_reject(dsn: str, expect_ref: str, code_substr: str) -> None:
         raise AssertionError(f"expected TargetBindingError({code_substr}) for this DSN")
 
 
+def _expect_reject_form(
+    dsn: str, expect_ref: str, require_form: str, code_substr: str
+) -> None:
+    try:
+        bind_target(dsn, expect_ref, require_form=require_form)
+    except TargetBindingError as exc:
+        assert code_substr in exc.code, (exc.code, code_substr, "wrong reject code")
+        assert exc.code == str(exc)
+    else:  # pragma: no cover
+        raise AssertionError(
+            f"expected TargetBindingError({code_substr}) for this form"
+        )
+
+
 # ---------------------------------------------------------------- reject matrix
 
 
@@ -274,12 +288,78 @@ def test_bind_target_sslrootcert_value_is_not_leaked_on_reject():
 
 def test_scrubbed_env_includes_openssl_trust_anchors():
     # sslrootcert=system uses the OpenSSL default trust store, which SSL_CERT_FILE /
-    # SSL_CERT_DIR redirect -> they must be in the connect-time scrub set alongside PG*.
-    assert "SSL_CERT_FILE" in SCRUBBED_ENV_VARS
-    assert "SSL_CERT_DIR" in SCRUBBED_ENV_VARS
-    assert "PGSSLROOTCERT" in SCRUBBED_ENV_VARS
+    # SSL_CERT_DIR redirect, and OPENSSL_CONF/MODULES/ENGINES can subvert (load a provider
+    # or lower the TLS floor) -> all must be in the connect-time scrub set (RI2 lens-B F1).
+    for var in (
+        "SSL_CERT_FILE",
+        "SSL_CERT_DIR",
+        "OPENSSL_CONF",
+        "OPENSSL_MODULES",
+        "OPENSSL_ENGINES",
+        "PGSSLROOTCERT",
+    ):
+        assert var in SCRUBBED_ENV_VARS, var
+    # env-merged libpq params the DSN allow-list drops must also be scrubbed (lens-B F5)
+    for var in ("PGOPTIONS", "PGSSLCRL", "PGGSSENCMODE", "PGCHANNELBINDING"):
+        assert var in PG_ENV_OVERRIDES, var
     # the PG* subset stays a subset of the full scrub set
     assert set(PG_ENV_OVERRIDES) <= set(SCRUBBED_ENV_VARS)
+
+
+def test_bind_target_rejects_non_numeric_port():
+    _expect_reject(
+        f"host=db.{REF}.supabase.co user=postgres port=54xx dbname=postgres",
+        REF,
+        "malformed_port",
+    )
+
+
+def test_bind_target_require_form_direct_rejects_pooler():
+    # RI2 lens-B F4: the P6 (direct) probe must refuse a pooler DSN mechanically
+    _expect_reject_form(
+        f"postgresql://postgres.{REF}:pw@aws-0-us-east-1.pooler.supabase.com:6543/postgres",
+        REF,
+        "direct",
+        "wrong_connection_form",
+    )
+
+
+def test_bind_target_require_form_pooler_rejects_direct():
+    # the P7 (pooler) probe must refuse a direct DSN mechanically
+    _expect_reject_form(
+        f"host=db.{REF}.supabase.co user=postgres dbname=postgres",
+        REF,
+        "pooler",
+        "wrong_connection_form",
+    )
+
+
+def test_bind_target_require_form_accepts_matching():
+    direct = bind_target(
+        f"host=db.{REF}.supabase.co user=postgres dbname=postgres",
+        REF,
+        require_form="direct",
+    )
+    assert direct["host"] == f"db.{REF}.supabase.co"
+    pooler = bind_target(
+        f"postgresql://postgres.{REF}:pw@aws-0-us-east-1.pooler.supabase.com:6543/postgres",
+        REF,
+        require_form="pooler",
+    )
+    assert pooler["host"] == "aws-0-us-east-1.pooler.supabase.com"
+
+
+def test_bind_target_rejects_unknown_require_form():
+    try:
+        bind_target(
+            f"host=db.{REF}.supabase.co user=postgres dbname=postgres",
+            REF,
+            require_form="banana",
+        )
+    except TargetBindingError as exc:
+        assert exc.code == "dsn_wrong_connection_form", exc.code
+    else:  # pragma: no cover
+        raise AssertionError("an unknown require_form must be rejected")
 
 
 def test_scrubbed_pg_env_scrubs_openssl_trust_anchors_and_restores():

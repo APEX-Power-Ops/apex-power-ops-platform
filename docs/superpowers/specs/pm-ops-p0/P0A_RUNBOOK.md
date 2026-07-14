@@ -16,7 +16,9 @@ evidence, read-only, before any P0-B..E action. This runbook binds **all nine** 
 - **The interpreter contract is `python -I -S`.** `-I` alone does **not** imply `-S`: `site` would still run and execute an editable-install `.pth` during startup — before the script's guards, with the injected DSN present (RI2 finding 1). Both CLIs refuse (`interpreter_not_isolated_no_site`) unless invoked with **`-I -S`**.
 - **A hash-pinned dependency bundle.** Because `-S` takes site-packages off `sys.path`, psycopg is loaded **only** from an operator-supplied, immutable, SHA-256-pinned dependency bundle — never the repo-local `.venv` — via `--dependency-bundle`/`--bundle-manifest`/`--expect-bundle-manifest-sha256` (the manifest's own hash attested out-of-band, like the repo SHA). See **Part A0**.
 - The DSN is injected into the **child process only** via `infra/infisical/inject.sh prod` and read from an **environment variable name** (never a value on the command line, never `export`ed into the operator shell; review round-3 finding 4). The admin DB role is **source-pinned** to `postgres` (no CLI override; finding 3). Authorized read-only prod access only.
-- **P6 and P7 are two SEPARATELY-GOVERNED read-only probes (RI2 finding 3).** P6 (`sslmode=verify-full` + `sslrootcert=system` cert chain) requires a **direct** `db.<ref>.supabase.co` connection; P7 (Supavisor transaction-mode `BEGIN…COMMIT`) requires the **transaction-pooler on port 6543**. The tracked session-pooler (`:5432`) `SUPABASE_PROD_DSN` proves **neither**: each probe needs its own child-only DSN input under its own GO, and any new DSN provisioning is its own authorization. Do **not** claim P6 and P7 from the single session-pooler DSN.
+- **P6 and P7 are two SEPARATELY-GOVERNED read-only probes (RI2 finding 3).** P6 (`sslmode=verify-full` + `sslrootcert=system` cert chain) requires a **direct** `db.<ref>.supabase.co` connection; P7 (Supavisor transaction-mode `BEGIN…COMMIT`) requires the **transaction-pooler on port 6543**. The tracked session-pooler (`:5432`) `SUPABASE_PROD_DSN` proves **neither**: each probe needs its own child-only DSN input under its own GO, and any new DSN provisioning is its own authorization. Do **not** claim P6 and P7 from the single session-pooler DSN. The two probes are now **mechanically distinct**: the P6 probe binds with `require_form="direct"` and the P7 probe with `require_form="pooler"` (RI2 lens-B F4), so a pooler DSN cannot be ticked as P6 (or vice-versa) even by mistake.
+- **Confirm the direct-host TLS trust chain LIVE before declaring P6 achievable (RI2 lens-B F2/F3).** `sslrootcert=system` trusts the OpenSSL/OS store; if `db.<ref>.supabase.co` presents a cert signed by Supabase's own CA (not a public root), or the Olares host locates its CA bundle only via the now-scrubbed `SSL_CERT_FILE`/`SSL_CERT_DIR`, then `verify-full` fails **closed** and P6 can never pass. This is safe (no bypass) but means P6 may be unsatisfiable as configured: verify the actual chain on the host first. If it does not chain to `system`, that is a **STOP + operator decision** (the acceptance contract's `system` pin may need amending), not a silent re-opening of a caller `sslrootcert`.
+- **OpenSSL-init env is a LAUNCH-time control for the readiness process (RI2 lens-B F1).** The short-lived `-I -S` P0-A run scrubs `OPENSSL_CONF`/`OPENSSL_MODULES`/`OPENSSL_ENGINES` before its first TLS, but a long-lived P0-E readiness process may have already initialised OpenSSL; those vars must be controlled at process launch (systemd/Render env hygiene), not relied on to be scrubbed at connect time.
 
 ---
 
@@ -67,8 +69,9 @@ test -z "$(git status --porcelain)"                  || { echo "refusing: dirty/
 # so no editable-install `.pth` executes before the guards (RI2 finding 1). psycopg is loaded
 # from the verified bundle (Part A0). The script refuses (interpreter_not_isolated_no_site)
 # without both flags, and refuses any un-pinned bundle.
+PY="$(command -v python3)"                          # any standard CPython; psycopg comes from the bundle, not its site
 infra/infisical/inject.sh prod -- \
-  "$BUNDLE/../python-runtime/bin/python" -I -S apps/mutation-seam/scripts/pm_ops_p0/preserve_evidence.py \
+  "$PY" -I -S apps/mutation-seam/scripts/pm_ops_p0/preserve_evidence.py \
     --expect-project-ref fxoyniqnrlkxfligbxmg \
     --dsn-env SUPABASE_PROD_DSN \
     --expect-repo-sha "$EXPECT_SHA" \
@@ -78,9 +81,9 @@ infra/infisical/inject.sh prod -- \
 # -> RESULT PASS + CUSTODY /home/olares/custody/pm-ops-p0/<UTC>/  (dir 0700, files 0400, manifest.sha256)
 ```
 
-> The `python` above must be a `-S`-usable interpreter whose stdlib resolves without site
-> (any standard CPython); psycopg comes from `--dependency-bundle`, not from that
-> interpreter's site-packages.
+> `$PY` is just a standard CPython used with `-I -S` (its own site-packages are ignored);
+> psycopg is loaded and verified from `--dependency-bundle`, then staged read-only into a
+> run-private directory and imported from there — never from `$PY`'s site or the repo `.venv`.
 
 The script independently re-enforces the gate: a **pristine** tree (clean + **no
 untracked** files), a fresh `git fetch origin refs/heads/main`, and `HEAD == origin/main ==
