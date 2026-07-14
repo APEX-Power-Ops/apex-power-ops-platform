@@ -1,0 +1,96 @@
+# Learning Governance Control Plane Design
+
+Date: 2026-07-14
+
+Status: DRAFT - NOT RATIFIED
+
+## Objective
+
+Define a tracked, machine-checkable learning governance control plane that can
+administer bounded continuous goals without allowing an executor to approve its
+own rights, technical correctness, business priority, learner-data use, or
+release.
+
+## Current State Preserved
+
+- Learning packages are a development prototype, not a governed hosted product.
+- The Slice 2d rehearsal is held because `ksa_mapped` is not part of the accepted
+  event vocabulary implemented by the package, database, API, and tests.
+- Hosted learning activation is held pending verified identity, authorization,
+  and privacy contracts.
+- The Level II pilot remains `ET-PILOT-HOLD` for ET-010 through ET-014.
+- ET-017 / `ET-INS-PD` and ET-028 / `ET-SYS-MTSC` remain parked.
+- Existing untracked notes and external workrepo artifacts are evidence inputs,
+  not canonical gate state.
+
+## Proposed Control Plane
+
+The later implementation packet may propose these tracked surfaces:
+
+```text
+docs/learning/governance/
+  PROGRAM-CHARTER.md
+  ROLE-AND-DECISION-RIGHTS.md
+  CONTENT-AND-ASSESSMENT-LIFECYCLE.md
+  DELEGATION-POLICY.md
+
+ops/learning/goals/
+  GOAL-REGISTRY.yaml
+  schema/goal.schema.json
+  check_goals.py
+  active/
+  archive/
+
+ops/learning/roadmap/
+  ROADMAP.yaml
+  BACKLOG.yaml
+
+ops/learning/decisions/<goal-id>/
+ops/learning/evidence/manifests/
+knowledge/learning/release-manifests/
+knowledge/learning/mappings/
+```
+
+These paths are design targets only. This packet does not create or activate
+them.
+
+## Design Workstreams
+
+1. Ratify program purpose, target audience, and measurable outcomes.
+2. Define human and delegated roles, appointments, expiry, and conflicts.
+3. Define the canonical goal object and state-transition contract.
+4. Separate immutable evidence from authority decisions.
+5. Define automatic-continuation limits and mandatory stop conditions.
+6. Define an offline checker and adversarial negative-test contract.
+7. Map the existing Level II prompt trail into held structured state.
+8. Define the separately gated Slice 2d reconciliation packet.
+
+## Required Operator Decisions
+
+- Product intent: exam preparation, internal qualification, field enablement, or
+  an explicitly staged combination.
+- Human stakeholder/product owner.
+- Delegated Learning Program Manager boundary.
+- Learning Technical Authority appointment and decision boundary.
+- Rights/source authority mechanism.
+- SME appointment and acceptance mechanism.
+- Platform/import owner, independent auditor, and release authority.
+
+Unknown appointments remain explicit blockers; they do not inherit from agent
+execution roles.
+
+## Acceptance For This Design Packet
+
+- Every proposed role has explicit allowed and forbidden decisions.
+- Goal identity, scope, cohort, inputs, evidence, gates, and expiry are defined.
+- Evidence and decisions bind to exact versions and hashes.
+- Automatic continuation cannot cross a human, write, environment, or scope gate.
+- The Level II migration map preserves its hold and exact target set.
+- The checker design includes false-green and self-approval negative cases.
+- Slice 2d reconciliation remains a separate no-live-write follow-up.
+- Cross-engine review finds no unresolved high-severity design contradiction.
+
+## Stop Condition
+
+Stop after operator and cross-engine review. Implementation, content work, and
+external evidence intake require separate authorization.
