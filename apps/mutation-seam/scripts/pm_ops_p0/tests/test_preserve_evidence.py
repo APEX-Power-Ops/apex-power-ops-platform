@@ -472,6 +472,21 @@ def test_assert_trusted_location_belt():
     )  # installed location -> no raise
 
 
+def test_git_env_scrubs_injected_secrets():
+    # Codex-c6 P1: the git preflight subprocess env must carry NO injected app secret
+    # (the DSN, signing keys, other DSNs), so git transports/credential helpers never see it.
+    os.environ["SUPABASE_PROD_DSN"] = "postgresql://secret-should-not-reach-git"
+    os.environ["DISPOSITION_SIGNING_KEY"] = "topsecret-should-not-reach-git"
+    try:
+        env = pe._git_env()
+    finally:
+        os.environ.pop("SUPABASE_PROD_DSN", None)
+        os.environ.pop("DISPOSITION_SIGNING_KEY", None)
+    assert "SUPABASE_PROD_DSN" not in env
+    assert "DISPOSITION_SIGNING_KEY" not in env
+    assert "PATH" in env  # git still receives what it legitimately needs
+
+
 # -------------------------------------------------------------------- custody
 
 

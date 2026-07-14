@@ -282,6 +282,34 @@ def _repo_root() -> Path:
     raise EvidenceRefusal("repo_root_not_found")
 
 
+# git needs only a small, non-secret slice of the environment for the governance preflight
+# (rev-parse / status / fetch). Running it with the FULL injected env would hand every
+# apex-platform/prod secret -- the DSN, signing keys, other DSNs -- to git's remote
+# transports and credential helpers, undermining the child-only secret handling (Codex-c6
+# P1). Allow-list only what git legitimately needs; every injected app secret is dropped.
+_GIT_ENV_ALLOW = (
+    "PATH",
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "LANG",
+    "TERM",
+    "TMPDIR",
+    "SSH_AUTH_SOCK",
+    "SSH_AGENT_PID",
+)
+
+
+def _git_env() -> dict[str, str]:
+    """A scrubbed environment for git subprocesses that carries no injected app secret."""
+    env = {k: os.environ[k] for k in _GIT_ENV_ALLOW if k in os.environ}
+    # git config / credential / locale prefixes are not the injected secrets; pass them
+    for key, value in os.environ.items():
+        if key.startswith(("GIT_", "LC_", "XDG_")):
+            env[key] = value
+    return env
+
+
 def _repo_git_state(repo_root: Path) -> tuple[str, bool, str | None]:
     """Return (HEAD sha, tree-pristine, freshly-fetched origin/main sha or None).
 
@@ -292,7 +320,8 @@ def _repo_git_state(repo_root: Path) -> tuple[str, bool, str | None]:
     The origin/main sha is read AFTER a fresh `git fetch origin main`, so the caller can
     require HEAD == origin/main by equality, not a mere ancestor test (finding 2). It is
     None when the fetch fails or the ref is unresolvable; the caller fails closed on None
-    (it cannot prove the current merged-tip guarantee).
+    (it cannot prove the current merged-tip guarantee). Every git subprocess runs with a
+    scrubbed env so the injected DSN/secrets never reach git's transports (Codex-c6 P1).
     """
 
     def _git(*args: str) -> subprocess.CompletedProcess:
@@ -301,6 +330,7 @@ def _repo_git_state(repo_root: Path) -> tuple[str, bool, str | None]:
             capture_output=True,
             text=True,
             check=False,
+            env=_git_env(),
         )
 
     head = _git("rev-parse", "HEAD")
