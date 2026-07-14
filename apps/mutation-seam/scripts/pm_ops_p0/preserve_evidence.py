@@ -241,10 +241,21 @@ def collect_evidence(dsn: str, expect_ref: str) -> dict[str, str]:
 
 
 def _write_restricted_file(path: Path, data: bytes) -> None:
-    """Create `path` atomically at mode 0400 (O_EXCL: no-clobber, no perm window)."""
+    """Create `path` atomically at mode 0400 (O_EXCL: no-clobber, no perm window).
+
+    Loops until the whole buffer is written: `os.write` may write fewer bytes than
+    requested without raising (short write), which would otherwise leave a
+    truncated evidence file while the manifest records the full-buffer hash
+    (review Codex-delta-P2).
+    """
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
     try:
-        os.write(fd, data)
+        view = memoryview(data)
+        while view:
+            written = os.write(fd, view)
+            if written == 0:  # pragma: no cover - defensive against a stuck fd
+                raise OSError("custody write made no progress")
+            view = view[written:]
     finally:
         os.close(fd)
 

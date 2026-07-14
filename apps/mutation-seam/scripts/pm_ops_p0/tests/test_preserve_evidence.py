@@ -147,6 +147,23 @@ def test_write_custody_no_clobber():
         shutil.rmtree(base, ignore_errors=True)
 
 
+def test_write_custody_writes_full_large_artifact():
+    # guards against a short-write truncation while the manifest records the full hash
+    base = Path(tempfile.mkdtemp(prefix="p0a-custody-"))
+    try:
+        big = ("row\t" * 100 + "\n") * 20000  # several MB, may span multiple writes
+        run_dir = pe.write_custody(base, {"big.txt": big}, clock="2026-07-14T00-00-00Z")
+        written = (run_dir / "big.txt").read_bytes()
+        assert written == big.encode()  # no truncation
+        manifest = (run_dir / pe.MANIFEST_NAME).read_text()
+        assert hashlib.sha256(big.encode()).hexdigest() in manifest
+    finally:
+        for p in base.rglob("*"):
+            with contextlib.suppress(OSError):
+                p.chmod(0o600)
+        shutil.rmtree(base, ignore_errors=True)
+
+
 # ------------------------------------------------------------------ SQL parity
 
 
