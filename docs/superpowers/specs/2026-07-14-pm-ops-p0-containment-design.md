@@ -6,6 +6,8 @@
 > (never one combined production transaction). Permanent identity is **P1** — separately gated,
 > **not** a prerequisite for P0.
 
+**Revision — rev5.3 (2026-07-14).** Docs+test narrow P0-E correction folding the operator's rev5.2→5.3 findings (3) — **no broad review round**; a deterministic static parity test replaces subjective review. **(F1/High)** `has_table_privilege(role,tbl,'INSERT'/'UPDATE')` returns **false** under column-scoped grants (`IRP_OPUS_2026-07-01` MEDIUM, live-reproduced — my rev5.2 focused-review lens had this backwards), so it would **false-503** a correct role on `projects`/`apparatus` INSERT: the positives now use **`has_column_privilege`** for all **15 `projects`** + **11 `apparatus`** INSERT columns and all **3 `scope_quote`** UPDATE columns. **(F3/Med)** the forbidden-write negatives use **`has_any_column_privilege`** for I/U (a table-level `NOT has_table_privilege` misses accidental column-level grants) and `has_table_privilege` for DELETE; the api negative now covers the full **11-table** write surface incl. the 5 recognition/billing tables + apparatus DELETE. **(F2/High)** P0-E binds **both** serving DSNs to the prod project (`bind_target`, the shared P0-A discipline) before probing, so a dev/branch DSN cannot satisfy the matrix against the wrong project. **(Task 4)** a static parity test derives the authoritative column/table/fn sets from migration 012 and asserts the matrix mirrors them exactly — offline, no live DB. The rev5.2 "complete matrix" claim is corrected only after that test passes.
+
 **Revision — rev5.2 (2026-07-14).** Docs-only bounded correction folding the operator's rev5.2 HOLD review (4 findings). **(F1/High)** P0-E is now the **route-critical permission matrix** grounded in migration 012 — the writer positive covers the full intake+materialize+project/apparatus+core+helper write set, the api positive covers recognition read + EXECUTE, and both **negatives mirror 012 completely** (writer denied **all 9** mutation fns; api denied **all 5** billing fns; plus the F-012-1 intake-helper assertion and the status/provenance/DELETE denials) — so readiness cannot green while any upload/review/approve/reject/recognition route lacks its permission. **(F2/Med)** P0-A DSN binding parses via `psycopg.conninfo.conninfo_to_dict` and **rejects `hostaddr`/`service`/multi-host/multi-port/empty-ambiguous + URI-query overrides** before the anchored host/user match. **(F3/Med)** value-silence reconciled with logging: ordinary logs carry **only a stable code + exception class**, never raw detail (P0-A **and** the readiness endpoints); raw diagnostics require restricted custody + a secret scan. **(F4/Low)** stale `INSERT+SELECT` prose corrected to the full matrix. **Focused parser/matrix re-review (Codex + 2 lenses, DDL-grounded, no live query) folded further:** the matrix now enumerates all **14 `projects` UPDATE columns** and the **complete 5-table I/U/D negative sets** (both roles), a non-012 `public.apparatus` check that would have **false-503'd ops roles pre-P0-C** was **removed**, and the DSN binding gained **PG\*-environment scrubbing + `sslmode=verify-full` + post-connect `Connection.info` re-check** (env-var reroute was a HIGH). Grounded on migration 012 (DDL) only — **no live DB query** (per operator directive). Detail in review record §5.
 
 **Revision — rev5.1 (2026-07-14).** Docs-only surgical correction folding the operator's rev5.1 review (6 findings). **(F1/High)** P0-E now verifies each ops serving role's **full operational permission matrix** from migration 012 — identity + posture (NOSUPERUSER/NOBYPASSRLS, not `ops_fn_owner`) + `ops_api` `EXECUTE` on the 4 recognition fns + `ops_intake_writer` `INSERT`/`SELECT ops.intake_runs` + negative guards — not one readable relation, so readiness cannot green while POSTs fail. **(F2/High)** the review record's "live catalog / live grants" wording is corrected: rev5 grant checks ran against the **`ops_dev` DEV database** (`mcp__ops-dev`, read-only, 2026-07-14), **NOT** production (`fxoyniqnrlkxfligbxmg`) — no prod access occurred; source/authorization recorded plainly. **(F3/Med)** P0-A now **requires** `--expect-project-ref fxoyniqnrlkxfligbxmg` + value-silent DSN host/user validation as the authoritative target binding (the schema fingerprint is secondary — a clone would pass it). **(F4/Med)** `/api/v1/control-plane/*` mutations are **authenticated** (`Depends(get_current_user)`→401) and correctly OUT of P0-D — §11.7 rewritten, the earlier unauth surfacing retracted. **(F5/Med)** both readiness endpoints return **stable codes** (`connection_or_query_failed`, `check_failed`, `database_unavailable`) instead of raw `str(exc)`, detail logged server-side. **(F6/Low)** review-record stale `ops.persons` wording corrected. Narrow cross-engine re-review (P0-A target binding + P0-E matrix) recorded in the review record §4.
@@ -63,7 +65,7 @@ Files touched by two actions are given as **composable diffs** (not full-file re
 **Objective.** Capture approved pre-change evidence. No mutation/deploy/secret/connectivity change. Runs as a **single guarded `REPEATABLE READ, READ ONLY` transaction** (read-only + schema-fingerprint guard, with the authoritative project binding via the script's `--expect-project-ref` DSN check — finding 3; fails closed on the wrong cluster); enumeration uses **effective-role closure** (fixed principals x all privileges + the anon/authenticated membership closure) and **fail-closed-leaning** SECURITY DEFINER discovery (name-reference + dynamic-SQL as the reliable primary, `pg_depend` supplementary; residual indirect-write / non-public-schema gap disclosed in the query (e) note). Stop with hashes, paths, results, drift.
 
 **Deliverable.** `apps/mutation-seam/scripts/pm_ops_p0/preserve_evidence.py` (read-only; house style of `scripts/smoke_deployed_mutation_seam.py`) + the SQL below → custody `/home/olares/custody/pm-ops-p0/<UTC>/` (0700 dir, 0400 files) + SHA-256 manifest.
-**Project binding (rev5.1 finding 3; rev5.2-hardened).** The script **REQUIRES** `--expect-project-ref fxoyniqnrlkxfligbxmg` and, before connecting, **value-silently** binds the DSN to that ref via **structured parsing with `psycopg.conninfo.conninfo_to_dict`** (handles both URI and key=value forms; never substring-matching). Before applying the host/user rules it **rejects** (value-free) any conninfo that could route around the check — `hostaddr` (overrides host-name resolution), `service` (pulls params from an out-of-band service file), **multiple** `host`/`port`/`hostaddr` values (failover lists), and empty/ambiguous `host` or `user`; URI query parameters are parsed by `conninfo_to_dict` and subject to the same rejects, so a `?hostaddr=`/`?host=` override cannot slip in. **Environment overrides (rev5.2 review — HIGH).** Because `conninfo_to_dict` parses only the *string* while libpq merges `PGHOSTADDR`/`PGSERVICE`/`PGHOST`/`PGPORT` from the **environment** at connect time for params absent from the string (an env-supplied `hostaddr`/`service` could reroute the actual TCP target while the string passes every reject), the script connects with a **scrubbed environment** (unset `PGHOSTADDR`/`PGSERVICE`/`PGHOST`/`PGPORT`/`PGSSLMODE`), passes the validated params **explicitly**, requires **`sslmode=verify-full`** (so the server TLS cert must match the expected `db.<ref>.supabase.co`/pooler host — a reroute to a different IP fails the cert check), and **re-validates the resolved `Connection.info`** (`host`/`hostaddr`) post-connect. Then: the **pooler** form requires `user == 'postgres.<ref>'` **AND** `host` an anchored match of `*.pooler.supabase.com` (on Supavisor the shared pooler host does the routing, so the tenant username alone does not bind it); the **direct** form requires `host` **exactly** `db.<ref>.supabase.co` (anchored, rejecting suffix-injection like `db.<ref>.supabase.co.evil.tld`). It refuses with a **value-free** error otherwise (never echoing the DSN); the pre-connect `conninfo_to_dict` parse is itself inside the value-silence — a libpq parse error on a malformed DSN (whose message can quote a DSN token) is caught and re-raised as a stable code, never logged raw. **Value-silence is end-to-end**: a psycopg `OperationalError` on the connect/query path is caught and re-raised as a **stable code**, and ordinary logs record **only the stable code + exception class name** — never the raw message/traceback (psycopg connect errors carry host/IP; cf. the lane's psql-DSN-leak precedent); any raw diagnostic requires **restricted custody + a secret scan** (finding 3). It records `current_database()` / `current_user` / `inet_server_addr()` as evidence markers **but discloses they cannot corroborate the project on managed Supabase** (`current_database()` is always `postgres`; `inet_server_addr()` is an internal node IP; `current_user` is a generic role) — so the binding rests on the validated **parameter set libpq actually connects with** (explicit params + scrubbed env + `verify-full` + post-connect `Connection.info` re-check), **not the DSN string alone**; the in-band markers are corroborating-only (residual accepted). The schema/RPC fingerprint in the SQL guard below is a **SECONDARY** corroborating check only — a Supabase branch/clone carries the same 4 tables + apparatus RPC but has its **own distinct ref/DSN**, which the ref check (not the fingerprint) catches.
+**Project binding (rev5.1 finding 3; rev5.2-hardened).** The script **REQUIRES** `--expect-project-ref fxoyniqnrlkxfligbxmg` and, before connecting, **value-silently** binds the DSN to that ref via **structured parsing with `psycopg.conninfo.conninfo_to_dict`** (handles both URI and key=value forms; never substring-matching). Before applying the host/user rules it **rejects** (value-free) any conninfo that could route around the check — `hostaddr` (overrides host-name resolution), `service` (pulls params from an out-of-band service file), **multiple** `host`/`port`/`hostaddr` values (failover lists), and empty/ambiguous `host` or `user`; URI query parameters are parsed by `conninfo_to_dict` and subject to the same rejects, so a `?hostaddr=`/`?host=` override cannot slip in. **Environment overrides (rev5.2 review — HIGH).** Because `conninfo_to_dict` parses only the *string* while libpq merges `PGHOSTADDR`/`PGSERVICE`/`PGHOST`/`PGPORT` from the **environment** at connect time for params absent from the string (an env-supplied `hostaddr`/`service` could reroute the actual TCP target while the string passes every reject), the script connects with a **scrubbed environment** (unset `PGHOSTADDR`/`PGSERVICE`/`PGHOST`/`PGPORT`/`PGSSLMODE`), passes the validated params **explicitly**, requires **`sslmode=verify-full`** (so the server TLS cert must match the expected `db.<ref>.supabase.co`/pooler host — a reroute to a different IP fails the cert check), and **re-validates the resolved `Connection.info`** (`host`/`hostaddr`) post-connect. Then: the **pooler** form requires `user == 'postgres.<ref>'` **AND** `host` an anchored match of `*.pooler.supabase.com` (on Supavisor the shared pooler host does the routing, so the tenant username alone does not bind it); the **direct** form requires `host` **exactly** `db.<ref>.supabase.co` (anchored, rejecting suffix-injection like `db.<ref>.supabase.co.evil.tld`). It refuses with a **value-free** error otherwise (never echoing the DSN); the pre-connect `conninfo_to_dict` parse is itself inside the value-silence — a libpq parse error on a malformed DSN (whose message can quote a DSN token) is caught and re-raised as a stable code, never logged raw. **Value-silence is end-to-end**: a psycopg `OperationalError` on the connect/query path is caught and re-raised as a **stable code**, and ordinary logs record **only the stable code + exception class name** — never the raw message/traceback (psycopg connect errors carry host/IP; cf. the lane's psql-DSN-leak precedent); any raw diagnostic requires **restricted custody + a secret scan** (finding 3). It records `current_database()` / `current_user` / `inet_server_addr()` as evidence markers **but discloses they cannot corroborate the project on managed Supabase** (`current_database()` is always `postgres`; `inet_server_addr()` is an internal node IP; `current_user` is a generic role) — so the binding rests on the validated **parameter set libpq actually connects with** (explicit params + scrubbed env + `verify-full` + post-connect `Connection.info` re-check), **not the DSN string alone**; the in-band markers are corroborating-only (residual accepted). The schema/RPC fingerprint in the SQL guard below is a **SECONDARY** corroborating check only — a Supabase branch/clone carries the same 4 tables + apparatus RPC but has its **own distinct ref/DSN**, which the ref check (not the fingerprint) catches. **This binding discipline is factored into a shared helper `pm_ops_p0.binding.bind_target(dsn, expect_ref) -> params` (raising `TargetBindingError`)** used by BOTH P0-A's evidence script and **P0-E's readiness probes** (rev5.3 finding 2), so both bind to project `fxoyniqnrlkxfligbxmg` identically.
 
 **Evidence set (each hashed + path-recorded):** (1) deployed OpenAPI both hosts + version/SHA; (2) `/reset` route + security state; (3) **effective privileges for the fixed Data-API principal set (`anon`/`authenticated`/`public`/`apex_tcc_runtime`) across all table privileges, plus the `anon`/`authenticated` membership closure** and per-table RLS; (4) **every `SECURITY DEFINER` function in `public` that depends on (via `pg_depend`), references by name, OR uses dynamic SQL touching the 4 tables — fail-closed `in_scope` flag**, with args/owner/EXECUTE grants (incl. PUBLIC); (5) counts (no row bodies); (6) `pg_default_acl` for schema `public` **for both `objtype='r'` (tables) and `'f'` (functions)**, per grantor; (7) active backend classification (inferred; record source); (8) Render `POST /reset` access logs (operator-captured); (9) rollback inputs (exact per-grantee ACL + per-grantor default ACL, so both rollbacks are generated from the snapshot).
 
@@ -408,12 +410,16 @@ This also restores `test_ops_route_mount_gate.py::test_recognition_router_host_g
 # asserts). Returns NAMED BOOLEANS only -- never a role/host/schema string or raw error (rev5.1 finding 5).
 # Route-critical permission matrix (rev5.2 finding 1) — mirrors migration 012's positive grants AND its
 # complete function-denial + helper-function posture asserts. Named booleans only (finding 5).
+# has_table_privilege(role,tbl,'INSERT'/'UPDATE') returns FALSE under column-scoped grants (IRP_OPUS_2026-07-01
+# MEDIUM, live-reproduced) -> positives on column-scoped objects (projects/apparatus INSERT, scope_quote UPDATE)
+# use has_column_privilege; forbidden-write NEGATIVES use has_any_column_privilege for I/U (catches column-level
+# drift) and has_table_privilege for DELETE (not column-scopable). (rev5.3 findings 1 & 3.)
 _OPS_API_CONTRACT_SQL = """
 SELECT (current_user = 'ops_api')                                                        AS identity,
        NOT (SELECT bool_or(rolsuper OR rolbypassrls) FROM pg_roles WHERE rolname = current_user) AS posture,
        NOT pg_has_role(current_user, 'ops_fn_owner', 'member')                           AS not_fn_owner,
        has_schema_privilege(current_user, 'ops', 'USAGE')                                AS ops_usage,
-       -- positive: recognition READ surface + EXECUTE exactly the 4 recognition fns (recognition routes)
+       -- positive: recognition READ surface + EXECUTE exactly the 4 recognition fns
        (has_table_privilege(current_user, 'ops.v_completion_recognition_worklist', 'SELECT')
         AND has_table_privilege(current_user, 'ops.v_completion_recognition_rollup', 'SELECT')) AS read_contract,
        (has_function_privilege(current_user, 'ops.attest_apparatus_complete(uuid,uuid,text)', 'EXECUTE')
@@ -429,13 +435,18 @@ SELECT (current_user = 'ops_api')                                               
              'ops.void_billing_application(uuid,uuid,text)',
              'ops._intake_source_format_text(ops.intake_source_format)']) s
            WHERE has_function_privilege(current_user, to_regprocedure(s), 'EXECUTE')) AS no_exec_forbidden,
-       -- negative: NO write on any scoping table (mirror 012 [5a]: I/U/D on all 5) + no apparatus fabricate/status/provenance
-       (NOT EXISTS (SELECT 1 FROM unnest(ARRAY['ops.scopes','ops.scope_quote','ops.scope_quote_line','ops.tasks','ops.projects']) t
-              CROSS JOIN unnest(ARRAY['INSERT','UPDATE','DELETE']) p WHERE has_table_privilege(current_user, t, p))
-        AND NOT has_table_privilege(current_user, 'ops.apparatus', 'INSERT')
-        AND NOT has_column_privilege(current_user, 'ops.apparatus', 'status', 'INSERT')
+       -- negative: api writes NOTHING -> no I/U/D on the FULL 11-table write surface (I/U via has_any_column_privilege
+       -- to catch column-level drift; DELETE via has_table_privilege). Explicit apparatus status/provenance too.
+       (NOT has_column_privilege(current_user, 'ops.apparatus', 'status', 'INSERT')
         AND NOT has_column_privilege(current_user, 'ops.apparatus', 'status', 'UPDATE')
-        AND NOT has_column_privilege(current_user, 'ops.apparatus', 'provenance_status', 'UPDATE')) AS no_forbidden_write
+        AND NOT has_column_privilege(current_user, 'ops.apparatus', 'provenance_status', 'UPDATE')
+        AND NOT EXISTS (SELECT 1 FROM unnest(ARRAY[
+              'ops.scopes','ops.scope_quote','ops.scope_quote_line','ops.tasks','ops.projects','ops.apparatus',
+              'ops.revenue_recognition_event','ops.completion_attestation','ops.billing_application',
+              'ops.billing_application_line','ops.billing_application_draft']) t
+            WHERE has_any_column_privilege(current_user, t, 'INSERT')
+               OR has_any_column_privilege(current_user, t, 'UPDATE')
+               OR has_table_privilege(current_user, t, 'DELETE'))) AS no_forbidden_write
 """
 _OPS_WRITER_CONTRACT_SQL = """
 SELECT (current_user = 'ops_intake_writer')                                              AS identity,
@@ -443,7 +454,7 @@ SELECT (current_user = 'ops_intake_writer')                                     
        NOT pg_has_role(current_user, 'ops_fn_owner', 'member')                           AS not_fn_owner,
        (has_schema_privilege(current_user, 'ops', 'USAGE')
         AND has_schema_privilege(current_user, 'core', 'USAGE'))                         AS schema_usage,
-       -- positive: intake write surface (upload/review)
+       -- positive: intake write surface (upload/review) — TABLE-level grants
        (has_table_privilege(current_user, 'ops.intake_runs', 'INSERT')
         AND has_table_privilege(current_user, 'ops.intake_runs', 'UPDATE')
         AND has_table_privilege(current_user, 'ops.intake_runs', 'SELECT')
@@ -451,29 +462,39 @@ SELECT (current_user = 'ops_intake_writer')                                     
         AND has_table_privilege(current_user, 'ops.intake_source_files', 'SELECT')
         AND has_table_privilege(current_user, 'ops.intake_validation_findings', 'INSERT')
         AND has_table_privilege(current_user, 'ops.intake_validation_findings', 'SELECT')) AS intake_write,
-       -- positive: materialize surface (approve/reject) — scopes / scope_quote / scope_quote_line / tasks
+       -- positive: materialize surface (approve/reject) — scopes/scope_quote_line/tasks TABLE-level;
+       -- scope_quote INSERT/SELECT table-level + all 3 column-scoped UPDATE cols
        (has_table_privilege(current_user, 'ops.scopes', 'INSERT')
         AND has_table_privilege(current_user, 'ops.scopes', 'DELETE')
         AND has_table_privilege(current_user, 'ops.scopes', 'SELECT')
         AND has_table_privilege(current_user, 'ops.scope_quote', 'INSERT')
         AND has_table_privilege(current_user, 'ops.scope_quote', 'SELECT')
+        AND has_column_privilege(current_user, 'ops.scope_quote', 'total_quoted_hours', 'UPDATE')
         AND has_column_privilege(current_user, 'ops.scope_quote', 'is_frozen', 'UPDATE')
+        AND has_column_privilege(current_user, 'ops.scope_quote', 'frozen_at', 'UPDATE')
         AND has_table_privilege(current_user, 'ops.scope_quote_line', 'INSERT')
         AND has_table_privilege(current_user, 'ops.scope_quote_line', 'SELECT')
         AND has_table_privilege(current_user, 'ops.tasks', 'INSERT')
         AND has_table_privilege(current_user, 'ops.tasks', 'UPDATE')
         AND has_table_privilege(current_user, 'ops.tasks', 'SELECT'))                    AS materialize_write,
-       -- positive: projects — SELECT + INSERT + the COMPLETE 14 V3-9 UPDATE columns (mirrors 012 [5a] foreach)
+       -- positive: projects — SELECT (table) + the 15 column-scoped INSERT cols + the 14 UPDATE cols (has_column_privilege)
        (has_table_privilege(current_user, 'ops.projects', 'SELECT')
-        AND has_table_privilege(current_user, 'ops.projects', 'INSERT')
+        AND NOT EXISTS (SELECT 1 FROM unnest(ARRAY[
+              'project_number','project_name','status','quote_revision','contract_value','description',
+              'source_client_name','source_site_name','source_site_address','source_site_city',
+              'source_site_state','source_site_zip','source','legacy_source_id','provenance_status']) c
+            WHERE NOT has_column_privilege(current_user, 'ops.projects', c, 'INSERT'))
         AND NOT EXISTS (SELECT 1 FROM unnest(ARRAY[
               'project_name','status','quote_revision','contract_value','description','source_client_name',
               'source_site_name','source_site_address','source_site_city','source_site_state','source_site_zip',
               'source','provenance_status','updated_at']) c
             WHERE NOT has_column_privilege(current_user, 'ops.projects', c, 'UPDATE'))) AS projects_write,
-       -- positive: apparatus — SELECT + INSERT + the 3 approve-freeze UPDATE columns
+       -- positive: apparatus — SELECT (table) + the 11 column-scoped INSERT cols + the 3 UPDATE cols (has_column_privilege)
        (has_table_privilege(current_user, 'ops.apparatus', 'SELECT')
-        AND has_table_privilege(current_user, 'ops.apparatus', 'INSERT')
+        AND NOT EXISTS (SELECT 1 FROM unnest(ARRAY[
+              'scope_id','task_id','apparatus_designation','apparatus_type','equipment_model_ref',
+              'drawing_reference','quoted_hours','quote_line_id','source','legacy_source_id','provenance_status']) c
+            WHERE NOT has_column_privilege(current_user, 'ops.apparatus', c, 'INSERT'))
         AND has_column_privilege(current_user, 'ops.apparatus', 'quoted_revenue', 'UPDATE')
         AND has_column_privilege(current_user, 'ops.apparatus', 'provenance_status', 'UPDATE')
         AND has_column_privilege(current_user, 'ops.apparatus', 'updated_at', 'UPDATE'))  AS apparatus_write,
@@ -495,12 +516,15 @@ SELECT (current_user = 'ops_intake_writer')                                     
              'ops.discard_draft_billing_application(uuid,uuid)',
              'ops.void_billing_application(uuid,uuid,text)']) s
            WHERE has_function_privilege(current_user, to_regprocedure(s), 'EXECUTE')) AS no_mutation_exec,
-       -- negative: no status write; no I/U/D on the 5 recognition/billing tables; no forbidden DELETE (mirror 012 [5a])
+       -- negative: no apparatus.status write; no I/U/D on the 5 recognition/billing tables (I/U via
+       -- has_any_column_privilege); no DELETE on the writable tables except scopes (mirror 012 [5a])
        (NOT has_column_privilege(current_user, 'ops.apparatus', 'status', 'INSERT')
         AND NOT has_column_privilege(current_user, 'ops.apparatus', 'status', 'UPDATE')
         AND NOT EXISTS (SELECT 1 FROM unnest(ARRAY['ops.revenue_recognition_event','ops.completion_attestation',
               'ops.billing_application','ops.billing_application_line','ops.billing_application_draft']) t
-            CROSS JOIN unnest(ARRAY['INSERT','UPDATE','DELETE']) p WHERE has_table_privilege(current_user, t, p))
+            WHERE has_any_column_privilege(current_user, t, 'INSERT')
+               OR has_any_column_privilege(current_user, t, 'UPDATE')
+               OR has_table_privilege(current_user, t, 'DELETE'))
         AND NOT EXISTS (SELECT 1 FROM unnest(ARRAY['ops.projects','ops.apparatus','ops.tasks',
               'ops.scope_quote','ops.scope_quote_line']) t WHERE has_table_privilege(current_user, t, 'DELETE'))) AS no_forbidden_write
 """
@@ -514,6 +538,7 @@ def health_ready(response: Response):
     import psycopg
     from config import engine
     from services.work.idempotency import idempotency_cache
+    from pm_ops_p0.binding import bind_target, TargetBindingError  # shared P0-A/P0-E target-binding (rev5.3 finding 2)
     log = logging.getLogger("health.ready")
     checks: dict[str, dict] = {}; ok = True
     def _sql(name: str, sql: str) -> None:
@@ -535,13 +560,22 @@ def health_ready(response: Response):
     _sql("pm_idempotency_keys", "SELECT to_regclass('pm.idempotency_keys') IS NOT NULL")
     # ops: probe each serving-role DSN for its FULL operational contract (identity + capability matrix per
     # 012). One query per DSN; returns named booleans only (stable labels; no raw DB detail).
+    # rev5.3 finding 2: bind BOTH serving DSNs to the PRODUCTION project before probing — a dev/branch DSN
+    # carrying the same roles+migrations would otherwise satisfy every matrix predicate while the prod
+    # service reads/writes the wrong project. bind_target() is the SHARED P0-A discipline (conninfo_to_dict
+    # parse; reject hostaddr/service/multi-host; anchored ref == fxoyniqnrlkxfligbxmg; scrub PG* env;
+    # sslmode=verify-full; post-connect Connection.info re-check), imported from the P0-A tooling module.
     def _probe_ops(name: str, dsn_env: str, contract_sql: str) -> None:
         nonlocal ok
         dsn = os.getenv(dsn_env)
         if not dsn:
             checks[name] = {"ok": False, "code": "dsn_unset"}; ok = False; return
         try:
-            with psycopg.connect(dsn, connect_timeout=5) as conn, conn.cursor() as cur:
+            params = bind_target(dsn, expect_ref="fxoyniqnrlkxfligbxmg")  # raises TargetBindingError on mismatch
+        except TargetBindingError:
+            checks[name] = {"ok": False, "code": "dsn_not_bound_to_project"}; ok = False; return
+        try:
+            with psycopg.connect(**params, connect_timeout=5) as conn, conn.cursor() as cur:
                 cur.execute(contract_sql)
                 cols = [d.name for d in cur.description]; vals = cur.fetchone()
             matrix = {c: bool(v) for c, v in zip(cols, vals)}
@@ -586,7 +620,7 @@ async def health_ready(response: Response):
     return {"status": "ready" if ok else "not_ready", "checks": checks}
 ```
 
-**Behavior-change note.** control-plane `/health/ready` currently returns **200-always**; P0-E makes it **503 on not-ready**. Liveness paths unchanged (remain the Render health-check), so a 503 readiness does **not** cycle the service. The ops probes verify each mounted serving role against its **full operational contract from migration 012** (rev5.1): identity (`current_user`), posture (NOSUPERUSER/NOBYPASSRLS + **not** a member of `ops_fn_owner`), `ops` schema `USAGE`, the **route-critical positive capability** each role needs (`ops_api`: `EXECUTE` on the 4 recognition fns + `SELECT` on the worklist/rollup views; `ops_intake_writer`: the full intake+materialize write set — `INSERT/UPDATE/SELECT ops.intake_runs`, the source-file/findings/scopes/scope_quote/scope_quote_line/tasks writes, projects/apparatus **column** writes, core reads, and the **F-012-1 helper** `EXECUTE`), and **complete negative** guards mirroring 012 (`ops_api` denied all 5 billing fns + fabricate/scope writes + the helper; `ops_intake_writer` denied **all 9** mutation fns + status/recognition/billing writes + forbidden DELETEs; neither SELECTs `ops.persons`, which is `ops_fn_owner`-only. The `public.apparatus` write exposure is **P0-C's** concern and is deliberately **not** checked here — including it would false-503 the ops roles before P0-C runs, since they inherit any PUBLIC grant, coupling two independent actions). A readiness green therefore means every POST path's actual permission is present — not merely that one relation is readable. Failures surface as **stable codes** (`connection_or_query_failed`, `dsn_unset`, `check_failed`), never raw DB text (finding 5); detail is logged server-side. (Each call opens two short-lived psycopg connections at `connect_timeout=5`; on a degraded DB the two connects can sum to ~10s — repoint any tight-timeout external monitor to `/health`.) **Consequence (see §11):** with `pm.idempotency_keys` **and** `work.*` both absent in prod today, P0-E control-plane readiness will correctly report **not_ready** — a truthful signal that the control-plane PM/work backend is not fully provisioned in prod (consistent with High-1's empty `work` schema and High-2's 500s). If any external monitor treats `/health/ready` non-200 as hard-down, repoint it to `/health` before P0-E.
+**Behavior-change note.** control-plane `/health/ready` currently returns **200-always**; P0-E makes it **503 on not-ready**. Liveness paths unchanged (remain the Render health-check), so a 503 readiness does **not** cycle the service. The ops probes verify each mounted serving role against its **full operational contract from migration 012** (rev5.1): identity (`current_user`), posture (NOSUPERUSER/NOBYPASSRLS + **not** a member of `ops_fn_owner`), `ops` schema `USAGE`, the **route-critical positive capability** each role needs (`ops_api`: `EXECUTE` on the 4 recognition fns + `SELECT` on the worklist/rollup views; `ops_intake_writer`: the full intake+materialize write set — `INSERT/UPDATE/SELECT ops.intake_runs`, the source-file/findings/scopes/scope_quote/scope_quote_line/tasks writes, projects/apparatus **column** writes, core reads, and the **F-012-1 helper** `EXECUTE`), and **complete negative** guards mirroring 012 (`ops_api` denied all 5 billing fns + fabricate/scope writes + the helper; `ops_intake_writer` denied **all 9** mutation fns + status/recognition/billing writes + forbidden DELETEs; neither SELECTs `ops.persons`, which is `ops_fn_owner`-only. The `public.apparatus` write exposure is **P0-C's** concern and is deliberately **not** checked here — including it would false-503 the ops roles before P0-C runs, since they inherit any PUBLIC grant, coupling two independent actions). **Column-scoped grants (`projects`/`apparatus` INSERT, `scope_quote` UPDATE) are checked with `has_column_privilege`** — `has_table_privilege` returns false for column-only grants (IRP MEDIUM), so a table-level check would false-503; **forbidden-write negatives use `has_any_column_privilege`** for I/U to catch accidental column-level drift. **Each serving DSN is bound to the prod project via `bind_target` before probing** (rev5.3), so a dev/branch DSN cannot satisfy the matrix for the wrong project. A readiness green therefore means every POST path's actual permission is present — not merely that one relation is readable. Failures surface as **stable codes** (`connection_or_query_failed`, `dsn_unset`, `check_failed`), never raw DB text (finding 5); detail is logged server-side. (Each call opens two short-lived psycopg connections at `connect_timeout=5`; on a degraded DB the two connects can sum to ~10s — repoint any tight-timeout external monitor to `/health`.) **Consequence (see §11):** with `pm.idempotency_keys` **and** `work.*` both absent in prod today, P0-E control-plane readiness will correctly report **not_ready** — a truthful signal that the control-plane PM/work backend is not fully provisioned in prod (consistent with High-1's empty `work` schema and High-2's 500s). If any external monitor treats `/health/ready` non-200 as hard-down, repoint it to `/health` before P0-E.
 
 **Preconditions.** None. **Rollback.** Revert. **Verification (GET-only).** `/health` → 200 both apps; `/health/ready` → 200 when contracts present, 503 with a per-check body otherwise. **Import-smoke test** (both apps): subprocess `from <module> import app` under prod env exits 0.
 
