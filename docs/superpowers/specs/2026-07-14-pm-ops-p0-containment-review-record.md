@@ -3,6 +3,7 @@
 > Companion to `docs/superpowers/specs/2026-07-14-pm-ops-p0-containment-design.md`.
 > Design-only lane. All review passes are **read-only**; no production access, SQL, deploy, secret change,
 > connectivity repair, push, or PR was performed to produce this record.
+> **Data sources (rev5.1 finding 2 clarification).** The original audit (rev1–rev4) used authorized **read-only prod** SELECTs via the hash-named MCP (`bb4a07f4`, this lane). The **rev5** grant/privilege checks were newly queried during rev5 against the **`ops_dev` DEV database** (`mcp__ops-dev`, read-only, 2026-07-14) — which mirrors the ratified `012` role boundary — **NOT** production (`fxoyniqnrlkxfligbxmg`). **No production access occurred during rev5 or rev5.1.** The "live catalog / live grants" phrasing in the initial §3 was imprecise (it meant the live *dev* DB) and is corrected below.
 
 **Subject:** PM/Ops Phase-0 emergency-containment design packet.
 **GATE_SHA (platform `main`, re-derived):** `270ca6e16a9cd3cfdd0d64b67e4b6e247f24139f` (unchanged through rev5).
@@ -31,7 +32,7 @@ The operator ratified all seven findings with explicit rulings; each is folded i
 | # | Sev | Finding | Operator ruling | Fold (design ref) |
 |---|---|---|---|---|
 | 1 | High | `SupabaseStore.reset()` executable outside production (env-conditional guard) | Make it **unconditionally refuse**; reset/reseed only via `MemoryStore` | §3 Change 3 — unconditional `raise`; test `test_supabase_reset_always_raises` |
-| 2 | High | Readiness probed `config.engine`, not the real ops role DSNs | Probe **actual `OPS_API_DSN` / `OPS_INTAKE_WRITER_DSN`** identities, contracts, permissions | §6 `_probe_role` (psycopg per-DSN; `current_user`=`ops_api`/`ops_intake_writer`, `ops` USAGE + `SELECT ops.persons`, not-superuser, no `UPDATE public.apparatus`) |
+| 2 | High | Readiness probed `config.engine`, not the real ops role DSNs | Probe **actual `OPS_API_DSN` / `OPS_INTAKE_WRITER_DSN`** identities, contracts, permissions | §6 per-DSN operational matrix (initial rev5 used a single read relation; **rev5.1 (§4, F1)** expanded to identity + posture + non-`ops_fn_owner` + `ops_api` EXECUTE 4 recognition fns / `ops_intake_writer` INSERT+SELECT `ops.intake_runs` + negative guards; **not** `ops.persons`) |
 | 3 | High | P0-A not an authoritative snapshot (no RO txn; ACL-only enumeration; regex-only SECURITY DEFINER discovery) | Guarded **`REPEATABLE READ, READ ONLY`** txn; **effective-role closure**; **fail-closed** function/dependency discovery | §2 SQL — txn guard + fingerprint, (b)/(b2) principal×priv + `pg_auth_members` closure, (e) `pg_depend` + dynamic-SQL fail-closed |
 | 4 | High | Future-function hardening internally contradictory (objective vs residual; ineffective per-schema PUBLIC revoke) | **Narrow 014 to existing-exposure containment**; remove the "best-effort PUBLIC" wording; forward-function posture = **separately measured finish line**, does not delay 014 | §4 objective + 014 stmt 3 (ADP functions `FROM anon, authenticated`) + 015 + §11.6 |
 | 5 | Med | Actions "independent" but actually ordered; post-P0-D `/reset` returns 503 not 404 | Replace independence claims with an explicit **DAG** and **phase-aware `/reset` acceptance** | §1 DAG + phase-aware acceptance; §3 OpenAPI-absence invariant; §9 |
@@ -54,17 +55,55 @@ The operator ratified all seven findings with explicit rulings; each is folded i
 
 | Source | Sev | Finding | Status | Disposition |
 |---|---|---|---|---|
-| Codex | P1/HIGH | `has_table_privilege('public', …)` aborts the P0-A snapshot ("role public does not exist") | **REFUTED** | Direct catalog verification on live PG: `has_table_privilege('public','pg_class','SELECT')`→True, `…('public','pg_statistic','SELECT')`→False. `'public'` is a valid special user name = PUBLIC pseudo-role; query (b) & (e) do NOT abort. Independently refuted by Lens B. **No change.** |
+| Codex | P1/HIGH | `has_table_privilege('public', …)` aborts the P0-A snapshot ("role public does not exist") | **REFUTED** | Direct catalog verification on the `ops_dev` **DEV** database (`mcp__ops-dev`, read-only): `has_table_privilege('public','pg_class','SELECT')`→True, `…('public','pg_statistic','SELECT')`→False. `'public'` is a valid special user name = PUBLIC pseudo-role; query (b) & (e) do NOT abort. Independently refuted by Lens B. **No change.** |
 | Codex | P2/MED | Review-record results not present in the reviewed commit | **VALID** | This §3 (commit B finalizes the record). |
 | Lens A | — | P0-C SQL (5 sub-checks: RPC direct-revoke completeness vs source lineage, table 7-verb + MAINTAIN, assertions 4a/4b/4c/5, objective honesty, 015 guard) | **clean** (all REFUTED_OK) | Confirms P0-C correctness; 3 RPC signatures match source-lineage CREATE defs. No change. |
 | Lens B | MEDIUM | `pg_depend` discovery is **inert for PL/pgSQL** bodies → `depends_on_targets=false` for all 3 RPCs; the design's baseline expected `true` (spurious-drift risk). Join also missing `refclassid`. | **CONFIRMED** | **Folded §2:** added `refclassid='pg_class'::regclass`; reframed `pg_depend` as supplementary/inert-for-plpgsql; `name_refs_targets` is the reliable primary; baseline corrected (`depends_on_targets=false` expected). No security miss (name-match still catches all 3). |
 | Lens B | LOW | "fail-closed" overstated — indirect-write-via-helper (no name token, no EXECUTE) and non-`public` exposed-schema secdef writers are not flagged | **PLAUSIBLE** | **Folded §2:** disclosed the residual coverage gap; reframed as "fail-closed-**leaning**"; noted P0-A output is operator-reviewed evidence, not an automated gate. |
 | Lens C | LOW | P0-B silently breaks the dev **persisted-validation harness** (`run_persisted_validation.py`→`validate.py` POSTs `/reset`); §3 caller-analysis omitted it | **CONFIRMED** | **Folded §3:** "Dev-tooling impact (disclosed)" — intended consequence; harness must reseed via a direct DB helper. No prod impact. |
 | Lens C | NOTE | `control_plane_router` `/api/v1/control-plane/*` POST mutations not covered by P0-D prefixes | **PLAUSIBLE** | **Surfaced §11.7** as an operator scope decision (ops narrowing itself misses nothing — `ops_router` is GET-only). |
-| Lens D | **HIGH** | P0-E probed `SELECT ops.persons`, which **neither** `ops_api` nor `ops_intake_writer` holds (grant is `ops_fn_owner`-only) → **false-503** of a healthy service; "greening" it would breach the ratified boundary | **CONFIRMED** (verified live: both `ops.persons`→False; `ops.v_completion_recognition_worklist`→True for api, `ops.intake_runs`→True for writer) | **Folded §6:** per-role least-privilege contracts — `ops.v_completion_recognition_worklist` (ops_api), `ops.intake_runs` (writer). |
+| Lens D | **HIGH** | P0-E probed `SELECT ops.persons`, which **neither** `ops_api` nor `ops_intake_writer` holds (grant is `ops_fn_owner`-only) → **false-503** of a healthy service; "greening" it would breach the ratified boundary | **CONFIRMED** (verified on `ops_dev` DEV DB, read-only: both `ops.persons`→False; `ops.v_completion_recognition_worklist`→True for api, `ops.intake_runs`→True for writer) | **Folded §6:** per-role least-privilege contracts — later expanded to the full operational matrix in rev5.1 (§4, F1). |
 | Lens D | NOTE | Two sequential `connect_timeout=5` probes can sum to ~10s on a degraded DB | **PLAUSIBLE** | **Noted §6** behavior note (repoint tight-timeout monitors to `/health`). Role literals + psycopg3 usage independently confirmed grounded. |
 | Lens E | NOTE | §9 acceptance P0-B row retained pre-rev5 wording ("reset() guard") | **PLAUSIBLE** | **Folded §9** — unconditional `reset()` raise. All other coherence checks (DAG↔§9, path resolution, dispositions accuracy, no dangling ref, no format breakage) REFUTED_OK. |
 
 **Cross-engine delta.** Codex surfaced the process gap (P2, this record) but its one code-level HIGH (P1) was a **false positive** refuted by direct catalog verification (and by Lens B). The **substantive defects were caught by the Claude lenses, not Codex** — the HIGH P0-E contract error (Lens D), the MEDIUM `pg_depend` inertness (Lens B), and the dev-harness break (Lens C). Both engines independently affirmed the P0-C SQL (Lens A clean; Codex raised nothing on §4) — genuine convergence on the highest-risk change.
 
 **Verdict — rev5 focused review COMPLETE.** 1 HIGH + 1 MEDIUM + 2 LOW + 2 NOTE folded; 1 Codex HIGH refuted with evidence; Lens A clean. **No finding overturns the design's structure or any of the seven operator rulings.** After folds, the packet is internally consistent and grounded against the host at `6f4b68d4`. **Design-only throughout — no push, no PR, no production access/SQL/deploy/secret-change/connectivity-repair. P0-A..E remain separately gated; this record and rev5 authorize no execution.**
+
+---
+
+## 4. rev5.1 — operator review corrections + narrow re-review
+
+The operator issued a **HOLD-for-rev5.1** verdict (6 findings) after rev5. rev5.1 is one **docs-only** correction commit; each finding is folded and mirrored in the design's rev5.1 revision note.
+
+| # | Sev | Finding | Ruling / correction | Fold (design ref) |
+|---|---|---|---|---|
+| F1 | High | P0-E verified one readable relation per role, not the operational contract — readiness could green while every POST fails (writer needs INSERT/UPDATE; api needs EXECUTE on 4 recognition fns) | Reuse migration `012`'s positive+negative assertions: writer intake writes, api recognition EXECUTE, no `ops_fn_owner` membership, no superuser/bypass, forbidden-write checks | §6 `_OPS_API_CONTRACT_SQL` / `_OPS_WRITER_CONTRACT_SQL` full matrix |
+| F2 | High | Review record contradicts the production-access hold ("no prod access" vs "live catalog/grants") | Record actual authorization/timestamp/source; the rev5 checks were **`ops_dev` DEV DB** (`mcp__ops-dev`, read-only, 2026-07-14), **not** prod — no breach; wording corrected | §3 rows + this record's header |
+| F3 | Med | P0-A "project fingerprint" is only a schema fingerprint — a clone/branch passes | Require `--expect-project-ref fxoyniqnrlkxfligbxmg`; value-silently validate DSN host/pooler user; in-band db/user markers | §2 Deliverable + guard comment |
+| F4 | Med | `/api/v1/control-plane/*` are NOT unauthenticated — the router applies `Depends(get_current_user)` (401 on missing bearer); should stay out of P0-D | **Do not add the prefix**; rewrite §11.7 as an authenticated, separately-governed surface; retract the rev5 surfacing | §11.7 rewritten |
+| F5 | Med | Readiness returns `str(exc)` — leaks hosts/roles/schema | Log detail server-side; return stable codes (`connection_failed`/`contract_missing`) | §6 both endpoints (`code:` fields, server-side `log.exception`) |
+| F6 | Low | Review record retains stale `SELECT ops.persons` disposition wording | Correct it | §2 disposition row + §3 rows |
+
+**No new defect** was found by the operator in the urgent three-RPC revocation or the `014`/`015` authority split.
+
+### Narrow cross-engine re-review (per operator directive: P0-A target binding + P0-E complete permission matrix only)
+
+**Method:** Codex `gpt-5.5` (`codex exec review --uncommitted`) + focused Claude lens(es), read-only, over the rev5.1 working tree (base `a3125580`), scoped strictly to the two changed areas.
+
+**Consolidated narrow findings & dispositions (all within the two scoped areas):**
+
+| Source | Sev | Finding | Status | Disposition |
+|---|---|---|---|---|
+| Codex | P1/HIGH | Writer `write_contract` omits `UPDATE ops.intake_runs` (012 grants `insert, update, select`) — could green while UPDATE-run-status POSTs fail | **CONFIRMED** | **Folded:** added `UPDATE` to `write_contract`. |
+| Codex | P1/HIGH | `no_recognition_exec` checks only 2 of the 4 recognition fns — an over-granted writer on `revoke`/`approve_and_recognize` slips through | **CONFIRMED** | **Folded:** now denies all 4 recognition fns. |
+| P0-E lens | LOW | Same 2-of-4 recognition-fn coverage asymmetry | **PLAUSIBLE** (converges with Codex P1b) | **Folded** (all 4). |
+| P0-E lens | NOTE×5 | 4 recognition-fn signatures byte-for-byte match 012; enum-qualified `approve_and_recognize` resolves; writer positive+negatives don't false-503 a correct role; posture/`pg_has_role`/`has_function_privilege` are readable from the role's own session; **both readiness endpoints leak no host/role/schema/DSN string (finding 5 clean)** | **REFUTED_OK** | Confirms the matrix + finding-5 error handling. |
+| P0-A lens | MEDIUM | Pooler branch validated user `postgres.<ref>` but not host; substring match is suffix-injectable (`db.<ref>.supabase.co.evil.tld`) | **PLAUSIBLE** | **Folded:** structured/anchored DSN parse + pooler-host `*.pooler.supabase.com` requirement. |
+| P0-A lens | LOW | Value-silence scoped to pre-connect refusal only; psycopg connect-path `OperationalError` can leak host/port/user | **PLAUSIBLE** | **Folded:** value-silence extended end-to-end (stable code + server-side log on the connect/query path). |
+| P0-A lens | NOTE | In-band markers can't corroborate the project on managed Supabase (`current_database()`='postgres'; `inet_server_addr()`=node IP; `current_user` generic) — DSN parse is single-point-of-truth | **PLAUSIBLE** | **Folded:** disclosed; residual accepted. |
+| P0-A lens | NOTE | Core of finding 3 (fingerprint-secondary, value-free refusal) | **REFUTED_OK** | Direction stands. |
+
+**Cross-engine delta.** Codex and the P0-E lens **converged** on writer-contract completeness (add `UPDATE`; deny all 4 recognition fns) — the two P1s. The P0-A lens (Claude) independently hardened the DSN binding (structured parse, pooler-host, end-to-end value-silence, marker disclosure) that Codex did not examine. The exec-contract signatures, enum resolution, and finding-5 leak-freedom were affirmed by the Claude P0-E lens.
+
+**Verdict — narrow re-review COMPLETE.** The two scoped areas were checked by both engines; the review surfaced targeted refinements (Codex 2× P1 + three P0-A hardenings), **all folded into this same rev5.1 commit**. After folds, the P0-A target binding and the P0-E full permission matrix are complete and grounded against migration `012`. Per the operator directive, **the audit loop stops here.** **Design-only throughout — no push, no PR, no production/prod-DB access, SQL, deploy, secret-change, or connectivity-repair. P0-A..E remain separately gated; rev5.1 authorizes no execution.**
