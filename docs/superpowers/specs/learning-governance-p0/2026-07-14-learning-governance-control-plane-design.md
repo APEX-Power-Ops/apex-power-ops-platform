@@ -22,6 +22,9 @@ release.
 - ET-017 / `ET-INS-PD` and ET-028 / `ET-SYS-MTSC` remain parked.
 - Existing untracked notes and external workrepo artifacts are evidence inputs,
   not canonical gate state.
+- The Windows Box tree is reachable from Olares through the verified read-only
+  mapping in `SOURCE-ACCESS-AND-CUSTODY-MAP.md`; reachability does not authorize
+  source-body access or resolve any source-specific gate.
 
 ## Proposed Control Plane
 

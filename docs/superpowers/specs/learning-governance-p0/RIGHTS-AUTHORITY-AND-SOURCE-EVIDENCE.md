@@ -25,6 +25,18 @@ The checksum proves byte correspondence, not signer authentication. The operator
 must accept the policy bundle as internal authority evidence. The signature image
 must not be copied into a public or broadly accessible repository.
 
+## Source Access Surface
+
+`SOURCE-ACCESS-AND-CUSTODY-MAP.md` records the verified read-only alias between
+the Windows Box tree and `/mnt/apex-platform-ro`. Metadata-only inspection
+confirmed the expected workrepo, source-domain directory, and six Stage 0
+artifact filenames. No source or artifact bodies were opened.
+
+The mount establishes availability for an admitted metadata observation. It is
+not lawful-access evidence, a license, a source-specific rights decision, a
+content-integrity check, or authoring authority. The source-register snapshot
+hash above remains unchanged by this separate location map.
+
 ## Current Register Census
 
 The snapshot contains 12 rows over the exact ET-010..014 cohort:

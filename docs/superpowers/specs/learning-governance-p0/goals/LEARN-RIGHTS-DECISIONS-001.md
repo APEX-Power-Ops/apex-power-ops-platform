@@ -19,6 +19,8 @@ bodies.
 
 - inspect register fields, official rights metadata, access records, hashes, and
   custody references admitted by the goal;
+- use the verified Olares read-only mount for admitted path, filename, stat, hash,
+  and control-field observations without opening source bodies;
 - prepare source-specific decision packets;
 - identify missing evidence and replacement-source needs; and
 - obtain rights-authority dispositions.
@@ -26,6 +28,7 @@ bodies.
 ## Forbidden
 
 - opening quarantined or derived learning bodies;
+- writing, renaming, deleting, or generating files on the read-only source mount;
 - copying, paraphrasing, authoring, or rendering learner content;
 - treating the standing policy as source-specific permission;
 - changing source classifications without the rights-authority decision; and

@@ -20,8 +20,9 @@ Read these in order before beginning a goal:
 5. `PROGRAM-MANAGER-OPERATING-INSTRUCTIONS.md`
 6. `CONTINUOUS-GOAL-LOOP.md`
 7. `ROADMAP-AND-CURRENT-GOALS.md`
-8. the active goal record under `goals/`
-9. every evidence and decision reference named by that goal
+8. `SOURCE-ACCESS-AND-CUSTODY-MAP.md` when a goal names Windows/Box or source-domain inputs
+9. the active goal record under `goals/`
+10. every evidence and decision reference named by that goal
 
 Chat summaries, sample GO text, agent recommendations, and memory are context,
 not authorization. The tracked goal record and operator decision are the gate.
@@ -41,6 +42,11 @@ Before the first edit or external access, report and verify:
 - whether the requested work includes source bodies, learner data, external
   systems, imports, renders, deployments, or releases.
 
+For a goal that names `/mnt/apex-platform-ro`, also verify that the mounted
+source is `//100.64.0.4/APEX-Platform-RO`, the effective CIFS mount includes
+`ro`, and the translated path resolves to the same custody identity named by the
+goal. Do not probe writability by creating a file.
+
 If any required field is absent or conflicting, stop at checkpoint `CP1` and
 return the gap to the Program Manager.
 
@@ -50,6 +56,7 @@ return the gap to the Program Manager.
 2. Assign bounded agents only after recording task ownership and conflicts.
 3. Preserve source and evidence bytes; derive working products into approved
    output roots.
+   The read-only Olares mirror is an inspection surface, never an output root.
 4. Keep unknown facts unknown. Do not infer approval from file presence, age,
    silence, or agent agreement.
 5. Validate incrementally with the narrowest relevant checks.

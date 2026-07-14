@@ -21,10 +21,13 @@ Status: CP5 RECOMMENDATION - OPERATOR CP6 DECISION REQUIRED
 - Independent audit scope: authority separation, scope compliance,
   evidence/version binding, reserved-decision holds, checkpoint completeness,
   unique goal identity, cohort/parked-state fidelity, and false-green routes
-- Reviewed packet digest:
-  `2b5d308d02e66c867c1f583600abd434aa0c45e34e68caecd1d058bd509acc7b`
-- Digest method: SHA-256 over the sorted `sha256sum` manifest of every packet
-  file except this CP4/CP5 review record
+- Reviewed packet manifest:
+  `reviews/LEARN-GOV-P0-001-REVIEWED-PACKET.sha256`
+- Manifest SHA-256:
+  `5c69fd7f8a08434d48a4916e7d38c8277f000b5bbddc9c74d906b751ad2123df`
+- Manifest method: sorted lines of `<file_sha256><two spaces><packet-relative
+  path>` for every packet file except this review record and the manifest itself;
+  verify from the packet root with `sha256sum -c`.
 - Review mode: documentation-only, findings-first, no external-system access
 
 The configured `gpt-5.6-sol` model could not be used by the installed Codex CLI
@@ -52,6 +55,28 @@ An earlier independent-audit attempt, Codex CLI run
 `019f612b-6f42-7cf2-846f-cbf9f8e9ac03`, failed closed because its read-only
 sandbox could not continue filesystem reads. It issued no acceptance and is not
 the appointed audit result.
+
+## Source Access Amendment
+
+A post-review documentation amendment records the verified read-only mapping
+from the Windows Box source root to `/mnt/apex-platform-ro`. It updates executor,
+rights-evidence, rights-goal, and Program Manager instructions and adds a
+canonical source access/custody map.
+
+The amendment does not change the source register, its snapshot hash, the active
+or parked cohort, source classifications, allowed body-access classes, or any
+owner-return state. Metadata-only verification observed directories and six
+Stage 0 filenames without opening artifact or source bodies.
+
+Focused non-authoring review: Codex CLI `gpt-5.5` run
+`019f6136-b7bc-7da0-b050-5b6c92b16d8c`. The review found one P2 in the
+aggregate-digest description and independently found the path mapping,
+read-only boundary, permissions, six-track rule, and unchanged source-register
+hash clean. The P2 disposition is recorded below. Focused re-verification:
+Codex CLI `gpt-5.5` run `019f6139-f783-7b01-a03e-7a7e608f5363`, clean. It
+verified all 28 manifest entries, the manifest's recorded hash and exclusions,
+the unchanged source-register hash, and the unchanged source-access permission
+boundary without opening the mount.
 
 ## Findings And Dispositions
 
@@ -93,6 +118,18 @@ incomplete and created a false-green route to CP6.
 
 Disposition: fixed. The independent auditor's exact run ID, model, scope, and
 result are now recorded above. The goal record binds the same identity.
+
+### P2: Aggregate Packet Digest Was Not Reproducible
+
+The earlier review record named a digest algorithm but did not fully specify
+path normalization. A second valid `sha256sum` invocation therefore produced a
+different aggregate value.
+
+Disposition: fixed. The packet now contains an explicit sorted checksum
+manifest over 28 packet-relative files. The review record and README name the
+manifest, exclude the manifest and review record from the reviewed set, record
+the manifest's own SHA-256, and provide the exact `sha256sum -c` verification
+context. All 28 entries verify.
 
 ## Authority And Scope Check
 

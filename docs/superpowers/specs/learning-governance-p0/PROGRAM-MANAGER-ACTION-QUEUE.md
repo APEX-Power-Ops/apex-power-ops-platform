@@ -13,6 +13,11 @@ or release. The critical path is governance and authority, not content volume.
 The next useful work is divided into one serial control-plane path and several
 parallel owner-return paths.
 
+The verified `/mnt/apex-platform-ro` mount removes the former Olares path-
+availability blocker for metadata-only source and artifact inventory. It does
+not remove the rights, body-access, SME, privacy, platform, render, release, or
+goal-authorization gates.
+
 ## Critical Path
 
 | Order | Goal | Why it is next | Entry condition |
