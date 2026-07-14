@@ -70,3 +70,69 @@ Codex round 3 (`694abe62`): **clean, no findings**. Offline suite **38/38**, `ru
 **Operator to confirm live at the evidence GO (unchanged):** P6 (`verify-full`/`sslrootcert` on the direct host) · P7 (Supavisor transaction-mode `BEGIN…COMMIT`). Run **only from clean merged `main`** (now enforced by the tooling).
 
 **Verdict (round 2): hardening tranche complete; ready for the governed PR + merge, then STOP for the operator's separate `P0-A READ-ONLY EVIDENCE` GO.** That GO authorises running `preserve_evidence.py` against production read-only; it is not granted by this review.
+
+---
+
+## Round 3 — operator post-merge review (runtime integrity) + hardening + cross-engine
+
+**Trigger.** After PR #98 merged (`cf1c72f3`), the operator ran an independent post-merge review, **HELD** `P0-A READ-ONLY EVIDENCE` again, and issued `GO PM-OPS-P0A-RUNTIME-INTEGRITY ONLY` with 5 findings — target-binding still sound; the hold is runtime integrity + governance. Design-only, no production access. Branch `pm-ops/p0a-runtime-integrity` off `cf1c72f3`; 19 commits: `f03806c4` (F1–F4) → `ad13fc3c` (F5) → `1eff8890` (cross-engine panel hardening) → 16 convergence commits `43efa331`..`07eb711c` (iterative Codex xhigh rounds; log below).
+
+### Operator findings (5) + dispositions
+| ID | Sev | Finding | Disposition |
+| --- | --- | --- | --- |
+| F1 | High | governed-runtime check bypassable by an untracked import-shadow module (imported at load, before validation; `--untracked-files=no` hid it) | **Fixed `f03806c4`**: strip script dir from `sys.path`; DEFER `pm_ops_p0.binding`/`psycopg` import into `_load_binding()` past the gate; pristine check includes untracked (`git status --porcelain`) |
+| F2 | High | "current merged main" not enforced — an ancestor could self-attest | **Fixed `f03806c4`**: fresh `git fetch origin main` + `HEAD == origin/main == --expect-repo-sha` by equality (not ancestor) |
+| F3 | Med | admin DB role caller-selectable (`--expect-db-role`) | **Fixed `f03806c4`**: flag removed; `EXPECTED_DB_ROLE` source-pinned to `postgres` |
+| F4 | Med | runbook exported the DSN into the operator shell | **Fixed `f03806c4`**: `infra/infisical/inject.sh prod -- …` child-only injection; no `export` (matches `CENSUS_RUNBOOK`) |
+| F5 | Med | nine-category closeout was a manual checklist with no finalizer | **Fixed `ad13fc3c`**: `finalize_closeout.py` — fail-closed, SHA-256-bound, no-clobber `closeout_index.json` |
+
+### Cross-engine review (Codex `gpt-5.5` + two adversarial opus lenses)
+Reviewed the tranche vs `origin/main`. Codex empirically verified the F2 mechanism with a live temp-git experiment (confirmed `git fetch … origin main` advances the fetched tip so an ancestor HEAD is caught). Both opus lenses were prompted to **refute**, not confirm, and did — every CONFIRMED finding was folded in `1eff8890`:
+
+| ID | Engine | Sev | Finding | Disposition |
+| --- | --- | --- | --- | --- |
+| A1 | opus-A | High | `git status --porcelain` obeyed a hostile repo-local `.git/config` `showUntrackedFiles=no`, re-hiding an untracked shadow | **Fixed `1eff8890`**: force `--untracked-files=all` + pin `-c status.showUntrackedFiles=normal` |
+| A2 | opus-A | Med-High | nothing verified WHAT `psycopg` resolved to (a tracked / `.gitignore`-hidden / PYTHONPATH shadow could still win) | **Fixed `1eff8890`** (initial belt: trusted-source assertion + scripts_dir append) — the belt itself was then iterated by the convergence rounds below until sound: `find_spec` origin vet BEFORE import (`8c72f15c`), prefix-match against real install dirs (`2a7ba02b`), user-site dropped (`20df0e35`), trust roots from `sys.*prefix` with no shadowable import (`fd74cd8a`), scripts_dir front-insert post-assert (`5e48dffd`) |
+| P1 | Codex-xhigh | High | spec `source` caller-controlled — a DB category (3/4/5/6/9) marked `operator` skipped the manifest hash binding | **Fixed `1eff8890`**: `CATEGORY_SOURCE` pins source per category → `category_source_mismatch` |
+| B-A1 | opus-B | Med | finalizer category 2 accepted ANY well-formed JSON (a saved JSON error body passed) | **Fixed `1eff8890`**: `_HTTP_REQUIRED_KEYS` require a category-2 marker (`security`/`path`) |
+| B-A2 | opus-B | Med | `00_provenance.json` presence-checked but not hash-bound | **Fixed `1eff8890`**: `_require_provenance` verifies its digest vs the manifest → `hash_mismatch` |
+| B-A3 | opus-B | Low-Med | `.json` operator artifacts (cat 7) got no content check | **Fixed `1eff8890`**: any `.json` artifact must parse → `failed_json` |
+| A6/B-caveat | opus-A/B | Low | index atomicity + tracking-ref staleness | **Fixed `1eff8890`**: read `FETCH_HEAD`; index published `partial`→hardlink→fsync-dir; manifest key by path relative to custody |
+
+**Residuals — accepted + documented (broader-compromise / operator-review scope):**
+- A rewritten `remote.origin.url` defeats the origin/main cross-check → the operator-supplied `--expect-repo-sha` (computed out-of-band from real `main` at GO time) is the **authoritative** anchor; origin/main corroborates.
+- The import-shadow class (untracked file / cwd / PYTHONPATH / user-site, incl. stdlib names) was initially a documented residual, but the convergence rounds **closed it at the interpreter level**: both CLIs refuse without `python -I` (ignores `PYTHONPATH`/user-site/unsafe `sys.path[0]`) AND a module-top preamble restricts `sys.path` to `sys.*prefix` roots before any shadowable import, AND `psycopg` is origin-vetted via `find_spec` before it executes. What remains requires writing into the interpreter install prefix (the venv itself) — a host compromise outside the checkout-write threat model.
+- Operator-artifact **semantic** binding (right evidence per category — same-host OpenAPI pairs, deployed SHA, log time window) and **tamper baseline** are operator-review scope: the finalizer binds structure + hashes at publish, not meaning (lens-B A4; confirmed at the runbook Part C drift review).
+
+**Value-silence:** re-confirmed by lens A across every new/changed path (git-state subprocess, fetch, `_load_binding` failure, finalizer) — stable codes + class-only logging; no DSN/host/password/driver text.
+
+### Convergence — iterative Codex `gpt-5.5` xhigh re-reviews (16 rounds)
+
+The tranche introduces two new fail-closed gates (the runtime-provenance guard and the finalizer), so Codex was re-run against **each hardened HEAD** until a clean pass. Every round surfaced a genuine finding — several of them regressions introduced by an earlier round's own fix — and each was folded with a regression test before the next round. Log (each row = one Codex re-review of the prior HEAD; findings folded in the named commit):
+
+| Folded in | Sev | Finding |
+| --- | --- | --- |
+| `43efa331` | P1a/P1b | HTTP shape accepted ANY one marker (`{"path":"/reset","error":…}` passed cat 2) → require ALL markers; script categories not filename-pinned (any manifest file satisfied any category) → `CATEGORY_SCRIPT_ARTIFACTS` exact-set pin |
+| `5e48dffd` | P2 | `_load_binding` APPENDED scripts_dir → a foreign PYTHONPATH `pm_ops_p0` could bind while provenance hashed this repo's `binding.py` → dedup + front-insert (post-assert); closeout index omitted the provenance/manifest hashes → recorded |
+| `8c72f15c` | P1/P2 | `import psycopg` executed BEFORE the trust assertion (a shadow runs at import time) → `find_spec` origin vet pre-import; operator artifacts indexed by BASENAME (subdir collision) → custody-relative paths |
+| `a3539fa5` | P1 | the git preflight subprocess inherited the injected app environment (DSN visible to git hooks/credential helpers) → scrubbed allow-list env for all git calls |
+| `93479a66` | P1b/P2 | the scrub still passed `GIT_DIR`/`GIT_CONFIG`/`XDG_*` redirect vars (preflight could be repointed at an attacker repo) → dropped; cat 2 accepted any route → exact `/reset`; cat 1 satisfied by ONE OpenAPI → both-host minimum |
+| `2a7ba02b` | P2 | psycopg trust used a SUBSTRING check (`/tmp/site-packages/psycopg.py` passed) → prefix-match against real install dirs; the same file listed twice satisfied a multi-capture minimum → duplicate reject |
+| `20df0e35` | P2 | `getusersitepackages()` (user-writable) was a trusted root → dropped; `/reset` evidence without a proven POST method → required |
+| `fd74cd8a` | P1 | the trust-root derivation itself imported `sysconfig`/`site` — themselves shadowable (empirically demonstrated) → roots derived from `sys.*prefix` attributes only, no import |
+| `ac6d2ad7` | P2 | an operator category was satisfiable by a manifest-listed DB artifact → `operator_artifact_is_db`; provenance was hash-checked but its CONTENT (schema-2 governed-run attestation) unverified → `provenance_attestation_invalid` |
+| `ddc19777` | P2 | alias paths (`x.json` vs `./x.json`) double-counted toward minimums → resolved-path dedup; manifest-listed files no category references were not byte-verified → full-bundle verify; symlinked provenance accepted → rejected |
+| `3b68fffd` | P2 | the cwd (`""` entry) survived the sys.path preamble; a symlinked `manifest.sha256` (hashes stored outside the bundle) accepted → both rejected |
+| `2ab86255` | P1/P3 | a PYTHONPATH-planted stdlib shadow still executed before the preamble → CLIs now REFUSE without `python -I` (isolated mode; `interpreter_not_isolated`); absolute artifact paths could bypass `relative_to` → rejected |
+| `1a8e7e0a` | P1/P2 | the preamble ran AFTER shadowable stdlib imports → moved to module top (prefix-only, `sys`+`os` only, before any other import); one operator capture satisfied two operator categories → cross-category dedup |
+| `c5623eea` | P2 | `git fetch origin main` could resolve a lightweight TAG named `main` → fetch `refs/heads/main` explicitly; cat 7/8 accepted arbitrary text/JSON → marker binding; the finalizer lacked the preamble + `-I` gate → added |
+| `dc386466` | P2 | cat 7 required only `backend` (Part B/C also define the inference `source`) → both required; cat 8 accepted a route JSON or a `GET /reset` line as access-log evidence → POST + `/reset` + not-JSON shape |
+| `07eb711c` | P2 | `_verify_manifest_bundle` byte-verified only what the manifest still LISTED — a tampered/regenerated manifest could DROP a fixed output no category references (`00_p0a_snapshot.sql`, `01_markers.txt`) and still pass → `REQUIRED_SCRIPT_ARTIFACTS` ⊆ manifest keys, else `incomplete_manifest` |
+
+**Convergence achieved:** Codex xhigh re-review of `07eb711c` — **clean** ("No actionable correctness issues"). The loop was honest-to-termination: no round was skipped, and the record was not finalized until the clean pass existed.
+
+**Value-silence:** re-confirmed across every new/changed path (git-state subprocess, fetch, `_load_binding` failure, both CLI gates, the finalizer) — stable value-free codes + class-only logging; no DSN/host/password/driver text.
+
+**Operator to confirm live at the evidence GO (unchanged):** P6 (`verify-full`/`sslrootcert` on the direct host) · P7 (Supavisor transaction-mode `BEGIN…COMMIT`). Run **only from clean merged `main`** — now enforced by pristine (untracked-inclusive, config-proof) + `HEAD == FETCH_HEAD(refs/heads/main) == --expect-repo-sha`, under `python -I`, with child-only Infisical injection.
+
+**Verdict (round 3): the runtime-integrity tranche is code-review-complete at `07eb711c`.** Offline suite **94/94**, `ruff check` + `ruff format` clean, LF-verified. All 5 operator findings fixed; the cross-engine panel (Codex + 2 adversarial opus lenses) plus 16 iterative Codex xhigh convergence rounds folded; final Codex pass clean; residuals accepted + documented above. Ready for the governed PR + squash merge (green CI, no admin bypass), then **STOP** for the operator's separate `P0-A READ-ONLY EVIDENCE` GO — which authorises running `preserve_evidence.py` against production read-only and is not granted by this review. No production access, SQL, HTTP evidence collection, deploy, secret change, or connectivity repair at any point in this tranche.
