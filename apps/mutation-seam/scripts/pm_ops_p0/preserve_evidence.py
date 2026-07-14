@@ -385,13 +385,14 @@ def _trusted_module_dirs() -> tuple[str, ...]:
         value = paths.get(key)
         if value:
             dirs.add(os.path.realpath(value))
-    for getter in ("getsitepackages", "getusersitepackages"):
-        try:
-            result = getattr(site, getter)()
-        except (AttributeError, TypeError):
-            continue
-        for value in [result] if isinstance(result, str) else result:
+    # the install-managed venv/system site only. NOT getusersitepackages(): the user site is
+    # user-writable and PYTHONUSERBASE-redirectable, so a planted ~/.local/.../psycopg.py must
+    # never be trusted (Codex-c9 P1).
+    try:
+        for value in site.getsitepackages():
             dirs.add(os.path.realpath(value))
+    except AttributeError:  # pragma: no cover - getsitepackages absent in some embeds
+        pass
     return tuple(dirs)
 
 

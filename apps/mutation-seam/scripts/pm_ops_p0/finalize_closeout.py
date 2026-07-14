@@ -229,12 +229,12 @@ def _validate_http_artifact(category: int, path: Path) -> None:
     if not isinstance(doc, dict) or not all(key in doc for key in required):
         raise CloseoutError("failed_http")
     if category == 2:
-        # the evidence must be the EXACT POST /reset route, not a substring match that a
-        # different route like /reset-status would satisfy (Codex-c7 P2).
+        # the evidence must be the EXACT POST /reset route (Codex-c7 P2) and must PROVE the
+        # destructive POST method -- an explicit method == POST or an OpenAPI `post` member.
+        # An unspecified method is insufficient for the /reset route state (Codex-c9 P2).
         if doc.get("path") != "/reset":
             raise CloseoutError("failed_http")
-        method = doc.get("method")
-        if method is not None and str(method).upper() != "POST":
+        if str(doc.get("method", "")).upper() != "POST" and "post" not in doc:
             raise CloseoutError("failed_http")
 
 

@@ -43,7 +43,7 @@ SCRIPT_ARTS = {
 OPERATOR_ARTS = {
     "openapi_seam.json": b'{"openapi": "3.1.0", "paths": {}}\n',
     "openapi_control.json": b'{"openapi": "3.1.0", "paths": {}}\n',
-    "reset_route.json": b'{"path": "/reset", "security": []}\n',
+    "reset_route.json": b'{"path": "/reset", "method": "POST", "security": []}\n',
     "backend.json": b'{"backend": "render", "source": "config"}\n',
     "reset_logs.txt": b"POST /reset 200\n",
 }
@@ -221,6 +221,16 @@ def test_finalize_category2_wrong_route_fails():
     def mutate(tmp, custody):
         (custody / "reset_route.json").write_bytes(
             b'{"path": "/reset-status", "security": []}\n'
+        )
+
+    _expect_closeout_error(_full_spec(), "failed_http", custody_mutator=mutate)
+
+
+def test_finalize_category2_missing_method_fails():
+    # Codex-c9 P2: the exact /reset path with security but NO proven POST method must fail
+    def mutate(tmp, custody):
+        (custody / "reset_route.json").write_bytes(
+            b'{"path": "/reset", "security": []}\n'
         )
 
     _expect_closeout_error(_full_spec(), "failed_http", custody_mutator=mutate)
