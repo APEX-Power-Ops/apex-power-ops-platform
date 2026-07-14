@@ -167,13 +167,34 @@ def test_finalize_failed_http_artifact_fails():
 
 
 def test_finalize_unhashed_script_artifact_fails():
-    # a script-sourced artifact that is NOT covered by the evidence manifest
+    # a script artifact present on disk but NOT covered by manifest.sha256 (tampered manifest):
+    # the correct category-5 artifact set passes the pin, then the manifest binding fails.
     def mutate(tmp, custody):
-        (custody / "99_rogue.txt").write_bytes(b"rogue\n")
+        m = custody / "manifest.sha256"
+        kept = [ln for ln in m.read_text().splitlines() if "05_counts.txt" not in ln]
+        m.write_text("\n".join(kept) + "\n")
 
+    _expect_closeout_error(_full_spec(), "unhashed_artifact", custody_mutator=mutate)
+
+
+def test_finalize_wrong_script_artifact_for_category_rejected():
+    # Codex-xhigh-final P1b: a manifest-present but wrong-for-the-category file is rejected
     spec = _full_spec()
-    spec["categories"][4]["artifacts"].append("99_rogue.txt")  # category 5 (script)
-    _expect_closeout_error(spec, "unhashed_artifact", custody_mutator=mutate)
+    spec["categories"][2]["artifacts"] = [
+        "05_counts.txt"
+    ]  # category 3 must bind 03_/04_
+    _expect_closeout_error(spec, "category_artifacts_mismatch")
+
+
+def test_finalize_category2_partial_shape_fails():
+    # Codex-xhigh-final P1a: the /reset path present but NO security state must fail
+    # (the shape check requires ALL markers, not any single one)
+    def mutate(tmp, custody):
+        (custody / "reset_route.json").write_bytes(
+            b'{"path": "/reset", "error": "unauthorized"}\n'
+        )
+
+    _expect_closeout_error(_full_spec(), "failed_http", custody_mutator=mutate)
 
 
 def test_finalize_hash_mismatch_fails():

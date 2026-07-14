@@ -56,6 +56,19 @@ CATEGORY_SOURCE = {
     9: "script",  # rollback inputs
 }
 
+# The EXACT tool-deterministic filenames each SCRIPT category must bind, per the runbook.
+# Script evidence files have fixed names, so a spec cannot satisfy a category with the wrong
+# (but manifest-present) artifact — e.g. listing 05_counts.txt for categories 3/4/6/9
+# (Codex-xhigh-final P1b). Operator categories (1/2/7/8) keep operator-chosen filenames,
+# validated instead by content (HTTP shape / JSON parse).
+CATEGORY_SCRIPT_ARTIFACTS = {
+    3: {"03_effective_privilege.txt", "04_role_membership_closure.txt"},
+    4: {"07_secdef_discovery.txt", "08_secdef_function_acl.txt"},
+    5: {"05_counts.txt"},
+    6: {"06_default_acl.txt"},
+    9: {"02_table_acl.txt", "06_default_acl.txt", "08_secdef_function_acl.txt"},
+}
+
 log = logging.getLogger("pm_ops_p0.finalize_closeout")
 
 
@@ -120,6 +133,11 @@ def _assert_categories_complete(spec: list[dict]) -> None:
     for entry in spec:
         if entry["source"] != CATEGORY_SOURCE[entry["category"]]:
             raise CloseoutError("category_source_mismatch")
+        # script categories must bind their EXACT tool-deterministic artifact set, so a
+        # manifest-present but wrong-for-the-category file cannot satisfy them.
+        expected = CATEGORY_SCRIPT_ARTIFACTS.get(entry["category"])
+        if expected is not None and set(entry["artifacts"]) != expected:
+            raise CloseoutError("category_artifacts_mismatch")
 
 
 def _read_manifest(custody_dir: Path) -> dict[str, str]:
@@ -175,16 +193,23 @@ _HTTP_REQUIRED_KEYS = {
 
 
 def _validate_http_artifact(category: int, path: Path) -> None:
-    """Category 1/2 artifacts must be the expected shape of JSON, not a saved error page."""
+    """Category 1/2 artifacts must be the FULL expected shape of JSON, not a saved error page.
+
+    ALL of a category's markers must be present (Codex-xhigh-final P1a): a partial capture
+    like ``{"path": "/reset", "error": "unauthorized"}`` — the ``/reset`` path but no
+    ``security`` state — must fail, not pass on a single matching key.
+    """
     try:
         doc = json.loads(path.read_text())
     except (ValueError, UnicodeDecodeError):
         raise CloseoutError("failed_http") from None
     required = _HTTP_REQUIRED_KEYS.get(category)
-    if required is not None and not (
-        isinstance(doc, dict) and any(key in doc for key in required)
-    ):
+    if required is None:
+        return
+    if not isinstance(doc, dict) or not all(key in doc for key in required):
         raise CloseoutError("failed_http")
+    if category == 2 and "/reset" not in str(doc.get("path", "")):
+        raise CloseoutError("failed_http")  # the /reset route evidence must name /reset
 
 
 def _require_parseable_json(path: Path) -> None:
