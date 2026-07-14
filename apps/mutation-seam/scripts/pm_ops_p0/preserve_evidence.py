@@ -369,49 +369,41 @@ def _repo_git_state(repo_root: Path) -> tuple[str, bool, str | None]:
     return head_sha, is_pristine, origin_main_sha
 
 
-def _trusted_module_dirs() -> tuple[str, ...]:
-    """The real interpreter/venv install directories a trusted module may live under.
+def _trusted_prefixes() -> tuple[str, ...]:
+    """Install prefixes a trusted module must live under -- from ``sys`` attributes ONLY.
 
-    Derived from ``sysconfig`` (this venv's purelib/platlib + the stdlib) and ``site`` --
-    the ACTUAL install paths, not a name token. `sysconfig`/`site` are stdlib and already
-    loaded at interpreter startup, so they resolve to the real modules here.
+    Uses ``sys.prefix`` / ``sys.base_prefix`` / ``sys.exec_prefix`` / ``sys.base_exec_prefix``,
+    all attributes of the builtin (unshadowable) ``sys`` module, so computing the trusted
+    roots imports NOTHING shadowable -- the earlier ``sysconfig``/``site`` approach itself
+    ran a PYTHONPATH ``sysconfig.py`` shadow during validation (Codex-c10 P1). A
+    venv-installed psycopg lives under ``sys.prefix``; the stdlib under ``sys.base_prefix``;
+    a PYTHONPATH / user-site / repo-tree shadow is outside every prefix.
     """
-    import site
-    import sysconfig
-
-    dirs: set[str] = set()
-    paths = sysconfig.get_paths()
-    for key in ("purelib", "platlib", "stdlib", "platstdlib"):
-        value = paths.get(key)
+    prefixes: set[str] = set()
+    for attr in ("prefix", "base_prefix", "exec_prefix", "base_exec_prefix"):
+        value = getattr(sys, attr, "")
         if value:
-            dirs.add(os.path.realpath(value))
-    # the install-managed venv/system site only. NOT getusersitepackages(): the user site is
-    # user-writable and PYTHONUSERBASE-redirectable, so a planted ~/.local/.../psycopg.py must
-    # never be trusted (Codex-c9 P1).
-    try:
-        for value in site.getsitepackages():
-            dirs.add(os.path.realpath(value))
-    except AttributeError:  # pragma: no cover - getsitepackages absent in some embeds
-        pass
-    return tuple(dirs)
+            prefixes.add(os.path.realpath(value))
+    return tuple(prefixes)
 
 
 def _assert_trusted_location(location: str) -> None:
-    """Refuse unless `location` resolves UNDER a real interpreter/venv install directory.
+    """Refuse unless `location` resolves UNDER a real interpreter/venv install prefix.
 
     Whatever placed a shadow on sys.path -- an untracked file the pristine check missed
     under a hostile .git/config, a TRACKED shadow at origin/main, a PYTHONPATH entry, a
-    .pth injection -- the module that resolves must come from a real install (the pinned
-    venv), never a repo-tree ``psycopg.py`` NOR a decoy path merely CONTAINING the token
-    ``site-packages`` (e.g. ``/tmp/site-packages/psycopg.py``, Codex-c8 P1). The resolved
-    origin is prefix-matched against the actual install dirs. Value-free code on failure.
+    .pth injection -- the module that resolves must come from the interpreter's own install
+    (under ``sys.*prefix``), never a repo-tree ``psycopg.py``, a user-site
+    (``~/.local``, PYTHONUSERBASE-redirectable, Codex-c9 P1), NOR a decoy path merely
+    CONTAINING ``site-packages`` (``/tmp/site-packages/psycopg.py``, Codex-c8 P1). The
+    resolved origin is prefix-matched against ``sys.*prefix``. Value-free code on failure.
     """
     if not location:
         raise EvidenceRefusal("untrusted_binding_source")
     resolved = os.path.realpath(location)
-    trusted = _trusted_module_dirs()
     if not any(
-        resolved == base or resolved.startswith(base + os.sep) for base in trusted
+        resolved == base or resolved.startswith(base + os.sep)
+        for base in _trusted_prefixes()
     ):
         raise EvidenceRefusal("untrusted_binding_source")
 
