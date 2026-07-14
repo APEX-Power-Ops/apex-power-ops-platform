@@ -691,5 +691,22 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def _isolation_gate(isolated: bool) -> int | None:
+    """Refuse the CLI unless the interpreter is isolated (``python -I``).
+
+    ``-I`` makes Python ignore ``PYTHONPATH``, the user site, and the unsafe ``sys.path[0]``
+    (cwd / script dir), so NO environment-injected path -- including a ``PYTHONPATH`` entry
+    pointing at a repo subdir -- can shadow an import before the pristine gate. Enforcing it
+    closes the import-shadow class at the interpreter level (Codex-c14 P1); the sys.path
+    preamble above is then belt-and-suspenders. Returns a non-None exit code when NOT isolated.
+    """
+    if not isolated:
+        print("RESULT FAIL")
+        print("FAILURE interpreter_not_isolated")
+        return 1
+    return None
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    _rc = _isolation_gate(sys.flags.isolated)
+    sys.exit(_rc if _rc is not None else main())

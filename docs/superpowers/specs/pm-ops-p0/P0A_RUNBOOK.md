@@ -32,9 +32,12 @@ test "$(git rev-parse --abbrev-ref HEAD)" = "main" || { echo "refusing: not on m
 test "$(git rev-parse HEAD)" = "$MAIN_SHA"         || { echo "refusing: HEAD != origin/main"; exit 1; }
 test -z "$(git status --porcelain)"                || { echo "refusing: dirty/untracked tree"; exit 1; }
 
-# secrets stay in the injected CHILD; nothing is exported into this shell
+# secrets stay in the injected CHILD; nothing is exported into this shell.
+# `-I` (isolated) is REQUIRED: it makes Python ignore PYTHONPATH / user-site / the unsafe
+# sys.path[0], closing the import-shadow class at the interpreter level; the script refuses
+# (interpreter_not_isolated) if invoked without it (review round-3 Codex-c14).
 infra/infisical/inject.sh prod -- \
-  "<repo>/.venv/bin/python" apps/mutation-seam/scripts/pm_ops_p0/preserve_evidence.py \
+  "<repo>/.venv/bin/python" -I apps/mutation-seam/scripts/pm_ops_p0/preserve_evidence.py \
     --expect-project-ref fxoyniqnrlkxfligbxmg \
     --dsn-env SUPABASE_PROD_DSN \
     --expect-repo-sha "$MAIN_SHA"

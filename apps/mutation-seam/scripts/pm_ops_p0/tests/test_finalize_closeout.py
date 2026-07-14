@@ -330,6 +330,17 @@ def test_finalize_symlinked_manifest_rejected():
     _expect_closeout_error(_full_spec(), "artifact_not_regular", custody_mutator=mutate)
 
 
+def test_resolve_within_rejects_absolute_path():
+    # Codex-c14 P3: an absolute artifact path is rejected even if it points inside custody
+    raised = False
+    try:
+        fc._resolve_within(Path("/tmp/custody"), "/tmp/custody/inside.txt")
+    except fc.CloseoutError as exc:
+        raised = True
+        assert exc.code == "artifact_path_escape", exc.code
+    assert raised
+
+
 def test_finalize_aliased_artifact_paths_rejected():
     # Codex-c12 P2: `x.json` and `./x.json` resolve to the same file and must not both count
     # toward the category-1 both-hosts minimum.

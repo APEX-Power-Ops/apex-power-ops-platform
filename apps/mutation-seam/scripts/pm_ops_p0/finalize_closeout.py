@@ -238,6 +238,10 @@ def _resolve_within(custody_dir: Path, rel: str) -> Path:
     links) with a value-free ``artifact_path_escape``. Returns the PRE-resolve path so the
     caller can lstat it (a symlink to a regular file inside the dir is still non-regular).
     """
+    # the spec requires custody-RELATIVE names; an absolute path would make `base / rel`
+    # discard base and could pass relative_to() if it points inside custody (Codex-c14 P3).
+    if Path(rel).is_absolute():
+        raise CloseoutError("artifact_path_escape")
     base = custody_dir.resolve()
     raw = base / rel
     try:

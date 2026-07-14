@@ -504,6 +504,18 @@ def test_git_env_scrubs_injected_secrets_and_redirects():
     assert "PATH" in env  # git still receives what it legitimately needs
 
 
+def test_isolation_gate():
+    # Codex-c14 P1: the CLI must run under python -I (isolated); else refuse fail-closed
+    assert pe._isolation_gate(True) is None  # isolated -> proceed
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = pe._isolation_gate(False)
+    out = buf.getvalue()
+    assert rc == 1
+    assert "interpreter_not_isolated" in out
+    assert "RESULT FAIL" in out
+
+
 # -------------------------------------------------------------------- custody
 
 
