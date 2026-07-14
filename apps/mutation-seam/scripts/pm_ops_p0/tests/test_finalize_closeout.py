@@ -28,7 +28,12 @@ CLOCK = "2026-07-14T00:00:00+00:00"
 
 # script-captured artifacts (hashed into manifest.sha256 by preserve_evidence.write_custody)
 SCRIPT_ARTS = {
-    "00_provenance.json": b'{"artifact": "prov"}\n',
+    "00_provenance.json": (
+        b'{"schema_version": 2, "repo_tree_pristine": true, '
+        b'"repo_head_equals_origin_main": true, "expected_db_role": "postgres", '
+        b'"expected_project_ref": "fxoyniqnrlkxfligbxmg", '
+        b'"origin_main_sha": "abc123", "repo_sha": "abc123", "expect_repo_sha": "abc123"}\n'
+    ),
     "00_p0a_snapshot.sql": b"BEGIN;\n",
     "01_markers.txt": b"markers\n",
     "02_table_acl.txt": b"acl\n",
@@ -267,6 +272,37 @@ def test_finalize_provenance_missing_fails():
         (custody / "00_provenance.json").unlink()  # governance anchor gone
 
     _expect_closeout_error(_full_spec(), "provenance_missing", custody_mutator=mutate)
+
+
+def test_finalize_operator_category_db_artifact_rejected():
+    # Codex-c11 P2: an operator category cannot be satisfied by a manifest-listed DB artifact
+    spec = _full_spec()
+    spec["categories"][6]["artifacts"] = [
+        "05_counts.txt"
+    ]  # category 7 (operator) -> a DB file
+    _expect_closeout_error(spec, "operator_artifact_is_db")
+
+
+def test_finalize_stale_provenance_attestation_rejected():
+    # Codex-c11 P2: provenance must carry the schema-2 governed-run attestation, not just
+    # hash-match. A stale record whose HASH still matches the manifest is refused on content.
+    def mutate(tmp, custody):
+        stale = b'{"schema_version": 1, "artifact": "old"}\n'
+        (custody / "00_provenance.json").write_bytes(stale)
+        m = custody / "manifest.sha256"
+        rebuilt = []
+        for line in m.read_text().splitlines():
+            if line.endswith(f"  {'00_provenance.json'}"):
+                rebuilt.append(
+                    f"{hashlib.sha256(stale).hexdigest()}  00_provenance.json"
+                )
+            else:
+                rebuilt.append(line)
+        m.write_text("\n".join(rebuilt) + "\n")
+
+    _expect_closeout_error(
+        _full_spec(), "provenance_attestation_invalid", custody_mutator=mutate
+    )
 
 
 def test_finalize_category2_json_error_body_fails():

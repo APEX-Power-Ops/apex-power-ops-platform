@@ -33,6 +33,10 @@ from pathlib import Path
 MANIFEST_NAME = "manifest.sha256"
 PROVENANCE_NAME = "00_provenance.json"
 OUT_NAME = "closeout_index.json"
+# the governed-run attestation the closeout leans on (must match preserve_evidence)
+PROJECT_REF = "fxoyniqnrlkxfligbxmg"
+EXPECTED_DB_ROLE = "postgres"
+PROVENANCE_SCHEMA_VERSION = 2
 
 # the nine design-§2 categories that a complete P0-A closeout must bind
 REQUIRED_CATEGORIES = frozenset(range(1, 10))
@@ -184,6 +188,27 @@ def _require_provenance(custody_dir: Path, manifest: dict[str, str]) -> str:
     digest = _sha256_file(prov)
     if digest != manifest[PROVENANCE_NAME]:
         raise CloseoutError("hash_mismatch")
+    # the closeout LEANS on the governed-run attestation, so verify its CONTENT, not just the
+    # hash: a stale/old-tool provenance (no schema_version 2, no origin_main_sha, missing the
+    # equality/pristine/role attestation) must not close out P0-A (Codex-c11 P2).
+    try:
+        record = json.loads(prov.read_text())
+    except (ValueError, UnicodeDecodeError):
+        raise CloseoutError("provenance_attestation_invalid") from None
+    sha = record.get("repo_sha") if isinstance(record, dict) else None
+    attested = isinstance(record, dict) and all(
+        (
+            record.get("schema_version") == PROVENANCE_SCHEMA_VERSION,
+            record.get("repo_tree_pristine") is True,
+            record.get("repo_head_equals_origin_main") is True,
+            record.get("expected_db_role") == EXPECTED_DB_ROLE,
+            record.get("expected_project_ref") == PROJECT_REF,
+            bool(sha),
+            sha == record.get("origin_main_sha") == record.get("expect_repo_sha"),
+        )
+    )
+    if not attested:
+        raise CloseoutError("provenance_attestation_invalid")
     return digest
 
 
@@ -332,6 +357,11 @@ def finalize(
                     )  # not covered by the tool manifest
                 if recorded != digest:
                     raise CloseoutError("hash_mismatch")
+            elif rel in manifest:
+                # an operator category (backend, /reset logs, ...) must be a NEW operator
+                # capture, never a manifest-listed script DB artifact standing in for it
+                # (Codex-c11 P2): that would pass a category with the wrong evidence entirely.
+                raise CloseoutError("operator_artifact_is_db")
             if category in HTTP_CATEGORIES:
                 _validate_http_artifact(category, path)
             elif path.name.endswith(".json"):
