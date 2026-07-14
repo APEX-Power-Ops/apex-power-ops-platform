@@ -334,6 +334,27 @@ def test_bind_target_require_form_pooler_rejects_direct():
     )
 
 
+def test_bind_target_require_form_pooler_rejects_session_pooler_port():
+    # Codex-RI2 r3: require_form="pooler" is the P7 TRANSACTION pooler (:6543). The tracked
+    # session-pooler DSN on :5432 must be rejected, else it could satisfy P7 falsely.
+    _expect_reject_form(
+        f"postgresql://postgres.{REF}:pw@aws-0-us-east-1.pooler.supabase.com:5432/postgres",
+        REF,
+        "pooler",
+        "wrong_connection_form",
+    )
+
+
+def test_bind_target_require_form_direct_rejects_non_5432_port():
+    # symmetry: the P6 direct probe is the direct host on 5432/default, not 6543
+    _expect_reject_form(
+        f"host=db.{REF}.supabase.co user=postgres port=6543 dbname=postgres",
+        REF,
+        "direct",
+        "wrong_connection_form",
+    )
+
+
 def test_bind_target_require_form_accepts_matching():
     direct = bind_target(
         f"host=db.{REF}.supabase.co user=postgres dbname=postgres",

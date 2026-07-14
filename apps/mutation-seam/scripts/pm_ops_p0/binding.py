@@ -182,6 +182,16 @@ def bind_target(
 
     # (4) anchored host/user match against the expected project (+ optional form pin)
     _assert_anchored(host, user, expect_ref, require_form)
+    # (4b) form-pinned PORT: mechanical P6/P7 separation is not complete on host/user alone —
+    # both pooler modes share `*.pooler.supabase.com`, differing only by PORT. P7 is the
+    # TRANSACTION pooler on 6543; the session pooler (5432) proves neither probe (Codex-RI2
+    # r3). Direct (P6) is the direct host on 5432/default. Reject a form/port mismatch.
+    if require_form == "pooler" and port != "6543":
+        raise TargetBindingError(
+            CODE_WRONG_FORM
+        )  # session-pooler :5432 ≠ transaction :6543
+    if require_form == "direct" and port not in ("", "5432"):
+        raise TargetBindingError(CODE_WRONG_FORM)
 
     # reconstruct an explicit whitelist: any exotic/injected libpq keyword in the
     # DSN (service, sslrootcert, options, a second host=, ...) is dropped here and
