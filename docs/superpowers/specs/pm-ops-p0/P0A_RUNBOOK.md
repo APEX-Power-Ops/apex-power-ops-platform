@@ -11,31 +11,47 @@ evidence, read-only, before any P0-B..E action. This runbook binds **all nine** 
 
 **Preconditions.**
 - A live, in-your-own-voice **`P0-A READ-ONLY EVIDENCE`** operator GO (this runbook does not grant it).
-- Run **only from clean, merged `main`** (the script enforces `--expect-repo-sha` + clean tracked tree + merged-to-`origin/main`).
-- The DSN is provided via an **environment variable name** (never a value on the command line). Authorized read-only prod access only.
+- Run **only from clean, merged `main`** — the script enforces a **pristine** tree (clean + **no untracked** files) and `HEAD == origin/main == --expect-repo-sha` by **equality** after a fresh `git fetch origin main` (not a mere ancestor test; review round-3 findings 1–2).
+- The DSN is injected into the **child process only** via `infra/infisical/inject.sh prod` and read from an **environment variable name** (never a value on the command line, never `export`ed into the operator shell; review round-3 finding 4). The admin DB role is **source-pinned** to `postgres` (no CLI override; finding 3). Authorized read-only prod access only.
 - P6 / P7 remain fail-closed **live confirmations** at run time: `sslmode=verify-full` cert chain for the direct host (P6); Supavisor transaction-mode `BEGIN…COMMIT` behavior on the pooler (P7).
 
 ---
 
 ## Part A — Database evidence (script-captured)
 
+Run from the **merged-main worktree** (it holds `infra/infisical/.env.agent`). The DSN is
+injected into the **child process only** via `infra/infisical/inject.sh prod` — never
+`export`ed into the operator shell (matches `CENSUS_RUNBOOK.md`; review round-3 finding 4).
+
 ```bash
-# from clean, merged main (repo root), with the read-only prod DSN exported into an env var:
-export SUPABASE_PROD_DSN='...'                     # value never passed on the CLI
-REPO_SHA="$(git rev-parse HEAD)"
-"<repo>/.venv/bin/python" apps/mutation-seam/scripts/pm_ops_p0/preserve_evidence.py \
-  --expect-project-ref fxoyniqnrlkxfligbxmg \
-  --dsn-env SUPABASE_PROD_DSN \
-  --expect-repo-sha "$REPO_SHA" \
-  --expect-db-role postgres
+set +x                                             # do not echo the injected child env
+git fetch --quiet origin main                      # refresh the remote ref first
+MAIN_SHA="$(git rev-parse origin/main)"            # pin to the MERGED tip, not local HEAD
+# fail closed unless we ARE that commit, on main, and pristine (the script re-checks too)
+test "$(git rev-parse --abbrev-ref HEAD)" = "main" || { echo "refusing: not on main"; exit 1; }
+test "$(git rev-parse HEAD)" = "$MAIN_SHA"         || { echo "refusing: HEAD != origin/main"; exit 1; }
+test -z "$(git status --porcelain)"                || { echo "refusing: dirty/untracked tree"; exit 1; }
+
+# secrets stay in the injected CHILD; nothing is exported into this shell
+infra/infisical/inject.sh prod -- \
+  "<repo>/.venv/bin/python" apps/mutation-seam/scripts/pm_ops_p0/preserve_evidence.py \
+    --expect-project-ref fxoyniqnrlkxfligbxmg \
+    --dsn-env SUPABASE_PROD_DSN \
+    --expect-repo-sha "$MAIN_SHA"
 # -> RESULT PASS + CUSTODY /home/olares/custody/pm-ops-p0/<UTC>/  (dir 0700, files 0400, manifest.sha256)
 ```
+
+The script independently re-enforces the gate: a **pristine** tree (clean + **no
+untracked** files), a fresh `git fetch origin main`, and `HEAD == origin/main ==
+--expect-repo-sha` by equality; the admin DB role is **source-pinned** to `postgres`. The
+DSN is read from `$SUPABASE_PROD_DSN` inside the injected child and bound to the project
+ref before any socket opens.
 
 Artifacts written (atomically published; each hashed in `manifest.sha256`):
 
 | Artifact | Design §2 category |
 | --- | --- |
-| `00_provenance.json` | governance: repo SHA / clean / merged, tool + query-bundle hashes, versions, timestamps |
+| `00_provenance.json` | governance: repo SHA, `origin_main_sha` + HEAD-equality, pristine flag, source-pinned role, tool + query-bundle hashes, versions, timestamps |
 | `00_p0a_snapshot.sql` | the exact guarded read-only SQL block (record) |
 | `01_markers.txt` | in-band markers (corroborating only) |
 | `02_table_acl.txt` | (9) rollback input — exact per-grantee table ACL + RLS |

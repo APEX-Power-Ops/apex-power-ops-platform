@@ -15,24 +15,36 @@ EVIDENCE`` operator GO. House style follows ``scripts/smoke_deployed_mutation_se
 
 from __future__ import annotations
 
-import argparse
-import hashlib
-import json
-import logging
 import os
-import subprocess
 import sys
-from datetime import datetime, timezone
-from pathlib import Path
 
-# self-locate the package on sys.path so `pm_ops_p0.binding` resolves whether the
-# script is run directly or imported (parent.parent == apps/mutation-seam/scripts)
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Runtime-integrity preamble (review round 3, finding 1). A planted, UNTRACKED module on
+# sys.path (e.g. pm_ops_p0/subprocess.py or scripts/psycopg.py) would otherwise be
+# imported at module load -- before any governance guard -- and run attacker code with the
+# injected production DSN in the environment. Two defences, in order:
+#   (1) here: drop this script's OWN directory from sys.path so a sibling file there
+#       cannot shadow the stdlib imports below (sys/os are already loaded -> unshadowable).
+#       `python /abs/.../preserve_evidence.py` puts that dir on sys.path[0] as a literal
+#       path; we strip literal matches. Empty ("" == cwd) entries are kept so this cannot
+#       perturb a pytest/-m run (which carries no DSN); the deferred import + main()'s
+#       pristine guard remain the authoritative controls for the real, DSN-bearing run.
+#   (2) main(): refuse unless the tree is pristine (no untracked files) AND HEAD equals the
+#       freshly-fetched origin/main tip -- so a planted shadow is rejected BEFORE
+#       pm_ops_p0.binding (hence psycopg) is imported. That import is DEFERRED to
+#       _load_binding(), reached only past the gate, and never runs at module load.
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path[:] = [p for p in sys.path if not p or os.path.abspath(p) != _SCRIPT_DIR]
 
-from pm_ops_p0.binding import (  # noqa: E402
-    TargetBindingError,
-    connect_bound,
-)
+import argparse  # noqa: E402
+import hashlib  # noqa: E402
+import json  # noqa: E402
+import logging  # noqa: E402
+import subprocess  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+# NOTE: pm_ops_p0.binding (and therefore psycopg) is imported LAZILY via _load_binding(),
+# only after main()'s runtime-integrity + provenance gate passes (finding 1).
 
 PROJECT_REF = "fxoyniqnrlkxfligbxmg"
 EXPECTED_DB_ROLE = "postgres"  # the administrative role P0-A must resolve to
@@ -242,14 +254,9 @@ def build_parser() -> argparse.ArgumentParser:
             "unless the tracked tree is clean, HEAD matches, and HEAD is merged to main."
         ),
     )
-    parser.add_argument(
-        "--expect-db-role",
-        default=EXPECTED_DB_ROLE,
-        help=(
-            f"The administrative DB role the connection MUST resolve to "
-            f"(default: {EXPECTED_DB_ROLE}); the run refuses otherwise."
-        ),
-    )
+    # NOTE (review round 3, finding 3): the expected admin DB role is SOURCE-PINNED to
+    # EXPECTED_DB_ROLE and is deliberately NOT a CLI option -- a fixed P0-A action must
+    # not let the caller choose (or weaken) the administrative role it asserts against.
     parser.add_argument(
         "--custody-root",
         default=str(CUSTODY_ROOT),
@@ -275,12 +282,17 @@ def _repo_root() -> Path:
     raise EvidenceRefusal("repo_root_not_found")
 
 
-def _repo_git_state(repo_root: Path) -> tuple[str, bool, bool | None]:
-    """Return (HEAD sha, tracked-tree-clean, merged-to-origin/main-or-None-if-unknown).
+def _repo_git_state(repo_root: Path) -> tuple[str, bool, str | None]:
+    """Return (HEAD sha, tree-pristine, freshly-fetched origin/main sha or None).
 
-    `on_main` is None when `origin/main` is not resolvable locally; the caller fails
-    closed on None (cannot verify the merged guarantee). Otherwise True/False from an
-    ancestor test.
+    `pristine` is True only when the tracked tree is clean AND there are no untracked
+    files -- `git status --porcelain` with NO `--untracked-files=no`, so a planted
+    import-shadow module (which is untracked) makes the tree non-pristine (finding 1).
+
+    The origin/main sha is read AFTER a fresh `git fetch origin main`, so the caller can
+    require HEAD == origin/main by equality, not a mere ancestor test (finding 2). It is
+    None when the fetch fails or the ref is unresolvable; the caller fails closed on None
+    (it cannot prove the current merged-tip guarantee).
     """
 
     def _git(*args: str) -> subprocess.CompletedProcess:
@@ -295,20 +307,32 @@ def _repo_git_state(repo_root: Path) -> tuple[str, bool, bool | None]:
     if head.returncode != 0:
         raise EvidenceRefusal("git_unavailable")
     head_sha = head.stdout.strip()
-    dirty = _git("status", "--porcelain", "--untracked-files=no")
-    is_clean = dirty.returncode == 0 and dirty.stdout.strip() == ""
-    on_main: bool | None = None
-    if (
-        _git("rev-parse", "--verify", "--quiet", "refs/remotes/origin/main").returncode
-        == 0
-    ):
-        on_main = (
-            _git(
-                "merge-base", "--is-ancestor", head_sha, "refs/remotes/origin/main"
-            ).returncode
-            == 0
-        )
-    return head_sha, is_clean, on_main
+    # pristine: no tracked modifications AND no untracked files (a shadow is untracked)
+    status = _git("status", "--porcelain")
+    is_pristine = status.returncode == 0 and status.stdout.strip() == ""
+    # fresh fetch, then read origin/main; None (fail closed) on any fetch/ref failure
+    origin_main_sha: str | None = None
+    if _git("fetch", "--quiet", "origin", "main").returncode == 0:
+        ref = _git("rev-parse", "--verify", "--quiet", "refs/remotes/origin/main")
+        if ref.returncode == 0 and ref.stdout.strip():
+            origin_main_sha = ref.stdout.strip()
+    return head_sha, is_pristine, origin_main_sha
+
+
+def _load_binding():
+    """Import the shared binding module -- DEFERRED past main()'s governance gate.
+
+    Re-adds the package parent (apps/mutation-seam/scripts) to sys.path only here, once
+    the pristine + merged-HEAD gate has proven no untracked shadow module exists, so
+    importing pm_ops_p0.binding (and therefore psycopg) is safe (finding 1). Returns
+    (TargetBindingError, connect_bound).
+    """
+    scripts_dir = os.path.dirname(_SCRIPT_DIR)
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    from pm_ops_p0.binding import TargetBindingError, connect_bound
+
+    return TargetBindingError, connect_bound
 
 
 def _sha256_file(path: Path) -> str:
@@ -318,8 +342,9 @@ def _sha256_file(path: Path) -> str:
 def build_provenance(
     *,
     repo_sha: str,
-    repo_clean: bool,
-    on_main: bool | None,
+    repo_pristine: bool,
+    on_main: bool,
+    origin_main_sha: str,
     expect_repo_sha: str,
     expect_project_ref: str,
     expect_db_role: str,
@@ -329,23 +354,26 @@ def build_provenance(
 ) -> str:
     """Return a deterministic JSON provenance record binding evidence to governed tooling.
 
-    Records the repo SHA + clean/merged state, the tool source hashes, the exact
-    query-bundle hash, the expected project/role, the DSN env-var NAME (never a
-    value), capture timestamps, and psycopg/libpq versions (review finding 2).
+    Records the repo SHA, the pristine (clean + no-untracked) flag, the freshly-fetched
+    origin/main tip and the HEAD==origin/main equality (finding 2), the tool source
+    hashes, the exact query-bundle hash, the source-pinned project/role, the DSN env-var
+    NAME (never a value), capture timestamps, and psycopg/libpq versions. A reviewer can
+    read HEAD == origin_main_sha == expect_repo_sha straight from the record.
     """
     import psycopg
 
     here = Path(__file__).resolve().parent
     record = {
         "artifact": "pm_ops_p0.preserve_evidence.provenance",
-        "schema_version": 1,
+        "schema_version": 2,
         "expected_project_ref": expect_project_ref,
         "expected_db_role": expect_db_role,
         "dsn_env_var_name": dsn_env,  # NAME only — never the DSN value
         "repo_sha": repo_sha,
         "expect_repo_sha": expect_repo_sha,
-        "repo_tracked_tree_clean": repo_clean,
-        "repo_head_merged_to_origin_main": on_main,
+        "origin_main_sha": origin_main_sha,
+        "repo_tree_pristine": repo_pristine,
+        "repo_head_equals_origin_main": on_main,
         "tool_source_sha256": {
             "binding.py": _sha256_file(here / "binding.py"),
             "preserve_evidence.py": _sha256_file(here / "preserve_evidence.py"),
@@ -368,18 +396,19 @@ def _rows_to_text(cur: object) -> str:
     return "\n".join(lines) + "\n"
 
 
-def collect_evidence(
-    dsn: str, expect_ref: str, *, expect_role: str = EXPECTED_DB_ROLE
-) -> dict[str, str]:
+def collect_evidence(dsn: str, expect_ref: str) -> dict[str, str]:
     """Open a bound, read-only connection and capture the P0-A evidence set.
 
-    Uses the shared ``connect_bound`` discipline (bind + scrubbed PG* env + connect
-    + post-connect re-check); inside the guarded read-only transaction, refuses
-    (value-free ``db_role_mismatch``) unless ``current_user`` is the expected admin
-    role, then captures ``{filename: text}``. The live connect/query is not exercised
-    by the offline suite; the choreography (execute order, env-scrub-at-connect, the
-    pre-query host re-check, and the role guard) is verified offline via a fake conn.
+    Imports the shared binding discipline LAZILY via ``_load_binding`` (finding 1): the
+    import (and therefore psycopg) is reached only after main()'s pristine + merged-HEAD
+    gate has proven no untracked shadow module exists. Inside the guarded read-only
+    transaction, refuses (value-free ``db_role_mismatch``) unless ``current_user`` is the
+    SOURCE-PINNED admin role ``EXPECTED_DB_ROLE`` (finding 3), then captures
+    ``{filename: text}``. The live connect/query is not exercised by the offline suite;
+    the choreography (execute order, env-scrub-at-connect, the pre-query host re-check,
+    and the role guard) is verified offline via a fake conn.
     """
+    _TargetBindingError, connect_bound = _load_binding()
     artifacts: dict[str, str] = {SNAPSHOT_NAME: p0a_sql_text()}
     with connect_bound(
         dsn, expect_ref, connect_timeout=CONNECT_TIMEOUT_SECONDS, autocommit=True
@@ -387,7 +416,7 @@ def collect_evidence(
         with conn.cursor() as cur:
             cur.execute(_BEGIN)
             cur.execute(_GUARD)
-            cur.execute(_ROLE_CHECK_SQL, (expect_role,))
+            cur.execute(_ROLE_CHECK_SQL, (EXPECTED_DB_ROLE,))
             if not (cur.fetchone() or [False])[0]:
                 raise EvidenceRefusal("db_role_mismatch")  # value-free (no role echo)
             for filename, sql in _EVIDENCE_STEPS:
@@ -479,34 +508,44 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     started_at = _utc_now_iso()
 
-    # --- pre-flight refusals (fail closed before reaching the DB layer) ---
+    # --- pre-flight refusals (fail closed before reaching the DB layer OR the deferred
+    #     binding/psycopg import, so a planted shadow module is never imported) ---
     try:
         if args.expect_project_ref != PROJECT_REF:
             raise EvidenceRefusal("unexpected_project_ref")
         dsn = os.getenv(args.dsn_env)
         if not dsn:
             raise EvidenceRefusal("dsn_unset")
-        # governance: run only from a clean, expected, merged checkout (finding 2)
-        repo_sha, repo_clean, on_main = _repo_git_state(_repo_root())
-        if not repo_clean:
-            raise EvidenceRefusal("repo_dirty")
+        # governance: run only from a pristine checkout whose HEAD IS the current merged
+        # main tip. pristine = clean + no untracked (finding 1); the three-way equality
+        # HEAD == origin/main == --expect-repo-sha (finding 2) rejects a stale/ancestor or
+        # self-attested checkout that an ancestor test would have passed.
+        repo_sha, repo_pristine, origin_main_sha = _repo_git_state(_repo_root())
+        if not repo_pristine:
+            raise EvidenceRefusal("repo_dirty")  # tracked OR untracked changes present
         if repo_sha != args.expect_repo_sha:
             raise EvidenceRefusal("repo_sha_mismatch")
-        # fail closed: an unresolvable origin/main cannot verify the merged
-        # guarantee, so refuse rather than record it as unknown (review Codex-P2).
-        if on_main is None:
+        # fail closed: an unresolvable/unfetchable origin/main cannot prove the merged,
+        # current-tip guarantee, so refuse rather than proceed (review Codex-P2 + finding 2).
+        if origin_main_sha is None:
             raise EvidenceRefusal("origin_main_unresolvable")
-        if not on_main:
-            raise EvidenceRefusal("repo_not_on_main")
+        if repo_sha != origin_main_sha:
+            raise EvidenceRefusal(
+                "repo_head_not_origin_main"
+            )  # ancestor/stale/self-attested
     except EvidenceRefusal as exc:
         return _fail(exc.code)
 
-    # --- live read-only capture (connect_bound binds BEFORE opening any socket:
-    #     a wrong-project DSN raises TargetBindingError with no connection made) ---
+    # --- live read-only capture. The binding module (hence psycopg) is imported HERE,
+    #     only after the governance gate above (finding 1); connect_bound binds BEFORE
+    #     opening any socket, so a wrong-project DSN raises with no connection made. ---
     try:
-        artifacts = collect_evidence(
-            dsn, args.expect_project_ref, expect_role=args.expect_db_role
-        )
+        TargetBindingError, _connect_bound = _load_binding()
+    except Exception as exc:  # noqa: BLE001 - a shadowed/broken binding import fails closed
+        log.warning("binding import failed: %s", type(exc).__name__)  # class only
+        return _fail("binding_import_failed")
+    try:
+        artifacts = collect_evidence(dsn, args.expect_project_ref)
     except (TargetBindingError, EvidenceRefusal) as exc:
         return _fail(exc.code)  # bind/host/role mismatch — value-free stable code
     except Exception as exc:  # noqa: BLE001
@@ -516,11 +555,12 @@ def main(argv: list[str] | None = None) -> int:
     # --- provenance (binds the evidence to the governed tooling + this run) ---
     artifacts[PROVENANCE_NAME] = build_provenance(
         repo_sha=repo_sha,
-        repo_clean=repo_clean,
-        on_main=on_main,
+        repo_pristine=repo_pristine,
+        on_main=(repo_sha == origin_main_sha),
+        origin_main_sha=origin_main_sha,
         expect_repo_sha=args.expect_repo_sha,
         expect_project_ref=args.expect_project_ref,
-        expect_db_role=args.expect_db_role,
+        expect_db_role=EXPECTED_DB_ROLE,
         dsn_env=args.dsn_env,
         started_at=started_at,
         finished_at=_utc_now_iso(),

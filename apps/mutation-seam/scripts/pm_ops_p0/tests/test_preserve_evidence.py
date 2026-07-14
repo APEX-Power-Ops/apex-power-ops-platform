@@ -17,6 +17,7 @@ import json
 import os
 import shutil
 import stat
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -29,6 +30,10 @@ REF = "fxoyniqnrlkxfligbxmg"
 SHA = "0123456789abcdef0123456789abcdef01234567"
 CLOCK = "2026-07-14T00-00-00Z"
 
+_SAME = (
+    object()
+)  # sentinel: origin/main sha defaults to HEAD sha (a merged-tip checkout)
+
 
 def _run_main(argv: list[str]) -> tuple[int, str]:
     buf = io.StringIO()
@@ -38,15 +43,55 @@ def _run_main(argv: list[str]) -> tuple[int, str]:
 
 
 @contextlib.contextmanager
-def _patched_repo(sha=SHA, clean=True, on_main=True):
-    """Inject a controlled git state so main()'s governance gate is offline-testable."""
+def _patched_repo(sha=SHA, clean=True, origin_main_sha=_SAME):
+    """Inject a controlled git state so main()'s governance gate is offline-testable.
+
+    The 3rd element is the freshly-fetched origin/main sha (str or None), matching the
+    real ``_repo_git_state`` contract; it defaults to the HEAD sha (HEAD == origin/main).
+    """
+    oms = sha if origin_main_sha is _SAME else origin_main_sha
     orig_root, orig_state = pe._repo_root, pe._repo_git_state
     pe._repo_root = lambda: Path("/fake/repo")
-    pe._repo_git_state = lambda root: (sha, clean, on_main)
+    pe._repo_git_state = lambda root: (sha, clean, oms)
     try:
         yield sha
     finally:
         pe._repo_root, pe._repo_git_state = orig_root, orig_state
+
+
+def _git(cwd: Path, *args: str) -> subprocess.CompletedProcess:
+    """Run git in `cwd`, raising with captured output on failure (test helper)."""
+    return subprocess.run(
+        ["git", "-C", str(cwd), *args], capture_output=True, text=True, check=True
+    )
+
+
+def _make_repo_with_remote(tmp: Path) -> tuple[Path, Path, str]:
+    """Build a real work repo with one commit on `main` pushed to a local bare origin.
+
+    Returns (work_dir, origin_bare_dir, head_sha) with HEAD == origin/main. Offline: the
+    remote is a local bare repo (no network), so the real ``_repo_git_state`` fetch runs.
+    """
+    origin = tmp / "origin.git"
+    work = tmp / "work"
+    subprocess.run(
+        ["git", "init", "--quiet", "--bare", str(origin)],
+        check=True,
+        capture_output=True,
+    )
+    work.mkdir()
+    _git(work, "init", "--quiet")
+    _git(work, "config", "user.email", "t@example.invalid")
+    _git(work, "config", "user.name", "T")
+    _git(work, "config", "commit.gpgsign", "false")
+    _git(work, "checkout", "--quiet", "-b", "main")
+    (work / "f.txt").write_text("1\n")
+    _git(work, "add", "-A")
+    _git(work, "commit", "--quiet", "-m", "c1")
+    _git(work, "remote", "add", "origin", str(origin))
+    _git(work, "push", "--quiet", "origin", "main")
+    _git(work, "fetch", "--quiet", "origin")  # populate refs/remotes/origin/main
+    return work, origin, _git(work, "rev-parse", "HEAD").stdout.strip()
 
 
 # ----------------------------------------------------------------- arg parsing
@@ -161,12 +206,14 @@ def test_main_refuses_repo_sha_mismatch():
     assert "repo_sha_mismatch" in out
 
 
-def test_main_refuses_repo_not_on_main():
+def test_main_refuses_head_not_origin_main():
+    # HEAD == --expect-repo-sha but != origin/main (a stale/ancestor or self-attested
+    # checkout an ancestor test would have passed) -> refuse (finding 2, equality).
     os.environ["PM_OPS_P0_TEST_DSN"] = (
         f"host=db.{REF}.supabase.co user=postgres dbname=postgres"
     )
     try:
-        with _patched_repo(on_main=False):
+        with _patched_repo(origin_main_sha="ffff0000ffff0000ffff0000ffff0000ffff0000"):
             rc, out = _run_main(
                 [
                     "--expect-project-ref",
@@ -180,7 +227,7 @@ def test_main_refuses_repo_not_on_main():
     finally:
         os.environ.pop("PM_OPS_P0_TEST_DSN", None)
     assert rc != 0
-    assert "repo_not_on_main" in out
+    assert "repo_head_not_origin_main" in out
 
 
 def test_main_refuses_when_origin_main_unresolvable():
@@ -189,7 +236,7 @@ def test_main_refuses_when_origin_main_unresolvable():
         f"host=db.{REF}.supabase.co user=postgres dbname=postgres"
     )
     try:
-        with _patched_repo(on_main=None):
+        with _patched_repo(origin_main_sha=None):
             rc, out = _run_main(
                 [
                     "--expect-project-ref",
@@ -232,6 +279,158 @@ def test_main_refuses_unbound_dsn_value_silently():
     assert secret_pw not in out
     assert "sneaky" not in out
     assert "not_bound" in out  # a stable bind reject code
+
+
+# ---------------------------------------------- runtime integrity (round 3)
+
+
+def test_expect_db_role_flag_is_rejected():
+    # finding 3: the admin DB role is SOURCE-PINNED, not a caller-selectable option
+    try:
+        pe.build_parser().parse_args(
+            [
+                "--expect-project-ref",
+                REF,
+                "--dsn-env",
+                "V",
+                "--expect-repo-sha",
+                SHA,
+                "--expect-db-role",
+                "authenticator",
+            ]
+        )
+    except SystemExit as exc:
+        assert exc.code != 0
+    else:  # pragma: no cover
+        raise AssertionError("--expect-db-role must not be an accepted option")
+
+
+def test_untracked_import_shadow_rejected_before_binding_import():
+    # finding 1: an untracked shadow module makes the tree non-pristine, so main() refuses
+    # (repo_dirty) BEFORE collect_evidence() -- where pm_ops_p0.binding/psycopg is imported.
+    tmp = Path(tempfile.mkdtemp(prefix="p0a-ri-shadow-"))
+    try:
+        work, _origin, head = _make_repo_with_remote(tmp)
+        # a planted import-shadow is UNTRACKED; if imported it would run this
+        (work / "psycopg.py").write_text("raise RuntimeError('shadow executed')\n")
+        reached = {"collect": False}
+
+        def spy_collect(dsn, expect_ref):
+            reached["collect"] = True  # only reachable past the deferred binding import
+            raise AssertionError("collect_evidence must not run for an untracked tree")
+
+        orig_root, orig_collect = pe._repo_root, pe.collect_evidence
+        pe._repo_root = lambda: work
+        pe.collect_evidence = spy_collect
+        os.environ["PM_OPS_P0_TEST_DSN"] = (
+            f"host=db.{REF}.supabase.co user=postgres dbname=postgres"
+        )
+        try:
+            rc, out = _run_main(
+                [
+                    "--expect-project-ref",
+                    REF,
+                    "--dsn-env",
+                    "PM_OPS_P0_TEST_DSN",
+                    "--expect-repo-sha",
+                    head,
+                ]
+            )
+        finally:
+            pe._repo_root, pe.collect_evidence = orig_root, orig_collect
+            os.environ.pop("PM_OPS_P0_TEST_DSN", None)
+        assert rc != 0
+        assert "repo_dirty" in out  # untracked shadow -> non-pristine -> refused
+        assert reached["collect"] is False  # refused before the deferred binding import
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_historical_ancestor_of_origin_main_rejected():
+    # finding 2: HEAD is an ANCESTOR of origin/main but not equal -> refuse (equality, not
+    # ancestor). A `merge-base --is-ancestor` test would have passed this stale checkout.
+    tmp = Path(tempfile.mkdtemp(prefix="p0a-ri-ancestor-"))
+    try:
+        work, _origin, head1 = _make_repo_with_remote(tmp)
+        (work / "f.txt").write_text("2\n")
+        _git(work, "add", "-A")
+        _git(work, "commit", "--quiet", "-m", "c2")
+        _git(work, "push", "--quiet", "origin", "main")  # origin/main advances to head2
+        _git(work, "reset", "--quiet", "--hard", head1)  # HEAD back to the ancestor
+        orig_root = pe._repo_root
+        pe._repo_root = lambda: work
+        os.environ["PM_OPS_P0_TEST_DSN"] = (
+            f"host=db.{REF}.supabase.co user=postgres dbname=postgres"
+        )
+        try:
+            rc, out = _run_main(
+                [
+                    "--expect-project-ref",
+                    REF,
+                    "--dsn-env",
+                    "PM_OPS_P0_TEST_DSN",
+                    "--expect-repo-sha",
+                    head1,
+                ]
+            )
+        finally:
+            pe._repo_root = orig_root
+            os.environ.pop("PM_OPS_P0_TEST_DSN", None)
+        assert rc != 0
+        assert "repo_head_not_origin_main" in out
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_head_equals_origin_main_clears_the_gate():
+    # finding 2 (positive): a pristine checkout at HEAD == origin/main == --expect-repo-sha
+    # clears the gate and reaches collect_evidence (stubbed short of any real connect).
+    tmp = Path(tempfile.mkdtemp(prefix="p0a-ri-pass-"))
+    try:
+        work, _origin, head = _make_repo_with_remote(tmp)
+        reached = {"collect": False}
+
+        def spy_collect(dsn, expect_ref):
+            reached["collect"] = True
+            raise pe.EvidenceRefusal("stub_gate_cleared")
+
+        orig_root, orig_collect = pe._repo_root, pe.collect_evidence
+        pe._repo_root = lambda: work
+        pe.collect_evidence = spy_collect
+        os.environ["PM_OPS_P0_TEST_DSN"] = (
+            f"host=db.{REF}.supabase.co user=postgres dbname=postgres"
+        )
+        try:
+            rc, out = _run_main(
+                [
+                    "--expect-project-ref",
+                    REF,
+                    "--dsn-env",
+                    "PM_OPS_P0_TEST_DSN",
+                    "--expect-repo-sha",
+                    head,
+                ]
+            )
+        finally:
+            pe._repo_root, pe.collect_evidence = orig_root, orig_collect
+            os.environ.pop("PM_OPS_P0_TEST_DSN", None)
+        assert rc != 0
+        assert reached["collect"] is True  # governance gate cleared
+        assert "stub_gate_cleared" in out
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_runbook_uses_child_only_infisical_injection():
+    # finding 4: the runbook injects the DSN into the CHILD process via inject.sh and
+    # never exports a literal secret into the operator shell.
+    root = Path(__file__).resolve().parents[5]
+    runbook = root / "docs" / "superpowers" / "specs" / "pm-ops-p0" / "P0A_RUNBOOK.md"
+    text = runbook.read_text()
+    assert "infra/infisical/inject.sh prod --" in text
+    assert "--dsn-env" in text
+    assert "export SUPABASE_PROD_DSN" not in text  # no literal secret export
+    assert "--expect-db-role" not in text  # removed, source-pinned (finding 3)
 
 
 # -------------------------------------------------------------------- custody
@@ -318,8 +517,9 @@ def test_write_custody_writes_full_large_artifact():
 def test_build_provenance_records_governance_fields():
     prov = pe.build_provenance(
         repo_sha="abc123",
-        repo_clean=True,
+        repo_pristine=True,
         on_main=True,
+        origin_main_sha="abc123",
         expect_repo_sha="abc123",
         expect_project_ref=REF,
         expect_db_role="postgres",
@@ -332,8 +532,11 @@ def test_build_provenance_records_governance_fields():
     assert rec["expected_project_ref"] == REF
     assert rec["expected_db_role"] == "postgres"
     assert rec["dsn_env_var_name"] == "SUPABASE_PROD_DSN"  # NAME only, never a value
-    assert rec["repo_tracked_tree_clean"] is True
-    assert rec["repo_head_merged_to_origin_main"] is True
+    assert rec["repo_tree_pristine"] is True
+    assert (
+        rec["origin_main_sha"] == "abc123"
+    )  # HEAD == origin/main == expect (finding 2)
+    assert rec["repo_head_equals_origin_main"] is True
     assert isinstance(rec["libpq_version"], int)
     assert set(rec["tool_source_sha256"]) == {"binding.py", "preserve_evidence.py"}
     here = Path(pe.__file__).resolve().parent
@@ -465,7 +668,7 @@ def test_collect_evidence_choreography_and_env_scrub():
     os.environ["PGHOST"] = "leak.example"
     try:
         dsn = f"host=db.{REF}.supabase.co user=postgres password=pw dbname=postgres"
-        artifacts = pe.collect_evidence(dsn, REF, expect_role="postgres")
+        artifacts = pe.collect_evidence(dsn, REF)
     finally:
         psycopg.connect = orig
         os.environ.pop("PGHOST", None)
@@ -497,7 +700,6 @@ def test_collect_evidence_refuses_wrong_db_role_before_evidence():
             pe.collect_evidence(
                 f"host=db.{REF}.supabase.co user=postgres dbname=postgres",
                 REF,
-                expect_role="postgres",
             )
         except pe.EvidenceRefusal as exc:
             raised = True
@@ -510,6 +712,7 @@ def test_collect_evidence_refuses_wrong_db_role_before_evidence():
 
 
 def test_collect_evidence_rejects_wrong_host_before_any_query():
+    import pm_ops_p0.binding as binding
     import psycopg
 
     recorder: list[str] = []
@@ -525,7 +728,7 @@ def test_collect_evidence_rejects_wrong_host_before_any_query():
             pe.collect_evidence(
                 f"host=db.{REF}.supabase.co user=postgres dbname=postgres", REF
             )
-        except pe.TargetBindingError as exc:
+        except binding.TargetBindingError as exc:  # deferred import -> catch on binding
             raised = True
             assert exc.code == "connection_host_mismatch", exc.code
     finally:
