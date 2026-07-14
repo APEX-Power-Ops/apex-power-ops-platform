@@ -103,10 +103,11 @@ script artifact, or failed-HTTP capture, and publishes a **no-clobber** `closeou
 binding every artifact by SHA-256 (review round-3 finding 5):
 
 ```bash
-"<repo>/.venv/bin/python" apps/mutation-seam/scripts/pm_ops_p0/finalize_closeout.py \
+"<repo>/.venv/bin/python" -I apps/mutation-seam/scripts/pm_ops_p0/finalize_closeout.py \
   --spec <closeout-spec.json> \
   --custody-dir /home/olares/custody/pm-ops-p0/<UTC>
 # -> RESULT PASS + CLOSEOUT .../closeout_index.json   (mode 0400; every artifact SHA-256-bound)
+# (-I required, like preserve_evidence: the finalizer refuses interpreter_not_isolated otherwise)
 ```
 
 The spec is JSON: `{"categories": [{"category": 1..9, "source": "script"|"operator",

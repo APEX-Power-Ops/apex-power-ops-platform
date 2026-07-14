@@ -292,6 +292,28 @@ def test_finalize_operator_artifact_reused_across_categories_rejected():
     _expect_closeout_error(spec, "operator_artifact_reused")
 
 
+def test_finalize_operator_categories_not_swappable():
+    # Codex-c16 P2: cat 7 (backend) and cat 8 (/reset logs) are marker-bound; a swap fails
+    spec = _full_spec()
+    spec["categories"][6]["artifacts"] = [
+        "reset_logs.txt"
+    ]  # cat 7 <- log (no `backend` key)
+    spec["categories"][7]["artifacts"] = [
+        "backend.json"
+    ]  # cat 8 <- backend (no `/reset`)
+    _expect_closeout_error(spec, "failed_operator_evidence")
+
+
+def test_finalizer_isolation_gate():
+    # Codex-c16 P2: the finalizer CLI must run under python -I (isolated)
+    assert fc._isolation_gate(True) is None
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = fc._isolation_gate(False)
+    assert rc == 1
+    assert "interpreter_not_isolated" in buf.getvalue()
+
+
 def test_finalize_stale_provenance_attestation_rejected():
     # Codex-c11 P2: provenance must carry the schema-2 governed-run attestation, not just
     # hash-match. A stale record whose HASH still matches the manifest is refused on content.
@@ -376,12 +398,15 @@ def test_finalize_category2_json_error_body_fails():
     _expect_closeout_error(_full_spec(), "failed_http", custody_mutator=mutate)
 
 
-def test_finalize_json_operator_artifact_must_parse():
-    # lens-B A3: a JSON-named operator artifact (category 7) that is an HTML error page fails
+def test_finalize_backend_artifact_html_fails():
+    # lens-B A3 + Codex-c16 P2: a category-7 backend artifact that is an HTML error page fails
+    # (the backend marker validator, which supersedes the generic .json parse fallback).
     def mutate(tmp, custody):
         (custody / "backend.json").write_bytes(b"<html>502 Bad Gateway</html>\n")
 
-    _expect_closeout_error(_full_spec(), "failed_json", custody_mutator=mutate)
+    _expect_closeout_error(
+        _full_spec(), "failed_operator_evidence", custody_mutator=mutate
+    )
 
 
 def test_finalize_tampered_provenance_fails():

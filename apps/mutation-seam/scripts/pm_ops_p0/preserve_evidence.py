@@ -371,12 +371,13 @@ def _repo_git_state(repo_root: Path) -> tuple[str, bool, str | None]:
         "--untracked-files=all",
     )
     is_pristine = status.returncode == 0 and status.stdout.strip() == ""
-    # fresh fetch, then read the JUST-FETCHED tip from FETCH_HEAD (NOT the remote-tracking
-    # ref, which `git fetch origin main` only updates opportunistically when the clone
-    # carries the standard fetch refspec — review round-3 A6). None (fail closed) on any
-    # fetch/parse failure: an unverifiable current-main tip must not proceed.
+    # fresh fetch of the BRANCH ref specifically (refs/heads/main, not the ambiguous "main"
+    # which a lightweight tag `main` could satisfy — Codex-c16 P2), then read the just-fetched
+    # tip from FETCH_HEAD (NOT the remote-tracking ref, which is updated only opportunistically
+    # — review round-3 A6). None (fail closed) on any fetch/parse failure: an unverifiable
+    # current-main tip must not proceed.
     origin_main_sha: str | None = None
-    if _git("fetch", "--quiet", "origin", "main").returncode == 0:
+    if _git("fetch", "--quiet", "origin", "refs/heads/main").returncode == 0:
         fh = _git("rev-parse", "--verify", "--quiet", "FETCH_HEAD")
         if fh.returncode == 0 and fh.stdout.strip():
             origin_main_sha = fh.stdout.strip()

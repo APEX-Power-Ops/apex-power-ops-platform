@@ -20,15 +20,36 @@ separate ``P0-A READ-ONLY EVIDENCE`` GO.
 
 from __future__ import annotations
 
-import argparse
-import contextlib
-import hashlib
-import json
-import logging
 import os
 import sys
-from datetime import datetime, timezone
-from pathlib import Path
+
+# Runtime-integrity preamble (Codex-c16 P2), mirroring preserve_evidence: BEFORE any
+# shadowable import, restrict sys.path to entries under an interpreter install prefix
+# (sys.*prefix), using only sys+os. When this is run as a script (per the runbook) an
+# untracked shadow next to it (json.py / hashlib.py) could otherwise execute and forge the
+# closeout checks. The runbook invokes it with `python -I` as an additional contract.
+_TRUSTED_SYS_PREFIXES = tuple(
+    os.path.realpath(getattr(sys, _attr))
+    for _attr in ("prefix", "base_prefix", "exec_prefix", "base_exec_prefix")
+    if getattr(sys, _attr, "")
+)
+sys.path[:] = [
+    _p
+    for _p in sys.path
+    if _p
+    and any(
+        os.path.realpath(_p) == _b or os.path.realpath(_p).startswith(_b + os.sep)
+        for _b in _TRUSTED_SYS_PREFIXES
+    )
+]
+
+import argparse  # noqa: E402
+import contextlib  # noqa: E402
+import hashlib  # noqa: E402
+import json  # noqa: E402
+import logging  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 MANIFEST_NAME = "manifest.sha256"
 PROVENANCE_NAME = "00_provenance.json"
@@ -286,6 +307,35 @@ def _validate_http_artifact(category: int, path: Path) -> None:
             raise CloseoutError("failed_http")
 
 
+def _validate_backend_artifact(path: Path) -> None:
+    """Category 7 (backend classification) must be a JSON object with a `backend` key.
+
+    Binds the artifact to the category so a swap (e.g. a log file under cat 7) fails
+    (Codex-c16 P2). Deeper semantics -- that the backend value is correct -- stay
+    operator-review scope.
+    """
+    try:
+        doc = json.loads(path.read_text())
+    except (ValueError, UnicodeDecodeError):
+        raise CloseoutError("failed_operator_evidence") from None
+    if not (isinstance(doc, dict) and "backend" in doc):
+        raise CloseoutError("failed_operator_evidence")
+
+
+def _validate_reset_log_artifact(path: Path) -> None:
+    """Category 8 (Render POST /reset access logs) must reference the `/reset` route.
+
+    Binds the artifact to the category so a swap (e.g. backend.json under cat 8) fails
+    (Codex-c16 P2). Deeper semantics -- the right host / time window -- stay operator-review.
+    """
+    try:
+        text = path.read_text()
+    except (ValueError, UnicodeDecodeError):
+        raise CloseoutError("failed_operator_evidence") from None
+    if "/reset" not in text:
+        raise CloseoutError("failed_operator_evidence")
+
+
 def _require_parseable_json(path: Path) -> None:
     """Any ``.json`` artifact must parse (lens-B A3: a JSON-named error page must fail)."""
     try:
@@ -405,6 +455,10 @@ def finalize(
                 seen_operator_rels.add(rel)
             if category in HTTP_CATEGORIES:
                 _validate_http_artifact(category, path)
+            elif category == 7:
+                _validate_backend_artifact(path)  # backend classification marker
+            elif category == 8:
+                _validate_reset_log_artifact(path)  # /reset access-log marker
             elif path.name.endswith(".json"):
                 _require_parseable_json(
                     path
@@ -498,5 +552,19 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
+def _isolation_gate(isolated: bool) -> int | None:
+    """Refuse the CLI unless the interpreter is isolated (``python -I``) -- Codex-c16 P2.
+
+    Additional contract on top of the sys.path preamble; returns a non-None exit code when
+    NOT isolated.
+    """
+    if not isolated:
+        print("RESULT FAIL")
+        print("FAILURE interpreter_not_isolated")
+        return 1
+    return None
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    _rc = _isolation_gate(sys.flags.isolated)
+    sys.exit(_rc if _rc is not None else main())
