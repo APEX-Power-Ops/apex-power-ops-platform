@@ -225,6 +225,23 @@ def test_bootstrap_rejects_unreadable_subdir():
             os.chmod(bundle / "pkg", 0o755)  # let TemporaryDirectory clean up
 
 
+def test_bootstrap_stage_io_failure_is_value_silent():
+    # Codex-r5: an ordinary staging I/O error (unwritable tmp, disk full) must fail closed
+    # with a value-free code, not a raw OSError traceback. Simulated by making mkdtemp raise.
+    with tempfile.TemporaryDirectory(prefix="p0a-bundle-") as d:
+        bundle, manifest, msha = _make_bundle(Path(d), {"a.py": b"a\n"})
+        orig = pe.tempfile.mkdtemp
+
+        def _boom(*a, **k):
+            raise OSError("disk full")
+
+        pe.tempfile.mkdtemp = _boom
+        try:
+            _expect_refusal("bundle_stage_failed", bundle, manifest, msha)
+        finally:
+            pe.tempfile.mkdtemp = orig
+
+
 def test_bootstrap_rejects_non_directory_bundle():
     with tempfile.TemporaryDirectory(prefix="p0a-bundle-") as d:
         root = Path(d)

@@ -383,6 +383,28 @@ def test_bind_target_rejects_unknown_require_form():
         raise AssertionError("an unknown require_form must be rejected")
 
 
+def test_scrubbed_pg_env_scrubs_whole_pg_namespace_by_prefix():
+    # Codex-r5: the scrub is by PG* prefix, so a libpq env var NOT in the explicit list
+    # (e.g. a future/unlisted one) is still removed, and an inner-set PG* leak is cleared.
+    saved = {k: os.environ.get(k) for k in ("PGZZZ_UNLISTED", "PGSSLNEGOTIATION")}
+    try:
+        os.environ["PGZZZ_UNLISTED"] = "should-be-scrubbed"
+        os.environ.pop("PGSSLNEGOTIATION", None)
+        with scrubbed_pg_env():
+            assert "PGZZZ_UNLISTED" not in os.environ  # unlisted PG* scrubbed by prefix
+            os.environ["PGSSLNEGOTIATION"] = "leaked-inside"  # an inner leak
+        assert os.environ.get("PGZZZ_UNLISTED") == "should-be-scrubbed"  # restored
+        assert (
+            "PGSSLNEGOTIATION" not in os.environ
+        )  # inner-set PG* leak cleared on exit
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
 def test_scrubbed_pg_env_scrubs_openssl_trust_anchors_and_restores():
     saved = {k: os.environ.get(k) for k in ("SSL_CERT_FILE", "SSL_CERT_DIR")}
     try:

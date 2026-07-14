@@ -56,11 +56,15 @@ CODE_MALFORMED_PORT = "dsn_malformed_port"  # non-numeric port
 CODE_CONN_HOST_MISMATCH = "connection_host_mismatch"
 CODE_CONN_USER_MISMATCH = "connection_user_mismatch"
 
-# PG* environment variables libpq merges at connect time for params absent from
-# the string. An env-supplied hostaddr/service could reroute the actual TCP
-# target, and an env-supplied SSL trust anchor could point verify-full at a rogue
-# CA (verify-full is the load-bearing control, so its trust store is scrubbed too
-# — review LOW-1). Scrub all of them before connecting.
+# EVERY libpq connection env var begins with `PG`, and libpq merges it at connect time for
+# any param absent from the string — a reroute (PGHOSTADDR/PGSERVICE), a rogue SSL trust
+# anchor (PGSSLROOTCERT), a lowered TLS floor (PGSSLMINPROTOCOLVERSION/PGSSLNEGOTIATION), a
+# session GUC (PGOPTIONS), etc. Rather than enumerate a denylist that keeps growing (RI2
+# lens-B F5, Codex-r5), `scrubbed_pg_env` scrubs the WHOLE `PG*` namespace by prefix: with
+# every connection param passed explicitly, no libpq env var is needed, so scrubbing all of
+# them is complete and safe. This tuple is the representative/ documented set (used by tests
+# and to name the classes); the actual scrub is by prefix and covers any `PG*` not listed.
+_LIBPQ_ENV_PREFIX = "PG"
 PG_ENV_OVERRIDES = (
     "PGHOSTADDR",
     "PGSERVICE",
@@ -70,13 +74,14 @@ PG_ENV_OVERRIDES = (
     "PGSSLROOTCERT",
     "PGSSLCERT",
     "PGSSLKEY",
-    # env-merged libpq params the DSN allow-list drops on the string side but that libpq
-    # would still take from the environment when absent from the string (RI2 lens-B F5):
     "PGOPTIONS",  # session GUC injection (-c ...) on the probe connection
     "PGSSLCRL",  # a CRL/CRL-dir the attacker controls
     "PGSSLCRLDIR",
     "PGGSSENCMODE",  # force/deny GSS to steer the negotiation
     "PGCHANNELBINDING",
+    "PGSSLMINPROTOCOLVERSION",  # lower the TLS floor (Codex-r5)
+    "PGSSLMAXPROTOCOLVERSION",
+    "PGSSLNEGOTIATION",  # steer the direct-TLS vs negotiated handshake (Codex-r5)
 )
 
 # `bind_target` source-pins `sslrootcert=system` (below), which tells libpq to trust
@@ -236,25 +241,34 @@ def _assert_anchored(
     raise TargetBindingError(CODE_HOST_NOT_BOUND)
 
 
+def _scrub_keys() -> list[str]:
+    """Every currently-set env key libpq/OpenSSL would merge: the whole ``PG*`` namespace
+    plus the exact OpenSSL trust-store redirects."""
+    keys = [k for k in os.environ if k.startswith(_LIBPQ_ENV_PREFIX)]
+    keys += [k for k in SSL_TRUST_ENV_OVERRIDES if k in os.environ]
+    return list(dict.fromkeys(keys))
+
+
 @contextmanager
 def scrubbed_pg_env() -> Iterator[None]:
-    """Remove the connect-time env overrides (PG* + OpenSSL trust store) for the context.
+    """Remove every connect-time env override (all ``PG*`` + OpenSSL trust store) for the context.
 
-    Scrubs `SCRUBBED_ENV_VARS` — the PG* reroute/trust overrides AND the OpenSSL
-    `SSL_CERT_FILE`/`SSL_CERT_DIR` default-store redirects that `sslrootcert=system`
-    relies on (RI2 finding 2). Values present beforehand are restored on exit; anything
-    the inner code sets is cleared, so a leaked override cannot survive the context.
-    Mutates global `os.environ` — callers in a concurrent path must serialise (see
-    `connect_bound`).
+    Scrubs the COMPLETE ``PG*`` namespace by prefix (any libpq connection var, listed or not
+    — Codex-r5) plus the OpenSSL ``SSL_CERT_FILE``/``SSL_CERT_DIR``/``OPENSSL_*`` redirects
+    that ``sslrootcert=system`` relies on (RI2 finding 2; lens-B F1). Values present
+    beforehand are restored on exit; anything the inner code sets — including a ``PG*`` not
+    present at entry — is cleared, so a leaked override cannot survive the context. Mutates
+    global ``os.environ`` — callers in a concurrent path must serialise (see ``connect_bound``).
     """
-    saved = {key: os.environ.pop(key, None) for key in SCRUBBED_ENV_VARS}
+    saved = {key: os.environ.pop(key, None) for key in _scrub_keys()}
     try:
         yield
     finally:
+        # clear any libpq/OpenSSL var the inner code set that was NOT scrubbed at entry
+        for key in _scrub_keys():
+            os.environ.pop(key, None)
         for key, value in saved.items():
-            if value is None:
-                os.environ.pop(key, None)
-            else:
+            if value is not None:
                 os.environ[key] = value
 
 

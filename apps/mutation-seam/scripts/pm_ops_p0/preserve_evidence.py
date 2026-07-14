@@ -606,8 +606,13 @@ def _bootstrap_dependency_bundle(
                 raise EvidenceRefusal("bundle_unlisted_file")
     # (2) hash-while-copy each LISTED file into a fresh private stage. mkdtemp is 0700 and
     #     owned by us, so nothing external can write it; we import from THIS copy, so the
-    #     verified bytes are the imported bytes (no verify->import TOCTOU).
-    staged = Path(tempfile.mkdtemp(prefix="p0a-bundle-staged-"))
+    #     verified bytes are the imported bytes (no verify->import TOCTOU). Ordinary staging
+    #     I/O errors (unwritable tmp, disk full, path too long) map to a value-free code, not
+    #     a raw OSError traceback -- main() only catches EvidenceRefusal here (Codex-r5).
+    try:
+        staged = Path(tempfile.mkdtemp(prefix="p0a-bundle-staged-"))
+    except OSError:
+        raise EvidenceRefusal("bundle_stage_failed") from None
     for rel, sha in manifest.items():
         source = _resolve_bundle_member(base, rel)
         if os.path.islink(source) or not os.path.isfile(source):
@@ -615,17 +620,19 @@ def _bootstrap_dependency_bundle(
         try:
             data = Path(source).read_bytes()
         except OSError:
-            # unreadable, or removed between isfile() and read -> fail closed, value-free,
-            # not a traceback (Codex-RI2 P2): main() maps this to RESULT FAIL like any refusal.
+            # unreadable, or removed between isfile() and read -> fail closed, value-free.
             raise EvidenceRefusal("bundle_member_unreadable") from None
         if hashlib.sha256(data).hexdigest() != sha:
             raise EvidenceRefusal("bundle_hash_mismatch")
         dest = staged / rel  # rel is manifest-validated: relative, no `..`, no absolute
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        with open(
-            os.open(dest, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400), "wb"
-        ) as fh:
-            fh.write(data)
+        try:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            with open(
+                os.open(dest, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400), "wb"
+            ) as fh:
+                fh.write(data)
+        except OSError:
+            raise EvidenceRefusal("bundle_stage_failed") from None
     # verified + staged. Don't write unlisted __pycache__ back into the stage, then expose it.
     sys.dont_write_bytecode = True
     staged_base = os.path.realpath(staged)
