@@ -29,9 +29,10 @@ CLOCK = "2026-07-14T00:00:00+00:00"
 # script-captured artifacts (hashed into manifest.sha256 by preserve_evidence.write_custody)
 SCRIPT_ARTS = {
     "00_provenance.json": (
-        b'{"schema_version": 2, "repo_tree_pristine": true, '
+        b'{"schema_version": 3, "repo_tree_pristine": true, '
         b'"repo_head_equals_origin_main": true, "expected_db_role": "postgres", '
         b'"expected_project_ref": "fxoyniqnrlkxfligbxmg", '
+        b'"dependency_bundle_manifest_sha256": "' + b"a" * 64 + b'", '
         b'"origin_main_sha": "abc123", "repo_sha": "abc123", "expect_repo_sha": "abc123"}\n'
     ),
     "00_p0a_snapshot.sql": b"BEGIN;\n",
@@ -337,13 +338,15 @@ def test_finalize_reset_log_route_json_fails():
 
 
 def test_finalizer_isolation_gate():
-    # Codex-c16 P2: the finalizer CLI must run under python -I (isolated)
-    assert fc._isolation_gate(True) is None
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(buf):
-        rc = fc._isolation_gate(False)
-    assert rc == 1
-    assert "interpreter_not_isolated" in buf.getvalue()
+    # RI2 finding 1: the finalizer CLI must run under python -I -S (isolated AND no-site),
+    # so an executable .pth cannot run before the gate; any weaker interpreter is refused.
+    assert fc._isolation_gate(True, True) is None
+    for isolated, no_site in ((True, False), (False, True), (False, False)):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = fc._isolation_gate(isolated, no_site)
+        assert rc == 1, (isolated, no_site)
+        assert "interpreter_not_isolated_no_site" in buf.getvalue()
 
 
 def test_finalize_stale_provenance_attestation_rejected():
@@ -358,6 +361,34 @@ def test_finalize_stale_provenance_attestation_rejected():
             if line.endswith(f"  {'00_provenance.json'}"):
                 rebuilt.append(
                     f"{hashlib.sha256(stale).hexdigest()}  00_provenance.json"
+                )
+            else:
+                rebuilt.append(line)
+        m.write_text("\n".join(rebuilt) + "\n")
+
+    _expect_closeout_error(
+        _full_spec(), "provenance_attestation_invalid", custody_mutator=mutate
+    )
+
+
+def test_finalize_provenance_without_bundle_attestation_rejected():
+    # Codex-RI2 P1: schema-3 provenance MUST carry a valid dependency_bundle_manifest_sha256.
+    # A record with the field stripped (or a pre-bundle capture) must not close out P0-A, even
+    # though its bytes still hash-match the (rebuilt) manifest.
+    def mutate(tmp, custody):
+        prov = custody / "00_provenance.json"
+        rec = json.loads(prov.read_text())
+        rec.pop(
+            "dependency_bundle_manifest_sha256", None
+        )  # strip the bundle attestation
+        data = (json.dumps(rec) + "\n").encode()
+        prov.write_bytes(data)
+        m = custody / "manifest.sha256"
+        rebuilt = []
+        for line in m.read_text().splitlines():
+            if line.endswith("  00_provenance.json"):
+                rebuilt.append(
+                    f"{hashlib.sha256(data).hexdigest()}  00_provenance.json"
                 )
             else:
                 rebuilt.append(line)

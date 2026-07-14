@@ -49,14 +49,22 @@ CODE_MISSING_HOST = "dsn_missing_host"
 CODE_MISSING_USER = "dsn_missing_user"
 CODE_HOST_NOT_BOUND = "dsn_host_not_bound_to_project"
 CODE_USER_NOT_BOUND = "dsn_user_not_bound_to_project"
+CODE_WRONG_FORM = (
+    "dsn_wrong_connection_form"  # direct DSN for a pooler probe or vice-versa
+)
+CODE_MALFORMED_PORT = "dsn_malformed_port"  # non-numeric port
 CODE_CONN_HOST_MISMATCH = "connection_host_mismatch"
 CODE_CONN_USER_MISMATCH = "connection_user_mismatch"
 
-# PG* environment variables libpq merges at connect time for params absent from
-# the string. An env-supplied hostaddr/service could reroute the actual TCP
-# target, and an env-supplied SSL trust anchor could point verify-full at a rogue
-# CA (verify-full is the load-bearing control, so its trust store is scrubbed too
-# — review LOW-1). Scrub all of them before connecting.
+# EVERY libpq connection env var begins with `PG`, and libpq merges it at connect time for
+# any param absent from the string — a reroute (PGHOSTADDR/PGSERVICE), a rogue SSL trust
+# anchor (PGSSLROOTCERT), a lowered TLS floor (PGSSLMINPROTOCOLVERSION/PGSSLNEGOTIATION), a
+# session GUC (PGOPTIONS), etc. Rather than enumerate a denylist that keeps growing (RI2
+# lens-B F5, Codex-r5), `scrubbed_pg_env` scrubs the WHOLE `PG*` namespace by prefix: with
+# every connection param passed explicitly, no libpq env var is needed, so scrubbing all of
+# them is complete and safe. This tuple is the representative/ documented set (used by tests
+# and to name the classes); the actual scrub is by prefix and covers any `PG*` not listed.
+_LIBPQ_ENV_PREFIX = "PG"
 PG_ENV_OVERRIDES = (
     "PGHOSTADDR",
     "PGSERVICE",
@@ -66,7 +74,38 @@ PG_ENV_OVERRIDES = (
     "PGSSLROOTCERT",
     "PGSSLCERT",
     "PGSSLKEY",
+    "PGOPTIONS",  # session GUC injection (-c ...) on the probe connection
+    "PGSSLCRL",  # a CRL/CRL-dir the attacker controls
+    "PGSSLCRLDIR",
+    "PGGSSENCMODE",  # force/deny GSS to steer the negotiation
+    "PGCHANNELBINDING",
+    "PGSSLMINPROTOCOLVERSION",  # lower the TLS floor (Codex-r5)
+    "PGSSLMAXPROTOCOLVERSION",
+    "PGSSLNEGOTIATION",  # steer the direct-TLS vs negotiated handshake (Codex-r5)
 )
+
+# `bind_target` source-pins `sslrootcert=system` (below), which tells libpq to trust
+# the OpenSSL DEFAULT trust store. That store — and OpenSSL's whole verification behaviour
+# — is redirected by OpenSSL's OWN environment: SSL_CERT_FILE / SSL_CERT_DIR relocate the
+# default CA store, and OPENSSL_CONF (+ its include path) / OPENSSL_MODULES / OPENSSL_ENGINES
+# can load an attacker-supplied provider/engine (arbitrary code) or lower the TLS floor. The
+# SAME env-attacker the SSL_CERT_FILE scrub already targets can use any of these, so they are
+# all scrubbed at connect time (RI2 review finding 2; lens-B F1). CAVEAT: OPENSSL_CONF is
+# consumed once at OpenSSL PROCESS INIT, so this connect-time scrub only protects a process
+# (like the short-lived `-I -S` P0-A run) that has done no TLS before the scrub; a long-lived
+# readiness process must control these at LAUNCH (see the design's readiness note).
+SSL_TRUST_ENV_OVERRIDES = (
+    "SSL_CERT_FILE",
+    "SSL_CERT_DIR",
+    "OPENSSL_CONF",
+    "OPENSSL_CONF_INCLUDE",
+    "OPENSSL_MODULES",
+    "OPENSSL_ENGINES",
+)
+
+# the full connect-time environment scrub set: PG* reroute/trust overrides + the
+# OpenSSL default-store redirects. `scrubbed_pg_env` removes all of these.
+SCRUBBED_ENV_VARS = PG_ENV_OVERRIDES + SSL_TRUST_ENV_OVERRIDES
 
 _POOLER_SUFFIX = ".pooler.supabase.com"
 
@@ -102,12 +141,22 @@ def _is_pooler_host(host: str) -> bool:
     return bool(label) and "." not in label
 
 
-def bind_target(dsn: str, expect_ref: str) -> dict[str, str]:
+def bind_target(
+    dsn: str, expect_ref: str, *, require_form: str | None = None
+) -> dict[str, str]:
     """Validate `dsn` binds to project `expect_ref`; return explicit libpq params.
 
     Raises `TargetBindingError` (value-free) on any reroute vector or mismatch.
-    The returned dict always sets `sslmode=verify-full`.
+    The returned dict always sets `sslmode=verify-full` + `sslrootcert=system`.
+
+    `require_form` (RI2 lens-B F4) optionally pins the connection FORM so the two
+    separately-governed evidence probes are mechanically distinct, not prose-only:
+    ``"direct"`` accepts only ``db.<ref>.supabase.co`` (the P6 verify-full cert-chain
+    probe) and ``"pooler"`` only ``*.pooler.supabase.com`` (the P7 transaction-pooler
+    probe). ``None`` (default) accepts either form.
     """
+    if require_form not in (None, "direct", "pooler"):
+        raise TargetBindingError(CODE_WRONG_FORM)
     try:
         parsed = conninfo_to_dict(dsn)
     except psycopg.Error:
@@ -132,18 +181,37 @@ def bind_target(dsn: str, expect_ref: str) -> dict[str, str]:
         raise TargetBindingError(CODE_MISSING_HOST)
     if not user:
         raise TargetBindingError(CODE_MISSING_USER)
+    # a non-numeric port is malformed (defence-in-depth; multi-port already rejected above)
+    if port and not port.isdigit():
+        raise TargetBindingError(CODE_MALFORMED_PORT)
 
-    # (4) anchored host/user match against the expected project
-    _assert_anchored(host, user, expect_ref)
+    # (4) anchored host/user match against the expected project (+ optional form pin)
+    _assert_anchored(host, user, expect_ref, require_form)
+    # (4b) form-pinned PORT: mechanical P6/P7 separation is not complete on host/user alone —
+    # both pooler modes share `*.pooler.supabase.com`, differing only by PORT. P7 is the
+    # TRANSACTION pooler on 6543; the session pooler (5432) proves neither probe (Codex-RI2
+    # r3). Direct (P6) is the direct host on 5432/default. Reject a form/port mismatch.
+    if require_form == "pooler" and port != "6543":
+        raise TargetBindingError(
+            CODE_WRONG_FORM
+        )  # session-pooler :5432 ≠ transaction :6543
+    if require_form == "direct" and port not in ("", "5432"):
+        raise TargetBindingError(CODE_WRONG_FORM)
 
     # reconstruct an explicit whitelist: any exotic/injected libpq keyword in the
     # DSN (service, sslrootcert, options, a second host=, ...) is dropped here and
-    # never reaches psycopg.connect.
+    # never reaches psycopg.connect. sslmode + sslrootcert are SOURCE-PINNED, so a
+    # caller sslrootcert (a rogue CA) is dropped and replaced, never honored.
     params: dict[str, str] = {
         "host": host,
         "user": user,
         "dbname": (parsed.get("dbname") or "postgres").strip() or "postgres",
         "sslmode": "verify-full",  # forced: cert must match host (defeats IP reroute)
+        # verify-full defaults to ~/.postgresql/root.crt (absent on the host -> the
+        # connect fails closed). Select the OpenSSL/OS trust store EXPLICITLY so the
+        # direct-host cert chain validates; SSL_CERT_FILE/SSL_CERT_DIR (which redirect
+        # that store) are scrubbed at connect time (RI2 review finding 2).
+        "sslrootcert": "system",
     }
     if port:
         params["port"] = port
@@ -153,13 +221,19 @@ def bind_target(dsn: str, expect_ref: str) -> dict[str, str]:
     return params
 
 
-def _assert_anchored(host: str, user: str, expect_ref: str) -> None:
-    """Bind host/user to `expect_ref` in either the direct or pooler form."""
+def _assert_anchored(
+    host: str, user: str, expect_ref: str, require_form: str | None = None
+) -> None:
+    """Bind host/user to `expect_ref` in the direct or pooler form (optionally form-pinned)."""
     direct_host = f"db.{expect_ref}.supabase.co"
     if host == direct_host:
         # direct form: the project-specific host is exact and cert-verified
+        if require_form == "pooler":
+            raise TargetBindingError(CODE_WRONG_FORM)  # a direct DSN for a pooler probe
         return
     if _is_pooler_host(host):
+        if require_form == "direct":
+            raise TargetBindingError(CODE_WRONG_FORM)  # a pooler DSN for a direct probe
         # pooler form: Supavisor routes by tenant username, so the ref binds there
         if user == f"postgres.{expect_ref}":
             return
@@ -167,22 +241,34 @@ def _assert_anchored(host: str, user: str, expect_ref: str) -> None:
     raise TargetBindingError(CODE_HOST_NOT_BOUND)
 
 
+def _scrub_keys() -> list[str]:
+    """Every currently-set env key libpq/OpenSSL would merge: the whole ``PG*`` namespace
+    plus the exact OpenSSL trust-store redirects."""
+    keys = [k for k in os.environ if k.startswith(_LIBPQ_ENV_PREFIX)]
+    keys += [k for k in SSL_TRUST_ENV_OVERRIDES if k in os.environ]
+    return list(dict.fromkeys(keys))
+
+
 @contextmanager
 def scrubbed_pg_env() -> Iterator[None]:
-    """Remove PG* environment overrides for the duration of the context.
+    """Remove every connect-time env override (all ``PG*`` + OpenSSL trust store) for the context.
 
-    Values present beforehand are restored on exit; anything the inner code sets
-    is cleared, so a leaked override cannot survive the context. Mutates global
-    `os.environ` — callers in a concurrent path must serialise (see `connect_bound`).
+    Scrubs the COMPLETE ``PG*`` namespace by prefix (any libpq connection var, listed or not
+    — Codex-r5) plus the OpenSSL ``SSL_CERT_FILE``/``SSL_CERT_DIR``/``OPENSSL_*`` redirects
+    that ``sslrootcert=system`` relies on (RI2 finding 2; lens-B F1). Values present
+    beforehand are restored on exit; anything the inner code sets — including a ``PG*`` not
+    present at entry — is cleared, so a leaked override cannot survive the context. Mutates
+    global ``os.environ`` — callers in a concurrent path must serialise (see ``connect_bound``).
     """
-    saved = {key: os.environ.pop(key, None) for key in PG_ENV_OVERRIDES}
+    saved = {key: os.environ.pop(key, None) for key in _scrub_keys()}
     try:
         yield
     finally:
+        # clear any libpq/OpenSSL var the inner code set that was NOT scrubbed at entry
+        for key in _scrub_keys():
+            os.environ.pop(key, None)
         for key, value in saved.items():
-            if value is None:
-                os.environ.pop(key, None)
-            else:
+            if value is not None:
                 os.environ[key] = value
 
 
@@ -217,18 +303,24 @@ def connect_bound(
     *,
     connect_timeout: int = 10,
     autocommit: bool = False,
+    require_form: str | None = None,
 ) -> Iterator[object]:
     """The full binding discipline in ONE call — the entry point both P0-A and P0-E use.
 
-    bind_target (rejects before any socket) -> connect inside a scrubbed PG* env
+    bind_target (rejects before any socket) -> connect inside a scrubbed PG*/OpenSSL env
     (serialised against concurrent callers) -> post-connect re-check. Yields an
     open psycopg connection guaranteed bound to `expect_ref`; closes it on exit.
     Value-silent: a bind/reroute mismatch raises `TargetBindingError`; the connect
-    itself may raise a psycopg error the caller must catch WITHOUT echoing it.
+    itself may raise a psycopg error the caller must catch WITHOUT echoing it. Pass
+    ``require_form="direct"|"pooler"`` to pin the connection form (RI2 lens-B F4).
+    Read-only callers should pass ``autocommit=True`` to avoid an idle-in-transaction
+    session for the probe window (RI2 lens-B F6).
     """
     import psycopg
 
-    params = bind_target(dsn, expect_ref)  # raises before any socket is opened
+    params = bind_target(
+        dsn, expect_ref, require_form=require_form
+    )  # raises before any socket is opened
     with _CONNECT_LOCK:
         with scrubbed_pg_env():
             conn = psycopg.connect(

@@ -54,6 +54,7 @@ import hashlib  # noqa: E402
 import json  # noqa: E402
 import logging  # noqa: E402
 import subprocess  # noqa: E402
+import tempfile  # noqa: E402
 from datetime import datetime, timezone  # noqa: E402
 from pathlib import Path  # noqa: E402
 
@@ -271,6 +272,33 @@ def build_parser() -> argparse.ArgumentParser:
     # NOTE (review round 3, finding 3): the expected admin DB role is SOURCE-PINNED to
     # EXPECTED_DB_ROLE and is deliberately NOT a CLI option -- a fixed P0-A action must
     # not let the caller choose (or weaken) the administrative role it asserts against.
+    # RI2 finding 1: under python -I -S site-packages are OFF sys.path, so psycopg is NOT
+    # obtained via the interpreter's site startup (the .pth execution vector). It is loaded
+    # from an operator-supplied, hash-pinned dependency bundle instead.
+    parser.add_argument(
+        "--dependency-bundle",
+        required=True,
+        help=(
+            "Directory of the immutable, hash-pinned Python dependency bundle "
+            "(psycopg + deps) to load under -S, where site-packages are off sys.path."
+        ),
+    )
+    parser.add_argument(
+        "--bundle-manifest",
+        required=True,
+        help=(
+            "SHA-256 manifest ('<sha256>  <relpath>' lines) pinning every file of the "
+            "dependency bundle. Verified before any bundle file is imported."
+        ),
+    )
+    parser.add_argument(
+        "--expect-bundle-manifest-sha256",
+        required=True,
+        help=(
+            "The authoritative SHA-256 of --bundle-manifest, attested OUT-OF-BAND (like "
+            "--expect-repo-sha). The manifest is rejected unless its own hash matches."
+        ),
+    )
     parser.add_argument(
         "--custody-root",
         default=str(CUSTODY_ROOT),
@@ -314,21 +342,53 @@ _GIT_ENV_ALLOW = (
 )
 
 
+# config-driven CODE EXECUTION / evasion knobs a repo-local `.git/config` (which `git
+# status`/`fetch` honor, is not a tracked file, and `git status` cannot report) could set —
+# the same static-plant trust boundary as an untracked shadow module (RI2 lens-A F1). Every
+# git call forces these OFF via command-line `-c` (highest precedence, overriding repo-local
+# config): a hostile `core.fsmonitor` (arbitrary program run during status, and can under-
+# report changes), a `core.hooksPath` hook, a `credential.helper = !prog` run during fetch,
+# a `core.sshCommand = !prog` run during the SSH fetch (RI2 Codex-r3 P1), and `ext::` remote-
+# helper execution. No code runs during the preflight, so the "fsmonitor overwrites tracked
+# binding.py then hides it" escalation is closed at the source. (`core.sshCommand=ssh` forces
+# the default ssh binary, which still authenticates via ~/.ssh; a fetch that genuinely needs
+# a custom transport fails closed as `origin_main_unresolvable`, never against an unverified
+# tip.)
+_GIT_HARDENING = (
+    "-c",
+    "core.fsmonitor=false",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "-c",
+    "credential.helper=",
+    "-c",
+    "core.sshCommand=ssh",
+    "-c",
+    "protocol.ext.allow=never",
+)
+
+
 def _git_env() -> dict[str, str]:
     """A scrubbed environment for git subprocesses that carries no injected app secret.
 
-    Passes ONLY the allow-list (+ locale ``LC_*``). It deliberately does NOT forward
-    ``GIT_*`` or ``XDG_*``: ``GIT_DIR`` / ``GIT_WORK_TREE`` / ``GIT_INDEX_FILE`` /
+    Passes ONLY the allow-list (+ locale ``LC_*``), plus ``GIT_CONFIG_GLOBAL`` /
+    ``GIT_CONFIG_SYSTEM`` pinned to ``/dev/null`` so a global/system gitconfig cannot inject
+    hooks/fsmonitor/credential-helpers (RI2 lens-A F1; the repo-LOCAL config is neutralised
+    by the command-line ``-c`` hardening instead, which outranks it). It deliberately does
+    NOT forward ``GIT_*`` or ``XDG_*``: ``GIT_DIR`` / ``GIT_WORK_TREE`` / ``GIT_INDEX_FILE`` /
     ``GIT_CONFIG*`` and ``XDG_CONFIG_HOME`` are honored OVER ``-C`` and could redirect the
     preflight at a DIFFERENT clean repo/config, defeating the pristine + HEAD-equality gate
-    (Codex-c7 P1). git discovers the repo via ``git -C repo_root`` and reads ~/.gitconfig /
-    ~/.ssh via ``HOME``; auth that requires a hostile ``GIT_SSH_COMMAND`` simply fails closed
-    (``origin_main_unresolvable``), never proceeds against an unverified tip.
+    (Codex-c7 P1). git discovers the repo via ``git -C repo_root``; auth that requires a
+    hostile ``GIT_SSH_COMMAND`` simply fails closed (``origin_main_unresolvable``).
     """
     env = {k: os.environ[k] for k in _GIT_ENV_ALLOW if k in os.environ}
     for key, value in os.environ.items():
         if key.startswith("LC_"):  # locale only; no GIT_*/XDG_* redirection surface
             env[key] = value
+    env["GIT_CONFIG_GLOBAL"] = (
+        "/dev/null"  # our own safe value, not a forwarded attacker one
+    )
+    env["GIT_CONFIG_SYSTEM"] = "/dev/null"
     return env
 
 
@@ -348,7 +408,7 @@ def _repo_git_state(repo_root: Path) -> tuple[str, bool, str | None]:
 
     def _git(*args: str) -> subprocess.CompletedProcess:
         return subprocess.run(
-            ["git", "-C", str(repo_root), *args],
+            ["git", "-C", str(repo_root), *_GIT_HARDENING, *args],
             capture_output=True,
             text=True,
             check=False,
@@ -423,18 +483,181 @@ def _assert_trusted_location(location: str) -> None:
         raise EvidenceRefusal("untrusted_binding_source")
 
 
-def _load_binding():
+def _assert_under_dir(location: str, trusted_dir: str) -> None:
+    """Refuse unless `location` resolves UNDER `trusted_dir` (a verified bundle root).
+
+    The CLI-path counterpart of ``_assert_trusted_location``: under ``python -S`` psycopg
+    lives in the hash-verified dependency bundle, not under ``sys.*prefix``, so the origin
+    is prefix-matched against the (already integrity-checked) bundle root. Value-free code.
+    """
+    if not location:
+        raise EvidenceRefusal("untrusted_binding_source")
+    resolved = os.path.realpath(location)
+    base = os.path.realpath(trusted_dir)
+    if not (resolved == base or resolved.startswith(base + os.sep)):
+        raise EvidenceRefusal("untrusted_binding_source")
+
+
+def _assert_binding_origin(location: str, trusted_dir: str | None) -> None:
+    """Vet a resolved import origin: under the verified bundle (CLI) or ``sys.*prefix``."""
+    if trusted_dir:
+        _assert_under_dir(location, trusted_dir)
+    else:
+        _assert_trusted_location(location)
+
+
+def _read_pinned_manifest(
+    manifest_path: Path, expect_manifest_sha: str
+) -> dict[str, str]:
+    """Read + integrity-verify the dependency-bundle manifest; return {relpath: sha256}.
+
+    The manifest's OWN sha256 must equal the operator-attested
+    ``--expect-bundle-manifest-sha256`` (out-of-band, like ``--expect-repo-sha``), so a
+    swapped manifest is rejected before ANY bundle file is trusted. Lines are
+    ``<sha256>  <relpath>``; a relative, non-escaping path is required. Value-free codes.
+    """
+    try:
+        raw = manifest_path.read_bytes()
+    except OSError:
+        raise EvidenceRefusal("bundle_manifest_unreadable") from None
+    if hashlib.sha256(raw).hexdigest() != expect_manifest_sha.strip().lower():
+        raise EvidenceRefusal("bundle_manifest_untrusted")
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        raise EvidenceRefusal("bundle_manifest_malformed") from None
+    entries: dict[str, str] = {}
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        parts = line.split(None, 1)
+        if len(parts) != 2:
+            raise EvidenceRefusal("bundle_manifest_malformed")
+        sha, rel = parts[0].strip().lower(), parts[1].strip()
+        if (
+            not rel
+            or Path(rel).is_absolute()
+            or ".." in Path(rel).parts
+            or len(sha) != 64
+        ):
+            raise EvidenceRefusal("bundle_manifest_malformed")
+        entries[rel] = sha
+    if not entries:
+        raise EvidenceRefusal("bundle_manifest_empty")
+    return entries
+
+
+def _resolve_bundle_member(base: str, rel: str) -> str:
+    """Return ``base/rel`` iff it does not escape ``base``; raise ``bundle_path_escape``."""
+    raw = os.path.join(base, rel)
+    resolved = os.path.realpath(raw)
+    if not (resolved == base or resolved.startswith(base + os.sep)):
+        raise EvidenceRefusal("bundle_path_escape")
+    return raw  # pre-resolve so a symlinked member is still caught by islink()
+
+
+def _walk_onerror(exc: OSError) -> None:
+    """os.walk error callback: turn a silently-skipped unreadable dir into a refusal.
+
+    The default ``onerror=None`` makes ``os.walk`` SILENTLY skip a directory it cannot
+    list, so an unlisted member hidden under an unreadable subdir would evade the
+    completeness sweep (fail-open; RI2 lens-A F4). Raise instead so the run fails closed.
+    """
+    raise EvidenceRefusal("bundle_dir_unreadable")
+
+
+def _bootstrap_dependency_bundle(
+    bundle_dir_arg: str, manifest_path_arg: str, expect_manifest_sha: str
+) -> str:
+    """Verify a hash-pinned dependency bundle, STAGE it read-only, and put the stage on sys.path.
+
+    Under ``python -S`` (RI2 finding 1) site-packages are OFF sys.path -- exactly because
+    that startup is the ``.pth`` execution vector we removed -- so psycopg cannot be
+    imported the normal way. The operator instead supplies an immutable dependency bundle
+    whose every file is SHA-256-pinned in a manifest, the manifest's own SHA-256 attested
+    out-of-band. This verifies the manifest; rejects any source member that is not a listed,
+    within-root, non-symlink regular file (no stray ``.pth``/``.py``/``.so`` surface); then
+    hash-checks each listed file WHILE COPYING it into a fresh run-private staging dir
+    (mode 0700, owned by this process) and imports from the STAGE, never the source. That
+    closes the verify->import TOCTOU (RI2 lens-A F2): the bytes hashed are the exact bytes
+    imported, from a directory no other party can write, and only manifest-listed files are
+    ever copied. Returns the staged root (realpath). Value-free on any failure.
+    """
+    manifest = _read_pinned_manifest(Path(manifest_path_arg), expect_manifest_sha)
+    root = Path(bundle_dir_arg)
+    if root.is_symlink() or not root.is_dir():
+        raise EvidenceRefusal("bundle_dir_invalid")
+    base = os.path.realpath(root)
+    # (1) completeness/shape sweep of the SOURCE (defence-in-depth: loudly refuse a tampered
+    #     bundle; staging below only copies listed files, so this is not solely load-bearing).
+    #     `onerror` makes an unreadable subdir fail closed instead of being silently skipped.
+    for dirpath, dirnames, filenames in os.walk(
+        base, followlinks=False, onerror=_walk_onerror
+    ):
+        for nm in dirnames:
+            if os.path.islink(os.path.join(dirpath, nm)):
+                raise EvidenceRefusal("bundle_unsafe_member")
+        for nm in filenames:
+            full = os.path.join(dirpath, nm)
+            if os.path.islink(full):
+                raise EvidenceRefusal("bundle_unsafe_member")
+            rel = os.path.relpath(full, base).replace(os.sep, "/")
+            if rel not in manifest:
+                raise EvidenceRefusal("bundle_unlisted_file")
+    # (2) hash-while-copy each LISTED file into a fresh private stage. mkdtemp is 0700 and
+    #     owned by us, so nothing external can write it; we import from THIS copy, so the
+    #     verified bytes are the imported bytes (no verify->import TOCTOU). Ordinary staging
+    #     I/O errors (unwritable tmp, disk full, path too long) map to a value-free code, not
+    #     a raw OSError traceback -- main() only catches EvidenceRefusal here (Codex-r5).
+    try:
+        staged = Path(tempfile.mkdtemp(prefix="p0a-bundle-staged-"))
+    except OSError:
+        raise EvidenceRefusal("bundle_stage_failed") from None
+    for rel, sha in manifest.items():
+        source = _resolve_bundle_member(base, rel)
+        if os.path.islink(source) or not os.path.isfile(source):
+            raise EvidenceRefusal("bundle_member_missing")
+        try:
+            data = Path(source).read_bytes()
+        except OSError:
+            # unreadable, or removed between isfile() and read -> fail closed, value-free.
+            raise EvidenceRefusal("bundle_member_unreadable") from None
+        if hashlib.sha256(data).hexdigest() != sha:
+            raise EvidenceRefusal("bundle_hash_mismatch")
+        dest = staged / rel  # rel is manifest-validated: relative, no `..`, no absolute
+        try:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            with open(
+                os.open(dest, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400), "wb"
+            ) as fh:
+                fh.write(data)
+        except OSError:
+            raise EvidenceRefusal("bundle_stage_failed") from None
+    # verified + staged. Don't write unlisted __pycache__ back into the stage, then expose it.
+    sys.dont_write_bytecode = True
+    staged_base = os.path.realpath(staged)
+    while staged_base in sys.path:
+        sys.path.remove(staged_base)
+    sys.path.insert(0, staged_base)
+    return staged_base
+
+
+def _load_binding(trusted_dir: str | None = None):
     """Import the shared binding module -- DEFERRED past main()'s governance gate.
 
     Vets psycopg's ORIGIN via ``importlib.util.find_spec`` and refuses an untrusted
-    location BEFORE ``import psycopg`` executes any module body (Codex-c5 P1): a PYTHONPATH
-    ``psycopg.py`` shadow must never run its code with the DSN already in the environment.
-    Only after psycopg is imported (and re-checked) does it put this repo's
-    ``apps/mutation-seam/scripts`` at the FRONT of sys.path (deduped) so
+    location BEFORE ``import psycopg`` executes any module body (Codex-c5 P1): a shadow
+    ``psycopg.py`` must never run its code with the DSN already in the environment. The
+    trusted location is the hash-verified dependency bundle (``trusted_dir``, the CLI path
+    under ``-S``) or -- when no bundle is supplied (the offline test path, site on) --
+    anything under ``sys.*prefix``. Only after psycopg is imported (and re-checked) does it
+    put this repo's ``apps/mutation-seam/scripts`` at the FRONT of sys.path (deduped) so
     ``from pm_ops_p0.binding`` binds THIS repo's ``binding.py`` -- the same file
-    ``build_provenance`` hashes -- not a foreign/stale ``pm_ops_p0`` on an earlier entry
-    (Codex-final P2a). Reached only once the pristine + merged-HEAD gate has proven no
-    untracked shadow module exists (finding 1). Returns (TargetBindingError, connect_bound).
+    ``build_provenance`` hashes (Codex-final P2a). That directory is on ``sys.path`` for the
+    SMALLEST possible window: every stdlib module ``binding.py`` imports is pre-imported
+    first (so a ``scripts/typing.py`` cannot shadow a lazy stdlib import -- RI2 lens-A F3),
+    and the directory is removed again immediately after the binding import.
+    Returns (TargetBindingError, connect_bound).
     """
     import importlib.util
 
@@ -442,17 +665,29 @@ def _load_binding():
     origin = spec.origin if spec else None
     if not origin:
         raise EvidenceRefusal("untrusted_binding_source")
-    _assert_trusted_location(origin)  # vet the resolved origin BEFORE any code runs
+    _assert_binding_origin(origin, trusted_dir)  # vet the origin BEFORE any code runs
     import psycopg
 
-    _assert_trusted_location(
-        getattr(psycopg, "__file__", "") or ""
+    _assert_binding_origin(
+        getattr(psycopg, "__file__", "") or "", trusted_dir
     )  # belt: file matches
+    # pre-import every stdlib module binding.py pulls in, BEFORE scripts_dir is exposed, so
+    # a `scripts/typing.py` (etc.) cannot shadow a not-yet-cached stdlib import (lens-A F3).
+    import contextlib  # noqa: F401
+    import threading  # noqa: F401
+    import typing  # noqa: F401
+
     scripts_dir = os.path.dirname(_SCRIPT_DIR)
     while scripts_dir in sys.path:
         sys.path.remove(scripts_dir)
     sys.path.insert(0, scripts_dir)
-    from pm_ops_p0.binding import TargetBindingError, connect_bound
+    try:
+        from pm_ops_p0.binding import TargetBindingError, connect_bound
+    finally:
+        # remove scripts_dir again immediately -- it need not stay on the global path once
+        # binding is imported (it is now cached in sys.modules), shrinking the shadow window.
+        while scripts_dir in sys.path:
+            sys.path.remove(scripts_dir)
 
     return TargetBindingError, connect_bound
 
@@ -471,6 +706,7 @@ def build_provenance(
     expect_project_ref: str,
     expect_db_role: str,
     dsn_env: str,
+    dependency_bundle_manifest_sha256: str,
     started_at: str,
     finished_at: str,
 ) -> str:
@@ -487,10 +723,15 @@ def build_provenance(
     here = Path(__file__).resolve().parent
     record = {
         "artifact": "pm_ops_p0.preserve_evidence.provenance",
-        "schema_version": 2,
+        # schema 3 (RI2): adds dependency_bundle_manifest_sha256; the finalizer REQUIRES it,
+        # so a pre-bundle (schema-2) capture can no longer close out P0-A.
+        "schema_version": 3,
         "expected_project_ref": expect_project_ref,
         "expected_db_role": expect_db_role,
         "dsn_env_var_name": dsn_env,  # NAME only — never the DSN value
+        # the attested hash of the dependency-bundle manifest this run loaded psycopg from
+        # (RI2 finding 1): binds the exact dependency set to the evidence.
+        "dependency_bundle_manifest_sha256": dependency_bundle_manifest_sha256,
         "repo_sha": repo_sha,
         "expect_repo_sha": expect_repo_sha,
         "origin_main_sha": origin_main_sha,
@@ -518,19 +759,22 @@ def _rows_to_text(cur: object) -> str:
     return "\n".join(lines) + "\n"
 
 
-def collect_evidence(dsn: str, expect_ref: str) -> dict[str, str]:
+def collect_evidence(
+    dsn: str, expect_ref: str, *, connect_bound=None
+) -> dict[str, str]:
     """Open a bound, read-only connection and capture the P0-A evidence set.
 
-    Imports the shared binding discipline LAZILY via ``_load_binding`` (finding 1): the
-    import (and therefore psycopg) is reached only after main()'s pristine + merged-HEAD
-    gate has proven no untracked shadow module exists. Inside the guarded read-only
+    ``connect_bound`` is supplied by main() from ``_load_binding(bundle_dir)`` after the
+    dependency bundle is verified (finding 1); when omitted (the offline test path, site
+    on) it is loaded lazily from the ambient install. Inside the guarded read-only
     transaction, refuses (value-free ``db_role_mismatch``) unless ``current_user`` is the
     SOURCE-PINNED admin role ``EXPECTED_DB_ROLE`` (finding 3), then captures
     ``{filename: text}``. The live connect/query is not exercised by the offline suite;
     the choreography (execute order, env-scrub-at-connect, the pre-query host re-check,
     and the role guard) is verified offline via a fake conn.
     """
-    _TargetBindingError, connect_bound = _load_binding()
+    if connect_bound is None:
+        _TargetBindingError, connect_bound = _load_binding()
     artifacts: dict[str, str] = {SNAPSHOT_NAME: p0a_sql_text()}
     with connect_bound(
         dsn, expect_ref, connect_timeout=CONNECT_TIMEOUT_SECONDS, autocommit=True
@@ -658,16 +902,30 @@ def main(argv: list[str] | None = None) -> int:
     except EvidenceRefusal as exc:
         return _fail(exc.code)
 
-    # --- live read-only capture. The binding module (hence psycopg) is imported HERE,
-    #     only after the governance gate above (finding 1); connect_bound binds BEFORE
-    #     opening any socket, so a wrong-project DSN raises with no connection made. ---
+    # --- dependency bundle (finding 1). Under python -I -S site-packages are off sys.path;
+    #     verify + expose the hash-pinned bundle BEFORE any dependency import. Runs only
+    #     after the governance gate, so a planted bundle is rejected before it can load. ---
     try:
-        TargetBindingError, _connect_bound = _load_binding()
+        bundle_dir = _bootstrap_dependency_bundle(
+            args.dependency_bundle,
+            args.bundle_manifest,
+            args.expect_bundle_manifest_sha256,
+        )
+    except EvidenceRefusal as exc:
+        return _fail(exc.code)
+
+    # --- live read-only capture. The binding module (hence psycopg) is imported HERE from
+    #     the VERIFIED bundle, only after the governance gate (finding 1); connect_bound
+    #     binds BEFORE opening any socket, so a wrong-project DSN raises with no socket. ---
+    try:
+        TargetBindingError, connect_bound = _load_binding(bundle_dir)
     except Exception as exc:  # noqa: BLE001 - a shadowed/broken binding import fails closed
         log.warning("binding import failed: %s", type(exc).__name__)  # class only
         return _fail("binding_import_failed")
     try:
-        artifacts = collect_evidence(dsn, args.expect_project_ref)
+        artifacts = collect_evidence(
+            dsn, args.expect_project_ref, connect_bound=connect_bound
+        )
     except (TargetBindingError, EvidenceRefusal) as exc:
         return _fail(exc.code)  # bind/host/role mismatch — value-free stable code
     except Exception as exc:  # noqa: BLE001
@@ -684,6 +942,9 @@ def main(argv: list[str] | None = None) -> int:
         expect_project_ref=args.expect_project_ref,
         expect_db_role=EXPECTED_DB_ROLE,
         dsn_env=args.dsn_env,
+        # store the NORMALISED manifest hash (the bootstrap accepts case-insensitive/spaced
+        # input), so the finalizer's lowercase-hex check matches this record (Codex-RI2 P2).
+        dependency_bundle_manifest_sha256=args.expect_bundle_manifest_sha256.strip().lower(),
         started_at=started_at,
         finished_at=_utc_now_iso(),
     )
@@ -703,22 +964,26 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _isolation_gate(isolated: bool) -> int | None:
-    """Refuse the CLI unless the interpreter is isolated (``python -I``).
+def _isolation_gate(isolated: bool, no_site: bool) -> int | None:
+    """Refuse the CLI unless the interpreter is isolated AND no-site (``python -I -S``).
 
-    ``-I`` makes Python ignore ``PYTHONPATH``, the user site, and the unsafe ``sys.path[0]``
-    (cwd / script dir), so NO environment-injected path -- including a ``PYTHONPATH`` entry
-    pointing at a repo subdir -- can shadow an import before the pristine gate. Enforcing it
-    closes the import-shadow class at the interpreter level (Codex-c14 P1); the sys.path
-    preamble above is then belt-and-suspenders. Returns a non-None exit code when NOT isolated.
+    ``-I`` alone is INSUFFICIENT (RI2 finding 1): it implies ``-s``/``-E``/``-P`` (no user
+    site, no ``PYTHONPATH``, no unsafe ``sys.path[0]``) but NOT ``-S``, so the ``site``
+    module still runs and still EXECUTES any ``.pth`` line in site-packages -- Python ships
+    an editable-install ``.pth`` -- during interpreter startup, BEFORE this script's
+    preamble, the governance gate, or target binding, with the injected production DSN
+    already in the environment. Only ``-S`` (``no_site``) suppresses ``site`` processing and
+    with it ``.pth`` execution. Requiring both closes the pre-guard code-execution window;
+    the module-top ``sys.path`` preamble and ``_load_binding`` origin vetting are then
+    belt-and-suspenders. Returns a non-None exit code when NOT (isolated and no_site).
     """
-    if not isolated:
+    if not (isolated and no_site):
         print("RESULT FAIL")
-        print("FAILURE interpreter_not_isolated")
+        print("FAILURE interpreter_not_isolated_no_site")
         return 1
     return None
 
 
 if __name__ == "__main__":
-    _rc = _isolation_gate(sys.flags.isolated)
+    _rc = _isolation_gate(sys.flags.isolated, sys.flags.no_site)
     sys.exit(_rc if _rc is not None else main())
