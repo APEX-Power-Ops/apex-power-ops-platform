@@ -1,17 +1,24 @@
 # Learning Governance P0 Design Packet
 
-Status: DRAFT - DESIGN ONLY
+Status: OPERATOR-DIRECTED DESIGN - NOT IMPLEMENTED
 
-Authority: operator GO `LEARNING-GOVERNANCE-P0-DESIGN ONLY`
+Authority:
+
+- operator GO `LEARNING-GOVERNANCE-P0-DESIGN ONLY`;
+- operator direction dated 2026-07-14 adopting the staged product intent,
+  recommended authorities, delegated Program Manager, separate primary Codex
+  executor, and checkpointed continuous-goal model.
 
 Baseline: `origin/main` at `cf1c72f370e4922b8fdad4b691f7ad9d89258109`
 
 ## Purpose
 
 This packet designs a durable control plane for learning-program goals,
-authority, evidence, decisions, and roadmap state. It preserves the current
-Level II Electrical Theory pilot hold while replacing untracked prompt state
-with a proposed governed model.
+authority, evidence, decisions, and roadmap state. It records the operator's
+product-intent and delegation decisions while preserving the current Level II
+Electrical Theory pilot hold. It replaces chat-only coordination with a
+proposed governed model that a separate primary executor can follow and a
+delegated Program Manager can review.
 
 ## Hard Boundaries
 
@@ -38,9 +45,25 @@ produce design documents. It does not authorize:
 6. `CHECKER-AND-ADVERSARIAL-TEST-DESIGN.md`
 7. `LEVEL-II-G2-STATE-MIGRATION-MAP.md`
 8. `SLICE2D-CONTRACT-RECONCILIATION-FOLLOW-UP.md`
+9. `APPOINTMENTS-AND-DELEGATIONS.md`
+10. `PROGRAM-MANAGER-OPERATING-INSTRUCTIONS.md`
+11. `PRIMARY-EXECUTOR-OPERATING-INSTRUCTIONS.md`
+12. `CONTINUOUS-GOAL-LOOP.md`
+13. `ROADMAP-AND-CURRENT-GOALS.md`
+14. `RIGHTS-AUTHORITY-AND-SOURCE-EVIDENCE.md`
+15. `goals/README.md`
+16. `goals/LEARN-GOV-P0-001.md`
+17. `goals/LEVEL-II-ET-PILOT-001.md`
+18. `templates/GOAL-CHARTER-TEMPLATE.md`
+19. `templates/EXECUTION-CHECKPOINT-TEMPLATE.md`
+20. `templates/PROGRAM-MANAGER-REVIEW-TEMPLATE.md`
+21. `templates/DECISION-RECORD-TEMPLATE.md`
+22. `templates/GOAL-CLOSEOUT-TEMPLATE.md`
 
 ## Review Gate
 
-All documents remain proposed until operator and Technical Authority review.
-No implementation plan may treat a placeholder, recommendation, or missing
-decision as accepted authority.
+The staged product intent and role mechanisms named in this packet are
+operator-directed. The control-plane implementation, individual goal
+appointments, source decisions, SME decisions, learner-data work, content work,
+and release decisions remain separately gated. No implementation plan may
+treat a placeholder, recommendation, or missing decision as accepted authority.

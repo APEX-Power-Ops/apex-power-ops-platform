@@ -43,13 +43,18 @@ be verified against the referenced external artifacts before migration.
 
 ## Five Owner-Return Tracks
 
-1. Rights/source authority.
+1. Rights/source authority: standing policy owner identified; source-specific
+   admissibility remains partial and does not clear the hold.
 2. Named SME and acceptance criteria.
 3. Platform/import mapping.
 4. Render-package requirements.
 5. Release authority.
 
 Missing or partial returns preserve the hold.
+
+The staged product decision names this cohort's intended first product
+**Internal Level II Learning and Readiness Pilot**. Naming the product does not
+change the goal state or admit authoring.
 
 ## Migration Acceptance
 

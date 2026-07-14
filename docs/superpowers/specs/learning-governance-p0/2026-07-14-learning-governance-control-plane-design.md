@@ -2,7 +2,7 @@
 
 Date: 2026-07-14
 
-Status: DRAFT - NOT RATIFIED
+Status: OPERATOR-DIRECTED DESIGN - IMPLEMENTATION NOT RATIFIED
 
 ## Objective
 
@@ -33,6 +33,8 @@ docs/learning/governance/
   ROLE-AND-DECISION-RIGHTS.md
   CONTENT-AND-ASSESSMENT-LIFECYCLE.md
   DELEGATION-POLICY.md
+  PRIMARY-EXECUTOR-INSTRUCTIONS.md
+  CONTINUOUS-GOAL-LOOP.md
 
 ops/learning/goals/
   GOAL-REGISTRY.yaml
@@ -47,6 +49,7 @@ ops/learning/roadmap/
 
 ops/learning/decisions/<goal-id>/
 ops/learning/evidence/manifests/
+ops/learning/checkpoints/<goal-id>/
 knowledge/learning/release-manifests/
 knowledge/learning/mappings/
 ```
@@ -65,19 +68,32 @@ them.
 7. Map the existing Level II prompt trail into held structured state.
 8. Define the separately gated Slice 2d reconciliation packet.
 
-## Required Operator Decisions
+## Operator Decisions Recorded In This Revision
 
-- Product intent: exam preparation, internal qualification, field enablement, or
-  an explicitly staged combination.
-- Human stakeholder/product owner.
-- Delegated Learning Program Manager boundary.
-- Learning Technical Authority appointment and decision boundary.
-- Rights/source authority mechanism.
-- SME appointment and acceptance mechanism.
-- Platform/import owner, independent auditor, and release authority.
+- Product intent is the staged model, beginning with **Internal Level II
+  Learning and Readiness Pilot**.
+- Jason Lyle Swenson is stakeholder/product owner, standing rights-policy
+  authority, privacy authority unless separately delegated, and release
+  authority.
+- A delegated Codex Program Manager administers goals, assignments, evidence
+  routing, checkpoints, and roadmap recommendations within this charter.
+- A separate Codex instance serves as primary task executor and may delegate
+  bounded work to agents.
+- Technical Authority and independent audit roles must be assigned to identities
+  that did not author the reviewed version.
+- The Program Manager may coordinate all roles but may not synthesize agent work
+  into human rights, SME, privacy-purpose, business-priority, or release approval.
 
-Unknown appointments remain explicit blockers; they do not inherit from agent
-execution roles.
+## Decisions Still Required Per Goal
+
+- exact executor and reviewer identities;
+- a named qualified SME and content-version-bound acceptance;
+- source-specific rights decisions under the standing policy;
+- learner-data purpose and privacy conditions;
+- import, environment, deployment, and release authorization.
+
+Unknown per-goal appointments remain explicit blockers; they do not inherit from
+agent execution roles.
 
 ## Acceptance For This Design Packet
 

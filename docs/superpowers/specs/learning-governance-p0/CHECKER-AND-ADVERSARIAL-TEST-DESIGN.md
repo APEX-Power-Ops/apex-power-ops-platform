@@ -30,12 +30,30 @@ The checker must reject at least:
 16. output or evidence paths escaping approved roots;
 17. a superseded goal returning to execution;
 18. a generic approval with no owner, evidence, or reviewed version.
+19. the Program Manager and primary executor resolving to the same run identity;
+20. an author or implementation agent serving as Technical Authority or
+    independent auditor for the version it changed;
+21. a primary executor starting a proposed next goal without a new CP1
+    authorization;
+22. checkpoint advancement without the required Program Manager or operator
+    decision;
+23. a standing rights policy treated as source-specific admissibility;
+24. a `CANDIDATE` source treated as authoring-ready;
+25. a checksum treated as proof of signer identity or authority;
+26. a living source-register path satisfying a decision without a bound row or
+    snapshot version;
+27. agent consensus substituted for a named human SME, privacy, rights, or
+    release decision; and
+28. a later product stage inheriting authorization from Stage 1.
 
 ## Positive Fixtures
 
 At minimum, include one valid design-only `GOVERN` goal and one faithfully held
 Level II migration fixture. No positive fixture may imply content or learner-data
 authorization.
+
+The valid `GOVERN` fixture must use distinct Program Manager, primary executor,
+and independent reviewer identities and must stop at its declared checkpoint.
 
 ## Implementation Gate
 

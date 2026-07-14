@@ -1,0 +1,43 @@
+# Learning Roadmap And Current Goals
+
+Status: OPERATOR-DIRECTED DESIGN - ROADMAP NOT YET MACHINE ENFORCED
+
+## Product Roadmap
+
+| Stage | Product posture | Entry gate | Current state |
+|---|---|---|---|
+| 0 | Governance, authority, identity, and content-control foundation | Operator-ratified design and later checker implementation | in design |
+| 1 | **Internal Level II Learning and Readiness Pilot** | Exact ET-010..014 cohort; source, rights, SME, content, identity, privacy, platform, render, and release gates green | held |
+| 2 | Field-performance enablement | Stage-1 evidence plus bounded operational-use charter | not admitted |
+| 3 | Internal qualification decision | Valid assessment, policy, SME, expiry, remediation, appeal, and HR authority | not admitted |
+| 4 | Exam-preparation decision | Separate claims, rights, metrics, audience, and non-endorsement posture | not admitted |
+
+## Current Goal Queue
+
+| Goal ID | Goal | State | Next checkpoint |
+|---|---|---|---|
+| `LEARN-GOV-P0-001` | Learning Governance Control Plane design | `in_progress` design-only | CP3 Program Manager review of this packet |
+| `LEVEL-II-ET-PILOT-001` | ET-010..014 Stage-1 pilot | `held` / `ET-PILOT-HOLD` | CP2 only after all owner-return tracks are evidenced |
+| `LEARN-SLICE2D-CONTRACT-001` | Reconcile `ksa_mapped` rehearsal contradiction | `proposed` and held | separate CP1 authorization |
+| `LEARN-IDENTITY-AUTH-001` | Learner identity, authorization, and privacy contract | `proposed` and held | separate design GO |
+| `LEARN-CONTENT-BUNDLE-001` | Versioned content, assessment, SME, and release-bundle contract | `proposed` and held | separate design GO |
+| `LEARN-GOV-P1-CHECKER-001` | Goal schema, registry, checker, and negative tests | `proposed` and held | P0 design ratification and implementation GO |
+
+## Stage-1 Owner-Return Tracks
+
+1. Rights/source authority and source-specific admissibility.
+2. Named qualified SME and version-bound acceptance criteria.
+3. Platform/import mapping and identity linkage.
+4. Render-package and accessibility acceptance.
+5. Release authority and admitted internal audience.
+6. Learner-data purpose, privacy, retention, and access policy.
+
+The standing rights policy resolves the policy owner, not every source decision.
+Every missing or partial track preserves `ET-PILOT-HOLD`.
+
+## Next Recommended Goal
+
+Complete CP3 review of `LEARN-GOV-P0-001`. If the design is accepted, prepare a
+separate implementation plan for the structured goal schema, appointments,
+decision records, and offline checker. Do not start content authoring or the
+Slice 2d rehearsal as the next goal.

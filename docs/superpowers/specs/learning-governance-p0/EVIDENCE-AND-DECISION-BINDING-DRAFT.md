@@ -20,6 +20,10 @@ exact evidence; changing evidence cannot silently change an accepted decision.
 - availability and validation state;
 - supersession relationship.
 
+An integrity checksum proves byte correspondence, not signer identity or legal
+authority. A source-rights decision must separately identify its authority and
+bind the exact evidence bundle it reviewed.
+
 Content bodies may remain in an approved source-domain or document store. The
 control plane stores locators, hashes, metadata, decisions, and release state,
 not uncontrolled duplicate bodies.
@@ -44,3 +48,5 @@ not uncontrolled duplicate bodies.
 - A decision cannot bind an unresolvable object version.
 - Stale or superseded evidence cannot satisfy a fresh gate.
 - An executor cannot author its own final approval record.
+- A living register filename cannot satisfy a decision without a bound snapshot,
+  row version, Git blob, or equivalent immutable identity.
