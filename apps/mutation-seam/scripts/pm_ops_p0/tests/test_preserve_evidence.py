@@ -183,6 +183,29 @@ def test_main_refuses_repo_not_on_main():
     assert "repo_not_on_main" in out
 
 
+def test_main_refuses_when_origin_main_unresolvable():
+    # fail closed: cannot verify the merged guarantee -> refuse (review Codex-P2)
+    os.environ["PM_OPS_P0_TEST_DSN"] = (
+        f"host=db.{REF}.supabase.co user=postgres dbname=postgres"
+    )
+    try:
+        with _patched_repo(on_main=None):
+            rc, out = _run_main(
+                [
+                    "--expect-project-ref",
+                    REF,
+                    "--dsn-env",
+                    "PM_OPS_P0_TEST_DSN",
+                    "--expect-repo-sha",
+                    SHA,
+                ]
+            )
+    finally:
+        os.environ.pop("PM_OPS_P0_TEST_DSN", None)
+    assert rc != 0
+    assert "origin_main_unresolvable" in out
+
+
 def test_main_refuses_unbound_dsn_value_silently():
     secret_host = "evil.attacker.example"
     secret_pw = "SuperSecretPw999"

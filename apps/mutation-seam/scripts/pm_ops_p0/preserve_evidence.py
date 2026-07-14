@@ -278,8 +278,9 @@ def _repo_root() -> Path:
 def _repo_git_state(repo_root: Path) -> tuple[str, bool, bool | None]:
     """Return (HEAD sha, tracked-tree-clean, merged-to-origin/main-or-None-if-unknown).
 
-    `on_main` is None when `origin/main` is not resolvable locally (recorded, not
-    enforced); otherwise True/False from an ancestor test.
+    `on_main` is None when `origin/main` is not resolvable locally; the caller fails
+    closed on None (cannot verify the merged guarantee). Otherwise True/False from an
+    ancestor test.
     """
 
     def _git(*args: str) -> subprocess.CompletedProcess:
@@ -491,9 +492,11 @@ def main(argv: list[str] | None = None) -> int:
             raise EvidenceRefusal("repo_dirty")
         if repo_sha != args.expect_repo_sha:
             raise EvidenceRefusal("repo_sha_mismatch")
-        if (
-            on_main is False
-        ):  # None = origin/main unresolvable -> recorded, not enforced
+        # fail closed: an unresolvable origin/main cannot verify the merged
+        # guarantee, so refuse rather than record it as unknown (review Codex-P2).
+        if on_main is None:
+            raise EvidenceRefusal("origin_main_unresolvable")
+        if not on_main:
             raise EvidenceRefusal("repo_not_on_main")
     except EvidenceRefusal as exc:
         return _fail(exc.code)
