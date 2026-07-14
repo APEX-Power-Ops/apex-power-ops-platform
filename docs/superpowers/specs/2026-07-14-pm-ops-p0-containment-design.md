@@ -6,11 +6,13 @@
 > (never one combined production transaction). Permanent identity is **P1** — separately gated,
 > **not** a prerequisite for P0.
 
-**Revision — rev4 (2026-07-14).** Folds the final verification round: Codex HIGH — the `ON FUNCTIONS` default-priv revoke names only `anon`/`authenticated`, but Postgres grants `EXECUTE` on new functions to **PUBLIC** via a built-in default that `ALTER DEFAULT PRIVILEGES` cannot reliably strip (repo precedent `ops-app-role-boundary/IRP_OPUS_2026-07-01.md`), so a future public SECURITY DEFINER function would be born callable by `anon`/`authenticated` via the PUBLIC grant. The 3 **known** write RPCs are fully closed (014 statement 2); the **future-function-PUBLIC** vector is not one-shot-closable in emergency P0 (a blanket `REVOKE … ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC` is too broad and would break legitimate callers) → reframed honestly and disclosed as a **standing-posture residual (§11.6)**, with a best-effort `PUBLIC` token added to the ADP function revokes. Plus doc nits: control-plane `conftest.py` needs an explicit `import os`; the composable-diff list adds mutation-seam `main.py` (P0-B + P0-D); the P0-B tests cross-reference the `PM_MUTATIONS_ENABLED` flag. rev1→rev3 history below.
+**Revision — rev5 (2026-07-14).** Folds the operator-ratified rev5 code-review — all seven findings ratified; dispositions in §12 and the committed review record (`2026-07-14-pm-ops-p0-containment-review-record.md`). Changes: **(1)** `SupabaseStore.reset()` now **unconditionally** refuses in every environment — reset/reseed is a test-only capability that exists solely on `MemoryStore` (`app/db/memory_store_original.py:61`), reachable only when `SEAM_STORE_BACKEND=memory`. **(2)** P0-E readiness probes the **actual `ops_api`/`ops_intake_writer` serving identities** via `OPS_API_DSN`/`OPS_INTAKE_WRITER_DSN` (psycopg, mirroring the routers) — asserting `current_user`, a positive contract, and absence of a forbidden privilege — instead of checking `ops.persons` through the wrong (`config.engine`) connection. **(3)** P0-A is a single **guarded `REPEATABLE READ, READ ONLY`** transaction with a project-fingerprint + read-only guard, **effective-role closure** (fixed-principal × all privileges, plus the `pg_auth_members` membership closure — not ACL-literal enumeration), and **fail-closed** SECURITY DEFINER discovery (dependency-based via `pg_depend` + a dynamic-SQL flag → unknowns treated in-scope). **(4)** P0-C's immediate claim is narrowed to **existing-exposure containment**; the ineffective rev4 "best-effort PUBLIC" ADP-function token is **removed** — forward-function PUBLIC EXECUTE posture is a separately measured finish line (§11.6) that does **not** gate urgent `014`. **(5)** §1 replaces the "no cross-action dependency" claim with an explicit **dependency DAG + phase-aware `/reset` acceptance** (OpenAPI-absence is the invariant; runtime POST is 404 pre-P0-D, 503 post-P0-D). **(6)** P0-D drops the separately-governed **learning** family and uses **exact route-family boundary matching** (`path == p or path.startswith(p + "/")`) so `/api/v1/work` no longer over-matches `/api/v1/workflow`. **(7)** the **review record is committed alongside** this design; the IRP-precedent path is corrected to `docs/superpowers/specs/ops-app-role-boundary/IRP_OPUS_2026-07-01.md`; the audit-note path is qualified to the `apex-learning-lane` repo. rev1→rev4 history below.
+
+**Revision — rev4 (2026-07-14).** Folds the final verification round: Codex HIGH — the `ON FUNCTIONS` default-priv revoke names only `anon`/`authenticated`, but Postgres grants `EXECUTE` on new functions to **PUBLIC** via a built-in default that `ALTER DEFAULT PRIVILEGES` cannot reliably strip (repo precedent `docs/superpowers/specs/ops-app-role-boundary/IRP_OPUS_2026-07-01.md`), so a future public SECURITY DEFINER function would be born callable by `anon`/`authenticated` via the PUBLIC grant. The 3 **known** write RPCs are fully closed (014 statement 2); the **future-function-PUBLIC** vector is not one-shot-closable in emergency P0 (a blanket `REVOKE … ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC` is too broad and would break legitimate callers) → reframed honestly and disclosed as a **standing-posture residual (§11.6)**, with a best-effort `PUBLIC` token added to the ADP function revokes. Plus doc nits: control-plane `conftest.py` needs an explicit `import os`; the composable-diff list adds mutation-seam `main.py` (P0-B + P0-D); the P0-B tests cross-reference the `PM_MUTATIONS_ENABLED` flag. rev1→rev3 history below.
 
 **Revision — rev3 (2026-07-14).** Folds two focused cross-engine review rounds (3 adversarial Claude lenses + Codex gpt-5.5, read-only, grounded against live prod). rev2 fixed the rev1 CRITICAL SECURITY DEFINER RPC bypass + imports/MAINTAIN/asserts. **rev3 fixes what the rev2 re-review found against the live catalog:** (a) CRITICAL — the `supabase_admin` `ALTER DEFAULT PRIVILEGES` was bundled in the postgres-run transaction and would abort the *entire* migration (managed `postgres` is not a member of `supabase_admin`), so P0-C is **split by authority** (014 postgres-run primary + 015 supabase_admin-run secondary); (b) CRITICAL — P0-D's default-deny middleware would 503 the *existing* test suite in both apps, so P0-D now includes a **conftest `PM_MUTATIONS_ENABLED=true` default**; (c) HIGH — default-privilege prevention now also covers **functions** (`ON FUNCTIONS`), closing the born-EXECUTE-exposed RPC-bypass class; (d) P0-E drops the wrong-DB **learning** check and §11 discloses that control-plane readiness is truthfully `not_ready` in prod because **both `pm.idempotency_keys` and `work.*` are absent**.
 
-**GATE_SHA (re-derived, not assumed):** `270ca6e16a9cd3cfdd0d64b67e4b6e247f24139f` (`origin/main`, clean).
+**GATE_SHA (re-derived, not assumed):** `270ca6e16a9cd3cfdd0d64b67e4b6e247f24139f` (`origin/main`, clean; re-derived at rev5 2026-07-14 — unchanged).
 **Branch / worktree:** `pm-ops/p0-containment-design` @ `/home/olares/code/apex/apex-pm-ops-p0` (isolated).
 **Target production project:** Supabase `fxoyniqnrlkxfligbxmg` (PostgreSQL **17.6**; `postgres` is **not** superuser, `supabase_admin` is); deploy host = **Render**.
 
@@ -38,51 +40,118 @@ Supporting: C2 prototype auth (unsigned base64 tokens; missing-auth default `fie
 | **P0-E** | both apps readiness | `GO PM-OPS-P0-E READINESS` | code deploy | revert commit |
 | **P1** | operations-web + APIs identity | separate P1 GO (later) | separate packet | n/a |
 
-**Reject condition (self-enforced):** no combined production transaction; P1 not a prerequisite; no cross-action dependency. Files touched by two actions are given as **composable diffs** (not full-file replacements): mutation-seam `health.py` (P0-B + P0-E), mutation-seam `main.py` (P0-B + P0-D), and control-plane `main.py` (P0-D + P0-E). P0-D is order-independent (its method gate covers `POST /reset` regardless of P0-B). **Within P0-C, `014` (the urgent primary containment) does NOT depend on `015`'s `supabase_admin` authority.**
+**Dependency DAG (replaces the earlier "no cross-action dependency" claim).** Every action is independently **gated** (its own operator GO) and independently **applied** (never one combined production transaction), but the actions are **not** all mutually order-independent:
+
+- **P0-A → P0-B, P0-C.** Both consume P0-A's snapshot: P0-C's rollbacks are generated from the captured per-grantee/per-grantor ACL, and P0-B relies on the captured `/reset` state. Run P0-A first.
+- **P0-B → (external) mutation-seam connectivity repair.** P0-B must be applied **before** connectivity is restored, or `/reset` re-arms.
+- **P0-C:** `014` (postgres, urgent primary) is independent of `015` (supabase_admin, secondary).
+- **P0-D, P0-E:** each independently applicable. **P0-D interacts with P0-B's acceptance** (below) but requires no ordering.
+- **P1** is never a prerequisite for any P0 action.
+
+**Phase-aware `/reset` acceptance (P0-B × P0-D).** The **durable invariant** is that `/reset` is **absent from the deployed OpenAPI `paths`** (verified via `GET /openapi.json`) — true whenever P0-B is applied, regardless of P0-D. The **runtime POST status is phase-dependent**: **404** when P0-B is applied and P0-D is not (route unmounted); **503** once P0-D is also live (the default-deny mutation gate preempts routing). Acceptance asserts OpenAPI-absence unconditionally and selects 404-or-503 by which actions are live — it never asserts a bare 404 in a phase where P0-D is active.
+
+Files touched by two actions are given as **composable diffs** (not full-file replacements): mutation-seam `health.py` (P0-B + P0-E), mutation-seam `main.py` (P0-B + P0-D), and control-plane `main.py` (P0-D + P0-E). **Within P0-C, `014` (the urgent primary containment) does NOT depend on `015`'s `supabase_admin` authority.** No combined production transaction; P1 not a prerequisite.
 
 ---
 
 ## 2. P0-A — Read-only evidence preservation
 
-**Objective.** Capture approved pre-change evidence. No mutation/deploy/secret/connectivity change. Stop with hashes, paths, results, drift.
+**Objective.** Capture approved pre-change evidence. No mutation/deploy/secret/connectivity change. Runs as a **single guarded `REPEATABLE READ, READ ONLY` transaction** (project-fingerprint + read-only guard; fails closed on the wrong cluster); enumeration uses **effective-role closure** (fixed principals x all privileges + the anon/authenticated membership closure) and **fail-closed** SECURITY DEFINER discovery. Stop with hashes, paths, results, drift.
 
 **Deliverable.** `apps/mutation-seam/scripts/pm_ops_p0/preserve_evidence.py` (read-only; house style of `scripts/smoke_deployed_mutation_seam.py`) + the SQL below → custody `/home/olares/custody/pm-ops-p0/<UTC>/` (0700 dir, 0400 files) + SHA-256 manifest.
 
-**Evidence set (each hashed + path-recorded):** (1) deployed OpenAPI both hosts + version/SHA; (2) `/reset` route + security state; (3) effective privileges + RLS on the 4 tables **for every grantee in the ACL**; (4) **every `SECURITY DEFINER` function in `public` referencing the 4 tables**, with args/owner/EXECUTE grants; (5) counts (no row bodies); (6) `pg_default_acl` for schema `public` **for both `objtype='r'` (tables) and `'f'` (functions)**, per grantor; (7) active backend classification (inferred; record source); (8) Render `POST /reset` access logs (operator-captured); (9) rollback inputs (exact per-grantee ACL + per-grantor default ACL, so both rollbacks are generated from the snapshot).
+**Evidence set (each hashed + path-recorded):** (1) deployed OpenAPI both hosts + version/SHA; (2) `/reset` route + security state; (3) **effective privileges for the fixed Data-API principal set (`anon`/`authenticated`/`public`/`apex_tcc_runtime`) across all table privileges, plus the `anon`/`authenticated` membership closure** and per-table RLS; (4) **every `SECURITY DEFINER` function in `public` that depends on (via `pg_depend`), references by name, OR uses dynamic SQL touching the 4 tables — fail-closed `in_scope` flag**, with args/owner/EXECUTE grants (incl. PUBLIC); (5) counts (no row bodies); (6) `pg_default_acl` for schema `public` **for both `objtype='r'` (tables) and `'f'` (functions)**, per grantor; (7) active backend classification (inferred; record source); (8) Render `POST /reset` access logs (operator-captured); (9) rollback inputs (exact per-grantee ACL + per-grantor default ACL, so both rollbacks are generated from the snapshot).
 
 **Read-only SQL snapshot (P0-A):**
 ```sql
--- pm-ops-p0-A : ACL + RLS + counts + default-priv (tables+functions) + SECURITY DEFINER RPC baseline. READ-ONLY.
--- (a) exact per-grantee table ACL
+-- pm-ops-p0-A : ACL + RLS + counts + default-priv (tables+functions) + effective-role closure
+-- + FAIL-CLOSED SECURITY DEFINER discovery. Single guarded READ-ONLY transaction.
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY;
+
+-- (guard) fail closed on the wrong cluster/DB or a writable session: assert read-only + target fingerprint.
+DO $$
+BEGIN
+  IF NOT (SELECT setting::bool FROM pg_settings WHERE name = 'transaction_read_only') THEN
+    RAISE EXCEPTION 'P0-A refused: transaction is not READ ONLY';
+  END IF;
+  IF to_regclass('public.projects') IS NULL OR to_regclass('public.scopes') IS NULL
+     OR to_regclass('public.tasks') IS NULL OR to_regclass('public.apparatus') IS NULL
+     OR to_regproc('public.approve_apparatus_completion') IS NULL THEN
+    RAISE EXCEPTION 'P0-A refused: target fingerprint absent (wrong database/project?) — expected the 4 PM tables + apparatus RPCs';
+  END IF;
+END $$;
+
+-- (a) exact per-grantee table ACL (rollback-input source; literal ACL entries preserved)
 select c.relname, c.relrowsecurity as rls_enabled,
        (select count(*) from pg_policy p where p.polrelid=c.oid) as policies,
        coalesce(array_to_string(c.relacl, E'\n'), '(default/no explicit acl)') as relacl
 from pg_class c join pg_namespace n on n.oid=c.relnamespace
 where n.nspname='public' and c.relname in ('projects','scopes','tasks','apparatus') order by c.relname;
--- (b) effective privilege for EVERY grantee present in the ACL (dynamic; records apex_tcc_runtime etc.)
-select c.relname, pg_get_userbyid(a.grantee) as grantee, a.privilege_type,
-       has_table_privilege(a.grantee, c.oid, a.privilege_type) as effective
-from pg_class c join pg_namespace n on n.oid=c.relnamespace cross join lateral aclexplode(c.relacl) a
+
+-- (b) EFFECTIVE privilege for the FIXED Data-API principal set across ALL table privileges,
+--     driven by principals x privileges (NOT by ACL entries) so membership-inherited access is captured.
+select c.relname, pr.role as principal, pv.priv as privilege_type,
+       has_table_privilege(pr.role, c.oid, pv.priv) as effective
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+cross join (values ('anon'),('authenticated'),('public'),('apex_tcc_runtime')) as pr(role)
+cross join (values ('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('TRUNCATE'),('REFERENCES'),('TRIGGER'),('MAINTAIN')) as pv(priv)
 where n.nspname='public' and c.relname in ('projects','scopes','tasks','apparatus')
-order by c.relname, grantee, a.privilege_type;
+order by c.relname, principal, privilege_type;
+
+-- (b2) role-membership closure of anon/authenticated (which roles inherit them) — completes effective-access evidence
+with recursive closure(target, member) as (
+    select rolname, rolname from pg_roles where rolname in ('anon','authenticated')
+  union
+    select c.target, r.rolname
+    from closure c
+    join pg_roles gr on gr.rolname = c.member
+    join pg_auth_members m on m.roleid = gr.oid
+    join pg_roles r on r.oid = m.member
+)
+select target as target_role, array_agg(distinct member order by member) as members_inheriting
+from closure group by target order by target;
+
 -- (c) counts only
 select 'projects' rel, count(*) n from public.projects
 union all select 'scopes', count(*) from public.scopes
 union all select 'tasks', count(*) from public.tasks
 union all select 'apparatus', count(*) from public.apparatus;
+
 -- (d) default privileges in schema public — BOTH objtypes r (tables) and f (functions), per grantor
 select pg_get_userbyid(d.defaclrole) as grantor, d.defaclobjtype as objtype, array_to_string(d.defaclacl, E'\n') as default_acl
 from pg_default_acl d join pg_namespace n on n.oid=d.defaclnamespace
 where n.nspname='public' and d.defaclobjtype in ('r','f') order by grantor, objtype;
--- (e) SECURITY DEFINER functions in public referencing any of the 4 tables (the RPC write-path surface)
+
+-- (e) FAIL-CLOSED SECURITY DEFINER discovery: every SECURITY DEFINER function in public that
+--     (i) depends on any of the 4 tables via pg_depend, (ii) references them by name, OR
+--     (iii) contains dynamic SQL (EXECUTE) whose targets cannot be statically resolved.
+--     (iii) fails CLOSED — flagged in_scope even when static analysis cannot prove a write.
+with tgt as (
+  select oid from pg_class
+  where relnamespace = 'public'::regnamespace and relname in ('projects','scopes','tasks','apparatus')
+),
+dep_fns as (
+  select distinct d.objid as fnoid
+  from pg_depend d join tgt on d.refobjid = tgt.oid
+  where d.classid = 'pg_proc'::regclass
+)
 select p.proname, pg_get_function_identity_arguments(p.oid) as args, pg_get_userbyid(p.proowner) as owner,
-       has_function_privilege('anon',p.oid,'EXECUTE') as anon_exec, has_function_privilege('authenticated',p.oid,'EXECUTE') as auth_exec,
-       (pg_get_functiondef(p.oid) ~* '\y(insert|update|delete|truncate)\y') as body_writes
+       has_function_privilege('public',p.oid,'EXECUTE') as public_exec,
+       has_function_privilege('anon',p.oid,'EXECUTE') as anon_exec,
+       has_function_privilege('authenticated',p.oid,'EXECUTE') as auth_exec,
+       (p.oid in (select fnoid from dep_fns)) as depends_on_targets,
+       (pg_get_functiondef(p.oid) ~* '\y(projects|scopes|tasks|apparatus)\y') as name_refs_targets,
+       (pg_get_functiondef(p.oid) ~* '\yexecute\y') as has_dynamic_sql,
+       ( p.oid in (select fnoid from dep_fns)
+         or pg_get_functiondef(p.oid) ~* '\y(projects|scopes|tasks|apparatus)\y'
+         or pg_get_functiondef(p.oid) ~* '\yexecute\y' ) as in_scope_failclosed
 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-where n.nspname='public' and p.prosecdef and pg_get_functiondef(p.oid) ~* '\y(projects|scopes|tasks|apparatus)\y' order by p.proname;
+where n.nspname='public' and p.prosecdef
+order by in_scope_failclosed desc, p.proname;
+COMMIT;
 ```
 
-**Baseline observed this session (re-captured authoritatively at GO):** 4 tables `rls_enabled=false`/`policies=0`; `anon`+`authenticated`+`apex_tcc_runtime` hold writes (anon/auth = full `arwdDxtm` incl. MAINTAIN; PUBLIC no direct table grant); default ACLs from grantors **`postgres`** and **`supabase_admin`** grant `anon`/`authenticated` full privileges on future public **tables AND `EXECUTE` on future functions**; query (e) returns exactly the 3 apparatus functions (owner postgres, PUBLIC+anon+authenticated EXECUTE, body_writes true).
+**Baseline observed this session (re-captured authoritatively at GO):** 4 tables `rls_enabled=false`/`policies=0`; `anon`+`authenticated`+`apex_tcc_runtime` hold writes (anon/auth = full `arwdDxtm` incl. MAINTAIN; PUBLIC no direct table grant); default ACLs from grantors **`postgres`** and **`supabase_admin`** grant `anon`/`authenticated` full privileges on future public **tables AND `EXECUTE` on future functions**; query (e) is expected to flag exactly the 3 apparatus functions `in_scope_failclosed=true` (owner postgres, `public_exec`/`anon_exec`/`auth_exec` true, `depends_on_targets` true), with **`has_dynamic_sql=false` for all in-scope rows** — any `in_scope_failclosed=true` row with `has_dynamic_sql=true` (an unresolvable dynamic-SQL SECURITY DEFINER function) is a NEW finding requiring re-review before P0-C.
 
 **Stop condition.** Stop with hashes/paths/results + drift (drift → re-review before P0-C).
 
@@ -92,7 +161,7 @@ where n.nspname='public' and p.prosecdef and pg_get_functiondef(p.oid) ~* '\y(pr
 
 *(Unchanged from rev2; verified clean by re-review.)*
 
-**Objective.** `/reset` absent in prod OpenAPI (POST → 404); the internal reset refuses production/Postgres execution; survives only as an explicit non-production, memory-backed, opt-in capability.
+**Objective.** `/reset` absent in prod OpenAPI (per §1 phase-aware acceptance); `SupabaseStore.reset()` **unconditionally refuses in every environment**; reset/reseed survives only as an explicit non-production, memory-backed (`MemoryStore`), opt-in capability.
 
 **Change 1 — `apps/mutation-seam/app/routers/health.py`** (composable additions, NOT a full-file replacement — P0-E also edits this file): add `import os`, keep `health_check`, delete the current unconditional `@router.post("/reset")` (lines 21-29), add:
 ```python
@@ -118,24 +187,30 @@ if health.test_reset_enabled():          # TEST-ONLY: never true in production
     app.include_router(health.reset_router)
 ```
 
-**Change 3 — `apps/mutation-seam/app/db/supabase_store.py` `reset()`** (defense-in-depth; `import os` already present):
+**Change 3 — `apps/mutation-seam/app/db/supabase_store.py` `reset()`** (`supabase_store.py:560`; **unconditional refusal** — the destructive Postgres reset path is removed entirely, in every environment):
 ```python
 def reset(self):
-    if os.getenv("APP_ENV", "production") == "production" or os.getenv("SEAM_TEST_RESET_ENABLED") != "true":
-        raise RuntimeError("SupabaseStore.reset() refused: disabled in production; requires SEAM_TEST_RESET_ENABLED=true.")
-    # ... existing truncate-in-FK-safe-order + reseed body unchanged ...
+    # Destructive reset/reseed is a TEST-ONLY capability and exists ONLY on MemoryStore
+    # (app/db/memory_store_original.py:61). SupabaseStore targets PostgreSQL and must NEVER
+    # destructively reset, in ANY environment -> refuse unconditionally.
+    raise RuntimeError(
+        "SupabaseStore.reset() is permanently disabled: destructive reset/reseed is available only via "
+        "MemoryStore (SEAM_STORE_BACKEND=memory). SupabaseStore never resets Postgres."
+    )
+    # (the prior truncate-in-FK-safe-order + reseed body is DELETED — unreachable and intentionally removed)
 ```
+The test-only `/reset` route (Changes 1-2) is mounted **only** when `SEAM_STORE_BACKEND=memory`, so `store` is a `MemoryStore` instance and `store.reset()` binds to `MemoryStore.reset()` — the memory path is unaffected. This change removes only the *Postgres* destruction path.
 
 **Preconditions.** P0-A captured; prod confirms `APP_ENV=production`, `SEAM_STORE_BACKEND=postgres`, no `SEAM_TEST_RESET_ENABLED`. **Rollback.** Revert the P0-B commit.
-**OpenAPI acceptance (GET-only):** `paths` excludes `/reset`; `POST /reset` → 404.
-**Negative tests (pytest, subprocess isolation — the mount is decided once at import; mirror `test_ops_route_mount_gate.py::test_recognition_router_host_gated_subprocess`; each subprocess env must carry `PM_MUTATIONS_ENABLED=true` per §5 so the `/reset` POST is not masked as 503 once P0-D is live):** `test_reset_absent_in_production` (prod env → absent + 404); `test_reset_mounted_only_in_memory_harness` (test+memory+opt-in → present + 200); `test_supabase_reset_guard_raises_in_production` (in-process, raises before DB call); import-smoke subprocess (`from app.main import app` under prod env exits 0).
+**OpenAPI acceptance (GET-only):** durable invariant — deployed OpenAPI `paths` excludes `/reset`. Runtime `POST /reset` → **404** (P0-B applied, P0-D not) or **503** (P0-D also live), per the §1 phase-aware acceptance.
+**Negative tests (pytest, subprocess isolation — the mount is decided once at import; mirror `test_ops_route_mount_gate.py::test_recognition_router_host_gated_subprocess`; each subprocess env must carry `PM_MUTATIONS_ENABLED=true` per §5 so the `/reset` POST is not masked as 503 once P0-D is live):** `test_reset_absent_in_production` (prod env → absent + 404); `test_reset_mounted_only_in_memory_harness` (test+memory+opt-in → present + 200); `test_supabase_reset_always_raises` (in-process; `SupabaseStore.reset()` raises in EVERY env — including non-production with `SEAM_TEST_RESET_ENABLED=true` — before any DB call); import-smoke subprocess (`from app.main import app` under prod env exits 0).
 **Sequencing.** Deploy P0-B **before** any mutation-seam connectivity repair.
 
 ---
 
 ## 4. P0-C — Atomic revocation of Data-API write privileges (split by authority)
 
-**Objective.** `PUBLIC`/`anon`/`authenticated` hold **no effective write** on the 4 tables **and no EXECUTE** on the 3 apparatus RPCs; new public **tables and functions** are not born write/EXECUTE-exposed; `SELECT` preserved. No schema relocation, no RLS redesign.
+**Objective (immediate containment claim).** `PUBLIC`/`anon`/`authenticated` hold **no effective write** on the 4 tables **and no EXECUTE** on the 3 apparatus RPCs — the two live exposures; and the postgres-grantor **named-role** default privileges no longer birth write/EXECUTE-exposed tables/functions; `SELECT` preserved. No schema relocation, no RLS redesign. **Forward-function PUBLIC EXECUTE posture is explicitly NOT claimed here** — it is a separately measured finish line (§11.6) that does **not** gate urgent `014`.
 
 **Why split.** The forward migration must run as **`postgres`** (owner/grantor of the 4 tables + 3 functions — the urgent revokes). But `ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin …` requires **`supabase_admin`** authority, which managed `postgres` does **not** hold (live-verified: `postgres` is not a member of `supabase_admin`; not superuser). Bundling both in one transaction means the `supabase_admin` statement errors and **rolls back the urgent revokes**. So:
 - **`014` (postgres-run, atomic — PRIMARY, closes the two live exposures):** table write REVOKE + RPC EXECUTE REVOKE + `postgres`-grantor default-priv (tables **and** functions) + assertions. Live-confirmed to apply cleanly as `postgres` (owner of all objects; no `WITH GRANT OPTION`, so no CASCADE).
@@ -162,15 +237,16 @@ REVOKE EXECUTE ON FUNCTION
     public.submit_apparatus_for_review(uuid, uuid, numeric, public.apparatus_assessment, numeric, text, text)
 FROM PUBLIC, anon, authenticated;
 
--- 3) postgres-grantor default-priv prevention — TABLES and FUNCTIONS (functions close the born-EXECUTE-exposed RPC class)
+-- 3) postgres-grantor NAMED-ROLE default-priv prevention — TABLES and FUNCTIONS.
+--    Revokes the anon/authenticated default that live pg_default_acl (objtypes 'r' and 'f') actually carries.
+--    Scope note: the built-in PUBLIC EXECUTE on NEW functions is a Postgres platform default that ADP cannot
+--    reliably strip, so it is deliberately NOT addressed here (no ineffective best-effort token). The 3 KNOWN
+--    write RPCs are fully closed by stmt 2; forward-function PUBLIC posture is a separately measured finish
+--    line (§11.6, docs/superpowers/specs/ops-app-role-boundary/IRP_OPUS_2026-07-01.md) that does NOT block 014.
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
     REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN ON TABLES FROM anon, authenticated;
--- Revokes the NAMED-role (anon/authenticated) function default (live pg_default_acl objtype 'f' has those rows).
--- PUBLIC is best-effort: Postgres grants EXECUTE on NEW functions to PUBLIC via a built-in default ADP cannot
--- reliably strip (repo precedent ops-app-role-boundary/IRP_OPUS_2026-07-01.md). Known RPCs are closed by stmt 2;
--- the future-function-PUBLIC EXECUTE vector is a §11.6 standing-posture residual, NOT one-shot-closable here.
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
-    REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC, anon, authenticated;
+    REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated;
 
 -- 4a) assert: no effective write on the 4 tables for anon/authenticated (all 7 revoked verbs)
 DO $$
@@ -237,7 +313,7 @@ DO $$ BEGIN IF current_user <> 'supabase_admin' THEN RAISE EXCEPTION 'run 015 as
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public
     REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, MAINTAIN ON TABLES FROM anon, authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA public
-    REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC, anon, authenticated;  -- PUBLIC best-effort (see 014 note + §11.6)
+    REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated;  -- named roles only; PUBLIC posture = §11.6 finish line
 DO $$
 DECLARE bad text;
 BEGIN
@@ -256,14 +332,14 @@ COMMIT;
 **Rollbacks (operator-gated).** `014.rollback.sql` (run as postgres) restores EXACTLY the table write verbs (incl. MAINTAIN) + the 3 RPC EXECUTEs + the postgres-grantor default privileges, **generated from the P0-A per-grantee/per-grantor snapshot** (not a blanket static grant), to anon/authenticated only (PUBLIC had no direct table grant; it did hold direct RPC EXECUTE → restore that). `015.rollback.sql` (run as supabase_admin) restores the supabase_admin-grantor default privileges. Each guards its `current_user`; fail-closed for objects born after apply.
 
 **Preconditions.** P0-A ACL + default-ACL (tables+functions) + SECURITY DEFINER snapshots captured; rollbacks generated; both migrations proven on a Supabase branch.
-**Acceptance.** 014: table write false + RPC EXECUTE false for anon+authenticated (asserted); SELECT preserved (asserted); postgres-grantor default-priv closed for tables+functions (asserted); applies cleanly as postgres. 015: supabase_admin-grantor default-priv closed (asserted) OR recorded as residual if no authority path. Rollbacks captured (snapshot-derived). No schema relocation/RLS redesign. Advisors re-run on the 4 objects + the 3 functions.
+**Acceptance.** 014: table write false + RPC EXECUTE false for anon+authenticated (asserted); SELECT preserved (asserted); postgres-grantor **named-role** default-priv closed for tables+functions (asserted; PUBLIC future-function EXECUTE explicitly out of the 014 claim per §11.6); applies cleanly as postgres. 015: supabase_admin-grantor default-priv closed (asserted) OR recorded as residual if no authority path. Rollbacks captured (snapshot-derived). No schema relocation/RLS redesign. Advisors re-run on the 4 objects + the 3 functions.
 **Post-change verification (read-only).** Re-run P0-A (a),(b),(d),(e); advisors; optional single read-only REST `GET .../rest/v1/projects?select=id&limit=1` still 200. Do not issue a write/RPC to "prove" closure.
 
 ---
 
 ## 5. P0-D — Temporary closure of unauthenticated PM mutation ingress
 
-**Objective.** Temporarily block unauthenticated PM mutation verbs across both apps' PM route families, reversibly, without permanent identity (P1). Default (flag unset) = **fail-closed**.
+**Objective.** Temporarily block unauthenticated PM mutation verbs across both apps' PM route families, reversibly, without permanent identity (P1). Default (flag unset) = **fail-closed**. The separately-governed **learning** family (`/api/v1/learning`) is **excluded** — its ingress posture is decided under the learning lane, not P0-D.
 
 **Mechanism.** A minimal ASGI middleware gated on `PM_MUTATIONS_ENABLED` (default disabled). **Register the gate BEFORE `app.add_middleware(CORSMiddleware, …)` in source order** (Starlette adds inner-first: last-added = outermost → CORS wraps the 503, so it carries CORS headers). Place the `@app.middleware("http")` block immediately after `app = FastAPI(...)`, above the CORS `add_middleware` call.
 
@@ -278,17 +354,23 @@ async def _pm_mutation_gate(request, call_next):
 # ... app.add_middleware(CORSMiddleware, ...) BELOW this block ...
 ```
 
-**control-plane — `apps/control-plane-api/main.py`** (add `JSONResponse` to `from fastapi.responses import FileResponse` → `FileResponse, JSONResponse`; scope to PM prefixes; **composable diff — P0-E also edits this file**):
+**control-plane — `apps/control-plane-api/main.py`** (add `JSONResponse` to `from fastapi.responses import FileResponse` → `FileResponse, JSONResponse`; scope to PM route families with **exact boundary matching**; **learning is separately governed and excluded**; **composable diff — P0-E also edits this file**):
 ```python
-_PM_MUTATION_PREFIXES = ("/api/v1/work", "/api/v1/ops/intake", "/api/v1/ops/recognition", "/api/v1/learning")
+_PM_MUTATION_PREFIXES = ("/api/v1/work", "/api/v1/ops/intake", "/api/v1/ops/recognition")
 _PM_MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+
+def _is_pm_mutation_path(path: str) -> bool:
+    # exact route-family boundary: matches "/api/v1/work" and "/api/v1/work/..", NOT "/api/v1/workflow".
+    # learning (/api/v1/learning) is separately governed and intentionally NOT included here.
+    return any(path == p or path.startswith(p + "/") for p in _PM_MUTATION_PREFIXES)
+
 @app.middleware("http")
 async def _pm_mutation_gate(request, call_next):
-    if (request.method in _PM_MUTATING_METHODS and request.url.path.startswith(_PM_MUTATION_PREFIXES)
+    if (request.method in _PM_MUTATING_METHODS and _is_pm_mutation_path(request.url.path)
             and os.getenv("PM_MUTATIONS_ENABLED") != "true"):
         return JSONResponse(status_code=503, content={"detail": "PM mutations temporarily disabled (containment P0-D)."})
     return await call_next(request)
-# ... registered ABOVE the CORS add_middleware call ...
+# ... registered ABOVE the CORS add_middleware call (control-plane main.py:78) ...
 ```
 
 **Test-suite deliverable (REQUIRED — the default-deny gate would otherwise 503 the entire existing suite in both apps).** Add, at the very top of each conftest **before** the app is imported:
@@ -298,20 +380,23 @@ This also restores `test_ops_route_mount_gate.py::test_recognition_router_host_g
 
 **Preconditions.** None — order-independent. **Rollback.** `PM_MUTATIONS_ENABLED=true` or revert.
 **Interaction note.** With P0-D live, the P0-B test-only `/reset` (a POST) is also gated by the mutation-seam blanket gate → the reset harness additionally needs `PM_MUTATIONS_ENABLED=true` (fails closed; documented).
-**Negative tests + verification.** The new P0-D negative tests explicitly control the flag (unset → assert 503; `=true` → passthrough), so they do not depend on the conftest default. Deployed: `POST` (empty body) to one route per PM family → 503; GETs unchanged; verify the 503 carries `Access-Control-Allow-Origin` via a cross-origin `fetch()`.
+**Negative tests + verification.** The new P0-D negative tests explicitly control the flag (unset → assert 503; `=true` → passthrough), so they do not depend on the conftest default. Plus a pure-unit `test_pm_gate_path_boundary` on `_is_pm_mutation_path`: `/api/v1/work` and `/api/v1/work/tasks` → True; `/api/v1/workflow` and `/api/v1/learning/x` → False (exact route-family boundary — no over-match, learning excluded). Deployed: `POST` (empty body) to one route per gated PM family → 503; a `POST` to a learning route is **not** gated by P0-D; GETs unchanged; verify the 503 carries `Access-Control-Allow-Origin` via a cross-origin `fetch()`.
 **Out of scope.** No JWT/session/capability/actor derivation — that is **P1**.
 
 ---
 
 ## 6. P0-E — Contract-aware readiness
 
-**Objective.** Readiness fails (**503**) when any **mounted** production domain's required schema, serving role, work table, durable-idempotency backend, or `pm.idempotency_keys` is unavailable. Liveness (`/health`, `/health/live`) stays static so Render's `healthCheckPath: /health` does not cycle the process.
+**Objective.** Readiness fails (**503**) when any **mounted** production domain's required schema, **serving-role identity/contract/permissions** (probed via the actual `OPS_API_DSN`/`OPS_INTAKE_WRITER_DSN`), work table, durable-idempotency backend, or `pm.idempotency_keys` is unavailable. Liveness (`/health`, `/health/live`) stays static so Render's `healthCheckPath: /health` does not cycle the process.
 
 **control-plane — replace `/health/ready`** (`apps/control-plane-api/main.py:~404`; **add `Response`**: `from fastapi import Depends, FastAPI, HTTPException, Request, Response`; **composable diff — P0-D also edits this file's imports/top**). Current behavior: 200-always, probes only `vw_trip_unit_cascade`.
 ```python
 @app.get("/health/ready")
 def health_ready(response: Response):
-    """Contract-aware readiness: verify each MOUNTED domain's required contract; 503 when any is unavailable."""
+    """Contract-aware readiness: verify each MOUNTED domain's required contract AND, for ops, the ACTUAL
+    serving-role DSN identity/contract/permissions; 503 when any is unavailable."""
+    import os
+    import psycopg
     from config import engine
     from services.work.idempotency import idempotency_cache
     checks: dict[str, dict] = {}; ok = True
@@ -322,19 +407,41 @@ def health_ready(response: Response):
             passed = bool(row and row[0]); checks[name] = {"ok": passed}; ok = ok and passed
         except Exception as exc:
             checks[name] = {"ok": False, "error": str(exc)}; ok = False
+    # control-plane's OWN DB (config.engine): connectivity, work tables, PM idempotency durability
     _sql("database", "SELECT 1")
-    # work.* routes mounted unconditionally -> require representative work tables (not just the schema)
     _sql("work_tables", "SELECT to_regclass('work.projects') IS NOT NULL AND to_regclass('work.tasks') IS NOT NULL "
                         "AND to_regclass('work.work_packages') IS NOT NULL")
-    # PM idempotency durability: singleton bound durable AND the backing table exists
     checks["pm_idempotency_backend"] = {"ok": idempotency_cache.backend_kind() == "durable"}
     ok = ok and checks["pm_idempotency_backend"]["ok"]
     _sql("pm_idempotency_keys", "SELECT to_regclass('pm.idempotency_keys') IS NOT NULL")
-    # ops intake/recognition mounted only when both role DSNs set -> ops.persons lives in this same DB
+    # ops: probe the ACTUAL serving-role DSNs (psycopg, as the routers do) -> identity + contract + forbidden priv.
+    def _probe_role(name: str, dsn_env: str, expected_role: str, must_read: str) -> None:
+        nonlocal ok
+        dsn = os.getenv(dsn_env)
+        if not dsn:
+            checks[name] = {"ok": False, "error": f"{dsn_env} unset"}; ok = False; return
+        try:
+            with psycopg.connect(dsn, connect_timeout=5) as conn, conn.cursor() as cur:
+                cur.execute(
+                    "SELECT current_user, "
+                    "(SELECT rolsuper FROM pg_roles WHERE rolname = current_user), "
+                    "has_schema_privilege(current_user, 'ops', 'USAGE'), "
+                    "has_table_privilege(current_user, %s, 'SELECT'), "
+                    "has_table_privilege(current_user, 'public.apparatus', 'UPDATE')",
+                    (must_read,))
+                who, is_super, ops_usage, can_read, writes_public = cur.fetchone()
+            passed = (who == expected_role and not is_super and ops_usage and can_read and not writes_public)
+            checks[name] = {"ok": passed, "current_user": who, "superuser": is_super,
+                            "ops_usage": ops_usage, "contract_read": can_read, "forbidden_public_write": writes_public}
+            ok = ok and passed
+        except Exception as exc:
+            checks[name] = {"ok": False, "error": str(exc)}; ok = False
+    # mounted only when both role DSNs are set (mirrors _ops_intake_enabled()).
     if _ops_intake_enabled():
-        _sql("ops_persons", "SELECT to_regclass('ops.persons') IS NOT NULL")
-    # NOTE: learning lives in a SEPARATE database (LEARNING_DEV_DSN); config.engine cannot validate it,
-    # so no learning check here — a correct learning readiness probe needs its own DSN-bound connection (deferred).
+        _probe_role("ops_api_dsn", "OPS_API_DSN", "ops_api", "ops.persons")
+        _probe_role("ops_intake_writer_dsn", "OPS_INTAKE_WRITER_DSN", "ops_intake_writer", "ops.persons")
+    # learning lives in a SEPARATE database (its own host-only DSN); a correct learning readiness probe needs
+    # its own DSN-bound connection and is deferred with the learning lane (not checked here).
     response.status_code = 200 if ok else 503
     return {"status": "ready" if ok else "not_ready", "checks": checks}
 ```
@@ -357,7 +464,7 @@ async def health_ready(response: Response):
     return {"status": "ready" if ok else "not_ready", "checks": checks}
 ```
 
-**Behavior-change note.** control-plane `/health/ready` currently returns **200-always**; P0-E makes it **503 on not-ready**. Liveness paths unchanged (remain the Render health-check), so a 503 readiness does **not** cycle the service. **Consequence (see §11):** with `pm.idempotency_keys` **and** `work.*` both absent in prod today, P0-E control-plane readiness will correctly report **not_ready** — a truthful signal that the control-plane PM/work backend is not fully provisioned in prod (consistent with High-1's empty `work` schema and High-2's 500s). If any external monitor treats `/health/ready` non-200 as hard-down, repoint it to `/health` before P0-E.
+**Behavior-change note.** control-plane `/health/ready` currently returns **200-always**; P0-E makes it **503 on not-ready**. Liveness paths unchanged (remain the Render health-check), so a 503 readiness does **not** cycle the service. The ops probes additionally verify each mounted serving role authenticates as its expected identity (`ops_api` / `ops_intake_writer`), holds its read contract (`ops` schema `USAGE` + `SELECT ops.persons`), and lacks a forbidden privilege (not superuser; no `UPDATE` on `public.apparatus`) — so a misconfigured DSN or an over-granted serving role also (correctly) reports not_ready. **Consequence (see §11):** with `pm.idempotency_keys` **and** `work.*` both absent in prod today, P0-E control-plane readiness will correctly report **not_ready** — a truthful signal that the control-plane PM/work backend is not fully provisioned in prod (consistent with High-1's empty `work` schema and High-2's 500s). If any external monitor treats `/health/ready` non-200 as hard-down, repoint it to `/health` before P0-E.
 
 **Preconditions.** None. **Rollback.** Revert. **Verification (GET-only).** `/health` → 200 both apps; `/health/ready` → 200 when contracts present, 503 with a per-check body otherwise. **Import-smoke test** (both apps): subprocess `from <module> import app` under prod env exits 0.
 
@@ -371,7 +478,7 @@ Out of scope; scoped for boundary clarity. A separate P1 packet designs: Supabas
 
 ## 8. Docs delta (fold the four audit corrections)
 
-Proposed edits to `notes/platform-status/2026-07-14-pm-ops-web-platform-audit.md` (proposed patch; applied when the operator chooses):
+Proposed edits to the PM/Ops audit note **in the `apex-learning-lane` repo** — `/home/olares/code/apex/apex-learning-lane/notes/platform-status/2026-07-14-pm-ops-web-platform-audit.md` (a SEPARATE repo from this worktree; applied there under its own governance, **not** committed with this packet):
 1. **High-2 tracer** — returns **500 with a valid `task_id`** (e.g. `?task_id=sched-task-001&max_depth=10`); missing `task_id` correctly returns 422. Degraded-backend conclusion unchanged.
 2. **High-3 advisor counts** — keep the PM-target-scoped figures; **add**: "Project-wide totals (supplementary, not the PM subset): 31 `rls_disabled_in_public`, 31 `security_definer_view`, 20 `rls_enabled_no_policy`, 8 `rls_policy_always_true`, 67 `function_search_path_mutable`. PM-target figures are a deliberate subset; enumerate the PM target object list before recounting."
 3. **High-4** — reframe as **readiness blindness** and record both durability failure modes: (a) startup-time durable-backend registration failure → **silent, persistent** in-memory fallback (`main.py:122-142`), real but fires only on a startup exception since binding is lazy; (b) after a successful lazy bind, request-time DB loss (or the **missing `pm.idempotency_keys` table**) → **500s on idempotent PM POSTs**; (c) `/health/ready` checks connectivity + a TCC view, not `pm.idempotency_keys`, `backend_kind()`, or mounted `work.*` — so neither is observable. *(Refines the ratified H4 wording, which stated "not a silent in-memory fallback" — the silent-fallback code path is real; operator to confirm final wording.)*
@@ -386,17 +493,17 @@ Proposed edits to `notes/platform-status/2026-07-14-pm-ops-web-platform-audit.md
 | P0-A | Read-only preservation: OpenAPI+SHA, /reset state, effective privileges+RLS (all grantees), SECURITY DEFINER RPCs, counts, default-priv (tables+functions, per grantor), backend classification, access logs, rollback inputs | §2 SQL (a)-(e) |
 | P0-B | /reset absent in prod; internal reset refuses prod/Postgres | §3 conditional reset_router + reset() guard |
 | P0-C | PUBLIC/anon/authenticated: no effective write on 4 tables **and** no EXECUTE on 3 RPCs; default-priv prevention (tables+functions, both grantors); SELECT preserved; **primary (014) does not depend on supabase_admin authority** | §4 split 014 (postgres) + 015 (supabase_admin) |
-| P0-D | Unauth PM mutation verbs blocked (both apps, incl. learning); fail-closed; CORS-clean 503; **existing CI stays green** | §5 middleware + conftest deliverable |
-| P0-E | Readiness 503 when any mounted schema/role/work-table/idempotency-backend/`pm.idempotency_keys` unavailable | §6 contract-aware /health/ready (both apps) + `backend_kind()` |
+| P0-D | Unauth PM mutation verbs blocked (both apps; **exact route-family boundary**, learning excluded); fail-closed; CORS-clean 503; **existing CI stays green** | §5 middleware + `_is_pm_mutation_path` + conftest deliverable |
+| P0-E | Readiness 503 when any mounted schema / **serving-role identity+contract+forbidden-priv** / work-table / idempotency-backend / `pm.idempotency_keys` unavailable | §6 contract-aware /health/ready (both apps) + per-DSN `_probe_role` + `backend_kind()` |
 | P1 | Permanent SSR/JWT identity, capability authz, server-derived actors | §7 (separate GO) |
 
-**Not one transaction; P1 not a prerequisite; no cross-action dependency:** each action = own file/commit/migration/GO; dual-touch files given as composable diffs; P0-D order-independent; P0-C 014 independent of 015. ✔
+**Not one combined transaction; P1 not a prerequisite; ordering per the §1 dependency DAG** (P0-A → P0-B/P0-C; P0-B before mutation-seam connectivity repair; P0-C `014` independent of `015`; P0-D has no ordering prerequisite but interacts with P0-B's acceptance via the phase-aware `/reset` rule): each action = own file/commit/migration/GO; dual-touch files given as composable diffs. ✔
 
 ---
 
 ## 10. What this packet does NOT do
 
-No production access, SQL, deploy, secret change, DB-connectivity repair, schema promotion/relocation, RLS-policy redesign, A1–A3 apply, OBS action, push, or PR. It stops at the design, the exact proposed code/SQL above, and the two-round review evidence (recorded at commit). Each action awaits its own separate GO; after design review, P0-B and P0-C each receive separate production GOs; connectivity repair only after P0-B is green.
+No production access, SQL, deploy, secret change, DB-connectivity repair, schema promotion/relocation, RLS-policy redesign, A1–A3 apply, OBS action, push, or PR. It stops at the design, the exact proposed code/SQL above, and the **cross-engine review record committed alongside** (`docs/superpowers/specs/2026-07-14-pm-ops-p0-containment-review-record.md`). Each action awaits its own separate GO; after design review, P0-B and P0-C each receive separate production GOs; connectivity repair only after P0-B is green.
 
 ---
 
@@ -408,4 +515,22 @@ The review rounds surfaced production defects predating this packet, **not** fix
 3. **The 3 SECURITY DEFINER apparatus RPCs** were an unauthenticated write path to `public.apparatus` predating this packet; P0-C revokes the EXECUTE grants but the functions still lack internal identity checks — real fix is P1 (server-derived actor) or gating inside the bodies.
 4. **`apex_tcc_runtime`** holds `arwd` on the 4 tables (intentionally out of P0-C scope; not Data-API-reachable) — recorded so "no effective write" is scoped accurately.
 5. **`supabase_admin` default-privilege authority**: closing the `supabase_admin`-grantor default privileges (015) requires a `supabase_admin` session that managed `postgres` lacks. 014 closes all EXISTING exposures and the realistic postgres-created future-object vector; if no `supabase_admin` path exists on managed Supabase, the residual (platform-created future objects under the supabase_admin grantor being born exposed) is operator-accepted until such a path is available.
-6. **Future-function-PUBLIC EXECUTE (standing-posture residual)**: Postgres grants `EXECUTE` on newly-created functions to `PUBLIC` via a built-in default that `ALTER DEFAULT PRIVILEGES` cannot reliably strip (repo precedent `ops-app-role-boundary/IRP_OPUS_2026-07-01.md`). The **3 known** apparatus write RPCs are explicitly closed (014 stmt 2), and the named-role (anon/authenticated) function defaults are revoked — but a *future* public `SECURITY DEFINER` function touching the PM tables would be born callable by anon/authenticated via the PUBLIC grant. A blanket `REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC` is **too broad** for emergency P0 (it would break legitimate callers across the mixed `public` schema). Robust closure of this class is a **standing posture control** — per-function `REVOKE EXECUTE … FROM PUBLIC` on creation + a CI assert scanning `has_function_privilege('public', f, 'EXECUTE')` for new public SECURITY-DEFINER functions that reference PM tables — scoped as a follow-on (P1 or a dedicated posture packet), not one-shot-closable here. **Operator decision:** accept as a disclosed residual, or fold the CI posture assert into a follow-on.
+6. **Future-function-PUBLIC EXECUTE (separately measured finish line — rev5 ruling 4)**: Postgres grants `EXECUTE` on newly-created functions to `PUBLIC` via a built-in default that `ALTER DEFAULT PRIVILEGES` cannot reliably strip (repo precedent `docs/superpowers/specs/ops-app-role-boundary/IRP_OPUS_2026-07-01.md`). The **3 known** apparatus write RPCs are explicitly closed (014 stmt 2), and the named-role (anon/authenticated) function defaults are revoked — but a *future* public `SECURITY DEFINER` function touching the PM tables would be born callable via the PUBLIC grant. A blanket `REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC` is **too broad** for emergency P0 (it would break legitimate callers across the mixed `public` schema). Per **rev5 ruling 4**, this vector is **not** claimed closed by 014 and does **not** delay it; robust closure is a **separately measured finish line** — per-function `REVOKE EXECUTE … FROM PUBLIC` at creation + a CI assert scanning `has_function_privilege('public', f, 'EXECUTE')` for new public SECURITY-DEFINER functions that reference PM tables (a dedicated posture packet, or folded into P1). Its completion is tracked independently of the P0 close-out.
+
+---
+
+## 12. Finding dispositions (rev5 — operator-ratified)
+
+All seven rev5-review findings were ratified by the operator; each is folded here. Full cross-engine detail (Claude adversarial lenses + Codex) is in the committed review record `docs/superpowers/specs/2026-07-14-pm-ops-p0-containment-review-record.md`.
+
+| # | Sev | Finding | Ruling / fold | Where |
+|---|---|---|---|---|
+| 1 | High | `SupabaseStore.reset()` still executable outside production | Unconditional refuse; reset/reseed only on `MemoryStore` | §3 Change 3; test `test_supabase_reset_always_raises` |
+| 2 | High | Readiness probes `config.engine`, not the real ops role DSNs | Probe `OPS_API_DSN`/`OPS_INTAKE_WRITER_DSN` identity+contract+forbidden-priv | §6 `_probe_role` |
+| 3 | High | P0-A not an authoritative snapshot (no RO txn / ACL-only / regex discovery) | Guarded `REPEATABLE READ, READ ONLY` txn + effective-role closure + fail-closed `pg_depend`/dynamic-SQL discovery | §2 SQL guard,(b),(b2),(e) |
+| 4 | High | Future-function hardening internally contradictory | Narrow 014 to existing-exposure containment; remove best-effort PUBLIC token; forward-function PUBLIC = separate finish line, does not delay 014 | §4 obj + 014 stmt 3 + 015 + §11.6 |
+| 5 | Med | Actions "independent" but actually ordered; post-P0-D `/reset` 503 not 404 | Explicit dependency DAG + phase-aware `/reset` acceptance (OpenAPI-absence invariant) | §1 DAG; §3 OpenAPI acceptance |
+| 6 | Med | P0-D reaches into learning + unsafe prefix `startswith` | Drop learning; exact route-family boundary `_is_pm_mutation_path` | §5 middleware + `test_pm_gate_path_boundary` |
+| 7 | Med | Review evidence not committed; paths misstated | Commit review record; IRP path → `docs/superpowers/specs/ops-app-role-boundary/IRP_OPUS_2026-07-01.md`; audit note → `apex-learning-lane` repo | §8, §10, §11.6, review record |
+
+**Preserved (unchanged) strengths per the review:** the 3-RPC `EXECUTE` revocation, the `014`/`015` authority split, snapshot-derived rollbacks, `SELECT` preservation, and P1 kept separate.
