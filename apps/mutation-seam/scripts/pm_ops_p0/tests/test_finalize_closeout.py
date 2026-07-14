@@ -319,6 +319,17 @@ def test_finalize_symlinked_provenance_rejected():
     _expect_closeout_error(_full_spec(), "provenance_missing", custody_mutator=mutate)
 
 
+def test_finalize_symlinked_manifest_rejected():
+    # Codex-c13 P2: a symlinked manifest.sha256 (hashes stored outside the bundle) is refused
+    def mutate(tmp, custody):
+        external = tmp / "external_manifest.sha256"
+        external.write_bytes((custody / "manifest.sha256").read_bytes())
+        (custody / "manifest.sha256").unlink()
+        (custody / "manifest.sha256").symlink_to(external)
+
+    _expect_closeout_error(_full_spec(), "artifact_not_regular", custody_mutator=mutate)
+
+
 def test_finalize_aliased_artifact_paths_rejected():
     # Codex-c12 P2: `x.json` and `./x.json` resolve to the same file and must not both count
     # toward the category-1 both-hosts minimum.

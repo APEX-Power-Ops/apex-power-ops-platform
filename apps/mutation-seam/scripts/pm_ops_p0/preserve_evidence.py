@@ -22,18 +22,21 @@ import sys
 # sys.path (e.g. pm_ops_p0/subprocess.py or scripts/psycopg.py) would otherwise be
 # imported at module load -- before any governance guard -- and run attacker code with the
 # injected production DSN in the environment. Two defences, in order:
-#   (1) here: drop this script's OWN directory from sys.path so a sibling file there
-#       cannot shadow the stdlib imports below (sys/os are already loaded -> unshadowable).
-#       `python /abs/.../preserve_evidence.py` puts that dir on sys.path[0] as a literal
-#       path; we strip literal matches. Empty ("" == cwd) entries are kept so this cannot
-#       perturb a pytest/-m run (which carries no DSN); the deferred import + main()'s
-#       pristine guard remain the authoritative controls for the real, DSN-bearing run.
+#   (1) here: drop every attacker-writable LAUNCHER entry from sys.path -- this script's own
+#       dir (direct-file `python /abs/.../preserve_evidence.py` puts it on sys.path[0]), the
+#       cwd, and empty ("" == cwd) entries (`python -m` / cwd-relative launchers) -- so no
+#       sibling/cwd file can shadow the stdlib imports below (sys/os are already loaded ->
+#       unshadowable). Keeping "" was an unenforced convention that left a cwd-launcher
+#       bypass (Codex-c13 P2); it is now dropped too.
 #   (2) main(): refuse unless the tree is pristine (no untracked files) AND HEAD equals the
 #       freshly-fetched origin/main tip -- so a planted shadow is rejected BEFORE
 #       pm_ops_p0.binding (hence psycopg) is imported. That import is DEFERRED to
 #       _load_binding(), reached only past the gate, and never runs at module load.
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path[:] = [p for p in sys.path if not p or os.path.abspath(p) != _SCRIPT_DIR]
+_CWD = os.path.abspath(os.getcwd())
+sys.path[:] = [
+    p for p in sys.path if p and os.path.abspath(p) not in (_SCRIPT_DIR, _CWD)
+]
 
 import argparse  # noqa: E402
 import hashlib  # noqa: E402

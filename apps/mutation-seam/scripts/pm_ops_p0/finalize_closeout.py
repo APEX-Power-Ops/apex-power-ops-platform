@@ -159,6 +159,11 @@ def _assert_categories_complete(spec: list[dict]) -> None:
 def _read_manifest(custody_dir: Path) -> dict[str, str]:
     """Parse ``manifest.sha256`` (lines ``<sha256>  <name>``) -> {name: sha256}."""
     manifest = custody_dir / MANIFEST_NAME
+    # the manifest must be a real file IN the bundle, not a symlink to hashes stored elsewhere
+    # (is_file follows links) -- else the closeout no longer proves the bundle's own manifest
+    # (Codex-c13 P2).
+    if manifest.is_symlink():
+        raise CloseoutError("artifact_not_regular")
     result: dict[str, str] = {}
     if manifest.is_file():
         for line in manifest.read_text().splitlines():
