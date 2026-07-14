@@ -9,9 +9,11 @@ packet `docs/superpowers/specs/2026-07-14-pm-ops-p0-containment-design.md` (§2 
 | Module | Purpose |
 | --- | --- |
 | `binding.py` | Shared **target-binding discipline**: `bind_target(dsn, expect_ref) -> params` (parse via `psycopg.conninfo.conninfo_to_dict`, reject reroute vectors, anchored host/user match, force `sslmode=verify-full`), `scrubbed_pg_env()`, `assert_bound_connection()`, and **`connect_bound(dsn, expect_ref)`** — the single-call context manager that bundles bind + scrub + connect + re-check. Both P0-A and the future P0-E readiness probes should use `connect_bound` so a caller cannot get only part of the protection. |
-| `preserve_evidence.py` | P0-A read-only evidence capture. Requires `--expect-project-ref`; runs a single guarded `REPEATABLE READ, READ ONLY` transaction; writes custody artifacts + a SHA-256 manifest. |
+| `preserve_evidence.py` | P0-A read-only evidence capture. Requires `--expect-project-ref`, `--dsn-env`, and `--expect-repo-sha` (+ `--expect-db-role`, default `postgres`). Governance-gated: refuses unless the tracked tree is clean, HEAD matches, and HEAD is merged to `origin/main`; refuses unless the connection resolves to the expected admin role. Runs a single guarded `REPEATABLE READ, READ ONLY` transaction (incl. the exact function-ACL query for RPC rollback); atomically publishes custody artifacts + a `00_provenance.json` (repo/tool/query hashes, versions, timestamps) + a SHA-256 manifest. |
 
-**Evidence scope.** `preserve_evidence.py` captures the **database** evidence subset (design §2 items 3/4/5/6/9: ACL/RLS, effective-role closure, SECURITY DEFINER discovery, default privileges, counts, rollback inputs). The deployed-OpenAPI / `/reset`-route-state / backend-classification / Render-log items (§2 items 1/2/7/8) are captured separately by the operator / HTTP tooling — this script is not the whole evidence set.
+**Governance & CI.** Deterministic deps in [`requirements.txt`](requirements.txt) (psycopg 3 pinned); path-filtered CI in `.github/workflows/pm-ops-p0-tooling.yml` runs the offline suite + ruff on every change here. The full P0-A closeout (all nine §2 evidence categories, script- and operator-captured) is governed by [`docs/superpowers/specs/pm-ops-p0/P0A_RUNBOOK.md`](../../../../docs/superpowers/specs/pm-ops-p0/P0A_RUNBOOK.md).
+
+**Evidence scope.** `preserve_evidence.py` captures the **database** evidence subset (design §2 items 3/4/5/6/9: ACL/RLS, effective-role closure, SECURITY DEFINER discovery + exact function ACL, default privileges, counts, rollback inputs). The deployed-OpenAPI / `/reset`-route-state / backend-classification / Render-log items (§2 items 1/2/7/8) are captured separately per the runbook — running this script alone does **not** complete P0-A.
 
 ## Runtime
 

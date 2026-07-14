@@ -1,0 +1,11 @@
+# Runtime dependency for the pm_ops_p0 operator tooling.
+#
+# This tooling is HOST-RUN (operator evidence capture), NOT part of the deployed
+# mutation-seam FastAPI service (which pins psycopg2 in ../../requirements.txt and
+# is intentionally left unchanged). The tooling requires psycopg v3 for
+# psycopg.conninfo.conninfo_to_dict + Connection.info; pinned for deterministic,
+# reproducible governed evidence runs (review finding 5).
+#
+# Dev/CI additionally installs pytest==9.0.3 and ruff==0.15.15 (see
+# ../../../../.github/workflows/pm-ops-p0-tooling.yml).
+psycopg[binary]==3.3.4
