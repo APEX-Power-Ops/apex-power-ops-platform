@@ -686,6 +686,7 @@ def test_build_provenance_records_governance_fields():
         finished_at="2026-07-14T00:00:05+00:00",
     )
     rec = json.loads(prov)
+    assert rec["schema_version"] == 3  # RI2: bundle-bearing provenance schema
     assert rec["repo_sha"] == "abc123"
     assert rec["expected_project_ref"] == REF
     assert rec["expected_db_role"] == "postgres"

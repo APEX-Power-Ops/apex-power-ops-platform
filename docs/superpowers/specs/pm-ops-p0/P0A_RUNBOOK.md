@@ -54,9 +54,10 @@ operator shell (matches `CENSUS_RUNBOOK.md`; review round-3 finding 4).
 set +x                                             # do not echo the injected child env
 EXPECT_SHA="<literal main SHA from the GO — independently sourced, NOT derived here>"
 git fetch --quiet origin refs/heads/main           # refresh the branch ref (not a tag named main)
-# fail closed unless we ARE that literal commit, on main, and pristine (the script re-checks too).
+# fail closed unless HEAD IS that literal commit, origin/main IS that literal commit, and the
+# tree is pristine (the script re-checks too). NOTE: a `git worktree add <path> <EXPECT_SHA>`
+# checkout is DETACHED, so we gate on SHA equality (what the script enforces), NOT branch name.
 # If origin/main has ADVANCED past EXPECT_SHA, STOP and get a new GO — do not adopt the new tip.
-test "$(git rev-parse --abbrev-ref HEAD)" = "main"   || { echo "refusing: not on main"; exit 1; }
 test "$(git rev-parse HEAD)" = "$EXPECT_SHA"         || { echo "refusing: HEAD != pinned SHA"; exit 1; }
 test "$(git rev-parse origin/main)" = "$EXPECT_SHA"  || { echo "refusing: origin/main advanced past the pinned SHA — STOP, re-review"; exit 1; }
 test -z "$(git status --porcelain)"                  || { echo "refusing: dirty/untracked tree"; exit 1; }

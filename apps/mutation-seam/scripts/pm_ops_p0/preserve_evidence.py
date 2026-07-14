@@ -560,7 +560,13 @@ def _bootstrap_dependency_bundle(
         target = _resolve_bundle_member(base, rel)
         if os.path.islink(target) or not os.path.isfile(target):
             raise EvidenceRefusal("bundle_member_missing")
-        if _sha256_file(Path(target)) != sha:
+        try:
+            digest = _sha256_file(Path(target))
+        except OSError:
+            # unreadable, or removed between isfile() and read -> fail closed, value-free,
+            # not a traceback (Codex-RI2 P2): main() maps this to RESULT FAIL like any refusal.
+            raise EvidenceRefusal("bundle_member_unreadable") from None
+        if digest != sha:
             raise EvidenceRefusal("bundle_hash_mismatch")
     # verified. Don't let the import write unlisted __pycache__ back into the bundle (that
     # would be an unlisted member on any re-verify), then expose the root at sys.path front.
@@ -636,7 +642,9 @@ def build_provenance(
     here = Path(__file__).resolve().parent
     record = {
         "artifact": "pm_ops_p0.preserve_evidence.provenance",
-        "schema_version": 2,
+        # schema 3 (RI2): adds dependency_bundle_manifest_sha256; the finalizer REQUIRES it,
+        # so a pre-bundle (schema-2) capture can no longer close out P0-A.
+        "schema_version": 3,
         "expected_project_ref": expect_project_ref,
         "expected_db_role": expect_db_role,
         "dsn_env_var_name": dsn_env,  # NAME only — never the DSN value

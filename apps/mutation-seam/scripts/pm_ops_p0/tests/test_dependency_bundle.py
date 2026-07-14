@@ -186,6 +186,23 @@ def test_bootstrap_rejects_missing_listed_file():
         )
 
 
+def test_bootstrap_rejects_unreadable_member():
+    # Codex-RI2 P2: a listed member that becomes unreadable (or vanishes) between the isfile()
+    # check and the hash read must fail CLOSED with a value-free code, not a raw OSError
+    # traceback. Simulated with chmod 000 (skipped when running as root, where 000 is bypassed).
+    if (
+        hasattr(os, "geteuid") and os.geteuid() == 0
+    ):  # pragma: no cover - root ignores 0o000
+        return
+    with tempfile.TemporaryDirectory(prefix="p0a-bundle-") as d:
+        bundle, manifest, msha = _make_bundle(Path(d), {"a.py": b"a\n"})
+        os.chmod(bundle / "a.py", 0o000)
+        try:
+            _expect_refusal("bundle_member_unreadable", bundle, manifest, msha)
+        finally:
+            os.chmod(bundle / "a.py", 0o644)  # let TemporaryDirectory clean up
+
+
 def test_bootstrap_rejects_non_directory_bundle():
     with tempfile.TemporaryDirectory(prefix="p0a-bundle-") as d:
         root = Path(d)
