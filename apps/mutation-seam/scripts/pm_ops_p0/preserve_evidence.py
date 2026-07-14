@@ -1,0 +1,545 @@
+"""P0-A read-only evidence preservation (design-only until a per-action GO).
+
+Captures pre-change evidence for the PM/Ops P0 containment lane in a single
+guarded ``REPEATABLE READ, READ ONLY`` transaction, then writes the results to
+restricted custody with a SHA-256 manifest. No mutation, deploy, secret change,
+or connectivity repair is performed.
+
+Value-silence is absolute: the DSN is read from an environment variable named on
+the command line (never passed as a value), and every failure surfaces as a
+stable code only — never a DSN, host, password, or raw driver message.
+
+Running this against production is gated behind a separate ``P0-A READ-ONLY
+EVIDENCE`` operator GO. House style follows ``scripts/smoke_deployed_mutation_seam.py``.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import logging
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+# self-locate the package on sys.path so `pm_ops_p0.binding` resolves whether the
+# script is run directly or imported (parent.parent == apps/mutation-seam/scripts)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from pm_ops_p0.binding import (  # noqa: E402
+    TargetBindingError,
+    connect_bound,
+)
+
+PROJECT_REF = "fxoyniqnrlkxfligbxmg"
+EXPECTED_DB_ROLE = "postgres"  # the administrative role P0-A must resolve to
+CUSTODY_ROOT = Path("/home/olares/custody/pm-ops-p0")
+MANIFEST_NAME = "manifest.sha256"
+PROVENANCE_NAME = "00_provenance.json"
+SNAPSHOT_NAME = "00_p0a_snapshot.sql"
+CONNECT_TIMEOUT_SECONDS = 10
+
+# parameterised guard: the connection must resolve to the expected admin role
+# before any evidence is read (review finding 3). Value-free: %s is bound, and the
+# result is a boolean, so neither the expected nor actual role text is interpolated.
+_ROLE_CHECK_SQL = "select current_user = %s"
+
+log = logging.getLogger("pm_ops_p0.preserve_evidence")
+
+
+class EvidenceRefusal(Exception):
+    """A pre-connect refusal carrying a stable, value-free code."""
+
+    def __init__(self, code: str) -> None:
+        self.code = code
+        super().__init__(code)
+
+
+# ---------------------------------------------------------------------------
+# P0-A read-only SQL snapshot (verbatim from the design packet §2). Raw strings
+# preserve the SQL `E'\n'` separators and the `\y` regex word-boundaries.
+# ---------------------------------------------------------------------------
+
+_BEGIN = "BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY;"
+
+_GUARD = r"""-- (guard) SECONDARY in-band check: assert read-only + a schema/RPC fingerprint. The fingerprint alone does NOT
+--   bind the project (a clone/branch with the same 4 tables + RPC passes) -- the AUTHORITATIVE project binding
+--   is the script's --expect-project-ref DSN validation (finding 3). Fails closed on a writable session/wrong DB.
+DO $$
+BEGIN
+  IF NOT (SELECT setting::bool FROM pg_settings WHERE name = 'transaction_read_only') THEN
+    RAISE EXCEPTION 'P0-A refused: transaction is not READ ONLY';
+  END IF;
+  IF to_regclass('public.projects') IS NULL OR to_regclass('public.scopes') IS NULL
+     OR to_regclass('public.tasks') IS NULL OR to_regclass('public.apparatus') IS NULL
+     OR to_regproc('public.approve_apparatus_completion') IS NULL THEN
+    RAISE EXCEPTION 'P0-A refused: target fingerprint absent (wrong database/project?) — expected the 4 PM tables + apparatus RPCs';
+  END IF;
+END $$;"""
+
+_Q_MARKERS = r"""-- (0) in-band evidence markers (corroborating only; cannot bind the project on managed Supabase)
+select current_database() as current_database, current_user as current_user,
+       coalesce(inet_server_addr()::text, '(unix socket)') as inet_server_addr;"""
+
+_Q_A = r"""-- (a) exact per-grantee table ACL (rollback-input source; literal ACL entries preserved)
+select c.relname, c.relrowsecurity as rls_enabled,
+       (select count(*) from pg_policy p where p.polrelid=c.oid) as policies,
+       coalesce(array_to_string(c.relacl, E'\n'), '(default/no explicit acl)') as relacl
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+where n.nspname='public' and c.relname in ('projects','scopes','tasks','apparatus') order by c.relname;"""
+
+_Q_B = r"""-- (b) EFFECTIVE privilege for the FIXED Data-API principal set across ALL table privileges,
+--     driven by principals x privileges (NOT by ACL entries) so membership-inherited access is captured.
+select c.relname, pr.role as principal, pv.priv as privilege_type,
+       has_table_privilege(pr.role, c.oid, pv.priv) as effective
+from pg_class c join pg_namespace n on n.oid=c.relnamespace
+cross join (values ('anon'),('authenticated'),('public'),('apex_tcc_runtime')) as pr(role)
+cross join (values ('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('TRUNCATE'),('REFERENCES'),('TRIGGER'),('MAINTAIN')) as pv(priv)
+where n.nspname='public' and c.relname in ('projects','scopes','tasks','apparatus')
+order by c.relname, principal, privilege_type;"""
+
+_Q_B2 = r"""-- (b2) role-membership closure of anon/authenticated (which roles inherit them) — completes effective-access evidence
+with recursive closure(target, member) as (
+    select rolname, rolname from pg_roles where rolname in ('anon','authenticated')
+  union
+    select c.target, r.rolname
+    from closure c
+    join pg_roles gr on gr.rolname = c.member
+    join pg_auth_members m on m.roleid = gr.oid
+    join pg_roles r on r.oid = m.member
+)
+select target as target_role, array_agg(distinct member order by member) as members_inheriting
+from closure group by target order by target;"""
+
+_Q_C = r"""-- (c) counts only
+select 'projects' rel, count(*) n from public.projects
+union all select 'scopes', count(*) from public.scopes
+union all select 'tasks', count(*) from public.tasks
+union all select 'apparatus', count(*) from public.apparatus;"""
+
+_Q_D = r"""-- (d) default privileges in schema public — BOTH objtypes r (tables) and f (functions), per grantor
+select pg_get_userbyid(d.defaclrole) as grantor, d.defaclobjtype as objtype, array_to_string(d.defaclacl, E'\n') as default_acl
+from pg_default_acl d join pg_namespace n on n.oid=d.defaclnamespace
+where n.nspname='public' and d.defaclobjtype in ('r','f') order by grantor, objtype;"""
+
+_Q_E = r"""-- (e) SECURITY DEFINER discovery. RELIABLE primary signals: name_refs_targets (regex on the function
+--     definition) and has_dynamic_sql (EXECUTE present -> unresolvable target -> fail CLOSED).
+--     depends_on_targets (pg_depend) is a SUPPLEMENTARY signal that is INERT for PL/pgSQL bodies (Postgres
+--     records no dependency edge from a plpgsql body to referenced tables), so it does NOT fire for the 3
+--     plpgsql apparatus RPCs -- they are caught by name_refs_targets. in_scope_failclosed = OR of the three.
+--     Residual coverage gap (disclosed): a SECURITY DEFINER function writing a target only INDIRECTLY (via a
+--     helper, with no name token and no EXECUTE), or a secdef writer in ANOTHER Data-API-exposed schema
+--     (outside this public filter), is not flagged. P0-A output is operator-reviewed EVIDENCE, not an
+--     automated gate -- treat any unexpected secdef function as in-scope pending review.
+with tgt as (
+  select oid from pg_class
+  where relnamespace = 'public'::regnamespace and relname in ('projects','scopes','tasks','apparatus')
+),
+dep_fns as (
+  select distinct d.objid as fnoid
+  from pg_depend d join tgt on d.refobjid = tgt.oid
+  where d.classid = 'pg_proc'::regclass and d.refclassid = 'pg_class'::regclass  -- guard same-numbered OIDs
+)
+select p.proname, pg_get_function_identity_arguments(p.oid) as args, pg_get_userbyid(p.proowner) as owner,
+       has_function_privilege('public',p.oid,'EXECUTE') as public_exec,
+       has_function_privilege('anon',p.oid,'EXECUTE') as anon_exec,
+       has_function_privilege('authenticated',p.oid,'EXECUTE') as auth_exec,
+       (p.oid in (select fnoid from dep_fns)) as depends_on_targets,
+       (pg_get_functiondef(p.oid) ~* '\y(projects|scopes|tasks|apparatus)\y') as name_refs_targets,
+       (pg_get_functiondef(p.oid) ~* '\yexecute\y') as has_dynamic_sql,
+       ( p.oid in (select fnoid from dep_fns)
+         or pg_get_functiondef(p.oid) ~* '\y(projects|scopes|tasks|apparatus)\y'
+         or pg_get_functiondef(p.oid) ~* '\yexecute\y' ) as in_scope_failclosed
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+where n.nspname='public' and p.prosecdef
+order by in_scope_failclosed desc, p.proname;"""
+
+_Q_F = r"""-- (f) EXACT function ACL for SECURITY DEFINER functions in public (rollback-input source for P0-C 014):
+--     raw proacl + aclexplode grantor/grantee/privilege/grant-option, so the 3 apparatus RPC EXECUTE grants
+--     can be restored EXACTLY -- distinguishing DIRECT vs INHERITED vs PUBLIC-derived access (the effective
+--     booleans in (e) cannot). A default/NULL proacl shows '(default/no explicit acl)' with null grantor/grantee
+--     (the built-in owner-all + PUBLIC EXECUTE, which ALTER DEFAULT PRIVILEGES cannot strip -- design §11.6).
+select p.proname, pg_get_function_identity_arguments(p.oid) as args, pg_get_userbyid(p.proowner) as owner,
+       coalesce(array_to_string(p.proacl, E'\n'), '(default/no explicit acl)') as proacl,
+       pg_get_userbyid(a.grantor) as grantor,
+       case when a.grantee = 0 then 'PUBLIC' else pg_get_userbyid(a.grantee) end as grantee,
+       a.privilege_type, a.is_grantable
+from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+left join lateral aclexplode(p.proacl) a on true
+where n.nspname='public' and p.prosecdef
+order by p.proname, grantee, a.privilege_type;"""
+
+_COMMIT = "COMMIT;"
+
+# Ordered evidence steps: (artifact filename, SQL). Executed inside the one txn.
+_EVIDENCE_STEPS: list[tuple[str, str]] = [
+    ("01_markers.txt", _Q_MARKERS),
+    ("02_table_acl.txt", _Q_A),
+    ("03_effective_privilege.txt", _Q_B),
+    ("04_role_membership_closure.txt", _Q_B2),
+    ("05_counts.txt", _Q_C),
+    ("06_default_acl.txt", _Q_D),
+    ("07_secdef_discovery.txt", _Q_E),
+    ("08_secdef_function_acl.txt", _Q_F),
+]
+
+
+def p0a_sql_text() -> str:
+    """Return the canonical guarded read-only P0-A SQL block (design §2 + review §F1).
+
+    Archived as ``00_p0a_snapshot.sql``. The design §2 snapshot is queries a-e; the
+    function-ACL query (f) is the review-added exact-rollback source (finding 1). The
+    in-band ``_Q_MARKERS`` (0) is a supplemental capture recorded separately to
+    ``01_markers.txt`` and is not part of this block (review L4).
+    """
+    return "\n\n".join(
+        [_BEGIN, _GUARD, _Q_A, _Q_B, _Q_B2, _Q_C, _Q_D, _Q_E, _Q_F, _COMMIT]
+    )
+
+
+def query_bundle_text() -> str:
+    """Return the EXACT ordered SQL bundle the tool executes (for the provenance hash).
+
+    Distinct from ``p0a_sql_text()``: includes the role guard and the markers query
+    in run order, so a modified query set changes the recorded ``query_bundle_sha256``.
+    """
+    steps = [_BEGIN, _GUARD, _ROLE_CHECK_SQL] + [sql for _, sql in _EVIDENCE_STEPS]
+    return "\n\n".join([*steps, _COMMIT])
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=(
+            "P0-A read-only evidence preservation for the PM/Ops containment lane. "
+            "Runs a single guarded REPEATABLE READ, READ ONLY transaction and writes "
+            "restricted custody artifacts + a SHA-256 manifest. Requires a per-action GO."
+        )
+    )
+    parser.add_argument(
+        "--expect-project-ref",
+        required=True,
+        help=(
+            "Supabase project ref the DSN MUST bind to "
+            f"(must equal {PROJECT_REF}); the run refuses otherwise."
+        ),
+    )
+    parser.add_argument(
+        "--dsn-env",
+        required=True,
+        help=(
+            "NAME of the environment variable holding the DSN (never the DSN value "
+            "itself — value-silence). The variable is read at run time."
+        ),
+    )
+    parser.add_argument(
+        "--expect-repo-sha",
+        required=True,
+        help=(
+            "The git HEAD SHA this run MUST execute from (governance). The run refuses "
+            "unless the tracked tree is clean, HEAD matches, and HEAD is merged to main."
+        ),
+    )
+    parser.add_argument(
+        "--expect-db-role",
+        default=EXPECTED_DB_ROLE,
+        help=(
+            f"The administrative DB role the connection MUST resolve to "
+            f"(default: {EXPECTED_DB_ROLE}); the run refuses otherwise."
+        ),
+    )
+    parser.add_argument(
+        "--custody-root",
+        default=str(CUSTODY_ROOT),
+        help=f"Custody root directory (default: {CUSTODY_ROOT}).",
+    )
+    return parser
+
+
+def _utc_clock() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _repo_root() -> Path:
+    """Locate the enclosing git repository root (a `.git` dir or worktree pointer file)."""
+    start = Path(__file__).resolve()
+    for parent in (start, *start.parents):
+        if (parent / ".git").exists():
+            return parent
+    raise EvidenceRefusal("repo_root_not_found")
+
+
+def _repo_git_state(repo_root: Path) -> tuple[str, bool, bool | None]:
+    """Return (HEAD sha, tracked-tree-clean, merged-to-origin/main-or-None-if-unknown).
+
+    `on_main` is None when `origin/main` is not resolvable locally; the caller fails
+    closed on None (cannot verify the merged guarantee). Otherwise True/False from an
+    ancestor test.
+    """
+
+    def _git(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            ["git", "-C", str(repo_root), *args],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    head = _git("rev-parse", "HEAD")
+    if head.returncode != 0:
+        raise EvidenceRefusal("git_unavailable")
+    head_sha = head.stdout.strip()
+    dirty = _git("status", "--porcelain", "--untracked-files=no")
+    is_clean = dirty.returncode == 0 and dirty.stdout.strip() == ""
+    on_main: bool | None = None
+    if (
+        _git("rev-parse", "--verify", "--quiet", "refs/remotes/origin/main").returncode
+        == 0
+    ):
+        on_main = (
+            _git(
+                "merge-base", "--is-ancestor", head_sha, "refs/remotes/origin/main"
+            ).returncode
+            == 0
+        )
+    return head_sha, is_clean, on_main
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def build_provenance(
+    *,
+    repo_sha: str,
+    repo_clean: bool,
+    on_main: bool | None,
+    expect_repo_sha: str,
+    expect_project_ref: str,
+    expect_db_role: str,
+    dsn_env: str,
+    started_at: str,
+    finished_at: str,
+) -> str:
+    """Return a deterministic JSON provenance record binding evidence to governed tooling.
+
+    Records the repo SHA + clean/merged state, the tool source hashes, the exact
+    query-bundle hash, the expected project/role, the DSN env-var NAME (never a
+    value), capture timestamps, and psycopg/libpq versions (review finding 2).
+    """
+    import psycopg
+
+    here = Path(__file__).resolve().parent
+    record = {
+        "artifact": "pm_ops_p0.preserve_evidence.provenance",
+        "schema_version": 1,
+        "expected_project_ref": expect_project_ref,
+        "expected_db_role": expect_db_role,
+        "dsn_env_var_name": dsn_env,  # NAME only — never the DSN value
+        "repo_sha": repo_sha,
+        "expect_repo_sha": expect_repo_sha,
+        "repo_tracked_tree_clean": repo_clean,
+        "repo_head_merged_to_origin_main": on_main,
+        "tool_source_sha256": {
+            "binding.py": _sha256_file(here / "binding.py"),
+            "preserve_evidence.py": _sha256_file(here / "preserve_evidence.py"),
+        },
+        "query_bundle_sha256": hashlib.sha256(query_bundle_text().encode()).hexdigest(),
+        "capture_started_at_utc": started_at,
+        "capture_finished_at_utc": finished_at,
+        "psycopg_version": psycopg.__version__,
+        "libpq_version": psycopg.pq.version(),
+    }
+    return json.dumps(record, indent=2, sort_keys=True) + "\n"
+
+
+def _rows_to_text(cur: object) -> str:
+    description = getattr(cur, "description", None)
+    cols = [d.name for d in description] if description else []
+    lines = ["\t".join(cols)]
+    for row in cur.fetchall():  # type: ignore[attr-defined]
+        lines.append("\t".join("" if v is None else str(v) for v in row))
+    return "\n".join(lines) + "\n"
+
+
+def collect_evidence(
+    dsn: str, expect_ref: str, *, expect_role: str = EXPECTED_DB_ROLE
+) -> dict[str, str]:
+    """Open a bound, read-only connection and capture the P0-A evidence set.
+
+    Uses the shared ``connect_bound`` discipline (bind + scrubbed PG* env + connect
+    + post-connect re-check); inside the guarded read-only transaction, refuses
+    (value-free ``db_role_mismatch``) unless ``current_user`` is the expected admin
+    role, then captures ``{filename: text}``. The live connect/query is not exercised
+    by the offline suite; the choreography (execute order, env-scrub-at-connect, the
+    pre-query host re-check, and the role guard) is verified offline via a fake conn.
+    """
+    artifacts: dict[str, str] = {SNAPSHOT_NAME: p0a_sql_text()}
+    with connect_bound(
+        dsn, expect_ref, connect_timeout=CONNECT_TIMEOUT_SECONDS, autocommit=True
+    ) as conn:
+        with conn.cursor() as cur:
+            cur.execute(_BEGIN)
+            cur.execute(_GUARD)
+            cur.execute(_ROLE_CHECK_SQL, (expect_role,))
+            if not (cur.fetchone() or [False])[0]:
+                raise EvidenceRefusal("db_role_mismatch")  # value-free (no role echo)
+            for filename, sql in _EVIDENCE_STEPS:
+                cur.execute(sql)
+                artifacts[filename] = _rows_to_text(cur)
+            cur.execute(_COMMIT)
+    return artifacts
+
+
+def _write_restricted_file(path: Path, data: bytes) -> None:
+    """Create `path` at mode 0400 (O_EXCL: no-clobber, no perm window), fsync'd.
+
+    Loops until the whole buffer is written: `os.write` may write fewer bytes than
+    requested without raising (short write), which would otherwise leave a truncated
+    evidence file while the manifest records the full-buffer hash (review Codex-delta-P2).
+    fsync makes the bytes durable before the directory is published (review finding 6).
+    """
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
+    try:
+        view = memoryview(data)
+        while view:
+            written = os.write(fd, view)
+            if written == 0:  # pragma: no cover - defensive against a stuck fd
+                raise OSError("custody write made no progress")
+            view = view[written:]
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _fsync_dir(path: Path) -> None:
+    """fsync a directory so its entries (creates/renames) are durable."""
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def write_custody(
+    base_dir: str | Path, artifacts: dict[str, str], *, clock: str
+) -> Path:
+    """Atomically publish artifacts to ``<base_dir>/<clock>/`` (dir 0700, files 0400) + manifest.
+
+    Bundle-atomic + durable (review finding 6): every artifact + manifest is written
+    (0400, fsync'd) into a ``.partial-<clock>`` staging dir, the staging dir is
+    fsync'd, then it is ``os.rename``d onto the final ``<clock>`` name and the parent
+    is fsync'd — so a crash mid-run leaves only a ``.partial-*`` dir, never a partial
+    final-named bundle. Restrictive modes are set atomically under a tightened umask
+    (no perm window, review Codex-P2/L5). No-clobber: a pre-existing final dir, a
+    stale ``.partial`` dir, or an artifact name collision (``O_EXCL``) raises
+    ``FileExistsError``.
+    """
+    base = Path(base_dir)
+    final_dir = base / clock
+    partial_dir = base / f".partial-{clock}"
+    old_umask = os.umask(0o077)
+    try:
+        if final_dir.exists():
+            raise FileExistsError(f"custody run already published: {final_dir}")
+        # umask 0o077 keeps every created dir (leaf + any parents) at 0o700
+        partial_dir.mkdir(
+            mode=0o700, parents=True
+        )  # no exist_ok -> no stale-partial clobber
+        manifest_lines: list[str] = []
+        for name in sorted(artifacts):
+            data = artifacts[name].encode()
+            _write_restricted_file(partial_dir / name, data)
+            manifest_lines.append(f"{hashlib.sha256(data).hexdigest()}  {name}")
+        _write_restricted_file(
+            partial_dir / MANIFEST_NAME, ("\n".join(manifest_lines) + "\n").encode()
+        )
+        _fsync_dir(partial_dir)
+        os.rename(partial_dir, final_dir)  # atomic publish
+        _fsync_dir(base)  # make the rename durable
+    finally:
+        os.umask(old_umask)
+    return final_dir
+
+
+def _fail(code: str) -> int:
+    print("RESULT FAIL")
+    print(f"FAILURE {code}")
+    return 1
+
+
+def main(argv: list[str] | None = None) -> int:
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
+    args = build_parser().parse_args(argv)
+    started_at = _utc_now_iso()
+
+    # --- pre-flight refusals (fail closed before reaching the DB layer) ---
+    try:
+        if args.expect_project_ref != PROJECT_REF:
+            raise EvidenceRefusal("unexpected_project_ref")
+        dsn = os.getenv(args.dsn_env)
+        if not dsn:
+            raise EvidenceRefusal("dsn_unset")
+        # governance: run only from a clean, expected, merged checkout (finding 2)
+        repo_sha, repo_clean, on_main = _repo_git_state(_repo_root())
+        if not repo_clean:
+            raise EvidenceRefusal("repo_dirty")
+        if repo_sha != args.expect_repo_sha:
+            raise EvidenceRefusal("repo_sha_mismatch")
+        # fail closed: an unresolvable origin/main cannot verify the merged
+        # guarantee, so refuse rather than record it as unknown (review Codex-P2).
+        if on_main is None:
+            raise EvidenceRefusal("origin_main_unresolvable")
+        if not on_main:
+            raise EvidenceRefusal("repo_not_on_main")
+    except EvidenceRefusal as exc:
+        return _fail(exc.code)
+
+    # --- live read-only capture (connect_bound binds BEFORE opening any socket:
+    #     a wrong-project DSN raises TargetBindingError with no connection made) ---
+    try:
+        artifacts = collect_evidence(
+            dsn, args.expect_project_ref, expect_role=args.expect_db_role
+        )
+    except (TargetBindingError, EvidenceRefusal) as exc:
+        return _fail(exc.code)  # bind/host/role mismatch — value-free stable code
+    except Exception as exc:  # noqa: BLE001
+        log.warning("evidence collection failed: %s", type(exc).__name__)  # class only
+        return _fail("connection_or_query_failed")
+
+    # --- provenance (binds the evidence to the governed tooling + this run) ---
+    artifacts[PROVENANCE_NAME] = build_provenance(
+        repo_sha=repo_sha,
+        repo_clean=repo_clean,
+        on_main=on_main,
+        expect_repo_sha=args.expect_repo_sha,
+        expect_project_ref=args.expect_project_ref,
+        expect_db_role=args.expect_db_role,
+        dsn_env=args.dsn_env,
+        started_at=started_at,
+        finished_at=_utc_now_iso(),
+    )
+
+    # --- custody (atomic + durable publish) ---
+    try:
+        run_dir = write_custody(args.custody_root, artifacts, clock=_utc_clock())
+    except FileExistsError:
+        return _fail("custody_path_exists")
+    except Exception as exc:  # noqa: BLE001
+        log.warning("custody write failed: %s", type(exc).__name__)
+        return _fail("custody_write_failed")
+
+    print("RESULT PASS")
+    print(f"CUSTODY {run_dir}")
+    print(f"ARTIFACTS {len(artifacts)}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

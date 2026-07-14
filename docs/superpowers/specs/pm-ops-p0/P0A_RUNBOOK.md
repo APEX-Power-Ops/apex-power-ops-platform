@@ -1,0 +1,81 @@
+# P0-A Read-Only Evidence — Runbook & Closeout Index
+
+**Scope.** P0-A of the PM/Ops emergency-containment lane: capture approved pre-change
+evidence, read-only, before any P0-B..E action. This runbook binds **all nine** design
+§2 evidence categories into one closeout.
+
+> **Hard rule (review finding 4).** `preserve_evidence.py` captures only the **database
+> subset** of P0-A. Running it alone does **NOT** complete P0-A. P0-A is complete only
+> when every one of the nine categories below has an artifact + hash in the closeout
+> index and the operator has reviewed the drift call.
+
+**Preconditions.**
+- A live, in-your-own-voice **`P0-A READ-ONLY EVIDENCE`** operator GO (this runbook does not grant it).
+- Run **only from clean, merged `main`** (the script enforces `--expect-repo-sha` + clean tracked tree + merged-to-`origin/main`).
+- The DSN is provided via an **environment variable name** (never a value on the command line). Authorized read-only prod access only.
+- P6 / P7 remain fail-closed **live confirmations** at run time: `sslmode=verify-full` cert chain for the direct host (P6); Supavisor transaction-mode `BEGIN…COMMIT` behavior on the pooler (P7).
+
+---
+
+## Part A — Database evidence (script-captured)
+
+```bash
+# from clean, merged main (repo root), with the read-only prod DSN exported into an env var:
+export SUPABASE_PROD_DSN='...'                     # value never passed on the CLI
+REPO_SHA="$(git rev-parse HEAD)"
+"<repo>/.venv/bin/python" apps/mutation-seam/scripts/pm_ops_p0/preserve_evidence.py \
+  --expect-project-ref fxoyniqnrlkxfligbxmg \
+  --dsn-env SUPABASE_PROD_DSN \
+  --expect-repo-sha "$REPO_SHA" \
+  --expect-db-role postgres
+# -> RESULT PASS + CUSTODY /home/olares/custody/pm-ops-p0/<UTC>/  (dir 0700, files 0400, manifest.sha256)
+```
+
+Artifacts written (atomically published; each hashed in `manifest.sha256`):
+
+| Artifact | Design §2 category |
+| --- | --- |
+| `00_provenance.json` | governance: repo SHA / clean / merged, tool + query-bundle hashes, versions, timestamps |
+| `00_p0a_snapshot.sql` | the exact guarded read-only SQL block (record) |
+| `01_markers.txt` | in-band markers (corroborating only) |
+| `02_table_acl.txt` | (9) rollback input — exact per-grantee table ACL + RLS |
+| `03_effective_privilege.txt` | (3) effective privileges, fixed principal set |
+| `04_role_membership_closure.txt` | (3) anon/authenticated membership closure |
+| `05_counts.txt` | (5) counts only |
+| `06_default_acl.txt` | (6) `pg_default_acl` tables + functions, per grantor / (9) rollback input |
+| `07_secdef_discovery.txt` | (4) SECURITY DEFINER discovery (fail-closed) |
+| `08_secdef_function_acl.txt` | (4)/(9) **exact** function ACL (raw `proacl` + `aclexplode`) — the P0-C RPC-grant rollback source (review finding 1) |
+
+## Part B — Non-database evidence (operator / HTTP-captured)
+
+These four categories are **not** produced by the script and must be captured separately and added to the closeout index:
+
+| # | Category | How to capture |
+| --- | --- | --- |
+| (1) | Deployed OpenAPI, both hosts, + version/SHA | `curl -s https://<mutation-seam-host>/openapi.json` and the control-plane host; record the deployed version/commit SHA. Hash each. |
+| (2) | `/reset` route + security state | From the captured OpenAPI: record the `POST /reset` entry + its `security` (expected: none) as its own artifact. |
+| (7) | Active backend classification | Record the inferred backend (Render service + `SEAM_STORE_BACKEND`) and the **source** of the inference (config/deploy), not a live mutation. |
+| (8) | Render `POST /reset` access logs | Operator-exported from Render; hash the export. |
+
+---
+
+## Part C — Closeout evidence index (fill in, then hash this file too)
+
+P0-A is complete only when every row has an artifact + SHA-256 and the drift call is recorded.
+
+| # | Category | Artifact / source | SHA-256 | Captured by | Status |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Deployed OpenAPI + version/SHA (both hosts) | | | operator/HTTP | ☐ |
+| 2 | `/reset` route + security state | | | operator/HTTP | ☐ |
+| 3 | Effective privileges + membership closure + RLS | `03_…`, `04_…` | (manifest) | script | ☐ |
+| 4 | SECURITY DEFINER discovery + **exact function ACL** | `07_…`, `08_…` | (manifest) | script | ☐ |
+| 5 | Counts | `05_counts.txt` | (manifest) | script | ☐ |
+| 6 | `pg_default_acl` (tables + functions) per grantor | `06_default_acl.txt` | (manifest) | script | ☐ |
+| 7 | Active backend classification (+ source) | | | operator | ☐ |
+| 8 | Render `POST /reset` access logs | | | operator | ☐ |
+| 9 | Rollback inputs (per-grantee ACL + per-grantor default ACL + RPC grants) | `02_…`, `06_…`, `08_…` | (manifest) | script | ☐ |
+| — | Provenance (repo SHA / clean / merged, tool + query hashes) | `00_provenance.json` | (manifest) | script | ☐ |
+
+**Drift.** Compare against the baseline in design §2 (4 tables `rls_enabled=false`/`policies=0`; `anon`+`authenticated` writes; default ACLs from grantors `postgres`+`supabase_admin`; query (e) flags exactly the 3 apparatus RPCs `in_scope_failclosed=true` via `name_refs_targets`, `has_dynamic_sql=false`). **Any** new SECURITY DEFINER function, any `has_dynamic_sql=true` in-scope row, or unexpected default-ACL grantor is a NEW finding requiring re-review **before P0-C**.
+
+**Stop condition.** Stop with the completed index, all hashes, and the drift call. Do **not** proceed to P0-B/C/D/E without their own separate operator GOs.
