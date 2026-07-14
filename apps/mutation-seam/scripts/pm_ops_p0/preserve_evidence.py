@@ -349,19 +349,24 @@ def _assert_trusted_psycopg(module: object) -> None:
 def _load_binding():
     """Import the shared binding module -- DEFERRED past main()'s governance gate.
 
-    APPENDS the package parent (apps/mutation-seam/scripts) to sys.path (not prepend) so an
-    installed ``site-packages`` ``psycopg`` always shadows a planted repo-tree ``psycopg.py``
-    rather than the reverse; ``pm_ops_p0`` still resolves because only the repo provides it.
-    Then asserts the imported psycopg came from an installed location (review round-3 A2).
-    Returns (TargetBindingError, connect_bound). Reached only once the pristine + merged-HEAD
-    gate has proven no untracked shadow module exists (finding 1).
+    Imports and asserts ``psycopg`` FIRST -- before this repo's package parent is on
+    sys.path -- so a planted repo-tree ``psycopg.py`` cannot shadow the installed
+    ``site-packages`` psycopg (``_assert_trusted_psycopg``, review round-3 A2). Only THEN
+    puts this repo's ``apps/mutation-seam/scripts`` at the FRONT of sys.path (deduped) so
+    ``from pm_ops_p0.binding`` binds THIS repo's ``binding.py`` -- the same file
+    ``build_provenance`` hashes -- rather than a foreign/stale ``pm_ops_p0`` on an earlier
+    PYTHONPATH entry (Codex-final P2a). Re-ordering here cannot re-trigger a shadowed
+    psycopg import because psycopg is already imported and cached. Reached only once the
+    pristine + merged-HEAD gate has proven no untracked shadow module exists (finding 1).
+    Returns (TargetBindingError, connect_bound).
     """
     import psycopg
 
     _assert_trusted_psycopg(psycopg)
     scripts_dir = os.path.dirname(_SCRIPT_DIR)
-    if scripts_dir not in sys.path:
-        sys.path.append(scripts_dir)
+    while scripts_dir in sys.path:
+        sys.path.remove(scripts_dir)
+    sys.path.insert(0, scripts_dir)
     from pm_ops_p0.binding import TargetBindingError, connect_bound
 
     return TargetBindingError, connect_bound

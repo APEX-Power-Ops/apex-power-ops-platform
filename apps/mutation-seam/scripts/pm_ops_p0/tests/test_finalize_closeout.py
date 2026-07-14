@@ -286,6 +286,12 @@ def test_finalize_index_binds_every_artifact_by_sha256():
                 data = (custody / art["name"]).read_bytes()
                 assert art["sha256"] == hashlib.sha256(data).hexdigest()
                 assert art["bytes"] == len(data)
+        # the git/role attestation + the manifest binding the script artifacts are RECORDED
+        prov = (custody / "00_provenance.json").read_bytes()
+        assert idx["provenance"]["name"] == "00_provenance.json"
+        assert idx["provenance"]["sha256"] == hashlib.sha256(prov).hexdigest()
+        man = (custody / "manifest.sha256").read_bytes()
+        assert idx["manifest_sha256"] == hashlib.sha256(man).hexdigest()
         # the index itself is published read-only
         assert stat.S_IMODE(out.stat().st_mode) == 0o400
 

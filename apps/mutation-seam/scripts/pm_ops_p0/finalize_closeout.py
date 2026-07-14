@@ -153,18 +153,22 @@ def _read_manifest(custody_dir: Path) -> dict[str, str]:
     return result
 
 
-def _require_provenance(custody_dir: Path, manifest: dict[str, str]) -> None:
-    """Provenance must exist, be manifest-listed, AND hash-match the manifest.
+def _require_provenance(custody_dir: Path, manifest: dict[str, str]) -> str:
+    """Provenance must exist, be manifest-listed, AND hash-match the manifest; return its sha.
 
     The provenance record carries the git-equality attestation the whole closeout
     leans on, so presence alone is insufficient: its bytes are verified against the
-    evidence manifest (lens-B finding A2) — a post-capture edit is ``hash_mismatch``.
+    evidence manifest (lens-B finding A2) — a post-capture edit is ``hash_mismatch``. The
+    returned digest is bound into the published index so the attestation is recorded there
+    too, not only cross-checked (Codex-final P2b).
     """
     prov = custody_dir / PROVENANCE_NAME
     if not (prov.is_file() and PROVENANCE_NAME in manifest):
         raise CloseoutError("provenance_missing")
-    if _sha256_file(prov) != manifest[PROVENANCE_NAME]:
+    digest = _sha256_file(prov)
+    if digest != manifest[PROVENANCE_NAME]:
         raise CloseoutError("hash_mismatch")
+    return digest
 
 
 def _resolve_within(custody_dir: Path, rel: str) -> Path:
@@ -282,7 +286,7 @@ def finalize(
     spec = load_spec(Path(spec_path))
     _assert_categories_complete(spec)  # missing / duplicate -> before touching files
     manifest = _read_manifest(custody)
-    _require_provenance(custody, manifest)
+    prov_digest = _require_provenance(custody, manifest)
 
     index_categories: list[dict] = []
     for entry in sorted(spec, key=lambda e: e["category"]):
@@ -317,11 +321,18 @@ def finalize(
             {"category": category, "source": source, "artifacts": artifacts}
         )
 
+    prov_path = custody / PROVENANCE_NAME
     index = {
         "artifact": "pm_ops_p0.closeout_index",
         "schema_version": 1,
         "custody_dir": str(custody.resolve()),
         "generated_at_utc": clock,
+        "provenance": {
+            "name": PROVENANCE_NAME,
+            "sha256": prov_digest,  # the git/role attestation is RECORDED here, not only cross-checked
+            "bytes": prov_path.stat().st_size,
+        },
+        "manifest_sha256": _sha256_file(custody / MANIFEST_NAME),
         "categories": index_categories,
         "all_categories_present": True,
         "all_artifacts_hashed": True,
