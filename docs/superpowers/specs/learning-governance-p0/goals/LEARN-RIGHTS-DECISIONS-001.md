@@ -46,4 +46,5 @@ bodies.
 
 ## Next Decision
 
-Rights-authority CP1 authorization after P0 acceptance.
+Separate rights-authority CP1 authorization. This proposal is permitted but not
+authorized by the P0 CP6 decision.

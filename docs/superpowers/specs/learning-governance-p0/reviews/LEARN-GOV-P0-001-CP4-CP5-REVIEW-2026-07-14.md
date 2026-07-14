@@ -2,7 +2,7 @@
 
 Date: 2026-07-14
 
-Status: CP5 RECOMMENDATION - OPERATOR CP6 DECISION REQUIRED
+Status: CP5 REVIEW COMPLETE - OPERATOR CP6 ACCEPTED WITH CONDITIONS
 
 ## Review Identity
 
@@ -21,13 +21,13 @@ Status: CP5 RECOMMENDATION - OPERATOR CP6 DECISION REQUIRED
 - Independent audit scope: authority separation, scope compliance,
   evidence/version binding, reserved-decision holds, checkpoint completeness,
   unique goal identity, cohort/parked-state fidelity, and false-green routes
-- Reviewed packet manifest:
+- Pre-CP6 reviewed packet manifest at accepted commit `afe73da2`:
   `reviews/LEARN-GOV-P0-001-REVIEWED-PACKET.sha256`
 - Manifest SHA-256:
   `5c69fd7f8a08434d48a4916e7d38c8277f000b5bbddc9c74d906b751ad2123df`
-- Manifest method: sorted lines of `<file_sha256><two spaces><packet-relative
+- Pre-CP6 manifest method: sorted lines of `<file_sha256><two spaces><packet-relative
   path>` for every packet file except this review record and the manifest itself;
-  verify from the packet root with `sha256sum -c`.
+  verify from the packet root checked out at `afe73da2` with `sha256sum -c`.
 - Review mode: documentation-only, findings-first, no external-system access
 
 The configured `gpt-5.6-sol` model could not be used by the installed Codex CLI
@@ -145,7 +145,7 @@ context. All 28 entries verify.
 
 ## CP5 Program Manager Synthesis
 
-After the two P2 corrections, no unresolved high-severity contradiction is known
+After the recorded corrections, no unresolved high-severity contradiction is known
 in the P0 design packet. The packet is suitable for an operator CP6 decision.
 
 Recommended operator disposition: `accept_with_conditions`.
@@ -174,3 +174,13 @@ Parallel metadata-only goals after their own CP1 authorizations:
 
 The next goal proposal is not authorization. The primary executor must remain
 stopped until the operator issues the applicable standalone GO.
+
+## CP6 Operator Disposition
+
+The operator accepted the design with conditions at
+`2026-07-14T15:29:03Z`, bound to commit `afe73da2`, tree `ecf49114`, and the
+reviewed manifest recorded above. The authoritative decision is
+`decisions/LEARN-GOV-P0-001-CP6-2026-07-14.md`.
+
+No implementation or operational hold was lifted. CP7 closeout is recorded at
+`closeouts/LEARN-GOV-P0-001-CP7-2026-07-14.md`.

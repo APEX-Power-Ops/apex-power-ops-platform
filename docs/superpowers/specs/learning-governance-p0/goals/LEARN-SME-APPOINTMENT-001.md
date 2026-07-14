@@ -41,4 +41,5 @@ acceptance.
 ## Next Decision
 
 Stakeholder names the SME/candidate pool and authorizes the bounded appointment
-packet.
+packet at a separate CP1 checkpoint. This proposal is permitted but not
+authorized by the P0 CP6 decision.

@@ -1,13 +1,15 @@
 # Learning Governance P0 Design Packet
 
-Status: OPERATOR-DIRECTED DESIGN - NOT IMPLEMENTED
+Status: DESIGN ACCEPTED WITH CONDITIONS - NOT IMPLEMENTED
 
 Authority:
 
 - operator GO `LEARNING-GOVERNANCE-P0-DESIGN ONLY`;
 - operator direction dated 2026-07-14 adopting the staged product intent,
   recommended authorities, delegated Program Manager, separate primary Codex
-  executor, and checkpointed continuous-goal model.
+  executor, and checkpointed continuous-goal model;
+- operator CP6 decision `LEARN-GOV-P0-CP6-2026-07-14`, accepting this governance
+  design only while retaining every implementation and operational hold.
 
 Baseline: `origin/main` at `cf1c72f370e4922b8fdad4b691f7ad9d89258109`
 
@@ -53,19 +55,22 @@ produce design documents. It does not authorize:
 14. `PROGRAM-MANAGER-ACTION-QUEUE.md`
 15. `RIGHTS-AUTHORITY-AND-SOURCE-EVIDENCE.md`
 16. `SOURCE-ACCESS-AND-CUSTODY-MAP.md`
-17. `goals/README.md`
-18. `goals/LEARN-GOV-P0-001.md`
-19. `goals/LEARN-GOV-P1-CHECKER-001.md`
-20. `goals/LEARN-RIGHTS-DECISIONS-001.md`
-21. `goals/LEARN-SME-APPOINTMENT-001.md`
-22. `goals/LEVEL-II-ET-PILOT-001.md`
-23. `reviews/LEARN-GOV-P0-001-CP4-CP5-REVIEW-2026-07-14.md`
-24. `reviews/LEARN-GOV-P0-001-REVIEWED-PACKET.sha256`
-25. `templates/GOAL-CHARTER-TEMPLATE.md`
-26. `templates/EXECUTION-CHECKPOINT-TEMPLATE.md`
-27. `templates/PROGRAM-MANAGER-REVIEW-TEMPLATE.md`
-28. `templates/DECISION-RECORD-TEMPLATE.md`
-29. `templates/GOAL-CLOSEOUT-TEMPLATE.md`
+17. `decisions/LEARN-GOV-P0-001-CP6-2026-07-14.md`
+18. `closeouts/LEARN-GOV-P0-001-CP7-2026-07-14.md`
+19. `goals/README.md`
+20. `goals/LEARN-GOV-P0-001.md`
+21. `goals/LEARN-GOV-P1-CHECKER-001.md`
+22. `goals/LEARN-RIGHTS-DECISIONS-001.md`
+23. `goals/LEARN-SME-APPOINTMENT-001.md`
+24. `goals/LEVEL-II-ET-PILOT-001.md`
+25. `reviews/LEARN-GOV-P0-001-CP4-CP5-REVIEW-2026-07-14.md`
+26. `reviews/LEARN-GOV-P0-001-REVIEWED-PACKET.sha256`
+27. `closeouts/LEARN-GOV-P0-001-POST-CP6-PACKET.sha256`
+28. `templates/GOAL-CHARTER-TEMPLATE.md`
+29. `templates/EXECUTION-CHECKPOINT-TEMPLATE.md`
+30. `templates/PROGRAM-MANAGER-REVIEW-TEMPLATE.md`
+31. `templates/DECISION-RECORD-TEMPLATE.md`
+32. `templates/GOAL-CLOSEOUT-TEMPLATE.md`
 
 ## Review Gate
 

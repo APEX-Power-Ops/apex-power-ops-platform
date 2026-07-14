@@ -10,7 +10,7 @@ roadmap. Preserve the held Level II state exactly.
 
 ## Entry Gates
 
-- P0 design accepted at CP6;
+- P0 design accepted at CP6 by `LEARN-GOV-P0-CP6-2026-07-14`;
 - exact P0 commit pinned;
 - separate Codex primary executor assigned;
 - independent Technical Authority and auditor assigned; and
@@ -45,4 +45,5 @@ roadmap. Preserve the held Level II state exactly.
 
 ## Next Decision
 
-Operator CP1 authorization after P0 CP6 acceptance.
+Separate operator CP1 authorization. This proposal is permitted but not
+authorized by the P0 CP6 decision.

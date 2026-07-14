@@ -2,7 +2,7 @@
 
 Date: 2026-07-14
 
-Status: CP5 SYNTHESIS COMPLETE - OPERATOR CP6 DECISION REQUIRED
+Status: P0 CP7 CLOSED - SUCCESSOR GOALS PROPOSED, NOT AUTHORIZED
 
 ## Program Manager Assessment
 
@@ -22,7 +22,7 @@ goal-authorization gates.
 
 | Order | Goal | Why it is next | Entry condition |
 |---:|---|---|---|
-| 1 | Finish `LEARN-GOV-P0-001` | Establishes the authority and checkpoint contract for every later goal | Operator CP6 decision |
+| 1 | `LEARN-GOV-P0-001` | Establishes the authority and checkpoint contract for every later goal | complete - design accepted with conditions |
 | 2 | `LEARN-GOV-P1-CHECKER-001` | Makes goal, role, evidence, transition, and hold rules machine-enforced | Accepted P0 design; separate offline implementation GO |
 | 3 | Canonical held-state migration | Moves the exact Level II state into the checked registry without changing it | Checker green; metadata-only migration GO |
 | 4 | Owner-return convergence | Completes rights, SME, platform, render, release, and privacy tracks | Separate goals and named decision owners |
@@ -131,12 +131,12 @@ Authority, platform, privacy, and release-owner decisions.
 
 ## Operator Inputs That Unlock The Most Work
 
-1. CP6 acceptance or revision of the P0 governance design.
+1. Separate CP1 authorization for the offline P1 checker.
 2. A named qualified SME or candidate pool for Stage 1.
 3. Confirmation of the initial internal learner audience and proposed pilot size.
 4. Rights evidence for the Kuphaldt source or approval to replace it.
-5. Approval to prepare the offline P1 checker under a separate goal.
-6. Approval to run the rights and SME packets in parallel after P0 acceptance.
+5. Separate CP1 authorization for the rights decision packet.
+6. Separate CP1 authorization for the SME appointment/rubric packet.
 
 ## Work Still Prohibited
 
@@ -151,8 +151,8 @@ Authority, platform, privacy, and release-owner decisions.
 
 ## Recommended Sequencing Decision
 
-Issue the P0 CP6 decision. On acceptance, authorize the offline checker as the
-primary executor's first implementation goal. In parallel, authorize the
-metadata-only rights decision packet and the SME appointment/rubric packet.
-Those three paths remove the largest governance blockers without exposing
-learners, source bodies, or production systems.
+Authorize the offline checker as the primary executor's first implementation
+goal under a separate CP1 decision. In parallel, authorize the metadata-only
+rights decision packet and the SME appointment/rubric packet under their own CP1
+decisions. Those three paths remove the largest governance blockers without
+exposing learners, source bodies, or production systems.

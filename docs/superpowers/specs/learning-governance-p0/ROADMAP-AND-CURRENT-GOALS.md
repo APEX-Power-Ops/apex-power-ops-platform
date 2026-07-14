@@ -1,12 +1,12 @@
 # Learning Roadmap And Current Goals
 
-Status: OPERATOR-DIRECTED DESIGN - ROADMAP NOT YET MACHINE ENFORCED
+Status: DESIGN ACCEPTED WITH CONDITIONS - ROADMAP NOT YET MACHINE ENFORCED
 
 ## Product Roadmap
 
 | Stage | Product posture | Entry gate | Current state |
 |---|---|---|---|
-| 0 | Governance, authority, identity, and content-control foundation | Operator-ratified design and later checker implementation | in design |
+| 0 | Governance, authority, identity, and content-control foundation | Operator-ratified design and later checker implementation | design accepted; enforcement not implemented |
 | 1 | **Internal Level II Learning and Readiness Pilot** | Exact ET-010..014 cohort; source, rights, SME, content, identity, privacy, platform, render, and release gates green | held |
 | 2 | Field-performance enablement | Stage-1 evidence plus bounded operational-use charter | not admitted |
 | 3 | Internal qualification decision | Valid assessment, policy, SME, expiry, remediation, appeal, and HR authority | not admitted |
@@ -16,10 +16,10 @@ Status: OPERATOR-DIRECTED DESIGN - ROADMAP NOT YET MACHINE ENFORCED
 
 | Goal ID | Goal | State | Next checkpoint |
 |---|---|---|---|
-| `LEARN-GOV-P0-001` | Learning Governance Control Plane design | `checkpoint_review` at CP5 | operator CP6 decision |
-| `LEARN-GOV-P1-CHECKER-001` | Offline goal schema, registry, decision, and checkpoint checker | `proposed` and held | P0 design CP6 acceptance plus separate CP1 authorization |
-| `LEARN-RIGHTS-DECISIONS-001` | Metadata-only source-rights decision packet for the 12 ET rows | `proposed` and held | rights-authority CP1 authorization |
-| `LEARN-SME-APPOINTMENT-001` | SME qualification, appointment, and review-rubric packet | `proposed` and held | stakeholder names the candidate or approved candidate pool |
+| `LEARN-GOV-P0-001` | Learning Governance Control Plane design | `closed` / accepted with conditions | CP7 complete |
+| `LEARN-GOV-P1-CHECKER-001` | Offline goal schema, registry, decision, and checkpoint checker | `proposed` / not authorized | separate CP1 authorization |
+| `LEARN-RIGHTS-DECISIONS-001` | Metadata-only source-rights decision packet for the 12 ET rows | `proposed` / not authorized | separate rights-authority CP1 authorization |
+| `LEARN-SME-APPOINTMENT-001` | SME qualification, appointment, and review-rubric packet | `proposed` / not authorized | candidate input plus separate CP1 authorization |
 | `LEVEL-II-ET-PILOT-001` | ET-010..014 Stage-1 pilot | `held` / `ET-PILOT-HOLD` | CP2 only after all owner-return tracks are evidenced |
 | `LEARN-SLICE2D-CONTRACT-001` | Reconcile `ksa_mapped` rehearsal contradiction | `proposed` and held | separate CP1 authorization |
 | `LEARN-IDENTITY-AUTH-001` | Learner identity, authorization, and privacy contract | `proposed` and held | separate design GO |
@@ -39,7 +39,7 @@ Every missing or partial track preserves `ET-PILOT-HOLD`.
 
 ## Next Recommended Goal
 
-Obtain the operator's CP6 decision for `LEARN-GOV-P0-001`. If accepted, run
-`LEARN-GOV-P1-CHECKER-001` first while the rights and SME packets proceed in
-parallel under their own goals. Do not start content authoring or the Slice 2d
-rehearsal as the next goal.
+Obtain a separate CP1 authorization for `LEARN-GOV-P1-CHECKER-001` as the next
+serial goal. The rights and SME proposals may be authorized independently in
+parallel. Do not start any proposal, content authoring, or the Slice 2d rehearsal
+from this recommendation alone.

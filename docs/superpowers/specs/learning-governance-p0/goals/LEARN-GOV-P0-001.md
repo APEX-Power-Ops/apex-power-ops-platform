@@ -1,6 +1,6 @@
 # Goal LEARN-GOV-P0-001
 
-Status: CHECKPOINT REVIEW - CP5 COMPLETE; OPERATOR CP6 REQUIRED
+Status: CLOSED - DESIGN ACCEPTED WITH CONDITIONS
 
 ## Identity
 
@@ -8,7 +8,8 @@ Status: CHECKPOINT REVIEW - CP5 COMPLETE; OPERATOR CP6 REQUIRED
 - Goal type: `GOVERN`
 - Product stage: `0`
 - Authority: operator GO `LEARNING-GOVERNANCE-P0-DESIGN ONLY` plus the
-  2026-07-14 operator direction recorded in this packet
+  2026-07-14 operator direction and CP6 decision
+  `LEARN-GOV-P0-CP6-2026-07-14` recorded in this packet
 - Program Manager: `LEARN-PM-2026-07-14`
 - Primary executor: not assigned for this revision; the Program Manager authored
   the governance draft under direct operator instruction
@@ -18,7 +19,7 @@ Status: CHECKPOINT REVIEW - CP5 COMPLETE; OPERATOR CP6 REQUIRED
 - Independent auditor: Codex CLI `gpt-5.5` run
   `019f612c-853c-7683-92de-02c5541573c9`; review-only, did not author or edit
   the reviewed version
-- Current checkpoint: `CP5`
+- Current checkpoint: `CP7` complete
 
 ## Objective
 
@@ -57,5 +58,5 @@ requirements, and faithful migration of the held Level II state.
 
 ## Next Decision
 
-Operator CP6 acceptance, conditional acceptance, revision, hold, or rejection.
-No implementation goal is authorized by the Program Manager's CP5 recommendation.
+Goal closed at CP7. The three named successor goals are proposals only and each
+requires a separate CP1 authorization. No implementation goal is active.
