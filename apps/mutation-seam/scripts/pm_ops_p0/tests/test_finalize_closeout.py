@@ -421,6 +421,19 @@ def test_finalize_tampered_uncategorized_manifest_file_fails():
     _expect_closeout_error(_full_spec(), "hash_mismatch", custody_mutator=mutate)
 
 
+def test_finalize_manifest_missing_fixed_script_artifact_fails():
+    # Codex-c18 P2: preserve_evidence writes a FIXED artifact set, so a tampered/regenerated
+    # manifest that silently DROPS a fixed output no category references (01_markers.txt)
+    # must not close out P0-A -- byte-verifying only what the manifest still lists is not
+    # enough. (Dropping a category-referenced file trips unhashed_artifact in the loop first.)
+    def mutate(tmp, custody):
+        m = custody / "manifest.sha256"
+        kept = [ln for ln in m.read_text().splitlines() if "01_markers.txt" not in ln]
+        m.write_text("\n".join(kept) + "\n")
+
+    _expect_closeout_error(_full_spec(), "incomplete_manifest", custody_mutator=mutate)
+
+
 def test_finalize_category2_json_error_body_fails():
     # lens-B A1: a failed /reset capture that saved a JSON error body (valid JSON, wrong
     # shape) must fail — category 2 previously accepted ANY well-formed JSON.

@@ -94,6 +94,26 @@ CATEGORY_SCRIPT_ARTIFACTS = {
     9: {"02_table_acl.txt", "06_default_acl.txt", "08_secdef_function_acl.txt"},
 }
 
+# Every fixed output of preserve_evidence.write_custody (its artifact names are
+# tool-deterministic). The evidence manifest must list ALL of them: byte-verifying only what
+# a manifest still lists would let a tampered/regenerated manifest silently DROP a fixed
+# output no category references (00_p0a_snapshot.sql, 01_markers.txt) and still close out
+# P0-A (Codex-c18 P2).
+REQUIRED_SCRIPT_ARTIFACTS = frozenset(
+    {
+        "00_p0a_snapshot.sql",
+        "00_provenance.json",
+        "01_markers.txt",
+        "02_table_acl.txt",
+        "03_effective_privilege.txt",
+        "04_role_membership_closure.txt",
+        "05_counts.txt",
+        "06_default_acl.txt",
+        "07_secdef_discovery.txt",
+        "08_secdef_function_acl.txt",
+    }
+)
+
 # Minimum artifact count for operator categories whose runbook definition names multiple
 # captures. Category 1 is "deployed OpenAPI for BOTH hosts", so it must bind >= 2 (Codex-c7
 # P1b). NOTE (operator-review scope, lens-B A4): the finalizer enforces STRUCTURE + integrity
@@ -243,7 +263,12 @@ def _verify_manifest_bundle(
 
     Covers script artifacts no category references (00_p0a_snapshot.sql, 01_markers.txt): a
     post-manifest edit to ANY manifest-bound byte must fail the closeout (Codex-c12 P2).
+    The manifest must also list the FULL fixed preserve_evidence output set -- a tampered/
+    regenerated manifest that dropped an uncategorized fixed output would otherwise pass
+    (Codex-c18 P2). Dropping a category-referenced file trips ``unhashed_artifact`` first.
     """
+    if REQUIRED_SCRIPT_ARTIFACTS - manifest.keys():
+        raise CloseoutError("incomplete_manifest")
     for name, sha in manifest.items():
         path = _resolve_within(custody, name)
         if path.is_symlink() or not path.is_file():
