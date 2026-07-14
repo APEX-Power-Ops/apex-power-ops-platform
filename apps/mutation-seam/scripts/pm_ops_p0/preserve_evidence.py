@@ -348,8 +348,12 @@ _GIT_ENV_ALLOW = (
 # git call forces these OFF via command-line `-c` (highest precedence, overriding repo-local
 # config): a hostile `core.fsmonitor` (arbitrary program run during status, and can under-
 # report changes), a `core.hooksPath` hook, a `credential.helper = !prog` run during fetch,
-# and `ext::`/`file::` remote-helper execution. No code runs during the preflight, so the
-# "fsmonitor overwrites tracked binding.py then hides it" escalation is closed at the source.
+# a `core.sshCommand = !prog` run during the SSH fetch (RI2 Codex-r3 P1), and `ext::` remote-
+# helper execution. No code runs during the preflight, so the "fsmonitor overwrites tracked
+# binding.py then hides it" escalation is closed at the source. (`core.sshCommand=ssh` forces
+# the default ssh binary, which still authenticates via ~/.ssh; a fetch that genuinely needs
+# a custom transport fails closed as `origin_main_unresolvable`, never against an unverified
+# tip.)
 _GIT_HARDENING = (
     "-c",
     "core.fsmonitor=false",
@@ -357,6 +361,8 @@ _GIT_HARDENING = (
     "core.hooksPath=/dev/null",
     "-c",
     "credential.helper=",
+    "-c",
+    "core.sshCommand=ssh",
     "-c",
     "protocol.ext.allow=never",
 )

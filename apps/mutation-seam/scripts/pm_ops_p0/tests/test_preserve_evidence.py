@@ -589,9 +589,13 @@ def test_git_env_scrubs_injected_secrets_and_redirects():
 
 
 def test_git_hardening_flags_disable_config_execution():
-    # RI2 lens-A F1: every git call forces the code-execution knobs OFF via command-line -c
+    # RI2 lens-A F1 + Codex-r3 P1: every git call forces the code-execution knobs OFF via
+    # command-line -c (fsmonitor, hooks, credential.helper, core.sshCommand, ext remote-helper)
     joined = " ".join(pe._GIT_HARDENING)
     assert "core.fsmonitor=false" in joined
+    assert (
+        "core.sshCommand=ssh" in joined
+    )  # a hostile repo-local core.sshCommand is overridden
     assert "core.hooksPath=/dev/null" in joined
     assert "credential.helper=" in joined
     assert "protocol.ext.allow=never" in joined
