@@ -45,4 +45,28 @@ All three engines independently concluded: **the P0-A gate is SOUND — no DSN t
 ## Final state
 Codex round 3 (`694abe62`): **clean, no findings**. Offline suite **38/38**, `ruff check` + `ruff format` clean, files LF-verified. No production access, SQL, deploy, secret change, or connectivity repair was performed at any point.
 
-**Verdict: tooling is code-review-complete and ready for the operator's separate `P0-A READ-ONLY EVIDENCE` GO.** That GO authorises running `preserve_evidence.py` against production read-only; it is not granted by this review.
+**Verdict (round 1): tooling is code-review-complete.** See round 2 for the operator's evidence-integrity review and the hardening tranche.
+
+---
+
+## Round 2 — operator review (evidence integrity + governance) + hardening tranche
+
+**Trigger.** The operator independently reviewed the tooling and **HELD** `P0-A READ-ONLY EVIDENCE` with 6 findings — target-binding confirmed sound (no wrong-project bypass); the hold was evidence integrity + governance. An authorized bounded hardening tranche + governed PR was directed.
+
+**Commits.** `be997bd4`..`924674ea` (round 1) → `b7b59934` (hardening tranche) → `40c93ce5` (Codex delta fix).
+
+| ID | Sev | Finding | Disposition |
+| --- | --- | --- | --- |
+| Op-1 | High | secdef query captured effective booleans, not `proacl`/grantor/grantee/grant-option — cannot generate the exact RPC-grant rollback P0-C requires | **Fixed `b7b59934`**: query (f) — raw `proacl` + `aclexplode`; artifact `08_secdef_function_acl.txt` |
+| Op-2 | High | evidence not bound to governed tooling (any checkout; no repo SHA / hashes / provenance) | **Fixed `b7b59934`**: `--expect-repo-sha` required + clean-merged-main gate + `00_provenance.json` (repo/tool/query hashes, versions, timestamps, DSN env name) |
+| Op-3 | Med | DB authority not enforced (direct-host DSN accepts any user; `current_user` only recorded) | **Fixed `b7b59934`**: `--expect-db-role` (default `postgres`) + parameterized `current_user` guard → `db_role_mismatch` before any evidence read |
+| Op-4 | Med | only the DB subset of P0-A; no parent runbook binding all 9 categories | **Fixed `b7b59934`**: `P0A_RUNBOOK.md` + 9-category closeout index; "script alone ≠ P0-A done" |
+| Op-5 | Med | dependency + CI governance missing (psycopg3 undeclared; no workflow) | **Fixed `b7b59934`**: pinned `requirements.txt` + path-filtered CI (pytest + ruff, `persist-credentials:false`) |
+| Op-6 | Low | custody per-file, not bundle-atomic or durable (no fsync; partial final dir on crash) | **Fixed `b7b59934`**: `.partial-<clock>` → fsync files/manifest/dir → `os.rename` → fsync parent |
+| Codex-r2-P2 | Med | `on_main=None` (origin/main unresolvable) skipped the refusal, bypassing the documented merged-to-main guarantee | **Fixed `40c93ce5`**: fail closed → `origin_main_unresolvable`; only a verified-merged HEAD proceeds |
+
+**Cross-engine (round 2).** Codex `gpt-5.5` reviewed `b7b59934` → the one P2 above (fixed). Offline suite **48/48**, ruff clean.
+
+**Operator to confirm live at the evidence GO (unchanged):** P6 (`verify-full`/`sslrootcert` on the direct host) · P7 (Supavisor transaction-mode `BEGIN…COMMIT`). Run **only from clean merged `main`** (now enforced by the tooling).
+
+**Verdict (round 2): hardening tranche complete; ready for the governed PR + merge, then STOP for the operator's separate `P0-A READ-ONLY EVIDENCE` GO.** That GO authorises running `preserve_evidence.py` against production read-only; it is not granted by this review.
