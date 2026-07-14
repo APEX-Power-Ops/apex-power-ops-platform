@@ -90,7 +90,27 @@ P0-A is complete only when every row has an artifact + SHA-256 and the drift cal
 | 7 | Active backend classification (+ source) | | | operator | ☐ |
 | 8 | Render `POST /reset` access logs | | | operator | ☐ |
 | 9 | Rollback inputs (per-grantee ACL + per-grantor default ACL + RPC grants) | `02_…`, `06_…`, `08_…` | (manifest) | script | ☐ |
-| — | Provenance (repo SHA / clean / merged, tool + query hashes) | `00_provenance.json` | (manifest) | script | ☐ |
+| — | Provenance (repo SHA, `origin_main_sha` + HEAD-equality, pristine flag, tool + query hashes) | `00_provenance.json` | (manifest) | script | ☐ |
+
+**Finalize (fail-closed).** After Parts A + B, place the operator/HTTP artifacts (categories
+1, 2, 7, 8) into the **same** custody dir, write a closeout spec mapping each of the nine
+categories to its artifact filenames, then run the finalizer. It refuses on any missing or
+duplicated category, path traversal, non-regular artifact, unhashed or hash-mismatched
+script artifact, or failed-HTTP capture, and publishes a **no-clobber** `closeout_index.json`
+binding every artifact by SHA-256 (review round-3 finding 5):
+
+```bash
+"<repo>/.venv/bin/python" apps/mutation-seam/scripts/pm_ops_p0/finalize_closeout.py \
+  --spec <closeout-spec.json> \
+  --custody-dir /home/olares/custody/pm-ops-p0/<UTC>
+# -> RESULT PASS + CLOSEOUT .../closeout_index.json   (mode 0400; every artifact SHA-256-bound)
+```
+
+The spec is JSON: `{"categories": [{"category": 1..9, "source": "script"|"operator",
+"artifacts": ["<name under the custody dir>", ...]}, ...]}`. Script categories (3, 4, 5, 6,
+9) reference the manifest-hashed artifacts above; operator categories (1, 2, 7, 8) reference
+the Part-B captures. A `RESULT PASS` closeout index — not this checklist alone — is what
+completes the P0-A database + evidence binding.
 
 **Drift.** Compare against the baseline in design §2 (4 tables `rls_enabled=false`/`policies=0`; `anon`+`authenticated` writes; default ACLs from grantors `postgres`+`supabase_admin`; query (e) flags exactly the 3 apparatus RPCs `in_scope_failclosed=true` via `name_refs_targets`, `has_dynamic_sql=false`). **Any** new SECURITY DEFINER function, any `has_dynamic_sql=true` in-scope row, or unexpected default-ACL grantor is a NEW finding requiring re-review **before P0-C**.
 
