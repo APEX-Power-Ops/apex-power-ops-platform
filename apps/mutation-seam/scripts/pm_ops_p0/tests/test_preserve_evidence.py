@@ -35,7 +35,23 @@ _SAME = (
 )  # sentinel: origin/main sha defaults to HEAD sha (a merged-tip checkout)
 
 
+# the three dependency-bundle args are argparse-required; governance refusals fire before
+# the bundle is ever validated, so refusal tests can pass throwaway values. Collect-reaching
+# tests stub _bootstrap_dependency_bundle to "" (-> the ambient offline psycopg via
+# _load_binding(None)); see _patched_repo.
+_BUNDLE_ARGS = [
+    "--dependency-bundle",
+    "/nonexistent-bundle",
+    "--bundle-manifest",
+    "/nonexistent-manifest",
+    "--expect-bundle-manifest-sha256",
+    "0" * 64,
+]
+
+
 def _run_main(argv: list[str]) -> tuple[int, str]:
+    if "--dependency-bundle" not in argv:
+        argv = [*argv, *_BUNDLE_ARGS]
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
         rc = pe.main(argv)
@@ -48,15 +64,27 @@ def _patched_repo(sha=SHA, clean=True, origin_main_sha=_SAME):
 
     The 3rd element is the freshly-fetched origin/main sha (str or None), matching the
     real ``_repo_git_state`` contract; it defaults to the HEAD sha (HEAD == origin/main).
+    Also stubs the dependency-bundle bootstrap to "" so a governance-cleared run reaches
+    the binding via the ambient offline psycopg (``_load_binding(None)``) instead of
+    verifying a real bundle.
     """
     oms = sha if origin_main_sha is _SAME else origin_main_sha
-    orig_root, orig_state = pe._repo_root, pe._repo_git_state
+    orig_root, orig_state, orig_boot = (
+        pe._repo_root,
+        pe._repo_git_state,
+        pe._bootstrap_dependency_bundle,
+    )
     pe._repo_root = lambda: Path("/fake/repo")
     pe._repo_git_state = lambda root: (sha, clean, oms)
+    pe._bootstrap_dependency_bundle = lambda *a, **k: ""
     try:
         yield sha
     finally:
-        pe._repo_root, pe._repo_git_state = orig_root, orig_state
+        pe._repo_root, pe._repo_git_state, pe._bootstrap_dependency_bundle = (
+            orig_root,
+            orig_state,
+            orig_boot,
+        )
 
 
 def _git(cwd: Path, *args: str) -> subprocess.CompletedProcess:
@@ -124,6 +152,40 @@ def test_parser_requires_expect_repo_sha():
         assert exc.code != 0
     else:  # pragma: no cover
         raise AssertionError("--expect-repo-sha must be required")
+
+
+def test_parser_requires_dependency_bundle_args():
+    # RI2 finding 1: all three bundle args are required — psycopg is loaded ONLY from a
+    # verified hash-pinned bundle under -S, never the interpreter's site startup.
+    full = [
+        "--expect-project-ref",
+        REF,
+        "--dsn-env",
+        "V",
+        "--expect-repo-sha",
+        SHA,
+        "--dependency-bundle",
+        "/b",
+        "--bundle-manifest",
+        "/m",
+        "--expect-bundle-manifest-sha256",
+        "0" * 64,
+    ]
+    pe.build_parser().parse_args(full)  # complete set parses
+    for missing in (
+        "--dependency-bundle",
+        "--bundle-manifest",
+        "--expect-bundle-manifest-sha256",
+    ):
+        args = list(full)
+        i = args.index(missing)
+        del args[i : i + 2]
+        try:
+            pe.build_parser().parse_args(args)
+        except SystemExit as exc:
+            assert exc.code != 0
+        else:  # pragma: no cover
+            raise AssertionError(f"{missing} must be required")
 
 
 # --------------------------------------------------------------- refusal paths
@@ -315,7 +377,7 @@ def test_untracked_import_shadow_rejected_before_binding_import():
         (work / "psycopg.py").write_text("raise RuntimeError('shadow executed')\n")
         reached = {"collect": False}
 
-        def spy_collect(dsn, expect_ref):
+        def spy_collect(dsn, expect_ref, *, connect_bound=None):
             reached["collect"] = True  # only reachable past the deferred binding import
             raise AssertionError("collect_evidence must not run for an untracked tree")
 
@@ -390,13 +452,18 @@ def test_head_equals_origin_main_clears_the_gate():
         work, _origin, head = _make_repo_with_remote(tmp)
         reached = {"collect": False}
 
-        def spy_collect(dsn, expect_ref):
+        def spy_collect(dsn, expect_ref, *, connect_bound=None):
             reached["collect"] = True
             raise pe.EvidenceRefusal("stub_gate_cleared")
 
-        orig_root, orig_collect = pe._repo_root, pe.collect_evidence
+        orig_root, orig_collect, orig_boot = (
+            pe._repo_root,
+            pe.collect_evidence,
+            pe._bootstrap_dependency_bundle,
+        )
         pe._repo_root = lambda: work
         pe.collect_evidence = spy_collect
+        pe._bootstrap_dependency_bundle = lambda *a, **k: ""  # ambient offline psycopg
         os.environ["PM_OPS_P0_TEST_DSN"] = (
             f"host=db.{REF}.supabase.co user=postgres dbname=postgres"
         )
@@ -412,7 +479,11 @@ def test_head_equals_origin_main_clears_the_gate():
                 ]
             )
         finally:
-            pe._repo_root, pe.collect_evidence = orig_root, orig_collect
+            pe._repo_root, pe.collect_evidence, pe._bootstrap_dependency_bundle = (
+                orig_root,
+                orig_collect,
+                orig_boot,
+            )
             os.environ.pop("PM_OPS_P0_TEST_DSN", None)
         assert rc != 0
         assert reached["collect"] is True  # governance gate cleared
@@ -610,6 +681,7 @@ def test_build_provenance_records_governance_fields():
         expect_project_ref=REF,
         expect_db_role="postgres",
         dsn_env="SUPABASE_PROD_DSN",
+        dependency_bundle_manifest_sha256="d" * 64,
         started_at="2026-07-14T00:00:00+00:00",
         finished_at="2026-07-14T00:00:05+00:00",
     )
@@ -618,6 +690,9 @@ def test_build_provenance_records_governance_fields():
     assert rec["expected_project_ref"] == REF
     assert rec["expected_db_role"] == "postgres"
     assert rec["dsn_env_var_name"] == "SUPABASE_PROD_DSN"  # NAME only, never a value
+    assert (
+        rec["dependency_bundle_manifest_sha256"] == "d" * 64
+    )  # bundle bound to evidence
     assert rec["repo_tree_pristine"] is True
     assert (
         rec["origin_main_sha"] == "abc123"
@@ -828,7 +903,7 @@ def test_main_value_silent_when_collection_raises():
 
     sentinel = "leaky-host-9.9.9.9.internal"
 
-    def boom(dsn, expect_ref, *, expect_role="postgres"):
+    def boom(dsn, expect_ref, *, connect_bound=None):
         raise RuntimeError(f"could not connect to {sentinel}:5432")
 
     records: list[str] = []
