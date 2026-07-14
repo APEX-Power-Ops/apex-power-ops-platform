@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from pm_ops_p0.binding import (  # noqa: E402
     PG_ENV_OVERRIDES,
+    SCRUBBED_ENV_VARS,
     TargetBindingError,
     assert_bound_connection,
     bind_target,
@@ -228,6 +229,75 @@ def test_accepted_params_carry_no_reroute_keys():
     )
     assert "hostaddr" not in params
     assert "service" not in params
+
+
+# ------------------------------------------------- TLS trust contract (RI2 finding 2)
+
+
+def test_bind_target_sourcepins_sslrootcert_system():
+    # verify-full defaults to ~/.postgresql/root.crt (absent on the host -> fail closed);
+    # the OS trust store must be selected explicitly via sslrootcert=system. bind_target
+    # source-pins it so the direct-host verify-full cert chain can actually validate.
+    params = bind_target(
+        f"host=db.{REF}.supabase.co user=postgres dbname=postgres", REF
+    )
+    assert params["sslmode"] == "verify-full"
+    assert params["sslrootcert"] == "system"
+
+
+def test_bind_target_drops_caller_sslrootcert():
+    # a caller-supplied sslrootcert (a rogue CA that would let verify-full validate a
+    # man-in-the-middle cert) must never survive: bind_target reconstructs an explicit
+    # whitelist and source-pins sslrootcert=system regardless of the DSN value.
+    params = bind_target(
+        f"host=db.{REF}.supabase.co user=postgres dbname=postgres "
+        f"sslrootcert=/tmp/rogue-ca.pem",
+        REF,
+    )
+    assert params["sslrootcert"] == "system"
+    assert "/tmp/rogue-ca.pem" not in params.values()
+
+
+def test_bind_target_sslrootcert_value_is_not_leaked_on_reject():
+    # value-silence: a rogue sslrootcert on a wrong-host DSN must not be echoed
+    try:
+        bind_target(
+            "host=evil.attacker.example user=postgres dbname=postgres "
+            "sslrootcert=/tmp/rogue-ca.pem",
+            REF,
+        )
+    except TargetBindingError as exc:
+        assert "rogue-ca" not in f"{exc!r}|{exc}|{exc.code}"
+    else:  # pragma: no cover
+        raise AssertionError("expected a host_not_bound reject")
+
+
+def test_scrubbed_env_includes_openssl_trust_anchors():
+    # sslrootcert=system uses the OpenSSL default trust store, which SSL_CERT_FILE /
+    # SSL_CERT_DIR redirect -> they must be in the connect-time scrub set alongside PG*.
+    assert "SSL_CERT_FILE" in SCRUBBED_ENV_VARS
+    assert "SSL_CERT_DIR" in SCRUBBED_ENV_VARS
+    assert "PGSSLROOTCERT" in SCRUBBED_ENV_VARS
+    # the PG* subset stays a subset of the full scrub set
+    assert set(PG_ENV_OVERRIDES) <= set(SCRUBBED_ENV_VARS)
+
+
+def test_scrubbed_pg_env_scrubs_openssl_trust_anchors_and_restores():
+    saved = {k: os.environ.get(k) for k in ("SSL_CERT_FILE", "SSL_CERT_DIR")}
+    try:
+        os.environ["SSL_CERT_FILE"] = "/tmp/rogue-bundle.pem"
+        os.environ["SSL_CERT_DIR"] = "/tmp/rogue-dir"
+        with scrubbed_pg_env():
+            assert "SSL_CERT_FILE" not in os.environ
+            assert "SSL_CERT_DIR" not in os.environ
+        assert os.environ.get("SSL_CERT_FILE") == "/tmp/rogue-bundle.pem"
+        assert os.environ.get("SSL_CERT_DIR") == "/tmp/rogue-dir"
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
 
 
 # -------------------------------------------------------------- env scrub

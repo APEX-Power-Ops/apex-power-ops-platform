@@ -68,6 +68,21 @@ PG_ENV_OVERRIDES = (
     "PGSSLKEY",
 )
 
+# `bind_target` source-pins `sslrootcert=system` (below), which tells libpq to trust
+# the OpenSSL DEFAULT trust store. That store is redirected by the OpenSSL environment
+# variables SSL_CERT_FILE / SSL_CERT_DIR — an attacker-set SSL_CERT_FILE pointing at a
+# rogue CA bundle would let `verify-full` validate a man-in-the-middle cert. They are
+# NOT `PG*` vars (libpq does not read them; OpenSSL does), so they are scrubbed here
+# alongside the PG* set at connect time (RI2 review finding 2).
+SSL_TRUST_ENV_OVERRIDES = (
+    "SSL_CERT_FILE",
+    "SSL_CERT_DIR",
+)
+
+# the full connect-time environment scrub set: PG* reroute/trust overrides + the
+# OpenSSL default-store redirects. `scrubbed_pg_env` removes all of these.
+SCRUBBED_ENV_VARS = PG_ENV_OVERRIDES + SSL_TRUST_ENV_OVERRIDES
+
 _POOLER_SUFFIX = ".pooler.supabase.com"
 
 # scrubbed_pg_env mutates process-global os.environ, so serialise the brief
@@ -138,12 +153,18 @@ def bind_target(dsn: str, expect_ref: str) -> dict[str, str]:
 
     # reconstruct an explicit whitelist: any exotic/injected libpq keyword in the
     # DSN (service, sslrootcert, options, a second host=, ...) is dropped here and
-    # never reaches psycopg.connect.
+    # never reaches psycopg.connect. sslmode + sslrootcert are SOURCE-PINNED, so a
+    # caller sslrootcert (a rogue CA) is dropped and replaced, never honored.
     params: dict[str, str] = {
         "host": host,
         "user": user,
         "dbname": (parsed.get("dbname") or "postgres").strip() or "postgres",
         "sslmode": "verify-full",  # forced: cert must match host (defeats IP reroute)
+        # verify-full defaults to ~/.postgresql/root.crt (absent on the host -> the
+        # connect fails closed). Select the OpenSSL/OS trust store EXPLICITLY so the
+        # direct-host cert chain validates; SSL_CERT_FILE/SSL_CERT_DIR (which redirect
+        # that store) are scrubbed at connect time (RI2 review finding 2).
+        "sslrootcert": "system",
     }
     if port:
         params["port"] = port
@@ -169,13 +190,16 @@ def _assert_anchored(host: str, user: str, expect_ref: str) -> None:
 
 @contextmanager
 def scrubbed_pg_env() -> Iterator[None]:
-    """Remove PG* environment overrides for the duration of the context.
+    """Remove the connect-time env overrides (PG* + OpenSSL trust store) for the context.
 
-    Values present beforehand are restored on exit; anything the inner code sets
-    is cleared, so a leaked override cannot survive the context. Mutates global
-    `os.environ` — callers in a concurrent path must serialise (see `connect_bound`).
+    Scrubs `SCRUBBED_ENV_VARS` — the PG* reroute/trust overrides AND the OpenSSL
+    `SSL_CERT_FILE`/`SSL_CERT_DIR` default-store redirects that `sslrootcert=system`
+    relies on (RI2 finding 2). Values present beforehand are restored on exit; anything
+    the inner code sets is cleared, so a leaked override cannot survive the context.
+    Mutates global `os.environ` — callers in a concurrent path must serialise (see
+    `connect_bound`).
     """
-    saved = {key: os.environ.pop(key, None) for key in PG_ENV_OVERRIDES}
+    saved = {key: os.environ.pop(key, None) for key in SCRUBBED_ENV_VARS}
     try:
         yield
     finally:
