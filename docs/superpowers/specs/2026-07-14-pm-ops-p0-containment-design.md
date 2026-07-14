@@ -535,10 +535,9 @@ def health_ready(response: Response):
     identity + FULL operational permission matrix (migration 012). Returns stable codes only -- never raw DB
     error text (rev5.1 finding 5)."""
     import os, logging
-    import psycopg
     from config import engine
     from services.work.idempotency import idempotency_cache
-    from pm_ops_p0.binding import bind_target, TargetBindingError  # shared P0-A/P0-E target-binding (rev5.3 finding 2)
+    from pm_ops_p0.binding import connect_bound, TargetBindingError  # shared P0-A/P0-E full binding discipline; connect_bound opens/manages the psycopg conn (rev5.3 finding 2; RI2 finding 8)
     log = logging.getLogger("health.ready")
     checks: dict[str, dict] = {}; ok = True
     def _sql(name: str, sql: str) -> None:
@@ -562,25 +561,26 @@ def health_ready(response: Response):
     # 012). One query per DSN; returns named booleans only (stable labels; no raw DB detail).
     # rev5.3 finding 2: bind BOTH serving DSNs to the PRODUCTION project before probing — a dev/branch DSN
     # carrying the same roles+migrations would otherwise satisfy every matrix predicate while the prod
-    # service reads/writes the wrong project. bind_target() is the SHARED P0-A discipline (conninfo_to_dict
-    # parse; reject hostaddr/service/multi-host; anchored ref == fxoyniqnrlkxfligbxmg; scrub PG* env;
-    # sslmode=verify-full; post-connect Connection.info re-check), imported from the P0-A tooling module.
+    # service reads/writes the wrong project. RI2 finding 8: use the SINGLE-CALL connect_bound() rather than
+    # bind_target + a raw psycopg.connect, so the readiness probe gets the FULL P0-A discipline atomically —
+    # bind (reject before any socket) + scrub the PG*/OpenSSL env + connect (sslmode=verify-full,
+    # sslrootcert=system) + the post-connect Connection.info re-check, serialised under the shared lock —
+    # instead of re-implementing (and drifting from) a subset of it here.
     def _probe_ops(name: str, dsn_env: str, contract_sql: str) -> None:
         nonlocal ok
         dsn = os.getenv(dsn_env)
         if not dsn:
             checks[name] = {"ok": False, "code": "dsn_unset"}; ok = False; return
         try:
-            params = bind_target(dsn, expect_ref="fxoyniqnrlkxfligbxmg")  # raises TargetBindingError on mismatch
-        except TargetBindingError:
-            checks[name] = {"ok": False, "code": "dsn_not_bound_to_project"}; ok = False; return
-        try:
-            with psycopg.connect(**params, connect_timeout=5) as conn, conn.cursor() as cur:
-                cur.execute(contract_sql)
-                cols = [d.name for d in cur.description]; vals = cur.fetchone()
+            with connect_bound(dsn, expect_ref="fxoyniqnrlkxfligbxmg", connect_timeout=5) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(contract_sql)
+                    cols = [d.name for d in cur.description]; vals = cur.fetchone()
             matrix = {c: bool(v) for c, v in zip(cols, vals)}
             passed = all(matrix.values())
             checks[name] = {"ok": passed, **matrix}; ok = ok and passed
+        except TargetBindingError:
+            checks[name] = {"ok": False, "code": "dsn_not_bound_to_project"}; ok = False
         except Exception as exc:
             log.warning("ops readiness probe %s failed: %s", name, type(exc).__name__)  # class only (finding 3)
             checks[name] = {"ok": False, "code": "connection_or_query_failed"}; ok = False
