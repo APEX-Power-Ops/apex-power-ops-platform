@@ -433,6 +433,47 @@ def test_runbook_uses_child_only_infisical_injection():
     assert "--expect-db-role" not in text  # removed, source-pinned (finding 3)
 
 
+def test_config_hidden_untracked_shadow_still_rejected():
+    # lens-A A1: a hostile repo-local .git/config `showUntrackedFiles=no` must NOT hide a
+    # planted untracked shadow from the pristine check (the tool forces --untracked-files=all).
+    tmp = Path(tempfile.mkdtemp(prefix="p0a-ri-cfg-"))
+    try:
+        work, _origin, _head = _make_repo_with_remote(tmp)
+        _git(
+            work, "config", "status.showUntrackedFiles", "no"
+        )  # attacker hides untracked
+        (work / "psycopg.py").write_text(
+            "raise RuntimeError('shadow')\n"
+        )  # untracked shadow
+        _sha, pristine, _oms = pe._repo_git_state(work)
+        assert (
+            pristine is False
+        )  # forced -uall + pinned config defeats the hostile config
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def test_assert_trusted_psycopg_belt():
+    # lens-A A2: whatever placed a shadow on sys.path, the imported psycopg must resolve
+    # from an installed site-packages/dist-packages location, never a repo-tree psycopg.py.
+    class _Mod:
+        pass
+
+    shadow = _Mod()
+    shadow.__file__ = "/home/olares/code/apex/apex-power-ops-platform/apps/mutation-seam/scripts/psycopg.py"
+    raised = False
+    try:
+        pe._assert_trusted_psycopg(shadow)
+    except pe.EvidenceRefusal as exc:
+        raised = True
+        assert exc.code == "untrusted_binding_source", exc.code
+    assert raised, "a repo-tree psycopg shadow must be refused"
+
+    installed = _Mod()
+    installed.__file__ = "/repo/.venv/lib/python3.12/site-packages/psycopg/__init__.py"
+    pe._assert_trusted_psycopg(installed)  # installed location -> no raise
+
+
 # -------------------------------------------------------------------- custody
 
 

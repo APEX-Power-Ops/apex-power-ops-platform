@@ -21,6 +21,7 @@ separate ``P0-A READ-ONLY EVIDENCE`` GO.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import logging
@@ -38,6 +39,22 @@ REQUIRED_CATEGORIES = frozenset(range(1, 10))
 # categories captured over HTTP; their artifacts must be the expected valid JSON, not an
 # error page a failed `curl` saved (finding 5: "failed-HTTP ... categories fail")
 HTTP_CATEGORIES = frozenset({1, 2})
+
+# The REQUIRED source per category, per the runbook. The spec's declared source is
+# VALIDATED against this (never trusted): categories 3/4/5/6/9 are script-captured DB
+# evidence and MUST pass the manifest membership + hash binding; marking one "operator"
+# would otherwise skip that binding entirely (Codex-xhigh P1).
+CATEGORY_SOURCE = {
+    1: "operator",  # deployed OpenAPI
+    2: "operator",  # /reset route + security
+    3: "script",  # effective privileges + membership closure
+    4: "script",  # SECURITY DEFINER discovery + exact function ACL
+    5: "script",  # counts
+    6: "script",  # pg_default_acl
+    7: "operator",  # backend classification
+    8: "operator",  # Render /reset access logs
+    9: "script",  # rollback inputs
+}
 
 log = logging.getLogger("pm_ops_p0.finalize_closeout")
 
@@ -98,6 +115,11 @@ def _assert_categories_complete(spec: list[dict]) -> None:
         raise CloseoutError("duplicate_category")
     if REQUIRED_CATEGORIES - set(seen):
         raise CloseoutError("missing_category")
+    # source is not caller's free choice: each category's source MUST match the runbook,
+    # so a DB category cannot be downgraded to "operator" to skip the manifest hash binding.
+    for entry in spec:
+        if entry["source"] != CATEGORY_SOURCE[entry["category"]]:
+            raise CloseoutError("category_source_mismatch")
 
 
 def _read_manifest(custody_dir: Path) -> dict[str, str]:
@@ -114,9 +136,17 @@ def _read_manifest(custody_dir: Path) -> dict[str, str]:
 
 
 def _require_provenance(custody_dir: Path, manifest: dict[str, str]) -> None:
+    """Provenance must exist, be manifest-listed, AND hash-match the manifest.
+
+    The provenance record carries the git-equality attestation the whole closeout
+    leans on, so presence alone is insufficient: its bytes are verified against the
+    evidence manifest (lens-B finding A2) — a post-capture edit is ``hash_mismatch``.
+    """
     prov = custody_dir / PROVENANCE_NAME
     if not (prov.is_file() and PROVENANCE_NAME in manifest):
         raise CloseoutError("provenance_missing")
+    if _sha256_file(prov) != manifest[PROVENANCE_NAME]:
+        raise CloseoutError("hash_mismatch")
 
 
 def _resolve_within(custody_dir: Path, rel: str) -> Path:
@@ -135,24 +165,41 @@ def _resolve_within(custody_dir: Path, rel: str) -> Path:
     return raw
 
 
+# HTTP (JSON) captures must carry at least one key characteristic of the category, so a
+# saved error body ({"error": ...}, {}, [], "Not Found") — not just an HTML error page — is
+# rejected (lens-B A1: category 2 previously accepted ANY well-formed JSON).
+_HTTP_REQUIRED_KEYS = {
+    1: ("openapi", "paths"),  # deployed OpenAPI document
+    2: ("security", "path"),  # POST /reset route + its security state
+}
+
+
 def _validate_http_artifact(category: int, path: Path) -> None:
-    """Category 1/2 artifacts must be the expected valid JSON, not a saved error page."""
+    """Category 1/2 artifacts must be the expected shape of JSON, not a saved error page."""
     try:
         doc = json.loads(path.read_text())
     except (ValueError, UnicodeDecodeError):
         raise CloseoutError("failed_http") from None
-    if category == 1 and not (
-        isinstance(doc, dict) and ("openapi" in doc or "paths" in doc)
+    required = _HTTP_REQUIRED_KEYS.get(category)
+    if required is not None and not (
+        isinstance(doc, dict) and any(key in doc for key in required)
     ):
-        # an OpenAPI capture must carry an openapi version or a paths object
         raise CloseoutError("failed_http")
+
+
+def _require_parseable_json(path: Path) -> None:
+    """Any ``.json`` artifact must parse (lens-B A3: a JSON-named error page must fail)."""
+    try:
+        json.loads(path.read_text())
+    except (ValueError, UnicodeDecodeError):
+        raise CloseoutError("failed_json") from None
 
 
 def _sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _write_no_clobber(path: Path, data: bytes) -> None:
+def _write_restricted_file(path: Path, data: bytes) -> None:
     """Write ``data`` to ``path`` at 0400, O_EXCL (no clobber), short-write-safe + fsync'd."""
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
     try:
@@ -165,6 +212,32 @@ def _write_no_clobber(path: Path, data: bytes) -> None:
         os.fsync(fd)
     finally:
         os.close(fd)
+
+
+def _fsync_dir(path: Path) -> None:
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _publish_no_clobber(out_path: Path, data: bytes) -> None:
+    """Atomically publish ``data`` to ``out_path`` (0400), no-clobber + durable (lens-B A6).
+
+    Writes a sibling ``.partial`` (O_EXCL, fsync'd), hard-links it onto the final name
+    (``os.link`` is atomic and raises ``FileExistsError`` if the final exists -> no clobber),
+    then removes the partial and fsyncs the directory. A crash mid-write leaves only the
+    ``.partial`` file, never a truncated final index at the canonical name.
+    """
+    partial = out_path.parent / f"{out_path.name}.partial"
+    _write_restricted_file(partial, data)
+    try:
+        os.link(partial, out_path)  # atomic no-clobber publish
+    finally:
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(partial)
+    _fsync_dir(out_path.parent)
 
 
 def finalize(
@@ -180,6 +253,7 @@ def finalize(
     if the index already exists. Returns the written index path on success.
     """
     custody = Path(custody_dir)
+    base = custody.resolve()
     spec = load_spec(Path(spec_path))
     _assert_categories_complete(spec)  # missing / duplicate -> before touching files
     manifest = _read_manifest(custody)
@@ -195,7 +269,10 @@ def finalize(
                 raise CloseoutError("artifact_not_regular")
             digest = _sha256_file(path)
             if source == "script":
-                recorded = manifest.get(path.name)
+                # key by the path RELATIVE to custody, not just the basename, so a nested
+                # spec name cannot alias a flat manifest entry (lens-B A6); flat script
+                # artifacts match, any nested name -> unhashed_artifact (fail closed).
+                recorded = manifest.get(path.resolve().relative_to(base).as_posix())
                 if recorded is None:
                     raise CloseoutError(
                         "unhashed_artifact"
@@ -204,6 +281,10 @@ def finalize(
                     raise CloseoutError("hash_mismatch")
             if category in HTTP_CATEGORIES:
                 _validate_http_artifact(category, path)
+            elif path.name.endswith(".json"):
+                _require_parseable_json(
+                    path
+                )  # a JSON-named operator error page must fail
             artifacts.append(
                 {"name": path.name, "sha256": digest, "bytes": path.stat().st_size}
             )
@@ -221,7 +302,7 @@ def finalize(
         "all_artifacts_hashed": True,
     }
     data = (json.dumps(index, indent=2, sort_keys=True) + "\n").encode()
-    _write_no_clobber(Path(out_path), data)
+    _publish_no_clobber(Path(out_path), data)
     return Path(out_path)
 
 

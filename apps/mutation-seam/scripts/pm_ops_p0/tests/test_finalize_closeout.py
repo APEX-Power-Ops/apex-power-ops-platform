@@ -150,6 +150,14 @@ def test_finalize_duplicate_category_fails():
     _expect_closeout_error(spec, "duplicate_category")
 
 
+def test_finalize_category_source_downgrade_rejected():
+    # Codex-xhigh P1: a DB category (3) marked "operator" would skip the manifest hash
+    # binding; the source is pinned per category, so this is rejected.
+    spec = _full_spec()
+    spec["categories"][2]["source"] = "operator"  # category 3 is script-captured
+    _expect_closeout_error(spec, "category_source_mismatch")
+
+
 def test_finalize_failed_http_artifact_fails():
     # a failed OpenAPI capture saved an HTML error page instead of JSON
     def mutate(tmp, custody):
@@ -199,6 +207,42 @@ def test_finalize_provenance_missing_fails():
         (custody / "00_provenance.json").unlink()  # governance anchor gone
 
     _expect_closeout_error(_full_spec(), "provenance_missing", custody_mutator=mutate)
+
+
+def test_finalize_category2_json_error_body_fails():
+    # lens-B A1: a failed /reset capture that saved a JSON error body (valid JSON, wrong
+    # shape) must fail — category 2 previously accepted ANY well-formed JSON.
+    def mutate(tmp, custody):
+        (custody / "reset_route.json").write_bytes(b'{"error": "unauthorized"}\n')
+
+    _expect_closeout_error(_full_spec(), "failed_http", custody_mutator=mutate)
+
+
+def test_finalize_json_operator_artifact_must_parse():
+    # lens-B A3: a JSON-named operator artifact (category 7) that is an HTML error page fails
+    def mutate(tmp, custody):
+        (custody / "backend.json").write_bytes(b"<html>502 Bad Gateway</html>\n")
+
+    _expect_closeout_error(_full_spec(), "failed_json", custody_mutator=mutate)
+
+
+def test_finalize_tampered_provenance_fails():
+    # lens-B A2: provenance edited after the manifest was written -> content hash mismatch
+    def mutate(tmp, custody):
+        (custody / "00_provenance.json").write_bytes(b'{"artifact": "TAMPERED"}\n')
+
+    _expect_closeout_error(_full_spec(), "hash_mismatch", custody_mutator=mutate)
+
+
+def test_finalize_leaves_no_partial_on_success():
+    # lens-B A6: the atomic publish removes its .partial staging file
+    with _tmp() as tmp:
+        custody = _make_custody(tmp)
+        spec = _write_spec(tmp, _full_spec())
+        out = custody / "closeout_index.json"
+        fc.finalize(spec, custody, out, clock=CLOCK)
+        assert out.exists()
+        assert list(custody.glob("*.partial")) == []
 
 
 # -------------------------------------------------------------- happy path + index

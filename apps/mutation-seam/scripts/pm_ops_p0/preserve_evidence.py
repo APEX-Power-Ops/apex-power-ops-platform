@@ -307,29 +307,61 @@ def _repo_git_state(repo_root: Path) -> tuple[str, bool, str | None]:
     if head.returncode != 0:
         raise EvidenceRefusal("git_unavailable")
     head_sha = head.stdout.strip()
-    # pristine: no tracked modifications AND no untracked files (a shadow is untracked)
-    status = _git("status", "--porcelain")
+    # pristine: no tracked modifications AND no untracked files (a planted shadow is
+    # untracked). `--untracked-files=all` is forced AND status.showUntrackedFiles is
+    # pinned to `normal` on the command line, so a hostile repo-local .git/config
+    # `showUntrackedFiles=no` cannot hide the shadow from this check (review round-3 A1).
+    status = _git(
+        "-c",
+        "status.showUntrackedFiles=normal",
+        "status",
+        "--porcelain",
+        "--untracked-files=all",
+    )
     is_pristine = status.returncode == 0 and status.stdout.strip() == ""
-    # fresh fetch, then read origin/main; None (fail closed) on any fetch/ref failure
+    # fresh fetch, then read the JUST-FETCHED tip from FETCH_HEAD (NOT the remote-tracking
+    # ref, which `git fetch origin main` only updates opportunistically when the clone
+    # carries the standard fetch refspec — review round-3 A6). None (fail closed) on any
+    # fetch/parse failure: an unverifiable current-main tip must not proceed.
     origin_main_sha: str | None = None
     if _git("fetch", "--quiet", "origin", "main").returncode == 0:
-        ref = _git("rev-parse", "--verify", "--quiet", "refs/remotes/origin/main")
-        if ref.returncode == 0 and ref.stdout.strip():
-            origin_main_sha = ref.stdout.strip()
+        fh = _git("rev-parse", "--verify", "--quiet", "FETCH_HEAD")
+        if fh.returncode == 0 and fh.stdout.strip():
+            origin_main_sha = fh.stdout.strip()
     return head_sha, is_pristine, origin_main_sha
+
+
+def _assert_trusted_psycopg(module: object) -> None:
+    """Refuse unless the imported psycopg resolved from an installed package location.
+
+    The load-bearing belt (review round-3 A2): whatever placed a shadow on sys.path --
+    an untracked file the pristine check missed under a hostile .git/config, a TRACKED
+    shadow committed at origin/main, a PYTHONPATH entry, a .pth injection -- the module we
+    actually import must come from a real ``site-packages``/``dist-packages`` install
+    (the pinned venv), never a repo-tree ``psycopg.py``. Value-free code on failure.
+    """
+    location = getattr(module, "__file__", "") or ""
+    normalized = location.replace(os.sep, "/")
+    if "/site-packages/" not in normalized and "/dist-packages/" not in normalized:
+        raise EvidenceRefusal("untrusted_binding_source")
 
 
 def _load_binding():
     """Import the shared binding module -- DEFERRED past main()'s governance gate.
 
-    Re-adds the package parent (apps/mutation-seam/scripts) to sys.path only here, once
-    the pristine + merged-HEAD gate has proven no untracked shadow module exists, so
-    importing pm_ops_p0.binding (and therefore psycopg) is safe (finding 1). Returns
-    (TargetBindingError, connect_bound).
+    APPENDS the package parent (apps/mutation-seam/scripts) to sys.path (not prepend) so an
+    installed ``site-packages`` ``psycopg`` always shadows a planted repo-tree ``psycopg.py``
+    rather than the reverse; ``pm_ops_p0`` still resolves because only the repo provides it.
+    Then asserts the imported psycopg came from an installed location (review round-3 A2).
+    Returns (TargetBindingError, connect_bound). Reached only once the pristine + merged-HEAD
+    gate has proven no untracked shadow module exists (finding 1).
     """
+    import psycopg
+
+    _assert_trusted_psycopg(psycopg)
     scripts_dir = os.path.dirname(_SCRIPT_DIR)
     if scripts_dir not in sys.path:
-        sys.path.insert(0, scripts_dir)
+        sys.path.append(scripts_dir)
     from pm_ops_p0.binding import TargetBindingError, connect_bound
 
     return TargetBindingError, connect_bound
