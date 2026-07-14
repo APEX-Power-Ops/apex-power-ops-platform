@@ -296,12 +296,14 @@ def finalize(
             path = _resolve_within(custody, name)
             if path.is_symlink() or not path.is_file():
                 raise CloseoutError("artifact_not_regular")
+            # the path RELATIVE to custody (not the basename) keys the manifest AND is what
+            # the index records, so a subdir artifact (captures/openapi.json) is identified
+            # exactly and cannot alias a flat manifest entry or another basename (Codex-c5
+            # P2 / lens-B A6). Flat script artifacts match; any nested name -> unhashed.
+            rel = path.resolve().relative_to(base).as_posix()
             digest = _sha256_file(path)
             if source == "script":
-                # key by the path RELATIVE to custody, not just the basename, so a nested
-                # spec name cannot alias a flat manifest entry (lens-B A6); flat script
-                # artifacts match, any nested name -> unhashed_artifact (fail closed).
-                recorded = manifest.get(path.resolve().relative_to(base).as_posix())
+                recorded = manifest.get(rel)
                 if recorded is None:
                     raise CloseoutError(
                         "unhashed_artifact"
@@ -315,7 +317,7 @@ def finalize(
                     path
                 )  # a JSON-named operator error page must fail
             artifacts.append(
-                {"name": path.name, "sha256": digest, "bytes": path.stat().st_size}
+                {"name": rel, "sha256": digest, "bytes": path.stat().st_size}
             )
         index_categories.append(
             {"category": category, "source": source, "artifacts": artifacts}

@@ -331,17 +331,15 @@ def _repo_git_state(repo_root: Path) -> tuple[str, bool, str | None]:
     return head_sha, is_pristine, origin_main_sha
 
 
-def _assert_trusted_psycopg(module: object) -> None:
-    """Refuse unless the imported psycopg resolved from an installed package location.
+def _assert_trusted_location(location: str) -> None:
+    """Refuse unless `location` is an installed ``site-packages``/``dist-packages`` path.
 
-    The load-bearing belt (review round-3 A2): whatever placed a shadow on sys.path --
-    an untracked file the pristine check missed under a hostile .git/config, a TRACKED
-    shadow committed at origin/main, a PYTHONPATH entry, a .pth injection -- the module we
-    actually import must come from a real ``site-packages``/``dist-packages`` install
-    (the pinned venv), never a repo-tree ``psycopg.py``. Value-free code on failure.
+    Whatever placed a shadow on sys.path -- an untracked file the pristine check missed
+    under a hostile .git/config, a TRACKED shadow at origin/main, a PYTHONPATH entry, a
+    .pth injection -- the module that resolves must come from a real install (the pinned
+    venv), never a repo-tree ``psycopg.py`` (review round-3 A2). Value-free code on failure.
     """
-    location = getattr(module, "__file__", "") or ""
-    normalized = location.replace(os.sep, "/")
+    normalized = (location or "").replace(os.sep, "/")
     if "/site-packages/" not in normalized and "/dist-packages/" not in normalized:
         raise EvidenceRefusal("untrusted_binding_source")
 
@@ -349,20 +347,28 @@ def _assert_trusted_psycopg(module: object) -> None:
 def _load_binding():
     """Import the shared binding module -- DEFERRED past main()'s governance gate.
 
-    Imports and asserts ``psycopg`` FIRST -- before this repo's package parent is on
-    sys.path -- so a planted repo-tree ``psycopg.py`` cannot shadow the installed
-    ``site-packages`` psycopg (``_assert_trusted_psycopg``, review round-3 A2). Only THEN
-    puts this repo's ``apps/mutation-seam/scripts`` at the FRONT of sys.path (deduped) so
+    Vets psycopg's ORIGIN via ``importlib.util.find_spec`` and refuses an untrusted
+    location BEFORE ``import psycopg`` executes any module body (Codex-c5 P1): a PYTHONPATH
+    ``psycopg.py`` shadow must never run its code with the DSN already in the environment.
+    Only after psycopg is imported (and re-checked) does it put this repo's
+    ``apps/mutation-seam/scripts`` at the FRONT of sys.path (deduped) so
     ``from pm_ops_p0.binding`` binds THIS repo's ``binding.py`` -- the same file
-    ``build_provenance`` hashes -- rather than a foreign/stale ``pm_ops_p0`` on an earlier
-    PYTHONPATH entry (Codex-final P2a). Re-ordering here cannot re-trigger a shadowed
-    psycopg import because psycopg is already imported and cached. Reached only once the
-    pristine + merged-HEAD gate has proven no untracked shadow module exists (finding 1).
-    Returns (TargetBindingError, connect_bound).
+    ``build_provenance`` hashes -- not a foreign/stale ``pm_ops_p0`` on an earlier entry
+    (Codex-final P2a). Reached only once the pristine + merged-HEAD gate has proven no
+    untracked shadow module exists (finding 1). Returns (TargetBindingError, connect_bound).
     """
+    import importlib.util
+
+    spec = importlib.util.find_spec("psycopg")  # locates WITHOUT executing the module
+    origin = spec.origin if spec else None
+    if not origin:
+        raise EvidenceRefusal("untrusted_binding_source")
+    _assert_trusted_location(origin)  # vet the resolved origin BEFORE any code runs
     import psycopg
 
-    _assert_trusted_psycopg(psycopg)
+    _assert_trusted_location(
+        getattr(psycopg, "__file__", "") or ""
+    )  # belt: file matches
     scripts_dir = os.path.dirname(_SCRIPT_DIR)
     while scripts_dir in sys.path:
         sys.path.remove(scripts_dir)

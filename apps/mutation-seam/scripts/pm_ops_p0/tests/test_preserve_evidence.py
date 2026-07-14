@@ -453,25 +453,23 @@ def test_config_hidden_untracked_shadow_still_rejected():
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-def test_assert_trusted_psycopg_belt():
-    # lens-A A2: whatever placed a shadow on sys.path, the imported psycopg must resolve
-    # from an installed site-packages/dist-packages location, never a repo-tree psycopg.py.
-    class _Mod:
-        pass
-
-    shadow = _Mod()
-    shadow.__file__ = "/home/olares/code/apex/apex-power-ops-platform/apps/mutation-seam/scripts/psycopg.py"
+def test_assert_trusted_location_belt():
+    # lens-A A2 / Codex-c5 P1: a repo-tree psycopg location is refused (the origin is vetted
+    # via find_spec BEFORE import); an installed site-packages location is accepted.
+    repo_shadow = (
+        "/home/olares/code/apex/apex-power-ops-platform"
+        "/apps/mutation-seam/scripts/psycopg.py"
+    )
     raised = False
     try:
-        pe._assert_trusted_psycopg(shadow)
+        pe._assert_trusted_location(repo_shadow)
     except pe.EvidenceRefusal as exc:
         raised = True
         assert exc.code == "untrusted_binding_source", exc.code
-    assert raised, "a repo-tree psycopg shadow must be refused"
-
-    installed = _Mod()
-    installed.__file__ = "/repo/.venv/lib/python3.12/site-packages/psycopg/__init__.py"
-    pe._assert_trusted_psycopg(installed)  # installed location -> no raise
+    assert raised, "a repo-tree psycopg location must be refused"
+    pe._assert_trusted_location(
+        "/repo/.venv/lib/python3.12/site-packages/psycopg/__init__.py"
+    )  # installed location -> no raise
 
 
 # -------------------------------------------------------------------- custody

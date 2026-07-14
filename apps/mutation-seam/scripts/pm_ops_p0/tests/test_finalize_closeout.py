@@ -296,6 +296,26 @@ def test_finalize_index_binds_every_artifact_by_sha256():
         assert stat.S_IMODE(out.stat().st_mode) == 0o400
 
 
+def test_finalize_index_records_custody_relative_subpath():
+    # Codex-c5 P2: an operator artifact in a subdir is recorded by its custody-relative
+    # path, not a bare basename that could collide with a flat file of the same name.
+    with _tmp() as tmp:
+        custody = _make_custody(tmp)
+        (custody / "captures").mkdir()
+        (custody / "captures" / "openapi_seam.json").write_bytes(
+            b'{"openapi": "3.1.0", "paths": {}}\n'
+        )
+        spec = _full_spec()
+        spec["categories"][0]["artifacts"] = [
+            "captures/openapi_seam.json"
+        ]  # cat 1, subdir
+        out = custody / "closeout_index.json"
+        fc.finalize(_write_spec(tmp, spec), custody, out, clock=CLOCK)
+        idx = json.loads(out.read_text())
+        cat1 = next(c for c in idx["categories"] if c["category"] == 1)
+        assert cat1["artifacts"][0]["name"] == "captures/openapi_seam.json"
+
+
 def test_finalize_no_clobber():
     with _tmp() as tmp:
         custody = _make_custody(tmp)
