@@ -505,15 +505,18 @@ def test_git_env_scrubs_injected_secrets_and_redirects():
 
 
 def test_isolation_gate():
-    # Codex-c14 P1: the CLI must run under python -I (isolated); else refuse fail-closed
-    assert pe._isolation_gate(True) is None  # isolated -> proceed
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(buf):
-        rc = pe._isolation_gate(False)
-    out = buf.getvalue()
-    assert rc == 1
-    assert "interpreter_not_isolated" in out
-    assert "RESULT FAIL" in out
+    # RI2 finding 1: -I alone does NOT imply -S, so site still runs and executes an
+    # editable-install .pth BEFORE the gate (with the injected DSN present). The CLI now
+    # requires python -I -S (isolated AND no-site); any weaker interpreter is refused.
+    assert pe._isolation_gate(True, True) is None  # -I -S -> proceed
+    for isolated, no_site in ((True, False), (False, True), (False, False)):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = pe._isolation_gate(isolated, no_site)
+        out = buf.getvalue()
+        assert rc == 1, (isolated, no_site)
+        assert "interpreter_not_isolated_no_site" in out
+        assert "RESULT FAIL" in out
 
 
 # -------------------------------------------------------------------- custody

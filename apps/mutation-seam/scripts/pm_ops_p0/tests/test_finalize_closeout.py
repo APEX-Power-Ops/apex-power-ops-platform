@@ -337,13 +337,15 @@ def test_finalize_reset_log_route_json_fails():
 
 
 def test_finalizer_isolation_gate():
-    # Codex-c16 P2: the finalizer CLI must run under python -I (isolated)
-    assert fc._isolation_gate(True) is None
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(buf):
-        rc = fc._isolation_gate(False)
-    assert rc == 1
-    assert "interpreter_not_isolated" in buf.getvalue()
+    # RI2 finding 1: the finalizer CLI must run under python -I -S (isolated AND no-site),
+    # so an executable .pth cannot run before the gate; any weaker interpreter is refused.
+    assert fc._isolation_gate(True, True) is None
+    for isolated, no_site in ((True, False), (False, True), (False, False)):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = fc._isolation_gate(isolated, no_site)
+        assert rc == 1, (isolated, no_site)
+        assert "interpreter_not_isolated_no_site" in buf.getvalue()
 
 
 def test_finalize_stale_provenance_attestation_rejected():

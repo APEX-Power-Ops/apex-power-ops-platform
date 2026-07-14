@@ -703,22 +703,26 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _isolation_gate(isolated: bool) -> int | None:
-    """Refuse the CLI unless the interpreter is isolated (``python -I``).
+def _isolation_gate(isolated: bool, no_site: bool) -> int | None:
+    """Refuse the CLI unless the interpreter is isolated AND no-site (``python -I -S``).
 
-    ``-I`` makes Python ignore ``PYTHONPATH``, the user site, and the unsafe ``sys.path[0]``
-    (cwd / script dir), so NO environment-injected path -- including a ``PYTHONPATH`` entry
-    pointing at a repo subdir -- can shadow an import before the pristine gate. Enforcing it
-    closes the import-shadow class at the interpreter level (Codex-c14 P1); the sys.path
-    preamble above is then belt-and-suspenders. Returns a non-None exit code when NOT isolated.
+    ``-I`` alone is INSUFFICIENT (RI2 finding 1): it implies ``-s``/``-E``/``-P`` (no user
+    site, no ``PYTHONPATH``, no unsafe ``sys.path[0]``) but NOT ``-S``, so the ``site``
+    module still runs and still EXECUTES any ``.pth`` line in site-packages -- Python ships
+    an editable-install ``.pth`` -- during interpreter startup, BEFORE this script's
+    preamble, the governance gate, or target binding, with the injected production DSN
+    already in the environment. Only ``-S`` (``no_site``) suppresses ``site`` processing and
+    with it ``.pth`` execution. Requiring both closes the pre-guard code-execution window;
+    the module-top ``sys.path`` preamble and ``_load_binding`` origin vetting are then
+    belt-and-suspenders. Returns a non-None exit code when NOT (isolated and no_site).
     """
-    if not isolated:
+    if not (isolated and no_site):
         print("RESULT FAIL")
-        print("FAILURE interpreter_not_isolated")
+        print("FAILURE interpreter_not_isolated_no_site")
         return 1
     return None
 
 
 if __name__ == "__main__":
-    _rc = _isolation_gate(sys.flags.isolated)
+    _rc = _isolation_gate(sys.flags.isolated, sys.flags.no_site)
     sys.exit(_rc if _rc is not None else main())

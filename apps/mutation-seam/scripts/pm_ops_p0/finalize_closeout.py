@@ -585,19 +585,22 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _isolation_gate(isolated: bool) -> int | None:
-    """Refuse the CLI unless the interpreter is isolated (``python -I``) -- Codex-c16 P2.
+def _isolation_gate(isolated: bool, no_site: bool) -> int | None:
+    """Refuse the CLI unless the interpreter is isolated AND no-site (``python -I -S``).
 
-    Additional contract on top of the sys.path preamble; returns a non-None exit code when
-    NOT isolated.
+    ``-I`` alone does not imply ``-S``, so ``site`` still runs and executes any ``.pth``
+    line in site-packages before this script starts (RI2 finding 1). The finalizer is
+    stdlib-only, so ``-S`` costs it nothing and closes the pre-guard ``.pth`` window;
+    requiring both mirrors ``preserve_evidence``. Returns a non-None exit code when NOT
+    (isolated and no_site).
     """
-    if not isolated:
+    if not (isolated and no_site):
         print("RESULT FAIL")
-        print("FAILURE interpreter_not_isolated")
+        print("FAILURE interpreter_not_isolated_no_site")
         return 1
     return None
 
 
 if __name__ == "__main__":
-    _rc = _isolation_gate(sys.flags.isolated)
+    _rc = _isolation_gate(sys.flags.isolated, sys.flags.no_site)
     sys.exit(_rc if _rc is not None else main())
