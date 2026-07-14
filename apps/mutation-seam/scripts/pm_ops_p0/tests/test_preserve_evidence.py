@@ -194,6 +194,132 @@ def test_p0a_sql_default_acl_tables_and_functions():
     assert "'r'" in sql and "'f'" in sql  # both objtypes
 
 
+# --------------------------------------------- live-path choreography (mocked)
+
+
+class _FakeCursor:
+    def __init__(self, recorder):
+        self._recorder = recorder
+        self.description = None
+
+    def execute(self, sql):
+        self._recorder.append(sql)
+
+    def fetchall(self):
+        return []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+class _FakeConn:
+    def __init__(self, host, user, recorder):
+        self.info = type("Info", (), {"host": host, "user": user, "hostaddr": ""})()
+        self._recorder = recorder
+
+    def cursor(self):
+        return _FakeCursor(self._recorder)
+
+    def close(self):
+        pass
+
+
+def test_collect_evidence_choreography_and_env_scrub():
+    import pm_ops_p0.binding as binding
+    import psycopg
+
+    recorder: list[str] = []
+    env_at_connect: dict[str, object] = {}
+
+    def fake_connect(**kwargs):
+        for k in binding.PG_ENV_OVERRIDES:
+            env_at_connect[k] = os.environ.get(k)
+        return _FakeConn(kwargs["host"], kwargs["user"], recorder)
+
+    orig = psycopg.connect
+    psycopg.connect = fake_connect
+    os.environ["PGHOST"] = "leak.example"
+    try:
+        dsn = f"host=db.{REF}.supabase.co user=postgres password=pw dbname=postgres"
+        artifacts = pe.collect_evidence(dsn, REF)
+    finally:
+        psycopg.connect = orig
+        os.environ.pop("PGHOST", None)
+
+    # exact guarded read-only choreography
+    expected = (
+        [pe._BEGIN, pe._GUARD] + [sql for _, sql in pe._EVIDENCE_STEPS] + [pe._COMMIT]
+    )
+    assert recorder == expected
+    # PG* overrides were scrubbed at the moment of connect
+    assert env_at_connect.get("PGHOST") is None
+    assert "00_p0a_snapshot.sql" in artifacts
+
+
+def test_collect_evidence_rejects_wrong_host_before_any_query():
+    import psycopg
+
+    recorder: list[str] = []
+
+    def fake_connect(**kwargs):
+        return _FakeConn("evil.attacker.example", "postgres", recorder)
+
+    orig = psycopg.connect
+    psycopg.connect = fake_connect
+    try:
+        raised = False
+        try:
+            pe.collect_evidence(
+                f"host=db.{REF}.supabase.co user=postgres dbname=postgres", REF
+            )
+        except pe.TargetBindingError as exc:
+            raised = True
+            assert exc.code == "connection_host_mismatch", exc.code
+    finally:
+        psycopg.connect = orig
+    assert raised
+    assert recorder == []  # the post-connect re-check gates BEFORE any query runs
+
+
+def test_main_value_silent_when_collection_raises():
+    import logging
+
+    sentinel = "leaky-host-9.9.9.9.internal"
+
+    def boom(dsn, expect_ref):
+        raise RuntimeError(f"could not connect to {sentinel}:5432")
+
+    records: list[str] = []
+
+    class _Cap(logging.Handler):
+        def emit(self, record):
+            records.append(self.format(record))
+
+    handler = _Cap()
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    orig_collect = pe.collect_evidence
+    pe.collect_evidence = boom
+    pe.log.addHandler(handler)
+    pe.log.setLevel(logging.DEBUG)
+    os.environ["PM_OPS_P0_TEST_DSN"] = "host=whatever user=x dbname=postgres"
+    try:
+        rc, out = _run_main(
+            ["--expect-project-ref", REF, "--dsn-env", "PM_OPS_P0_TEST_DSN"]
+        )
+    finally:
+        pe.collect_evidence = orig_collect
+        pe.log.removeHandler(handler)
+        os.environ.pop("PM_OPS_P0_TEST_DSN", None)
+    assert rc != 0
+    assert "connection_or_query_failed" in out
+    # the raw driver message (which can carry host/IP) never reaches stdout or logs
+    assert sentinel not in out
+    assert all(sentinel not in m for m in records)
+
+
 # ------------------------------------------------------------------- runner
 
 

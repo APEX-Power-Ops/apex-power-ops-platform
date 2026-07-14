@@ -17,6 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from pm_ops_p0.binding import (  # noqa: E402
+    PG_ENV_OVERRIDES,
     TargetBindingError,
     assert_bound_connection,
     bind_target,
@@ -232,21 +233,23 @@ def test_accepted_params_carry_no_reroute_keys():
 # -------------------------------------------------------------- env scrub
 
 
-def test_scrubbed_pg_env_removes_and_restores():
-    saved = {k: os.environ.get(k) for k in ("PGHOSTADDR", "PGHOST", "PGPORT")}
+def test_scrubbed_pg_env_removes_all_overrides_and_restores():
+    # drive the actual scrub list, so adding/removing a var is covered automatically
+    names = list(PG_ENV_OVERRIDES)
+    assert "PGSERVICE" in names and "PGSSLMODE" in names and "PGSSLROOTCERT" in names
+    saved = {k: os.environ.get(k) for k in names}
     try:
-        os.environ["PGHOSTADDR"] = "9.9.9.9"
-        os.environ["PGHOST"] = "leak.example"
-        os.environ.pop("PGPORT", None)
+        # all present except the last (absent), exercising both restore branches
+        for k in names[:-1]:
+            os.environ[k] = f"leak-{k}"
+        os.environ.pop(names[-1], None)
         with scrubbed_pg_env():
-            assert "PGHOSTADDR" not in os.environ
-            assert "PGHOST" not in os.environ
-            assert "PGPORT" not in os.environ
-            os.environ["PGHOSTADDR"] = "should-not-survive"  # inner leak
-        # restored to pre-context values
-        assert os.environ.get("PGHOSTADDR") == "9.9.9.9"
-        assert os.environ.get("PGHOST") == "leak.example"
-        assert "PGPORT" not in os.environ
+            for k in names:
+                assert k not in os.environ, k
+            os.environ[names[0]] = "should-not-survive"  # inner leak
+        for k in names[:-1]:
+            assert os.environ.get(k) == f"leak-{k}", k
+        assert names[-1] not in os.environ  # was absent -> stays absent
     finally:
         for k, v in saved.items():
             if v is None:
@@ -259,24 +262,48 @@ def test_scrubbed_pg_env_removes_and_restores():
 
 
 class _StubInfo:
-    def __init__(self, host, hostaddr=""):
+    def __init__(self, host, user="", hostaddr=""):
         self.host = host
+        self.user = user
         self.hostaddr = hostaddr
 
 
 class _StubConn:
-    def __init__(self, host, hostaddr=""):
-        self.info = _StubInfo(host, hostaddr)
+    def __init__(self, host, user="", hostaddr=""):
+        self.info = _StubInfo(host, user, hostaddr)
 
 
-def test_assert_bound_connection_accepts_direct_and_pooler():
+def test_assert_bound_connection_accepts_direct_and_valid_pooler():
+    # direct form: exact host is sufficient (no user constraint)
     assert_bound_connection(_StubConn(f"db.{REF}.supabase.co"), REF)
-    assert_bound_connection(_StubConn("aws-0-us-east-1.pooler.supabase.com"), REF)
+    # pooler form REQUIRES the tenant user postgres.<ref> (host alone is shared)
+    assert_bound_connection(
+        _StubConn("aws-0-us-east-1.pooler.supabase.com", user=f"postgres.{REF}"), REF
+    )
+
+
+def test_assert_bound_connection_rejects_pooler_wrong_user():
+    # the pooler host is multi-tenant; a wrong tenant user must be rejected
+    try:
+        assert_bound_connection(
+            _StubConn(
+                "aws-0-us-east-1.pooler.supabase.com", user="postgres.someotherproject"
+            ),
+            REF,
+        )
+    except TargetBindingError as exc:
+        assert exc.code == "connection_user_mismatch", exc.code
+        assert "someotherproject" not in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("expected a connection_user_mismatch reject")
 
 
 def test_assert_bound_connection_rejects_wrong_host_value_silently():
     try:
-        assert_bound_connection(_StubConn("evil.attacker.example", "6.6.6.6"), REF)
+        assert_bound_connection(
+            _StubConn("evil.attacker.example", user="postgres.x", hostaddr="6.6.6.6"),
+            REF,
+        )
     except TargetBindingError as exc:
         assert exc.code == "connection_host_mismatch", exc.code
         assert "evil.attacker.example" not in str(exc)

@@ -29,9 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pm_ops_p0.binding import (  # noqa: E402
     TargetBindingError,
-    assert_bound_connection,
-    bind_target,
-    scrubbed_pg_env,
+    connect_bound,
 )
 
 PROJECT_REF = "fxoyniqnrlkxfligbxmg"
@@ -122,6 +120,10 @@ _Q_E = r"""-- (e) SECURITY DEFINER discovery. RELIABLE primary signals: name_ref
 --     depends_on_targets (pg_depend) is a SUPPLEMENTARY signal that is INERT for PL/pgSQL bodies (Postgres
 --     records no dependency edge from a plpgsql body to referenced tables), so it does NOT fire for the 3
 --     plpgsql apparatus RPCs -- they are caught by name_refs_targets. in_scope_failclosed = OR of the three.
+--     Residual coverage gap (disclosed): a SECURITY DEFINER function writing a target only INDIRECTLY (via a
+--     helper, with no name token and no EXECUTE), or a secdef writer in ANOTHER Data-API-exposed schema
+--     (outside this public filter), is not flagged. P0-A output is operator-reviewed EVIDENCE, not an
+--     automated gate -- treat any unexpected secdef function as in-scope pending review.
 with tgt as (
   select oid from pg_class
   where relnamespace = 'public'::regnamespace and relname in ('projects','scopes','tasks','apparatus')
@@ -160,10 +162,14 @@ _EVIDENCE_STEPS: list[tuple[str, str]] = [
 
 
 def p0a_sql_text() -> str:
-    """Return the canonical guarded read-only P0-A SQL block (for the record + parity)."""
-    return "\n\n".join(
-        [_BEGIN, _GUARD, _Q_MARKERS, _Q_A, _Q_B, _Q_B2, _Q_C, _Q_D, _Q_E, _COMMIT]
-    )
+    """Return the canonical guarded read-only P0-A SQL block (design §2, byte-faithful).
+
+    This is the block archived as ``00_p0a_snapshot.sql`` — a faithful copy of the
+    published design §2 snapshot (guard + queries a-e). The in-band ``_Q_MARKERS``
+    query is a supplemental capture (§2 prose) recorded separately to
+    ``01_markers.txt`` and is deliberately NOT part of this canonical block (review L4).
+    """
+    return "\n\n".join([_BEGIN, _GUARD, _Q_A, _Q_B, _Q_B2, _Q_C, _Q_D, _Q_E, _COMMIT])
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -211,29 +217,36 @@ def _rows_to_text(cur: object) -> str:
     return "\n".join(lines) + "\n"
 
 
-def collect_evidence(params: dict[str, str], expect_ref: str) -> dict[str, str]:
+def collect_evidence(dsn: str, expect_ref: str) -> dict[str, str]:
     """Open a bound, read-only connection and capture the P0-A evidence set.
 
-    Connects inside a scrubbed PG* environment, re-checks the resolved host, runs
-    the guarded read-only transaction, and returns ``{filename: text}``. Live only
-    (not exercised by the offline suite).
+    Uses the shared ``connect_bound`` discipline (bind + scrubbed PG* env + connect
+    + post-connect re-check), then runs the guarded read-only transaction and
+    returns ``{filename: text}``. The live connect/query is not exercised by the
+    offline suite, but the choreography (execute order, env-scrub-at-connect, and
+    the pre-query host re-check) is verified offline via a fake connection.
     """
-    import psycopg  # local import keeps offline paths driver-light
-
     artifacts: dict[str, str] = {"00_p0a_snapshot.sql": p0a_sql_text()}
-    with scrubbed_pg_env():
-        with psycopg.connect(
-            **params, connect_timeout=CONNECT_TIMEOUT_SECONDS, autocommit=True
-        ) as conn:
-            assert_bound_connection(conn, expect_ref)  # post-connect host re-check
-            with conn.cursor() as cur:
-                cur.execute(_BEGIN)
-                cur.execute(_GUARD)
-                for filename, sql in _EVIDENCE_STEPS:
-                    cur.execute(sql)
-                    artifacts[filename] = _rows_to_text(cur)
-                cur.execute(_COMMIT)
+    with connect_bound(
+        dsn, expect_ref, connect_timeout=CONNECT_TIMEOUT_SECONDS, autocommit=True
+    ) as conn:
+        with conn.cursor() as cur:
+            cur.execute(_BEGIN)
+            cur.execute(_GUARD)
+            for filename, sql in _EVIDENCE_STEPS:
+                cur.execute(sql)
+                artifacts[filename] = _rows_to_text(cur)
+            cur.execute(_COMMIT)
     return artifacts
+
+
+def _write_restricted_file(path: Path, data: bytes) -> None:
+    """Create `path` atomically at mode 0400 (O_EXCL: no-clobber, no perm window)."""
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400)
+    try:
+        os.write(fd, data)
+    finally:
+        os.close(fd)
 
 
 def write_custody(
@@ -241,21 +254,26 @@ def write_custody(
 ) -> Path:
     """Write artifacts to ``<base_dir>/<clock>/`` (dir 0700, files 0400) + manifest.
 
-    No-clobber: a pre-existing run directory raises ``FileExistsError``.
+    Created atomically at restrictive modes under a tightened umask, so there is no
+    window where the run dir is world-searchable or a file world-readable before a
+    later chmod (review Codex-P2 / L5). No-clobber: a pre-existing run directory
+    (``mkdir`` without ``exist_ok``) or artifact (``O_EXCL``) raises ``FileExistsError``.
     """
     run_dir = Path(base_dir) / clock
-    run_dir.mkdir(parents=True)  # no exist_ok -> no-clobber
-    run_dir.chmod(0o700)
-    manifest_lines: list[str] = []
-    for name in sorted(artifacts):
-        data = artifacts[name].encode()
-        path = run_dir / name
-        path.write_bytes(data)
-        path.chmod(0o400)
-        manifest_lines.append(f"{hashlib.sha256(data).hexdigest()}  {name}")
-    manifest = run_dir / MANIFEST_NAME
-    manifest.write_text("\n".join(manifest_lines) + "\n")
-    manifest.chmod(0o400)
+    old_umask = os.umask(0o077)
+    try:
+        # umask 0o077 keeps every created dir (leaf + any parents) at 0o700
+        run_dir.mkdir(mode=0o700, parents=True)  # no exist_ok -> no-clobber
+        manifest_lines: list[str] = []
+        for name in sorted(artifacts):
+            data = artifacts[name].encode()
+            _write_restricted_file(run_dir / name, data)
+            manifest_lines.append(f"{hashlib.sha256(data).hexdigest()}  {name}")
+        _write_restricted_file(
+            run_dir / MANIFEST_NAME, ("\n".join(manifest_lines) + "\n").encode()
+        )
+    finally:
+        os.umask(old_umask)
     return run_dir
 
 
@@ -269,22 +287,22 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
     args = build_parser().parse_args(argv)
 
-    # --- pre-connect binding (fails closed; never connects on refusal) ---
+    # --- pre-flight refusals (fail closed before reaching the DB layer) ---
     try:
         if args.expect_project_ref != PROJECT_REF:
             raise EvidenceRefusal("unexpected_project_ref")
         dsn = os.getenv(args.dsn_env)
         if not dsn:
             raise EvidenceRefusal("dsn_unset")
-        params = bind_target(dsn, expect_ref=args.expect_project_ref)
-    except (EvidenceRefusal, TargetBindingError) as exc:
+    except EvidenceRefusal as exc:
         return _fail(exc.code)
 
-    # --- live read-only capture ---
+    # --- live read-only capture (connect_bound binds BEFORE opening any socket:
+    #     a wrong-project DSN raises TargetBindingError with no connection made) ---
     try:
-        artifacts = collect_evidence(params, args.expect_project_ref)
+        artifacts = collect_evidence(dsn, args.expect_project_ref)
     except TargetBindingError as exc:
-        return _fail(exc.code)  # post-connect host mismatch
+        return _fail(exc.code)  # bind reject (pre-connect) or post-connect mismatch
     except Exception as exc:  # noqa: BLE001
         log.warning("evidence collection failed: %s", type(exc).__name__)  # class only
         return _fail("connection_or_query_failed")

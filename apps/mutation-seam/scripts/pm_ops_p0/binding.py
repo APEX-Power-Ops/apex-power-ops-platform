@@ -10,27 +10,31 @@ Value-silence is absolute: no function here ever raises, prints, or logs a DSN,
 password, host, or a raw driver message. Failures surface only as `TargetBindingError`
 whose message is one of a small set of STABLE CODES.
 
-Defence-in-depth (the design's §2 discipline), split by responsibility so it
-stays offline-testable:
+Defence-in-depth (the design's §2 discipline). To avoid a caller getting only
+part of the protection (review HIGH-1/M1), the full discipline is bundled into a
+single `connect_bound()` context manager that BOTH consumers should use:
 
 * `bind_target`            -- parse + reject + anchored match + force verify-full
                               (pure; returns params). The `verify-full` in the
-                              returned params means the server TLS cert must match
-                              the expected host, so a wrong-IP reroute fails the
-                              cert check even before the post-connect re-check.
+                              returned params is the AUTHORITATIVE defence against
+                              an IP reroute: the server TLS cert must match the
+                              expected host, so a wrong-IP target fails the cert
+                              check regardless of any env override.
 * `scrubbed_pg_env`        -- context manager that removes the PG* environment
                               overrides libpq would otherwise merge at connect time,
                               restoring them on exit.
-* `assert_bound_connection`-- post-connect re-check of `Connection.info` host.
+* `assert_bound_connection`-- post-connect name-level cross-check of the resolved
+                              `Connection.info` (host, and pooler tenant user).
+* `connect_bound`          -- bind + scrub + connect + re-check, in one call.
 
 `bind_target` is a pure function so the security matrix is fully testable without
-a database; the caller opens the connection inside `scrubbed_pg_env()` and then
-calls `assert_bound_connection`.
+a database.
 """
 
 from __future__ import annotations
 
 import os
+import threading
 from contextlib import contextmanager
 from typing import Iterator
 
@@ -46,13 +50,30 @@ CODE_MISSING_USER = "dsn_missing_user"
 CODE_HOST_NOT_BOUND = "dsn_host_not_bound_to_project"
 CODE_USER_NOT_BOUND = "dsn_user_not_bound_to_project"
 CODE_CONN_HOST_MISMATCH = "connection_host_mismatch"
+CODE_CONN_USER_MISMATCH = "connection_user_mismatch"
 
 # PG* environment variables libpq merges at connect time for params absent from
 # the string. An env-supplied hostaddr/service could reroute the actual TCP
-# target while the DSN string passes every reject; scrub them before connecting.
-PG_ENV_OVERRIDES = ("PGHOSTADDR", "PGSERVICE", "PGHOST", "PGPORT", "PGSSLMODE")
+# target, and an env-supplied SSL trust anchor could point verify-full at a rogue
+# CA (verify-full is the load-bearing control, so its trust store is scrubbed too
+# — review LOW-1). Scrub all of them before connecting.
+PG_ENV_OVERRIDES = (
+    "PGHOSTADDR",
+    "PGSERVICE",
+    "PGHOST",
+    "PGPORT",
+    "PGSSLMODE",
+    "PGSSLROOTCERT",
+    "PGSSLCERT",
+    "PGSSLKEY",
+)
 
 _POOLER_SUFFIX = ".pooler.supabase.com"
+
+# scrubbed_pg_env mutates process-global os.environ, so serialise the brief
+# scrub+connect window against concurrent callers (e.g. a threadpooled readiness
+# endpoint) — review LOW-2.
+_CONNECT_LOCK = threading.Lock()
 
 
 class TargetBindingError(Exception):
@@ -71,7 +92,9 @@ def _is_pooler_host(host: str) -> bool:
     """True for a Supavisor pooler host `<single-label>.pooler.supabase.com`.
 
     Requires a single, non-empty label before the anchored suffix, which rejects
-    suffix-injection like `db.<ref>.supabase.co.pooler.supabase.com`.
+    suffix-injection like `db.<ref>.supabase.co.pooler.supabase.com`. Note the
+    pooler host is SHARED/multi-tenant — it does not identify a project; the ref
+    binding for the pooler form is the tenant username `postgres.<ref>`.
     """
     if not host.endswith(_POOLER_SUFFIX):
         return False
@@ -113,6 +136,9 @@ def bind_target(dsn: str, expect_ref: str) -> dict[str, str]:
     # (4) anchored host/user match against the expected project
     _assert_anchored(host, user, expect_ref)
 
+    # reconstruct an explicit whitelist: any exotic/injected libpq keyword in the
+    # DSN (service, sslrootcert, options, a second host=, ...) is dropped here and
+    # never reaches psycopg.connect.
     params: dict[str, str] = {
         "host": host,
         "user": user,
@@ -146,7 +172,8 @@ def scrubbed_pg_env() -> Iterator[None]:
     """Remove PG* environment overrides for the duration of the context.
 
     Values present beforehand are restored on exit; anything the inner code sets
-    is cleared, so a leaked override cannot survive the context.
+    is cleared, so a leaked override cannot survive the context. Mutates global
+    `os.environ` — callers in a concurrent path must serialise (see `connect_bound`).
     """
     saved = {key: os.environ.pop(key, None) for key in PG_ENV_OVERRIDES}
     try:
@@ -160,14 +187,59 @@ def scrubbed_pg_env() -> Iterator[None]:
 
 
 def assert_bound_connection(conn: object, expect_ref: str) -> None:
-    """Re-check an open connection's `Connection.info` host binds to `expect_ref`.
+    """Post-connect NAME-level cross-check that the connection binds to `expect_ref`.
 
-    Belt-and-suspenders after `bind_target` + `verify-full`; raises a value-free
-    `TargetBindingError(connection_host_mismatch)` if the resolved host is not the
-    expected direct or pooler host.
+    `verify-full` (forced by `bind_target`) is the AUTHORITATIVE defence against an
+    IP reroute — the server cert must match the expected host. This function is a
+    belt-and-suspenders name-level check: the resolved `Connection.info.host` must
+    be the expected direct or pooler host, and for the pooler form (a shared,
+    multi-tenant host) the tenant `user` must be `postgres.<ref>`. `hostaddr` is
+    not equality-checked because managed Supabase IPs rotate (review MEDIUM-1/L3).
+
+    Raises a value-free `TargetBindingError` on mismatch.
     """
     info = getattr(conn, "info", None)
     host = (getattr(info, "host", "") or "").strip()
-    if host == f"db.{expect_ref}.supabase.co" or _is_pooler_host(host):
+    if host == f"db.{expect_ref}.supabase.co":
         return
+    if _is_pooler_host(host):
+        user = (getattr(info, "user", "") or "").strip()
+        if user == f"postgres.{expect_ref}":
+            return
+        raise TargetBindingError(CODE_CONN_USER_MISMATCH)
     raise TargetBindingError(CODE_CONN_HOST_MISMATCH)
+
+
+@contextmanager
+def connect_bound(
+    dsn: str,
+    expect_ref: str,
+    *,
+    connect_timeout: int = 10,
+    autocommit: bool = False,
+) -> Iterator[object]:
+    """The full binding discipline in ONE call — the entry point both P0-A and P0-E use.
+
+    bind_target (rejects before any socket) -> connect inside a scrubbed PG* env
+    (serialised against concurrent callers) -> post-connect re-check. Yields an
+    open psycopg connection guaranteed bound to `expect_ref`; closes it on exit.
+    Value-silent: a bind/reroute mismatch raises `TargetBindingError`; the connect
+    itself may raise a psycopg error the caller must catch WITHOUT echoing it.
+    """
+    import psycopg
+
+    params = bind_target(dsn, expect_ref)  # raises before any socket is opened
+    with _CONNECT_LOCK:
+        with scrubbed_pg_env():
+            conn = psycopg.connect(
+                **params, connect_timeout=connect_timeout, autocommit=autocommit
+            )
+    try:
+        assert_bound_connection(conn, expect_ref)
+    except BaseException:
+        conn.close()
+        raise
+    try:
+        yield conn
+    finally:
+        conn.close()
