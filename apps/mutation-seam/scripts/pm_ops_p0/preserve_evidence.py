@@ -18,24 +18,35 @@ from __future__ import annotations
 import os
 import sys
 
-# Runtime-integrity preamble (review round 3, finding 1). A planted, UNTRACKED module on
-# sys.path (e.g. pm_ops_p0/subprocess.py or scripts/psycopg.py) would otherwise be
-# imported at module load -- before any governance guard -- and run attacker code with the
+# Runtime-integrity preamble (review round 3, finding 1). A planted module on sys.path
+# (an untracked pm_ops_p0/subprocess.py, or a PYTHONPATH/cwd/user-site file) would otherwise
+# be imported at module load -- before any governance guard -- and run attacker code with the
 # injected production DSN in the environment. Two defences, in order:
-#   (1) here: drop every attacker-writable LAUNCHER entry from sys.path -- this script's own
-#       dir (direct-file `python /abs/.../preserve_evidence.py` puts it on sys.path[0]), the
-#       cwd, and empty ("" == cwd) entries (`python -m` / cwd-relative launchers) -- so no
-#       sibling/cwd file can shadow the stdlib imports below (sys/os are already loaded ->
-#       unshadowable). Keeping "" was an unenforced convention that left a cwd-launcher
-#       bypass (Codex-c13 P2); it is now dropped too.
+#   (1) here, BEFORE any shadowable import: restrict sys.path to entries UNDER an interpreter
+#       install prefix (sys.*prefix), using only sys+os (already loaded -> unshadowable). That
+#       drops EVERY attacker-writable/injected entry -- PYTHONPATH, cwd, "", the script dir,
+#       the user site -- regardless of launcher or of whether -I was passed (Codex-c15 P1),
+#       so no planted module can shadow the stdlib imports below (nor psycopg later).
+#       pm_ops_p0 is already imported (or is re-exposed post-gate by _load_binding), so its
+#       submodules resolve via the package __path__, not sys.path.
 #   (2) main(): refuse unless the tree is pristine (no untracked files) AND HEAD equals the
 #       freshly-fetched origin/main tip -- so a planted shadow is rejected BEFORE
 #       pm_ops_p0.binding (hence psycopg) is imported. That import is DEFERRED to
 #       _load_binding(), reached only past the gate, and never runs at module load.
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-_CWD = os.path.abspath(os.getcwd())
+_TRUSTED_SYS_PREFIXES = tuple(
+    os.path.realpath(getattr(sys, _attr))
+    for _attr in ("prefix", "base_prefix", "exec_prefix", "base_exec_prefix")
+    if getattr(sys, _attr, "")
+)
 sys.path[:] = [
-    p for p in sys.path if p and os.path.abspath(p) not in (_SCRIPT_DIR, _CWD)
+    _p
+    for _p in sys.path
+    if _p
+    and any(
+        os.path.realpath(_p) == _b or os.path.realpath(_p).startswith(_b + os.sep)
+        for _b in _TRUSTED_SYS_PREFIXES
+    )
 ]
 
 import argparse  # noqa: E402

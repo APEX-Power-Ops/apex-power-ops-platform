@@ -359,18 +359,29 @@ def finalize(
     prov_digest = _require_provenance(custody, manifest)
 
     index_categories: list[dict] = []
+    seen_operator_rels: set[str] = (
+        set()
+    )  # operator artifacts must be unique ACROSS categories
     for entry in sorted(spec, key=lambda e: e["category"]):
         category, source = entry["category"], entry["source"]
         artifacts: list[dict] = []
+        category_rels: set[str] = (
+            set()
+        )  # WITHIN-category distinctness, on RESOLVED paths
         for name in entry["artifacts"]:
             path = _resolve_within(custody, name)
             if path.is_symlink() or not path.is_file():
                 raise CloseoutError("artifact_not_regular")
             # the path RELATIVE to custody (not the basename) keys the manifest AND is what
-            # the index records, so a subdir artifact (captures/openapi.json) is identified
-            # exactly and cannot alias a flat manifest entry or another basename (Codex-c5
-            # P2 / lens-B A6). Flat script artifacts match; any nested name -> unhashed.
+            # the index records, so a subdir/`./`-aliased name is identified by the SAME
+            # resolved path -- no basename alias can slip a duplicate past the checks
+            # (Codex-c5/c12 P2 / lens-B A6). Flat script artifacts match; nested -> unhashed.
             rel = path.resolve().relative_to(base).as_posix()
+            if rel in category_rels:
+                raise CloseoutError(
+                    "duplicate_artifact"
+                )  # same file twice in one category
+            category_rels.add(rel)
             digest = _sha256_file(path)
             if source == "script":
                 recorded = manifest.get(rel)
@@ -380,11 +391,18 @@ def finalize(
                     )  # not covered by the tool manifest
                 if recorded != digest:
                     raise CloseoutError("hash_mismatch")
-            elif rel in manifest:
-                # an operator category (backend, /reset logs, ...) must be a NEW operator
-                # capture, never a manifest-listed script DB artifact standing in for it
-                # (Codex-c11 P2): that would pass a category with the wrong evidence entirely.
-                raise CloseoutError("operator_artifact_is_db")
+            else:  # operator
+                if rel in manifest:
+                    # an operator category (backend, /reset logs, ...) must be a NEW operator
+                    # capture, never a manifest-listed script DB artifact standing in for it
+                    # (Codex-c11 P2): that would pass a category with the wrong evidence.
+                    raise CloseoutError("operator_artifact_is_db")
+                if rel in seen_operator_rels:
+                    # one operator capture cannot satisfy two operator categories (e.g.
+                    # backend.json for both cat 7 and cat 8) -- script categories legitimately
+                    # share rollback files, operator ones do NOT (Codex-c15 P2).
+                    raise CloseoutError("operator_artifact_reused")
+                seen_operator_rels.add(rel)
             if category in HTTP_CATEGORIES:
                 _validate_http_artifact(category, path)
             elif path.name.endswith(".json"):
@@ -394,12 +412,9 @@ def finalize(
             artifacts.append(
                 {"name": rel, "sha256": digest, "bytes": path.stat().st_size}
             )
-        # DISTINCT + minimum enforced on RESOLVED paths, so `x.json` and `./x.json` cannot
-        # both count toward a multi-capture minimum (Codex-c12 P2).
-        rels = [a["name"] for a in artifacts]
-        if len(set(rels)) != len(rels):
-            raise CloseoutError("duplicate_artifact")
-        if len(rels) < CATEGORY_MIN_ARTIFACTS.get(category, 1):
+        # operator categories the runbook defines with multiple captures (cat 1 = OpenAPI for
+        # BOTH hosts) must bind at least that many DISTINCT resolved artifacts (Codex-c7/c12).
+        if len(category_rels) < CATEGORY_MIN_ARTIFACTS.get(category, 1):
             raise CloseoutError("category_incomplete")
         index_categories.append(
             {"category": category, "source": source, "artifacts": artifacts}

@@ -283,6 +283,15 @@ def test_finalize_operator_category_db_artifact_rejected():
     _expect_closeout_error(spec, "operator_artifact_is_db")
 
 
+def test_finalize_operator_artifact_reused_across_categories_rejected():
+    # Codex-c15 P2: one operator capture cannot satisfy two operator categories
+    spec = _full_spec()
+    spec["categories"][7]["artifacts"] = [
+        "backend.json"
+    ]  # cat 8 reuses cat 7's capture
+    _expect_closeout_error(spec, "operator_artifact_reused")
+
+
 def test_finalize_stale_provenance_attestation_rejected():
     # Codex-c11 P2: provenance must carry the schema-2 governed-run attestation, not just
     # hash-match. A stale record whose HASH still matches the manifest is refused on content.
