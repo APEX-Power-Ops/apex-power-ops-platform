@@ -308,32 +308,40 @@ def _validate_http_artifact(category: int, path: Path) -> None:
 
 
 def _validate_backend_artifact(path: Path) -> None:
-    """Category 7 (backend classification) must be a JSON object with a `backend` key.
+    """Category 7 must be a JSON object with BOTH a `backend` and a `source` key.
 
-    Binds the artifact to the category so a swap (e.g. a log file under cat 7) fails
-    (Codex-c16 P2). Deeper semantics -- that the backend value is correct -- stay
-    operator-review scope.
+    Part B/C define category 7 as the backend classification PLUS the source of the
+    inference (config/deploy), so `source` is required too (Codex-c17 P2). Whether the
+    values are correct stays operator-review scope.
     """
     try:
         doc = json.loads(path.read_text())
     except (ValueError, UnicodeDecodeError):
         raise CloseoutError("failed_operator_evidence") from None
-    if not (isinstance(doc, dict) and "backend" in doc):
+    if not (isinstance(doc, dict) and "backend" in doc and "source" in doc):
         raise CloseoutError("failed_operator_evidence")
 
 
 def _validate_reset_log_artifact(path: Path) -> None:
-    """Category 8 (Render POST /reset access logs) must reference the `/reset` route.
+    """Category 8 must be Render POST /reset ACCESS-LOG evidence, not a route def or GET line.
 
-    Binds the artifact to the category so a swap (e.g. backend.json under cat 8) fails
-    (Codex-c16 P2). Deeper semantics -- the right host / time window -- stay operator-review.
+    Requires the log text to reference both POST and the `/reset` route, and to NOT parse as
+    a JSON object (a copied route definition would). A `GET /reset` line or a route JSON is
+    therefore rejected (Codex-c17 P2). The right host / time window stays operator-review.
     """
     try:
         text = path.read_text()
     except (ValueError, UnicodeDecodeError):
         raise CloseoutError("failed_operator_evidence") from None
-    if "/reset" not in text:
+    if "POST" not in text or "/reset" not in text:
         raise CloseoutError("failed_operator_evidence")
+    try:
+        json.loads(text)
+    except ValueError:
+        return  # good: an access-log export is not a JSON document
+    raise CloseoutError(
+        "failed_operator_evidence"
+    )  # a JSON route def is not access-log evidence
 
 
 def _require_parseable_json(path: Path) -> None:

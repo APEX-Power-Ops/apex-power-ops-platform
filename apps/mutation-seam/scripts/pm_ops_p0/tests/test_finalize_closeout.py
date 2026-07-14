@@ -304,6 +304,38 @@ def test_finalize_operator_categories_not_swappable():
     _expect_closeout_error(spec, "failed_operator_evidence")
 
 
+def test_finalize_backend_missing_source_fails():
+    # Codex-c17 P2: category 7 requires BOTH `backend` and `source` (the inference source)
+    def mutate(tmp, custody):
+        (custody / "backend.json").write_bytes(b'{"backend": "render"}\n')  # no source
+
+    _expect_closeout_error(
+        _full_spec(), "failed_operator_evidence", custody_mutator=mutate
+    )
+
+
+def test_finalize_reset_log_get_line_fails():
+    # Codex-c17 P2: a GET /reset line is not POST access-log evidence
+    def mutate(tmp, custody):
+        (custody / "reset_logs.txt").write_bytes(b"GET /reset 200\n")
+
+    _expect_closeout_error(
+        _full_spec(), "failed_operator_evidence", custody_mutator=mutate
+    )
+
+
+def test_finalize_reset_log_route_json_fails():
+    # Codex-c17 P2: a copied route JSON (POST + /reset but parses as JSON) is not a log
+    def mutate(tmp, custody):
+        (custody / "reset_logs.txt").write_bytes(
+            b'{"path": "/reset", "method": "POST"}\n'
+        )
+
+    _expect_closeout_error(
+        _full_spec(), "failed_operator_evidence", custody_mutator=mutate
+    )
+
+
 def test_finalizer_isolation_gate():
     # Codex-c16 P2: the finalizer CLI must run under python -I (isolated)
     assert fc._isolation_gate(True) is None
