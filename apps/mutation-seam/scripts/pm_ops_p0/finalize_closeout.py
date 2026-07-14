@@ -151,13 +151,9 @@ def _assert_categories_complete(spec: list[dict]) -> None:
         expected = CATEGORY_SCRIPT_ARTIFACTS.get(entry["category"])
         if expected is not None and set(entry["artifacts"]) != expected:
             raise CloseoutError("category_artifacts_mismatch")
-        # the same file listed twice must not satisfy a multi-capture minimum (Codex-c8 P2)
-        if len(entry["artifacts"]) != len(set(entry["artifacts"])):
-            raise CloseoutError("duplicate_artifact")
-        # operator categories the runbook defines with multiple captures (category 1 =
-        # deployed OpenAPI for BOTH hosts) must bind at least that many DISTINCT (Codex-c7 P1b).
-        if len(entry["artifacts"]) < CATEGORY_MIN_ARTIFACTS.get(entry["category"], 1):
-            raise CloseoutError("category_incomplete")
+        # NOTE: the DISTINCT-artifact and per-category minimum checks are applied in
+        # finalize() on RESOLVED custody-relative paths, not raw spec strings, so aliases
+        # like `x.json` and `./x.json` cannot satisfy a multi-capture minimum (Codex-c12 P2).
 
 
 def _read_manifest(custody_dir: Path) -> dict[str, str]:
@@ -183,7 +179,9 @@ def _require_provenance(custody_dir: Path, manifest: dict[str, str]) -> str:
     too, not only cross-checked (Codex-final P2b).
     """
     prov = custody_dir / PROVENANCE_NAME
-    if not (prov.is_file() and PROVENANCE_NAME in manifest):
+    # reject a SYMLINK provenance (is_file follows links): the attestation must be a real file
+    # inside the custody bundle, not a link to JSON elsewhere (Codex-c12 P2).
+    if prov.is_symlink() or not prov.is_file() or PROVENANCE_NAME not in manifest:
         raise CloseoutError("provenance_missing")
     digest = _sha256_file(prov)
     if digest != manifest[PROVENANCE_NAME]:
@@ -210,6 +208,22 @@ def _require_provenance(custody_dir: Path, manifest: dict[str, str]) -> str:
     if not attested:
         raise CloseoutError("provenance_attestation_invalid")
     return digest
+
+
+def _verify_manifest_bundle(
+    custody: Path, base: Path, manifest: dict[str, str]
+) -> None:
+    """Every manifest-listed file must be a within-custody regular file with a matching hash.
+
+    Covers script artifacts no category references (00_p0a_snapshot.sql, 01_markers.txt): a
+    post-manifest edit to ANY manifest-bound byte must fail the closeout (Codex-c12 P2).
+    """
+    for name, sha in manifest.items():
+        path = _resolve_within(custody, name)
+        if path.is_symlink() or not path.is_file():
+            raise CloseoutError("artifact_not_regular")
+        if _sha256_file(path) != sha:
+            raise CloseoutError("hash_mismatch")
 
 
 def _resolve_within(custody_dir: Path, rel: str) -> Path:
@@ -371,9 +385,22 @@ def finalize(
             artifacts.append(
                 {"name": rel, "sha256": digest, "bytes": path.stat().st_size}
             )
+        # DISTINCT + minimum enforced on RESOLVED paths, so `x.json` and `./x.json` cannot
+        # both count toward a multi-capture minimum (Codex-c12 P2).
+        rels = [a["name"] for a in artifacts]
+        if len(set(rels)) != len(rels):
+            raise CloseoutError("duplicate_artifact")
+        if len(rels) < CATEGORY_MIN_ARTIFACTS.get(category, 1):
+            raise CloseoutError("category_incomplete")
         index_categories.append(
             {"category": category, "source": source, "artifacts": artifacts}
         )
+
+    # every manifest-listed file (incl. ones no category references, e.g. 00_p0a_snapshot.sql
+    # / 01_markers.txt) must currently be a within-custody regular file whose hash matches, so
+    # a post-manifest edit to ANY bound byte fails the closeout before all_artifacts_hashed is
+    # asserted (Codex-c12 P2).
+    _verify_manifest_bundle(custody, base, manifest)
 
     prov_path = custody / PROVENANCE_NAME
     index = {

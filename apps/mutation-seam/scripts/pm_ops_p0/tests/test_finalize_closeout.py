@@ -305,6 +305,37 @@ def test_finalize_stale_provenance_attestation_rejected():
     )
 
 
+def test_finalize_symlinked_provenance_rejected():
+    # Codex-c12 P2: a symlinked 00_provenance.json (even to valid, hash-matching JSON outside
+    # custody) is refused -- the attestation must be a real file in the bundle.
+    def mutate(tmp, custody):
+        external = tmp / "external_prov.json"
+        external.write_bytes(
+            SCRIPT_ARTS["00_provenance.json"]
+        )  # manifest hash still matches
+        (custody / "00_provenance.json").unlink()
+        (custody / "00_provenance.json").symlink_to(external)
+
+    _expect_closeout_error(_full_spec(), "provenance_missing", custody_mutator=mutate)
+
+
+def test_finalize_aliased_artifact_paths_rejected():
+    # Codex-c12 P2: `x.json` and `./x.json` resolve to the same file and must not both count
+    # toward the category-1 both-hosts minimum.
+    spec = _full_spec()
+    spec["categories"][0]["artifacts"] = ["openapi_seam.json", "./openapi_seam.json"]
+    _expect_closeout_error(spec, "duplicate_artifact")
+
+
+def test_finalize_tampered_uncategorized_manifest_file_fails():
+    # Codex-c12 P2: a manifest-listed file no category references (01_markers.txt) is still
+    # hash-verified, so a post-manifest edit fails the closeout.
+    def mutate(tmp, custody):
+        (custody / "01_markers.txt").write_bytes(b"TAMPERED\n")
+
+    _expect_closeout_error(_full_spec(), "hash_mismatch", custody_mutator=mutate)
+
+
 def test_finalize_category2_json_error_body_fails():
     # lens-B A1: a failed /reset capture that saved a JSON error body (valid JSON, wrong
     # shape) must fail — category 2 previously accepted ANY well-formed JSON.
