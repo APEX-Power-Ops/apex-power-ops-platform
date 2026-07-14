@@ -69,6 +69,15 @@ CATEGORY_SCRIPT_ARTIFACTS = {
     9: {"02_table_acl.txt", "06_default_acl.txt", "08_secdef_function_acl.txt"},
 }
 
+# Minimum artifact count for operator categories whose runbook definition names multiple
+# captures. Category 1 is "deployed OpenAPI for BOTH hosts", so it must bind >= 2 (Codex-c7
+# P1b). NOTE (operator-review scope, lens-B A4): the finalizer enforces STRUCTURE + integrity
+# (present, hashed, valid-JSON shape, exact /reset route, both OpenAPI hosts). Deeper
+# SEMANTICS of the operator captures — that each OpenAPI is a DIFFERENT host, the deployed
+# version/commit SHA is recorded, the log export covers the right window — are confirmed by
+# the operator at the closeout drift review (runbook Part C), not mechanized here.
+CATEGORY_MIN_ARTIFACTS = {1: 2}
+
 log = logging.getLogger("pm_ops_p0.finalize_closeout")
 
 
@@ -138,6 +147,10 @@ def _assert_categories_complete(spec: list[dict]) -> None:
         expected = CATEGORY_SCRIPT_ARTIFACTS.get(entry["category"])
         if expected is not None and set(entry["artifacts"]) != expected:
             raise CloseoutError("category_artifacts_mismatch")
+        # operator categories the runbook defines with multiple captures (category 1 =
+        # deployed OpenAPI for BOTH hosts) must bind at least that many (Codex-c7 P1b).
+        if len(entry["artifacts"]) < CATEGORY_MIN_ARTIFACTS.get(entry["category"], 1):
+            raise CloseoutError("category_incomplete")
 
 
 def _read_manifest(custody_dir: Path) -> dict[str, str]:
@@ -212,8 +225,14 @@ def _validate_http_artifact(category: int, path: Path) -> None:
         return
     if not isinstance(doc, dict) or not all(key in doc for key in required):
         raise CloseoutError("failed_http")
-    if category == 2 and "/reset" not in str(doc.get("path", "")):
-        raise CloseoutError("failed_http")  # the /reset route evidence must name /reset
+    if category == 2:
+        # the evidence must be the EXACT POST /reset route, not a substring match that a
+        # different route like /reset-status would satisfy (Codex-c7 P2).
+        if doc.get("path") != "/reset":
+            raise CloseoutError("failed_http")
+        method = doc.get("method")
+        if method is not None and str(method).upper() != "POST":
+            raise CloseoutError("failed_http")
 
 
 def _require_parseable_json(path: Path) -> None:

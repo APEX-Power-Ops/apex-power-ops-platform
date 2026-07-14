@@ -42,6 +42,7 @@ SCRIPT_ARTS = {
 # operator/HTTP-captured artifacts (NOT in the script manifest; finalizer hashes them)
 OPERATOR_ARTS = {
     "openapi_seam.json": b'{"openapi": "3.1.0", "paths": {}}\n',
+    "openapi_control.json": b'{"openapi": "3.1.0", "paths": {}}\n',
     "reset_route.json": b'{"path": "/reset", "security": []}\n',
     "backend.json": b'{"backend": "render", "source": "config"}\n',
     "reset_logs.txt": b"POST /reset 200\n",
@@ -66,7 +67,11 @@ def _make_custody(tmp: Path) -> Path:
 def _full_spec() -> dict:
     return {
         "categories": [
-            {"category": 1, "source": "operator", "artifacts": ["openapi_seam.json"]},
+            {
+                "category": 1,
+                "source": "operator",
+                "artifacts": ["openapi_seam.json", "openapi_control.json"],
+            },
             {"category": 2, "source": "operator", "artifacts": ["reset_route.json"]},
             {
                 "category": 3,
@@ -197,6 +202,23 @@ def test_finalize_category2_partial_shape_fails():
     _expect_closeout_error(_full_spec(), "failed_http", custody_mutator=mutate)
 
 
+def test_finalize_category1_requires_both_hosts():
+    # Codex-c7 P1b: category 1 = deployed OpenAPI for BOTH hosts; a single doc is incomplete
+    spec = _full_spec()
+    spec["categories"][0]["artifacts"] = ["openapi_seam.json"]
+    _expect_closeout_error(spec, "category_incomplete")
+
+
+def test_finalize_category2_wrong_route_fails():
+    # Codex-c7 P2: a different route (/reset-status) must not satisfy the exact /reset evidence
+    def mutate(tmp, custody):
+        (custody / "reset_route.json").write_bytes(
+            b'{"path": "/reset-status", "security": []}\n'
+        )
+
+    _expect_closeout_error(_full_spec(), "failed_http", custody_mutator=mutate)
+
+
 def test_finalize_hash_mismatch_fails():
     # a script artifact whose bytes disagree with the recorded manifest hash (tampered)
     def mutate(tmp, custody):
@@ -307,13 +329,17 @@ def test_finalize_index_records_custody_relative_subpath():
         )
         spec = _full_spec()
         spec["categories"][0]["artifacts"] = [
-            "captures/openapi_seam.json"
-        ]  # cat 1, subdir
+            "captures/openapi_seam.json",  # cat 1, in a subdir
+            "openapi_control.json",  # + the second host (category 1 needs both)
+        ]
         out = custody / "closeout_index.json"
         fc.finalize(_write_spec(tmp, spec), custody, out, clock=CLOCK)
         idx = json.loads(out.read_text())
         cat1 = next(c for c in idx["categories"] if c["category"] == 1)
-        assert cat1["artifacts"][0]["name"] == "captures/openapi_seam.json"
+        names = {a["name"] for a in cat1["artifacts"]}
+        assert (
+            "captures/openapi_seam.json" in names
+        )  # recorded by its custody-relative path
 
 
 def test_finalize_no_clobber():

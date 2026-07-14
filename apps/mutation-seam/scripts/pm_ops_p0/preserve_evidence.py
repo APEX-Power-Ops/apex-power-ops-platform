@@ -301,11 +301,19 @@ _GIT_ENV_ALLOW = (
 
 
 def _git_env() -> dict[str, str]:
-    """A scrubbed environment for git subprocesses that carries no injected app secret."""
+    """A scrubbed environment for git subprocesses that carries no injected app secret.
+
+    Passes ONLY the allow-list (+ locale ``LC_*``). It deliberately does NOT forward
+    ``GIT_*`` or ``XDG_*``: ``GIT_DIR`` / ``GIT_WORK_TREE`` / ``GIT_INDEX_FILE`` /
+    ``GIT_CONFIG*`` and ``XDG_CONFIG_HOME`` are honored OVER ``-C`` and could redirect the
+    preflight at a DIFFERENT clean repo/config, defeating the pristine + HEAD-equality gate
+    (Codex-c7 P1). git discovers the repo via ``git -C repo_root`` and reads ~/.gitconfig /
+    ~/.ssh via ``HOME``; auth that requires a hostile ``GIT_SSH_COMMAND`` simply fails closed
+    (``origin_main_unresolvable``), never proceeds against an unverified tip.
+    """
     env = {k: os.environ[k] for k in _GIT_ENV_ALLOW if k in os.environ}
-    # git config / credential / locale prefixes are not the injected secrets; pass them
     for key, value in os.environ.items():
-        if key.startswith(("GIT_", "LC_", "XDG_")):
+        if key.startswith("LC_"):  # locale only; no GIT_*/XDG_* redirection surface
             env[key] = value
     return env
 
