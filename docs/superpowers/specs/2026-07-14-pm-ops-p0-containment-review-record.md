@@ -32,7 +32,7 @@ The operator ratified all seven findings with explicit rulings; each is folded i
 | # | Sev | Finding | Operator ruling | Fold (design ref) |
 |---|---|---|---|---|
 | 1 | High | `SupabaseStore.reset()` executable outside production (env-conditional guard) | Make it **unconditionally refuse**; reset/reseed only via `MemoryStore` | §3 Change 3 — unconditional `raise`; test `test_supabase_reset_always_raises` |
-| 2 | High | Readiness probed `config.engine`, not the real ops role DSNs | Probe **actual `OPS_API_DSN` / `OPS_INTAKE_WRITER_DSN`** identities, contracts, permissions | §6 per-DSN operational matrix (initial rev5 used a single read relation; **rev5.1 (§4, F1)** expanded to identity + posture + non-`ops_fn_owner` + `ops_api` EXECUTE 4 recognition fns / `ops_intake_writer` INSERT+SELECT `ops.intake_runs` + negative guards; **not** `ops.persons`) |
+| 2 | High | Readiness probed `config.engine`, not the real ops role DSNs | Probe **actual `OPS_API_DSN` / `OPS_INTAKE_WRITER_DSN`** identities, contracts, permissions | §6 per-DSN **route-critical matrix** (rev5→rev5.2): `ops_api` EXECUTE 4 recognition fns + worklist/rollup SELECT + all-5-billing denial; `ops_intake_writer` full intake/materialize/column write set + F-012-1 helper + all-9-mutation-fn denial; posture + non-`ops_fn_owner`; **not** `ops.persons` (see §5, F1) |
 | 3 | High | P0-A not an authoritative snapshot (no RO txn; ACL-only enumeration; regex-only SECURITY DEFINER discovery) | Guarded **`REPEATABLE READ, READ ONLY`** txn; **effective-role closure**; **fail-closed** function/dependency discovery | §2 SQL — txn guard + fingerprint, (b)/(b2) principal×priv + `pg_auth_members` closure, (e) `pg_depend` + dynamic-SQL fail-closed |
 | 4 | High | Future-function hardening internally contradictory (objective vs residual; ineffective per-schema PUBLIC revoke) | **Narrow 014 to existing-exposure containment**; remove the "best-effort PUBLIC" wording; forward-function posture = **separately measured finish line**, does not delay 014 | §4 objective + 014 stmt 3 (ADP functions `FROM anon, authenticated`) + 015 + §11.6 |
 | 5 | Med | Actions "independent" but actually ordered; post-P0-D `/reset` returns 503 not 404 | Replace independence claims with an explicit **DAG** and **phase-aware `/reset` acceptance** | §1 DAG + phase-aware acceptance; §3 OpenAPI-absence invariant; §9 |
@@ -107,3 +107,39 @@ The operator issued a **HOLD-for-rev5.1** verdict (6 findings) after rev5. rev5.
 **Cross-engine delta.** Codex and the P0-E lens **converged** on writer-contract completeness (add `UPDATE`; deny all 4 recognition fns) — the two P1s. The P0-A lens (Claude) independently hardened the DSN binding (structured parse, pooler-host, end-to-end value-silence, marker disclosure) that Codex did not examine. The exec-contract signatures, enum resolution, and finding-5 leak-freedom were affirmed by the Claude P0-E lens.
 
 **Verdict — narrow re-review COMPLETE.** The two scoped areas were checked by both engines; the review surfaced targeted refinements (Codex 2× P1 + three P0-A hardenings), **all folded into this same rev5.1 commit**. After folds, the P0-A target binding and the P0-E full permission matrix are complete and grounded against migration `012`. Per the operator directive, **the audit loop stops here.** **Design-only throughout — no push, no PR, no production/prod-DB access, SQL, deploy, secret-change, or connectivity-repair. P0-A..E remain separately gated; rev5.1 authorizes no execution.**
+
+---
+
+## 5. rev5.2 — operator review corrections + focused parser/matrix re-review
+
+The operator issued a second **HOLD** (4 findings) after rev5.1, holding P0-A pending a bounded rev5.2. rev5.2 is one **docs-only** correction commit, grounded on migration `012` (DDL) — **no live DB query** (per operator directive; task 5).
+
+| # | Sev | Finding | Correction | Fold (design ref) |
+|---|---|---|---|---|
+| F1 | High | P0-E still not the full contract — writer positive checked only `ops.intake_runs`; negatives only 4 (of 9) writer fns and none of the api's 5 billing fns | Route-critical matrix: full 012 positive grants (intake+materialize+project/apparatus col+core+helper) + **complete** negatives (writer all 9 mutation fns; api all 5 billing fns; F-012-1 helper; status/provenance/DELETE) | §6 `_OPS_API_CONTRACT_SQL` / `_OPS_WRITER_CONTRACT_SQL` |
+| F2 | Med | DSN binding underspecified vs libpq overrides (`hostaddr`, `service`, multi-host, URI query) | Parse with `psycopg.conninfo.conninfo_to_dict`; reject `hostaddr`/`service`/multi-host/multi-port/empty-ambiguous + URI-query overrides before the anchored host/user rules | §2 Project binding |
+| F3 | Med | "End-to-end value silence" conflicted with raw exception logging | Ordinary logs = stable code + exception **class** only (P0-A + both readiness endpoints); raw diagnostics require restricted custody + secret scan | §2 + §6 (`log.warning(..., type(exc).__name__)`) |
+| F4 | Low | Stale `INSERT+SELECT` prose (behavior note + review record) omitting `UPDATE`/full matrix | Corrected to the route-critical matrix | §6 behavior note + §2 row above |
+
+**No new defect** was found in reset containment, the three-RPC revocation, or the `014`/`015` split; `fafe5e26` was clean/docs-only/unpushed.
+
+### Focused parser/matrix re-review (per operator directive: parser + matrix only; NO broad audit, NO live DB query)
+
+**Method:** Codex `gpt-5.5` (`codex exec review --uncommitted`) + focused Claude lens(es), read-only over the rev5.2 working tree (base `fafe5e26`), scoped strictly to the DSN parser contract and the route-critical matrix, grounded on migration `012` (DDL only).
+
+**Consolidated focused findings & dispositions (matrix + parser only; all folded into this same rev5.2 commit):**
+
+| Source | Sev | Finding | Status | Disposition |
+|---|---|---|---|---|
+| Matrix lens | NOTE | Every 012-grounded POSITIVE + all fn signatures (incl. both `issue_billing_application` overloads, the enum-qualified `approve_and_recognize`) + the has_table/has_column split are correct — **no false-503, no missing route positive, no signature error** | **REFUTED_OK** | Confirms the positive matrix + signatures. |
+| Matrix lens | MEDIUM | `NOT has_table_privilege(...,'public.apparatus','UPDATE')` is **not** 012-grounded — depends on the PUBLIC-inherited ACL; ops roles inherit any PUBLIC grant, so pre-P0-C it would **false-503** a correctly-provisioned ops role, coupling P0-E to P0-C ordering | **PLAUSIBLE** | **Folded:** removed the `public.apparatus` check from both role matrices (behavior note documents that public-write containment is P0-C's job). |
+| Codex P1a / lens LOW | HIGH/LOW | Writer positive checked only 3 columns; 012 grants all **14 `projects` UPDATE** columns + projects/apparatus INSERT | **CONFIRMED** | **Folded:** `projects_write` now requires all 14 UPDATE columns (unnest, mirrors 012 foreach) + table-level `projects`/`apparatus` INSERT. |
+| Codex P1b / lens LOW | HIGH/LOW | api negative missed `scope_quote_line` + **DELETE** across the 5 scoping tables | **CONFIRMED** | **Folded:** api `no_forbidden_write` = `NOT EXISTS` I/U/D over all 5 scoping tables + apparatus fabricate/status/provenance. |
+| Codex P2 / lens LOW | MED/LOW | Writer billing negative checked only `billing_application`; 012 denies I/U/D on all **3** billing tables + recognition/attestation | **CONFIRMED** | **Folded:** writer `no_forbidden_write` = `NOT EXISTS` I/U/D over the **5** recognition/billing tables + the 5-table DELETE set + apparatus.status. |
+| **DSN lens** | **HIGH** | `conninfo_to_dict` parses only the **string**; libpq merges `PGHOSTADDR`/`PGSERVICE`/`PGHOST`/`PGPORT` from the **environment** at connect → an env-supplied `hostaddr`/`service` reroutes the actual connection while the string passes every reject; "single point of truth" over-claimed | **CONFIRMED** | **Folded:** scrub PG\* env, pass explicit params, require `sslmode=verify-full`, re-validate `Connection.info` post-connect; claim reframed to "the parameter set libpq actually connects with." |
+| DSN lens | LOW | The pre-connect `conninfo_to_dict` parse of a malformed DSN can raise a libpq error whose message quotes a DSN token; not explicitly wrapped | **PLAUSIBLE** | **Folded:** parse wrapped in the value-silence (stable code, never raw). |
+| DSN lens | NOTE×2 | URI-query expansion closes `?hostaddr=`; anchored pooler/direct host matching rejects suffix-injection | **REFUTED_OK** | Confirms those vectors closed. |
+
+**Cross-engine delta.** Codex and the matrix lens **converged** on the negative-completeness gaps (writer/api I/U/D coverage). The matrix lens uniquely caught the `public.apparatus` **false-503 / P0-C-coupling** (a correctness risk, not just completeness) and independently affirmed all positives + signatures. The DSN lens uniquely caught the **PG\*-environment reroute** (HIGH) that neither Codex nor the string-level checks surfaced.
+
+**Verdict — focused parser/matrix re-review COMPLETE.** All findings folded into this same rev5.2 commit; the matrix now mirrors 012's positive grants and `[5a]` negatives completely (14 projects columns; full 5-table I/U/D sets), the non-012 `public.apparatus` false-503 is removed, and the DSN binding is hardened against env-var reroute. Grounded on migration 012 (DDL) — **no live DB query** (per operator directive). Per the operator directive, **the audit loop stops here.** **Design-only throughout — no push, no PR, no production/prod-DB access, SQL, deploy, secret-change, or connectivity-repair. P0-A..E remain separately gated; rev5.2 authorizes no execution.**
