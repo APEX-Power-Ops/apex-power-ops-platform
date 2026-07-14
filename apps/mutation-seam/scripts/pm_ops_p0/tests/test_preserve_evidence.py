@@ -454,22 +454,26 @@ def test_config_hidden_untracked_shadow_still_rejected():
 
 
 def test_assert_trusted_location_belt():
-    # lens-A A2 / Codex-c5 P1: a repo-tree psycopg location is refused (the origin is vetted
-    # via find_spec BEFORE import); an installed site-packages location is accepted.
-    repo_shadow = (
+    # lens-A A2 / Codex-c5,c8 P1: only a path UNDER a real interpreter/venv install dir is
+    # trusted -- a repo-tree shadow AND a decoy merely CONTAINING "site-packages" are refused.
+    import sysconfig
+
+    for bad in (
         "/home/olares/code/apex/apex-power-ops-platform"
-        "/apps/mutation-seam/scripts/psycopg.py"
-    )
-    raised = False
-    try:
-        pe._assert_trusted_location(repo_shadow)
-    except pe.EvidenceRefusal as exc:
-        raised = True
-        assert exc.code == "untrusted_binding_source", exc.code
-    assert raised, "a repo-tree psycopg location must be refused"
-    pe._assert_trusted_location(
-        "/repo/.venv/lib/python3.12/site-packages/psycopg/__init__.py"
-    )  # installed location -> no raise
+        "/apps/mutation-seam/scripts/psycopg.py",
+        "/tmp/site-packages/psycopg.py",  # contains the token but is NOT a real install dir
+        "",
+    ):
+        raised = False
+        try:
+            pe._assert_trusted_location(bad)
+        except pe.EvidenceRefusal as exc:
+            raised = True
+            assert exc.code == "untrusted_binding_source", exc.code
+        assert raised, bad
+    # the ACTUAL interpreter site-packages location is accepted
+    real = os.path.join(sysconfig.get_paths()["purelib"], "psycopg", "__init__.py")
+    pe._assert_trusted_location(real)  # under the real venv -> no raise
 
 
 def test_git_env_scrubs_injected_secrets_and_redirects():

@@ -209,6 +209,13 @@ def test_finalize_category1_requires_both_hosts():
     _expect_closeout_error(spec, "category_incomplete")
 
 
+def test_finalize_duplicate_artifact_in_category_rejected():
+    # Codex-c8 P2: the same file listed twice must not satisfy the multi-capture minimum
+    spec = _full_spec()
+    spec["categories"][0]["artifacts"] = ["openapi_seam.json", "openapi_seam.json"]
+    _expect_closeout_error(spec, "duplicate_artifact")
+
+
 def test_finalize_category2_wrong_route_fails():
     # Codex-c7 P2: a different route (/reset-status) must not satisfy the exact /reset evidence
     def mutate(tmp, custody):

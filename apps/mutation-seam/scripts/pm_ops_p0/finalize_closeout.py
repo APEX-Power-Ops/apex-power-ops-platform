@@ -147,8 +147,11 @@ def _assert_categories_complete(spec: list[dict]) -> None:
         expected = CATEGORY_SCRIPT_ARTIFACTS.get(entry["category"])
         if expected is not None and set(entry["artifacts"]) != expected:
             raise CloseoutError("category_artifacts_mismatch")
+        # the same file listed twice must not satisfy a multi-capture minimum (Codex-c8 P2)
+        if len(entry["artifacts"]) != len(set(entry["artifacts"])):
+            raise CloseoutError("duplicate_artifact")
         # operator categories the runbook defines with multiple captures (category 1 =
-        # deployed OpenAPI for BOTH hosts) must bind at least that many (Codex-c7 P1b).
+        # deployed OpenAPI for BOTH hosts) must bind at least that many DISTINCT (Codex-c7 P1b).
         if len(entry["artifacts"]) < CATEGORY_MIN_ARTIFACTS.get(entry["category"], 1):
             raise CloseoutError("category_incomplete")
 

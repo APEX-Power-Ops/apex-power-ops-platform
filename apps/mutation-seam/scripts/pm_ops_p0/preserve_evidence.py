@@ -369,16 +369,49 @@ def _repo_git_state(repo_root: Path) -> tuple[str, bool, str | None]:
     return head_sha, is_pristine, origin_main_sha
 
 
+def _trusted_module_dirs() -> tuple[str, ...]:
+    """The real interpreter/venv install directories a trusted module may live under.
+
+    Derived from ``sysconfig`` (this venv's purelib/platlib + the stdlib) and ``site`` --
+    the ACTUAL install paths, not a name token. `sysconfig`/`site` are stdlib and already
+    loaded at interpreter startup, so they resolve to the real modules here.
+    """
+    import site
+    import sysconfig
+
+    dirs: set[str] = set()
+    paths = sysconfig.get_paths()
+    for key in ("purelib", "platlib", "stdlib", "platstdlib"):
+        value = paths.get(key)
+        if value:
+            dirs.add(os.path.realpath(value))
+    for getter in ("getsitepackages", "getusersitepackages"):
+        try:
+            result = getattr(site, getter)()
+        except (AttributeError, TypeError):
+            continue
+        for value in [result] if isinstance(result, str) else result:
+            dirs.add(os.path.realpath(value))
+    return tuple(dirs)
+
+
 def _assert_trusted_location(location: str) -> None:
-    """Refuse unless `location` is an installed ``site-packages``/``dist-packages`` path.
+    """Refuse unless `location` resolves UNDER a real interpreter/venv install directory.
 
     Whatever placed a shadow on sys.path -- an untracked file the pristine check missed
     under a hostile .git/config, a TRACKED shadow at origin/main, a PYTHONPATH entry, a
     .pth injection -- the module that resolves must come from a real install (the pinned
-    venv), never a repo-tree ``psycopg.py`` (review round-3 A2). Value-free code on failure.
+    venv), never a repo-tree ``psycopg.py`` NOR a decoy path merely CONTAINING the token
+    ``site-packages`` (e.g. ``/tmp/site-packages/psycopg.py``, Codex-c8 P1). The resolved
+    origin is prefix-matched against the actual install dirs. Value-free code on failure.
     """
-    normalized = (location or "").replace(os.sep, "/")
-    if "/site-packages/" not in normalized and "/dist-packages/" not in normalized:
+    if not location:
+        raise EvidenceRefusal("untrusted_binding_source")
+    resolved = os.path.realpath(location)
+    trusted = _trusted_module_dirs()
+    if not any(
+        resolved == base or resolved.startswith(base + os.sep) for base in trusted
+    ):
         raise EvidenceRefusal("untrusted_binding_source")
 
 
