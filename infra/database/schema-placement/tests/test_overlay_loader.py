@@ -1179,7 +1179,10 @@ def _e2e_retain_resolved_static_na_overlay_OV015_no_receipt():
                                              _consumer_overlay("operator_declaration", cb, "sha:o1", producing_repo_sha=None,
                                                                producing_repo_sha_not_applicable_reason="operator", operator_identity="op-1", attestation_ref="att-1")],
                                  receipt=True)
-    return rc == 1 and "OV015" in out and receipt is None
+    # assert the N/A-MIRROR reason text, not bare OV015 — the pre-existing unresolved branch also
+    # emits OV015, and a silently-rejected overlay (eff stays not_observed) would green a bare check
+    # even with the #103 branch deleted (implementation-IRP Lens B)
+    return rc == 1 and "static_repo=not_applicable is not a resolved state" in out and receipt is None
 
 
 def _e2e_harden_external_na_unexposed_overlay_OV015_no_receipt():
@@ -1196,7 +1199,8 @@ def _e2e_harden_external_na_unexposed_overlay_OV015_no_receipt():
                                              _consumer_overlay("operator_declaration", cb, "sha:o1", producing_repo_sha=None,
                                                                producing_repo_sha_not_applicable_reason="operator", operator_identity="op-1", attestation_ref="att-1")],
                                  receipt=True)
-    return rc == 1 and "OV015" in out and receipt is None
+    # branch-specific reason assertion, same rationale as case 8 (implementation-IRP Lens B)
+    return rc == 1 and "external_clients=not_applicable is not a resolved state" in out and receipt is None
 
 
 def _e2e_delete_false_covering_green_no_OV015():
