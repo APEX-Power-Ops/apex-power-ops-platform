@@ -1109,8 +1109,56 @@ def _e2e_unaccepted_manifest_SP018_no_receipt():
     return rc == 1 and "SP018" in out and receipt is None   # no receipt is written on a RED gate
 
 
+def _e2e_signed_runtime_na_overlay_OV015_no_receipt():
+    # gate-correction: a validly-SIGNED runtime_logs overlay authored not_applicable must be rejected at
+    # the overlay layer (OV015) for a resolved harden conclusion, and emit NO receipt.
+    priv, pub = _ephemeral_keypair(); saved = _pin_signer(pub); oid = "public.v"
+    try:
+        tmp, cb, base = _write_harden_case(priv, pub, _zero_census([oid]))
+        overlays = [_in_data_api_overlay(cb, False),
+                    _consumer_overlay("static_repo", cb, "sha:s1"),
+                    _consumer_overlay("runtime_logs", cb, "sha:r1", state="not_applicable",
+                                      producing_repo_sha=None, producing_repo_sha_not_applicable_reason="runtime query"),
+                    _consumer_overlay("external_clients", cb, "sha:e1"),
+                    _consumer_overlay("operator_declaration", cb, "sha:o1", producing_repo_sha=None,
+                                      producing_repo_sha_not_applicable_reason="operator", operator_identity="op-1", attestation_ref="att-1")]
+        opts = []
+        for i, o in enumerate(overlays):
+            p = os.path.join(tmp, f"ov{i}.json"); ob, sig = _sign(o, priv); _wb(p, ob); _wb(p + ".sig", sig); opts += ["--overlay", p]
+        rpath = os.path.join(tmp, "receipt.json")
+        rc, out = _capture_main(base + opts + ["--receipt-out", rpath])
+        return rc == 1 and "OV015" in out and not os.path.exists(rpath)
+    finally:
+        dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS.update(saved)
+
+
+def _e2e_base_census_runtime_na_OV015_no_receipt():
+    # gate-correction: runtime_logs already not_applicable in the BASE census (no overlay) is likewise
+    # rejected at the overlay layer (OV015) for a resolved harden conclusion, with NO receipt.
+    priv, pub = _ephemeral_keypair(); saved = _pin_signer(pub); oid = "public.v"
+    try:
+        census = _zero_census([oid])
+        census["relations"][0]["consumer_evidence"]["runtime_logs"] = {"state": "not_applicable", "found_consumers": None, "ref": None, "detail": "base n/a"}
+        tmp, cb, base = _write_harden_case(priv, pub, census)
+        overlays = [_in_data_api_overlay(cb, False),
+                    _consumer_overlay("static_repo", cb, "sha:s1"),
+                    _consumer_overlay("external_clients", cb, "sha:e1"),
+                    _consumer_overlay("operator_declaration", cb, "sha:o1", producing_repo_sha=None,
+                                      producing_repo_sha_not_applicable_reason="operator", operator_identity="op-1", attestation_ref="att-1")]
+        opts = []
+        for i, o in enumerate(overlays):
+            p = os.path.join(tmp, f"ov{i}.json"); ob, sig = _sign(o, priv); _wb(p, ob); _wb(p + ".sig", sig); opts += ["--overlay", p]
+        rpath = os.path.join(tmp, "receipt.json")
+        rc, out = _capture_main(base + opts + ["--receipt-out", rpath])
+        return rc == 1 and "OV015" in out and not os.path.exists(rpath)
+    finally:
+        dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS.update(saved)
+
+
 _CASES += [
     ("e2e_red_then_green", _e2e_red_then_green),
+    ("e2e_signed_runtime_na_overlay_OV015_no_receipt", _e2e_signed_runtime_na_overlay_OV015_no_receipt),
+    ("e2e_base_census_runtime_na_OV015_no_receipt", _e2e_base_census_runtime_na_OV015_no_receipt),
     ("e2e_ov021_via_main", _e2e_ov021_via_main),
     ("e2e_delete_missing_in_data_api_OV015", _e2e_delete_missing_in_data_api_OV015),
     ("e2e_delete_true_in_data_api_SP027", _e2e_delete_true_in_data_api_SP027),

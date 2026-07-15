@@ -58,7 +58,7 @@ CODES = {
     "SP019": "entity_map is not accepted but a decision needs entity/schema resolution",
     "SP020": "duplicate decision_id / entity_id / physical_schema identity",
     "SP021": "manifest evidence_snapshot differs from the supplied --snapshot",
-    "SP022": "unresolved consumer-evidence dimension for a no_consumer conclusion",
+    "SP022": "a resolved consumer_disposition (no_consumer/has_consumers) needs every consumer dim observed/not_applicable, with database_deps + operator_declaration + runtime_logs required OBSERVED (runtime_logs: any non-observed state, incl. not_applicable/query_failed/stale, is rejected)",
     "SP023": "target_entity's physical_schema disagrees with target_schema",
     "SP024": "evidence_snapshot target_identity is absent/not-guard-passed, or its project binding is unasserted/mismatched",
     "SP025": "a target_object does not live in the decision's target_schema (relocation destination binding)",
@@ -393,9 +393,11 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                     st = fv.get("state") if isinstance(fv, dict) else "missing"
                     d.append(Diagnostic("SP010", f"decision:{did}:{r['object_id']}:{field}", f"state={st} (required observed)"))
         # SP010: consumer_evidence is a nested object, so it is excluded from the generic loop above;
-        # if the manifest EXPLICITLY requires it, enforce every consumer dimension observed/N-A here
-        # (Codex R2: the requirement was silently dropped, letting a compat cluster green with
-        # not_observed dims since compat has no resolved consumer_disposition).
+        # if the manifest EXPLICITLY requires it, enforce every consumer dimension observed/N-A here.
+        # (Codex R2 added this manifest-opt-in path. Correction tranche: an accepted compat/harden/promote/
+        # archive is SCHEMA-FORCED to a RESOLVED consumer_disposition, so the conclusion-based SP022 path
+        # below already requires every consumer dim resolved independent of the manifest — this opt-in is
+        # defence-in-depth, not the sole gate.)
         if require_consumer_evidence:
             for r in src_rels:
                 ce = r.get("consumer_evidence", {})
@@ -404,8 +406,10 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                     if st not in ("observed", "not_applicable"):
                         d.append(Diagnostic("SP010", f"decision:{did}:{r['object_id']}:consumer_evidence.{dimname}", f"state={st} (manifest required_observations includes consumer_evidence)"))
 
-        # consumer conclusion — SP022 RESOLUTION applies to BOTH resolved conclusions (every dim
-        # observed-or-not_applicable; operator_declaration observed); SP013 is the count agreement.
+        # consumer conclusion — SP022 RESOLUTION applies to BOTH resolved conclusions: every dim
+        # observed-or-not_applicable, EXCEPT operator_declaration, database_deps, and runtime_logs which
+        # must be OBSERVED (runtime_logs: ANY non-observed state — incl. not_applicable/query_failed/stale —
+        # is rejected, gate-correction); SP013 is the count agreement.
         conclusion = row.get("consumer_disposition")
         if conclusion in ("no_consumer", "has_consumers"):
             for r in src_rels:
@@ -419,6 +423,9 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                         continue
                     if dimname == "database_deps" and st != "observed":
                         d.append(Diagnostic("SP022", f"decision:{did}:{r['object_id']}:database_deps", f"state={st} (the machine dependency signal must be OBSERVED for a resolved conclusion; not_applicable is not permitted — finding #3)"))
+                        continue
+                    if dimname == "runtime_logs" and st != "observed":
+                        d.append(Diagnostic("SP022", f"decision:{did}:{r['object_id']}:runtime_logs", f"state={st} (gate-correction: a resolved consumer_disposition requires runtime_logs OBSERVED; unavailable telemetry or API-non-exposure must be recorded not_observed, never not_applicable — runtime evidence covers direct-SQL consumers, so non-exposure does not waive it)"))
                         continue
                     if st == "not_applicable":
                         continue

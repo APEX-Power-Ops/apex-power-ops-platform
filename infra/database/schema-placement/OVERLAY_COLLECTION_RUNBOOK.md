@@ -41,6 +41,13 @@ Non-observed consumer states use `{"state":"...","found_consumers":null,"ref":nu
 
 ## 3. Window + freshness discipline (make preapply SATISFIABLE)
 
+> **WARNING — a valid derived consumer window does NOT imply resolved consumer evidence.** The window is
+> derived only across the OBSERVED consumer overlays; a resolved `consumer_disposition` additionally
+> requires the `runtime_logs` dimension itself to be OBSERVED. Unavailable telemetry OR API-non-exposure
+> must be recorded `not_observed`, **never** `not_applicable` — an N/A `runtime_logs` on any accepted
+> change action is rejected by BOTH the semantic checker (`SP022`) and the signed-overlay loader
+> (`OV015`), and no receipt is written. (delete additionally floors on `SP027`.)
+
 - Per overlay (enforced at author time): `started_at < ended_at <= captured_at` and `ended_at <=
   now` (OV009); `captured_at` is set by the tool clock (its future-half is OV010).
 - At the cluster gate the consumer window derives as `S = max(started_at)`, `E = min(ended_at)`
