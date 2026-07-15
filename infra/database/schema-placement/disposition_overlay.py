@@ -398,10 +398,15 @@ def check_cluster_completeness(base_census, effective, manifest, decisions):
     """OV015 (advisory, audit F7): every cluster-source relation must have each gate-required
     permitted-overlay-target dimension resolved (state != not_observed) in the effective view — unless
     it was already observed in the BASE census (e.g. database_deps, which is not an overlay target).
-    NARROW N/A mirror (gate-correction): for a resolved consumer_disposition, runtime_logs=not_applicable
-    is ALSO flagged here. This is a PARTIAL mirror of the authoritative SP022, which rejects EVERY
-    non-observed runtime state (incl. query_failed/stale) — SP009/SP022/SP027 on the effective view remain
-    authoritative and catch the intermediate states fail-closed; OV015 names the missing overlay early."""
+    NARROW N/A mirrors (gate-corrections #102/#103): for a resolved consumer_disposition,
+    runtime_logs=not_applicable is flagged (any action class), and static_repo/external_clients=
+    not_applicable are flagged for NON-delete rows — the non_delete guard keeps the mirror silent on
+    every delete row so the ratified accepted-delete SP027 exposure-false exception is never
+    early-blocked (its N/A misuses are rejected checker-side: SP027 on accepted delete, SP022 on a
+    non-accepted delete row carrying a voluntary resolved conclusion). These are PARTIAL mirrors of
+    the authoritative SP022, which rejects EVERY non-observed state (incl. query_failed/stale) —
+    SP009/SP022/SP027 on the effective view remain authoritative and catch the intermediate states
+    fail-closed; OV015 names the missing overlay early."""
     out = []
     dec_by_id = {row["decision_id"]: row for row in decisions.get("rows", [])}
     base_index = {r["object_id"]: r for r in base_census.get("relations", [])}
@@ -415,12 +420,17 @@ def check_cluster_completeness(base_census, effective, manifest, decisions):
             if base_rel is None or eff_rel is None:
                 continue
             resolved_conclusion = row.get("consumer_disposition") in ("no_consumer", "has_consumers")
+            non_delete = row.get("action_class") != "delete"
             for dim in sorted(_gate_required_dims(row, manifest)):
                 eff_state = _base_slot(eff_rel, dim).get("state")
                 if _base_slot(base_rel, dim).get("state") == "not_observed" and eff_state == "not_observed":
                     out.append(("OV015", f"cluster:{did}:{oid}:{dim}", f"gate-required dimension {dim} is unresolved (no permitted overlay)"))
                 elif dim == "consumer_evidence.runtime_logs" and eff_state == "not_applicable" and resolved_conclusion:
                     out.append(("OV015", f"cluster:{did}:{oid}:{dim}", "runtime_logs=not_applicable is not a resolved state for a resolved consumer_disposition (gate-correction: unavailable telemetry or API-non-exposure must be not_observed)"))
+                elif dim == "consumer_evidence.static_repo" and eff_state == "not_applicable" and resolved_conclusion and non_delete:
+                    out.append(("OV015", f"cluster:{did}:{oid}:{dim}", "static_repo=not_applicable is not a resolved state for a resolved consumer_disposition (gate-correction #103: static-code consumers are possible on any relation)"))
+                elif dim == "consumer_evidence.external_clients" and eff_state == "not_applicable" and resolved_conclusion and non_delete:
+                    out.append(("OV015", f"cluster:{did}:{oid}:{dim}", "external_clients=not_applicable is not a resolved state for a resolved non-delete consumer_disposition (gate-correction #103: the inventory covers non-API integrations, so Data-API non-exposure does not waive it; the accepted-delete SP027 exception is checker-side)"))
     return out
 
 

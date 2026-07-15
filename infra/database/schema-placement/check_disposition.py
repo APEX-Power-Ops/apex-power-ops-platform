@@ -58,7 +58,7 @@ CODES = {
     "SP019": "entity_map is not accepted but a decision needs entity/schema resolution",
     "SP020": "duplicate decision_id / entity_id / physical_schema identity",
     "SP021": "manifest evidence_snapshot differs from the supplied --snapshot",
-    "SP022": "a resolved consumer_disposition (no_consumer/has_consumers) needs every consumer dim observed/not_applicable, with database_deps + operator_declaration + runtime_logs required OBSERVED (runtime_logs: any non-observed state, incl. not_applicable/query_failed/stale, is rejected)",
+    "SP022": "a resolved consumer_disposition (no_consumer/has_consumers) requires EVERY consumer dimension OBSERVED; the single exception is external_clients=not_applicable on an ACCEPTED delete, which the SP027 floor's ratified exposure-false waiver governs (#103)",
     "SP023": "target_entity's physical_schema disagrees with target_schema",
     "SP024": "evidence_snapshot target_identity is absent/not-guard-passed, or its project binding is unasserted/mismatched",
     "SP025": "a target_object does not live in the decision's target_schema (relocation destination binding)",
@@ -406,10 +406,12 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                     if st not in ("observed", "not_applicable"):
                         d.append(Diagnostic("SP010", f"decision:{did}:{r['object_id']}:consumer_evidence.{dimname}", f"state={st} (manifest required_observations includes consumer_evidence)"))
 
-        # consumer conclusion — SP022 RESOLUTION applies to BOTH resolved conclusions: every dim
-        # observed-or-not_applicable, EXCEPT operator_declaration, database_deps, and runtime_logs which
-        # must be OBSERVED (runtime_logs: ANY non-observed state — incl. not_applicable/query_failed/stale —
-        # is rejected, gate-correction); SP013 is the count agreement.
+        # consumer conclusion — SP022 RESOLUTION applies to BOTH resolved conclusions: EVERY consumer
+        # dimension must be OBSERVED (any non-observed state — not_observed/not_applicable/query_failed/
+        # stale — is rejected). The single carve-out (#103, design rev 3.2): external_clients=
+        # not_applicable on an ACCEPTED delete defers to the SP027 floor's ratified exposure-false
+        # waiver. The loop is conclusion-based, not status- or action-gated — it reaches a retain or a
+        # non-accepted row that voluntarily asserts a resolved conclusion. SP013 is the count agreement.
         conclusion = row.get("consumer_disposition")
         if conclusion in ("no_consumer", "has_consumers"):
             for r in src_rels:
@@ -427,10 +429,27 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                     if dimname == "runtime_logs" and st != "observed":
                         d.append(Diagnostic("SP022", f"decision:{did}:{r['object_id']}:runtime_logs", f"state={st} (gate-correction: a resolved consumer_disposition requires runtime_logs OBSERVED; unavailable telemetry or API-non-exposure must be recorded not_observed, never not_applicable — runtime evidence covers direct-SQL consumers, so non-exposure does not waive it)"))
                         continue
-                    if st == "not_applicable":
+                    if dimname == "static_repo" and st != "observed":
+                        d.append(Diagnostic("SP022", f"decision:{did}:{r['object_id']}:static_repo", f"state={st} (gate-correction #103: a resolved consumer_disposition requires static_repo OBSERVED; static-code consumers are possible on any relation, so non-applicability cannot be asserted — no not_applicable waiver exists)"))
                         continue
+                    if dimname == "external_clients" and st != "observed":
+                        if (st == "not_applicable"
+                                and row.get("action_class") == "delete"
+                                and row.get("decision_status") == "accepted"):
+                            # The ONLY surviving not_applicable (state+status+action scoped): the
+                            # ratified SP027 exception on an ACCEPTED delete, where the delete floor
+                            # alone evaluates the exposure-false waiver. Other non-observed states on
+                            # an accepted delete keep today's SP022+SP027 dual diagnostic, and a
+                            # NON-accepted delete row carrying a voluntary resolved conclusion always
+                            # gets SP022 — SP027 is gated accepted-only and never sees it (#103).
+                            continue
+                        d.append(Diagnostic("SP022", f"decision:{did}:{r['object_id']}:external_clients", f"state={st} (gate-correction #103: a resolved consumer_disposition requires external_clients OBSERVED; the inventory covers non-API integrations — dashboards, BI, MCP, direct SQL — so Data-API non-exposure does not make it inapplicable)"))
+                        continue
+                    # every DIMS member now has an explicit branch above; any state reaching here on a
+                    # non-observed dim is unresolved (the former generic not_applicable fall-through is
+                    # unreachable inside this loop and was removed — #103 P4)
                     if st != "observed":
-                        d.append(Diagnostic("SP022", f"decision:{did}:{r['object_id']}:{dimname}", f"state={st} (unresolved; a resolved conclusion needs every dim observed or not_applicable)"))
+                        d.append(Diagnostic("SP022", f"decision:{did}:{r['object_id']}:{dimname}", f"state={st} (unresolved; a resolved conclusion needs every dim observed)"))
                         continue
                     if (dim.get("found_consumers") or 0) > 0:
                         observed_positive = True

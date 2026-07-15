@@ -264,6 +264,14 @@ NEG = {
     # IRP lens A: the predicate is CONCLUSION-scoped, not action-scoped. An accepted retain that VOLUNTARILY carries a
     # resolved consumer_disposition (schema-permitted) must satisfy the evidence too — runtime N/A is red-gated (fails closed).
     "SP022_retain_resolved_runtime_na": (retain_bundle, lambda s, d, e, m: (d["rows"][0].update(consumer_disposition="no_consumer"), s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived")), "SP022"),
+    # --- correction tranche #103 (consumer-NA applicability, design rev 3.2): static_repo and
+    #     external_clients must also be OBSERVED for a resolved conclusion. The ONLY surviving N/A is
+    #     the ratified SP027 exception (accepted delete + external_clients N/A + exposure OBSERVED
+    #     false — preserved green by test_delete_external_na_when_unexposed).
+    "SP022_harden_static_na": (harden_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["static_repo"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived"), "SP022"),  # matrix case 1: no static_repo N/A waiver exists
+    "SP022_harden_external_na_unexposed": (harden_bundle, lambda s, d, e, m: (s["relations"][0].__setitem__("in_data_api_exposed_schema", {"state": "observed", "value": False}), s["relations"][0]["consumer_evidence"]["external_clients"].update(state="not_applicable", found_consumers=None, ref=None, detail="not api-exposed")), "SP022"),  # matrix case 2: exposure-false does NOT waive a change action (P2 rejected — the inventory covers non-API integrations)
+    "SP022_retain_resolved_external_na": (retain_bundle, lambda s, d, e, m: (d["rows"][0].update(consumer_disposition="no_consumer"), s["relations"][0]["consumer_evidence"]["external_clients"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived")), "SP022"),  # matrix case 4: a voluntarily resolved retain is reached (conclusion-based, not action-gated)
+    "SP022_proposed_delete_external_na_unexposed": (delete_bundle, lambda s, d, e, m: (d["rows"][0].update(decision_status="proposed"), s["relations"][0].__setitem__("in_data_api_exposed_schema", {"state": "observed", "value": False}), s["relations"][0]["consumer_evidence"]["external_clients"].update(state="not_applicable", found_consumers=None, ref=None, detail="n/a")), "SP022"),  # matrix case 11: the STATUS conjunct — SP027 is gated accepted-only, so the carve-out must not skip a proposed row even with exposure false (SP016 also fires; the `in` assertion tolerates it)
 }
 
 
@@ -364,6 +372,43 @@ def _delete_runtime_na_both():
 
 def test_delete_runtime_na_emits_both():
     assert _delete_runtime_na_both()
+
+
+def _delete_static_na_both():
+    # #103 matrix case 5: an accepted delete with static_repo=not_applicable violates BOTH the
+    # destructive floor (SP027) and the conclusion invariant (SP022 — the new explicit branch);
+    # kept separate from the PERMITTED accepted-delete external_clients N/A + exposure-false case
+    # (test_delete_external_na_when_unexposed) per the operator's test correction.
+    got = codes(_mut(delete_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["static_repo"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived")))
+    return "SP022" in got and "SP027" in got
+
+
+def test_delete_static_na_emits_both():
+    assert _delete_static_na_both()
+
+
+def _delete_external_not_observed_both():
+    # #103 matrix case 3 [PRESERVE]: accepted delete + external_clients=not_observed keeps TODAY'S
+    # dual diagnostic (SP022 AND SP027) — the carve-out is scoped to the not_applicable STATE only,
+    # so it must not swallow the SP022 half for other non-observed states (rev-3.2 state conjunct).
+    got = codes(_mut(delete_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["external_clients"].update(state="not_observed", found_consumers=None, ref=None, detail="pending")))
+    return "SP022" in got and "SP027" in got
+
+
+def test_delete_external_not_observed_emits_both():
+    assert _delete_external_not_observed_both()
+
+
+def _retain_unresolved_both_na_green():
+    # #103 matrix case 7 [PRESERVE]: an unresolved retain (null conclusion) with BOTH seam dims
+    # not_applicable stays green — the conclusion loop is off; only a resolved claim is gated.
+    return codes(_mut(retain_bundle, lambda s, d, e, m: (
+        s["relations"][0]["consumer_evidence"]["static_repo"].update(state="not_applicable", found_consumers=None, ref=None, detail="n/a"),
+        s["relations"][0]["consumer_evidence"]["external_clients"].update(state="not_applicable", found_consumers=None, ref=None, detail="n/a")))) == []
+
+
+def test_retain_unresolved_both_na_green():
+    assert _retain_unresolved_both_na_green()
 
 
 def _retain_runtime_na_green():
@@ -910,6 +955,9 @@ if __name__ == "__main__":
         ("delete_external_na_when_unexposed", _delete_external_na_unexposed),
         ("delete_runtime_na_both", _delete_runtime_na_both),
         ("retain_runtime_na_green", _retain_runtime_na_green),
+        ("delete_static_na_both", _delete_static_na_both),
+        ("delete_external_not_observed_both", _delete_external_not_observed_both),
+        ("retain_unresolved_both_na_green", _retain_unresolved_both_na_green),
         ("gate_receipt_pure", _receipt_pure),
         # F7 obsolete under SP026: the receipt binds snapshot_signature_sha256 from in-hand sig bytes; there is no second read to guard.
         ("signature_roundtrip", _sig_roundtrip),

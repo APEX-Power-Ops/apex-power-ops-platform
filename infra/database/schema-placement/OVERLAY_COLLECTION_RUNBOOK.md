@@ -43,10 +43,13 @@ Non-observed consumer states use `{"state":"...","found_consumers":null,"ref":nu
 
 > **WARNING — a valid derived consumer window does NOT imply resolved consumer evidence.** The window is
 > derived only across the OBSERVED consumer overlays; a resolved `consumer_disposition` additionally
-> requires the `runtime_logs` dimension itself to be OBSERVED. Unavailable telemetry OR API-non-exposure
-> must be recorded `not_observed`, **never** `not_applicable` — an N/A `runtime_logs` on any accepted
-> change action is rejected by BOTH the semantic checker (`SP022`) and the signed-overlay loader
-> (`OV015`), and no receipt is written. (delete additionally floors on `SP027`.)
+> requires EVERY consumer dimension itself to be OBSERVED (#102 `runtime_logs`; #103 `static_repo` and
+> `external_clients`). Unavailable telemetry, an unscanned repo, OR API-non-exposure must be recorded
+> `not_observed`, **never** `not_applicable` — an N/A on any of these dims for a resolved conclusion is
+> rejected by the semantic checker (`SP022`) and, on non-delete rows, early-flagged by the signed-overlay
+> loader (`OV015`); no receipt is written. The SINGLE surviving N/A: `external_clients=not_applicable` on
+> an ACCEPTED delete, governed by the SP027 floor's ratified exposure-false waiver. (delete additionally
+> floors on `SP027`.)
 
 - Per overlay (enforced at author time): `started_at < ended_at <= captured_at` and `ended_at <=
   now` (OV009); `captured_at` is set by the tool clock (its future-half is OV010).
