@@ -251,12 +251,19 @@ NEG = {
     #      telemetry OR API-non-exposure must be recorded not_observed, never not_applicable (runtime
     #      evidence covers direct-SQL consumers). Representative cases only; enforced in BOTH the semantic
     #      checker (SP022) and the overlay loader (test_overlay_loader.py). delete additionally floors on SP027
-    #      (see test_delete_runtime_na_emits_both); retain is unaffected (see test_retain_runtime_na_preserves_behavior).
+    #      (see test_delete_runtime_na_emits_both); retain WITHOUT a resolved consumer_disposition is unaffected
+    #      (test_retain_runtime_na_preserves_behavior), but a retain that voluntarily asserts one is gated (SP022_retain_resolved_runtime_na).
     "SP022_harden_runtime_na": (harden_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived"), "SP022"),  # ordinary change case
     "SP022_compat_runtime_na": (compat_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived"), "SP022"),  # schema-forced has_consumers case
     "SP022_runtime_not_observed": (harden_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_observed", found_consumers=None, ref=None, detail="pending"), "SP022"),  # resolved + not_observed also fails
     "SP022_runtime_na_unexposed": (harden_bundle, lambda s, d, e, m: (s["relations"][0].__setitem__("in_data_api_exposed_schema", {"state": "observed", "value": False}), s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="not api-exposed")), "SP022"),  # independence: API-non-exposure does NOT waive the invariant
     "SP022_runtime_na_manifest_optin": (compat_bundle, lambda s, d, e, m: (m["required_observations"].append("consumer_evidence"), s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived")), "SP022"),  # independence: manifest opt-in (SP010 would allow N/A) does NOT waive the conclusion-based invariant
+    # IRP lens C: the invariant is observed-ONLY, not merely not-N/A. EVERY non-observed runtime state fails a
+    # resolved conclusion — locks against a future narrowing to {not_applicable, not_observed} that would silently reopen query_failed/stale.
+    "SP022_runtime_query_failed": (harden_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="query_failed", found_consumers=None, ref=None, detail="err"), "SP022"),
+    # IRP lens A: the predicate is CONCLUSION-scoped, not action-scoped. An accepted retain that VOLUNTARILY carries a
+    # resolved consumer_disposition (schema-permitted) must satisfy the evidence too — runtime N/A is red-gated (fails closed).
+    "SP022_retain_resolved_runtime_na": (retain_bundle, lambda s, d, e, m: (d["rows"][0].update(consumer_disposition="no_consumer"), s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived")), "SP022"),
 }
 
 

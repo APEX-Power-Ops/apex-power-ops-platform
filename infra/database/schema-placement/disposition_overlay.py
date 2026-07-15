@@ -398,7 +398,10 @@ def check_cluster_completeness(base_census, effective, manifest, decisions):
     """OV015 (advisory, audit F7): every cluster-source relation must have each gate-required
     permitted-overlay-target dimension resolved (state != not_observed) in the effective view — unless
     it was already observed in the BASE census (e.g. database_deps, which is not an overlay target).
-    SP009/SP022/SP027 on the effective view remain authoritative; OV015 names the missing overlay early."""
+    NARROW N/A mirror (gate-correction): for a resolved consumer_disposition, runtime_logs=not_applicable
+    is ALSO flagged here. This is a PARTIAL mirror of the authoritative SP022, which rejects EVERY
+    non-observed runtime state (incl. query_failed/stale) — SP009/SP022/SP027 on the effective view remain
+    authoritative and catch the intermediate states fail-closed; OV015 names the missing overlay early."""
     out = []
     dec_by_id = {row["decision_id"]: row for row in decisions.get("rows", [])}
     base_index = {r["object_id"]: r for r in base_census.get("relations", [])}

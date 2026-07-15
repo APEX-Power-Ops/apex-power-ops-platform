@@ -58,7 +58,7 @@ CODES = {
     "SP019": "entity_map is not accepted but a decision needs entity/schema resolution",
     "SP020": "duplicate decision_id / entity_id / physical_schema identity",
     "SP021": "manifest evidence_snapshot differs from the supplied --snapshot",
-    "SP022": "unresolved consumer-evidence dimension for a no_consumer conclusion",
+    "SP022": "a resolved consumer_disposition (no_consumer/has_consumers) needs every consumer dim observed/not_applicable, with database_deps + operator_declaration + runtime_logs required OBSERVED (runtime_logs: any non-observed state, incl. not_applicable/query_failed/stale, is rejected)",
     "SP023": "target_entity's physical_schema disagrees with target_schema",
     "SP024": "evidence_snapshot target_identity is absent/not-guard-passed, or its project binding is unasserted/mismatched",
     "SP025": "a target_object does not live in the decision's target_schema (relocation destination binding)",
@@ -406,8 +406,10 @@ def semantic_check(snapshot, decisions, entity_map, manifest, now, mode, roots, 
                     if st not in ("observed", "not_applicable"):
                         d.append(Diagnostic("SP010", f"decision:{did}:{r['object_id']}:consumer_evidence.{dimname}", f"state={st} (manifest required_observations includes consumer_evidence)"))
 
-        # consumer conclusion — SP022 RESOLUTION applies to BOTH resolved conclusions (every dim
-        # observed-or-not_applicable; operator_declaration observed); SP013 is the count agreement.
+        # consumer conclusion — SP022 RESOLUTION applies to BOTH resolved conclusions: every dim
+        # observed-or-not_applicable, EXCEPT operator_declaration, database_deps, and runtime_logs which
+        # must be OBSERVED (runtime_logs: ANY non-observed state — incl. not_applicable/query_failed/stale —
+        # is rejected, gate-correction); SP013 is the count agreement.
         conclusion = row.get("consumer_disposition")
         if conclusion in ("no_consumer", "has_consumers"):
             for r in src_rels:
