@@ -19,6 +19,12 @@ services:
         value: "false"
       - key: DATABASE_URL
         sync: false
+      # ops.* role-scoped serving DSNs (values set in Render dashboard, sourced from Infisical prod).
+      # Both must be present for main.py to mount /api/v1/ops/* (fail-safe OFF when unset).
+      - key: OPS_API_DSN
+        sync: false
+      - key: OPS_INTAKE_WRITER_DSN
+        sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
