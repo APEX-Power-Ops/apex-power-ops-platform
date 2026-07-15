@@ -1,7 +1,8 @@
 # Consumer-evidence `not_applicable` applicability design (issue #103, Phase 1)
 
-**Status: DESIGN-ONLY, rev 3.1 — awaiting final operator ratification. No enforcement, schema, or test edits until ratified.**
-**Rev 3.1** folds the bounded delta review (Codex gpt-5.5 xhigh, §11c): the SP022 delete carve-out is scoped to **accepted** delete (`decision_status == "accepted"`, matching SP027's exact gate at `check_disposition.py:465`) — an unscoped carve-out would have loosened non-accepted delete rows carrying voluntary resolved conclusions; tests 11–12 added.
+**Status: rev 3.2 — RATIFIED (operator, 2026-07-15, §11d). Implementation authorized under the offline guardrails; STOP at the draft PR.**
+**Rev 3.2** applies the operator's AMEND-ONCE-THEN-RATIFY ruling on rev 3.1 (§11d): the carve-out is scoped by **state as well as status** (`not_applicable` + accepted delete ONLY — other non-observed states on accepted delete keep today's SP022+SP027 dual diagnostic); the test matrix pins the state/action/status conjuncts (cases 3/5/6/11) and is labeled NEW-NEG vs PRESERVE (not all twelve start red); minor wording amendments folded.
+**Rev 3.1** folded the bounded delta review (Codex gpt-5.5 xhigh, §11c): the SP022 delete carve-out is scoped to **accepted** delete (`decision_status == "accepted"`, matching SP027's exact gate at `check_disposition.py:465`) — an unscoped carve-out would have loosened non-accepted delete rows carrying voluntary resolved conclusions; tests 11–12 added.
 Worktree `apex-gate-correction-consumer-na`, branch `schema-placement/gate-correction-consumer-na-applicability` off `35397326` (the merged #102 gate-correction). Grounded on the code at that commit; line refs are as read this session.
 **Rev 3** applies the operator's ratification ruling on rev 2 (record in §11): **P2 REJECTED as written** — `external_clients` is the platform's broad external/integration-inventory dimension, not a Data-API-only signal, so `in_data_api=false` does not make it inapplicable; **no new N/A waiver is introduced**. `external_clients` must be OBSERVED for resolved **non-delete** conclusions; the existing accepted-delete SP027 exception (and its current OV022 behavior) is preserved verbatim, with its broader semantic question recorded separately (§6c). **P6 removed** (its temporal-coverage claim was falsified: a base-census exposure-false observation bypasses OV022 entirely — verified; moot once the waiver is rejected). **P7 deferred** to a separate correction. **P3 amended**: OV015 narrowly mirrors BOTH N/A states for resolved non-delete conclusions. Test plan cut to 10.
 **Rev 2** folded the adversarial cross-engine review (3 opus refute-lenses + Codex gpt-5.5 xhigh; record in §11).
@@ -31,7 +32,7 @@ The SP022 conclusion loop fires for **any** row whose `consumer_disposition ∈ 
 | `delete`  | `= no_consumer` (const)          | schema:283–284 | yes | **yes** (check_disposition.py:513–533) |
 | `retain`  | none forced (may be null/unresolved) | schema:278–279 | only if the author *voluntarily* sets a resolved value | — |
 
-**Resolved-conclusion CHANGE actions with no destructive floor = `harden`, `promote`, `compat`, `archive`.** These are exactly the rows exposed to the seam. `delete` also enters the loop but its SP027 floor already handles `static_repo`/`external_clients` strictly (below). A non-accepted row (proposed/rejected/unknown) with a null conclusion never enters the loop; if it carries a resolved conclusion it does (correct — the claim is what's gated).
+**The rows exposed to the seam are ALL rows carrying a resolved conclusion outside the accepted-delete floor**: the schema-forced change actions (`harden`, `promote`, `compat`, `archive`), a `retain` that **voluntarily** asserts a resolved conclusion, and a **non-accepted `delete` row** (proposed/rejected) that voluntarily carries one — SP027 is gated `accepted`-only (`check_disposition.py:465`), so it never sees those. Accepted `delete` also enters the loop but its SP027 floor already handles `static_repo`/`external_clients` strictly (below). A row with a null conclusion never enters the loop (correct — the claim is what's gated).
 
 ## 3. The seam (current behavior, grounded)
 
@@ -50,7 +51,7 @@ So for a resolved conclusion, **`static_repo=not_applicable` and `external_clien
 
 **Scope qualifier (Codex):** this pair is the whole remaining N/A seam **for resolved SP022 conclusions** — not the whole applicability surface. The SP010 manifest opt-in (`check_disposition.py:401–407`) intentionally accepts observed-or-N/A without asserting a conclusion, and an accepted `retain` with a null conclusion never enters the loop; both are documented in §4† and remain out of scope. `advisor_findings` (overlay path, not a `DIMS` member) and `database_deps` (a `DIMS` member, already forced-observed, not overlayable) are sibling *surfaces*, not this seam — explicitly out of scope (§9 P5).
 
-**SP027 (delete floor) already does the right thing** (`check_disposition.py:513–533`): `static_repo` (and database_deps/runtime_logs/operator_declaration) must be OBSERVED; `external_clients` OBSERVED, or `not_applicable` **only when `in_data_api_exposed_schema` is OBSERVED `false`**; plus a ≥30-day window. The change actions have no equivalent.
+**SP027 — the currently ratified delete floor** (`check_disposition.py:513–533`; its semantics remain disputed, §6c): `static_repo` (and database_deps/runtime_logs/operator_declaration) must be OBSERVED; `external_clients` OBSERVED, or `not_applicable` **only when `in_data_api_exposed_schema` is OBSERVED `false`**; plus a ≥30-day window. Gated to **accepted** delete only. The change actions have no equivalent.
 
 **Concrete exploit** (same class as #102): an accepted `harden` on an API-exposed table with real external consumers → set `external_clients=not_applicable` + `static_repo=not_applicable`; the forced-observed dims read `found_consumers=0`; the row greens as `no_consumer`; a receipt is written and the harden proceeds, hiding both static-code and external API consumers.
 
@@ -60,14 +61,14 @@ Governing principle: **a resolved `consumer_disposition` is a factual claim ("no
 
 Legend: **O** = OBSERVED required; **any** = unconstrained by this gate. The table applies to **every** resolved conclusion, including a `retain` that voluntarily asserts one (conclusion-based, not action-gated).
 
-| dimension | overlayable? | resolved NON-delete conclusion (harden/promote/compat/archive/voluntary-retain) | delete (SP027 + current OV022, preserved verbatim) | unresolved (retain-null / non-accepted-null) |
+| dimension | overlayable? | resolved conclusion outside the accepted-delete floor (harden/promote/compat/archive/voluntary-retain/**non-accepted delete**) | **accepted delete** (SP027 + current OV022, preserved verbatim) | unresolved (retain-null / non-accepted-null) |
 |---|---|---|---|---|
 | `operator_declaration` | overlay (window) | **O** | **O** | any (SP022 loop off)† |
 | `database_deps` | base-census-only | **O** | **O** | any† |
 | `runtime_logs` | overlay (window) | **O** (#102) | **O** | any† |
 | `static_repo` | overlay (window) | **O** — *no N/A waiver* (NEW #103) | **O** (SP027; NEW: SP022 also fires — consistent, no contradiction) | any† |
-| `external_clients` | overlay (window) | **O** — *no N/A waiver* (NEW #103, P2 rejected) | **O, or N/A iff `in_data_api` OBSERVED `false`** — the existing ratified SP027 exception, unchanged; SP022 defers to SP027 here | any† |
-| `in_data_api_exposed_schema` | overlay (bool) | not consulted by SP022 (no waiver to grant) | predicate input for delete's SP027 exception (unchanged) | — |
+| `external_clients` | overlay (window) | **O** — *no N/A waiver* (NEW #103, P2 rejected) | **O, or N/A iff `in_data_api` OBSERVED `false`** — the ratified SP027 exception, unchanged; SP022 skips ONLY the N/A state here (other non-observed states get SP022 and SP027, today's dual diagnostic) | any† |
+| `in_data_api_exposed_schema` | overlay (bool) | not consulted by SP022 (no waiver to grant) | predicate input for the accepted-delete SP027 exception (unchanged) | — |
 
 † For an unresolved conclusion, the SP022 loop does not fire. If the **manifest** lists `consumer_evidence` in `required_observations`, the weaker SP010 opt-in (`check_disposition.py:401–407`) still requires every dim `observed`-or-`not_applicable` — but that path is deliberately weaker (it does not assert a conclusion) and is **out of scope** for #103; it is documented here so the two paths are not conflated.
 
@@ -105,17 +106,22 @@ for dimname in DIMS:                       # static_repo, database_deps, runtime
                     static-code consumers are possible on any relation, so non-applicability
                     cannot be asserted (no not_applicable waiver)"; continue
 
-    if dimname == "external_clients" and st != "observed":                            # NEW #103 (rev 3.1)
-        if action_class == "delete" and decision_status == "accepted":
-            continue        # defer to SP027 — which is gated EXACTLY accepted-delete
-                            # (check_disposition.py:465 `action_class=="delete" and decision_status=="accepted"`)
-                            # and already enforces observed-or-ratified-exception (exposure OBSERVED false).
-                            # Preserves the existing exception and its green regression
-                            # (_delete_external_na_unexposed) byte-for-byte.
-                            # NOT plain action_class=="delete": a proposed/rejected delete row may carry a
-                            # resolved conclusion (schema:227 permits it; only accepted-delete forces one,
-                            # schema:283) and SP027 never runs on it — an unscoped carve-out would LOOSEN
-                            # those rows (bounded-review High, rev 3.1).
+    if dimname == "external_clients" and st != "observed":                            # NEW #103 (rev 3.2)
+        if (
+            st == "not_applicable"
+            and row.get("action_class") == "delete"
+            and row.get("decision_status") == "accepted"
+        ):
+            continue        # ONLY the preserved SP027 exception (state+status+action scoped):
+                            # accepted delete + not_applicable -> SP027 alone evaluates the ratified
+                            # exposure-false waiver (check_disposition.py:522), preserving the green
+                            # regression (_delete_external_na_unexposed) byte-for-byte.
+                            # Any OTHER non-observed state on an accepted delete (not_observed/
+                            # query_failed/stale) gets SP022 here AND SP027 — exactly today's behavior
+                            # (rev-3.1's status-only carve-out dropped the SP022 diagnostic; operator
+                            # Finding 1). A non-accepted delete row carrying a voluntary resolved
+                            # conclusion always gets SP022 (SP027 never runs on it, schema:227/283;
+                            # bounded-review High, rev 3.1).
         emit SP022 "external_clients must be OBSERVED for a resolved consumer_disposition;
                     the inventory covers non-API integrations (dashboards, BI, MCP, direct SQL),
                     so Data-API non-exposure does not make it inapplicable"; continue
@@ -124,7 +130,7 @@ for dimname in DIMS:                       # static_repo, database_deps, runtime
     if st != "observed": emit SP022 (unresolved); continue
     if ce[dimname].found_consumers > 0: observed_positive = True; (SP013 no_consumer contradiction)
 ```
-Diagnostic code stays **SP022** (same invariant family). SP022 consults **no exposure predicate** (rev 3: there is no waiver to grant); `in_data_api_exposed_schema` is read only by SP027's unchanged delete branch. The carve-out and SP027 are scoped to the **identical** accepted-delete predicate, so every row exactly one of them owns: accepted delete → SP027 (observed or the ratified exposure-false N/A exception); everything else with a resolved conclusion → SP022's strict branch. No row is owned by neither.
+Diagnostic code stays **SP022** (same invariant family). SP022 consults **no exposure predicate** (rev 3: there is no waiver to grant); `in_data_api_exposed_schema` is read only by SP027's unchanged delete branch. Ownership is exact: accepted delete + N/A → SP027 alone (the ratified exception); accepted delete + other non-observed states → SP022 **and** SP027 (today's dual diagnostic, preserved); every other row with a resolved conclusion → SP022. No row is owned by neither layer, and no existing diagnostic is removed.
 
 ### 6b. OV015 (overlay loader, narrow early-warning mirror — P3 as amended)
 The NEW OV015 branches must remain a **strict subset** of the checker's rejections (fire only on inputs the checker also rejects). Extend `check_cluster_completeness` (`disposition_overlay.py:417–423`) with two branches, guarded by `resolved_conclusion` **and non-delete** (matching the amended P3: "reject both N/A states for resolved non-delete conclusions"):
@@ -149,7 +155,7 @@ No exposure predicate is consulted (rev 3: there is no waiver). The `non_delete`
 - **Recorded SP027 semantic question (separate packet; NOT changed here):** the accepted-delete `external_clients` exposure exception carries (a) the same inventory-breadth objection that rejected P2, and (b) the verified base-census temporal bypass above (including OV022's `:363` defer comment "SP027 denies it", which is inaccurate for the base-census path — SP027 grants it). Correcting it would invalidate a ratified exception and its tests (`_delete_external_na_unexposed`), so it must be an **explicit SP027 policy correction** with its own ratification, not a rider on #103.
 
 **Two-layer invariant (stated precisely; must be explicit tests via SEPARATE layer calls — the full CLI stops after OV015):**
-1. **No false green (the security property):** a receipt is written only if BOTH the OV gates and the checker pass; SP022/SP027 are authoritative and reject every non-observed state (modulo the preserved delete exception), so no N/A on these dims can reach a receipt.
+1. **No false green (the security property, scoped precisely):** for every row carrying a **resolved conclusion**, a receipt is written only if BOTH the OV gates and the checker pass; SP022/SP027 are authoritative and reject every non-observed `static_repo`/`external_clients` state, **modulo exactly one carve-out: `external_clients=not_applicable` on an accepted delete, which the ratified SP027 exposure-false exception governs**. No other N/A on these dims can reach a receipt.
 2. **Subset on the NEW N/A mirror branches:** every input they reject, the checker also rejects (both fire on resolved non-delete N/A, which SP022 rejects unconditionally in rev 3 — no predicate divergence is possible because neither layer consults one).
 3. **What is NOT claimed:** OV015 is a *partial* early-warning mirror — `query_failed`/`stale`, delete-row N/A misuses, and delete `static_repo=N/A` are checker-red but mirror-silent by design (no receipt results either way). The pre-existing delete/in_data_api over-requirement (P7, deferred) means "OV015-rejects ⟹ checker-rejects" does not hold globally today; it does hold for the #103 branches.
 
@@ -164,7 +170,8 @@ No exposure predicate is consulted (rev 3: there is no waiver). The `non_delete`
 | `static_repo=observed` + `external_clients=observed` | GREEN | GREEN (baseline preserved) |
 | voluntarily resolved `retain`, either dim N/A | GREEN (seam) | **SP022** (conclusion-based; reaches it) |
 | unresolved retain, both N/A | GREEN | GREEN (loop off) |
-| **accepted** `delete`, `external_clients=not_applicable` + exposure observed **false** | GREEN (SP027 exception) | **GREEN — preserved verbatim** (SP022 defers to SP027; regression `:346` untouched) |
+| **accepted** `delete`, `external_clients=not_applicable` + exposure observed **false** | GREEN (SP027 exception) | **GREEN — preserved verbatim** (the state+status-scoped carve-out defers exactly this to SP027; regression `:346` untouched) |
+| **accepted** `delete`, `external_clients` = not_observed / query_failed / stale | SP022 (generic fall-through) **and** SP027 | **SP022 and SP027 — preserved** (rev 3.2: the carve-out is N/A-only, so today's dual diagnostic survives; rev 3.1 would have dropped the SP022 half) |
 | **accepted** `delete`, `static_repo=not_applicable` | SP027 red | SP027 red **and** SP022 red (consistent; no contradiction) |
 | **non-accepted** `delete` row w/ voluntary resolved conclusion, `external_clients` = N/A / not_observed / query_failed / stale | N/A: GREEN (seam); others: SP022 (generic fall-through) | **SP022 (all four states)** — the carve-out is accepted-delete-scoped, so SP027-unseen rows stay SP022-owned (rev 3.1; an unscoped carve-out would have LOOSENED the three non-N/A states) |
 
@@ -172,27 +179,31 @@ No exposure predicate is consulted (rev 3: there is no waiver). The `non_delete`
 
 ## 8. Representative boundary-test plan (NOT a Cartesian grid)
 
-Checker (`test_check_disposition.py`, NEG unless noted):
-1. `harden`, `static_repo=not_applicable` → SP022
-2. `harden`, `external_clients=not_applicable`, `in_data_api` observed **false** → SP022 — **the rev-3 boundary** (the case rev 1/2 would have greened; locks "no waiver for change actions")
-3. `compat` (forced has_consumers), `external_clients=not_observed` → SP022 (non-N/A non-observed via the explicit branch)
-4. **voluntarily resolved `retain`** (`no_consumer`), `external_clients=not_applicable` → SP022 (conclusion-based enforcement reaches it — operator test correction)
-5. `delete`, `static_repo=not_applicable` → SP027 **and** SP022 (both fire; assert both codes)
-6. `delete`, `external_clients=not_applicable` + `in_data_api` observed **false** → **GREEN** (preserved SP027 exception — the `_delete_external_na_unexposed` analog stays green; kept SEPARATE from case 5 per the operator correction)
-7. unresolved `retain` (conclusion null), both dims N/A → **GREEN** (loop off)
+Legend: **[NEW-NEG]** = must be RED against the unmodified enforcement (locks the fix); **[PRESERVE]** = must be GREEN before AND after (locks no-loosening / no-over-block).
 
-Overlay loader (`test_overlay_loader.py`, e2e signed-overlay, assert `rc==1 && OV015 in out && no receipt`):
-8. signed `static_repo=not_applicable` overlay, resolved `harden` → OV015, no receipt
-9. signed `external_clients=not_applicable` overlay + `in_data_api` observed **false**, resolved `harden` → OV015, no receipt (mirror fires for non-delete even with exposure false — no waiver; the deliberate counterpart of checker case 6's delete-green)
-10. **Two-layer agreement via SEPARATE layer calls** (the full CLI stops after OV015, so it cannot witness both layers — operator test correction): for the inputs of cases 1 and 2, invoke the loader's completeness gate and `semantic_check` independently on the same effective input; assert **both** reject.
+Checker (`test_check_disposition.py`):
+1. **[NEW-NEG]** `harden`, `static_repo=not_applicable` → SP022
+2. **[NEW-NEG]** `harden`, `external_clients=not_applicable`, `in_data_api` observed **false** → SP022 — **the rev-3 boundary** (the case rev 1/2 would have greened; locks "no waiver for change actions")
+3. **[PRESERVE]** **accepted** `delete`, `external_clients=not_observed` → SP022 **and** SP027 (today's dual diagnostic; locks the **state** conjunct of the carve-out — a state-blind carve-out would drop the SP022 half — operator Finding 2 restructure; non-delete `external_clients=not_observed` → SP022 is already proven by existing coverage)
+4. **[NEW-NEG]** **voluntarily resolved `retain`** (`no_consumer`), `external_clients=not_applicable` → SP022 (conclusion-based enforcement reaches it — operator test correction)
+5. **[NEW-NEG]** accepted `delete`, `static_repo=not_applicable` → SP027 **and** SP022 (both fire; assert both codes; SP022 half is new)
+6. **[PRESERVE]** accepted `delete`, `external_clients=not_applicable` + `in_data_api` observed **false** → **GREEN** (the ratified SP027 exception — `_delete_external_na_unexposed` analog; locks the exception survives; kept SEPARATE from case 5 per the operator correction)
+7. **[PRESERVE]** unresolved `retain` (conclusion null), both dims N/A → **GREEN** (loop off)
+11. **[NEW-NEG]** **proposed** `delete` row carrying a voluntary resolved conclusion, `external_clients=not_applicable` → **SP022** (SP016 may also be present — assert SP022 ∈ codes, not exact-set) — locks the **status** conjunct (a status-blind carve-out would green this, since SP027 never runs on non-accepted rows; rev-3.1's original `not_observed` variant started green and proved nothing — operator Finding 2)
 
-Rev-3.1 additions (from the bounded delta review):
-11. **proposed** `delete` row carrying a voluntary resolved conclusion, `external_clients=not_observed` → SP022 — locks the accepted-delete scoping of the carve-out (an unscoped `action_class=="delete"` carve-out would green this, since SP027 never runs on non-accepted rows).
-12. loader-level delete-waiver over-block guard: **accepted** `delete`, `external_clients=not_applicable`, `in_data_api` observed **false** with a covering overlay window, all other consumer dims observed → **NO OV015, green/receipt path intact** — locks the `non_delete` guard (a missing guard would emit OV015 and early-block the preserved ratified exception).
+Cases 3, 5, 6, 11 together pin all three conjuncts of the carve-out (state, action, status).
 
-12 purposeful tests (10 per the operator sizing + 2 mandated by the bounded delta review). Synthetic Ed25519 keys only; never the production signing key.
+Overlay loader (`test_overlay_loader.py`, e2e signed-overlay, assert `rc==1 && OV015 in out && no receipt` unless noted):
+8. **[NEW-NEG]** **voluntarily resolved `retain`** + signed `static_repo=not_applicable` overlay → OV015, no receipt (proves the mirror is conclusion-based, not action-gated — operator amendment; harden coverage of the same branch comes via case 10)
+9. **[NEW-NEG]** signed `external_clients=not_applicable` overlay + `in_data_api` observed **false**, resolved `harden` → OV015, no receipt (mirror fires for non-delete even with exposure false — no waiver; the deliberate counterpart of checker case 6's delete-green)
+10. **[NEW-NEG]** **Two-layer agreement via SEPARATE layer calls** (the full CLI stops after OV015, so it cannot witness both layers — operator test correction): for the inputs of cases 1 and 2, invoke the loader's completeness gate and `semantic_check` independently on the same effective input; assert **both** reject.
+12. **[PRESERVE]** loader-level delete-waiver over-block guard: **accepted** `delete`, `external_clients=not_applicable`, `in_data_api` observed **false** with a covering overlay window, all other consumer dims observed → **NO OV015, green/receipt path intact** — locks the `non_delete` guard (a missing guard would emit OV015 and early-block the preserved ratified exception).
 
-## 9. Policy set — operator ruling applied (rev 3)
+12-case matrix: 8 NEW-NEG (red first) + 4 PRESERVE (green throughout). **Not all twelve start red — land the matrix first, then confirm every NEW-NEG case red and every PRESERVE case green against the unmodified enforcement before implementing.** Synthetic Ed25519 keys only; never the production signing key.
+
+## 9. Policy set — RATIFIED (operator, 2026-07-15)
+
+**Final ruling (§11d): P1 ratified · P2 rejection ratified · P3 ratified as amended · P4–P5 ratified · P6 removal ratified · P7 deferral ratified · separate SP027 policy-debt packet confirmed.** Implementation is authorized on the rev-3.2 text, stopping at the draft PR.
 
 | # | policy | ruling (operator review of rev 2) | rev-3 embodiment |
 |---|---|---|---|
@@ -206,9 +217,21 @@ Rev-3.1 additions (from the bounded delta review):
 | — | broader SP027 delete-exception semantics (inventory breadth + base-census temporal bypass + inaccurate `:363` defer comment) | **Recorded separately**; explicit SP027 policy-correction packet with its own ratification | §6c third bullet + §5 verdict |
 
 ## 10. Governance / boundaries (this phase)
-Design-only. No edits to `check_disposition.py`, `disposition_overlay.py`, `disposition.schema.json`, or tests. No prod access, secrets, signing, apply, push, or PR. Review protocol per the operator ruling: the four-engine rev-1→rev-2 audit is NOT replayed; rev 3 got **one bounded review of the rev-2→rev-3 delta** (Codex, §11c — Not CLEAN; both findings folded as rev 3.1), then **STOP for final operator ratification of the rev-3.1 text**. Only after ratification: failing representative tests first (12, §8) → SP022 + OV015 implementation → diagnostics/docs → locked offline gates → cross-engine IRP of the implementation → draft PR → stop before merge.
+**RATIFIED (§11d) — implementation phase authorized.** Guardrails: offline only; no prod access, secrets, or signing; no schema edits; no further design-wide IRP (the implementation gets its planned cross-engine IRP). Sequence: **land the 12-case matrix first — confirm every NEW-NEG case red and every PRESERVE case green against the unmodified enforcement** — then SP022 + OV015 implementation → diagnostics/docs/fixture sweep → locked offline gates → cross-engine IRP of the implementation → **draft PR → STOP** (merge is a separate operator GO).
 
 ## 11. Review record
+
+### 11d. Operator ratification of rev 3.1 → rev 3.2 (2026-07-15) — AMEND ONCE, THEN RATIFY
+
+Verdict: policy architecture sound, no false-green remains; two Medium findings + minor text amendments, all folded here as rev 3.2:
+
+| # | sev | finding | disposition |
+|---|---|---|---|
+| 1 | Med | the rev-3.1 carve-out was status-scoped but **state-blind** — it delegated ALL non-observed `external_clients` states on accepted delete to SP027, silently dropping the SP022 diagnostic that fires today on `not_observed`/`query_failed`/`stale` (fail-closed, but removes a diagnostic) | **Adopted** — carve-out now `st == "not_applicable" AND action_class == "delete" AND decision_status == "accepted"` (§6a); §7 dual-diagnostic row added |
+| 2 | Med | test 11 (proposed delete + `not_observed`) starts green (SP022 already fires) — it would not detect a missing status conjunct | **Adopted** — case 11 → proposed delete + resolved conclusion + `not_applicable` → SP022 (SP016 tolerated); case 3 → accepted delete + `not_observed` → SP022 and SP027 [PRESERVE]; case 8 → voluntarily resolved retain + static_repo overlay (conclusion-based OV015); cases 3/5/6/11 pin the state/action/status conjuncts |
+| — | minor | column rename (accepted delete); §2 exposed-rows wording; no-false-green invariant scoped modulo the accepted-delete N/A exception; `row.get(...)` in pseudocode; "currently ratified delete floor" phrasing; "not all twelve should fail" test-sequencing language; overlay case 8 retain variant | **All adopted** |
+
+**Final ratification ruling:** P1 ✓ · P2-rejection ✓ · P3-as-amended ✓ · P4 ✓ · P5 ✓ · P6-removal ✓ · P7-deferral ✓ · separate SP027 policy-debt packet ✓. Implementation authorized to the draft-PR boundary; no further design-wide IRP; the implementation retains its planned cross-engine IRP. Operator verified head `7565bcf7`, clean worktree, doc-only delta from `35397326`.
 
 ### 11c. Bounded delta review of rev 2 → rev 3 (Codex gpt-5.5 xhigh, single pass, 2026-07-15)
 
