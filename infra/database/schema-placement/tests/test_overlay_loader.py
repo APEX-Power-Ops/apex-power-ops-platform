@@ -1170,8 +1170,10 @@ def _e2e_retain_resolved_static_na_overlay_OV015_no_receipt():
     # receipt. Every other consumer dim is observed so ONLY the new static_repo N/A branch can fire.
     rc, out, receipt = _run_case(_resolved_retain_docs("public.v"),
                                  lambda cb: [_in_data_api_overlay(cb, False),
-                                             _consumer_overlay("static_repo", cb, None, state="not_applicable",
-                                                               producing_repo_sha=None, producing_repo_sha_not_applicable_reason="waived"),
+                                             # static_repo is a REQUIRED-sha category (author HEAD is
+                                             # required even for a not_applicable claim) — keep the
+                                             # default producing_repo_sha or the loader rejects OV012
+                                             _consumer_overlay("static_repo", cb, None, state="not_applicable"),
                                              _consumer_overlay("runtime_logs", cb, "sha:r1", producing_repo_sha=None, producing_repo_sha_not_applicable_reason="runtime query"),
                                              _consumer_overlay("external_clients", cb, "sha:e1"),
                                              _consumer_overlay("operator_declaration", cb, "sha:o1", producing_repo_sha=None,
