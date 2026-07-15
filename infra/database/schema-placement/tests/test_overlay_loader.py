@@ -1155,10 +1155,85 @@ def _e2e_base_census_runtime_na_OV015_no_receipt():
         dt.TRUSTED_SIGNERS.clear(); dt.TRUSTED_SIGNERS.update(saved)
 
 
+# ---- correction tranche #103 (consumer-NA applicability, design rev 3.2) ----
+def _resolved_retain_docs(oid):
+    """An accepted retain that VOLUNTARILY asserts a resolved conclusion (the schema permits it) —
+    the conclusion-based gates must reach it exactly like a change action (#103)."""
+    decisions, manifest, em = _retain_docs(oid)
+    decisions["rows"][0]["consumer_disposition"] = "no_consumer"
+    return decisions, manifest, em
+
+
+def _e2e_retain_resolved_static_na_overlay_OV015_no_receipt():
+    # #103 matrix case 8: voluntarily resolved retain + a validly-signed static_repo=not_applicable
+    # overlay is rejected at the overlay layer (OV015 is conclusion-based, not action-gated), with NO
+    # receipt. Every other consumer dim is observed so ONLY the new static_repo N/A branch can fire.
+    rc, out, receipt = _run_case(_resolved_retain_docs("public.v"),
+                                 lambda cb: [_in_data_api_overlay(cb, False),
+                                             _consumer_overlay("static_repo", cb, None, state="not_applicable",
+                                                               producing_repo_sha=None, producing_repo_sha_not_applicable_reason="waived"),
+                                             _consumer_overlay("runtime_logs", cb, "sha:r1", producing_repo_sha=None, producing_repo_sha_not_applicable_reason="runtime query"),
+                                             _consumer_overlay("external_clients", cb, "sha:e1"),
+                                             _consumer_overlay("operator_declaration", cb, "sha:o1", producing_repo_sha=None,
+                                                               producing_repo_sha_not_applicable_reason="operator", operator_identity="op-1", attestation_ref="att-1")],
+                                 receipt=True)
+    return rc == 1 and "OV015" in out and receipt is None
+
+
+def _e2e_harden_external_na_unexposed_overlay_OV015_no_receipt():
+    # #103 matrix case 9: exposure-false does NOT waive external_clients on a change action (P2
+    # rejected) — a signed external_clients=not_applicable overlay + in_data_api observed FALSE on a
+    # resolved harden is rejected at the overlay layer (OV015), NO receipt. Deliberate counterpart of
+    # the accepted-delete green (case 12): same dim states, different action class, opposite verdict.
+    rc, out, receipt = _run_case(_harden_docs("public.v"),
+                                 lambda cb: [_in_data_api_overlay(cb, False),
+                                             _consumer_overlay("static_repo", cb, "sha:s1"),
+                                             _consumer_overlay("runtime_logs", cb, "sha:r1", producing_repo_sha=None, producing_repo_sha_not_applicable_reason="runtime query"),
+                                             _consumer_overlay("external_clients", cb, None, state="not_applicable",
+                                                               producing_repo_sha=None, producing_repo_sha_not_applicable_reason="not api-exposed"),
+                                             _consumer_overlay("operator_declaration", cb, "sha:o1", producing_repo_sha=None,
+                                                               producing_repo_sha_not_applicable_reason="operator", operator_identity="op-1", attestation_ref="att-1")],
+                                 receipt=True)
+    return rc == 1 and "OV015" in out and receipt is None
+
+
+def _e2e_delete_false_covering_green_no_OV015():
+    # #103 matrix case 12 [PRESERVE]: the VALID accepted-delete waiver path — external_clients
+    # not_applicable + in_data_api observed FALSE with a covering overlay window + all other consumer
+    # dims observed — stays green with a receipt and NO OV015. Locks the mirror's non-delete guard:
+    # a guard-less OV015 N/A branch would early-block the ratified SP027 exception (over-block).
+    rc, out, receipt = _run_case(_delete_docs("public.v"),
+                                 lambda cb: _delete_consumer_overlays(cb) + [_in_data_api_overlay(cb, False)],
+                                 receipt=True, extra_roots=[tcd._ROOT])
+    return rc == 0 and "OV015" not in out and receipt is not None
+
+
+def _two_layer_agreement_separate_calls():
+    # #103 matrix case 10: the full CLI stops after OV015 (merge short-circuit), so two-layer
+    # agreement is proven by invoking the layers SEPARATELY on the same input: the loader's
+    # completeness gate (check_cluster_completeness on base==effective, no overlays) and the checker
+    # (tcd.codes) must BOTH reject — never one-green-one-red.
+    def both_reject(mut):
+        snap, dec, em, man, sp = tcd._mut(tcd.harden_bundle, mut)
+        checker_red = "SP022" in tcd.codes((snap, dec, em, man, sp))
+        loader_red = any(c == "OV015" for c, _p, _m in ov.check_cluster_completeness(snap, snap, man, dec))
+        return checker_red and loader_red
+    static_na = lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["static_repo"].update(
+        state="not_applicable", found_consumers=None, ref=None, detail="waived")
+    external_na_unexposed = lambda s, d, e, m: (
+        s["relations"][0].__setitem__("in_data_api_exposed_schema", {"state": "observed", "value": False}),
+        s["relations"][0]["consumer_evidence"]["external_clients"].update(state="not_applicable", found_consumers=None, ref=None, detail="not api-exposed"))
+    return both_reject(static_na) and both_reject(external_na_unexposed)
+
+
 _CASES += [
     ("e2e_red_then_green", _e2e_red_then_green),
     ("e2e_signed_runtime_na_overlay_OV015_no_receipt", _e2e_signed_runtime_na_overlay_OV015_no_receipt),
     ("e2e_base_census_runtime_na_OV015_no_receipt", _e2e_base_census_runtime_na_OV015_no_receipt),
+    ("e2e_retain_resolved_static_na_overlay_OV015_no_receipt", _e2e_retain_resolved_static_na_overlay_OV015_no_receipt),
+    ("e2e_harden_external_na_unexposed_overlay_OV015_no_receipt", _e2e_harden_external_na_unexposed_overlay_OV015_no_receipt),
+    ("e2e_delete_false_covering_green_no_OV015", _e2e_delete_false_covering_green_no_OV015),
+    ("two_layer_agreement_separate_calls", _two_layer_agreement_separate_calls),
     ("e2e_ov021_via_main", _e2e_ov021_via_main),
     ("e2e_delete_missing_in_data_api_OV015", _e2e_delete_missing_in_data_api_OV015),
     ("e2e_delete_true_in_data_api_SP027", _e2e_delete_true_in_data_api_SP027),
