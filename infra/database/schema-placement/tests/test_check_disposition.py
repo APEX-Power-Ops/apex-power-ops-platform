@@ -246,6 +246,17 @@ NEG = {
     "SP015_compat_window_infinite": (promote_bundle, lambda s, d, e, m: d["rows"][0]["compatibility_contract"]["exit_condition"].update(window_hours=float("inf")), "SP015"),  # correction tranche: compat exit window must be finite (schema exclusiveMinimum lets +inf through)
     "SP014_delete_empty_recovery": (delete_bundle, lambda s, d, e, m: d["rows"][0]["retention_disposition"]["recovery_proof"].update(artifact_path="empty.sha256"), "SP014"),  # Claude R2: zero-byte artifact
     "SP022_compat_unresolved_consumer": (compat_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["database_deps"].update(state="not_observed", found_consumers=None, ref=None, detail="pending"), "SP022"),  # correction tranche: accepted compat must carry OBSERVED consumer evidence, independent of manifest required_observations
+    # ---- gate-correction tranche: the governing invariant is CONCLUSION-BASED — a resolved
+    #      consumer_disposition (no_consumer/has_consumers) requires runtime_logs OBSERVED. Unavailable
+    #      telemetry OR API-non-exposure must be recorded not_observed, never not_applicable (runtime
+    #      evidence covers direct-SQL consumers). Representative cases only; enforced in BOTH the semantic
+    #      checker (SP022) and the overlay loader (test_overlay_loader.py). delete additionally floors on SP027
+    #      (see test_delete_runtime_na_emits_both); retain is unaffected (see test_retain_runtime_na_preserves_behavior).
+    "SP022_harden_runtime_na": (harden_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived"), "SP022"),  # ordinary change case
+    "SP022_compat_runtime_na": (compat_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived"), "SP022"),  # schema-forced has_consumers case
+    "SP022_runtime_not_observed": (harden_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_observed", found_consumers=None, ref=None, detail="pending"), "SP022"),  # resolved + not_observed also fails
+    "SP022_runtime_na_unexposed": (harden_bundle, lambda s, d, e, m: (s["relations"][0].__setitem__("in_data_api_exposed_schema", {"state": "observed", "value": False}), s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="not api-exposed")), "SP022"),  # independence: API-non-exposure does NOT waive the invariant
+    "SP022_runtime_na_manifest_optin": (compat_bundle, lambda s, d, e, m: (m["required_observations"].append("consumer_evidence"), s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived")), "SP022"),  # independence: manifest opt-in (SP010 would allow N/A) does NOT waive the conclusion-based invariant
 }
 
 
@@ -335,6 +346,27 @@ def _delete_external_na_unexposed():
 
 def test_delete_external_na_when_unexposed():
     assert _delete_external_na_unexposed()
+
+
+def _delete_runtime_na_both():
+    # a resolved delete with runtime_logs=not_applicable trips BOTH the conclusion-based invariant (SP022)
+    # and the destructive-evidence floor (SP027).
+    got = codes(_mut(delete_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="waived")))
+    return "SP022" in got and "SP027" in got
+
+
+def test_delete_runtime_na_emits_both():
+    assert _delete_runtime_na_both()
+
+
+def _retain_runtime_na_green():
+    # retain carries no resolved consumer_disposition, so the conclusion-based invariant does not apply:
+    # runtime_logs=not_applicable is preserved existing behavior (retain changes nothing).
+    return codes(_mut(retain_bundle, lambda s, d, e, m: s["relations"][0]["consumer_evidence"]["runtime_logs"].update(state="not_applicable", found_consumers=None, ref=None, detail="n/a"))) == []
+
+
+def test_retain_runtime_na_preserves_behavior():
+    assert _retain_runtime_na_green()
 
 
 def _sig_roundtrip():
@@ -869,6 +901,8 @@ if __name__ == "__main__":
         ("sp024_missing_expect", _sp024_missing_expect),
         ("sp024_missing_target_identity", _sp024_missing_ti),
         ("delete_external_na_when_unexposed", _delete_external_na_unexposed),
+        ("delete_runtime_na_both", _delete_runtime_na_both),
+        ("retain_runtime_na_green", _retain_runtime_na_green),
         ("gate_receipt_pure", _receipt_pure),
         # F7 obsolete under SP026: the receipt binds snapshot_signature_sha256 from in-hand sig bytes; there is no second read to guard.
         ("signature_roundtrip", _sig_roundtrip),

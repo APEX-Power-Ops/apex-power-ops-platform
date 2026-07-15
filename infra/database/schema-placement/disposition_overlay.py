@@ -411,9 +411,13 @@ def check_cluster_completeness(base_census, effective, manifest, decisions):
             base_rel, eff_rel = base_index.get(oid), eff_index.get(oid)
             if base_rel is None or eff_rel is None:
                 continue
+            resolved_conclusion = row.get("consumer_disposition") in ("no_consumer", "has_consumers")
             for dim in sorted(_gate_required_dims(row, manifest)):
-                if _base_slot(base_rel, dim).get("state") == "not_observed" and _base_slot(eff_rel, dim).get("state") == "not_observed":
+                eff_state = _base_slot(eff_rel, dim).get("state")
+                if _base_slot(base_rel, dim).get("state") == "not_observed" and eff_state == "not_observed":
                     out.append(("OV015", f"cluster:{did}:{oid}:{dim}", f"gate-required dimension {dim} is unresolved (no permitted overlay)"))
+                elif dim == "consumer_evidence.runtime_logs" and eff_state == "not_applicable" and resolved_conclusion:
+                    out.append(("OV015", f"cluster:{did}:{oid}:{dim}", "runtime_logs=not_applicable is not a resolved state for a resolved consumer_disposition (gate-correction: unavailable telemetry or API-non-exposure must be not_observed)"))
     return out
 
 
