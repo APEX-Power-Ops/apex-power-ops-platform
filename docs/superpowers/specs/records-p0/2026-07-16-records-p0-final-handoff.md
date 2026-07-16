@@ -1,6 +1,6 @@
 # Records P0/P1 Final Handoff
 
-Status: **HELD — PRE-PUBLICATION HANDOFF**
+Status: **HELD — BOUNDED CORRECTION; DELTA RE-REVIEW REQUIRED, NOT AUTHORIZED**
 Goal: RECORDS-P0-AUTHORITY-AND-P1-ADMISSION-FRAMEWORK-001
 Decision status: proposed
 Execution authorized: false
@@ -40,6 +40,8 @@ Migrations 001 through 049 must not be replayed.
 | Base tree | b3f91a2392e0afd7b545bab2b6441c7ed6e27432 |
 | Framework content commit | a3fe240928d42ca9f4cbaf9526b5444aa46dc062 |
 | Framework content tree | e3719d8ac777fd1f2e7cd92be0d5000b1139135b |
+| Prior bounded-review head | cafa297d728172d946fd775da763bf5b78a01b4c |
+| Prior bounded-review tree | d06b750e4fa23648097759d1560800e8aa213ec0 |
 | Audit SHA-256 | 5db6a3a0582eac515c55f1c66496ae46e64541b65325e66430346adf20cbeb43 |
 
 The exact publication head and tree are re-derived only after review metadata is
@@ -66,7 +68,12 @@ The final branch is restricted to exactly these thirteen paths:
 13. reference/records/PUNCHLIST.md
 
 No SQL, application, package, importer, serving-contract, or retained
-production-evidence blob is authorized to change.
+production-evidence blob is authorized to change. The authorized external
+review projection for prior head cafa297d contained these thirteen changed
+paths only. Its sole migration path was the migration MANIFEST.md; it contained
+no migration SQL body. Migration filenames and status were checked locally in
+the full checkout and supplied as context, not independently reconstructed by
+the external reviewers.
 
 ## 4. Ratified precedents preserved
 
@@ -138,24 +145,40 @@ No missing answer defaults to approval.
 
 The DB-free gate must report:
 
-- all 17 focused tests passing;
+- all 23 focused tests passing: 6 status tests and 17 validator tests;
 - real manifest result HELD;
 - execution_authorized=false;
 - REC-D001 through REC-D011 unresolved;
 - no diagnostics;
+- the exact authorized local audit bytes recomputed with actual, manifest, and
+  expected SHA-256 values equal and `audit_artifact_verified=true`;
 - clean worktree;
 - no merge commit in the candidate history;
 - only add/modify operations on the exact thirteen paths in every commit;
 - final Git diff equal to the manifest;
 - frozen base tree and canonical Git blobs resolving exactly.
 
+Direct disposable-repository tests must prove both the valid
+`verify_git_diff=true` path and fail-closed rejection of a transient
+unauthorized add/delete path. CI lacks the authorized external audit artifact,
+so its explicitly named external-binding-only mode must report
+`audit_artifact_verified=false`; that mode is not publication proof. The CI
+publication command must require the exact admission result HELD.
+
 The synthetic accepted fixture proves checker satisfiability only. It always
 emits execution_authorized=false and cannot be used as real authority.
 
 ## 9. Review and publication state
 
-Formal review results are recorded in the companion bounded review record.
-Publication is limited to the exact reviewed branch
+Formal review results for prior head cafa297d and tree d06b750e are recorded in
+the companion bounded review record. The substantive Codex review was the
+bounded Docker run; the earlier over-broad attempt was terminated and excluded
+as non-authoritative. The prior reviews do not cover this correction. No delta
+review, push, draft pull request, merge, deployment, publication, or hold
+clearance is authorized by this handoff.
+
+If separately authorized after a focused delta review, publication remains
+limited to the exact reviewed branch
 records/p0-authority-admission-framework and one mechanically draft-held pull
 request targeting main with title:
 

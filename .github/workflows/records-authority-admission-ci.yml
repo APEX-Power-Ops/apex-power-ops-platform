@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   exact-held-manifest:
-    name: Exact held manifest and history
+    name: Exact HELD manifest and history (external audit binding)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -39,7 +39,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Validate held manifest, exact diff, and every candidate commit
+      - name: Validate exact HELD state, external audit binding, and history
         run: >-
           python docs/superpowers/specs/records-p0/validate_records_admission.py
           --repo-root .
@@ -47,6 +47,8 @@ jobs:
           --expect-base bdec885a5cd2862da7907054646c9c0fb5df5ef2
           --expect-tree b3f91a2392e0afd7b545bab2b6441c7ed6e27432
           --expect-audit-sha256 5db6a3a0582eac515c55f1c66496ae46e64541b65325e66430346adf20cbeb43
+          --external-audit-binding-only
+          --expect-admission-result HELD
           --verify-git-diff
 
   db-free-tests:

@@ -17,6 +17,7 @@ from typing import Any
 
 SCHEMA_VERSION = "1.0.0"
 GOAL_ID = "RECORDS-P0-AUTHORITY-AND-P1-ADMISSION-FRAMEWORK-001"
+CANDIDATE_ID = "RECORDS-FIRST-SLICE-2026-07"
 AUDIT_PATH = "/home/olares/code/apex/apex-learning-lane/notes/platform-status/2026-07-14-records-platform-and-field-execution-audit.md"
 TOP_KEYS = set(
     "schema_version goal_id fixture_kind bindings candidate ratified_precedents "
@@ -81,16 +82,24 @@ OFFLINE_IDENTITY = "Jason Swenson, operator named by the ruled architecture reco
 SERVING_IDENTITY = "Jason Swenson, author of the canonical Gate 9 v2 serving-contract commit"
 OFFLINE_LOCATOR = "git:3d3ca14f547fb5ae9e8c3ceafd3f2ceda7785bfa:reference/records/01-OFFLINE-SYNC-ARCHITECTURE.md@blob:f02390980ac8d6f4dd97081481061eb911dd48b9"
 SERVING_LOCATOR = "git:a3f4cab25045017b332970a30fc974a7d19db0a9:reference/records/SERVING_CONTRACT.yaml@blob:96eae45f751754e8ce50413a3e8448c866c05026"
-OFFLINE_AUTH = (OFFLINE_IDENTITY, OFFLINE_LOCATOR, CANON["reference/records/01-OFFLINE-SYNC-ARCHITECTURE.md"][1], "2026-06-14T19:44:21-07:00")
+OFFLINE_SUPERSESSION = "A signed operator amendment must bind and supersede this ruled architecture artifact before dependent work."
+SERVING_TRANSPORT_SUPERSESSION = "A signed Gate 5 posture decision must bind the superseded contract and land before any serving or grant change."
+DATA_API_SUPERSESSION = "A signed Gate 5 posture decision must bind the superseded contract; exposure cannot be enabled by configuration drift."
+PRIVILEGE_SUPERSESSION = "A signed Gate 5 posture decision must re-open the privilege boundary; owner or bypass runtime DSNs remain prohibited."
+OFFLINE_AUTH = (
+    OFFLINE_IDENTITY, OFFLINE_LOCATOR,
+    CANON["reference/records/01-OFFLINE-SYNC-ARCHITECTURE.md"][1],
+    "2026-06-14T19:44:21-07:00", OFFLINE_SUPERSESSION,
+)
 SERVING_AUTH = (SERVING_IDENTITY, SERVING_LOCATOR, CANON["reference/records/SERVING_CONTRACT.yaml"][1], "2026-07-04T01:57:46+00:00")
-# code: (subject, choice, exact authority tuple)
+# code: (subject, choice, exact identity/locator/digest/timestamp/supersession tuple)
 PRECEDENTS = {
     "REC-R001": ("installable_pwa_client", "installable_pwa", OFFLINE_AUTH),
     "REC-R002": ("fully_offline_field_operation", "zero_connectivity_full_job", OFFLINE_AUTH),
     "REC-R003": ("sync_engine", "powersync", OFFLINE_AUTH),
-    "REC-R004": ("serving_transport", "separate_direct_role_dsn", SERVING_AUTH),
-    "REC-R005": ("data_api_posture", "records_schema_excluded", SERVING_AUTH),
-    "REC-R006": ("runtime_privilege_ceiling", "owners_superusers_and_bypass_identities_forbidden", SERVING_AUTH),
+    "REC-R004": ("serving_transport", "separate_direct_role_dsn", (*SERVING_AUTH, SERVING_TRANSPORT_SUPERSESSION)),
+    "REC-R005": ("data_api_posture", "records_schema_excluded", (*SERVING_AUTH, DATA_API_SUPERSESSION)),
+    "REC-R006": ("runtime_privilege_ceiling", "owners_superusers_and_bypass_identities_forbidden", (*SERVING_AUTH, PRIVILEGE_SUPERSESSION)),
 }
 DECISIONS = {
     "REC-D001": "First consumer, accountable owner, and release acceptor",
@@ -174,8 +183,21 @@ def _forbidden_path(path: str) -> bool:
 
 
 class Checker:
-    def __init__(self, document: dict[str, Any], root: Path, base: str, tree: str, audit: str) -> None:
+    def __init__(
+        self,
+        document: dict[str, Any],
+        root: Path,
+        base: str,
+        tree: str,
+        audit: str,
+        *,
+        audit_artifact: Path | None,
+        external_audit_binding_only: bool,
+    ) -> None:
         self.doc, self.root, self.base, self.tree, self.audit = document, root, base, tree, audit
+        self.audit_artifact = audit_artifact
+        self.external_audit_binding_only = external_audit_binding_only
+        self.audit_artifact_verified = False
         self.fixture = "invalid"
         self.diag: list[dict[str, str]] = []
         self.artifacts: dict[str, str] = {}
@@ -208,7 +230,12 @@ class Checker:
         if value is not False:
             self.add(code, path, "must be the literal boolean false")
 
-    def authority(self, value: Any, path: str, exact: tuple[str, str, str, str] | None = None) -> dict[str, Any]:
+    def authority(
+        self,
+        value: Any,
+        path: str,
+        exact: tuple[str, str, str, str, str] | None = None,
+    ) -> dict[str, Any]:
         keys = {"identity", "immutable_locator", "digest_algorithm", "digest", "timestamp", "supersession_rule"}
         item = self.obj(value, path, keys, "REC-A003")
         identity = self.text(item.get("identity"), f"{path}/identity", "REC-A003")
@@ -235,7 +262,7 @@ class Checker:
             self.add("REC-A003", f"{path}/timestamp", "timestamp needs timezone")
         if supersession and PLACEHOLDER_RE.search(supersession):
             self.add("REC-A003", f"{path}/supersession_rule", "placeholder supersession is forbidden")
-        if exact and (identity, locator, digest, timestamp) != exact:
+        if exact and (identity, locator, digest, timestamp, supersession) != exact:
             self.add("REC-A003", path, "ratified authority differs from immutable precedent")
         return item
 
@@ -288,8 +315,72 @@ class Checker:
             self.add("REC-A004", "/bindings/audit/path", "wrong audit locator")
         if audit.get("digest_algorithm") != "sha256":
             self.add("REC-A004", "/bindings/audit/digest_algorithm", "must equal sha256")
-        if audit.get("digest") != self.audit:
-            self.add("REC-A004", "/bindings/audit/digest", "stale audit digest")
+        manifest_digest = audit.get("digest")
+        manifest_digest_valid = (
+            isinstance(manifest_digest, str)
+            and SHA256_RE.fullmatch(manifest_digest) is not None
+        )
+        expected_digest_valid = SHA256_RE.fullmatch(self.audit) is not None
+        if not manifest_digest_valid:
+            self.add("REC-A004", "/bindings/audit/digest", "invalid audit SHA-256 digest")
+        if not expected_digest_valid:
+            self.add("REC-A004", "/bindings/audit/digest", "invalid frozen audit SHA-256 digest")
+        if manifest_digest != self.audit:
+            self.add(
+                "REC-A004",
+                "/bindings/audit/digest",
+                "manifest audit digest differs from frozen expectation",
+            )
+
+        actual_digest = ""
+        artifact_readable = False
+        if self.audit_artifact is None:
+            if not self.external_audit_binding_only:
+                self.add(
+                    "REC-A004",
+                    "/bindings/audit",
+                    "authorized audit artifact verification is required",
+                )
+        elif self.audit_artifact != Path(AUDIT_PATH):
+            self.add(
+                "REC-A004",
+                "/bindings/audit/path",
+                "audit artifact path differs from authorized locator",
+            )
+        elif self.audit_artifact.is_symlink():
+            self.add("REC-A004", "/bindings/audit/path", "audit artifact may not be a symlink")
+        elif not self.audit_artifact.is_file():
+            self.add("REC-A004", "/bindings/audit/path", "audit artifact is not a file")
+        else:
+            try:
+                actual_digest = _sha256(self.audit_artifact)
+                artifact_readable = True
+            except OSError as exc:
+                self.add(
+                    "REC-A004",
+                    "/bindings/audit/path",
+                    f"cannot hash audit artifact: {exc}",
+                )
+        if artifact_readable:
+            if actual_digest != manifest_digest:
+                self.add(
+                    "REC-A004",
+                    "/bindings/audit/digest",
+                    "audit artifact digest differs from manifest binding",
+                )
+            if actual_digest != self.audit:
+                self.add(
+                    "REC-A004",
+                    "/bindings/audit/digest",
+                    "audit artifact digest differs from frozen expectation",
+                )
+            self.audit_artifact_verified = (
+                audit.get("path") == AUDIT_PATH
+                and audit.get("digest_algorithm") == "sha256"
+                and manifest_digest_valid
+                and expected_digest_valid
+                and actual_digest == manifest_digest == self.audit
+            )
 
         entries = self.arr(item.get("artifacts"), "/bindings/artifacts", "REC-A005")
         paths: list[str] = []
@@ -319,7 +410,9 @@ class Checker:
     def candidate(self) -> dict[str, Any]:
         keys = {"id", "decision_status", "implementation_readiness", "execution_authorized"}
         item = self.obj(self.doc.get("candidate"), "/candidate", keys, "REC-A002")
-        self.text(item.get("id"), "/candidate/id", "REC-A002")
+        candidate_id = self.text(item.get("id"), "/candidate/id", "REC-A002")
+        if candidate_id and candidate_id != CANDIDATE_ID:
+            self.add("REC-A002", "/candidate/id", "candidate ID differs from frozen packet")
         self.false(item.get("execution_authorized"), "/candidate/execution_authorized", "REC-A009")
         state = (item.get("decision_status"), item.get("implementation_readiness"))
         if state[0] not in {"proposed", "accepted"}:
@@ -552,6 +645,7 @@ class Checker:
         admission = "INVALID" if diagnostics else "SATISFIABLE_FIXTURE" if self.fixture == "synthetic" else "HELD"
         return {
             "admission_result": admission,
+            "audit_artifact_verified": self.audit_artifact_verified,
             "execution_authorized": False,
             "unresolved_decision_codes": self.unresolved,
             "diagnostics": diagnostics,
@@ -566,8 +660,20 @@ def validate_manifest(
     expected_tree: str,
     expected_audit_sha256: str,
     verify_git_diff: bool = False,
+    audit_artifact: Path | None = None,
+    external_audit_binding_only: bool = False,
 ) -> dict[str, Any]:
-    return Checker(document, repo_root, expected_base, expected_tree, expected_audit_sha256).run(verify_git_diff)
+    if audit_artifact is not None and external_audit_binding_only:
+        raise ValueError("audit artifact and external-binding-only mode are mutually exclusive")
+    return Checker(
+        document,
+        repo_root,
+        expected_base,
+        expected_tree,
+        expected_audit_sha256,
+        audit_artifact=audit_artifact,
+        external_audit_binding_only=external_audit_binding_only,
+    ).run(verify_git_diff)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -578,6 +684,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expect-tree", required=True)
     parser.add_argument("--expect-audit-sha256", required=True)
     parser.add_argument("--verify-git-diff", action="store_true")
+    audit_mode = parser.add_mutually_exclusive_group(required=True)
+    audit_mode.add_argument("--verify-authorized-audit-artifact", action="store_true")
+    audit_mode.add_argument("--external-audit-binding-only", action="store_true")
+    parser.add_argument(
+        "--expect-admission-result",
+        choices=("HELD", "SATISFIABLE_FIXTURE"),
+    )
     args = parser.parse_args(argv)
     try:
         result = validate_manifest(
@@ -585,14 +698,21 @@ def main(argv: list[str] | None = None) -> int:
             expected_base=args.expect_base, expected_tree=args.expect_tree,
             expected_audit_sha256=args.expect_audit_sha256,
             verify_git_diff=args.verify_git_diff,
+            audit_artifact=(
+                Path(AUDIT_PATH) if args.verify_authorized_audit_artifact else None
+            ),
+            external_audit_binding_only=args.external_audit_binding_only,
         )
     except ValueError as exc:
         result = {
-            "admission_result": "INVALID", "execution_authorized": False,
+            "admission_result": "INVALID", "audit_artifact_verified": False,
+            "execution_authorized": False,
             "unresolved_decision_codes": [],
             "diagnostics": [{"code": "REC-A000", "path": "/", "message": str(exc)}],
         }
     print(json.dumps(result, indent=2, sort_keys=True))
+    if args.expect_admission_result is not None:
+        return 0 if result["admission_result"] == args.expect_admission_result else 1
     return 0 if result["admission_result"] in {"HELD", "SATISFIABLE_FIXTURE"} else 1
 
 
