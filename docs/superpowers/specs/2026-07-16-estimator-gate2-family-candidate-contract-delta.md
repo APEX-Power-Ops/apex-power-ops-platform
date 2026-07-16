@@ -1,9 +1,11 @@
 # Estimator Gate 2 Family Candidate Contract Delta
 
-Status: **CORRECTED OFFLINE DESIGN CANDIDATE / IMPLEMENTATION HOLD**
+Status: **POST-REVIEW CORRECTED OFFLINE DESIGN CANDIDATE / IMPLEMENTATION HOLD**
 Date: 2026-07-16
 GO boundary: `EST-TAKEOFF-CATALOG-COVERAGE-001`
 Baseline: detached `origin/main@bdec885a5cd2862da7907054646c9c0fb5df5ef2`
+Post-review correction base:
+`7c435f61fafbd495ceabbf5aed9c73d91243bce1`
 
 ## 1. Purpose
 
@@ -56,6 +58,16 @@ candidate object still lacks family-scoped standards, packaging options,
 quantity basis, structured questions, and line-scoped evidence. This delta
 preserves its fields conceptually but does not copy implementation into this
 worktree.
+
+Its preserved `resolveGate2Decisions` function is also negative evidence, not an
+adjacent v2 implementation. It can return `status:'resolved'` without the
+literal R1 and breaker-R1-unavailable predicates added by this correction. That
+behavior disqualifies the preserved v1 resolver from use, import, wrapping, or
+implementation-hash binding as a v2 resolver. The held commit contains no merged
+Gate 2 resolver, so this documentation correction does not claim that current
+runtime code enforces the new gate. Product resolution remains blocked until a
+separately implemented and reviewed v2 resolver places all predicates in this
+contract before its first resolved-state construction.
 
 ### 2.3 Signed-overlay boundary
 
@@ -405,6 +417,28 @@ unrecognized receipt/preimage version fails closed. No family on this baseline
 has such a receipt; all current false R1 flags remain an additional hold rather
 than a substitute for one.
 
+### Gate 1 receipt scope binding
+
+The validator must load the exact Gate 1 receipt identified by
+`context.gate1ReceiptId`, validate its closed
+`apex.estimator-gate1-receipt/v1` shape, recompute its receipt hash, and require
+that hash to equal `context.gate1ReceiptHash`. It must then compare all four
+loaded receipt scope fields independently to the candidate-set context:
+
+```text
+loadedGate1Receipt.intakeScopeId === context.intakeScopeId
+loadedGate1Receipt.projectId     === context.projectId
+loadedGate1Receipt.revisionId    === context.revisionId
+loadedGate1Receipt.lineSetId     === context.lineSetId
+```
+
+These are literal string-equality checks after schema validation, with no trim,
+case folding, alias, inherited default, or project-level fallback. An exact
+receipt ID, receipt hash, or `gate1EvidenceHash` is not a substitute for any of
+the four comparisons. A mismatch in any one field blocks candidate eligibility,
+resolution, pricing, and emission even when the other three fields and every
+authority receipt are valid.
+
 Use `pricingProfile`, not an unqualified `standard`, in future decision shapes so
 `MTS` cannot be confused with a manual transfer switch. The canonical NETA
 section is a cited proposal from the family design, not a mapping key. Exact ref
@@ -457,6 +491,35 @@ the ref. A non-breaker binding must use `breakerAuthorityMode:'not_applicable'`.
 Without valid breaker family authority, the matched breaker remains evidence in
 the candidate set and cannot enter a v2 resolved or emitted product path.
 
+### R1 estimating-authority gate
+
+`r1Ratified` is a separate, non-waivable estimating-authority gate. For every
+candidate, any operation that returns that candidate as `resolved`, transitions
+it to `priced`, or includes it in emitted scope or envelope output must require
+the literal predicate:
+
+```text
+candidate.r1Ratified === true
+```
+
+Equality to the replayed compiler field and bound family-contract field remains
+required, but equality alone is insufficient when the value is false. Literal
+`false` is legal only on a blocked preview that cannot produce a resolution,
+price, priced workflow state, scope, or envelope. A family-authority receipt,
+scope-output-authority receipt, Gate 2 decision receipt, signature, hash,
+appointment, or operator answer is an additional gate and may not waive,
+override, default, or reinterpret false R1 as true. A receipt schema that claims
+such a waiver is invalid for this contract version.
+
+Breaker candidates follow the same predicate. `lockedBreakerRef`, a matched
+report disposition, catalog hours, `priced_breaker_rule`, and otherwise-valid
+breaker family authority do not establish R1 ratification. The merged baseline
+has no independently bound breaker R1 ratification field. Missing breaker R1
+authority is therefore fail-closed: the breaker preview must carry
+`r1Ratified:false` and cannot resolve, price, or emit until a separately reviewed
+breaker R1 authority source is present in the bound family contract and exact
+compiler replay.
+
 ### Ref options
 
 `candidateRefs` and `refOptions[].ref` must be identical and in identical order.
@@ -476,7 +539,8 @@ active `candidateRefs`/`refOptions` member, equals the ref on every counted
 For every non-breaker candidate it is `null`. `provisionalDefaultRef` is `null` or
 resolves to exactly one candidate ref; it never bypasses an answer.
 `r1Ratified` must equal the literal flag in the bound family contract rather than
-a producer-supplied assertion.
+a producer-supplied assertion, and the R1 estimating-authority gate above still
+requires that exact value to be `true` before resolution, pricing, or emission.
 
 ### Packaging
 
@@ -1167,8 +1231,21 @@ No resolver may return `status:'resolved'`, no workflow may transition to
 `priced`, and no emitter may construct a native envelope unless every family
 binding and any required scope-output authority binding passes schema, preimage,
 hash, currentness, appointment, scope, effective/expiry, supersession, and
-projection checks at that operation time. Candidate generation may expose a
-blocked preview without authority; resolution and emission may not.
+projection checks at that operation time, every loaded Gate 1 receipt scope
+field exactly equals the candidate-set context, and every affected candidate
+satisfies `r1Ratified === true`. Candidate generation may expose a blocked
+preview with false R1 or unavailable authority; resolution, pricing, and
+emission may not.
+
+The preserved unmerged v1 `resolveGate2Decisions` function is not a resolver
+permitted by the paragraph above. An attempt to use it for v2 fails before the
+call because its v1 candidate and decision shapes, implementation hash, and
+operation gate do not satisfy this contract. Its ability to construct a v1
+`status:'resolved'` object is the explicit bypass falsifier for a future v2
+implementation, not evidence that the held documentation commit has a runtime
+v2 path. A conforming v2 implementation must demonstrate the literal R1,
+breaker-R1-availability, loaded Gate 1 scope, and all pre-existing checks on the
+same path before constructing or returning any resolved object.
 
 Validation order avoids a recursive hash: compute `candidateContentHash` without
 the declared `candidateSetHash` or declared `candidateContentHash`; compute the
@@ -1214,12 +1291,15 @@ and every candidate-level declared `candidateSetHash` to equal that result.
    use; unknown versions, opaque pass-through hashes, source/report/catalog/
    compiler/family-scope/candidate/ordering drift, family-contract-file drift, or
    manifest drift requires regeneration and new decisions;
-10. unresolved candidates, catalog gaps, invalid family authority, or invalid
-    scope-output authority prevent resolution and complete-envelope emission;
+10. unresolved candidates, catalog gaps, `r1Ratified !== true`, invalid family
+    authority, or invalid scope-output authority prevent resolution, pricing,
+    and complete-envelope emission;
 11. candidate generation never mints refs, hours, standards, aliases, or family
    authority;
-12. the Gate 1 receipt reference is exact, accepted, and current; an ID or
-    evidence hash alone is insufficient;
+12. the Gate 1 receipt reference is exact, accepted, and current; the loaded
+    receipt's `intakeScopeId`, `projectId`, `revisionId`, and `lineSetId` each
+    exactly equal the candidate-set context; an ID, receipt hash, or evidence
+    hash alone is insufficient;
 13. a valid hash or signature is evidence integrity, not implementation,
    deployment, mutation, or product authorization;
 14. candidate identities `(standardScopeKey, lineKey)` are unique within the
@@ -1252,9 +1332,29 @@ and every candidate-level declared `candidateSetHash` to equal that result.
    bound implementation; it is invalid on the current emitter; and
 24. receipt signatures or hashes prove integrity and acceptance only within
    their exact authority scope; they do not authorize implementation, deployment,
-   production mutation, push, or PR.
+   production mutation, push, or PR; and
+25. every candidate that can become resolved, priced, or emitted has literal
+   `r1Ratified === true`; false is legal only in a blocked preview, no receipt or
+   authority artifact can waive it, and missing breaker R1 authority is false
+   and fail-closed.
 
-## 9. Independent-review decisions
+### 8.1 Focused post-review falsification cases
+
+These cases test only the post-review corrections and their adjacent resolution
+gate. They do not reopen ledger classification or discovery analysis.
+
+| Case | Perturbation | Expected result |
+|---|---|---|
+| `R1-FALSE-AUTH-VALID` | Candidate has `r1Ratified:false`; family contract, candidate-set-scoped family authority, output authority where required, answers, hashes, and scope are otherwise valid | Blocked preview only; no resolved candidate, price, `priced` transition, scope, or envelope |
+| `BREAKER-R1-UNAVAILABLE` | Breaker has an exact locked matched ref and otherwise-valid breaker family authority, but no independently bound breaker R1 ratification source | `r1Ratified:false`; blocked preview only; mechanical lock and receipts cannot waive the hold |
+| `GATE1-SCOPE-INTAKE-MISMATCH` | Loaded Gate 1 `intakeScopeId` differs; project, revision, and line set match | Blocked before candidate eligibility |
+| `GATE1-SCOPE-PROJECT-MISMATCH` | Loaded Gate 1 `projectId` differs; intake scope, revision, and line set match | Blocked before candidate eligibility |
+| `GATE1-SCOPE-REVISION-MISMATCH` | Loaded Gate 1 `revisionId` differs; intake scope, project, and line set match | Blocked before candidate eligibility |
+| `GATE1-SCOPE-LINESET-MISMATCH` | Loaded Gate 1 `lineSetId` differs; intake scope, project, and revision match | Blocked before candidate eligibility |
+| `GATE1-SCOPE-EXACT-MATCH` | All four loaded Gate 1 scope fields exactly equal candidate-set context | This scope check passes; candidate remains eligible only subject to literal true R1 and every other schema, hash, authority, answer, quantity, packaging, output-mode, and resolution gate |
+| `PRESERVED-V1-RESOLVER-BYPASS` | The unmerged preserved v1 `resolveGate2Decisions` function is presented as, imported into, wrapped by, or hash-bound as the v2 resolver | Rejected before invocation; its v1 shapes and missing literal R1/breaker-R1 operation gate cannot satisfy the v2 implementation contract |
+
+## 9. Original independent-review decisions
 
 The bounded independent review must decide only whether these corrections close
 the named design defects without implementation:
@@ -1274,7 +1374,29 @@ the named design defects without implementation:
 7. signatures, hashes, accepted receipts, and this review do not authorize
    implementation, deployment, push, or PR.
 
-## 10. Non-authorizations
+## 10. Post-review focused-review decisions
+
+The successor bounded Codex and Claude review must inspect only the corrections
+below and their adjacent resolution gate. It must not redo the ledger or
+discovery analysis:
+
+1. literal `r1Ratified === true` is mandatory for every resolved, priced, or
+   emitted candidate;
+2. false R1 remains legal only for a blocked preview and no authority receipt or
+   otherwise-valid decision can waive it;
+3. unavailable breaker R1 authority blocks despite an exact breaker lock and
+   otherwise-valid family authority;
+4. the loaded Gate 1 receipt independently matches candidate-set
+   `intakeScopeId`, `projectId`, `revisionId`, and `lineSetId` exactly;
+5. each mismatch falsifier blocks, while the exact-match case passes only this
+   scope check and remains subject to every other gate; and
+6. the adjacent resolution gate applies these predicates before `resolved`,
+   `priced`, or emitted output and preserves every pre-existing fail-closed
+   condition; the preserved unmerged v1 resolver is explicitly rejected as a
+   negative control rather than represented as a conforming current
+   implementation.
+
+## 11. Non-authorizations
 
 This design does not authorize implementation, dependency changes, recognizer or
 `candidateKind` changes, family-map edits, catalog edits, authority-flag changes,

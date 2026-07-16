@@ -1,8 +1,24 @@
 # EST-TAKEOFF-CATALOG-COVERAGE-001 Gate 2 Contract Correction Cross-Engine Review
 
-Status: **CLEAN**
+Status: **SUPERSEDED BY POST-REVIEW CORRECTION HOLD**
 
 Review completed: `2026-07-16T02:56:26Z`
+
+## 0. Supersession notice
+
+This record retains the exact prior artifact hashes, engine versions, run and
+session identifiers, verdicts, findings, and dispositions below. Its historical
+`CLEAN` result applies only to the original C1-C7 review surface frozen at those
+hashes. It is not the current acceptance record for commit
+`7c435f61fafbd495ceabbf5aed9c73d91243bce1`.
+
+Post-review findings require an explicit literal `r1Ratified === true` operation
+gate, fail-closed treatment when breaker R1 authority is unavailable, exact
+loaded Gate 1 receipt equality for `intakeScopeId`, `projectId`, `revisionId`,
+and `lineSetId`, and focused falsification cases for those predicates. Those
+requirements supersede this record's current-clean status without altering its
+review provenance. The successor focused review is recorded separately after
+the bounded correction is frozen.
 
 ## 1. Reviewed object
 
@@ -135,10 +151,11 @@ formal prompt scope, baseline, artifact bytes, or artifact hashes.
 - No runtime, catalog, schema, corpus, family, authority, deployment, or
   production file changed.
 
-## 5. Review outcome
+## 5. Historical review outcome
 
-The bounded Gate 2 contract correction is clean for C1-C7. It may be committed
-as the five frozen documentation artifacts plus this review record on the named
-local branch. This review grants no authority to implement a family, alter the
-catalog or ledger, ingest corpus material, resolve Gate 2, emit scope, deploy,
-push, or open a pull request.
+The original bounded Gate 2 contract correction was clean for its C1-C7 scope.
+That result is now superseded by the post-review findings in section 0 and may
+not be used as current acceptance of the held commit. The historical review
+still grants no authority to implement a family, alter the catalog or ledger,
+ingest corpus material, resolve Gate 2, emit scope, deploy, push, or open a pull
+request.
