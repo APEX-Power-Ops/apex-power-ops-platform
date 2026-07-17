@@ -1,0 +1,85 @@
+name: Records authority and admission gate
+
+on:
+  push:
+    paths:
+      - ".github/workflows/records-authority-admission-ci.yml"
+      - "docs/lanes/README.md"
+      - "docs/superpowers/specs/records-p0/**"
+      - "infra/database/migrations/records/MANIFEST.md"
+      - "reference/records/CURRENT-STATE.md"
+      - "reference/records/PUNCHLIST.md"
+  pull_request:
+    paths:
+      - ".github/workflows/records-authority-admission-ci.yml"
+      - "docs/lanes/README.md"
+      - "docs/superpowers/specs/records-p0/**"
+      - "infra/database/migrations/records/MANIFEST.md"
+      - "reference/records/CURRENT-STATE.md"
+      - "reference/records/PUNCHLIST.md"
+
+permissions:
+  contents: read
+
+jobs:
+  exact-held-manifest:
+    name: Exact HELD manifest and history (external audit binding)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact candidate head
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Select repository Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+
+      - name: Validate exact HELD state, external audit binding, and history
+        run: >-
+          python docs/superpowers/specs/records-p0/validate_records_admission.py
+          --repo-root .
+          --manifest docs/superpowers/specs/records-p0/records-admission-manifest.json
+          --expect-base bdec885a5cd2862da7907054646c9c0fb5df5ef2
+          --expect-tree b3f91a2392e0afd7b545bab2b6441c7ed6e27432
+          --expect-audit-sha256 5db6a3a0582eac515c55f1c66496ae46e64541b65325e66430346adf20cbeb43
+          --external-audit-binding-only
+          --expect-admission-result HELD
+          --verify-git-diff
+
+  db-free-tests:
+    name: DB-free authority regression tests
+    needs: exact-held-manifest
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out a fresh exact candidate head
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Select repository Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+
+      - name: Run DB-free Records tests
+        run: >-
+          python -m unittest discover -v
+          -s docs/superpowers/specs/records-p0
+          -p 'test_*.py'
+
+      - name: Prove tests did not mutate the checkout
+        shell: bash
+        run: |
+          changes="$(git status --porcelain=v1 --untracked-files=all)"
+          if [[ -n "$changes" ]]; then
+            printf '%s\n' "$changes"
+            exit 1
+          fi
