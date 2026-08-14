@@ -1,0 +1,15 @@
+# Render fixture standing in for the values Olares injects at install time.
+# Used by `helm template -f ci/olares-values.yaml .` for a local render; not
+# part of the packaged chart (see .helmignore).
+
+deviceName: "Generic"
+sharedlib: /olares/rootfs/shared
+userspace:
+  appData: /olares/rootfs/userdata/appdata/claudedesktop
+  appCache: /olares/rootfs/userdata/appcache/claudedesktop
+  userData: /olares/rootfs/userdata/Home
+olaresEnv:
+  TZ: "Etc/UTC"
+  CLAUDE_DESKTOP_CLI: ""
+  ALLOW_HOME_DIR_ACCESS: "false"
+  ALLOW_EXTERNAL_DIR_ACCESS: "false"

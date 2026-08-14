@@ -1,0 +1,42 @@
+metadata:
+  title: Claude
+  description: Anthropic 官方 Claude Linux 桌面应用，通过浏览器串流访问
+spec:
+  fullDescription: |
+    **概览**
+    在 Olares 中运行的 Claude Linux 桌面应用，并通过浏览器串流访问。它提供与 macOS
+    和 Windows 桌面应用相同的 Chat、Cowork 与 Code 体验——并行会话、可视化差异审阅、
+    内置终端与编辑器、实时应用预览——你可以从 Olares 网络中的任意设备打开它，无需在
+    本地安装任何东西。
+
+    **工作方式**
+    Claude Desktop 是原生 Linux 图形应用，因此本应用在容器内提供一个最小化的 X11
+    桌面（openbox），并使用 Selkies 将该桌面通过 HTTP 串流出来。打开入口即可在浏览器
+    标签页中获得应用窗口。`claude-desktop` 软件包来自 Anthropic 官方 apt 仓库，并在
+    构建镜像时固定版本。
+
+    **数据持久化**
+    容器主目录（`/config`）保存在应用的私有数据卷中，因此登录状态、设置、聊天记录缓存
+    以及 MCP 服务器配置都会在重启和升级后保留。
+
+    **首次使用**
+    打开 `Claude` 入口，使用你的 Claude 账号或所在组织的 SSO 登录。桌面应用不支持直接
+    填写 Claude Console API Key——需要使用 API Key 认证时，请使用 `Claude Code` 应用
+    或命令行工具。
+
+    **文件访问**
+    默认情况下，应用只能访问自己的私有数据卷。开启 `ALLOW_HOME_DIR_ACCESS` 可将
+    Olares Home 挂载到 `/home/userdata/home`，开启 `ALLOW_EXTERNAL_DIR_ACCESS` 可将
+    External 挂载到 `/home/userdata/external`，这样 Cowork 与 Code 才能处理真实文件。
+
+    **Linux 上暂不可用的功能**
+    Computer Use（控制屏幕与应用）以及语音听写不在 Linux 桌面 Beta 范围内。全局快捷
+    唤起（Quick Entry）会被浏览器捕获，而不会传递到串流桌面。
+
+  upgradeDescription: |
+    **v0.1.0**
+
+    首个版本。基于 `baseimage-selkies:ubuntunoble`（Ubuntu 24.04）桌面镜像，固定安装
+    Anthropic 官方 apt 仓库中的 `claude-desktop` **1.28929.0**。强制设置
+    `PIXELFLUX_WAYLAND=false` 以使用 X11，在 Olares 上缩放表现正常。在 Olares One 上
+    可选启用 GPU 直通。

@@ -1,0 +1,136 @@
+olaresManifest.version: '0.12.0'
+olaresManifest.type: app
+apiVersion: 'v3'
+
+workloadReplicas:
+  claudedesktop: 1
+
+metadata:
+  name: claudedesktop
+  description: Anthropic's official Claude desktop app for Linux, streamed to your browser
+  icon: https://app.cdn.olares.com/appstore/claudedesktop/icon.png
+  appid: claudedesktop
+  version: '0.1.0'
+  title: Claude
+  categories:
+  - Developer Tools
+  - Productivity_v112
+
+entrances:
+- name: claudedesktop
+  host: claudedesktop
+  port: 3000
+  title: Claude
+  icon: https://app.cdn.olares.com/appstore/claudedesktop/icon.png
+  openMethod: window
+
+permission:
+  appData: true
+  appCache: true
+  userData:
+  - Home
+  externalData: true
+
+spec:
+  versionName: '1.28929.0'
+  fullDescription: |
+    **Overview**
+    The Claude desktop app for Linux, running inside Olares and streamed to your
+    browser. It is the same Chat, Cowork, and Code experience as the macOS and
+    Windows desktop app — parallel sessions, visual diff review, an integrated
+    terminal and editor, and live app preview — reachable from any device on
+    your Olares network without installing anything locally.
+
+    **How it works**
+    Claude Desktop is a native Linux GUI application, so this app ships it on a
+    minimal X11 desktop (openbox) inside the container and streams that desktop
+    over HTTP with Selkies. Opening the entrance gives you the app window in a
+    browser tab. The `claude-desktop` package comes from Anthropic's official
+    apt repository and is pinned in the image at build time.
+
+    **What persists**
+    The container home directory (`/config`) is stored in the app's private data
+    volume, so your login session, settings, chat history cache, and MCP server
+    configuration survive restarts and upgrades.
+
+    **First-time setup**
+    Open the `Claude` entrance and sign in with your Claude account or your
+    organization's SSO. The desktop app does not accept a Claude Console API key
+    — use the `Claude Code` app or the CLI for API-key authentication.
+
+    **File access**
+    By default the app can only see its own private volume. Turn on
+    `ALLOW_HOME_DIR_ACCESS` to mount your Olares Home drive at
+    `/home/userdata/home`, and `ALLOW_EXTERNAL_DIR_ACCESS` to mount the External
+    drive at `/home/userdata/external`, so Cowork and Code can work on real
+    files.
+
+    **Not available on Linux**
+    Computer Use (screen and app control) and voice dictation are not part of
+    the Linux desktop beta. The global Quick Entry hotkey is captured by the
+    browser rather than the streamed desktop.
+
+  upgradeDescription: |
+    **v0.1.0**
+
+    First release. Pins `claude-desktop` **1.28929.0** from Anthropic's official
+    apt repository on a `baseimage-selkies:ubuntunoble` (Ubuntu 24.04) desktop
+    image. Forces `PIXELFLUX_WAYLAND=false` so the desktop runs on X11, which
+    scales correctly on Olares. Optional GPU passthrough on Olares One.
+
+  developer: Anthropic
+  website: https://claude.ai/download
+  submitter: APEX Power Ops
+  locale:
+  - en-US
+  - zh-CN
+  doc: https://code.claude.com/docs/en/desktop-linux
+  license:
+  - text: Anthropic Consumer Terms of Service
+    url: https://www.anthropic.com/legal/consumer-terms
+  requiredMemory: 2Gi
+  limitedMemory: 8Gi
+  requiredDisk: 1Gi
+  limitedDisk: 20Gi
+  requiredCpu: 500m
+  limitedCpu: "4"
+  supportArch:
+  - amd64
+  - arm64
+
+options:
+  allowMultipleInstall: false
+  dependencies:
+  - name: olares
+    type: system
+    version: '>=1.12.6-0'
+
+envs:
+- envName: TZ
+  type: string
+  required: false
+  editable: true
+  applyOnChange: true
+  default: "Etc/UTC"
+  description: "Timezone of the streamed desktop, in tz database form (e.g. America/Chicago)."
+- envName: CLAUDE_DESKTOP_CLI
+  type: string
+  required: false
+  editable: true
+  applyOnChange: true
+  default: ""
+  description: "Extra command-line flags appended to claude-desktop on start. Leave empty unless you are debugging; the sandbox and password-store flags the container needs are already applied."
+- envName: ALLOW_HOME_DIR_ACCESS
+  type: bool
+  required: false
+  editable: true
+  applyOnChange: true
+  default: "false"
+  description: "Mount the Olares Home directory at /home/userdata/home so Claude can read and write your files."
+- envName: ALLOW_EXTERNAL_DIR_ACCESS
+  type: bool
+  required: false
+  editable: true
+  applyOnChange: true
+  default: "false"
+  description: "Mount the Olares External directory at /home/userdata/external so Claude can read and write files on attached storage."

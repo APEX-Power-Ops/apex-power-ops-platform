@@ -1,0 +1,16 @@
+apiVersion: v2
+name: claudedesktop
+description: Anthropic's official Claude desktop app for Linux, streamed to your browser
+
+# A chart can be either an 'application' or a 'library' chart.
+type: application
+
+# Chart version. Bump on every change to the chart or its templates, including
+# when only the app version moves. Must stay in sync with metadata.version in
+# OlaresManifest.yaml.
+version: 0.1.0
+
+# Version of the upstream `claude-desktop` Debian package that the container
+# image is pinned to. Must stay in sync with spec.versionName in
+# OlaresManifest.yaml and with CLAUDE_DESKTOP_VERSION in docker/Dockerfile.
+appVersion: "1.28929.0"
