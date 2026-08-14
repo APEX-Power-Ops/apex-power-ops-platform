@@ -184,7 +184,7 @@ def main(chart_dir: Path) -> int:
         f.check((chart_dir / required_file).is_file(), f"{required_file} is missing")
 
     helmignore = (chart_dir / ".helmignore").read_text(encoding="utf-8").splitlines()
-    for build_only in ("docker/", "ci/", "scripts/"):
+    for build_only in ("docker/", "ci/", "scripts/", "dist/"):
         f.check(build_only in helmignore, f".helmignore does not exclude build-only directory {build_only!r}")
 
     if f:

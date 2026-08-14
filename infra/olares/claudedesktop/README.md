@@ -40,6 +40,7 @@ distribution requires the upstream Olares Application Chart format
 | `docker/` | Image build inputs (Dockerfile + `/config` overlay). Excluded from the packaged chart. |
 | `ci/olares-values.yaml` | Fixture standing in for Olares-injected values, for local `helm template`. Excluded. |
 | `scripts/validate.py` | Structural + version-coherence checks. Excluded. |
+| `scripts/package.sh` | Builds the uploadable chart archive into `dist/`. Excluded. |
 
 ## Configuration
 
@@ -89,29 +90,95 @@ See [`docker/README.md`](docker/README.md) for the build, push, and version-bump
 procedure. The chart expects a multi-arch (`amd64`, `arm64`) image at the tag in
 `values.yaml`.
 
-## Install
+## Install without Olares Market
 
-**Sideload onto an Olares device** (no Market round trip):
+Market submission is optional. Olares installs an Application Chart from an
+uploaded archive, so this package can run on a device that never sees the public
+Market. Three routes, in order of how most people should reach for them.
+
+Note that `olares-cli` is **not** one of them: it manages the Olares OS itself
+(`install`, `start`, `stop`, `backups`, `node`, `gpu`), and has no app-install
+subcommand.
+
+### 1. Upload a custom chart (recommended)
+
+Build the archive, then upload it through the Market UI:
 
 ```bash
-olares-cli app install --path infra/olares/claudedesktop
+scripts/package.sh          # writes dist/claudedesktop-<version>.tgz
 ```
 
-**Submit to Olares Market:** fork [`beclab/apps`](https://github.com/beclab/apps),
-copy this directory in as `claudedesktop/` at the repository root, and open a PR
-against `beclab/apps:main`. Two prerequisites before submitting:
+Then in Olares: **Market** → **My Olares** → **Custom** → **Upload custom
+chart**, and select the `.tgz`. Olares accepts `.zip`, `.tgz`, `.tar`, and `.gz`;
+the archive must contain the chart directory at its root, which is what
+`package.sh` produces. It installs, upgrades, and uninstalls exactly like a
+Market app, and appears under **Custom** rather than in the public listing.
+
+`package.sh` runs `validate.py` first and excludes the build-only directories
+per `.helmignore`, so `docker/`, `ci/`, `scripts/`, and `dist/` stay out of the
+payload. It uses `helm package` when helm is on PATH and falls back to `tar`
+with the same exclusions otherwise.
+
+This route drops the icon constraint that a Market submission carries: point
+`metadata.icon` and the entrance icon at any HTTPS URL your device can reach.
+
+### 2. DevBox, for iterating against a live device
+
+[DevBox](https://market.olares.com/app/devbox) is Olares' app development tool.
+It gives you an editable copy of the chart files, an **Install** button that
+deploys the in-progress app onto the system, and a chart download once it works.
+Reach for it when you are changing the manifest or templates and want a short
+edit-install-inspect loop instead of rebuilding an archive each time.
+
+### 3. `InstallDevApp` provider API, for automation
+
+The Market exposes `InstallDevApp` / `UninstallDevApp` for programmatic installs
+— this is what DevBox itself calls:
+
+```
+POST http://$OS_SYSTEM_SERVER/system-server/v1alpha1/app/service.appstore/v1/InstallDevApp
+{"appName": "claudedesktop", "repoUrl": "<chart repo URL>", "source": "<source>"}
+```
+
+The caller must be an installed Olares app that declares the provider in its
+manifest, and must exchange its `OS_APP_KEY` / `OS_APP_SECRET` for a
+short-lived access token first:
+
+```yaml
+permission:
+  sysData:
+  - group: service.appstore
+    dataType: app
+    version: v1
+    ops:
+    - InstallDevApp
+```
+
+That makes it the right route only for an installer app or a CI agent already
+running inside Olares — not for a one-off install from a laptop.
+
+## Submit to Olares Market
+
+Fork [`beclab/apps`](https://github.com/beclab/apps), copy this directory in as
+`claudedesktop/` at the repository root, and open a **draft** PR against
+`beclab/apps:main` titled `[NEW][claudedesktop][0.1.0]<title>` — GitBot parses
+that format and auto-closes PRs that do not match. Mark it ready for review to
+trigger the check.
+
+Two prerequisites beyond the packaging itself:
 
 1. **Icon hosting.** `metadata.icon` and the entrance icon point at
    `https://app.cdn.olares.com/appstore/claudedesktop/icon.png`, the CDN path
    Olares serves accepted apps from. That object does not exist until the app is
    accepted — coordinate the icon upload with the Market maintainers, or point
-   both fields at your own reachable HTTPS URL for the review.
+   both fields at your own reachable HTTPS URL for the review. Market assets must
+   be PNG or WEBP, 256x256 px, up to 512 KB.
 2. **Public image.** `values.yaml` references
    `ghcr.io/jasonlswenson-sys/claude-desktop-olares`; it must be pullable
    anonymously for review installs to succeed.
 
 Update `owners` to the GitHub handles that should be able to approve future
-changes to the app.
+changes to the app — every submitter must appear in that file.
 
 ## Known limitations
 
