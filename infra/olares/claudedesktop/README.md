@@ -42,6 +42,71 @@ distribution requires the upstream Olares Application Chart format
 | `scripts/validate.py` | Structural + version-coherence checks. Excluded. |
 | `scripts/package.sh` | Builds the uploadable chart archive into `dist/`. Excluded. |
 
+## Getting your repo into the app
+
+An Olares app is sandboxed. It cannot see a checkout on your laptop, and it
+cannot see this repository's working copy on the machine you ran `package.sh`
+from — installing the chart ships the *packaging*, not the code. Three ways to
+close that gap, and the first is almost always the right one.
+
+### The shared `Home/Code` workspace (default, nothing to enable)
+
+The chart mounts the `Code` folder of your Olares Home drive at `~/workspace`
+inside the container. This is the same directory the official
+[code-server](https://market.olares.com/app/codeserver) and
+[opencode](https://market.olares.com/app/opencode) apps mount, so it is the
+established place for source on an Olares device.
+
+Clone once from the app's own terminal:
+
+```bash
+cd ~/workspace
+git clone https://github.com/APEX-Power-Ops/apex-power-ops-platform.git
+```
+
+Every app that mounts `Home/Code` then sees the same working tree, and the Files
+app can browse it. `git`, `openssh-client`, `gcc`/`g++`/`make`/`cmake`, and
+`python3` all ship in the base image, so cloning, building, and pushing work
+without adding anything.
+
+Git is the sync boundary between the Olares desktop and your workstation: both
+push to and pull from GitHub. Do not expect a live mirror of a laptop directory
+— nothing in Olares provides that.
+
+Two apps writing the same worktree at the same time will fight over the index
+and over `.git/` locks. If you also run Claude Code or code-server against this
+directory, work in one at a time, or give each its own clone.
+
+### The whole Home drive (`ALLOW_HOME_DIR_ACCESS`)
+
+Mounts the entire Home drive at `/home/userdata/home`. Only needed to reach
+documents, photos, or other non-code folders — the workspace above needs no
+toggle. Default off.
+
+### The External drive (`ALLOW_EXTERNAL_DIR_ACCESS`)
+
+Mounts attached storage at `/home/userdata/external`, for large trees or media
+that do not belong on Home. Default off.
+
+### A note on storage tiers
+
+Olares exposes three tiers, and they behave differently under a cluster with
+JuiceFS enabled ([data
+concepts](https://docs.olares.com/manual/concepts/data.html)):
+
+- **AppData** — cross-node, JuiceFS-backed, included in system backups. `/config`
+  lives here, matching what the official `chromium` app does (it deliberately
+  migrated its profile from AppCache to AppData).
+- **AppCache** — node-local SSD, fast, not cross-node.
+- **UserData** — the Home drive, shared across apps. `~/workspace` lives here.
+
+On a default single-node install with no JuiceFS these are all local disk and
+the distinction does not bite. On a JuiceFS-backed cluster, an Electron profile
+and a git worktree are both fragmented random I/O, which is the workload JuiceFS
+is worst at. If the desktop feels sluggish there, move `/config` to
+`.Values.userspace.appCache` — at the cost of pinning the pod to one node and
+dropping the profile out of system backups.
+
 ## Configuration
 
 Set from the app's environment variables in the Olares UI; all take effect on
@@ -51,15 +116,13 @@ restart (`applyOnChange: true`).
 | --- | --- | --- |
 | `TZ` | `Etc/UTC` | Timezone of the streamed desktop. |
 | `CLAUDE_DESKTOP_CLI` | *(empty)* | Extra flags appended to `claude-desktop`. The container's required flags are already applied by the launch wrapper. |
-| `ALLOW_HOME_DIR_ACCESS` | `false` | Mounts the Olares Home drive at `/home/userdata/home`. |
+| `ALLOW_HOME_DIR_ACCESS` | `false` | Mounts the **whole** Home drive at `/home/userdata/home`. Not needed for code — see the workspace above. |
 | `ALLOW_EXTERNAL_DIR_ACCESS` | `false` | Mounts the Olares External drive at `/home/userdata/external`. |
-
-Both file-access toggles default off, so out of the box the app can only see its
-own private volume. Turn them on for Cowork and Code to work on real files.
 
 The container home directory (`/config`) is backed by the app's private data
 volume, so the signed-in session, settings, MCP server config, and Electron cache
-survive restarts and upgrades.
+survive restarts and upgrades. `~/workspace` is the exception: it is the shared
+`Home/Code` directory, mounted unconditionally.
 
 On an **Olares One**, the chart detects `deviceName` and passes `/dev/dri`
 through so the Electron compositor and the Selkies encoder use VA-API instead of

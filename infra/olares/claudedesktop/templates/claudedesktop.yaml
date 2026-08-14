@@ -1,5 +1,6 @@
 {{- $userspace := .Values.userspace | default dict }}
 {{- $appData := required "userspace.appData is required — Olares injects it at install time; use ci/olares-values.yaml for local renders" $userspace.appData }}
+{{- $userData := required "userspace.userData is required — Olares injects it at install time; use ci/olares-values.yaml for local renders" $userspace.userData }}
 {{- $env := .Values.olaresEnv | default dict }}
 {{- $tz := $env.TZ | default "Etc/UTC" }}
 {{- $cli := $env.CLAUDE_DESKTOP_CLI | default "" }}
@@ -98,6 +99,11 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+            # Shared code workspace. Same Home/Code directory the official
+            # code-server and opencode apps mount, so a repo cloned once is
+            # visible to all of them rather than trapped in this app's volume.
+            - name: workspace
+              mountPath: /config/workspace
             - name: dshm
               mountPath: /dev/shm
             {{- if $allowHome }}
@@ -120,6 +126,10 @@ spec:
           hostPath:
             path: "{{ $appData }}/config"
             type: DirectoryOrCreate
+        - name: workspace
+          hostPath:
+            path: "{{ $userData }}/Code"
+            type: DirectoryOrCreate
         - name: dshm
           emptyDir:
             medium: Memory
@@ -127,7 +137,7 @@ spec:
         {{- if $allowHome }}
         - name: olares-home-dir
           hostPath:
-            path: "{{ $userspace.userData }}"
+            path: "{{ $userData }}"
             type: DirectoryOrCreate
         {{- end }}
         {{- if $allowExternal }}

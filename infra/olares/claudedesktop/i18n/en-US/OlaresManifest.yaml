@@ -27,12 +27,20 @@ spec:
     organization's SSO. The desktop app does not accept a Claude Console API key
     — use the `Claude Code` app or the CLI for API-key authentication.
 
-    **File access**
-    By default the app can only see its own private volume. Turn on
-    `ALLOW_HOME_DIR_ACCESS` to mount your Olares Home drive at
-    `/home/userdata/home`, and `ALLOW_EXTERNAL_DIR_ACCESS` to mount the External
-    drive at `/home/userdata/external`, so Cowork and Code can work on real
-    files.
+    **Your code, shared across apps**
+    An Olares app is sandboxed and cannot see a repository sitting on your
+    laptop. The bridge is the `Code` folder on your Olares Home drive, which
+    this app mounts at `~/workspace` — the same directory the official
+    code-server and opencode apps use. Clone a repository into it once (from
+    this app's own terminal, from another app, or through Files) and every one
+    of those apps sees the same working tree. Push and pull with git as usual;
+    git, ssh, and a compiler toolchain are already in the image.
+
+    Two extra toggles widen that access when you need it:
+    `ALLOW_HOME_DIR_ACCESS` mounts the whole Home drive at
+    `/home/userdata/home`, and `ALLOW_EXTERNAL_DIR_ACCESS` mounts the External
+    drive at `/home/userdata/external`. Both default off; the shared workspace
+    needs neither.
 
     **Not available on Linux**
     Computer Use (screen and app control) and voice dictation are not part of
@@ -40,6 +48,13 @@ spec:
     browser rather than the streamed desktop.
 
   upgradeDescription: |
+    **v0.2.0**
+
+    Mount the Home drive's `Code` folder at `~/workspace`, matching the
+    convention the official code-server and opencode apps already follow. A
+    repository cloned there is shared across those apps instead of being
+    trapped in this app's private volume.
+
     **v0.1.0**
 
     First release. Pins `claude-desktop` **1.28929.0** from Anthropic's official

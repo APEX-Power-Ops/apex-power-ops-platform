@@ -24,16 +24,28 @@ spec:
     填写 Claude Console API Key——需要使用 API Key 认证时，请使用 `Claude Code` 应用
     或命令行工具。
 
-    **文件访问**
-    默认情况下，应用只能访问自己的私有数据卷。开启 `ALLOW_HOME_DIR_ACCESS` 可将
-    Olares Home 挂载到 `/home/userdata/home`，开启 `ALLOW_EXTERNAL_DIR_ACCESS` 可将
-    External 挂载到 `/home/userdata/external`，这样 Cowork 与 Code 才能处理真实文件。
+    **代码目录，多应用共享**
+    Olares 应用运行在沙箱中，无法访问你本地电脑上的代码仓库。两者之间的桥梁是 Olares
+    Home 盘中的 `Code` 目录：本应用会将它挂载到 `~/workspace`，这与官方 code-server
+    和 opencode 应用使用的是同一个目录。只需把仓库克隆到该目录一次（在本应用的终端中、
+    在其他应用中，或通过“文件”应用），这些应用便共享同一份工作副本。像平常一样使用 git
+    推送与拉取即可——镜像中已内置 git、ssh 与编译工具链。
+
+    另有两个开关可在需要时扩大访问范围：`ALLOW_HOME_DIR_ACCESS` 将整个 Home 盘挂载到
+    `/home/userdata/home`，`ALLOW_EXTERNAL_DIR_ACCESS` 将 External 盘挂载到
+    `/home/userdata/external`。两者默认关闭；共享的 workspace 无需开启任何一个。
 
     **Linux 上暂不可用的功能**
     Computer Use（控制屏幕与应用）以及语音听写不在 Linux 桌面 Beta 范围内。全局快捷
     唤起（Quick Entry）会被浏览器捕获，而不会传递到串流桌面。
 
   upgradeDescription: |
+    **v0.2.0**
+
+    将 Home 盘的 `Code` 目录挂载到 `~/workspace`，与官方 code-server 和 opencode
+    应用遵循的约定保持一致。克隆到该目录的仓库可在这些应用之间共享，而不再被局限在本应用
+    的私有数据卷中。
+
     **v0.1.0**
 
     首个版本。基于 `baseimage-selkies:ubuntunoble`（Ubuntu 24.04）桌面镜像，固定安装
