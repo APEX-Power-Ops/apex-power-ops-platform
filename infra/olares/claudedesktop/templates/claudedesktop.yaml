@@ -1,0 +1,176 @@
+{{- $userspace := .Values.userspace | default dict }}
+{{- $appData := required "userspace.appData is required — Olares injects it at install time; use ci/olares-values.yaml for local renders" $userspace.appData }}
+{{- $userData := required "userspace.userData is required — Olares injects it at install time; use ci/olares-values.yaml for local renders" $userspace.userData }}
+{{- $env := .Values.olaresEnv | default dict }}
+{{- $tz := $env.TZ | default "Etc/UTC" }}
+{{- $cli := $env.CLAUDE_DESKTOP_CLI | default "" }}
+{{- $allowHome := eq (toString ($env.ALLOW_HOME_DIR_ACCESS | default "false")) "true" }}
+{{- $allowExternal := eq (toString ($env.ALLOW_EXTERNAL_DIR_ACCESS | default "false")) "true" }}
+{{- /*
+  Olares One ships an iGPU at /dev/dri. Handing it to the container lets the
+  Electron compositor and the Selkies encoder run on VA-API instead of software,
+  which is the difference between a usable and a slideshow desktop on that box.
+*/ -}}
+{{- $isOlaresOne := eq (toString (.Values.deviceName | default "")) "Olares One" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: claudedesktop
+  namespace: {{ .Release.Namespace }}
+  labels:
+    io.kompose.service: claudedesktop
+spec:
+  replicas: {{ .Values.workloads.claudedesktop.replicaCount }}
+  minReadySeconds: 10
+  selector:
+    matchLabels:
+      io.kompose.service: claudedesktop
+  # The Electron profile under /config is single-writer; never run two pods
+  # against it, not even for the duration of a rollout.
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: claudedesktop
+    spec:
+      containers:
+        - name: claudedesktop
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if $isOlaresOne }}
+          securityContext:
+            privileged: true
+          {{- end }}
+          env:
+            # The base image drops to this uid/gid and chowns /config to match.
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: {{ $tz | quote }}
+            - name: TITLE
+              value: "Claude"
+            # The base image defaults to a Wayland compositor, which mis-scales
+            # under the Olares entrance proxy. Pin the X11 path.
+            - name: PIXELFLUX_WAYLAND
+              value: "false"
+            - name: DeviceName
+              value: {{ .Values.deviceName | default "" | quote }}
+            - name: CLAUDE_DESKTOP_CLI
+              value: {{ $cli | quote }}
+            {{- if $isOlaresOne }}
+            - name: DRINODE
+              value: /dev/dri/renderD128
+            - name: LIBVA_DRIVER_NAME
+              value: iHD
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.httpPort }}
+              protocol: TCP
+            - name: https
+              containerPort: {{ .Values.service.httpsPort }}
+              protocol: TCP
+          # The desktop stack (nginx + compositor + Electron) takes a while on a
+          # cold volume, so startup gets a long budget and liveness a short one.
+          startupProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 3
+            failureThreshold: 60
+            timeoutSeconds: 3
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 5
+            failureThreshold: 3
+            timeoutSeconds: 3
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 3
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            # Shared code workspace. Same Home/Code directory the official
+            # code-server and opencode apps mount, so a repo cloned once is
+            # visible to all of them rather than trapped in this app's volume.
+            - name: workspace
+              mountPath: /config/workspace
+            - name: dshm
+              mountPath: /dev/shm
+            {{- if $allowHome }}
+            - name: olares-home-dir
+              mountPath: /home/userdata/home
+            {{- end }}
+            {{- if $allowExternal }}
+            - name: olares-external-dir
+              mountPath: /home/userdata/external
+            {{- end }}
+            {{- if $isOlaresOne }}
+            - name: dev-dri
+              mountPath: /dev/dri
+            {{- end }}
+      restartPolicy: Always
+      volumes:
+        # Container $HOME. Holds the signed-in session, app settings, MCP server
+        # config, and the Electron cache.
+        - name: config
+          hostPath:
+            path: "{{ $appData }}/config"
+            type: DirectoryOrCreate
+        - name: workspace
+          hostPath:
+            path: "{{ $userData }}/Code"
+            type: DirectoryOrCreate
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .Values.shmSize }}
+        {{- if $allowHome }}
+        - name: olares-home-dir
+          hostPath:
+            path: "{{ $userData }}"
+            type: DirectoryOrCreate
+        {{- end }}
+        {{- if $allowExternal }}
+        - name: olares-external-dir
+          hostPath:
+            path: "{{ .Values.sharedlib }}"
+            type: DirectoryOrCreate
+        {{- end }}
+        {{- if $isOlaresOne }}
+        - name: dev-dri
+          hostPath:
+            path: /dev/dri
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # Referenced by entrances[0].host in OlaresManifest.yaml; renaming this
+  # breaks the entrance.
+  name: claudedesktop
+  namespace: {{ .Release.Namespace }}
+  labels:
+    io.kompose.service: claudedesktop
+spec:
+  type: ClusterIP
+  selector:
+    io.kompose.service: claudedesktop
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.service.httpPort }}
+      targetPort: http
+    - name: https
+      protocol: TCP
+      port: {{ .Values.service.httpsPort }}
+      targetPort: https

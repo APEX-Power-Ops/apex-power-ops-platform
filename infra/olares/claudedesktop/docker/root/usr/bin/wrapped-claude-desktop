@@ -1,0 +1,37 @@
+#!/bin/bash
+# Launch wrapper for Claude Desktop inside the Olares container.
+#
+# Everything here exists because the app runs in a pod rather than on a normal
+# desktop; the app itself takes no special configuration.
+
+BIN=/usr/bin/claude-desktop
+
+# Electron writes a singleton lock into the profile and leaves it behind when
+# the pod is killed rather than shut down. A stale lock makes the next start
+# hand off to a process that no longer exists and exit without a window, which
+# reads as "the app never starts". Clear it when nothing is actually running.
+if ! pgrep -f "${BIN}" > /dev/null 2>&1; then
+  rm -f "${HOME}/.config/Claude/SingletonLock" \
+        "${HOME}/.config/Claude/SingletonCookie" \
+        "${HOME}/.config/Claude/SingletonSocket"
+fi
+
+# Match the compositor the base image actually started.
+if ls -l /dev/dri/* > /dev/null 2>&1; then
+  if pgrep labwc > /dev/null 2>&1; then
+    WAYLAND="--ozone-platform=wayland"
+  fi
+fi
+
+# --no-sandbox: the pod has no user namespaces, so Chromium's namespace sandbox
+#   cannot initialize and the app exits at startup. Isolation comes from the
+#   container boundary instead.
+# --password-store=basic: there is no D-Bus secret service in the image, so
+#   Electron's safeStorage would otherwise fail or block on a keyring unlock.
+#   The basic store keeps credentials under $HOME, which is the persisted
+#   /config volume.
+exec "${BIN}" \
+  --no-sandbox \
+  --password-store=basic \
+  ${WAYLAND} \
+  "$@"
