@@ -57,7 +57,10 @@ OUT_NAME = "closeout_index.json"
 # the governed-run attestation the closeout leans on (must match preserve_evidence)
 PROJECT_REF = "fxoyniqnrlkxfligbxmg"
 EXPECTED_DB_ROLE = "postgres"
-PROVENANCE_SCHEMA_VERSION = 2
+# schema 3 (RI2 finding 1): the governed run now loads psycopg from a hash-pinned dependency
+# bundle, so the provenance MUST carry dependency_bundle_manifest_sha256. A pre-bundle
+# (schema-2) capture no longer closes out P0-A.
+PROVENANCE_SCHEMA_VERSION = 3
 
 # the nine design-§2 categories that a complete P0-A closeout must bind
 REQUIRED_CATEGORIES = frozenset(range(1, 10))
@@ -247,6 +250,10 @@ def _require_provenance(custody_dir: Path, manifest: dict[str, str]) -> str:
             record.get("repo_head_equals_origin_main") is True,
             record.get("expected_db_role") == EXPECTED_DB_ROLE,
             record.get("expected_project_ref") == PROJECT_REF,
+            # RI2 finding 1: the closeout must prove the run loaded psycopg from a verified
+            # hash-pinned bundle, so a valid dependency_bundle_manifest_sha256 is REQUIRED
+            # (a pre-bundle capture, or a field-stripped record, does not close out P0-A).
+            _is_sha256(record.get("dependency_bundle_manifest_sha256")),
             bool(sha),
             sha == record.get("origin_main_sha") == record.get("expect_repo_sha"),
         )
@@ -254,6 +261,15 @@ def _require_provenance(custody_dir: Path, manifest: dict[str, str]) -> str:
     if not attested:
         raise CloseoutError("provenance_attestation_invalid")
     return digest
+
+
+def _is_sha256(value: object) -> bool:
+    """True iff ``value`` is a 64-char lowercase hex SHA-256 digest string."""
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(c in "0123456789abcdef" for c in value)
+    )
 
 
 def _verify_manifest_bundle(
@@ -585,19 +601,22 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _isolation_gate(isolated: bool) -> int | None:
-    """Refuse the CLI unless the interpreter is isolated (``python -I``) -- Codex-c16 P2.
+def _isolation_gate(isolated: bool, no_site: bool) -> int | None:
+    """Refuse the CLI unless the interpreter is isolated AND no-site (``python -I -S``).
 
-    Additional contract on top of the sys.path preamble; returns a non-None exit code when
-    NOT isolated.
+    ``-I`` alone does not imply ``-S``, so ``site`` still runs and executes any ``.pth``
+    line in site-packages before this script starts (RI2 finding 1). The finalizer is
+    stdlib-only, so ``-S`` costs it nothing and closes the pre-guard ``.pth`` window;
+    requiring both mirrors ``preserve_evidence``. Returns a non-None exit code when NOT
+    (isolated and no_site).
     """
-    if not isolated:
+    if not (isolated and no_site):
         print("RESULT FAIL")
-        print("FAILURE interpreter_not_isolated")
+        print("FAILURE interpreter_not_isolated_no_site")
         return 1
     return None
 
 
 if __name__ == "__main__":
-    _rc = _isolation_gate(sys.flags.isolated)
+    _rc = _isolation_gate(sys.flags.isolated, sys.flags.no_site)
     sys.exit(_rc if _rc is not None else main())

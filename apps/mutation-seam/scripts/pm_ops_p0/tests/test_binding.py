@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from pm_ops_p0.binding import (  # noqa: E402
     PG_ENV_OVERRIDES,
+    SCRUBBED_ENV_VARS,
     TargetBindingError,
     assert_bound_connection,
     bind_target,
@@ -36,6 +37,20 @@ def _expect_reject(dsn: str, expect_ref: str, code_substr: str) -> None:
         assert exc.code == str(exc), "error str must equal the stable code"
     else:  # pragma: no cover - failure path
         raise AssertionError(f"expected TargetBindingError({code_substr}) for this DSN")
+
+
+def _expect_reject_form(
+    dsn: str, expect_ref: str, require_form: str, code_substr: str
+) -> None:
+    try:
+        bind_target(dsn, expect_ref, require_form=require_form)
+    except TargetBindingError as exc:
+        assert code_substr in exc.code, (exc.code, code_substr, "wrong reject code")
+        assert exc.code == str(exc)
+    else:  # pragma: no cover
+        raise AssertionError(
+            f"expected TargetBindingError({code_substr}) for this form"
+        )
 
 
 # ---------------------------------------------------------------- reject matrix
@@ -228,6 +243,184 @@ def test_accepted_params_carry_no_reroute_keys():
     )
     assert "hostaddr" not in params
     assert "service" not in params
+
+
+# ------------------------------------------------- TLS trust contract (RI2 finding 2)
+
+
+def test_bind_target_sourcepins_sslrootcert_system():
+    # verify-full defaults to ~/.postgresql/root.crt (absent on the host -> fail closed);
+    # the OS trust store must be selected explicitly via sslrootcert=system. bind_target
+    # source-pins it so the direct-host verify-full cert chain can actually validate.
+    params = bind_target(
+        f"host=db.{REF}.supabase.co user=postgres dbname=postgres", REF
+    )
+    assert params["sslmode"] == "verify-full"
+    assert params["sslrootcert"] == "system"
+
+
+def test_bind_target_drops_caller_sslrootcert():
+    # a caller-supplied sslrootcert (a rogue CA that would let verify-full validate a
+    # man-in-the-middle cert) must never survive: bind_target reconstructs an explicit
+    # whitelist and source-pins sslrootcert=system regardless of the DSN value.
+    params = bind_target(
+        f"host=db.{REF}.supabase.co user=postgres dbname=postgres "
+        f"sslrootcert=/tmp/rogue-ca.pem",
+        REF,
+    )
+    assert params["sslrootcert"] == "system"
+    assert "/tmp/rogue-ca.pem" not in params.values()
+
+
+def test_bind_target_sslrootcert_value_is_not_leaked_on_reject():
+    # value-silence: a rogue sslrootcert on a wrong-host DSN must not be echoed
+    try:
+        bind_target(
+            "host=evil.attacker.example user=postgres dbname=postgres "
+            "sslrootcert=/tmp/rogue-ca.pem",
+            REF,
+        )
+    except TargetBindingError as exc:
+        assert "rogue-ca" not in f"{exc!r}|{exc}|{exc.code}"
+    else:  # pragma: no cover
+        raise AssertionError("expected a host_not_bound reject")
+
+
+def test_scrubbed_env_includes_openssl_trust_anchors():
+    # sslrootcert=system uses the OpenSSL default trust store, which SSL_CERT_FILE /
+    # SSL_CERT_DIR redirect, and OPENSSL_CONF/MODULES/ENGINES can subvert (load a provider
+    # or lower the TLS floor) -> all must be in the connect-time scrub set (RI2 lens-B F1).
+    for var in (
+        "SSL_CERT_FILE",
+        "SSL_CERT_DIR",
+        "OPENSSL_CONF",
+        "OPENSSL_MODULES",
+        "OPENSSL_ENGINES",
+        "PGSSLROOTCERT",
+    ):
+        assert var in SCRUBBED_ENV_VARS, var
+    # env-merged libpq params the DSN allow-list drops must also be scrubbed (lens-B F5)
+    for var in ("PGOPTIONS", "PGSSLCRL", "PGGSSENCMODE", "PGCHANNELBINDING"):
+        assert var in PG_ENV_OVERRIDES, var
+    # the PG* subset stays a subset of the full scrub set
+    assert set(PG_ENV_OVERRIDES) <= set(SCRUBBED_ENV_VARS)
+
+
+def test_bind_target_rejects_non_numeric_port():
+    _expect_reject(
+        f"host=db.{REF}.supabase.co user=postgres port=54xx dbname=postgres",
+        REF,
+        "malformed_port",
+    )
+
+
+def test_bind_target_require_form_direct_rejects_pooler():
+    # RI2 lens-B F4: the P6 (direct) probe must refuse a pooler DSN mechanically
+    _expect_reject_form(
+        f"postgresql://postgres.{REF}:pw@aws-0-us-east-1.pooler.supabase.com:6543/postgres",
+        REF,
+        "direct",
+        "wrong_connection_form",
+    )
+
+
+def test_bind_target_require_form_pooler_rejects_direct():
+    # the P7 (pooler) probe must refuse a direct DSN mechanically
+    _expect_reject_form(
+        f"host=db.{REF}.supabase.co user=postgres dbname=postgres",
+        REF,
+        "pooler",
+        "wrong_connection_form",
+    )
+
+
+def test_bind_target_require_form_pooler_rejects_session_pooler_port():
+    # Codex-RI2 r3: require_form="pooler" is the P7 TRANSACTION pooler (:6543). The tracked
+    # session-pooler DSN on :5432 must be rejected, else it could satisfy P7 falsely.
+    _expect_reject_form(
+        f"postgresql://postgres.{REF}:pw@aws-0-us-east-1.pooler.supabase.com:5432/postgres",
+        REF,
+        "pooler",
+        "wrong_connection_form",
+    )
+
+
+def test_bind_target_require_form_direct_rejects_non_5432_port():
+    # symmetry: the P6 direct probe is the direct host on 5432/default, not 6543
+    _expect_reject_form(
+        f"host=db.{REF}.supabase.co user=postgres port=6543 dbname=postgres",
+        REF,
+        "direct",
+        "wrong_connection_form",
+    )
+
+
+def test_bind_target_require_form_accepts_matching():
+    direct = bind_target(
+        f"host=db.{REF}.supabase.co user=postgres dbname=postgres",
+        REF,
+        require_form="direct",
+    )
+    assert direct["host"] == f"db.{REF}.supabase.co"
+    pooler = bind_target(
+        f"postgresql://postgres.{REF}:pw@aws-0-us-east-1.pooler.supabase.com:6543/postgres",
+        REF,
+        require_form="pooler",
+    )
+    assert pooler["host"] == "aws-0-us-east-1.pooler.supabase.com"
+
+
+def test_bind_target_rejects_unknown_require_form():
+    try:
+        bind_target(
+            f"host=db.{REF}.supabase.co user=postgres dbname=postgres",
+            REF,
+            require_form="banana",
+        )
+    except TargetBindingError as exc:
+        assert exc.code == "dsn_wrong_connection_form", exc.code
+    else:  # pragma: no cover
+        raise AssertionError("an unknown require_form must be rejected")
+
+
+def test_scrubbed_pg_env_scrubs_whole_pg_namespace_by_prefix():
+    # Codex-r5: the scrub is by PG* prefix, so a libpq env var NOT in the explicit list
+    # (e.g. a future/unlisted one) is still removed, and an inner-set PG* leak is cleared.
+    saved = {k: os.environ.get(k) for k in ("PGZZZ_UNLISTED", "PGSSLNEGOTIATION")}
+    try:
+        os.environ["PGZZZ_UNLISTED"] = "should-be-scrubbed"
+        os.environ.pop("PGSSLNEGOTIATION", None)
+        with scrubbed_pg_env():
+            assert "PGZZZ_UNLISTED" not in os.environ  # unlisted PG* scrubbed by prefix
+            os.environ["PGSSLNEGOTIATION"] = "leaked-inside"  # an inner leak
+        assert os.environ.get("PGZZZ_UNLISTED") == "should-be-scrubbed"  # restored
+        assert (
+            "PGSSLNEGOTIATION" not in os.environ
+        )  # inner-set PG* leak cleared on exit
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+
+def test_scrubbed_pg_env_scrubs_openssl_trust_anchors_and_restores():
+    saved = {k: os.environ.get(k) for k in ("SSL_CERT_FILE", "SSL_CERT_DIR")}
+    try:
+        os.environ["SSL_CERT_FILE"] = "/tmp/rogue-bundle.pem"
+        os.environ["SSL_CERT_DIR"] = "/tmp/rogue-dir"
+        with scrubbed_pg_env():
+            assert "SSL_CERT_FILE" not in os.environ
+            assert "SSL_CERT_DIR" not in os.environ
+        assert os.environ.get("SSL_CERT_FILE") == "/tmp/rogue-bundle.pem"
+        assert os.environ.get("SSL_CERT_DIR") == "/tmp/rogue-dir"
+    finally:
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
 
 
 # -------------------------------------------------------------- env scrub
