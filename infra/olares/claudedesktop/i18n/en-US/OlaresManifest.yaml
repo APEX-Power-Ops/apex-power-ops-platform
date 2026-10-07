@@ -1,0 +1,63 @@
+metadata:
+  title: Claude
+  description: Anthropic's official Claude desktop app for Linux, streamed to your browser
+spec:
+  fullDescription: |
+    **Overview**
+    The Claude desktop app for Linux, running inside Olares and streamed to your
+    browser. It is the same Chat, Cowork, and Code experience as the macOS and
+    Windows desktop app — parallel sessions, visual diff review, an integrated
+    terminal and editor, and live app preview — reachable from any device on
+    your Olares network without installing anything locally.
+
+    **How it works**
+    Claude Desktop is a native Linux GUI application, so this app ships it on a
+    minimal X11 desktop (openbox) inside the container and streams that desktop
+    over HTTP with Selkies. Opening the entrance gives you the app window in a
+    browser tab. The `claude-desktop` package comes from Anthropic's official
+    apt repository and is pinned in the image at build time.
+
+    **What persists**
+    The container home directory (`/config`) is stored in the app's private data
+    volume, so your login session, settings, chat history cache, and MCP server
+    configuration survive restarts and upgrades.
+
+    **First-time setup**
+    Open the `Claude` entrance and sign in with your Claude account or your
+    organization's SSO. The desktop app does not accept a Claude Console API key
+    — use the `Claude Code` app or the CLI for API-key authentication.
+
+    **Your code, shared across apps**
+    An Olares app is sandboxed and cannot see a repository sitting on your
+    laptop. The bridge is the `Code` folder on your Olares Home drive, which
+    this app mounts at `~/workspace` — the same directory the official
+    code-server and opencode apps use. Clone a repository into it once (from
+    this app's own terminal, from another app, or through Files) and every one
+    of those apps sees the same working tree. Push and pull with git as usual;
+    git, ssh, and a compiler toolchain are already in the image.
+
+    Two extra toggles widen that access when you need it:
+    `ALLOW_HOME_DIR_ACCESS` mounts the whole Home drive at
+    `/home/userdata/home`, and `ALLOW_EXTERNAL_DIR_ACCESS` mounts the External
+    drive at `/home/userdata/external`. Both default off; the shared workspace
+    needs neither.
+
+    **Not available on Linux**
+    Computer Use (screen and app control) and voice dictation are not part of
+    the Linux desktop beta. The global Quick Entry hotkey is captured by the
+    browser rather than the streamed desktop.
+
+  upgradeDescription: |
+    **v0.2.0**
+
+    Mount the Home drive's `Code` folder at `~/workspace`, matching the
+    convention the official code-server and opencode apps already follow. A
+    repository cloned there is shared across those apps instead of being
+    trapped in this app's private volume.
+
+    **v0.1.0**
+
+    First release. Pins `claude-desktop` **1.28929.0** from Anthropic's official
+    apt repository on a `baseimage-selkies:ubuntunoble` (Ubuntu 24.04) desktop
+    image. Forces `PIXELFLUX_WAYLAND=false` so the desktop runs on X11, which
+    scales correctly on Olares. Optional GPU passthrough on Olares One.

@@ -1,0 +1,33 @@
+# Values consumed by the chart templates.
+#
+# `userspace`, `olaresEnv`, `deviceName`, and `sharedlib` are injected by Olares
+# at install time and are intentionally absent here — the templates fall back to
+# safe defaults so the chart still renders standalone (see ci/olares-values.yaml
+# for a local render fixture).
+
+workloads:
+  claudedesktop:
+    replicaCount: 1
+
+image:
+  repository: ghcr.io/jasonlswenson-sys/claude-desktop-olares
+  # Image tag. `<claude-desktop version>-selkies<image revision>`; the app
+  # version half must match Chart.appVersion.
+  tag: 1.28929.0-selkies1
+  pullPolicy: IfNotPresent
+
+service:
+  httpPort: 3000
+  httpsPort: 3001
+
+# /dev/shm sizing. Electron's renderer processes fail to start on the 64Mi
+# Kubernetes default.
+shmSize: 1Gi
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 2Gi
+  limits:
+    cpu: "4"
+    memory: 8Gi
