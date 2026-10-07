@@ -1,0 +1,361 @@
+{
+  "schema_version": "1.0.0",
+  "goal_id": "RECORDS-P0-AUTHORITY-AND-P1-ADMISSION-FRAMEWORK-001",
+  "fixture_kind": "real",
+  "bindings": {
+    "base_commit": "bdec885a5cd2862da7907054646c9c0fb5df5ef2",
+    "base_tree": "b3f91a2392e0afd7b545bab2b6441c7ed6e27432",
+    "audit": {
+      "path": "/home/olares/code/apex/apex-learning-lane/notes/platform-status/2026-07-14-records-platform-and-field-execution-audit.md",
+      "digest_algorithm": "sha256",
+      "digest": "5db6a3a0582eac515c55f1c66496ae46e64541b65325e66430346adf20cbeb43"
+    },
+    "artifacts": [
+      {
+        "path": "docs/superpowers/specs/records-p0/PRODUCT-ADMISSION-FRAMEWORK.md",
+        "digest_algorithm": "sha256",
+        "digest": "4d0c7d7b33c8cd4c3f81c4441e855460ed9e07ae72bd554126a4202223160081"
+      },
+      {
+        "path": "docs/superpowers/specs/records-p0/PROPOSED-FIRST-SLICE-DECISION-PACKET.md",
+        "digest_algorithm": "sha256",
+        "digest": "2055ef3c0b9f8f1d11c3fda929cf394c671dc93a45fb336f481a405ba4a2ab91"
+      },
+      {
+        "path": "reference/records/01-OFFLINE-SYNC-ARCHITECTURE.md",
+        "digest_algorithm": "sha256",
+        "digest": "ad404a27384e0262f3b0b005083c1c3d63314032ae4bd2b333be32d5c53628c0"
+      },
+      {
+        "path": "reference/records/SERVING_CONTRACT.md",
+        "digest_algorithm": "sha256",
+        "digest": "d38a111046a7717e8ea5da82cfce4f2269602b8d0c61bff35d2d9211d04db1fa"
+      },
+      {
+        "path": "reference/records/SERVING_CONTRACT.yaml",
+        "digest_algorithm": "sha256",
+        "digest": "e9b25be4c65665eebe19ea17b45a8769d5b9f63515b49531cf45432d12f4c8b6"
+      },
+      {
+        "path": "reference/records/04-LV-CB-DATASHEET-SPEC.md",
+        "digest_algorithm": "sha256",
+        "digest": "2d3fb3a34d7e231f4ba5d42060a780f37c9c4c17b8cfb9e64e837d1dc806478f"
+      },
+      {
+        "path": "reference/records/06-TRANSFORMER-DATASHEET-SPEC.md",
+        "digest_algorithm": "sha256",
+        "digest": "accb8b7540979f70f99a92203a40a8b7f6381309f8ca68d171a776202902a320"
+      },
+      {
+        "path": "reference/records/10-GROUNDING-DATASHEET-SPEC.md",
+        "digest_algorithm": "sha256",
+        "digest": "af55fa3266bb7da32b022b18e1b1f8fd9758e46833913c96bd43ee4055edb339"
+      },
+      {
+        "path": "reference/records/14-CAPTURE-MODE-IMPORT-SPEC.md",
+        "digest_algorithm": "sha256",
+        "digest": "71ef99d353cde389d813c3ddcad2eb7110c5d2f414fc6cba8959a3cecf8c13fe"
+      }
+    ]
+  },
+  "candidate": {
+    "id": "RECORDS-FIRST-SLICE-2026-07",
+    "decision_status": "proposed",
+    "implementation_readiness": "held",
+    "execution_authorized": false
+  },
+  "ratified_precedents": [
+    {
+      "code": "REC-R001",
+      "subject": "installable_pwa_client",
+      "choice": "installable_pwa",
+      "authority": {
+        "identity": "Jason Swenson, operator named by the ruled architecture record",
+        "immutable_locator": "git:3d3ca14f547fb5ae9e8c3ceafd3f2ceda7785bfa:reference/records/01-OFFLINE-SYNC-ARCHITECTURE.md@blob:f02390980ac8d6f4dd97081481061eb911dd48b9",
+        "digest_algorithm": "sha256",
+        "digest": "ad404a27384e0262f3b0b005083c1c3d63314032ae4bd2b333be32d5c53628c0",
+        "timestamp": "2026-06-14T19:44:21-07:00",
+        "supersession_rule": "A signed operator amendment must bind and supersede this ruled architecture artifact before dependent work."
+      }
+    },
+    {
+      "code": "REC-R002",
+      "subject": "fully_offline_field_operation",
+      "choice": "zero_connectivity_full_job",
+      "authority": {
+        "identity": "Jason Swenson, operator named by the ruled architecture record",
+        "immutable_locator": "git:3d3ca14f547fb5ae9e8c3ceafd3f2ceda7785bfa:reference/records/01-OFFLINE-SYNC-ARCHITECTURE.md@blob:f02390980ac8d6f4dd97081481061eb911dd48b9",
+        "digest_algorithm": "sha256",
+        "digest": "ad404a27384e0262f3b0b005083c1c3d63314032ae4bd2b333be32d5c53628c0",
+        "timestamp": "2026-06-14T19:44:21-07:00",
+        "supersession_rule": "A signed operator amendment must bind and supersede this ruled architecture artifact before dependent work."
+      }
+    },
+    {
+      "code": "REC-R003",
+      "subject": "sync_engine",
+      "choice": "powersync",
+      "authority": {
+        "identity": "Jason Swenson, operator named by the ruled architecture record",
+        "immutable_locator": "git:3d3ca14f547fb5ae9e8c3ceafd3f2ceda7785bfa:reference/records/01-OFFLINE-SYNC-ARCHITECTURE.md@blob:f02390980ac8d6f4dd97081481061eb911dd48b9",
+        "digest_algorithm": "sha256",
+        "digest": "ad404a27384e0262f3b0b005083c1c3d63314032ae4bd2b333be32d5c53628c0",
+        "timestamp": "2026-06-14T19:44:21-07:00",
+        "supersession_rule": "A signed operator amendment must bind and supersede this ruled architecture artifact before dependent work."
+      }
+    },
+    {
+      "code": "REC-R004",
+      "subject": "serving_transport",
+      "choice": "separate_direct_role_dsn",
+      "authority": {
+        "identity": "Jason Swenson, author of the canonical Gate 9 v2 serving-contract commit",
+        "immutable_locator": "git:a3f4cab25045017b332970a30fc974a7d19db0a9:reference/records/SERVING_CONTRACT.yaml@blob:96eae45f751754e8ce50413a3e8448c866c05026",
+        "digest_algorithm": "sha256",
+        "digest": "e9b25be4c65665eebe19ea17b45a8769d5b9f63515b49531cf45432d12f4c8b6",
+        "timestamp": "2026-07-04T01:57:46+00:00",
+        "supersession_rule": "A signed Gate 5 posture decision must bind the superseded contract and land before any serving or grant change."
+      }
+    },
+    {
+      "code": "REC-R005",
+      "subject": "data_api_posture",
+      "choice": "records_schema_excluded",
+      "authority": {
+        "identity": "Jason Swenson, author of the canonical Gate 9 v2 serving-contract commit",
+        "immutable_locator": "git:a3f4cab25045017b332970a30fc974a7d19db0a9:reference/records/SERVING_CONTRACT.yaml@blob:96eae45f751754e8ce50413a3e8448c866c05026",
+        "digest_algorithm": "sha256",
+        "digest": "e9b25be4c65665eebe19ea17b45a8769d5b9f63515b49531cf45432d12f4c8b6",
+        "timestamp": "2026-07-04T01:57:46+00:00",
+        "supersession_rule": "A signed Gate 5 posture decision must bind the superseded contract; exposure cannot be enabled by configuration drift."
+      }
+    },
+    {
+      "code": "REC-R006",
+      "subject": "runtime_privilege_ceiling",
+      "choice": "owners_superusers_and_bypass_identities_forbidden",
+      "authority": {
+        "identity": "Jason Swenson, author of the canonical Gate 9 v2 serving-contract commit",
+        "immutable_locator": "git:a3f4cab25045017b332970a30fc974a7d19db0a9:reference/records/SERVING_CONTRACT.yaml@blob:96eae45f751754e8ce50413a3e8448c866c05026",
+        "digest_algorithm": "sha256",
+        "digest": "e9b25be4c65665eebe19ea17b45a8769d5b9f63515b49531cf45432d12f4c8b6",
+        "timestamp": "2026-07-04T01:57:46+00:00",
+        "supersession_rule": "A signed Gate 5 posture decision must re-open the privilege boundary; owner or bypass runtime DSNs remain prohibited."
+      }
+    }
+  ],
+  "open_human_decisions": [
+    {
+      "code": "REC-D001",
+      "title": "First consumer, accountable owner, and release acceptor",
+      "state": "unresolved"
+    },
+    {
+      "code": "REC-D002",
+      "title": "Authorization tenancy and row-scope model",
+      "state": "unresolved"
+    },
+    {
+      "code": "REC-D003",
+      "title": "Authoritative human, device, and service-principal identity sources",
+      "state": "unresolved"
+    },
+    {
+      "code": "REC-D004",
+      "title": "Device assignment and revocation",
+      "state": "unresolved"
+    },
+    {
+      "code": "REC-D005",
+      "title": "Source-content use posture",
+      "state": "unresolved"
+    },
+    {
+      "code": "REC-D006",
+      "title": "Lifecycle, reviewer separation, and amendment semantics",
+      "state": "unresolved"
+    },
+    {
+      "code": "REC-D007",
+      "title": "Retention, legal hold, deletion, backup, and restore",
+      "state": "unresolved"
+    },
+    {
+      "code": "REC-D008",
+      "title": "Asset-tag scope and soft-reference reconciliation ownership",
+      "state": "unresolved"
+    },
+    {
+      "code": "REC-D009",
+      "title": "Exact first apparatus, template, and capture-mode slice",
+      "state": "unresolved"
+    },
+    {
+      "code": "REC-D010",
+      "title": "PowerSync hosting, operations, and custody",
+      "state": "unresolved"
+    },
+    {
+      "code": "REC-D011",
+      "title": "Acceptance evidence and signatory",
+      "state": "unresolved"
+    }
+  ],
+  "technical_invariants": [
+    {
+      "code": "REC-I001",
+      "title": "Verified issuer, audience, signature, expiry, and token use",
+      "state": "required"
+    },
+    {
+      "code": "REC-I002",
+      "title": "Server-side scope mapping and cross-project denial",
+      "state": "required"
+    },
+    {
+      "code": "REC-I003",
+      "title": "Atomic route, idempotency key, request hash, mutation, audit, and response claim",
+      "state": "required"
+    },
+    {
+      "code": "REC-I004",
+      "title": "Exact-response replay and same-key different-body rejection",
+      "state": "required"
+    },
+    {
+      "code": "REC-I005",
+      "title": "Server-known device binding and monotonic revision compare-and-swap",
+      "state": "required"
+    },
+    {
+      "code": "REC-I006",
+      "title": "Separate office and device authority",
+      "state": "required"
+    },
+    {
+      "code": "REC-I007",
+      "title": "Governed lifecycle transitions and reviewer separation",
+      "state": "required"
+    },
+    {
+      "code": "REC-I008",
+      "title": "Template, key, requiredness, kind, value, unit, and option validation",
+      "state": "required"
+    },
+    {
+      "code": "REC-I009",
+      "title": "Immutable accepted evidence and controlled amendments",
+      "state": "required"
+    }
+  ],
+  "serving_guardrails": {
+    "data_api_exposed": false,
+    "runtime_identities": [],
+    "forbidden_runtime_identities": [
+      "postgres",
+      "records_fn_owner",
+      "records_owner",
+      "records_reclaim_owner",
+      "service_role"
+    ],
+    "serving_role_ceiling": [
+      "records_api",
+      "records_auditor",
+      "records_intake_writer"
+    ],
+    "migration_replay_authorized": false
+  },
+  "authority_emissions": {
+    "schema_change": false,
+    "credential_minting": false,
+    "deployment": false,
+    "production_action": false,
+    "role_activation": false,
+    "data_api_exposure": false,
+    "product_implementation": false
+  },
+  "acceptance_contract": {
+    "elements": [
+      "office_user",
+      "technician",
+      "project",
+      "apparatus",
+      "template",
+      "offline_capture",
+      "reconnect",
+      "governed_review",
+      "acceptance_decision",
+      "evidence_readback"
+    ],
+    "ptm_office_import_is_field_proof": false
+  },
+  "first_slice_candidates": [
+    {
+      "code": "RFS-GROUNDING",
+      "apparatus_key": "grounding_system",
+      "template_key": "ats_grounding_v1",
+      "capture_mode": "field_entry",
+      "decision_status": "proposed",
+      "execution_authorized": false,
+      "selected": false,
+      "source_binding": {
+        "path": "reference/records/10-GROUNDING-DATASHEET-SPEC.md",
+        "git_blob": "f461df75e559b4256944d5c2f27885f56fc581b2",
+        "digest_algorithm": "sha256",
+        "digest": "af55fa3266bb7da32b022b18e1b1f8fd9758e46833913c96bd43ee4055edb339"
+      }
+    },
+    {
+      "code": "RFS-LV-CB",
+      "apparatus_key": "cb_lv",
+      "template_key": "ats_lv_cb_v1",
+      "capture_mode": "field_entry",
+      "decision_status": "proposed",
+      "execution_authorized": false,
+      "selected": false,
+      "source_binding": {
+        "path": "reference/records/04-LV-CB-DATASHEET-SPEC.md",
+        "git_blob": "a18ac8a19f77df5b924112575aca8e924543edf6",
+        "digest_algorithm": "sha256",
+        "digest": "2d3fb3a34d7e231f4ba5d42060a780f37c9c4c17b8cfb9e64e837d1dc806478f"
+      }
+    },
+    {
+      "code": "RFS-DRY-XFMR",
+      "apparatus_key": "xfmr_dry",
+      "template_key": "ats_dry_xfmr_v1",
+      "capture_mode": "field_entry",
+      "decision_status": "proposed",
+      "execution_authorized": false,
+      "selected": false,
+      "source_binding": {
+        "path": "reference/records/06-TRANSFORMER-DATASHEET-SPEC.md",
+        "git_blob": "9f92017c65d4d9aec137376486b25ebcc88495ea",
+        "digest_algorithm": "sha256",
+        "digest": "accb8b7540979f70f99a92203a40a8b7f6381309f8ca68d171a776202902a320"
+      }
+    }
+  ],
+  "recommendation": {
+    "candidate_code": "RFS-GROUNDING",
+    "decision_status": "proposed",
+    "ratified": false,
+    "selected": false,
+    "execution_authorized": false
+  },
+  "changed_paths": [
+    ".github/workflows/records-authority-admission-ci.yml",
+    "docs/lanes/README.md",
+    "docs/superpowers/specs/records-p0/2026-07-16-records-p0-final-handoff.md",
+    "docs/superpowers/specs/records-p0/2026-07-16-records-p0-review-record.md",
+    "docs/superpowers/specs/records-p0/PRODUCT-ADMISSION-FRAMEWORK.md",
+    "docs/superpowers/specs/records-p0/PROPOSED-FIRST-SLICE-DECISION-PACKET.md",
+    "docs/superpowers/specs/records-p0/records-admission-manifest.json",
+    "docs/superpowers/specs/records-p0/test_records_status_authority.py",
+    "docs/superpowers/specs/records-p0/test_validate_records_admission.py",
+    "docs/superpowers/specs/records-p0/validate_records_admission.py",
+    "infra/database/migrations/records/MANIFEST.md",
+    "reference/records/CURRENT-STATE.md",
+    "reference/records/PUNCHLIST.md"
+  ]
+}

@@ -31,10 +31,13 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
 ## Active lanes
 
 ### Lane: records (PowerDB-replacement / NETA records)
-- **Scope:** the in-house records forms engine + NETA reference/datasheet data — DEV ONLY.
-- **Branch:** `records/chip10-import` (HISTORICAL - merged; b6980b28 is an ancestor of main)
-  **Worktree:** `/home/olares/code/apex/apex-records-lane` (STALE - refresh onto main or
-  retire after the 2026-07-02 cleanup lands; do not build from it)
+- **Scope:** the in-house records forms engine + NETA reference/datasheet data. Product work
+  remains held; this lane status does not authorize database, credential, serving, sync, or
+  field-runtime action.
+- `Records-State-Key: migration_tip=049; evidence_as_of=2026-07-07; substrate=prod-applied-dormant; data_api=excluded; prod_role_login=none; product_runtime=not-admitted`
+- **Branch:** `records/p0-authority-admission-framework` (PROPOSED authority/admission packet)
+  **Worktree:** `/home/olares/code/apex/apex-records-p0-admission`. The detached
+  `/home/olares/code/apex/apex-records-lane` checkout is historical and must not be built from.
 - **Dev DB / schema:** `records_dev` → `records.*` (+ `neta.*` reference)
 - **Write-boundary (OWNS):** `infra/database/migrations/records/**`, `packages/records-*/**`,
   the datasheet/import tooling under `tools/powerdb/**`.
@@ -42,13 +45,16 @@ A lane is "done" only when its branch is pushed and its completion is recorded a
   prod Supabase.
 - **Gates:** `schema` (every migration), `business_state`.
 - **Escalation / owner:** CC (technical authority). Abort = leave branch unpushed-of-the-bad-commit; never force-push shared history.
-- **Status:** **foundation merged, prototype-grade** - Chip 10a + partial 10c import plumbing
-  and records migrations through `044` are in main (`b6980b28` is an ancestor of main); NOT
-  production-governed. Next = validation-harness lane, then security/RLS. Validation harness (Gate 2)
-  landed 2026-07: run_validation.py + records-ci.yml; next = security/RLS (Gate 3).
+- **Status:** repository migrations `001`-`049` are the current chain. Retained governed evidence
+  records that chain as production-applied but deliberately dormant: all six Records roles were
+  observed `NOLOGIN`, `records` was excluded from the Data API, no credential was minted during
+  that campaign, and no serving consumer was admitted. This does not freshly inventory external
+  secret stores and does not establish a live Records product. Gate 3/5 security, ownership, and
+  audit substrate is complete; product admission, user/project authorization, lifecycle/value
+  enforcement, offline operation, and acceptance remain held human/product gates. Never replay
+  migrations `001`-`049`.
 - **Resume guard:** read `reference/records/CURRENT-STATE.md` (the single records resume
-  landing page, updated 2026-07-02) before any new records work. The detached
-  `apex-records-lane` checkout is stale - do not build from it.
+  landing page, updated 2026-07-16) before any new Records work.
 
 ### Lane: ops (PM revenue / recognition)
 - **Scope:** the Operations PM lane — Estimator intake → per-apparatus revenue → progress billing — DEV ONLY.

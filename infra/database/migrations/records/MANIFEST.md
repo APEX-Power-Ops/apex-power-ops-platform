@@ -1,12 +1,25 @@
 # NETA Records Domain SQL Migration Manifest
 ## Packet: 2026-06-12-records-001
-## Lane: NETA field-records platform — Chip 1 (data model foundation)
+## Lane: NETA field-records platform — current ordered chain `001`-`049`
 ## Authority: `reference/records/00-MASTER-INDEX.md` §4, `01-OFFLINE-SYNC-ARCHITECTURE.md`
 
+`Records-State-Key: migration_tip=049; evidence_as_of=2026-07-07; substrate=prod-applied-dormant; data_api=excluded; prod_role_login=none; product_runtime=not-admitted`
+
+## Current scope and status
+
+Retained governed evidence records `001`-`049` as production-applied but deliberately
+dormant: all six Records roles were observed `NOLOGIN`, Records was excluded from the Data
+API, no credential was minted during that campaign, and no serving consumer was admitted.
+This manifest does not freshly verify current production or external secret-store state.
+
+Statements in the `043`/`044` rows that RLS/grants are absent describe those exact stack
+positions; migration `045` supersedes that posture.
+Migrations `001`-`049` must not be replayed.
+
 The `records` schema is the in-house replacement for the legacy field-test datastore:
-asset register, NETA data sheets, test results, and PM tracking. This Chip 1 set
-lands the foundation tables only — no data seed, no cross-schema FK activation
-(both are later chips).
+asset register, NETA data sheets, test results, and PM tracking. This manifest spans
+the foundation, reference/template, lineage, and identity work through `044`, followed by
+security/RLS, ownership, audit roles, audit log, and audit triggers in `045`-`049`.
 
 **Generalized 2026-06-15 (records chip):** the original `neta.*` sketch is renamed to `records.*` and the `datasheet_*` tables to `form_*` with a `form_type` discriminator (`neta_datasheet` | `jha` | `safety` | `sop` | `inspection`), plus a deferred `assets.equipment_model_id` soft seam to the `core` identity spine. NETA data sheets are one `form_type`; the engine is generic. Applied + down/up-validated on a local Postgres `records_dev`.
 
@@ -74,7 +87,8 @@ Execute in strict sequential order against the target database:
 
 **Chip 2c coverage close (migs 023-037): records grew 19 → 34 datasheets; mig 042 then added the Network Protector (7.8) leaf + sheet — the last genuine family gap — → records now 35.** Every asset-class leaf with a 1:1 NETA procedure now has a leaf-bound sheet. The remaining 8 leaves without a standalone sheet are all documented deferrals: `harmonic_filter` (no NETA section — can't build the coverage invariant); `mcc_lv` / `mcc_mv` (operator `crossref` ruling, mig 019 — asset-tree composition, not a sheet); `protective_relay` (the parallel relay lane); and the four `swgr_*` leaves (`swgr_lv_switchboard` / `swgr_mv_metalclad` / `swgr_padmount` / `swgr_vfi`) which share NETA 7.1.1 and are served by the **013 parent-bound switchgear sheet** via its `assembly_type` selector. Follow-on FOLDS (same recipe + a selector, not new leaves): MV switch variants (7.5.1.2/.2/.3/.4 — `switch_medium`), electromechanical metering (7.11.1 — `meter_kind`), liquid-filled reactor (7.20.3.2 — `reactor_type`), and flooded-LA / NiCd batteries (7.18.1.1/.2 — `battery_type`).
 
-Each file has a matching `_down.sql` that reverses it in dependency order. Chip 2a
+Every non-seed migration has a same-number `_down.sql`. Data-only seeds `006` and `009`
+reverse transitively when `005` and `008` drop their owning tables. Chip 2a
 is validated by `test_005_neta_reference.py` (9 tests); the Chip 2-shell family
 taxonomy by `test_007_asset_class_shell.py` (13 tests); Chip 2-backfill by
 `test_008_backfill.py` (8 tests); the Chip 2b LV-CB datasheet by
@@ -104,15 +118,17 @@ contact-resistance / associated-devices battery) — all on local `records_dev`.
 
 ## Validation
 
-The records gate is `run_validation.py` in this directory - the PRIMARY way to
-validate this stack. It builds a disposable `records_val_*` database (never
-shared `records_dev`), applies 001-044 forward-incrementally, runs each
-migration test at the exact stack state it was developed for, verifies each
-test restored its migration (schema fingerprint), then runs the records-import
-DB tests against the migrated result. Env contract: `RECORDS_PG_ADMIN_DSN`
-(maintenance DB `postgres`), NETA extracts resolved and validated via
-`_dbtest.py` (`REQUIRED_NETA_FILES`). See `.env.dev.template` and
-`docs/superpowers/specs/2026-07-02-records-validation-harness-design.md`.
+The Records gate is `run_validation.py` in this directory - the PRIMARY way to
+validate this stack. It builds a disposable `records_val_*` database (never shared
+`records_dev`), applies `001`-`049` forward-incrementally, runs each migration test at
+the exact stack state it was developed for, verifies each test restored its migration
+(schema fingerprint), and then runs the records-import DB tests against the migrated result.
+Tier 3 covers 43 numbered migration-test files; the isolated compatibility pass is pinned
+to the exact 28 `@compat` tests, and the gate continues through role/posture/serving tiers 5-7.
+
+Env contract: `RECORDS_PG_ADMIN_DSN` (maintenance DB `postgres`), with NETA extracts
+resolved and validated via `_dbtest.py` (`REQUIRED_NETA_FILES`). See `.env.dev.template`
+and `docs/superpowers/specs/2026-07-02-records-validation-harness-design.md`.
 CI: `.github/workflows/records-ci.yml`.
 
 The per-chip guidance below remains for LEGACY manual runs only; targeting
@@ -130,26 +146,22 @@ The per-chip guidance below remains for LEGACY manual runs only; targeting
 > ups are full snapshots, re-running an *older* xfmr snapshot (e.g. `020`) reverts a *newer* one (`021`);
 > always re-apply forward to the latest xfmr patch. The IT PF-readings patch (`022`) layers on `015` the same way — re-apply it after any base reset.
 
-## Quick Execution
+## Execution boundary
 
-```bash
-# Against a local staging database
-psql -d apex_neta_stage -f 001_records_enums.sql
-psql -d apex_neta_stage -f 002_records_tables.sql
-psql -d apex_neta_stage -f 003_records_indexes.sql
-psql -d apex_neta_stage -f 004_records_triggers_and_views.sql
+The disposable runner above is the only canonical execution path for the full ordered chain.
+It must target a newly created `records_val_*` database, never shared `records_dev`.
 
-# Roll back (reverse order)
-psql -d apex_neta_stage -f 004_records_triggers_and_views_down.sql
-psql -d apex_neta_stage -f 003_records_indexes_down.sql
-psql -d apex_neta_stage -f 002_records_tables_down.sql
-psql -d apex_neta_stage -f 001_records_enums_down.sql
-```
+This authority/admission packet runs only DB-free status and admission checks. No DB-backed
+runner tier, migration, database, role, credential, secret, or production action is authorized.
 
-> Not yet applied to the governed Supabase project — this lands as reviewable SQL
-> first (per the operator's "talk about how it works before migration steps" gate).
+Retained operator-gated evidence records `001`-`049` applied to the governed project and then
+made deliberately dormant: Data API excluded, all six Records roles observed `NOLOGIN`, no
+credential minted during that campaign, and no consumer admitted. That evidence does not
+freshly inventory current external state. Never replay migrations `001`-`049`.
 
-## Object Summary
+## Chip 1 / post-004 Object Summary
+
+These historical counts describe the foundation immediately after `004`, not the post-`049` stack.
 
 | Category | Count | Details |
 | --- | --- | --- |
